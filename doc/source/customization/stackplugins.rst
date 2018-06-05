@@ -78,8 +78,12 @@ PyMca PCA
 Show Spectra
 ++++++++++++
 
-.. automodule:: PyMca5.PyMcaPlugins.ShowSpectra
+.. automodule:: PyMca5.PyMcaPlugins.StackShowSpectra
 
+Stack Axes Options
+++++++++++++++++++
+
+.. automodule:: PyMca5.PyMcaPlugins.StackAxesPlugin
 
 Stack motor positions
 +++++++++++++++++++++
