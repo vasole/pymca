@@ -112,6 +112,11 @@ Stack Scan Window Plugin
 
 .. automodule:: PyMca5.PyMcaPlugins.StackScanWindowPlugin
 
+Stack Simple Fitting
+++++++++++++++++++++
+
+.. automodule:: PyMca5.PyMcaPlugins.FitStackPlugin
+
 Stack motor positions
 +++++++++++++++++++++
 
