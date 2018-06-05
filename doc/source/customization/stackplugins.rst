@@ -121,3 +121,7 @@ Stack motor positions
 +++++++++++++++++++++
 
 .. automodule:: PyMca5.PyMcaPlugins.StackMotorInfoPlugin
+
+.. TODO: XAS Batch
+
+.. TODO: XAS Stack Normalization
