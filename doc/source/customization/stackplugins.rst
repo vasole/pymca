@@ -100,6 +100,14 @@ Stack Normalization
 
 .. automodule:: PyMca5.PyMcaPlugins.StackNormalizationPlugin
 
+.. TODO: Stack ROI Batch
+
+Stack Row or Column Reversing
++++++++++++++++++++++++++++++
+
+.. automodule:: PyMca5.PyMcaPlugins.ReverseStackPlugin
+
+
 Stack motor positions
 +++++++++++++++++++++
 
