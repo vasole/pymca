@@ -27,7 +27,7 @@
 
 Following normalization methods are available:
 
- - Normalize to maximum (y / max(y)')
+ - Normalize to maximum y / max(y)
  - Subtract offset and normalize to new maximum (y-min(y))/(max(y)-min(y))
  - Subtract offset and normalize to integrated area (y-min(y))/trapz(max(y)-min(y),x)
  - Subtract offset and normalize to counts (y-min(y))/sum(max(y)-min(y))

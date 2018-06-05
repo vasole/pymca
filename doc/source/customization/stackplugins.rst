@@ -95,6 +95,11 @@ Stack Image Browser
 
 .. automodule:: PyMca5.PyMcaPlugins.StackBrowserPlugin
 
+Stack Normalization
++++++++++++++++++++
+
+.. automodule:: PyMca5.PyMcaPlugins.StackNormalizationPlugin
+
 Stack motor positions
 +++++++++++++++++++++
 
