@@ -107,6 +107,10 @@ Stack Row or Column Reversing
 
 .. automodule:: PyMca5.PyMcaPlugins.ReverseStackPlugin
 
+Stack Scan Window Plugin
+++++++++++++++++++++++++
+
+.. automodule:: PyMca5.PyMcaPlugins.StackScanWindowPlugin
 
 Stack motor positions
 +++++++++++++++++++++
