@@ -90,6 +90,11 @@ Stack Filtering Options
 
 .. automodule:: PyMca5.PyMcaPlugins.BackgroundStackPlugin
 
+Stack Image Browser
++++++++++++++++++++
+
+.. automodule:: PyMca5.PyMcaPlugins.StackBrowserPlugin
+
 Stack motor positions
 +++++++++++++++++++++
 
