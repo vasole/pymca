@@ -357,7 +357,7 @@ class StackSelector(object):
                         "Image Files (*edf *ccd *raw *edf.gz *ccd.gz *raw.gz *cbf)",
                         "Image Files (*tif *tiff *TIF *TIFF)",
                         "TextImage Files (*txt)",
-                        "HDF5 Files (*.nxs *.hdf *.h5)",
+                        "HDF5 Files (*.nxs *.hdf *.hdf5 *.h5)",
                         "EDF Files (*ccd)",
                         "Specfile Files (*mca)",
                         "Specfile Files (*dat)",
@@ -372,7 +372,7 @@ class StackSelector(object):
                         "MRC files (*.mrc *.st)",
                         "All Files (*)"]
         if not HDF5:
-            idx = fileTypeList.index("HDF5 Files (*.nxs *.hdf *.h5)")
+            idx = fileTypeList.index("HDF5 Files (*.nxs *.hdf *.hdf5 *.h5)")
             del fileTypeList[idx]
         message = "Open ONE indexed stack or SEVERAL files"
         return self._getFileList(fileTypeList, message=message,

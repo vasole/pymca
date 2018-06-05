@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -525,7 +525,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
         mcaIndex = stack.info.get('McaIndex')
         if not (mcaIndex in [0, -1, 2]):
             raise IndexError("1D index must be 0, 2, or -1")
-        filefilter = ['HDF5 Files (*.h5 *.nxs *.hdf)', 'CSV 2-column (*.csv)', 'ASCII 2-column (*)']
+        filefilter = ['HDF5 Files (*.h5 *.nxs *.hdf *.hdf5)', 'CSV 2-column (*.csv)', 'ASCII 2-column (*)']
         filename, ffilter = PyMcaFileDialogs.\
                     getFileList(parent=None,
                         filetypelist=filefilter,

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -142,7 +142,7 @@ class StackNormalizationPlugin(StackPluginBase.StackPluginBase):
         getfilter = True
         fileTypeList = ["EDF Files (*edf *ccd *tif)"]
         if HDF5:
-            fileTypeList.append('HDF5 Files (*.h5 *.nxs *.hdf)')
+            fileTypeList.append('HDF5 Files (*.h5 *.nxs *.hdf *.hdf5)')
         fileTypeList.append('ASCII Files (*)') 
         fileTypeList.append("EDF Files (*)")
         message = "Open data file"
