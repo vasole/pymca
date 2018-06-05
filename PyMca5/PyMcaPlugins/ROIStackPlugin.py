@@ -23,10 +23,6 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
-__contact__ = "sole@esrf.fr"
-__license__ = "MIT"
-__copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 """
 This plugin opens a stack ROI window providing alternative views:
 
@@ -41,6 +37,11 @@ width, to smooth the stack image.
 The mask of this plot widget is synchronized with the master stack widget.
 
 """
+__author__ = "V.A. Sole - ESRF Data Analysis"
+__contact__ = "sole@esrf.fr"
+__license__ = "MIT"
+__copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+
 from PyMca5 import StackPluginBase
 from PyMca5.PyMcaGui.pymca import StackROIWindow
 from PyMca5.PyMcaGui import PyMca_Icons as PyMca_Icons

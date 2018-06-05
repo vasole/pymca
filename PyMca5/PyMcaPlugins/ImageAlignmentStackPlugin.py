@@ -23,10 +23,6 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
-__contact__ = "sole@esrf.fr"
-__license__ = "MIT"
-__copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 """
 This plugin provides two methods to align stack images, one based on a FFT
 algorithm and the other one based on the SIFT algorithm (on GPU).
@@ -36,6 +32,11 @@ or saved to a file.
 
 This plugin also allows to apply the results from a file.
 """
+__author__ = "V.A. Sole - ESRF Data Analysis"
+__contact__ = "sole@esrf.fr"
+__license__ = "MIT"
+__copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+
 import sys
 import os
 import numpy

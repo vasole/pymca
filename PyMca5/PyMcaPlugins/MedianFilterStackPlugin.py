@@ -23,10 +23,6 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
-__contact__ = "sole@esrf.fr"
-__license__ = "MIT"
-__copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 """
 This plugin open a new stack window with a configurable median filter
 applied to the data.
@@ -40,6 +36,10 @@ value of all pixels in the window. With the conditional option enabled,
 the pixel value is only replaced if it is the minimum or the maximum value
 in the smoothing window.
 """
+__author__ = "V.A. Sole - ESRF Data Analysis"
+__contact__ = "sole@esrf.fr"
+__license__ = "MIT"
+__copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 from PyMca5 import StackPluginBase
 from PyMca5.PyMcaGui.pymca import Median2DBrowser

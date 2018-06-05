@@ -23,10 +23,6 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
-__contact__ = "sole@esrf.fr"
-__license__ = "MIT"
-__copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 """
 This plugin open a file selection dialog to open one or more images in a
 new window. Usual image data formats are supported, as well as standard
@@ -41,6 +37,11 @@ zoomed area and then resize it to fit the original size.
 
 The mask of this plot widget is synchronized with the master stack widget.
 """
+__author__ = "V.A. Sole - ESRF Data Analysis"
+__contact__ = "sole@esrf.fr"
+__license__ = "MIT"
+__copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+
 import os
 from PyMca5 import StackPluginBase
 from PyMca5.PyMcaGui import PyMcaQt as qt
