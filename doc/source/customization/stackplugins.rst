@@ -85,6 +85,11 @@ Stack Axes Options
 
 .. automodule:: PyMca5.PyMcaPlugins.StackAxesPlugin
 
+Stack Filtering Options
++++++++++++++++++++++++
+
+.. automodule:: PyMca5.PyMcaPlugins.BackgroundStackPlugin
+
 Stack motor positions
 +++++++++++++++++++++
 
