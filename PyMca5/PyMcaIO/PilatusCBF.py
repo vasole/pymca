@@ -40,6 +40,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __license__   = "MIT"
 
 import sys
+import os
 import numpy as np
 import logging
 if sys.version < '3':
@@ -745,8 +746,6 @@ class CIF(dict):
             return False
 
 if __name__ == "__main__":
-    import os
-    import sys
     from PyMca5 import EdfFile
     #fd = open('Cu_ZnO_20289.mccd', 'rb')
     filename = sys.argv[1]
