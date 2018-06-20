@@ -38,6 +38,7 @@ from fisx import Material
 from fisx import Detector
 from fisx import XRF
 import time
+import sys
 xcom = None
 
 _logger = logging.getLogger(__name__)
@@ -767,8 +768,6 @@ def getFisxCorrectionFactorsFromFitConfigurationFile(fileName,
 
 if __name__ == "__main__":
     _logger.setLevel(logging.DEBUG)
-    import time
-    import sys
     if len(sys.argv) < 2:
         print("Usage: python FisxHelper FitConfigurationFile [element] [matrix_flag]")
         sys.exit(0)
