@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -43,7 +43,18 @@ QTVERSION = qt.qVersion()
 DEBUG = 0
 SCENE_MATRIX = True
 
-class SceneGLWidget(qt.QGLWidget):
+
+if hasattr(qt, 'QOpenGLWidget'):  # PyQt>=5.4
+    _BaseOpenGLWidget = qt.QOpenGLWidget
+    USING_QOPENGLWIDGET = True
+elif hasattr(qt, 'QGLWidget'):
+    _BaseOpenGLWidget = qt.QGLWidget
+    USING_QOPENGLWIDGET = False
+else:
+    raise ImportError("QOpenGLWidget not available.")
+
+
+class SceneGLWidget(_BaseOpenGLWidget):
 
     sigScaleChanged = qt.pyqtSignal(object)
     sigObjectSelected = qt.pyqtSignal(object)
@@ -51,8 +62,8 @@ class SceneGLWidget(qt.QGLWidget):
     sigMouseMoved = qt.pyqtSignal(object)
 
     def __init__(self, parent = None, scene=None):
-        #qt.QGLWidget.__init__(self, qt.QGLFormat(qt.QGL.SampleBuffers), parent)
-        qt.QGLWidget.__init__(self, parent)
+        #_BaseOpenGLWidget.__init__(self, qt.QGLFormat(qt.QGL.SampleBuffers), parent)
+        _BaseOpenGLWidget.__init__(self, parent)
         if 1:
             self.__test = None
         else:
@@ -86,7 +97,8 @@ class SceneGLWidget(qt.QGLWidget):
         self._objectSelectionMode = False
         self._vertexSelectionMode = False
         self.__selectingVertex    = False
-        self.setAutoBufferSwap(False)
+        if hasattr(self, "setAutoBufferSwap"):
+            self.setAutoBufferSwap(False)
         self.autoScale = True
         self.coordinates = Object3DCoordinates.Object3DCoordinates(self)
         self.lastPos = qt.QPoint()
@@ -97,6 +109,14 @@ class SceneGLWidget(qt.QGLWidget):
         self.__usingCache = False
         self.__outOfSelectMode = False
         self.__cacheTexture = GLWidgetCachePixmap.GLWidgetCachePixmap()
+
+    if USING_QOPENGLWIDGET:
+        def updateGL(self):
+            return self.update()
+
+        def swapBuffers(self):
+            pass
+            # no need to get the context with self.context() to swap buffers
 
     def setCurrentViewPosition(self, position, rotation_reset=None):
         if rotation_reset is None:
@@ -433,34 +453,42 @@ class SceneGLWidget(qt.QGLWidget):
 
         #prepare a pure virtual method for derived classes ???
         self.userPaintGL()
-
         #keep a copy of the current image
         #self.__finalImage = GL.glReadPixelsub(0,0, self.width(),self.height(),
 
         if GL.glGetIntegerv(GL.GL_RENDER_MODE) != GL.GL_SELECT and\
            (not self.__selectingVertex):
-            GL.glReadBuffer(GL.GL_BACK)
-            self.__finalImage = GL.glReadPixelsub(0,0,
-                                self.width(), self.height(),
-                                GL.GL_RGBA, GL.GL_UNSIGNED_BYTE)
-            if not hasattr(self.__finalImage, "dtype"):
-                # we did not receive an array (python 3) ...
-                self.__finalImage = numpy.fromstring(self.__finalImage,
-                                                dtype=numpy.uint8)
+            try:
+                # next line crashes on windows with intel HD 5500 with Qt 5.10.1
+                GL.glReadBuffer(GL.GL_BACK)
+                self.__finalImage = GL.glReadPixelsub(0,0,
+                                    self.width(), self.height(),
+                                    GL.GL_RGBA, GL.GL_UNSIGNED_BYTE)
+                if not hasattr(self.__finalImage, "dtype"):
+                    # we did not receive an array (python 3) ...
+                    self.__finalImage = numpy.fromstring(self.__finalImage,
+                                                    dtype=numpy.uint8)
 
-            self.__cacheTexture.setPixmap(self.__finalImage,
-                                      self.width(), self.height())
-            self.__usingCache = True
-            #self.saveImage()
+                self.__cacheTexture.setPixmap(self.__finalImage,
+                                          self.width(), self.height())
+                self.__usingCache = True
+                #self.saveImage()
+            except:
+                self.__usingCache = False
+        
 
-        if self.doubleBuffer():
-            if not self.autoBufferSwap():
-                if not self.__selectingVertex:
-                    if GL.glGetIntegerv(GL.GL_RENDER_MODE) == GL.GL_RENDER:
-                        self.swapBuffers()
-            else:
-                print("WARNING: Expected to work with autoBufferSwap off")
-
+        if hasattr(self, "doubleBuffer"):
+            if self.doubleBuffer():
+                if not self.autoBufferSwap():
+                    if not self.__selectingVertex:
+                        if GL.glGetIntegerv(GL.GL_RENDER_MODE) == GL.GL_RENDER:
+                            self.swapBuffers()
+                else:
+                    print("WARNING: Expected to work with autoBufferSwap off")
+        else:
+            if not self.__selectingVertex:
+                if GL.glGetIntegerv(GL.GL_RENDER_MODE) == GL.GL_RENDER:
+                    self.swapBuffers()
         if 0:
             #keep a hardcopy of the image
             image = GL.glReadPixels(0,0,self.width(),self.height(),
@@ -947,14 +975,14 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
         def renderText(self,  x, y, z, text, font = None, listbase = 2000):
             GL.glGetError()
             GL.glGetError()
-            qt.QGLWidget.renderText(self, x, y, z, text, font, listbase)
+            _BaseOpenGLWidget.renderText(self, x, y, z, text, font, listbase)
             GL.glGetError()
             GL.glGetError()
 
     def renderText(self, x, y, z, text, font = None, listbase = 2000):
         if font is None: font=self.font()
         if (QTVERSION < '4.3.2') or (QTVERSION > '4.4.0'):
-            qt.QGLWidget.renderText(self, x, y, z, text, font, listbase)
+            _BaseOpenGLWidget.renderText(self, x, y, z, text, font, listbase)
         else:
             if 0:
                 GL.glRasterPos3d(x, y, z)
@@ -1073,9 +1101,11 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
             else:
                 print("no signal")
 
+
+            if hasattr(self, "doneCurrent"):
+                self.doneCurrent()
             qt.QApplication.postEvent(self,
                               qt.QResizeEvent(qt.QSize(width,height),self.size()))
-
         elif self._vertexSelectionMode:
             #self.setCacheEnabled(False)
             if DEBUG:
@@ -1375,7 +1405,6 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
         qt.QApplication.postEvent(self,
                  qt.QResizeEvent(self.size(),self.size()))
 
-
     def print3D(self):
         """
         #This worked on Qt3
@@ -1396,7 +1425,7 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
     def closeEvent(self, event):
         self.__cacheTexture.openGLCleanup()
         self.setCacheEnabled(False)
-        qt.QGLWidget.closeEvent(self, event)
+        _BaseOpenGLWidget.closeEvent(self, event)
 
 if __name__ == '__main__':
     import sys

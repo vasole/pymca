@@ -203,8 +203,9 @@ def getMcaList(h5file, path, dataset=False, ignore=None):
                             datasetList.append(obj)
                         else:
                             datasetList.append(obj.name)
-
-    h5file[path].visititems(visit_function)
+    if hasattr(h5file[path], "visititems"):
+        # prevent errors dealing with toplevel datasets
+        h5file[path].visititems(visit_function)
     return datasetList
 
 def getMcaObjectPaths(h5file, mcaPath):
@@ -221,10 +222,16 @@ def getMcaObjectPaths(h5file, mcaPath):
     - counts
     - channels
     - calibration
+
+    The information below will be read but is not used as it does not belong to the
+    detector but to a yet-to-be-defined PyMca XRF application definition. Please do
+    not rely on it.
+    
     - i0
     - it
-    - i02flux
-    - it2flux
+    - i0_to_flux_factor
+    - it_to_flux_factor
+
     """
     if not mcaPath.startswith("/"):
         # this is needed in order to avoid posixpath to return
@@ -242,8 +249,8 @@ def getMcaObjectPaths(h5file, mcaPath):
                "i0_to_flux_factor",
                "it_to_flux_factor"]
 
+    # This initialization is not needed (at least for the time being)
     #mca["channels"] = None
-    #mca["i0"] = None
     #mca["live_time"] = None
     #mca["elapsed_time"] = None
     #mca["preset_time"]= None
@@ -326,8 +333,13 @@ def getNXClassGroups(h5file, path, classes, single=False):
 def getPositionersGroup(h5file, path):
     """
     Retrieve the positioners group associated to a path
-    retrieving them from the same entry (assuming they are in
-    NXentry/instrument/positioners)
+    retrieving them from the same entry.
+
+    It assumes they are either in:
+
+    - NXentry/NXinstrument/positioners or
+    - NXentry/measurement/pre_scan_snapshot
+
     """
     entry_path = getEntryName(path)
     instrument = getNXClassGroups(h5file, entry_path, ["NXinstrument", b"NXinstrument"], single=True)
@@ -350,11 +362,25 @@ def getPositionersGroup(h5file, path):
     return positioners
 
 def getMeasurementGroup(h5file, path):
+    """
+    Retrieve the measurement group associated to a path
+    retrieving them from the same entry.
+
+    It looks for:
+
+    - A group named measurement at the entry level
+    - The NXdata group at the entry level with the greater number of datasets
+
+    """
     if path in ["/", b"/", "", b""]:
         raise ValueError("path cannot be the toplevel root")
     entry_path = getEntryName(path)
     entry = h5file[entry_path]
-    items_list = entry.items()
+    if hasattr(entry, "items"):
+        items_list = entry.items()
+    else:
+        # we have received a top level dataset
+        return None
     measurement = None
     for key, group in items_list:
         if key in ["measurement", b"measurement"]:
@@ -401,8 +427,10 @@ def getInstrumentGroup(h5file, path):
 
 def getScannedPositioners(h5file, path):
     """
-    Try to retrieve the positioners (aka. motors) that were moved
+    Try to retrieve the positioners (aka. motors) that were moved.
+
     For that:
+
         - Look for datasets present at measurement and positioners groups
         - Look for positioners with more than one single value
         - Look for datasets present at measurement and title

@@ -1,19 +1,19 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: PyMCA
+Upstream-Name: PyMca5
 Upstream-Contact: V. Armando Sole <sole@esrf.fr>
 Files-Excluded: PyMca5/PyMcaMath/sift third-party/qhull third-party/fisx
  third-party/khronos_headers
 
 Files: *
-Copyright: 2004-2013 European Synchrotron Radiation Facility
+Copyright: 2004-2018 European Synchrotron Radiation Facility
 License: Expat
 
 Files: PyMca5/*
-Copyright: 2002, 2004-2015, European Synchrotron Radiation Facility
+Copyright: 2002, 2004-2018, European Synchrotron Radiation Facility
 License: Expat
 
 Files: PyMca5/Object3D/*
-Copyright: 2004-2013 European Synchrotron Radiation Facility
+Copyright: 2004-2018 European Synchrotron Radiation Facility
 License: LGPL-2+
 
 Files: PyMca5/Object3D/Object3DCTools/*
@@ -46,7 +46,7 @@ Copyright: 2004-2014, E. Papillon, European Synchrotron Radiation Facility
 License: Expat
 
 Files: PyMca5/PyMcaData/*
-Copyright: 2004-2014 European Synchrotron Radiation Facility (ESRF)
+Copyright: 2004-2018 European Synchrotron Radiation Facility (ESRF)
 License: Expat
 
 Files: PyMca5/PyMcaGraph/ctools/_ctools/include/InsidePolygonWithBounds.h
@@ -58,7 +58,7 @@ Copyright: Paul Bourke
 License: Expat
 
 Files: PyMca5/PyMcaGui/*
-Copyright: 2004-2014 European Synchrotron Radiation Facility (ESRF)
+Copyright: 2004-2018 European Synchrotron Radiation Facility (ESRF)
 License: Expat
 
 Files: PyMca5/PyMcaGui/io/QEdfFileWidget.py
@@ -73,15 +73,15 @@ Copyright: 2004-2014, E. Papillon, V.A. Sole, European Synchrotron Radiation Fac
 License: Expat
 
 Files: PyMca5/PyMcaGui/io/hdf5/HDF5Widget.py
-Copyright: 2004-2014, V.A. Sole, ESRF - D. Dale CHESS
+Copyright: 2004-2018, V.A. Sole, ESRF - D. Dale CHESS
 License: Expat
 
 Files: PyMca5/PyMcaGui/misc/QIPythonWidget.py
-Copyright: no-info-found
+Copyright: 2004-2018 European Synchrotron Radiation Facility (ESRF)
 License: Expat
 
 Files: PyMca5/PyMcaGui/physics/*
-Copyright: 2002, 2004-2015, European Synchrotron Radiation Facility
+Copyright: 2002, 2004-2018, European Synchrotron Radiation Facility
 License: Expat
 
 Files: PyMca5/PyMcaGui/plotting/ImageView.py
@@ -116,20 +116,20 @@ Copyright: 2004-2015, V.A. Sole, European Synchrotron Radiation Facility
 License: Expat
 
 Files: PyMca5/PyMcaIO/specfile/*
-Copyright: 2004-2013 European Synchrotron Radiation Facility
-License: LGPL-2+
+Copyright: 2004-2018 European Synchrotron Radiation Facility
+License: Expat
 
 Files: PyMca5/PyMcaIO/specfile/include/locale_management.h
-Copyright: 2004-2015, European Synchrotron Radiation Facility
-License: LGPL-2+
+Copyright: 2004-2018, European Synchrotron Radiation Facility
+License: Expat
 
 Files: PyMca5/PyMcaIO/specfile/setup.py
 Copyright: 2002, 2004-2015, European Synchrotron Radiation Facility
 License: Expat
 
 Files: PyMca5/PyMcaIO/specfile/src/*
-Copyright: 2004-2015, European Synchrotron Radiation Facility
-License: LGPL-2+
+Copyright: 2004-2018, European Synchrotron Radiation Facility
+License: Expat
 
 Files: PyMca5/PyMcaIO/sps/Include/*
 Copyright: 1998-2015, European Synchrotron Radiation Facility (ESRF)
@@ -145,8 +145,8 @@ Copyright: 1998-2013, Certified Scientific Software (CSS)
 License: Expat
 
 Files: PyMca5/PyMcaIO/sps/Include/sps_lut.h
-Copyright: 2004-2009, European Synchrotron Radiation Facility
-License: GPL-2+
+Copyright: 2004-2018, European Synchrotron Radiation Facility
+License: Expat
 
 Files: PyMca5/PyMcaIO/sps/Src/sps.c
 Copyright: 1998-2013, Certified Scientific Software (CSS)
@@ -201,7 +201,7 @@ Copyright: 2008 Uwe Schmitt, uschmitt@mineway.de,
 License: BSD-3-clause
 
 Files: PyMca5/PyMcaPlugins/*
-Copyright: 2004-2015, V.A. Sole, European Synchrotron Radiation Facility
+Copyright: 2004-2018, V.A. Sole, European Synchrotron Radiation Facility
 License: Expat
 
 Files: PyMca5/PyMcaPlugins/AdvancedAlignmentScanPlugin.py

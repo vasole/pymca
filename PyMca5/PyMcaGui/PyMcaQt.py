@@ -166,6 +166,20 @@ class VerticalSpacer(QWidget):
         QWidget.__init__(self, *args)
         self.setSizePolicy(QSizePolicy(QSizePolicy.Fixed,
                                           QSizePolicy.Expanding))
+_QToolButton = QToolButton
+class QToolButton(_QToolButton):
+    def __init__(self, *var, **kw):
+        _QToolButton.__init__(self, *var, **kw)
+        if "silx" in sys.modules:
+            try:
+                # this should be set via a user accessible parameter
+                tb = QToolBar()
+                size = tb.iconSize()
+                if (size.width() > 15) and (size.height() > 15):
+                    self.setIconSize(size)
+            except:
+                print("unable")
+                pass
 
 if sys.version_info < (3,):
     import types

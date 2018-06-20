@@ -40,6 +40,12 @@ if hasattr(qt, "QString"):
     QString = qt.QString
 else:
     QString = qt.safe_str
+try:
+    # try to import silx prior to importing matplotlib
+    # to prevent unnecessary warning
+    import silx.gui.plot
+except:
+    pass
 
 from PyMca5.PyMcaGui import PyMcaFileDialogs
 from PyMca5.PyMcaCore import DataObject

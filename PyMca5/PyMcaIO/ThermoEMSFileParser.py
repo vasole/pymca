@@ -247,6 +247,7 @@ def isThermoEMSFile(filename):
     except:
         f.close()
         return False
+    f.close()
     try:
         if filename.lower().endswith(".ems"):
             if line.startswith("#FORMAT") or \
