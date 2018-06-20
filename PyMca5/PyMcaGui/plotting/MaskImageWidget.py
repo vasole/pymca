@@ -1123,7 +1123,7 @@ class MaskImageWidget(qt.QWidget):
                                              numpy.uint8)
         minValue, maxValue = self._getSelectionMinMax()
         tmpData = numpy.array(self.__imageData, copy=True)
-        tmpData[True - numpy.isfinite(self.__imageData)] = minValue
+        tmpData[~numpy.isfinite(self.__imageData)] = minValue
         selectionMask[tmpData >= maxValue] = 1
         self.setSelectionMask(selectionMask, plot=False)
         self.plotImage(update=False)
@@ -1134,7 +1134,7 @@ class MaskImageWidget(qt.QWidget):
                                              numpy.uint8)
         minValue, maxValue = self._getSelectionMinMax()
         tmpData = numpy.array(self.__imageData, copy=True)
-        tmpData[True - numpy.isfinite(self.__imageData)] = maxValue
+        tmpData[~numpy.isfinite(self.__imageData)] = maxValue
         selectionMask[tmpData >= maxValue] = 0
         selectionMask[tmpData <= minValue] = 0
         self.setSelectionMask(selectionMask, plot=False)
@@ -1146,7 +1146,7 @@ class MaskImageWidget(qt.QWidget):
                                              numpy.uint8)
         minValue, maxValue = self._getSelectionMinMax()
         tmpData = numpy.array(self.__imageData, copy=True)
-        tmpData[True - numpy.isfinite(self.__imageData)] = maxValue
+        tmpData[~numpy.isfinite(self.__imageData)] = maxValue
         selectionMask[tmpData <= minValue] = 1
         self.setSelectionMask(selectionMask, plot=False)
         self.plotImage(update=False)
