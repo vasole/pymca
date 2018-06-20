@@ -397,8 +397,9 @@ class FastXRFLinearFit(object):
                 jStart = jEnd
         t = time.time() - t0
         _logger.debug("First fit elapsed = %f", t)
-        _logger.debug("Spectra per second = %f",
-                      data.shape[0]*data.shape[1]/float(t))
+        if t > 0.:
+            _logger.debug("Spectra per second = %f",
+                          data.shape[0]*data.shape[1]/float(t))
         t0 = time.time()
 
         # cleanup zeros
