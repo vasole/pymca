@@ -37,6 +37,7 @@ from fisx import Elements as FisxElements
 from fisx import Material
 from fisx import Detector
 from fisx import XRF
+import time
 xcom = None
 
 _logger = logging.getLogger(__name__)
