@@ -220,6 +220,7 @@ def isOlympusCSVFile(filename):
     except:
         f.close()
         return False
+    f.close()
     line = line.replace("\x00","")
     try:
         if filename.lower().endswith(".csv"):

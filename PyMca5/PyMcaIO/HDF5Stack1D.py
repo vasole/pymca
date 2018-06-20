@@ -141,6 +141,8 @@ class HDF5Stack1D(DataObject.DataObject):
                    (mSelection in scanlist):
                     scanlist = None
                     USE_JUST_KEYS = True
+            else:
+                USE_JUST_KEYS = True
         elif len(entryNames) == 1:
             # deal with the SOLEIL case of one entry but with different name
             # in different files

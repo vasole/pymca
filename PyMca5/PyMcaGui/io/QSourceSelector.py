@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -68,10 +68,10 @@ class QSourceSelector(qt.QWidget):
         self.fileCombo  = qt.QComboBox(self.fileWidget)
         self.fileCombo.setEditable(0)
         self.mapCombo= {}
-        openButton= qt.QToolButton(self.fileWidget)
+        openButton= qt.QPushButton(self.fileWidget)
 
         self.openIcon   = qt.QIcon(qt.QPixmap(icons.fileopen))
-        self.closeIcon  = qt.QIcon(qt.QPixmap(icons.fileclose))
+        self.closeIcon  = qt.QIcon(qt.QPixmap(icons.close))
         self.reloadIcon = qt.QIcon(qt.QPixmap(icons.reload_))
         self.specIcon   = qt.QIcon(qt.QPixmap(icons.spec))
 
@@ -79,15 +79,15 @@ class QSourceSelector(qt.QWidget):
         openButton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Minimum))
         openButton.setToolTip("Open new file data source")
 
-        closeButton= qt.QToolButton(self.fileWidget)
+        closeButton= qt.QPushButton(self.fileWidget)
         closeButton.setIcon(self.closeIcon)
         closeButton.setToolTip("Close current data source")
 
-        refreshButton= qt.QToolButton(self.fileWidget)
+        refreshButton= qt.QPushButton(self.fileWidget)
         refreshButton.setIcon(self.reloadIcon)
         refreshButton.setToolTip("Refresh data source")
 
-        specButton= qt.QToolButton(self.fileWidget)
+        specButton= qt.QPushButton(self.fileWidget)
         specButton.setIcon(self.specIcon)
         specButton.setToolTip("Open new shared memory source")
 
@@ -110,7 +110,7 @@ class QSourceSelector(qt.QWidget):
         fileWidgetLayout.addWidget(refreshButton)
         self.specButton = specButton
         if pluginsIcon:
-            self.pluginsButton = qt.QToolButton(self.fileWidget)
+            self.pluginsButton = qt.QPushButton(self.fileWidget)
             self.pluginsButton.setIcon(qt.QIcon(qt.QPixmap(icons.plugin)))
             self.pluginsButton.setToolTip("Plugin handling")
             fileWidgetLayout.addWidget(self.pluginsButton)

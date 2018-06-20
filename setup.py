@@ -119,13 +119,36 @@ def use_cython():
 
     return True
 
+# check if GUI dependencies are to be considered install_requires
+def use_gui():
+    """
+    Check if GUI dependencies are requested.
+    """
+
+    if "WITH_GUI" in os.environ:
+        if os.environ["WITH_GUI"] not in ["False", "0", 0]:
+            print("GUI requirements requested by environment")
+            return True
+
+    if "--gui" in sys.argv:
+        sys.argv.remove("--gui")
+        os.environ["WITH_GUI"] = "True"
+        print("GUI requrements requested by command line")
+        return True
+
+    return False
+
+
+
 if build_ext is not None:
     # we can use cython, but it may have been explicitely disabled
     if not use_cython():
         build_ext = None
 
+fid = open(os.path.join('PyMca5', '__init__.py'), 'r')
+ffile = fid.readlines()
+fid.close()
 
-ffile = open(os.path.join('PyMca5', '__init__.py'), 'r').readlines()
 __version__ = None
 for line in ffile:
     if line.startswith('__version__'):
@@ -387,7 +410,7 @@ def build_plotting_ctools(ext_modules):
     else:
         src = []
         for fname in glob.glob(os.path.join(basedir, 'cython', '*.c')):
-            src.append(os.path.join(basedir, 'cython', os.path.basename(fname))) 
+            src.append(os.path.join(basedir, 'cython', os.path.basename(fname)))
     src += c_files
 
     if sys.platform == 'win32':
@@ -417,7 +440,7 @@ def build_xas_xas(ext_modules):
     else:
         src = []
         for fname in glob.glob(os.path.join(basedir, 'cython', '*.c')):
-            src.append(os.path.join(basedir, 'cython', os.path.basename(fname))) 
+            src.append(os.path.join(basedir, 'cython', os.path.basename(fname)))
     src += c_files
     if sys.platform == 'win32':
         extra_compile_args = []
@@ -825,7 +848,19 @@ classifiers = ["Development Status :: 5 - Production/Stable",
                "Topic :: Scientific/Engineering :: Visualization",
                ]
 
-install_requires = ["numpy", "matplotlib", "fisx>=1.1.4", "silx>=0.7.0"]
+# install requires for non-GUI usage
+install_requires = ["numpy",
+                    "matplotlib>1.0",
+                    "fisx>=1.1.4",
+                    "h5py",
+                    "silx>=0.7"]
+if use_gui():
+    # install requires with all easy-to-provide GUI functionality
+    # plese take a look at requirements.txt for detailed explanation
+    install_requires += ["PyOpenGL",
+                         "qtconsole",
+                         "PyQt5"]   # either PyQt4 or PySide supported too
+
 setup_requires = ["numpy"]
 
 distrib = setup(name="PyMca5",
@@ -835,7 +870,7 @@ distrib = setup(name="PyMca5",
                 author_email="sole@esrf.fr",
                 license="MIT",
                 url="http://pymca.sourceforge.net",
-                download_url="https://github.com/vasole/pymca/archive/v%s.tar.gz" % __version__,  		
+                download_url="https://github.com/vasole/pymca/archive/v%s.tar.gz" % __version__,
                 long_description=long_description,
                 packages=packages,
                 platforms='any',

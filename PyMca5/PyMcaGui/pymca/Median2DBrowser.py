@@ -36,6 +36,9 @@ try:
     from PyMca5.PyMcaMath.PyMcaSciPy.signal import median
 except ImportError:
     _logger.warning("Median2DBrowser problem!")
+    import traceback
+    print(traceback.format_exc())
+
 
 medfilt2d = median.medfilt2d
 qt = StackBrowser.qt
