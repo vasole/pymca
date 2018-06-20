@@ -333,9 +333,15 @@ def getHDF5FileInstanceAndBuffer(filename, shape,
                                       dtype=dtype,
                                       compression=None)
     # data.attrs['signal'] = numpy.int32(1)
-    nxData.attrs['signal'] = buffername.encode('utf-8')
+    if hasattr(buffername, "encode"):
+        nxData.attrs['signal'] = buffername.encode('utf-8')
+    else:
+        nxData.attrs['signal'] = buffername
     if interpretation is not None:
-        data.attrs['interpretation'] = interpretation.encode('utf-8')
+        if hasattr(interpretation, "encode"):
+            data.attrs['interpretation'] = interpretation.encode('utf-8')
+        else:
+            data.attrs['interpretation'] = interpretation
 
     for i in range(len(shape)):
         dim = numpy.arange(shape[i]).astype(numpy.float32)
