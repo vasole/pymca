@@ -33,6 +33,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
 import numpy
 import time
+import sys
 
 try:
     from PyMca5.PyMcaIO import EdfFile
@@ -45,11 +46,31 @@ except ImportError:
 HDF5 = True
 try:
     import h5py
+    if sys.version_info < (3, ):
+        text_dtype = h5py.special_dtype(vlen=unicode)
+    else:
+        text_dtype = h5py.special_dtype(vlen=str)
 except ImportError:
     HDF5 = False
 
-
 DEBUG = 0
+
+
+def to_unicode(s):
+    """Return string as unicode.
+
+    :param s: A string (bytestring or unicode string).
+        If s is a bytestring, it is assumed that it is utf-8 encoded text"""
+    if hasattr(s, "decode"):
+        return s.decode("utf-8")
+    return s
+
+
+def to_h5py_utf8(str_list):
+    """Convert a string or a list of strings to a variable length utf-8 string
+    compatible with h5py.
+    """
+    return numpy.array(str_list, dtype=text_dtype)
 
 
 def getDate():
@@ -65,8 +86,8 @@ def getDate():
     second = localtime[5]
     # get the difference against Greenwich
     delta = hour - gtime[3]
-    return "%4d-%02d-%02dT%02d:%02d:%02d%+02d:00" % (year, month, day, hour,
-                                                     minute, second, delta)
+    return u"%4d-%02d-%02dT%02d:%02d:%02d%+02d:00" % (year, month, day, hour,
+                                                      minute, second, delta)
 
 
 def save2DArrayListAsASCII(datalist, filename,
@@ -236,35 +257,20 @@ def openHDF5File(name, mode='a', **kwargs):
     h5file = h5py.File(name, mode, **kwargs)
     if h5file.mode != 'r' and len(h5file) == 0:
         if 'file_name' not in h5file.attrs:
-            attr = 'file_name'
-            txt = "%s" % name
-            dtype = '<S%d' % len(txt)
-            h5file.attrs.create(attr, txt, dtype=dtype)
+            h5file.attrs.create('file_name', to_h5py_utf8(name))
         if 'file_time' not in h5file.attrs:
-            attr = 'file_time'
-            txt = "%s" % getDate()
-            dtype = '<S%d' % len(txt)
-            h5file.attrs.create(attr, txt, dtype=dtype)
+            h5file.attrs.create('file_time', to_h5py_utf8(getDate()))
         if 'HDF5_version' not in h5file.attrs:
-            attr = 'HDF5_version'
             txt = "%s" % h5py.version.hdf5_version
-            dtype = '<S%d' % len(txt)
-            h5file.attrs.create(attr, txt, dtype=dtype)
+            h5file.attrs.create('HDF5_version', to_h5py_utf8(txt))
         if 'HDF5_API_version' not in h5file.attrs:
-            attr = 'HDF5_API_version'
             txt = "%s" % h5py.version.api_version
-            dtype = '<S%d' % len(txt)
-            h5file.attrs.create(attr, txt, dtype=dtype)
+            h5file.attrs.create('HDF5_API_version', to_h5py_utf8(txt))
         if 'h5py_version' not in h5file.attrs:
-            attr = 'h5py_version'
             txt = "%s" % h5py.version.version
-            dtype = '<S%d' % len(txt)
-            h5file.attrs.create(attr, txt, dtype=dtype)
+            h5file.attrs.create('h5py_version', to_h5py_utf8(txt))
         if 'creator' not in h5file.attrs:
-            attr = 'creator'
-            txt = "%s" % 'PyMca'
-            dtype = '<S%d' % len(txt)
-            h5file.attrs.create(attr, txt, dtype=dtype)
+            h5file.attrs.create('creator', to_h5py_utf8('PyMca'))
         # if 'format_version' not in self.attrs and len(h5file) == 0:
         #     h5file.attrs['format_version'] = __format_version__
 
@@ -290,16 +296,16 @@ def getHDF5FileInstanceAndBuffer(filename, shape,
     # entry
     nxEntry = hdf.require_group(entryName)
     if 'NX_class' not in nxEntry.attrs:
-        nxEntry.attrs['NX_class'] = 'NXentry'.encode('utf-8')
-    elif nxEntry.attrs['NX_class'] != 'NXentry'.encode('utf-8'):
+        nxEntry.attrs['NX_class'] = u'NXentry'
+    elif nxEntry.attrs['NX_class'] not in [b'NXentry', u"NXentry"]:
         # should I raise an error?
         pass
-    nxEntry['title'] = "PyMca saved 3D Array".encode('utf-8')
-    nxEntry['start_time'] = getDate().encode('utf-8')
+    nxEntry['title'] = u"PyMca saved 3D Array"
+    nxEntry['start_time'] = getDate()
     nxData = nxEntry.require_group('NXdata')
     if 'NX_class' not in nxData.attrs:
-        nxData.attrs['NX_class'] = 'NXdata'.encode('utf-8')
-    elif nxData.attrs['NX_class'] == 'NXdata'.encode('utf-8'):
+        nxData.attrs['NX_class'] = u'NXdata'
+    elif nxData.attrs['NX_class'] in [b'NXdata', u'NXdata']:
         # should I raise an error?
         pass
     if compression:
@@ -333,15 +339,9 @@ def getHDF5FileInstanceAndBuffer(filename, shape,
                                       dtype=dtype,
                                       compression=None)
     # data.attrs['signal'] = numpy.int32(1)
-    if hasattr(buffername, "encode"):
-        nxData.attrs['signal'] = buffername.encode('utf-8')
-    else:
-        nxData.attrs['signal'] = buffername
+    nxData.attrs['signal'] = to_unicode(buffername)
     if interpretation is not None:
-        if hasattr(interpretation, "encode"):
-            data.attrs['interpretation'] = interpretation.encode('utf-8')
-        else:
-            data.attrs['interpretation'] = interpretation
+        data.attrs['interpretation'] = to_unicode(interpretation)
 
     for i in range(len(shape)):
         dim = numpy.arange(shape[i]).astype(numpy.float32)
@@ -350,11 +350,11 @@ def getHDF5FileInstanceAndBuffer(filename, shape,
                                       dim.dtype,
                                       dim,
                                       chunks=dim.shape)
-        # dset.attrs['axis'] = numpy.int32(i + 1)
-    nxData.attrs["axes"] = [('dim_%d' % i).encode('utf-8')
-                            for i in range(len(shape))]
 
-    nxEntry['end_time'] = getDate().encode('utf-8')
+    nxData.attrs["axes"] = to_h5py_utf8(['dim_%d' % i
+                                         for i in range(len(shape))])
+
+    nxEntry['end_time'] = getDate()
     return hdf, data
 
 
@@ -441,21 +441,21 @@ def save3DArrayAsHDF5(data, filename, axes=None, labels=None, dtype=None, mode='
         # entry
         nxEntry = hdf.require_group(entryName)
         if 'NX_class' not in nxEntry.attrs:
-            nxEntry.attrs['NX_class'] = 'NXentry'.encode('utf-8')
-        elif nxEntry.attrs['NX_class'] != 'NXentry'.encode('utf-8'):
+            nxEntry.attrs['NX_class'] = u'NXentry'
+        elif nxEntry.attrs['NX_class'] not in [b'NXentry', u'NXentry']:
             # should I raise an error?
             pass
 
-        nxEntry['title'] = "PyMca saved 3D Array".encode('utf-8')
-        nxEntry['start_time'] = getDate().encode('utf-8')
+        nxEntry['title'] = u"PyMca saved 3D Array"
+        nxEntry['start_time'] = getDate()
         nxData = nxEntry.require_group('NXdata')
         if 'NX_class' not in nxData.attrs:
-            nxData.attrs['NX_class'] = 'NXdata'.encode('utf-8')
-        elif nxData.attrs['NX_class'] != 'NXdata'.encode('utf-8'):
+            nxData.attrs['NX_class'] = u'NXdata'
+        elif nxData.attrs['NX_class'] not in [u'NXdata', b'NXdata']:
             # should I raise an error?
             pass
         if modify:
-            if interpretation in ["image", "image".encode('utf-8')]:
+            if interpretation in [b"image", u"image"]:
                 if compression:
                     if DEBUG:
                         print("Saving compressed and chunked dataset")
@@ -576,11 +576,10 @@ def save3DArrayAsHDF5(data, filename, axes=None, labels=None, dtype=None, mode='
                 dset[i:i + 1] = tmpData[0:1]
                 print("Saved item %d of %d" % (i + 1, data.shape[0]))
 
-        # dset.attrs['signal'] = "1".encode('utf-8')
-        nxData.attrs["signal"] = 'data'
+        nxData.attrs["signal"] = u'data'
 
         if interpretation is not None:
-            dset.attrs['interpretation'] = interpretation.encode('utf-8')
+            dset.attrs['interpretation'] = to_unicode(interpretation)
 
         axesAttribute = []
         for i in range(len(shape)):
@@ -606,15 +605,15 @@ def save3DArrayAsHDF5(data, filename, axes=None, labels=None, dtype=None, mode='
                                            compression=None)
             adset[:] = dim[:]
             adset.attrs['axis'] = i + 1
-        # dset.attrs['axes'] = (":".join(axesAttribute)).encode('utf-8')
-        nxData.attrs["axes"] = [axAttr.encode('utf-8') for axAttr in axesAttribute]
 
-        nxEntry['end_time'] = getDate().encode('utf-8')
+        nxData.attrs["axes"] = to_h5py_utf8([axAttr for axAttr in axesAttribute])
+
+        nxEntry['end_time'] = getDate()
         if mode.lower() == 'nexus+':
             # create link
-            g = h5py.h5g.open(hdf.fid, '/'.encode('utf-8'))
-            g.link('/data/NXdata/data'.encode('utf-8'),
-                   '/data/data'.encode('utf-8'),
+            g = h5py.h5g.open(hdf.fid, '/')
+            g.link('/data/NXdata/data',
+                   '/data/data',
                    h5py.h5g.LINK_HARD)
 
     elif mode.lower() == 'simplest':
