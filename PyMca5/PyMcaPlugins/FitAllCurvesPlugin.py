@@ -23,6 +23,11 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
+"""This plugin allows to perform a fit on all curves in the plot.
+A widget is provided to configure the fit parameters and to specify the
+output file.
+The fit results are saved as a NeXus HDF5 file, with one entry per
+fitted curve."""
 
 try:
     from PyMca5.PyMcaCore import Plugin1DBase

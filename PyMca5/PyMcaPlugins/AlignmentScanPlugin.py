@@ -23,6 +23,8 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
+"""This plugin aligns all curves with the active curve, using the FFT.
+"""
 __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"

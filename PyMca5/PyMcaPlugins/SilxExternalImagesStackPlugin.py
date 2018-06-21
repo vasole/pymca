@@ -23,8 +23,21 @@
 # THE SOFTWARE.
 #
 # ###########################################################################*/
-"""Plugin allowing to view an external image in a plot widget, with tools to
-crop and rotate the image.
+"""This plugin open a file selection dialog to open an image in a
+new window. Usual image data formats are supported, as well as standard
+image formats (JPG, PNG).
+
+The tool is meant to view an alternative view of the data, such as a
+photograph of the sample or a different type of scientific measurement
+of the same sample, and to compare it with the image displayed in the
+master stack window.
+
+The master image is overlaid with the newly opened image, and its
+level of transparency can be configured with a slider.
+
+The window offer a cropping tool, to crop the image to the current visible
+zoomed area and then resize it to fit the original size. It also provides
+a tool to rotate the image.
 
 The mask of the plot widget is synchronized with the master stack widget."""
 

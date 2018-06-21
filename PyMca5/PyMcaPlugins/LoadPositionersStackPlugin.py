@@ -24,7 +24,21 @@
 #
 # ###########################################################################*/
 """
-Plugin to load positioner info from a CSV or HDF5 file.
+This plugin is used to load motor positions from a CSV or HDF5 file.
+
+The number of values associated with a given positioner should be equal
+to the number of pixels in the stack image. A single scalar value can also be
+provided for a motor, if it didn't move during the experiment.
+
+A CSV file should have unique motor names in the header line, and can have
+an arbitrary number of motors/columns.
+
+Motor positions in a HDF5 files are 1-dimensional datasets whose names are
+the motor names. The user is allowed to select the HDF5 group containing all
+motor datasets.
+
+Data loaded with this plugin can then be used by other tools, such as the
+"Stack motor positions" plugin.
 """
 __authors__ = ["P. Knobel"]
 __license__ = "MIT"

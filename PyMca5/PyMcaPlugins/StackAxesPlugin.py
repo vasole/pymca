@@ -23,41 +23,20 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
+"""This plugin can be used to replace the stack's X data with data from
+a text file, or with the MCA curve's X or Y data.
+
+When loading from a file, the data should be in a format that can be
+loaded using `numpy.loadtxt
+<https://docs.scipy.org/doc/numpy-1.14.0/reference/generated/numpy.loadtxt.html>`_,
+i.e. must be a CSV file without a header line and with a single column.
+"""
+
 __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-"""
 
-A Stack plugin is a module that will be automatically added to the PyMca
-stack windows in order to perform user defined operations on the data stack.
-
-These plugins will be compatible with any stack window that provides the
-functions:
-    #data related
-    getStackDataObject
-    getStackData
-    getStackInfo
-    setStack
-
-    #images related
-    addImage
-    removeImage
-    replaceImage
-
-    #mask related
-    setSelectionMask
-    getSelectionMask
-
-    #displayed curves
-    getActiveCurve
-    getGraphXLimits
-    getGraphYLimits
-
-    #information method
-    stackUpdated
-    selectionMaskUpdated
-"""
 import numpy
 from PyMca5 import StackPluginBase
 from PyMca5.PyMcaGui import PyMcaFileDialogs

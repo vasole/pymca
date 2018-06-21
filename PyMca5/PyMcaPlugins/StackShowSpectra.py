@@ -23,6 +23,11 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
+"""
+This plugin opens a scan window displaying a number of spectra.
+
+The user can choose to display 10, 100, 1000 or all spectra.
+"""
 __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"

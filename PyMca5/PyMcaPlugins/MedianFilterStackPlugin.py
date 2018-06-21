@@ -23,40 +23,23 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
+"""
+This plugin open a new stack window with a configurable median filter
+applied to the data.
+
+The user can select the frame and modify the filter width.
+
+He can also choose to apply a conditional median filter instead
+of the regular median filter.
+With a regular median filter, each pixel value is replaced with the median
+value of all pixels in the window. With the conditional option enabled,
+the pixel value is only replaced if it is the minimum or the maximum value
+in the smoothing window.
+"""
 __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-"""
-
-A Stack plugin is a module that will be automatically added to the PyMca stack windows
-in order to perform user defined operations on the data stack.
-
-These plugins will be compatible with any stack window that provides the functions:
-    #data related
-    getStackDataObject
-    getStackData
-    getStackInfo
-    setStack
-
-    #images related
-    addImage
-    removeImage
-    replaceImage
-
-    #mask related
-    setSelectionMask
-    getSelectionMask
-
-    #displayed curves
-    getActiveCurve
-    getGraphXLimits
-    getGraphYLimits
-
-    #information method
-    stackUpdated
-    selectionMaskUpdated
-"""
 
 from PyMca5 import StackPluginBase
 from PyMca5.PyMcaGui.pymca import Median2DBrowser

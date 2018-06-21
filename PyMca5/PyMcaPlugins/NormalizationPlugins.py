@@ -23,6 +23,17 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
+"""This plugin provides methods to normalize all curves.
+
+Following normalization methods are available:
+
+ - Normalize to maximum y / max(y)
+ - Subtract offset and normalize to new maximum (y-min(y))/(max(y)-min(y))
+ - Subtract offset and normalize to integrated area (y-min(y))/trapz(max(y)-min(y),x)
+ - Subtract offset and normalize to counts (y-min(y))/sum(max(y)-min(y))
+ - Divide all curves by active curve
+"""
+
 __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
@@ -50,7 +61,7 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
                        "Subtract offset and normalize to new maximum",
                                        None],
                 '(y-min(y))/trapz(max(y)-min(y),x)':[self.offsetAndArea,
-                       "Subtract offset and normalize to integrated are",
+                       "Subtract offset and normalize to integrated area",
                                        None],
                 '(y-min(y))/sum(max(y)-min(y))':[self.offsetAndCounts,
                        "Subtract offset and normalize to counts",

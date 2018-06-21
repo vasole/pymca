@@ -23,6 +23,13 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
+"""
+This plugin provides methods to replace curves by their median filter average.
+3-, 5-, 7- or 9-points filters are provided. The filter can be applied on the
+data in its original order, or in a randomized order.
+
+"""
+
 __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"

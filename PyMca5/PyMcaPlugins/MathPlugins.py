@@ -23,10 +23,14 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
+"""This plugin provide simple math functions, to derivate or invert the
+active curve.
+"""
 __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+
 import numpy
 try:
     from PyMca5 import Plugin1DBase
