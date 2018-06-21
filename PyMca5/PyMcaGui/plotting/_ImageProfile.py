@@ -37,9 +37,10 @@ Functions to extract a profile curve of a region of interest in an image.
 # import ######################################################################
 
 import numpy
+import logging
 from PyMca5.PyMcaMath.fitting import SpecfitFuns
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
 
 
 # utils #######################################################################
@@ -209,8 +210,7 @@ def _getROILineProfileCurve(image, roiStart, roiEnd, roiWidth,
         coordsRange = row0, row1
 
     if nPoints == 1:  # all points are the same
-        if DEBUG:
-            print("START AND END POINT ARE THE SAME!!")
+        _logger.debug("START AND END POINT ARE THE SAME!!")
         return None
 
     # the coordinates of the reference points
@@ -249,9 +249,8 @@ def _getROILineProfileCurve(image, roiStart, roiEnd, roiWidth,
         newRow0 = 0.0
         newRow1 = - (col1 - col0) * sinalpha + (row1 - row0) * cosalpha
 
-        if DEBUG:
-            print("new X0 Y0 = %f, %f  " % (newCol0, newRow0))
-            print("new X1 Y1 = %f, %f  " % (newCol1, newRow1))
+        _logger.debug("new X0 Y0 = %f, %f  ", newCol0, newRow0)
+        _logger.debug("new X1 Y1 = %f, %f  ", newCol1, newRow1)
 
         tmpX = numpy.linspace(newCol0, newCol1,
                               nPoints).astype(numpy.float)
@@ -260,19 +259,19 @@ def _getROILineProfileCurve(image, roiStart, roiEnd, roiWidth,
         rotMatrix[0, 1] = - sinalpha
         rotMatrix[1, 0] = sinalpha
         rotMatrix[1, 1] = cosalpha
-        if DEBUG:
+        if _logger.getEffectiveLevel() == logging.DEBUG:
             # test if I recover the original points
             testX = numpy.zeros((2, 1), numpy.float)
             colRow = numpy.dot(rotMatrix, testX)
-            print("Recovered X0 = %f" % (colRow[0, 0] + col0))
-            print("Recovered Y0 = %f" % (colRow[1, 0] + row0))
-            print("It should be = %f, %f" % (col0, row0))
+            _logger.debug("Recovered X0 = %f", colRow[0, 0] + col0)
+            _logger.debug("Recovered Y0 = %f", colRow[1, 0] + row0)
+            _logger.debug("It should be = %f, %f", col0, row0)
             testX[0, 0] = newCol1
             testX[1, 0] = newRow1
             colRow = numpy.dot(rotMatrix, testX)
-            print("Recovered X1 = %f" % (colRow[0, 0] + col0))
-            print("Recovered Y1 = %f" % (colRow[1, 0] + row0))
-            print("It should be = %f, %f" % (col1, row1))
+            _logger.debug("Recovered X1 = %f", colRow[0, 0] + col0)
+            _logger.debug("Recovered Y1 = %f", colRow[1, 0] + row0)
+            _logger.debug("It should be = %f, %f", col1, row1)
 
         # find the drawing limits
         testX = numpy.zeros((2, 4), numpy.float)
@@ -290,21 +289,18 @@ def _getROILineProfileCurve(image, roiStart, roiEnd, roiWidth,
 
         for a in rowLimits0:
             if (a >= image.shape[0]) or (a < 0):
-                if DEBUG:
-                    print("outside row limits", a)
+                _logger.debug("outside row limits %s", a)
                 return None
         for a in colLimits0:
             if (a >= image.shape[1]) or (a < 0):
-                if DEBUG:
-                    print("outside column limits", a)
+                _logger.debug("outside column limits %s", a)
                 return None
 
         r0 = rowLimits0[0]
         r1 = rowLimits0[1]
 
         if r0 > r1:
-            if DEBUG:
-                print("r0 > r1", r0, r1)
+            _logger.debug("r0 > r1 %s %s", r0, r1)
             raise ValueError("r0 > r1")
 
         x = numpy.zeros((2, nPoints), numpy.float)

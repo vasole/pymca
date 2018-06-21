@@ -30,6 +30,7 @@ __author__ = "V. Armando Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaPhysics.xrf import ElementHtml
 from PyMca5.PyMcaPhysics.xrf import Elements
@@ -37,7 +38,8 @@ from PyMca5.PyMcaGui.physics.xrf.QPeriodicTable import QPeriodicTable
 
 __revision__ = "$Revision: 1.15 $"
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 CLOSE_ICON =[
 "16 16 18 1",
 ". c None",
@@ -193,8 +195,7 @@ class ElementsInfo(qt.QWidget):
         self.infoWidget.setFocus()
 
     def infoToggle(self,**kw):
-        if DEBUG:
-            print("toggleSource called")
+        _logger.debug("toggleSource called")
         if self.infoWidget.isHidden():
             self.infoWidget.show()
             self.infoWidget.raiseW()
@@ -238,8 +239,7 @@ class ElementsInfo(qt.QWidget):
 class Line(qt.QFrame):
     sigLineDoubleClickEvent = qt.pyqtSignal(object)
     def mouseDoubleClickEvent(self,event):
-        if DEBUG:
-            print("Double Click Event")
+        _logger.debug("Double Click Event")
         ddict={}
         ddict['event']="DoubleClick"
         ddict['data'] = event
@@ -248,8 +248,7 @@ class Line(qt.QFrame):
 class PixmapLabel(qt.QLabel):
     sigPixmapLabelMousePressEvent = qt.pyqtSignal(object)
     def mousePressEvent(self,event):
-        if DEBUG:
-            print("Mouse Press Event")
+        _logger.debug("Mouse Press Event")
         ddict={}
         ddict['event']="MousePress"
         ddict['data'] = event

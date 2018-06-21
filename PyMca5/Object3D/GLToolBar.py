@@ -31,7 +31,6 @@ from . import Object3DQt as qt
 from . import Object3DIcons
 from .HorizontalSpacer import HorizontalSpacer
 
-DEBUG = 0
 
 class GLToolBar(qt.QWidget):
 

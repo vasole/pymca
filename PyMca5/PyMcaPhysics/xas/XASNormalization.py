@@ -36,11 +36,13 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 import numpy
+import logging
 from PyMca5.PyMcaMath.fitting import SpecfitFuns
 from PyMca5.PyMcaMath import SGModule
 from PyMca5.PyMcaMath.fitting.Gefit import LeastSquaresFit
-DEBUG = 0
-if DEBUG:
+_logger = logging.getLogger(__name__)
+
+if _logger.getEffectiveLevel() == logging.DEBUG:
     from pylab import *
 
 
@@ -388,7 +390,7 @@ def XASPolynomialNormalization(spectrum,
         normalizedSpectrum = (spectrum - pre_edge_function(prePol, energy))\
                              /post_edge_function(postPol, energy)
     jump = post_edge_function(postPol, edge)
-    if DEBUG:
+    if _logger.getEffectiveLevel() == logging.DEBUG:
         plot(energy, spectrum, 'o')
         plot(xPre, pre_edge_function(prePol, xPre), 'r')
         plot(xPost, post_edge_function(postPol, xPost)+pre_edge_function(prePol, xPost), 'y')
@@ -433,8 +435,8 @@ def XASVictoreenNormalization(spectrum,
                               weightflag=0, linear=1)[0]
     normalizedSpectrum = (spectrum - pre_edge_function(prePol, energy))\
                          /post_edge_function(postPol, energy)
-    if DEBUG:
-        print("VICTOREEN")
+    if _logger.getEffectiveLevel() == logging.DEBUG:
+        _logger.info("VICTOREEN")
         plot(energy, spectrum, 'o')
         plot(xPre, pre_edge_function(prePol, xPre), 'r')
         plot(xPost,
@@ -460,7 +462,7 @@ if __name__ == "__main__":
         edge = estimateXANESEdge(spectrum+i, energy=energy)
     print("EDGE ELAPSED = ", (time.time() - t0)/float(n))
     print("EDGE = %f"  % edge)
-    if DEBUG:
+    if _logger.getEffectiveLevel() == logging.DEBUG:
         n = 1
     else:
         n = 100
@@ -490,7 +492,7 @@ if __name__ == "__main__":
                                         algorithm_parameters={'pre_edge_order':'Victoreen',
                                                               'post_edge_order':'Victoreen'})[0:2]
     print("ELAPSED Victoreen = ", (time.time() - t0)/float(n))
-    if DEBUG:
+    if _logger.getEffectiveLevel() == logging.DEBUG:
         #plot(energy, spectrum, 'b')
         plot(nEne0, nSpe0, 'k', label='Polynomial')
         plot(nEneP, nSpeP, 'b', label='Polynomial')

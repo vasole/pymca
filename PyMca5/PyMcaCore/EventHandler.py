@@ -78,6 +78,11 @@ Full event names: A string with the event name fully specified (i.e. a.b.c)
 """
 __version__ = '0.1Beta'
 
+import logging
+
+_logger = logging.getLogger(__name__)
+
+
 class Event(object):
   pass
 
@@ -212,7 +217,7 @@ class EventHandler(object):
         for cb in self.callbacks[event]:
             cb(*args, **kw)
       else:
-        print("Warning: missing event ",event)
+        _logger.warning("Warning: missing event: %s", event)
 
     def getfullevents(self):
       """ return a list with fully specified event names (a.b.c) """

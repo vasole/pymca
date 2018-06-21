@@ -29,6 +29,7 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui.io import QSelectorWidget
 from PyMca5.PyMcaGui.io import SpecFileDataInfo
@@ -36,9 +37,10 @@ from PyMca5.PyMcaGui.io import SpecFileCntTable
 OBJECT3D = SpecFileCntTable.OBJECT3D
 from PyMca5.PyMcaGui.io import SpecFileMcaTable
 
+_logger = logging.getLogger(__name__)
+
 QTVERSION = qt.qVersion()
 
-DEBUG = 0
 if QTVERSION > '4.2.0':
     class MyQTreeWidgetItem(qt.QTreeWidgetItem):
         def __lt__(self, other):
@@ -264,9 +266,8 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
     #
     #NEW data management
     def setDataSource(self, datasource):
-        if DEBUG:
-            print("setDataSource(self, datasource) called")
-            print("datasource = ", datasource)
+        _logger.debug("setDataSource(self, datasource) called")
+        _logger.debug("datasource = %s", datasource)
         self.data = datasource
         self.refresh()
 
@@ -282,9 +283,8 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
 
     #OLD data management
     def setData(self, specfiledata):
-        if DEBUG:
-            print("setData(self, specfiledata) called")
-            print("specfiledata = ",specfiledata)
+        _logger.debug("setData(self, specfiledata) called")
+        _logger.debug("specfiledata = %s", specfiledata)
         self.data= specfiledata
         self.refresh()
 
@@ -335,8 +335,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                     item.setText(0, "")
 
     def _autoReplace(self, scanlist=None):
-        if DEBUG:
-            print("autoreplace called with ",scanlist)
+        _logger.debug("autoreplace called with %s", scanlist)
         if self.autoReplaceBox.isChecked():
             self._replaceClicked()
         elif self.autoAddBox.isChecked():
@@ -353,12 +352,10 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
 
 
     def __selectionChanged(self):
-        if DEBUG:
-            print("__selectionChanged")
+        _logger.debug("__selectionChanged")
         itemlist = self.list.selectedItems()
         sel = [str(item.text(1)) for item in itemlist]
-        if DEBUG:
-            print("selection = ",sel)
+        _logger.debug("selection = %s", sel)
         if not len(sel):
             return
         info = self.data.getKeyInfo(sel[0])
@@ -412,10 +409,8 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             self.list.sortItems(index, qt.Qt.AscendingOrder)
             #print "index = ", index
 
-
     def __doubleClicked(self, item):
-        if DEBUG:
-            print("__doubleClicked")
+        _logger.debug("__doubleClicked")
         if item is not None:
             sn  = str(item.text(1))
             ddict={}
@@ -429,8 +424,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             self._addClicked()
 
     def __contextMenu(self, point):
-        if DEBUG:
-            print("__contextMenu",point)
+        _logger.debug("__contextMenu %s", point)
         item = self.list.itemAt(point)
         if item is not None:
             sn= str(item.text(1))
@@ -474,8 +468,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         if idx is None:
             if QTVERSION > '4.0.0':
                 idx = self.menu_idx
-        if DEBUG:
-            print("Scan information:")
+        _logger.debug("Scan information:")
 
         try:
             info = self.data.getDataObject(self.scans[idx]).info
@@ -485,7 +478,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             text = "Error: %s\n accessing scan information." % (sys.exc_info()[1])
             msg.setText(text)
             msg.exec_()
-            if DEBUG:
+            if _logger.getEffectiveLevel() == logging.DEBUG:
                 raise
             return
 
@@ -508,8 +501,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             self._dataInfoClosed(ddict)
 
     def _addClicked(self, emit=True):
-        if DEBUG:
-            print("Overwritten _addClicked method")
+        _logger.debug("Overwritten _addClicked method")
 
         #get selected scan keys
         if QTVERSION < '4.0.0':
@@ -574,10 +566,8 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
     def currentSelectionList(self):
         return self._addClicked(emit=False)
 
-
     def _removeClicked(self):
-        if DEBUG:
-            print("Overwritten _removeClicked method")
+        _logger.debug("Overwritten _removeClicked method")
 
         #get selected scan keys
         itemlist = self.list.selectedItems()
@@ -625,8 +615,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             self.sigRemoveSelection.emit(sel_list)
 
     def _replaceClicked(self):
-        if DEBUG:
-            print("Overwritten _replaceClicked method")
+        _logger.debug("Overwritten _replaceClicked method")
         #get selected scan keys
         itemlist = self.list.selectedItems()
         scan_sel = [str(item.text(1)) for item in itemlist]
@@ -682,8 +671,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             self.sigReplaceSelection.emit(sel_list)
 
     def _tabChanged(self, value):
-        if DEBUG:
-            print("self._tabChanged(value), value =  ",value)
+        _logger.debug("self._tabChanged(value), value = %s", value)
         text = str(self.mainTab.tabText(value))
         if self.data is None: return
 

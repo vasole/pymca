@@ -31,7 +31,12 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import numpy
+import logging
 from . import SGModule
+
+
+_logger = logging.getLogger(__name__)
+
 
 class SimpleMath(object):
     def derivate(self,xdata,ydata, xlimits=None):
@@ -87,9 +92,8 @@ class SimpleMath(object):
         """
         if (len(xarr) != len(yarr)) or\
            (len(xarr) == 0) or (len(yarr) == 0):
-            if DEBUG:
-                print('specAverage -- invalid input!')
-                print('Array lengths do not match or are 0')
+            _logger.debug('specAverage -- invalid input!\n'
+                          'Array lengths do not match or are 0')
             return None, None
 
         same = True
@@ -139,9 +143,8 @@ class SimpleMath(object):
                 if xmax < xmax0:
                     xmax0 = xmax
             if xmax <= xmin:
-                if DEBUG:
-                    print('specAverage -- ')
-                    print('No overlap between spectra!')
+                _logger.debug('specAverage -- \n'
+                              'No overlap between spectra!')
                 return numpy.array([]), numpy.array([])
 
         # make sure x0 is sorted

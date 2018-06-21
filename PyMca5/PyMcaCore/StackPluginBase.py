@@ -109,7 +109,10 @@ These plugins will be compatible with any stack window that provides the followi
 
 """
 import weakref
-DEBUG = 0
+import logging
+
+pluginBaseLogger = logging.getLogger(__name__)
+
 
 class StackPluginBase(object):
     def __init__(self, stackWindow, **kw):
@@ -211,12 +214,10 @@ class StackPluginBase(object):
         return self._stackWindow.getGraphYLabel()
 
     def stackUpdated(self):
-        if DEBUG:
-            print("stackUpdated(self) not implemented")
+        pluginBaseLogger.debug("stackUpdated(self) not implemented")
 
     def stackROIImageListUpdated(self):
-        if DEBUG:
-            print("stackROIImageListUpdated(self) not implemented")
+        pluginBaseLogger.debug("stackROIImageListUpdated(self) not implemented")
         return
 
     def stackClosed(self):
@@ -233,8 +234,7 @@ class StackPluginBase(object):
             self._widget.close()
 
     def selectionMaskUpdated(self):
-        if DEBUG:
-            print("selectionMaskUpdated(self) not implemented")
+        pluginBaseLogger.debug("selectionMaskUpdated(self) not implemented")
 
     #Methods to be implemented by the plugin
     def getMethods(self):
@@ -242,7 +242,7 @@ class StackPluginBase(object):
         A list with the NAMES  associated to the callable methods
         that are applicable to the specified stack.
         """
-        print("BASE STACK getMethods not implemented")
+        pluginBaseLogger.debug("BASE STACK getMethods not implemented")
         return []
 
     def getMethodToolTip(self, name):
@@ -261,7 +261,7 @@ class StackPluginBase(object):
         """
         The plugin is asked to apply the method associated to name.
         """
-        print("applyMethod not implemented")
+        pluginBaseLogger.debug("applyMethod not implemented")
         return
 
 

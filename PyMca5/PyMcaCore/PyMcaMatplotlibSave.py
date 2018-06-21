@@ -33,6 +33,7 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
 import numpy
+import logging
 from matplotlib import cm
 from matplotlib import __version__ as matplotlib_version
 from matplotlib.font_manager import FontProperties
@@ -41,7 +42,8 @@ from matplotlib.figure import Figure
 from matplotlib.colors import LinearSegmentedColormap, LogNorm, Normalize
 from matplotlib.ticker import MaxNLocator, AutoLocator
 
-DEBUG = 0
+
+_logger = logging.getLogger(__name__)
 
 colordict = {}
 colordict['blue']   = '#0000ff'
@@ -171,8 +173,7 @@ class PyMcaMatplotlibSave(FigureCanvas):
             n = self._filterData(x, y)
         if n == 0:
             #nothing to plot
-            if DEBUG:
-                print("nothing to plot")
+            _logger.debug("nothing to plot")
             return
         style = None
         if color is None:
@@ -473,7 +474,8 @@ class PyMcaMatplotlibSaveImage:
         elif self.config['colormap'] == 'ylgnbu_r':
             cmap = cm.YlGnBu_r
         else:
-            print("Unsupported colormap %s" % self.config['colormap'])
+            _logger.warning("Unsupported colormap %s", self.config['colormap'])
+            _logger.warning("Defaulting to grayscale.")
 
         if self.config['extent'] is None:
             h, w = self.imageData.shape

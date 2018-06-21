@@ -28,10 +28,12 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import posixpath
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 safe_str = qt.safe_str
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class McaSelectionType(qt.QWidget):
     sigMcaSelectionTypeSignal = qt.pyqtSignal(object)
@@ -204,8 +206,7 @@ class HDF5McaTable(qt.QTableWidget):
         self._update(row, col)
 
     def _mySlot(self, ddict):
-        if DEBUG:
-            print("HDF5McaTable._mySlot", ddict)
+        _logger.debug("HDF5McaTable._mySlot %s", ddict)
         row = ddict["row"]
         col = ddict["column"]
         if col == 1:

@@ -28,12 +28,14 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
+import logging
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from silx.gui.plot import PlotWidget
 
 QTVERSION = qt.qVersion()
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class MyQLineEdit(qt.QLineEdit):
     def __init__(self,parent=None,name=""):
@@ -47,8 +49,7 @@ class MyQLineEdit(qt.QLineEdit):
         self.returnPressed[()].emit()
 
     def setPaletteBackgroundColor(self, color):
-        if DEBUG:
-            print("setPalettebackgroundColor not implemented yet")
+        _logger.debug("setPalettebackgroundColor not implemented yet")
         pass
 
 """
@@ -273,8 +274,7 @@ class ColormapDialog(qt.QDialog):
                         fill=True)
 
     def _update(self):
-        if DEBUG:
-            print("colormap _update called")
+        _logger.debug("colormap _update called")
         self.marge = (abs(self.dataMax) + abs(self.dataMin)) / 6.0
         self.minmd = self.dataMin - self.marge
         self.maxpd = self.dataMax + self.marge
@@ -306,8 +306,7 @@ class ColormapDialog(qt.QDialog):
         self.sendColormap()
 
     def buttonGroupChange(self, val):
-        if DEBUG:
-            print("buttonGroup asking to update colormap")
+        _logger.debug("buttonGroup asking to update colormap")
         self.setColormapType(val, update=True)
         self._update()
 
@@ -324,8 +323,7 @@ class ColormapDialog(qt.QDialog):
             self._update()
 
     def chval(self, ddict):
-        if DEBUG:
-            print("Received ", ddict)
+        _logger.debug("Received %s", ddict)
         if ddict['event'] == 'markerMoving':
             diam = int(ddict['label'])
             x = ddict['x']
@@ -365,8 +363,7 @@ class ColormapDialog(qt.QDialog):
         self.sendColormap()
 
     def setAutoscale(self, val):
-        if DEBUG:
-            print("setAutoscale called", val)
+        _logger.debug("setAutoscale called %s", val)
         if val:
             self.autoScaleButton.setChecked(True)
             self.autoScale90Button.setChecked(False)
@@ -539,8 +536,7 @@ class ColormapDialog(qt.QDialog):
     send 'ColormapChanged' signal
     """
     def sendColormap(self):
-        if DEBUG:
-            print("sending colormap")
+        _logger.debug("sending colormap")
         try:
             cmap = self.getColormap()
             self.sigColormapChanged.emit(cmap)

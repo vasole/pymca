@@ -32,6 +32,7 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
+import logging
 __doc__ =\
 """
 The 1997 release of the Evaluated Atomic Data Library (EADL97)
@@ -159,7 +160,8 @@ SHELL_LIST = EADLSubshells.SHELL_LIST
 getSubshellFromValue = EADLSubshells.getSubshellFromValue
 getValueFromSubshell = EADLSubshells.getValueFromSubshell
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 AVOGADRO_NUMBER = 6.02214179E23
 
 #
@@ -414,14 +416,14 @@ def parseHeader1(line):
         ddict['subshell_code'] = 0
         ddict['subshell'] = 'none'
     else:
-        print("Inconsistent data")
-        print("X1 = ", X1, "S = ", S)
+        _logger.error("Inconsistent data")
+        _logger.error("X1 = %s; S = %s", X1, S)
         sys.exit(1)
     return ddict
 
 def parseHeader(line0, line1):
-    #print "line0 = ", line0
-    #print "line1 = ", line1
+    #_logger.info "line0 = ", line0
+    #_logger.info "line1 = ", line1
     ddict = parseHeader0(line0)
     ddict.update(parseHeader1(line1))
     return ddict
@@ -429,12 +431,12 @@ def parseHeader(line0, line1):
 if 0:
     ddict = parseHeader0(EADL97_DATA[0])
     for key in ddict.keys():
-        print(key, ddict[key])
+        _logger.info("%s: %s", key, ddict[key])
 
 if 0:
     ddict = parseHeader1(EADL97_DATA[1])
     for key in ddict.keys():
-        print(key, ddict[key])
+        _logger.info("%s: %s", key, ddict[key])
 
 
 def getDataLineIndex(lines, z, Yi, C, S, X1, Yo, I):
@@ -459,59 +461,46 @@ def getDataLineIndex(lines, z, Yi, C, S, X1, Yo, I):
         try:
             ddict = parseHeader(lines[i], lines[i+1])
         except:
-            print("Error with lines")
-            print("line index = %d" % i)
-            print(lines[i])
-            print(lines[i+1])
-            print(sys.exc_info())
+            _logger.error("Error with lines")
+            _logger.error("line index = %d", i)
+            _logger.error(lines[i])
+            _logger.error(lines[i+1])
+            _logger.error(sys.exc_info())
             raise
         if 0:
-            print(ddict['Z'], z)
-            print(ddict['Yi'], Yi)
-            print(ddict['C'], C)
-            print(ddict['S'], S)
-            print(ddict['X1'], X1)
-            print(ddict['Yo'], Yo)
-            print(ddict['I'], I)
-        if DEBUG:
-            if ddict['Z'] == z:
-                print("Z found")
-                if ddict['Yi'] == Yi:
-                    print("Yi found")
-                    if ddict['C'] == C:
-                        print("C found")
-                        if ddict['S'] == S:
-                            print("S found with X1 = ", ddict['X1'])
-                            print("Requested    X1 = ", X1)
-                            print(lines[i])
-                            print(lines[i+1])
-                            if ddict['X1'] == X1:
-                                print("Requested    Yo = ", Yo)
-                                print("Found        Yo = ", ddict['Yo'])
-                                if ddict['Yo'] == Yo:
-                                    print("Requested I = ",I)
-                                    if ddict['I'] == I:
-                                        print("FOUND!")
-                                        print(lines[i])
-                                        print(lines[i+1])
-                                        LAST_INDEX = i - 1
-                                        return i
-                                        break
-        else:
-            if ddict['Z'] == z:
-                if ddict['Yi'] == Yi:
-                    if ddict['C'] == C:
-                        if ddict['S'] == S:
-                            if ddict['X1'] == X1:
-                                if ddict['Yo'] == Yo:
-                                    if ddict['I'] == I:
-                                        LAST_INDEX = i - 1
-                                        return i
-                                        break
+            _logger.info("%s, %s", ddict['Z'], z)
+            _logger.info("%s, %s", ddict['Yi'], Yi)
+            _logger.info("%s, %s", ddict['C'], C)
+            _logger.info("%s, %s", ddict['S'], S)
+            _logger.info("%s, %s", ddict['X1'], X1)
+            _logger.info("%s, %s", ddict['Yo'], Yo)
+            _logger.info("%s, %s", ddict['I'], I)
+
+        if ddict['Z'] == z:
+            _logger.debug("Z found")
+            if ddict['Yi'] == Yi:
+                _logger.debug("Yi found")
+                if ddict['C'] == C:
+                    _logger.debug("C found")
+                    if ddict['S'] == S:
+                        _logger.debug("S found with X1 = %s", ddict['X1'])
+                        _logger.debug("Requested    X1 = %s", X1)
+                        _logger.debug(lines[i])
+                        _logger.debug(lines[i+1])
+                        if ddict['X1'] == X1:
+                            _logger.debug("Requested    Yo = %s", Yo)
+                            _logger.debug("Found        Yo = %s", ddict['Yo'])
+                            if ddict['Yo'] == Yo:
+                                _logger.debug("Requested I = %s", I)
+                                if ddict['I'] == I:
+                                    _logger.debug("FOUND!")
+                                    _logger.debug(lines[i])
+                                    _logger.debug(lines[i+1])
+                                    LAST_INDEX = i - 1
+                                    return i
         i += 1
     if LAST_INDEX > 0:
-        if DEBUG:
-            print("REPEATING")
+        _logger.debug("REPEATING")
         LAST_INDEX = -1
         return getDataLineIndex(lines, z, Yi, C, S, X1, Yo, I)
     return -1
@@ -524,13 +513,12 @@ def getActualDataFromLinesAndOffset(lines, index):
         data_end += 1
         end_line = lines[data_end + 1]
     data_end += 1
-    if DEBUG:
-        print("COMPLETE DATA SET")
-        print(lines[index:data_end])
-        print("END DATA SET")
-        print("ADDITIONAL LINE")
-        print(lines[data_end])
-        print("END ADDITIONAL LINE")
+    _logger.debug("COMPLETE DATA SET")
+    _logger.debug(lines[index:data_end])
+    _logger.debug("END DATA SET")
+    _logger.debug("ADDITIONAL LINE")
+    _logger.debug(lines[data_end])
+    _logger.debug("END ADDITIONAL LINE")
     ndata = data_end - data_begin
     energy = numpy.zeros((ndata,), numpy.float)
     t = lines[data_begin].split()
@@ -614,8 +602,7 @@ def getRadiativeWidths(z, lines=None):
     if index < 0:
         raise IOError("Requested data not found")
     shell_codes, value = getActualDataFromLinesAndOffset(lines, index)
-    if DEBUG:
-        print("shell_codes, value ",shell_codes, value)
+    _logger.debug("shell_codes %s, value %s", shell_codes, value)
     i = 0
     ddict = getBaseShellDict()
     for code in shell_codes:
@@ -636,8 +623,7 @@ def getNonradiativeWidths(z, lines=None):
     if index < 0:
         raise IOError("Requested data not found")
     shell_codes, value = getActualDataFromLinesAndOffset(lines, index)
-    if DEBUG:
-        print("shell_codes, value ",shell_codes, value)
+    _logger.debug("shell_codes %s, value %s", shell_codes, value)
     i = 0
     ddict = getBaseShellDict()
     for code in shell_codes:
@@ -673,8 +659,7 @@ def getRadiativeTransitionProbabilities(z, shell='K', lines=None):
         #this error may happen when requesting non existing data too
         raise IOError("Requested data not found")
     shell_codes, values = getActualDataFromLinesAndOffset(lines, index)
-    if DEBUG:
-        print("shell_codes, values ",shell_codes, values)
+    _logger.debug("shell_codes %s, values %s", shell_codes, values)
     i = 0
     ddict = getBaseShellDict(nvalues=2)
     for code in shell_codes:
@@ -711,8 +696,7 @@ def getNonradiativeTransitionProbabilities(z, shell='K', lines=None):
         #this error may happen when requesting non existing data too
         raise IOError("Requested data not found")
     shell_codes, values = getActualDataFromLinesAndOffset(lines, index)
-    if DEBUG:
-        print("shell_codes, values ",shell_codes, values)
+    _logger.debug("shell_codes %s, values %s", shell_codes, values)
     i = 0
     ddict = {}#getBaseShellDict()
     for code in shell_codes:
@@ -737,8 +721,7 @@ def getBindingEnergies(z, lines=None):
     if index < 0:
         raise IOError("Requested data not found")
     shell_codes, value = getActualDataFromLinesAndOffset(lines, index)
-    if DEBUG:
-        print("shell_codes, value ",shell_codes, value)
+    _logger.debug("shell_codes %s, value %s", shell_codes, value)
     i = 0
     ddict = getBaseShellDict()
     for code in shell_codes:
@@ -841,41 +824,41 @@ if __name__ == "__main__":
         element = sys.argv[1]
     else:
         element = 'Pb'
-    print("Getting binding energies for element %s" % element)
+    _logger.info("Getting binding energies for element %s", element)
     ddict = getBindingEnergies(Elements.index(element)+1)
     for key in getBaseShellList():
         if ddict[key] > 0.0:
-            print("Shell = %s Energy (keV) = %.7E" % (key, ddict[key] * 1000.))
-    print("Getting fluorescence yields for element %s" % element)
+            _logger.info("Shell = %s Energy (keV) = %.7E", key, ddict[key] * 1000.)
+    _logger.info("Getting fluorescence yields for element %s", element)
     ddict = getFluorescenceYields(Elements.index(element)+1)
     for key in getBaseShellList():
         if key in ddict:
             if ddict[key] > 0.0:
-                print("Shell = %s Yield = %.7E" % (key, ddict[key]))
+                _logger.info("Shell = %s Yield = %.7E", key, ddict[key])
 
     #total_emission = 0.0
     for shell in ['K', 'L1', 'L2', 'L3', 'M1', 'M2', 'M3', 'M4', 'M5']:
         try:
             ddict = getRadiativeTransitionProbabilities(Elements.index(element)+1,
-                                                    shell=shell)
-            print("%s Shell radiative emission probabilities " % shell)
+                                                        shell=shell)
+            _logger.info("%s Shell radiative emission probabilities ", shell)
         except IOError:
             continue
         total = 0.0
         for key in getBaseShellList():
             if key in ddict:
                 if ddict[key][0] > 0.0:
-                    print("Shell = %s Yield = %.7E Energy = %.7E" % (key, ddict[key][0],
-                                                         ddict[key][1] * 1000.))
+                    _logger.info("Shell = %s Yield = %.7E Energy = %.7E",
+                                 key, ddict[key][0], ddict[key][1] * 1000.)
                     total += ddict[key][0]
-        print("Total %s-shell emission probability = %.7E" % (shell, total))
+        _logger.info("Total %s-shell emission probability = %.7E", shell, total)
         #total_emission += total
-    #print "total_emission = ", total_emission
+    #_logger.info "total_emission = ", total_emission
     for shell in ['K', 'L1', 'L2', 'L3', 'M1', 'M2', 'M3', 'M4', 'M5']:
         try:
             ddict = getNonradiativeTransitionProbabilities(Elements.index(element)+1,
-                                                    shell=shell)
-            print("%s Shell Nonradiative emission probabilities " % shell)
+                                                           shell=shell)
+            _logger.info("%s Shell Nonradiative emission probabilities ", shell)
         except IOError:
             continue
         total = 0.0
@@ -885,12 +868,13 @@ if __name__ == "__main__":
                 key = "%s-%s%s" % (shell, key0.split()[0], key1.split()[0])
                 if key in ddict:
                     if ddict[key][0] > 0.0:
-                        print("Shell = %s Yield = %.7E Energy = %.7E" %\
-                                  (key, ddict[key][0], ddict[key][1] * 1000.))
+                        _logger.info("Shell = %s Yield = %.7E Energy = %.7E",
+                                     key, ddict[key][0], ddict[key][1] * 1000.)
                         total += ddict[key][0]
-        print("Total %s-shell non-radiative emission probability = %.7E" % (shell, total))
+        _logger.info("Total %s-shell non-radiative emission probability = %.7E",
+                     shell, total)
         if shell in ['K']:
-            for key0 in ['L1', 'L2' ,'L3']:
+            for key0 in ['L1', 'L2', 'L3']:
                 subtotal = 0.0
                 for key1 in shell_list:
                     tmpKey =  key1.split()[0]
@@ -900,10 +884,10 @@ if __name__ == "__main__":
                             subtotal += ddict[key][0]
                             if tmpKey == key0:
                                 subtotal += ddict[key][0]
-                print("%s vacancies for nonradiative transition to %s shell = %.7E"%\
-                      (key0, shell, subtotal))
+                _logger.info("%s vacancies for nonradiative transition to %s shell = %.7E",
+                             key0, shell, subtotal)
 
-    #print(getNonradiativeTransitionProbabilities(Elements.index(element)+1, 'L1'))
-    print(getMShellCosterKronigYields(Elements.index(element)+1))
-    print("atomic weight = ", getAtomicWeights()[Elements.index(element)])
+    #_logger.info(getNonradiativeTransitionProbabilities(Elements.index(element)+1, 'L1'))
+    _logger.info(getMShellCosterKronigYields(Elements.index(element)+1))
+    _logger.info("atomic weight = %s", getAtomicWeights()[Elements.index(element)])
     sys.exit(0)

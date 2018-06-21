@@ -31,6 +31,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import time
 import numpy
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 try:
     from . import PCAWindow
@@ -39,7 +40,10 @@ try:
 except ImportError:
     PCA = False
     MDP = False
-DEBUG = 0
+
+
+_logger = logging.getLogger(__name__)
+
 
 
 class SimpleThread(qt.QThread):
@@ -53,13 +57,12 @@ class SimpleThread(qt.QThread):
         self._result = None
 
     def run(self):
-        if DEBUG:
+        try:
             self._result = self._function(*self._var, **self._kw)
-        else:
-            try:
-                self._result = self._function(*self._var, **self._kw)
-            except:
-                self._result = ("Exception",) + sys.exc_info()
+        except:
+            if _logger.getEffectiveLevel() == logging.DEBUG:
+                raise
+            self._result = ("Exception",) + sys.exc_info()
 
 
 class PCADialog(qt.QDialog):
@@ -120,8 +123,7 @@ class PCADialog(qt.QDialog):
             self.pcaParametersDialogInitialized = True
         ret = self.pcaParametersDialog.exec_()
         if ret:
-            if DEBUG:
-                t0 = time.time()
+            t0 = time.time()
             pcaParameters = self.pcaParametersDialog.getParameters()
             self.pcaParametersDialog.close()
             function = pcaParameters['function']
@@ -139,7 +141,7 @@ class PCADialog(qt.QDialog):
                     msg.setText("Number of components too high")
                     msg.exec_()
                     return
-            if DEBUG:
+            if _logger.getEffectiveLevel() == logging.DEBUG:
                 images, eigenvalues, eigenvectors = function(data,
                                                              npc,
                                                              binning=binning,
@@ -169,8 +171,7 @@ class PCADialog(qt.QDialog):
                     return
             if isinstance(self._data, numpy.ndarray):
                 self._data.shape = old_shape
-            if DEBUG:
-                print("PCA Elapsed = ", time.time() - t0)
+            _logger.debug("PCA Elapsed = %s", time.time() - t0)
             methodlabel = pcaParameters.get('methodlabel', "")
             imagenames = None
             vectornames = None
@@ -279,7 +280,7 @@ class PCADialog(qt.QDialog):
         return result
 
 if __name__ == "__main__":
-    DEBUG = 1
+    _logger.setLevel(logging.DEBUG)
     import os
     from PyMca5.PyMcaIO import EdfFile
     app = qt.QApplication([])

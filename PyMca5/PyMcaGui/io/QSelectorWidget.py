@@ -27,11 +27,13 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-import sys
+
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class QSelectorWidget(qt.QWidget):
     def __init__(self, parent=None):
@@ -44,8 +46,7 @@ class QSelectorWidget(qt.QWidget):
         """
         Method to be overwritten to build the main widget
         """
-        if DEBUG:
-            print("_build():Method to be overwritten")
+        _logger.debug("_build():Method to be overwritten")
         pass
 
     def _buildActions(self):
@@ -74,16 +75,13 @@ class QSelectorWidget(qt.QWidget):
         self._addClicked()
 
     def _addClicked(self):
-        if DEBUG:
-            print("_addClicked()")
+        _logger.debug("_addClicked()")
 
     def _removeClicked(self):
-        if DEBUG:
-            print("_removeClicked()")
+        _logger.debug("_removeClicked()")
 
     def _replaceClicked(self):
-        if DEBUG: print(
-            "_replaceClicked()")
+        _logger.debug("_replaceClicked()")
 
 
 def test():

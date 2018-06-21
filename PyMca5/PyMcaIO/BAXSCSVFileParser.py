@@ -33,9 +33,11 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
 import numpy
+import logging
 from PyMca5.PyMcaIO import SpecFileAbstractClass
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class BufferedFile(object):
     def __init__(self, filename):
@@ -127,8 +129,7 @@ class BAXSCSVFileParser(object):
         return self.__getitem__(int(n[0])-1)
 
     def allmotors(self):
-        if DEBUG:
-            print("BAXCSVFileParser allmotors called")
+        _logger.debug("BAXCSVFileParser allmotors called")
         return []
 
 class BAXSCSVScan(SpecFileAbstractClass.SpecFileAbstractScan):

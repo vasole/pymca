@@ -30,10 +30,13 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+import logging
 import os
 import sys
 import time
 from . import PyMcaLogo
+
+_logger = logging.getLogger(__name__)
 
 class HtmlIndex(object):
     def __init__(self, htmldir):
@@ -150,7 +153,7 @@ class HtmlIndex(object):
                 try:
                     os.remove(index)
                 except:
-                    print("cannot delete file %s" % index)
+                    _logger.error("cannot delete file %s", index)
                     continue
 
     def _getHtmlFileList(self, directory):
@@ -166,7 +169,7 @@ class HtmlIndex(object):
             try:
                 os.remove(index)
             except:
-                print("cannot delete file %s" % index)
+                _logger.error("cannot delete file %s", index)
                 return
         filelist = self._getHtmlFileList(directory)
         text = ""
@@ -185,7 +188,7 @@ class HtmlIndex(object):
             try:
                 os.remove(index)
             except:
-                print("cannot delete file %s" % index)
+                _logger.error("cannot delete file %s", index)
                 return
         directorylist = self._getHtmlDirList(directory)
         text = ""

@@ -29,6 +29,7 @@ Plugin to load positioner info from a CSV or HDF5 file.
 __authors__ = ["P. Knobel"]
 __license__ = "MIT"
 
+import logging
 
 from PyMca5 import StackPluginBase
 from PyMca5.PyMcaGui.io.hdf5.HDF5Widget import getGroupNameDialog
@@ -62,15 +63,15 @@ except ImportError:
 
 # suppress errors and warnings if fabio is missing
 if silx_open is not None:
-    import logging
     logging.getLogger("silx.io.fabioh5").setLevel(logging.CRITICAL)
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
 
 
 class LoadPositionersStackPlugin(StackPluginBase.StackPluginBase):
     def __init__(self, stackWindow):
-        StackPluginBase.DEBUG = DEBUG
+        if _logger.getEffectiveLevel() == logging.DEBUG:
+            StackPluginBase.pluginBaseLogger.setLevel(logging.DEBUG)
         StackPluginBase.StackPluginBase.__init__(self, stackWindow)
         self.methodDict = {'Load positioners': [self._loadFromFile,
                                                 "Load positioners from file"]}
@@ -115,11 +116,9 @@ class LoadPositionersStackPlugin(StackPluginBase.StackPluginBase):
                         getfilter=True,
                         currentfilter=filefilter[0])
         if len(filename):
-            if DEBUG:
-                print("file name = %s file filter = %s" % (filename, ffilter))
+            _logger.debug("file name = %s file filter = %s", filename, ffilter)
         else:
-            if DEBUG:
-                print("nothing selected")
+            _logger.debug("nothing selected")
             return
         filename = filename[0]
 

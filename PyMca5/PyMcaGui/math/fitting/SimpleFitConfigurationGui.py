@@ -30,6 +30,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import traceback
 import os.path
+import logging
 from . import SimpleFitControlWidget
 
 if sys.version_info < (3,):
@@ -54,7 +55,8 @@ if h5py is not None:
 from . import Parameters
 from PyMca5.PyMcaGui.math.StripBackgroundWidget import StripBackgroundDialog
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class DummyWidget(qt.QWidget):
     def __init__(self, parent=None, text="Automatically estimated function"):
@@ -194,8 +196,7 @@ class SimpleFitConfigurationGui(qt.QDialog):
         self.initDir = None
 
     def _fitControlSlot(self, ddict):
-        if DEBUG:
-            print("FitControlSignal", ddict)
+        _logger.debug("FitControlSignal %s", ddict)
         event = ddict['event']
         if event == "stripSetupCalled":
             if self._stripDialog is None:
@@ -351,17 +352,15 @@ class SimpleFitConfigurationGui(qt.QDialog):
                 fileName = ddict['functions'][functionName]['file']
                 if fileName not in currentFiles:
                     try:
-                        if DEBUG:
-                            print("Adding file %s" % fileName)
+                        _logger.debug("Adding file %s", fileName)
                         self.simpleFitInstance.importFunctions(fileName)
                         currentFiles.append(fileName)
                     except:
                         if "library.zip" in fileName:
-                            if DEBUG:
-                                print("Assuming PyMca supplied fit function")
+                            _logger.debug("Assuming PyMca supplied fit function")
                             continue
-                        print("Cannot import file %s" % fileName)
-                        print(sys.exc_info()[1])
+                        _logger.warning("Cannot import file %s", fileName)
+                        _logger.warning(sys.exc_info()[1])
 
         if 'fit' in ddict:
             self.fitControlWidget.setConfiguration(ddict['fit'])
@@ -493,7 +492,7 @@ class SimpleFitConfigurationGui(qt.QDialog):
             self.initDir = os.path.dirname(filename)
             self.setConfiguration(cfg)
         except:
-            if DEBUG:
+            if _logger.getEffectiveLevel() == logging.DEBUG:
                 raise
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
@@ -530,17 +529,15 @@ class SimpleFitConfigurationGui(qt.QDialog):
 
     def saveConfiguration(self, filename):
         cfg = ConfigDict.ConfigDict(self.getConfiguration())
-        if DEBUG:
+        try:
             cfg.write(filename)
             self.initDir = os.path.dirname(filename)
-        else:
-            try:
-                cfg.write(filename)
-                self.initDir = os.path.dirname(filename)
-            except:
-                qt.QMessageBox.critical(self, "Save Parameters",
-                    "ERROR while saving parameters to\n%s"%filename,
-                    qt.QMessageBox.Ok, qt.QMessageBox.NoButton, qt.QMessageBox.NoButton)
+        except:
+            if _logger.getEffectiveLevel() == logging.DEBUG:
+                raise
+            qt.QMessageBox.critical(self, "Save Parameters",
+                "ERROR while saving parameters to\n%s"%filename,
+                qt.QMessageBox.Ok, qt.QMessageBox.NoButton, qt.QMessageBox.NoButton)
 
 
 def test():
@@ -558,5 +555,5 @@ def test():
     sys.exit()
 
 if __name__=="__main__":
-    DEBUG = 1
+    _logger.setLevel(logging.DEBUG)
     test()

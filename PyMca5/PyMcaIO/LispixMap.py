@@ -34,9 +34,11 @@ import os
 import sys
 import struct
 import numpy
+import logging
 from PyMca5 import DataObject
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 SOURCE_TYPE = "EdfFileStack"
 
 class LispixMap(DataObject.DataObject):
@@ -187,7 +189,7 @@ class LispixMap(DataObject.DataObject):
                 self.data.shape = rows, columns, channels
                 mcaIndex = 2
             else:
-                print("Assuming spectra")
+                _logger.info("Assuming spectra")
                 self.data.shape = rows, columns, channels
                 mcaIndex = 2
 
@@ -281,9 +283,7 @@ def _parseHeaderFile(headerFile):
         if not treated:
             content = line.replace("\t", " ")
             if len(content.strip(" ")):
-                if DEBUG:
-                    print("Ignored line:")
-                    print(line)
+                _logger.debug("Ignored line: %s", line)
     return description
 
 

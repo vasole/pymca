@@ -27,11 +27,12 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class DoubleSlider(qt.QWidget):
     sigDoubleSliderValueChanged = qt.pyqtSignal(object)
@@ -68,8 +69,7 @@ class DoubleSlider(qt.QWidget):
         return ddict
 
     def _sliderChanged(self, value):
-        if DEBUG:
-            print("DoubleSlider._sliderChanged()")
+        _logger.debug("DoubleSlider._sliderChanged()")
         ddict = self.__getDict()
         self.sigDoubleSliderValueChanged.emit(ddict)
 

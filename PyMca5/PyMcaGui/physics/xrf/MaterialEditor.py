@@ -33,6 +33,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
 import copy
+import logging
 import numpy
 import traceback
 from PyMca5.PyMcaGui import PyMcaQt as qt
@@ -44,7 +45,8 @@ if hasattr(qt, "QString"):
 else:
     QString = str
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class MaterialEditor(qt.QWidget):
     def __init__(self, parent=None, name="Material Editor",
@@ -142,7 +144,7 @@ class MaterialEditor(qt.QWidget):
                 #no message?
                 error = 1
                 del Elements.Material[material]
-                if DEBUG:
+                if _logger.getEffectiveLevel() == logging.DEBUG:
                     raise
                 continue
         return error
@@ -668,7 +670,7 @@ class MaterialGUI(qt.QWidget):
         self.__massAttButton.clicked.connect(self.__massAttSlot)
 
     def setCurrent(self, matkey0):
-        if DEBUG:"setCurrent(self, matkey0) ", matkey0
+        _logger.debug("setCurrent(self, matkey0=%s)", matkey0)
         matkey = Elements.getMaterialKey(matkey0)
         if matkey is not None:
             if self.__toolMode:
@@ -692,8 +694,7 @@ class MaterialGUI(qt.QWidget):
             self.__fillingValues = False
 
     def _fillValues(self):
-        if DEBUG:
-            print("fillValues(self)")
+        _logger.debug("fillValues(self)")
         self.__fillingValues = True
         if self.__comments:
             self.__nameLine.setText("%s" % self._current['Comment'])
@@ -731,9 +732,8 @@ class MaterialGUI(qt.QWidget):
 
     # http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=666503
     def _updateCurrent(self):
-        if DEBUG:
-            print("updateCurrent(self)")
-            print("self._current before = ", self._current)
+        _logger.debug("updateCurrent(self)")
+        _logger.debug("self._current before = %s", self._current)
 
         self._current['CompoundList']     = []
         self._current['CompoundFraction'] = []
@@ -753,8 +753,7 @@ class MaterialGUI(qt.QWidget):
                 self._current['CompoundFraction'].append(float(txt1))
         self.__densitySlot(silent=True)
         self.__thicknessSlot(silent=True)
-        if DEBUG:
-            print("self._current after = ", self._current)
+        _logger.debug("self._current after = %s", self._current)
 
     def __densitySlot(self, silent=False):
         try:
@@ -802,8 +801,7 @@ class MaterialGUI(qt.QWidget):
         self.sigMaterialMassAttenuationSignal.emit(ddict)
 
     def __nameLineSlot(self):
-        if DEBUG:
-            print("__nameLineSlot(self)")
+        _logger.debug("__nameLineSlot(self)")
         qstring = self.__nameLine.text()
         text = str(qstring)
         if self.__toolMode:
@@ -855,8 +853,7 @@ class MaterialGUI(qt.QWidget):
             return
         item = self.__table.item(row, col)
         if item is not None:
-            if DEBUG:
-                print("table item is None")
+            _logger.debug("table item is None")
             qstring = item.text()
         else:
             qstring = ""

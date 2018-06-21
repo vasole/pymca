@@ -30,6 +30,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os.path
 import numpy
+import logging
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from silx.gui.plot import PlotWidget
@@ -52,11 +53,13 @@ from PyMca5 import PyMcaDirs
 from . import SpecFileDataInfo
 from PyMca5 import spslut
 
+_logger = logging.getLogger(__name__)
+
+
 COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
 
 
-DEBUG = 0
 SOURCE_TYPE = 'EdfFile'
 __revision__ = "$Revision: 1.35 $"
 
@@ -382,8 +385,8 @@ class QEdfFileWidget(qt.QWidget):
         self.printPreview.setIcon(self.printIcon)
         self.toolBarLayout.addWidget(self.printPreview)
 
-        if DEBUG:
-            print("printPreview id = %d" % id(self.printPreview.printPreviewDialog))
+        _logger.debug("printPreview id = %d",
+                      id(self.printPreview.printPreviewDialog))
 
         #info
         self.infoText = qt.QLabel(self.toolBar)
@@ -393,13 +396,11 @@ class QEdfFileWidget(qt.QWidget):
         self.toolBarLayout.addWidget(qt.HorizontalSpacer(self.toolBar))
 
     def _hFlipIconSignal(self):
-        if DEBUG:
-            print("_hFlipIconSignal called")
+        _logger.debug("_hFlipIconSignal called")
         self.graph.setYAxisInverted(not self.graph.isYAxisInverted())
 
     def _aspectButtonSignal(self):
-        if DEBUG:
-            print("_aspectButtonSignal")
+        _logger.debug("_aspectButtonSignal")
         if self._keepDataAspectRatioFlag:
             self.keepDataAspectRatio(False)
         else:
@@ -454,8 +455,7 @@ class QEdfFileWidget(qt.QWidget):
             self._dataInfoClosed(ddict)
 
     def _zoomReset(self):
-        if DEBUG:
-            print("_zoomReset")
+        _logger.debug("_zoomReset")
         self.graph.resetZoom()
 
     def _saveMatplotlibImage(self):
@@ -805,17 +805,14 @@ class QEdfFileWidget(qt.QWidget):
                     else:
                         self.removeSelection([nsel])
             elif dict['event']  == 'imageChanged':
-                if DEBUG:
-                    print("Image changed")
+                _logger.debug("Image changed")
                 if dict['index'] != self.currentArray:
                     self.currentArray = dict['index']
                     self.refresh()
-                if DEBUG:
-                    print("self.currentArray = ",self.currentArray)
+                _logger.debug("self.currentArray = %s", self.currentArray)
 
     def openFile(self, filename=None,justloaded=None):
-        if DEBUG:
-            print("openfile = %s" % filename)
+        _logger.debug("openfile = %s", filename)
         if justloaded is None:justloaded = 0
         if filename is None:
             self.lastInputDir = PyMcaDirs.inputDir
@@ -1061,8 +1058,7 @@ class QEdfFileWidget(qt.QWidget):
                 try:
                     self.sigDelSelection.emit((self.data.SourceName, mcakeys))
                 except:
-                    if DEBUG:
-                        print("sigDelSelection is to be implemented")
+                    _logger.debug("sigDelSelection is to be implemented")
 
         for idx in range(self.fileCombo.count()):
             itext = self.fileCombo.itemText(idx)
@@ -1100,15 +1096,13 @@ class QEdfFileWidget(qt.QWidget):
         wid.setDataSize(0, 0)
 
     def setDataSource(self,data=None):
-        if DEBUG:
-            print("setData(self, data) called")
-            print("data = ",data)
+        _logger.debug("setData(self, data) called")
+        _logger.debug("data = %s", data)
         self.data= data
         self.refresh()
 
     def refresh(self):
-        if DEBUG:
-            print("refresh method called")
+        _logger.debug("refresh method called")
         if self.data is None:
             self._reset()
             #wid = self.__getParamWidget('array')
@@ -1118,10 +1112,9 @@ class QEdfFileWidget(qt.QWidget):
             return
         self.currentFile = self.data.sourceName
         #this gives the number of images in the file
-        infoSource= self.data.getSourceInfo()
-        if DEBUG:
-            print("info :")
-            print(infoSource)
+        infoSource = self.data.getSourceInfo()
+        _logger.debug("info :")
+        _logger.debug("%s", infoSource)
 
         nimages=len(infoSource['KeyList'])
         #print self.data.SourceName,"nimages = ",nimages
@@ -1135,19 +1128,16 @@ class QEdfFileWidget(qt.QWidget):
         #print "SUM = ",loadsum, infoSource['KeyList']
         #print self.currentArray
         if (self.oldsource != self.currentFile) or (self.oldcurrentArray != self.currentArray):
-            if DEBUG:
-                print("I have to read again ... ")
+            _logger.debug("I have to read again ... ")
             if not loadsum:
-                if DEBUG:
-                    print("Not Loading the sum")
+                _logger.debug("Not Loading the sum")
                 dataObject = self.data.getDataObject(infoSource['KeyList']\
                                                      [self.currentArray])
                 info = dataObject.info
                 data = dataObject.data
                 imageinfo = infoSource['KeyList']
             else:
-                if DEBUG:
-                    print("Loading the sum")
+                _logger.debug("Loading the sum")
                 dataObject = self.data.getDataObject('0.0')
                 info = dataObject.info
                 data = dataObject.data
@@ -1165,9 +1155,9 @@ class QEdfFileWidget(qt.QWidget):
                         if 'Title' in header:
                             imageinfo[i] += "- " + header['Title']
                         i+=1
-                if DEBUG:
-                    print("NOT ADDING 0.0 - SUM KEY")
-                    wid.setImages(nimages+1,info = imageinfo+["0.0 - SUM"])
+                _logger.debug("NOT ADDING 0.0 - SUM KEY")
+                if _logger.getEffectiveLevel() == logging.DEBUG:
+                    wid.setImages(nimages+1, info = imageinfo+["0.0 - SUM"])
                 wid.setImages(nimages,info = imageinfo)
             else:
                 if 'Title' in info:
@@ -1176,10 +1166,9 @@ class QEdfFileWidget(qt.QWidget):
             wid.setCurrentImage(self.currentArray)
             #P.B. -> pointer(a,d1,d2,i1,i2) = a+ (i1+i2 * d1)
             wid.setDataSize(int(info["Dim_2"]), int(info["Dim_1"]))
-            if DEBUG:
-                print("Image size = %d x %d" % (int(info["Dim_2"]),
-                                                int(info["Dim_1"])))
-                print("data  size = ", data.shape)
+            _logger.debug("Image size = %d x %d",
+                          int(info["Dim_2"]), int(info["Dim_1"]))
+            _logger.debug("data  size = %s", data.shape)
 
             if self.graph.isHidden():
                 self.graph.show()
@@ -1220,13 +1209,11 @@ class QEdfFileWidget(qt.QWidget):
         return self.paramWidget
 
     def _replaceClicked(self):
-        if DEBUG:
-            print("replace clicked")
+        _logger.debug("replace clicked")
         selkeys= self.__getSelectedKeys()
         if len(selkeys):
             #self.eh.event(self.repEvent, selkeys)
-            if DEBUG:
-                print("Replace event")
+            _logger.debug("Replace event")
             if self.allImages:
                 arraynamelist = self.data.getSourceInfo()['KeyList']
             else:
@@ -1275,8 +1262,7 @@ class QEdfFileWidget(qt.QWidget):
             self.sigReplaceSelection.emit(signalsellist)
 
     def _add2DClicked(self, replace=False, emit=True):
-        if DEBUG:
-            print("ADD 2D clicked")
+        _logger.debug("ADD 2D clicked")
         if (self.data is None) or \
            (self.currentArray is None):
             return
@@ -1306,8 +1292,7 @@ class QEdfFileWidget(qt.QWidget):
             return [sel]
 
     def _remove2DClicked(self):
-        if DEBUG:
-            print("REMOVE 2D clicked")
+        _logger.debug("REMOVE 2D clicked")
         infoSource= self.data.getSourceInfo()
         sel = {}
         sel['SourceType'] = infoSource['SourceType']
@@ -1325,8 +1310,7 @@ class QEdfFileWidget(qt.QWidget):
         self.sigRemoveSelection.emit([sel])
 
     def _replace2DClicked(self):
-        if DEBUG:
-            print("REPLACE 2D clicked")
+        _logger.debug("REPLACE 2D clicked")
         self._add2DClicked(replace=True)
 
     def currentSelectionList(self):
@@ -1336,15 +1320,12 @@ class QEdfFileWidget(qt.QWidget):
         return a
 
     def _addClicked(self, emit=True):
-        if DEBUG:
-            print("select clicked")
+        _logger.debug("select clicked")
         selkeys= self.__getSelectedKeys()
-        if DEBUG:
-            print("selected keys = ",selkeys)
+        _logger.debug("selected keys = %s", selkeys)
         if len(selkeys):
             #self.eh.event(self.addEvent, selkeys)
-            if DEBUG:
-                print("Select event")
+            _logger.debug("Select event")
             if self.allImages:
                 arraynamelist = self.data.getSourceInfo()['KeyList']
             else:
@@ -1423,16 +1404,14 @@ class QEdfFileWidget(qt.QWidget):
         return selkeys
 
     def _removeClicked(self):
-        if DEBUG:
-            print("remove clicked")
+        _logger.debug("remove clicked")
         selkeys= self.__getSelectedKeys()
         returnedselection=[]
         signalsellist = []
         if len(selkeys):
             #self.eh.event(self.delEvent, selkeys)
-            if DEBUG:
-                print("Remove Event")
-                print("self.selection before = ",self.selection)
+            _logger.debug("Remove Event")
+            _logger.debug("self.selection before = %s", self.selection)
             if self.allImages:
                 arraynamelist = self.data.getSourceInfo()['KeyList']
             else:
@@ -1460,17 +1439,13 @@ class QEdfFileWidget(qt.QWidget):
                     if selection['plot'] == 'rows':
                          sel[arrayname]['rows'].append({'x':selection['x'],'y':selection['y']})
                     if self.selection is not None:
-                        if DEBUG:
-                            print("step 1")
+                        _logger.debug("step 1")
                         if sel['SourceName'] in self.selection:
-                            if DEBUG:
-                                print("step 2")
+                            _logger.debug("step 2")
                             if arrayname in self.selection[sel['SourceName']]:
-                                if DEBUG:
-                                    print("step 3")
+                                _logger.debug("step 3")
                                 if 'rows' in self.selection[sel['SourceName']][arrayname]:
-                                    if DEBUG:
-                                        print("step 4")
+                                    _logger.debug("step 4")
                                     for couple in  sel[arrayname]['rows']:
                                         if couple in  self.selection[sel['SourceName']][arrayname]['rows']:
                                             index= self.selection[sel['SourceName']][arrayname]['rows'].index(couple)
@@ -1519,17 +1494,13 @@ class QEdfFileWidget(qt.QWidget):
         for sel in selection:
                 arrayname = sel['Key']
                 if self.selection is not None:
-                    if DEBUG:
-                        print("step 1")
+                    _logger.debug("step 1")
                     if sel['SourceName'] in self.selection:
-                        if DEBUG:
-                            print("step 2")
+                        _logger.debug("step 2")
                         if arrayname in self.selection[sel['SourceName']]:
-                            if DEBUG:
-                                print("step 3")
+                            _logger.debug("step 3")
                             if 'rows' in self.selection[sel['SourceName']][arrayname]:
-                                if DEBUG:
-                                    print("step 4")
+                                _logger.debug("step 4")
                                 for couple in  sel[arrayname]['rows']:
                                     if couple in  self.selection[sel['SourceName']][arrayname]['rows']:
                                         index= self.selection[sel['SourceName']][arrayname]['rows'].index(couple)
@@ -1571,11 +1542,10 @@ class QEdfFileWidget(qt.QWidget):
         self.sigRemoveSelection.emit(signalsellist)
 
     def setSelected(self,sellist,reset=1):
-        if DEBUG:
-            print("setSelected(self,sellist,reset=1) called")
-            print("sellist = ",sellist)
-            print("selection before = ",self.selection)
-            print("reset = ",reset)
+        _logger.debug("setSelected(self,sellist,reset=1) called")
+        _logger.debug("sellist = %s", sellist)
+        _logger.debug("selection before = %s", self.selection)
+        _logger.debug("reset = %s", reset)
         if reset:
             self.selection = {}
         elif self.selection is None:
@@ -1605,8 +1575,7 @@ class QEdfFileWidget(qt.QWidget):
                 for rowsel in sel[selkey]['cols']:
                     if rowsel not in self.selection[specname][selkey]['cols']:
                         self.selection[specname][selkey]['cols'].append(rowsel)
-        if DEBUG:
-            print("self.selection after = ",self.selection)
+        _logger.debug("self.selection after = %s", self.selection)
         self.__refreshSelection()
 
     def getSelection(self):
@@ -1628,10 +1597,9 @@ class QEdfFileWidget(qt.QWidget):
 
 
     def __refreshSelection(self):
-        if DEBUG:
-            print("__refreshSelection(self) called")
-            print(self.selection)
-            print("self.data.SourceName = ",self.data.sourceName)
+        _logger.debug("__refreshSelection(self) called")
+        _logger.debug(self.selection)
+        _logger.debug("self.data.SourceName = %s", self.data.sourceName)
         if self.selection is not None:
             if self.data is None:
                 return
@@ -1657,9 +1625,9 @@ class QEdfFileWidget(qt.QWidget):
             for key in sel.keys():
                 if (sel[key]['rows'] != []) or (sel[key]['cols'] !=  []):
                     selkeys.append(key)
-            if DEBUG:
-                print("selected images =",selkeys,"but self.selection = ",self.selection)
-                print("and self.selection.get(self.data.SourceName, {}) =",sel)
+            _logger.debug("selected images = %s but self.selection = %s",
+                          selkeys, self.selection)
+            _logger.debug("and self.selection.get(self.data.SourceName, {}) = %s ", sel)
 
             wid = self.__getParamWidget("array")
             wid.markImageSelected(selkeys)

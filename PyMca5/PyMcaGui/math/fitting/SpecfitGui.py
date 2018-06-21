@@ -30,6 +30,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
 import traceback
+import logging
 from PyMca5.PyMcaCore import EventHandler
 from PyMca5.PyMcaMath.fitting import Specfit
 from PyMca5.PyMcaGui import PyMcaQt as qt
@@ -41,7 +42,9 @@ from . import MultiParameters
 from . import FitActionsGui
 from . import FitStatusGui
 from . import QScriptOption
-DEBUG = 0
+
+_logger = logging.getLogger(__name__)
+
 
 class SpecfitGui(qt.QWidget):
     sigSpecfitGuiSignal = qt.pyqtSignal(object)
@@ -173,8 +176,8 @@ class SpecfitGui(qt.QWidget):
                 self.guiconfig.FunComBox.setCurrentIndex(i)
                 self.funevent(self.specfit.fitconfig['fittheory'])
             except:
-                print("Function not in list %s" %\
-                      self.specfit.fitconfig['fittheory'])
+                _logger.warning("Function not in list %s",
+                                self.specfit.fitconfig['fittheory'])
                 self.funevent(self.specfit.theorylist[0])
             #current background
             try:
@@ -182,8 +185,8 @@ class SpecfitGui(qt.QWidget):
                 i=1+list(self.specfit.bkgdict.keys()).index(self.specfit.fitconfig['fitbkg'])
                 self.guiconfig.BkgComBox.setCurrentIndex(i)
             except:
-                print("Background not in list %s" %\
-                      self.specfit.fitconfig['fitbkg'])
+                _logger.warning("Background not in list %s",
+                                self.specfit.fitconfig['fitbkg'])
                 self.bkgevent(list(self.specfit.bkgdict.keys())[0])
             #and all the rest
             if configuration['McaMode']:
@@ -261,7 +264,7 @@ class SpecfitGui(qt.QWidget):
                 ddict={}
                 ddict['event'] = 'FitError'
                 self._emitSignal(ddict)
-                if DEBUG:
+                if _logger.getEffectiveLevel() == logging.DEBUG:
                     raise
                 return
             self.guiparameters.fillfrommca(mcaresult)
@@ -285,7 +288,7 @@ class SpecfitGui(qt.QWidget):
                     msg.exec_()
                     return
             except:
-                if DEBUG:
+                if _logger.getEffectiveLevel() == logging.DEBUG:
                     raise
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
@@ -313,7 +316,7 @@ class SpecfitGui(qt.QWidget):
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error on mcafit: %s" % sys.exc_info()[1])
                 msg.exec_()
-                if DEBUG:
+                if _logger.getEffectiveLevel() == logging.DEBUG:
                     raise
                 return
             self.guiparameters.fillfrommca(mcaresult)
@@ -326,11 +329,11 @@ class SpecfitGui(qt.QWidget):
             #for param in self.specfit.paramlist:
             #    print param['name'],param['group'],param['estimation']
             self.specfit.paramlist=self.guiparameters.fillfitfromtable()
-            if DEBUG:
-                for param in self.specfit.paramlist:
-                    print(param['name'],param['group'],param['estimation'])
-                print("TESTING")
-                self.specfit.startfit()
+            for param in self.specfit.paramlist:
+                _logger.debug("name %s; group %s; estimation %s",
+                              param['name'], param['group'], param['estimation'])
+            _logger.debug("TESTING")
+
             try:
                 self.specfit.startfit()
             except:
@@ -338,7 +341,7 @@ class SpecfitGui(qt.QWidget):
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error on Fit")
                 msg.exec_()
-                if DEBUG:
+                if _logger.getEffectiveLevel() == logging.DEBUG:
                     raise
                 return
             self.guiparameters.fillfromfit(self.specfit.paramlist,current='Fit')

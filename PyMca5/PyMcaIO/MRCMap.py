@@ -30,19 +30,18 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-import os
 import sys
-import re
 import struct
 import numpy
-import copy
+import logging
 from PyMca5 import DataObject
 
 if sys.version < '2.6':
     def bytes(x):
         return str(x)
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 SOURCE_TYPE = "EdfFileStack"
 
 class MRCMap(DataObject.DataObject):

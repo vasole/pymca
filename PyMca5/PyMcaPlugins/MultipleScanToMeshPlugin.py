@@ -28,15 +28,16 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
-import os
 import numpy
+import logging
 from matplotlib.mlab import griddata
 
 from PyMca5 import Plugin1DBase
 from PyMca5.PyMcaGui import MaskImageWidget
 from PyMca5.PyMcaGui import PyMcaQt as qt
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
     def __init__(self, plotWindow, **kw):
@@ -76,14 +77,11 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
         """
         The plugin is asked to apply the method associated to name.
         """
-        if DEBUG:
-                self.methodDict[name][0]()
-        else:
-            try:
-                self.methodDict[name][0]()
-            except:
-                print(sys.exc_info())
-                raise
+        try:
+            self.methodDict[name][0]()
+        except:
+            _logger.error(sys.exc_info())
+            raise
 
     def _rixsID26(self):
         allCurves = self.getAllCurves()
@@ -264,7 +262,7 @@ if __name__ == "__main__":
     #w.exec_()
     #sys.exit(0)
 
-    DEBUG = 1
+    _logger.setLevel(logging.DEBUG)
     x = numpy.arange(100.)
     y = x * x
     plot = Plot.Plot()

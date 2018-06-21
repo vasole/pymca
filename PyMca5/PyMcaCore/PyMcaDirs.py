@@ -32,8 +32,10 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
+import logging
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 inputDir  = None
 outputDir = None
 nativeFileDialogs = False
@@ -43,8 +45,7 @@ class __ModuleWrapper:
     self.__dict__["_ModuleWrapper__wrapped"] = wrapped
 
   def __getattr__(self, name):
-    if DEBUG:
-        print("getting ", name)
+    _logger.debug("getting %s", name)
     if name == "inputDir":
         if self.__wrapped.__dict__[name] is None:
             if self.__wrapped.__dict__['outputDir'] is not None:
@@ -63,13 +64,11 @@ class __ModuleWrapper:
             if not os.path.isdir(value):
                 value = os.getcwd()
             self.__setattr__('outputDir', value)
-    if DEBUG:
-        print("got ", name, getattr(self.__wrapped, name))
+    _logger.debug("got %s %s", name, getattr(self.__wrapped, name))
     return getattr(self.__wrapped, name)
 
   def __setattr__(self, name, value):
-    if DEBUG:
-        print("setting ", name, value)
+    _logger.debug("setting %s %s", name, value)
     if name == "inputDir":
         if os.path.isdir(value):
             self.__wrapped.__dict__[name]=value

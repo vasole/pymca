@@ -36,7 +36,6 @@ import logging
 from PyMca5.PyMcaIO import ConfigDict
 import PyMca5
 
-DEBUG = False
 
 if sys.version_info < (3, ):
     text_dtype = h5py.special_dtype(vlen=unicode)
@@ -177,7 +176,7 @@ class SimpleFitAll(object):
             except:
                 _logger.error(
                         "Error %s processing index = %d", sys.exc_info()[1], i)
-                if DEBUG:
+                if _logger.getEffectiveLevel() == logging.DEBUG:
                     raise
         self.onProcessSpectraFinished()
         self._status = "Ready"

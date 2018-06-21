@@ -37,6 +37,7 @@ import h5py
 from operator import itemgetter
 import re
 import posixpath
+import logging
 phynx = h5py
 
 if sys.version_info >= (3,):
@@ -46,7 +47,8 @@ from . import DataObject
 from . import NexusTools
 
 SOURCE_TYPE = "HDF5"
-DEBUG = 0
+
+_logger = logging.getLogger(__name__)
 
 #sorting method
 def h5py_sorting(object_list):
@@ -89,8 +91,8 @@ def h5py_sorting(object_list):
         #The only way to reach this point is to have different
         #structures among the different entries. In that case
         #defaults to the unfiltered case
-        print("WARNING: Default ordering")
-        print("Probably all entries do not have the key %s" % sorting_key)
+        _logger.warning("Default ordering")
+        _logger.warning("Probably all entries do not have the key %s", sorting_key)
         return object_list
 
 def _get_number_list(txt):
@@ -262,8 +264,7 @@ class NexusDataSource(object):
             return self.__getKeyInfo(key)
         else:
             #should we raise a KeyError?
-            if DEBUG:
-                print("Error key not in list ")
+            _logger.debug("Error key not in list ")
             return {}
 
     def __getKeyInfo(self,key):
@@ -273,8 +274,7 @@ class NexusDataSource(object):
             entry = int(entry)-1
         except:
             #should we rise an error?
-            if DEBUG:
-                print("Error trying to interpret key = %s" % key)
+            _logger.debug("Error trying to interpret key = %s", key)
             return {}
 
         sourceObject = self._sourceObjectList[index]
@@ -293,8 +293,7 @@ class NexusDataSource(object):
               starting by 1.
         selection: a dictionnary generated via QNexusWidget
         """
-        if DEBUG:
-            print("getDataObject selection = ", selection)
+        _logger.debug("getDataObject selection = %s", selection)
         if selection is not None:
             if 'sourcename' in selection:
                 filename  = selection['sourcename']
@@ -314,7 +313,7 @@ class NexusDataSource(object):
             actual_key = "%d.%d" % (fileIndex+1, entryIndex+1)
             if actual_key != key:
                 if entry != "/":
-                    print("Warning selection keys do not match")
+                    _logger.warning("selection keys do not match")
         else:
             #Probably I should find the acual entry following h5py_ordering output
             #and search for an NXdata plot.
@@ -355,9 +354,8 @@ class NexusDataSource(object):
                                 if path in h5:
                                     dataset = h5[path].value
                     if dataset is None:
-                        if DEBUG:
-                            print("Broken link? Ignoring key %s = % s" % \
-                                                  (key, mcaDatasetObjectPath ))
+                        _logger.debug("Broken link? Ignoring key %s = %s",
+                                      key, mcaDatasetObjectPath)
                         del mcaObjectPaths[key]
                     else:
                         mcaObjectPaths[key] = dataset
@@ -405,9 +403,9 @@ class NexusDataSource(object):
                         if selection['mcaselectiontype'].lower() != "sum":
                             output.info["McaLiveTime"] /= divider                        
             except:
-                import traceback                
-                print("exception", sys.exc_info())
-                print(("%s " % value) + ''.join(traceback.format_tb(trace)))
+                # import traceback
+                _logger.error("%s", sys.exc_info())
+                # print(("%s " % value) + ''.join(traceback.format_tb(trace)))
                 return output
             output.x = [mcaChannels]
             output.y = [mcaData]
@@ -444,8 +442,7 @@ class NexusDataSource(object):
                         output.info['MotorValues'].append(value)
             except:
                 # I cannot affort to fail here for something probably not used
-                if DEBUG:
-                    print("Error reading positioners ", sys.exc_info())
+                _logger.debug("Error reading positioners\n%s", sys.exc_info())
         for cnt in ['y', 'x', 'm']:
             if not cnt in selection:
                 continue
@@ -471,16 +468,15 @@ class NexusDataSource(object):
                         nSpectra *= iDummy
                     if mcaselectiontype == "sum":
                         # sum already calculated
-                        if DEBUG:
-                            print("SUM")
+                        _logger.debug("SUM")
                     elif mcaselectiontype in ["avg", "average"]:
                         # calculate the average
-                        if DEBUG:
-                            print("AVERAGE")
+                        _logger.debug("AVERAGE")
                         data /= nSpectra
                     else:                        
-                        print("Unsupported selection type %s" % mcaselectiontype)
-                        print("Calculating average")
+                        _logger.warning("Unsupported selection type %s",
+                                        mcaselectiontype)
+                        _logger.warning("Calculating average")
                         data /= nSpectra
                 elif len(data.shape) == 2:
                     if min(data.shape) == 1:

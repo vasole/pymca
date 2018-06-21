@@ -29,6 +29,7 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import numpy
+import logging
 from PyMca5.PyMcaGui import MaskImageWidget
 from PyMca5.PyMcaGui import ColormapDialog
 from PyMca5 import spslut
@@ -43,7 +44,8 @@ COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
 
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class RGBImageCalculator(qt.QWidget):
     sigAddImageClicked = qt.pyqtSignal(object)
@@ -170,8 +172,7 @@ class RGBImageCalculator(qt.QWidget):
         return self.graphWidget.plotImage(update=update)
 
     def _calculateClicked(self):
-        if DEBUG:
-            print("Calculate clicked")
+        _logger.debug("Calculate clicked")
         text = "%s" % self.mathExpression.text()
         if not len(text):
             qt.QMessageBox.critical(self, "Calculation Error",
@@ -217,8 +218,7 @@ class RGBImageCalculator(qt.QWidget):
         self.graphWidget.graph.setGraphTitle("%s" % name)
 
     def _addImageClicked(self):
-        if DEBUG:
-            print("Add image clicked")
+        _logger.debug("Add image clicked")
         if self._imageData is None:
             return
         if self._imageData == []:
@@ -234,8 +234,7 @@ class RGBImageCalculator(qt.QWidget):
         self.sigAddImageClicked.emit(ddict)
 
     def _removeImageClicked(self):
-        if DEBUG:
-            print("remove image clicked")
+        _logger.debug("remove image clicked")
         text = "%s" % self.name.text()
         if not len(text):
             qt.QMessageBox.critical(self, "Name Error",
@@ -244,8 +243,7 @@ class RGBImageCalculator(qt.QWidget):
         self.sigRemoveImageClicked.emit(text)
 
     def _replaceImageClicked(self):
-        if DEBUG:
-            print("replace image clicked")
+        _logger.debug("replace image clicked")
         text = "%s" % self.name.text()
         if not len(text):
             qt.QMessageBox.critical(self, "Name Error",

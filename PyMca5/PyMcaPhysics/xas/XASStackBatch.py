@@ -37,12 +37,14 @@ import os
 import numpy
 import h5py
 import posixpath
+import logging
 from PyMca5.PyMca import XASClass
 from PyMca5.PyMcaIO import ConfigDict
 import time
 
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class XASStackBatch(object):
     def __init__(self, analyzer=None):
@@ -82,8 +84,7 @@ class XASStackBatch(object):
         :return: A dictionnary with the results as keys.
         """
 
-        if DEBUG:
-            t0 = time.time()
+        t0 = time.time()
         if configuration is not None:
             self._analyzer.setConfiguration(configuration)
 
@@ -95,7 +96,7 @@ class XASStackBatch(object):
             # dictated by the current configuration
             pass
         else:
-            print("WARNING: weight not handled yet")
+            _logger.warning("WARNING: weight not handled yet")
         weightPolicy = 0 # no weight
         #weightPolicy = 1 # use average weight from the sum spectrum
         #weightPolicy = 2 # individual pixel weights (slow)
@@ -311,15 +312,15 @@ class XASStackBatch(object):
         outputDict["images"] = output
         out.flush()
         out.close()
-        if DEBUG:
-            t = time.time() - t0
-            print("First fit elapsed = %f" % t)
-            print("Spectra per second = %f" % (data.shape[0]*data.shape[1]/float(t)))
-            t0 = time.time()
+
+        t = time.time() - t0
+        _logger.debug("First fit elapsed = %f", t)
+        _logger.debug("Spectra per second = %f", data.shape[0]*data.shape[1]/float(t))
+        t0 = time.time()
         return outputDict
 
 if __name__ == "__main__":
-    DEBUG = 1
+    _logger.setLevel(logging.DEBUG)
     analyzer = XASClass.XASClass()
     instance = XASStackBatch(analyzer=analyzer)
     configurationFile = "test.ini"

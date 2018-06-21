@@ -28,15 +28,16 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
-import os
 import traceback
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 from PyMca5.PyMcaGui.io import QSourceSelector
 from . import QDataSource
 #import weakref
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class QDispatcher(qt.QWidget):
     sigAddSelection = qt.pyqtSignal(object)
@@ -93,9 +94,8 @@ class QDispatcher(qt.QWidget):
         self.tabWidget.currentChanged[int].connect(self._tabChanged)
 
     def _addSelectionSlot(self, sel_list, event=None):
-        if DEBUG:
-            print("QDispatcher._addSelectionSlot")
-            print("sel_list = ",sel_list)
+        _logger.debug("QDispatcher._addSelectionSlot")
+        _logger.debug("sel_list = %s", sel_list)
 
         if event is None:
             event = "addSelection"
@@ -144,31 +144,29 @@ class QDispatcher(qt.QWidget):
                             #I should create a weakref to it in order to be informed
                             #about its deletion.
                             if source.sourceType != "SPS":
-                                if DEBUG:
+                                try:
                                     dataObject = source.getDataObject(sel['Key'],
                                                           selection=sel['selection'])
-                                else:
-                                    try:
-                                        dataObject = source.getDataObject(sel['Key'],
-                                                              selection=sel['selection'])
-                                    except:
-                                        error = sys.exc_info()
-                                        text = "Failed to read data source.\n"
-                                        text += "Source: %s\n" % source.sourceName
-                                        text += "Key: %s\n"  % sel['Key']
-                                        text += "Error: %s" % error[1]
-                                        if QTVERSION < '4.0.0':
-                                            qt.QMessageBox.critical(self,
-                                                                    "%s" % error[0],
-                                                                    text)
-                                        else:
-                                            msg = qt.QMessageBox(self)
-                                            msg.setWindowTitle('Source Error')
-                                            msg.setIcon(qt.QMessageBox.Critical)
-                                            msg.setInformativeText(text)
-                                            msg.setDetailedText(\
-                                                traceback.format_exc())
-                                        continue
+                                except:
+                                    if _logger.getEffectiveLevel() == logging.DEBUG:
+                                        raise
+                                    error = sys.exc_info()
+                                    text = "Failed to read data source.\n"
+                                    text += "Source: %s\n" % source.sourceName
+                                    text += "Key: %s\n"  % sel['Key']
+                                    text += "Error: %s" % error[1]
+                                    if QTVERSION < '4.0.0':
+                                        qt.QMessageBox.critical(self,
+                                                                "%s" % error[0],
+                                                                text)
+                                    else:
+                                        msg = qt.QMessageBox(self)
+                                        msg.setWindowTitle('Source Error')
+                                        msg.setIcon(qt.QMessageBox.Critical)
+                                        msg.setInformativeText(text)
+                                        msg.setDetailedText(\
+                                            traceback.format_exc())
+                                    continue
                             else:
                                 dataObject = source.getDataObject(sel['Key'],
                                                           selection=sel['selection'],
@@ -209,7 +207,7 @@ class QDispatcher(qt.QWidget):
                                 self.sigRemoveSelection.emit(selectionList)
                                 selectionList = []
                             else:
-                                print("Unhandled dispatcher event = ", event)
+                                _logger.warning("Unhandled dispatcher event = %s", event)
                                 del selectionList[-1]
             if len(selectionList):
                 if event.lower() == "addselection":
@@ -221,9 +219,8 @@ class QDispatcher(qt.QWidget):
             lastEvent = None
 
     def _removeSelectionSlot(self, sel_list):
-        if DEBUG:
-            print("_removeSelectionSlot")
-            print("sel_list = ",sel_list)
+        _logger.debug("_removeSelectionSlot")
+        _logger.debug("sel_list = %s", sel_list)
         for sel in sel_list:
             ddict = {}
             ddict.update(sel)
@@ -231,23 +228,21 @@ class QDispatcher(qt.QWidget):
             self.sigRemoveSelection.emit(ddict)
 
     def _replaceSelectionSlot(self, sel_list):
-        if DEBUG:
-            print("_replaceSelectionSlot")
-            print("sel_list = ",sel_list)
+        _logger.debug("_replaceSelectionSlot")
+        _logger.debug("sel_list = %s", sel_list)
 
         if len(sel_list) == 1:
-            self._addSelectionSlot([sel_list[0]], event = "replaceSelection")
+            self._addSelectionSlot([sel_list[0]], event="replaceSelection")
         elif len(sel_list) > 1:
-            self._addSelectionSlot([sel_list[0]], event = "replaceSelection")
-            self._addSelectionSlot(sel_list[1:], event = "addSelection")
+            self._addSelectionSlot([sel_list[0]], event="replaceSelection")
+            self._addSelectionSlot(sel_list[1:], event="addSelection")
 
     def _otherSignalsSlot(self, ddict):
         self.sigOtherSignals.emit(ddict)
 
     def _sourceSelectorSlot(self, ddict):
-        if DEBUG:
-            print("_sourceSelectorSlot(self, ddict)")
-            print("ddict = ",ddict)
+        _logger.debug("_sourceSelectorSlot(self, ddict)")
+        _logger.debug("ddict = %s", ddict)
         if ddict["event"] == "NewSourceSelected":
             source = QDataSource.QDataSource(ddict["sourcelist"])
             self.sourceList.append(source)
@@ -265,8 +260,7 @@ class QDispatcher(qt.QWidget):
                     found = 1
                     break
             if not found:
-                if DEBUG:
-                    print("WARNING: source not found")
+                _logger.debug("WARNING: source not found")
                 return
             sourceType = source.sourceType
             if ddict["event"] == "SourceReloaded":
@@ -280,8 +274,7 @@ class QDispatcher(qt.QWidget):
                     found = 1
                     break
             if not found:
-                if DEBUG:
-                    print("WARNING: source not found")
+                _logger.debug("WARNING: source not found")
                 return
             sourceType = source.sourceType
             del self.sourceList[self.sourceList.index(source)]
@@ -299,13 +292,10 @@ class QDispatcher(qt.QWidget):
                 self.selectorWidget[sourceType].setDataSource(None)
             self.tabWidget.setCurrentWidget(self.selectorWidget[sourceType])
         elif ddict["event"] == "SourceClosed":
-            if DEBUG:
-                print("not implemented yet")
-
+            _logger.debug("not implemented yet")
 
     def _selectionUpdatedSlot(self, ddict):
-        if DEBUG:
-            print("_selectionUpdatedSlot(self, dict)",ddict)
+        _logger.debug("_selectionUpdatedSlot(self, dict=%s)")
         if 'selectionlist' in ddict:
             sel_list = ddict['selectionlist']
         else:
@@ -332,8 +322,7 @@ class QDispatcher(qt.QWidget):
         self._addSelectionSlot(sel_list)
 
     def _tabChanged(self, value):
-        if DEBUG:
-            print("self._tabChanged(value), value =  ",value)
+        _logger.debug("self._tabChanged(value), value =  %s", value)
         text = str(self.tabWidget.tabText(value))
         ddict = {}
         ddict['SourceType'] = text
@@ -355,16 +344,17 @@ class QDispatcher(qt.QWidget):
             ddict['SourceName'] = self.selectorWidget[text].data.sourceName
         else:
             ddict['SourceName'] = None
-        print(ddict)
-        print("===========================")
+        _logger.info("%s", ddict)
+        _logger.info("===========================")
         for source in self.sourceList:
-            print(source)
-            print(source.sourceType)
+            _logger.info(source)
+            _logger.info(source.sourceType)
             sourceType = source.sourceType
-            print(self.selectorWidget[sourceType].currentSelectionList())
+            _logger.info(self.selectorWidget[sourceType].currentSelectionList())
 
-        if self.pluginsCallback is not None:
-            self.pluginsCallback(info)
+        # this seems unused (info is not defined)
+        # if self.pluginsCallback is not None:
+        #     self.pluginsCallback(info)
 
 
 def test():

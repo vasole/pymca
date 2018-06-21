@@ -38,8 +38,9 @@ ___doc__ = """
 
 """
 import numpy
+import logging
 from PyMca5.PyMcaGraph.ctools import pnpoly
-DEBUG = 0
+_logger = logging.getLogger(__name__)
 
 from . import MaskImageWidget
 from . import MaskImageTools
@@ -137,7 +138,7 @@ class MaskScatterWidget(PlotWindow):
             self.colormapDialog.show()
         else:
             # RGBA image
-            print("No colormap to be handled")
+            _logger.info("No colormap to be handled")
             return
 
     def setPlotViewMode(self, mode="scatter", bins=None):
@@ -165,7 +166,7 @@ class MaskScatterWidget(PlotWindow):
         if hasattr(self, "maskToolBar"):
             self.maskToolBar.activateDensityPlotView()
 
-        if DEBUG:
+        if _logger.getEffectiveLevel() == logging.DEBUG:
             if self._densityPlotWidget is None:
                 self._densityPlotWidget = MaskImageWidget.MaskImageWidget(
                                 imageicons=True,
@@ -226,8 +227,7 @@ class MaskScatterWidget(PlotWindow):
         return image[0]
 
     def _updateDensityPlot(self, bins=None):
-        if DEBUG:
-            print("_updateDensityPlot called")
+        _logger.debug("_updateDensityPlot called")
         if self._densityPlotWidget is None:
             return
         curve = self.getCurve(self._selectionCurve)
@@ -265,14 +265,14 @@ class MaskScatterWidget(PlotWindow):
         self._binsX = image[2]
         self._binsY = image[1]
         self._bins = bins
-        if DEBUG:
+        if _logger.getEffectiveLevel() == logging.DEBUG:
             # this does not work properly
             # update mask levels
             if self._selectionMask is not None:
                 weights = self._selectionMask[:]
                 weights.shape = x.shape
                 if self._maxNRois > 1:
-                    print("BAD PATH")
+                    _logger.debug("BAD PATH")
                     # this does not work properly yet
                     weightsSum = weights.sum(dtype=numpy.float64)
                     volume = (binsY[1] - binsY[0]) * (binsX[1] - binsX[0])
@@ -381,7 +381,7 @@ class MaskScatterWidget(PlotWindow):
                               color=None, symbol=None, selectable=None,
                               **kw):
         if "replot" in kw:
-            print("MaskScatterWidget.setSelectionCurveData: deprecated replot parameter")
+            _logger.warning("MaskScatterWidget.setSelectionCurveData: deprecated replot parameter")
             resetzoom = kw["replot"] and resetzoom
         self.setActiveCurveHandling(False)
         if legend is None:
@@ -457,7 +457,7 @@ class MaskScatterWidget(PlotWindow):
                               z=0,
                               pixmap=pixmap,
                               resetzoom=True)
-            if DEBUG:
+            if _logger.getEffectiveLevel() == logging.DEBUG:
                 if self._densityPlotWidget is None:
                     self._densityPlotWidget = MaskImageWidget.MaskImageWidget(
                                     imageicons=True,
@@ -466,8 +466,8 @@ class MaskScatterWidget(PlotWindow):
                                     aspect=True,
                                     polygon=True)
                 self._updateDensityPlot()
-                print("CLOSE = ", numpy.allclose(imageData, self._imageData))
-                print("CLOSE PIXMAP = ", numpy.allclose(pixmap, self._pixmap))
+                _logger.debug("CLOSE = %s", numpy.allclose(imageData, self._imageData))
+                _logger.debug("CLOSE PIXMAP = %s", numpy.allclose(pixmap, self._pixmap))
             self._imageData = imageData
             self._pixmap = pixmap
         #self._updatePlot()
@@ -571,8 +571,7 @@ class MaskScatterWidget(PlotWindow):
         self._nRoi = intValue
 
     def _handlePolygonMask(self, points):
-        if DEBUG:
-            print("_handlePolygonMask called")
+        _logger.debug("_handlePolygonMask called")
         if self._eraseMode:
             value = 0
         else:
@@ -602,11 +601,10 @@ class MaskScatterWidget(PlotWindow):
             else:
                 qt.QToolTip.hideText()
         except:
-            print("Error trying to show mouse text <%s>" % text)
+            _logger.warning("Error trying to show mouse text <%s>" % text)
 
     def graphCallback(self, ddict):
-        if DEBUG:
-            print("MaskScatterWidget graphCallback", ddict)
+        _logger.debug("MaskScatterWidget graphCallback %s", ddict)
         if ddict["event"] == "drawingFinished":
             if ddict["parameters"]["shape"].lower() == "rectangle":
                 points = numpy.zeros((5, 2), dtype=ddict["points"].dtype)
@@ -727,11 +725,10 @@ class MaskScatterWidget(PlotWindow):
         self.sigMaskScatterWidgetSignal.emit(ddict)
 
     def _resetSelection(self, owncall=True):
-        if DEBUG:
-            print("_resetSelection")
+        _logger.debug("_resetSelection")
 
         if self._selectionMask is None:
-            print("Selection mask is None, doing nothing")
+            _logger.info("Selection mask is None, doing nothing")
             return
         else:
             self._selectionMask[:] = 0
@@ -803,8 +800,7 @@ class MaskScatterWidget(PlotWindow):
         self._emitMaskChangedSignal()
 
     def _setSelectionMaskFromDensityMask(self, densityPlotMask, update=None):
-        if DEBUG:
-            print("_setSelectionMaskFromDensityMask called")
+        _logger.debug("_setSelectionMaskFromDensityMask called")
         curve = self.getCurve(self._selectionCurve)
         if curve is None:
             return
@@ -840,8 +836,7 @@ class MaskScatterWidget(PlotWindow):
         self.setSelectionMask(view, plot=True)
 
     def _densityPlotSlot(self, ddict):
-        if DEBUG:
-            print("_densityPlotSlot called")
+        _logger.debug("_densityPlotSlot called")
         if ddict["event"] == "resetSelection":
             self.__resetSelection()
             return
@@ -857,7 +852,7 @@ class MaskScatterWidget(PlotWindow):
         y0 = y.min()
         deltaX = (x.max() - x0)/float(bins[0])
         deltaY = (y.max() - y0)/float(bins[1])
-        if DEBUG:
+        if _logger.getEffectiveLevel() == logging.DEBUG:
             if self._selectionMask is None:
                 view = numpy.zeros(x.size, dtype=numpy.uint8)
             else:
@@ -893,7 +888,7 @@ class MaskScatterWidget(PlotWindow):
         view2[:] = values[:]
         if self._selectionMask is not None:
             view2.shape = self._selectionMask.shape
-        if DEBUG:
+        if _logger.getEffectiveLevel() == logging.DEBUG:
             if not numpy.allclose(view, view2):
                 a = view[:]
                 b = view2[:]
@@ -902,12 +897,13 @@ class MaskScatterWidget(PlotWindow):
                 c = 0
                 for i in range(a.size):
                     if a[i] != b[i]:
-                        print(i, "a = ", a[i], "b = ", b[i], "(x, y) = ", x[i], y[i])
+                        _logger.debug("%d a = %s, b = %s, (x, y) = (%s, %s)",
+                                      i, a[i], b[i], x[i], y[i])
                         c += 1
                         if c > 10:
                             break
             else:
-                print("OK!!!")
+                _logger.debug("OK!!!")
         self.setSelectionMask(view2)
 
     def _initializeAlpha(self):
