@@ -144,8 +144,7 @@ class SimpleFitGui(qt.QWidget):
                                     aspectRatio=False, colormap=False,
                                     yInverted=False, roi=False, mask=False,
                                     fit=False, control=True, position=True)
-            self.graph.zoomModeAction.setVisible(False)
-            self.graph.panModeAction.setVisible(False)
+            self.graph.getInteractiveModeToolBar().setVisible(False)
             # No context menu by default, execute zoomBack on right click
             plotArea = self.graph.getWidgetHandle()
             plotArea.setContextMenuPolicy(qt.Qt.CustomContextMenu)

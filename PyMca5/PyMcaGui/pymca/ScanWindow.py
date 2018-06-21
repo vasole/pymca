@@ -109,13 +109,8 @@ class BaseScanWindow(PlotWindow):
         plotArea.customContextMenuRequested.connect(self._zoomBack)
 
         # Toolbar:
-        # hide zoom and pan mode buttons, and the next separator
-        self.zoomModeAction.setVisible(False)
-        self.panModeAction.setVisible(False)
-        for action in self.toolBar().actions():
-            if action.isSeparator():
-                action.setVisible(False)
-                break
+        # hide interactive toolbar (zoom and pan mode buttons)
+        self.getInteractiveModeToolBar().setVisible(False)
 
         # additional buttons
         self._mathToolBar = qt.QToolBar(self)

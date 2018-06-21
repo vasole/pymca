@@ -35,7 +35,7 @@ import numpy
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from .PyMca_Icons import IconDict
 
-from silx.gui.plot import Colors
+from silx.gui import colors
 
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -43,7 +43,7 @@ else:
     QString = qt.safe_str
 
 
-_COLORDICT = Colors.COLORDICT
+_COLORDICT = colors.COLORDICT
 # these are color RGBA strings '#0000ff'
 _COLORLIST = [_COLORDICT['black'],
               _COLORDICT['blue'],
