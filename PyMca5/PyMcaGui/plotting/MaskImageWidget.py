@@ -1249,23 +1249,25 @@ class MaskImageWidget(qt.QWidget):
             self.__image = qimage
 
         if self.__image.format() == qt.QImage.Format_Indexed8:
-            pixmap0 = numpy.fromstring(qimage.bits().asstring(width * height),
-                                 dtype = numpy.uint8)
+            pixmap0 = numpy.frombuffer(qimage.bits().asstring(width * height),
+                                       dtype=numpy.uint8)
             pixmap = numpy.zeros((height * width, 4), numpy.uint8)
-            pixmap[:,0] = pixmap0[:]
-            pixmap[:,1] = pixmap0[:]
-            pixmap[:,2] = pixmap0[:]
-            pixmap[:,3] = 255
+            pixmap[:, 0] = pixmap0[:]
+            pixmap[:, 1] = pixmap0[:]
+            pixmap[:, 2] = pixmap0[:]
+            pixmap[:, 3] = 255
             pixmap.shape = height, width, 4
         else:
             self.__image = self.__image.convertToFormat(qt.QImage.Format_ARGB32)
-            pixmap = numpy.fromstring(self.__image.bits().asstring(width * height * 4),
-                                 dtype = numpy.uint8)
-            pixmap.shape = height, width,-1
+            pixmap0 = numpy.frombuffer(self.__image.bits().asstring(width * height * 4),
+                                       dtype=numpy.uint8)
+            pixmap = numpy.array(pixmap0, copy=True)
+            pixmap.shape = height, width, -1
             # Qt uses BGRA, convert to RGBA
-            tmpBuffer = numpy.array(pixmap[:,:,0], copy=True, dtype=pixmap.dtype)
-            pixmap[:,:,0] = pixmap[:,:,2]
-            pixmap[:,:,2] = tmpBuffer
+            tmpBuffer = numpy.array(pixmap[:, :, 0],
+                                    copy=True, dtype=pixmap.dtype)
+            pixmap[:, :, 0] = pixmap[:, :, 2]
+            pixmap[:, :, 2] = tmpBuffer
 
         if data is None:
             self.__imageData = numpy.zeros((height, width), numpy.float)
