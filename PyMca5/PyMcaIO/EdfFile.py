@@ -443,7 +443,7 @@ class  EdfFile(object):
             self.Images[Index].DataType = 'UnsignedShort'
             try:
                 self.__data = numpy.reshape(
-                    numpy.fromstring(binary, numpy.uint16),
+                    numpy.copy(numpy.frombuffer(binary, numpy.uint16)),
                     (self.Images[Index].Dim2, self.Images[Index].Dim1))
             except ValueError:
                 raise IOError('Size spec in ADSC-header does not match ' + \
@@ -636,14 +636,14 @@ class  EdfFile(object):
                     sizeToRead = self.Images[Index].Dim1 * \
                                  self.Images[Index].Dim2 * \
                                  self.Images[Index].Dim3 * datasize
-                    Data = numpy.fromstring(self.File.read(sizeToRead),
-                                datatype)
+                    Data = numpy.copy(numpy.frombuffer(self.File.read(sizeToRead),
+                                                       datatype))
                     Data = numpy.reshape(Data, (self.Images[Index].Dim3, self.Images[Index].Dim2, self.Images[Index].Dim1))
                 elif self.Images[Index].NumDim == 2:
                     sizeToRead = self.Images[Index].Dim1 * \
                                  self.Images[Index].Dim2 * datasize
-                    Data = numpy.fromstring(self.File.read(sizeToRead),
-                                datatype)
+                    Data = numpy.copy(numpy.frombuffer(self.File.read(sizeToRead),
+                                                       datatype))
                     #print "datatype = ",datatype
                     #print "Data.type = ", Data.dtype.char
                     #print "self.Images[Index].DataType ", self.Images[Index].DataType
@@ -654,8 +654,8 @@ class  EdfFile(object):
                     Data = numpy.reshape(Data, (self.Images[Index].Dim2, self.Images[Index].Dim1))
                 elif self.Images[Index].NumDim == 1:
                     sizeToRead = self.Images[Index].Dim1 * datasize
-                    Data = numpy.fromstring(self.File.read(sizeToRead),
-                                datatype)
+                    Data = numpy.copy(numpy.frombuffer(self.File.read(sizeToRead),
+                                                       datatype))
         elif self.ADSC or self.MARCCD or self.PILATUS_CBF or self.SPE:
             return self.__data[Pos[1]:(Pos[1] + Size[1]),
                                Pos[0]:(Pos[0] + Size[0])]
@@ -664,9 +664,9 @@ class  EdfFile(object):
             return data[Pos[1]:(Pos[1] + Size[1]),
                                Pos[0]:(Pos[0] + Size[0])]
         elif fastedf and CAN_USE_FASTEDF:
-            type = self.__GetDefaultNumpyType__(self.Images[Index].DataType, index=Index)
-            size_pixel = self.__GetSizeNumpyType__(type)
-            Data = numpy.array([], type)
+            type_ = self.__GetDefaultNumpyType__(self.Images[Index].DataType, index=Index)
+            size_pixel = self.__GetSizeNumpyType__(type_)
+            Data = numpy.array([], type_)
             if self.Images[Index].NumDim == 1:
                 if Pos == None: Pos = (0,)
                 if Size == None: Size = (0,)
@@ -674,7 +674,7 @@ class  EdfFile(object):
                 Size = list(Size)
                 if Size[0] == 0:Size[0] = sizex - Pos[0]
                 self.File.seek((Pos[0] * size_pixel) + self.Images[Index].DataPosition, 0)
-                Data = numpy.fromstring(self.File.read(Size[0] * size_pixel), type)
+                Data = numpy.copy(numpy.frombuffer(self.File.read(Size[0] * size_pixel), type_))
             elif self.Images[Index].NumDim == 2:
                 if Pos == None: Pos = (0, 0)
                 if Size == None: Size = (0, 0)
@@ -682,7 +682,7 @@ class  EdfFile(object):
                 sizex, sizey = self.Images[Index].Dim1, self.Images[Index].Dim2
                 if Size[0] == 0:Size[0] = sizex - Pos[0]
                 if Size[1] == 0:Size[1] = sizey - Pos[1]
-                Data = numpy.zeros([Size[1], Size[0]], type)
+                Data = numpy.zeros([Size[1], Size[0]], type_)
                 self.File.seek((((Pos[1] * sizex) + Pos[0]) * size_pixel) + self.Images[Index].DataPosition, 0)
                 extended_fread(Data, Size[0] * size_pixel , numpy.array([Size[1]]),
                                numpy.array([sizex * size_pixel]) , self.File)
@@ -695,7 +695,7 @@ class  EdfFile(object):
                 if Size[0] == 0:Size[0] = sizex - Pos[0]
                 if Size[1] == 0:Size[1] = sizey - Pos[1]
                 if Size[2] == 0:Size[2] = sizez - Pos[2]
-                Data = numpy.zeros([Size[2], Size[1], Size[0]], type)
+                Data = numpy.zeros([Size[2], Size[1], Size[0]], type_)
                 self.File.seek(((((Pos[2] * sizey + Pos[1]) * sizex) + Pos[0]) * size_pixel) + self.Images[Index].DataPosition, 0)
                 extended_fread(Data, Size[0] * size_pixel , numpy.array([Size[2], Size[1]]),
                         numpy.array([ sizey * sizex * size_pixel , sizex * size_pixel]) , self.File)
@@ -703,9 +703,9 @@ class  EdfFile(object):
         else:
             if fastedf:
                 print("I could not use fast routines")
-            type = self.__GetDefaultNumpyType__(self.Images[Index].DataType, index=Index)
-            size_pixel = self.__GetSizeNumpyType__(type)
-            Data = numpy.array([], type)
+            type_ = self.__GetDefaultNumpyType__(self.Images[Index].DataType, index=Index)
+            size_pixel = self.__GetSizeNumpyType__(type_)
+            Data = numpy.array([], type_)
             if self.Images[Index].NumDim == 1:
                 if Pos == None: Pos = (0,)
                 if Size == None: Size = (0,)
@@ -713,7 +713,7 @@ class  EdfFile(object):
                 Size = list(Size)
                 if Size[0] == 0:Size[0] = sizex - Pos[0]
                 self.File.seek((Pos[0] * size_pixel) + self.Images[Index].DataPosition, 0)
-                Data = numpy.fromstring(self.File.read(Size[0] * size_pixel), type)
+                Data = numpy.copy(numpy.frombuffer(self.File.read(Size[0] * size_pixel), type_))
             elif self.Images[Index].NumDim == 2:
                 if Pos == None: Pos = (0, 0)
                 if Size == None: Size = (0, 0)
@@ -723,11 +723,11 @@ class  EdfFile(object):
                 if Size[1] == 0:Size[1] = sizey - Pos[1]
                 #print len(range(Pos[1],Pos[1]+Size[1])), "LECTURES OF ", Size[0], "POINTS"
                 #print "sizex = ", sizex, "sizey = ", sizey
-                Data = numpy.zeros((Size[1], Size[0]), type)
+                Data = numpy.zeros((Size[1], Size[0]), type_)
                 dataindex = 0
                 for y in range(Pos[1], Pos[1] + Size[1]):
                     self.File.seek((((y * sizex) + Pos[0]) * size_pixel) + self.Images[Index].DataPosition, 0)
-                    line = numpy.fromstring(self.File.read(Size[0] * size_pixel), type)
+                    line = numpy.copy(numpy.frombuffer(self.File.read(Size[0] * size_pixel), type_))
                     Data[dataindex, :] = line[:]
                     #Data=numpy.concatenate((Data,line))
                     dataindex += 1
@@ -745,7 +745,7 @@ class  EdfFile(object):
                 for z in range(Pos[2], Pos[2] + Size[2]):
                     for y in range(Pos[1], Pos[1] + Size[1]):
                         self.File.seek(((((z * sizey + y) * sizex) + Pos[0]) * size_pixel) + self.Images[Index].DataPosition, 0)
-                        line = numpy.fromstring(self.File.read(Size[0] * size_pixel), type)
+                        line = numpy.copy(numpy.frombuffer(self.File.read(Size[0] * size_pixel), type_))
                         Data = numpy.concatenate((Data, line))
                 Data = numpy.reshape(Data, (Size[2], Size[1], Size[0]))
 
@@ -776,9 +776,10 @@ class  EdfFile(object):
                 size_img = size_row * self.Images[Index].Dim2
                 offset = offset + (Position[2] * size_img)
         self.File.seek(self.Images[Index].DataPosition + offset, 0)
-        Data = numpy.fromstring(self.File.read(size_pixel),
-                                self.__GetDefaultNumpyType__(self.Images[Index].DataType,
-                                                             index=Index))
+        Data = numpy.copy(numpy.frombuffer(
+                self.File.read(size_pixel),
+                self.__GetDefaultNumpyType__(self.Images[Index].DataType,
+                                             index=Index)))
         if self.SysByteOrder.upper() != self.Images[Index].ByteOrder.upper():
             Data = Data.byteswap()
         Data = self.__SetDataType__ (Data, "DoubleValue")
