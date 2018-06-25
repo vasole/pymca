@@ -111,7 +111,26 @@ def getDefaultUserPluginsDirectory():
         else:
             return None
     except:
-        print("WARNING: Cannot initialize plugis directory")
+        print("WARNING: Cannot initialize plugins directory")
+        return None
+
+def getDefaultUserFitFunctionsDirectory():
+    """
+    Return the default directory to look for user defined fit functions.
+
+    The directory will be created if not existing. In case of error it returns None.
+    """
+    try:
+        settingsDir = os.path.dirname(getDefaultSettingsFile())
+        if os.path.exists(settingsDir):
+            fitFunctionsDir = os.path.join(settingsDir, "fit")
+            if not os.path.exists(fitFunctionsDir):
+                os.mkdir(fitFunctionsDir)
+            return fitFunctionsDir
+        else:
+            return None
+    except:
+        print("WARNING: Cannot initialize fit functions directory")
         return None
 
 def getUserDataFile(fileName, directory=""):
