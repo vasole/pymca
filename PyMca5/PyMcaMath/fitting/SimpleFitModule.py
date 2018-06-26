@@ -34,11 +34,17 @@ import sys
 import os
 import numpy
 import copy
+import logging
+import glob
 import types
 from . import Gefit
 from . import SpecfitFuns
+from PyMca5 import getDefaultUserFitFunctionsDirectory
+
+_logger = logging.getLogger(__name__)
 
 DEBUG = 0
+
 
 class SimpleFit(object):
     def __init__(self):
@@ -328,6 +334,25 @@ class SimpleFit(object):
         def wrapped(parameters, index, x):
             return f(x, parameters, index)
         return wrapped
+
+    def loadUserFunctions(self):
+        userDirectory = getDefaultUserFitFunctionsDirectory()
+        fileList = glob.glob(os.path.join(userDirectory, "*.py"))
+        # simple filter to prevent unnecessary imports
+        filteredFileList = []
+        for fname in fileList:
+            # in Python 3, rb implies bytes and not strings
+            with open(fname, 'r') as f:
+                for line in f:
+                    if line.strip().startswith("THEORY"):
+                        filteredFileList.append(fname)
+                        break
+        for fname in filteredFileList:
+            try:
+                self.importFunctions(fname)
+            except:
+                _logger.error("Could not import user fit functions %s",
+                              fname)
 
     def setFitFunction(self, name):
         if name in [None, "None", "NONE"]:
