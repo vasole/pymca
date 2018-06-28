@@ -351,7 +351,7 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
         width = qimage.width()
         height = qimage.height()
         if qimage.format() == qt.QImage.Format_Indexed8:
-            pixmap0 = numpy.fromstring(qimage.bits().asstring(width * height),
+            pixmap0 = numpy.frombuffer(qimage.bits().asstring(width * height),
                                        dtype=numpy.uint8)
             pixmap = numpy.zeros((height * width, 4), numpy.uint8)
             pixmap[:, 0] = pixmap0[:]
@@ -361,10 +361,11 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
             pixmap.shape = height, width, 4
         else:
             qimage = qimage.convertToFormat(qt.QImage.Format_ARGB32)
-            pixmap = numpy.fromstring(qimage.bits().asstring(width * height * 4),
-                                      dtype=numpy.uint8)
+            pixmap0 = numpy.frombuffer(qimage.bits().asstring(width * height * 4),
+                                       dtype=numpy.uint8)
+            pixmap = numpy.array(pixmap0)  # copy
             pixmap.shape = height, width, -1
-            # Qt uses BGRA, convert to RGBA   # TODO: check this (qt doc says 0xAARRGGBB)
+            # Qt uses BGRA, convert to RGBA
             tmpBuffer = numpy.array(pixmap[:, :, 0], copy=True, dtype=pixmap.dtype)
             pixmap[:, :, 0] = pixmap[:, :, 2]
             pixmap[:, :, 2] = tmpBuffer
