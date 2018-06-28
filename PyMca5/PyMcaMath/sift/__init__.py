@@ -37,3 +37,7 @@ from .plan import SiftPlan
 from .match import MatchPlan
 from .alignment import LinearAlign
 
+
+_logger = logging.getLogger(__name__)
+_logger.warning("The sift module in PyMca is deprecated. "
+                "You should import sift from the silx library.")
