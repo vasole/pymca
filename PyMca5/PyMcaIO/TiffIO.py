@@ -684,13 +684,14 @@ class TiffIO(object):
         rowStart = 0
         if len(stripOffsets) == 1:
             bytesPerRow = int(stripByteCounts[0] / rowsPerStrip)
+            nBytes = stripByteCounts[0]
             if nRows == rowsPerStrip:
                 actualBytesPerRow = int(image.nbytes / nRows)
                 if actualBytesPerRow != bytesPerRow:
                     print("Warning: Bogus StripByteCounts information")
                     bytesPerRow = actualBytesPerRow 
+                    nBytes = (rowMax-rowMin+1) * bytesPerRow
             fd.seek(stripOffsets[0] + rowMin * bytesPerRow)
-            nBytes = (rowMax-rowMin+1) * bytesPerRow
             if self._swap:
                 readout = numpy.array(numpy.frombuffer(fd.read(nBytes), dtype)).byteswap()
             else:
@@ -699,6 +700,7 @@ class TiffIO(object):
                 readout.shape = -1, nColumns, len(nBits)
             elif info['colormap'] is not None:
                 readout = colormap[readout]
+                readout.shape = -1, nColumns, 3
             else:
                 readout.shape = -1, nColumns
             image[rowMin:rowMax+1, :] = readout
@@ -706,7 +708,7 @@ class TiffIO(object):
             for i in range(len(stripOffsets)):
                 # the amount of rows
                 nRowsToRead = rowsPerStrip
-                rowEnd = int(min(rowStart+nRowsToRead, nRows))
+                rowEnd = int(min(rowStart + nRowsToRead, nRows))
                 if rowEnd < rowMin:
                     rowStart += nRowsToRead
                     continue
@@ -727,17 +729,19 @@ class TiffIO(object):
                     # intermediate buffer
                     tmpBuffer = fd.read(nBytes)
                     while readBytes < nBytes:
-                        n = struct.unpack('b', tmpBuffer[readBytes:(readBytes+1)])[0]
+                        n = struct.unpack('b',
+                                        tmpBuffer[readBytes:(readBytes + 1)])[0]
                         readBytes += 1
                         if n >= 0:
                             # should I prevent reading more than the
                             # length of the chain? Let's python raise
                             # the exception...
                             bufferBytes +=  tmpBuffer[readBytes:\
-                                                      readBytes+(n+1)]
-                            readBytes += (n+1)
+                                                      readBytes + (n + 1)]
+                            readBytes += (n + 1)
                         elif n > -128:
-                            bufferBytes += (-n+1) * tmpBuffer[readBytes:(readBytes+1)]
+                            bufferBytes += (-n + 1) * \
+                                           tmpBuffer[readBytes:(readBytes + 1)]
                             readBytes += 1
                         else:
                             # if read -128 ignore the byte
@@ -793,8 +797,8 @@ class TiffIO(object):
                          image[:, :, 1] * 0.587 + \
                          image[:, :, 2] * 0.299).astype(numpy.float32)
 
-        if (rowMin == 0) and (rowMax == (nRows-1)):
-            self._imageDataCacheIndex.insert(0,nImage)
+        if (rowMin == 0) and (rowMax == (nRows - 1)):
+            self._imageDataCacheIndex.insert(0, nImage)
             self._imageDataCache.insert(0, image)
             if len(self._imageDataCacheIndex) > self._maxImageCacheLength:
                 self._imageDataCacheIndex = self._imageDataCacheIndex[:self._maxImageCacheLength]
@@ -1054,7 +1058,7 @@ class TiffIO(object):
                               bitsPerSample * nChannels / 8)
 
         if descriptionLength > 4:
-            stripOffsets0 = endOfFile + dateLength + descriptionLength +\
+            stripOffsets0 = endOfFile + dateLength + descriptionLength + \
                         2 + 12 * nDirectoryEntries + 4
         else:
             stripOffsets0 = endOfFile + dateLength + \
@@ -1083,7 +1087,7 @@ class TiffIO(object):
                 value = stripOffsets0 + i * stripByteCounts
                 stripOffsets.append(value)
                 if i == 0:
-                    stripOffsetsString  = struct.pack(fmt, value)
+                    stripOffsetsString = struct.pack(fmt, value)
                     stripByteCountsString = struct.pack(fmt, stripByteCounts)
                 else:
                     stripOffsetsString += struct.pack(fmt, value)
@@ -1289,7 +1293,7 @@ if __name__ == "__main__":
         tif = None
         if os.path.exists(filename):
             print("Testing image appending")
-            tif = TiffIO(filename, mode = 'rb+')
+            tif = TiffIO(filename, mode='rb+')
             tif.writeImage((data * 2).astype(dtype), info={'Title': '2nd'})
             tif = None
     tif = TiffIO(filename)
