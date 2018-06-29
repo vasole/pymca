@@ -30,6 +30,7 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+__date__ = "25/06/2018"
 
 import sys
 import os
@@ -45,6 +46,7 @@ TAG_ID  = { 256:"NumberOfColumns",           # S or L ImageWidth
             259:"Compression",               # SHORT (1 - NoCompression, ...
             262:"PhotometricInterpretation", # SHORT (0 - WhiteIsZero, 1 -BlackIsZero, 2 - RGB, 3 - Palette color
             270:"ImageDescription",          # ASCII
+            272:"Model",                     # ASCII
             273:"StripOffsets",              # S or L, for each strip, the byte offset of the strip
             277:"SamplesPerPixel",           # SHORT (>=3) only for RGB images
             278:"RowsPerStrip",              # S or L, number of rows in each back may be not for the last
@@ -62,6 +64,7 @@ TAG_BITS_PER_SAMPLE    = 258
 TAG_PHOTOMETRIC_INTERPRETATION = 262
 TAG_COMPRESSION        = 259
 TAG_IMAGE_DESCRIPTION  = 270
+TAG_MODEL              = 272
 TAG_STRIP_OFFSETS      = 273
 TAG_SAMPLES_PER_PIXEL  = 277
 TAG_ROWS_PER_STRIP     = 278
@@ -151,7 +154,7 @@ class TiffIO(object):
             else:
                 raise IOError("File is not a Mar CCD file, nor a TIFF file")
             a = fd.read(2)
-            fortyTwo = struct.unpack(self._structChar+"H",a)[0]
+            fortyTwo = struct.unpack(self._structChar + "H", a)[0]
             if fortyTwo != 42:
                 raise IOError("Invalid TIFF version %d" % fortyTwo)
             else:
@@ -184,7 +187,7 @@ class TiffIO(object):
         if self._access is None:
             # we do not own the file
             # open in read mode
-            newFile = open(fileName,'rb')
+            newFile = open(fileName, 'rb')
         else:
             newFile = open(fileName, self._access)
         self.fd = newFile
@@ -272,7 +275,13 @@ class TiffIO(object):
                 ftype, vfmt = FIELD_TYPE[fieldType]
                 if ftype not in ['ASCII', 'RATIONAL', 'SRATIONAL']:
                     vfmt = st + vfmt
-                    actualValue = struct.unpack(vfmt, valueOffset[0: struct.calcsize(vfmt)])[0]
+                    data = valueOffset[0: struct.calcsize(vfmt)]
+                    if struct.calcsize(vfmt) > len(data):
+                        # I do not see how I can enter here
+                        # Add a 0 padding to have the expected size
+                        print("WARNING: Data at tag id '%s' is smaller than expected", tagID)
+                        data = data + b"\x00" * (struct.calcsize(vfmt) - len(data))
+                    actualValue = struct.unpack(vfmt, data)[0]
                     valueOffsetList.append(actualValue)
                 else:
                     valueOffsetList.append(valueOffset)
@@ -293,8 +302,6 @@ class TiffIO(object):
                 # if nValues == 1:
                 #    print("valueOffset =  %s" % valueOffset)
         return tagIDList, fieldTypeList, nValuesList, valueOffsetList
-
-
 
     def _readIFDEntry(self, tag, tagIDList, fieldTypeList, nValuesList, valueOffsetList):
         fd = self.fd
@@ -374,13 +381,15 @@ class TiffIO(object):
         if nValuesList[idx] != 1:
             # this happens with RGB and friends, nBits is not a single value
             nBits = self._readIFDEntry(TAG_BITS_PER_SAMPLE,
-                                          tagIDList, fieldTypeList, nValuesList, valueOffsetList)
+                                       tagIDList, fieldTypeList, nValuesList,
+                                       valueOffsetList)
 
 
         if TAG_COLORMAP in tagIDList:
             idx = tagIDList.index(TAG_COLORMAP)
             tmpColormap = self._readIFDEntry(TAG_COLORMAP,
-                                          tagIDList, fieldTypeList, nValuesList, valueOffsetList)
+                                             tagIDList, fieldTypeList, nValuesList,
+                                             valueOffsetList)
             if max(tmpColormap) > 255:
                 tmpColormap = numpy.array(tmpColormap, dtype=numpy.uint16)
                 tmpColormap = (tmpColormap / 256.).astype(numpy.uint8)
@@ -423,9 +432,15 @@ class TiffIO(object):
             imageDescription = self._readIFDEntry(TAG_IMAGE_DESCRIPTION,
                     tagIDList, fieldTypeList, nValuesList, valueOffsetList)
             if type(imageDescription) in [type([1]), type((1,))]:
-                imageDescription =helpString.join(imageDescription)
+                imageDescription = helpString.join(imageDescription)
         else:
-            imageDescription = "%d/%d" % (nImage+1, len(self._IFD))
+            imageDescription = "%d/%d" % (nImage + 1, len(self._IFD))
+
+        if TAG_MODEL in tagIDList:
+            model = self._readIFDEntry(TAG_MODEL,
+                                       tagIDList, fieldTypeList, nValuesList, valueOffsetList)
+        else:
+            model = None
 
         defaultSoftware = "Unknown Software"
 
@@ -454,12 +469,15 @@ class TiffIO(object):
             date = self._readIFDEntry(TAG_DATE,
                     tagIDList, fieldTypeList, nValuesList, valueOffsetList)
             if type(date) in [type([1]), type((1,))]:
-                date =helpString.join(date)
+                date = helpString.join(date)
         else:
             date = "Unknown Date"
 
         stripOffsets = self._readIFDEntry(TAG_STRIP_OFFSETS,
-                        tagIDList, fieldTypeList, nValuesList, valueOffsetList)
+                                          tagIDList,
+                                          fieldTypeList,
+                                          nValuesList,
+                                          valueOffsetList)
         if TAG_ROWS_PER_STRIP in tagIDList:
             rowsPerStrip = self._readIFDEntry(TAG_ROWS_PER_STRIP,
                         tagIDList, fieldTypeList, nValuesList, valueOffsetList)[0]
@@ -511,6 +529,8 @@ class TiffIO(object):
         info["colormap"] = colormap
         info["sampleFormat"] = sampleFormat
         info["photometricInterpretation"] = interpretation
+        if model is not None:
+            info["model"] = model
         infoDict = {}
         testString = 'PyMca'
 
@@ -663,9 +683,9 @@ class TiffIO(object):
 
         rowStart = 0
         if len(stripOffsets) == 1:
-            bytesPerRow = int(stripByteCounts[0]/rowsPerStrip)
+            bytesPerRow = int(stripByteCounts[0] / rowsPerStrip)
             if nRows == rowsPerStrip:
-                actualBytesPerRow = int(image.nbytes/nRows)
+                actualBytesPerRow = int(image.nbytes / nRows)
                 if actualBytesPerRow != bytesPerRow:
                     print("Warning: Bogus StripByteCounts information")
                     bytesPerRow = actualBytesPerRow 
