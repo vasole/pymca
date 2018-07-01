@@ -2232,8 +2232,8 @@ def test(filename=None, backend=None):
         container.setImageData(data, xScale=(1000.0, 1.0), yScale=(1000., 1.))
         mask = (data*0).astype(numpy.uint8)
         n, m = data.shape
-        mask[ n/4:n/4+n/8, m/4:m/4+m/8] = 1
-        mask[ 3*n/4:3*n/4+n/8, m/4:m/4+m/8] = 2
+        mask[ n//4 : n//4 + n//8, m//4 : m//4 + m//8] = 1
+        mask[ 3*n//4 : 3*n//4 + n//8, m//4 : m//4 + m//8] = 2
         container.setSelectionMask(mask, plot=True)
         #data.shape = 100, 400
         #container.setImageData(None)
