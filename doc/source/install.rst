@@ -112,24 +112,45 @@ read the following sections.
 Installing Python
 +++++++++++++++++
 
-Please follow the instructions suplied by the silx project http://www.silx.org/doc/silx/latest/install.html
+Linux
+-----
 
-Using pip
-+++++++++
+For Linux please refer to the relevant documentation of your linux distribution.
 
-Configure your PATH environment variable to include the pip installation
-directory, the same way as described for Python.
 
-The pip installation directory will likely be ``C:\Python35\Scripts\``.
+Windows
+-------
 
-Then you will be able to use all pip commands listed in following in a command
-prompt.
+Download and install Python from `python.org <https://www.python.org/downloads/windows/>`_.
 
+We recommend that you install the 64bits version of Python, which is not the
+default version suggested on the Python website.
+The 32bits version is limited to 2 GB of memory, and also we don't provide a
+binary wheel for it what means that you would have to install *PyMca5* from its sources, which requires you to install a C compiler first.
+
+We also encourage you to use Python 3.5 or newer, former versions are no more
+officially supported.
+
+Configure Python as explained on
+`docs.python.org <https://docs.python.org/3/using/windows.html#configuring-python>`_
+to add the python installation directory to your PATH environment variable.
+
+You may need to configure your PATH environment variable to include the pip installation directory.
+
+MacOS
+-----
+
+Python 2.7 is shipped by default but we recommend using Python 3.5 or newer to simplify the installation of the Qt library.
+
+
+Download and install Python from `python.org <https://www.python.org/downloads/mac-osx/>`_ or, alternatively, install Python from the `anaconda distribution <https://www.anaconda.com/download/>`_
+
+Open a terminal and type ``which python3`` and ``which pip3``. Those commands should give you back the location of the respective scripts if you have properly installed python.
 
 Installing dependencies
 +++++++++++++++++++++++
 
-All dependencies may be simply installed with pip:
+All dependencies may be simply installed with pip. Please replace pip by pip3 if that is what you are using:
 
 .. code-block:: bash 
 
@@ -151,32 +172,9 @@ or
 
     pip install PyMca5
 
+For MacOS and Windows this should work without issues, as binary wheels of *PyMca* are provided on PyPI.
 
-MacOS
------
-
-While Apple ships Python 2.7 by default on their operating systems, we recommend
-using Python 3.5 or newer to ease the installation of the Qt library.
-
-The installation of PyMca can simply be performed by:
-
-.. code-block:: bash 
-
-    pip install -r https://raw.githubusercontent.com/vasole/pymca/master/requirements.txt
-
-Then install *PyMca* with:
-
-.. code-block:: bash 
-
-    pip install pymca
-
-or 
-
-.. code-block:: bash 
-
-    pip install PyMca5
-
-This should work without issues, as binary wheels of *PyMca* are provided on PyPI.
+Please remember to replace pip by pip3 if that is what you are using.
 
 .. _Installing from source:
 
@@ -246,7 +244,7 @@ There are few advanced options to ``setup.py build``:
 * ``--no-cython``: Prevent Cython (even if installed) to re-generate the C source code.
   Use the one provided by the development team.
 
-It is not recommended to run the test suite of *PyMca* only after installation:
+It is recommended to run the test suite of *PyMca* only after installation:
 
 .. code-block:: bash 
 
