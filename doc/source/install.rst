@@ -2,8 +2,10 @@
 Installation steps
 ==================
 
-*PyMca* supports most operating systems and different version of the Python
-programming language.
+*PyMca* supports most operating systems and different version of the Python programming language.
+
+It can be installed as a stand alone application or as a Python module. The later offer a greater flexibility besides the possibility to
+make use of different features of *PyMca* in your own Python programs.
 
 Stand-alone Executable
 ----------------------
