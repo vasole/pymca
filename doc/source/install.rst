@@ -211,7 +211,7 @@ After downloading the `PyMca5-x.y.z.tar.gz` archive, extract its content:
 
     tar xzvf PyMca5-x.y.z.tar.gz
     cd PyMca5-x.y.z
-    pip uninstall -y silx
+    pip uninstall -y PyMca5
     pip install . [--user]
     
 Alternatively, you can get the latest source code from the master branch of the
