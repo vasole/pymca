@@ -39,6 +39,7 @@ Table of contents
    changelog.rst
    license.rst
    faq.rst
+   customization/index.rst
 
 .. toctree::
    :hidden:

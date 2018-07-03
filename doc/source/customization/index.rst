@@ -3,6 +3,7 @@ Customizing PyMca
 =================
 
 .. toctree::
+    :maxdepth: 3
 
-    plugins1d
-    stackplugins
+    settings
+    plugins/index.rst
