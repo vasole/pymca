@@ -332,7 +332,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                     self.mcaWindow.showMaximized()
             currentConfigDict = ConfigDict.ConfigDict()
             try:
-                defaultFileName = self.__getDefaultSettingsFile()
+                defaultFileName = PyMca5.getDefaultSettingsFile()
                 self.configDir  = os.path.dirname(defaultFileName)
             except:
                 if not ('fresh' in kw):
@@ -542,7 +542,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
 
     def _dispatcherRemoveSelectionSlot(self, dictOrList):
         if DEBUG:
-            print("self.dispatcherRemoveSelectionSlot(ddict), ddict = ",ddict)
+            print("self.dispatcherRemoveSelectionSlot(ddict), ddict = ", dictOrList)
         if type(dictOrList) == type([]):
             ddict = dictOrList[0]
         else:
@@ -754,7 +754,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         d = ConfigDict.ConfigDict()
         d.update(config)
         if filename is None:
-            filename = self.__getDefaultSettingsFile()
+            filename = PyMca5.getDefaultSettingsFile()
         d.write(filename)
 
     def __configurePyMca(self, ddict):
@@ -1477,46 +1477,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
 
     def _saveAs(self, filename=None):
         if filename is None:
-            filename = self.__getDefaultSettingsFile()
+            filename = PyMca5.getDefaultSettingsFile()
         self.saveConfig(self.getConfig(), filename)
-
-    def __getDefaultSettingsFile(self):
-        filename = "PyMca.ini"
-        if sys.platform == 'win32':
-            # recipe based on: http://bugs.python.org/issue1763#msg62242
-            dll = ctypes.windll.shell32
-            buf = ctypes.create_unicode_buffer(MAX_PATH + 1)
-            if dll.SHGetSpecialFolderPathW(None, buf, 0x0005, False):
-                directory = buf.value
-            else:
-                # the above should have worked
-                home = os.getenv('USERPROFILE')
-                try:
-                    l = len(home)
-                    directory = os.path.join(home, "My Documents")
-                except:
-                    home = '\\'
-                    directory = '\\'
-                #print home
-                #print directory
-            if os.path.isdir('%s' % directory):
-                directory = os.path.join(directory, "PyMca")
-            else:
-                #print "My Documents is not there"
-                directory = os.path.join(home, "PyMca")
-            if not os.path.exists('%s' % directory):
-                #print "PyMca directory not present"
-                os.mkdir('%s' % directory)
-            #print filename
-            finalfile = os.path.join(directory, filename)
-            #print finalfile
-        else:
-            home = os.getenv('HOME')
-            directory = os.path.join(home, "PyMca")
-            if not os.path.exists('%s' % directory):
-                os.mkdir('%s' % directory)
-            finalfile =  os.path.join(directory, filename)
-        return finalfile
 
     def loadTrainingData(self):
         try:
