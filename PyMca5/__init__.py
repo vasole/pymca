@@ -162,7 +162,7 @@ def getDataFile(fileName, directory=None):
     Look for the provided file name in directories following the priority:
 
     0 - The provided file
-    1 - User data directory (~/PyMca/PyMcaData)
+    1 - User data directory (~/.pymca/PyMcaData)
     2 - PyMca data directory (PyMcaDataDir.PYMCA_DATA_DIR)
     3 - fisx data directory (fisx.DataDir.FISX_DATA_DIR)
     """
