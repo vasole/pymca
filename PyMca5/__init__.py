@@ -74,7 +74,6 @@ def getDefaultSettingsDirectory():
             # the above should have worked
             home = os.getenv('USERPROFILE')
             try:
-                l = len(home)
                 directory = os.path.join(home, "My Documents")
             except:
                 home = '\\'
