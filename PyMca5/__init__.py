@@ -111,7 +111,7 @@ def getDefaultUserPluginsDirectory():
         else:
             return None
     except:
-        print("WARNING: Cannot initialize plugis directory")
+        print("WARNING: Cannot initialize plugins directory")
         return None
 
 def getUserDataFile(fileName, directory=""):
@@ -158,7 +158,7 @@ def getDataFile(fileName, directory=None):
     # return the input file name if exists
     if os.path.exists(fileName):
         if DEBUG:
-            print("Filename as supplied <%s>" % newFileName)
+            print("Filename as supplied <%s>" % fileName)
         return fileName
 
     # the list of sub-directories where to look for the file
