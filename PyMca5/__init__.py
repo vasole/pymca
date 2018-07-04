@@ -89,10 +89,16 @@ def getDefaultSettingsFile():
         finalfile = os.path.join(directory, filename)
     else:
         home = os.getenv('HOME')
-        directory = os.path.join(home, "PyMca")
-        if not os.path.exists('%s' % directory):
+        directory = os.path.join(home, ".pymca")
+        if not os.path.isdir('%s' % directory):
+            # if legacy directory exists, possibly containing user plugins,
+            # we should keep using it
+            legacy_directory = os.path.join(home, "PyMca")
+            if os.path.exists(os.path.join(legacy_directory, "plugins")):
+                return os.path.join(legacy_directory, filename)
+            # else, we can create the new settings directory
             os.mkdir('%s' % directory)
-        finalfile =  os.path.join(directory, filename)
+        finalfile = os.path.join(directory, filename)
     return finalfile
 
 def getDefaultUserPluginsDirectory():
