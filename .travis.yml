@@ -12,8 +12,16 @@ matrix:
 
         - language: generic
           os: osx
-          env: BUILD_COMMAND=bdist_wheel
+          env: 
+              - BUILD_COMMAND=bdist_wheel
+              - PYTHON_VERSION=2
 
+        - language: generic
+          os: osx
+          env: 
+              - BUILD_COMMAND=bdist_wheel
+              - PYTHON_VERSION=3
+                
 cache:
     apt: true
 
@@ -48,7 +56,6 @@ script:
     # Dependencies
     - pip install matplotlib
     - pip install fisx
-    - pip install h5py
 
     # Install from source package
     - pip install --pre --find-links dist/ --no-cache-dir --no-index PyMca5 $PIP_INSTALL_EXTRA_ARGS
