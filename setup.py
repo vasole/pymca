@@ -58,7 +58,10 @@ if ("--install-scripts" in sys.argv or "--install-lib" in sys.argv or
 try:
     from Cython.Distutils import build_ext
     import Cython.Compiler.Version
-    if Cython.Compiler.Version.version < '0.18':
+    cython_version = Cython.Compiler.Version.version
+    if (sys.version_info >= (3, 7)) and (cython_version < "0.28.3"):
+        build_ext = None
+    elif  cython_version < '0.18':
         build_ext = None
 except ImportError:
     build_ext = None
@@ -404,13 +407,33 @@ def build_plotting_ctools(ext_modules):
     c_files = [os.path.join(basedir, 'src', 'InsidePolygonWithBounds.c'),
                os.path.join(basedir, 'src', 'MinMaxImpl.c'),
                os.path.join(basedir, 'src', 'Colormap.c')]
-
+    cython_dir = os.path.join(basedir, 'cython')
     if build_ext:
+        # delete previously generated code (if any)
+        for fname in glob.glob(os.path.join(cython_dir, '*.c')):
+            try:
+                os.remove(fname)
+            except:
+                print("Cannot delete previously generated code <%s>" % fname)
+                raise
         src = [os.path.join(basedir, 'cython', '_ctools.pyx')]
     else:
-        src = []
-        for fname in glob.glob(os.path.join(basedir, 'cython', '*.c')):
-            src.append(os.path.join(basedir, 'cython', os.path.basename(fname)))
+        inSrc = os.path.join(cython_dir, 'default', '_ctools.c')
+        outSrc = os.path.join(cython_dir, '_ctools.c')
+        inFile = open(inSrc, 'rb')
+        inLines = inFile.readlines()
+        inFile.close()
+        if os.path.exists(outSrc):
+            outFile = open(outSrc, 'rb')
+            outLines = outFile.readlines()
+            outFile.close()
+            if outLines != inLines:
+                os.remove(outSrc)
+        if not os.path.exists(outSrc):
+            outFile = open(outSrc, 'wb')
+            outFile.writelines(inLines)
+            outFile.close()
+        src = [outSrc]
     src += c_files
 
     if sys.platform == 'win32':
@@ -435,12 +458,33 @@ def build_xas_xas(ext_modules):
     basedir = os.path.join('PyMca5', 'PyMcaPhysics', 'xas', '_xas')
     c_files = [os.path.join(basedir, 'src', 'polspl.c'),
                os.path.join(basedir, 'src', 'bessel0.c')]
+    cython_dir = os.path.join(basedir, 'cython')
     if build_ext:
+        # delete previously generated code (if any)
+        for fname in glob.glob(os.path.join(cython_dir, '*.c')):
+            try:
+                os.remove(fname)
+            except:
+                print("Cannot delete previously generated code <%s>" % fname)
+                raise
         src = [os.path.join(basedir, 'cython', '_xas.pyx')]
     else:
-        src = []
-        for fname in glob.glob(os.path.join(basedir, 'cython', '*.c')):
-            src.append(os.path.join(basedir, 'cython', os.path.basename(fname)))
+        inSrc = os.path.join(cython_dir, 'default', '_xas.c')
+        inFile = open(inSrc, 'rb')
+        inLines = inFile.readlines()
+        inFile.close()
+        outSrc = os.path.join(cython_dir, '_xas.c')
+        if os.path.exists(outSrc):
+            outFile = open(outSrc, 'rb')
+            outLines = outFile.readlines()
+            outFile.close()
+            if outLines != inLines:
+                os.remove(outSrc)
+        if not os.path.exists(outSrc):
+            outFile = open(outSrc, 'wb')
+            outFile.writelines(inLines)
+            outFile.close()
+        src = [outSrc]
     src += c_files
     if sys.platform == 'win32':
         extra_compile_args = []
