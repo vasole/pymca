@@ -44,7 +44,8 @@ if __name__ == '__main__':
                    'qt=',
                    'backend=',
                    'nativefiledialogs=',
-                   'PySide=']
+                   'PySide=',
+                   'binding=']
     try:
         opts, args = getopt.getopt(
                      sys.argv[1:],
@@ -57,6 +58,7 @@ if __name__ == '__main__':
     keywords={}
     debugreport = 0
     qtversion = None
+    binding = None
     for opt, arg in opts:
         if  opt in ('--spec'):
             keywords['spec'] = arg
@@ -77,23 +79,41 @@ if __name__ == '__main__':
             else:
                 nativeFileDialogs = False
         elif opt in ('--PySide'):
+            print("Please use --binding=PySide")
             import PySide.QtCore
-    if qtversion == '3':
-        raise NotImplementedError("Qt3 is no longer supported")
-    elif qtversion == '4':
-        try:
-            import sip
-            sip.setapi("QString", 2)
-            sip.setapi("QVariant", 2)
-        except:
-            print("Cannot set sip API") # Console widget not available
-        import PyQt4.QtCore
-    elif qtversion == '5':
-        try:
-            import sip
-        except:
-            pass
-        import PyQt5.QtCore
+        elif opt in ('--binding'):
+            binding = arg.lower()
+            if binding == "pyqt5":
+                import PyQt5.QtCore
+            elif binding == "pyqt4":
+                if sys.version_info < (3,):
+                    try:
+                        import sip
+                        sip.setapi("QString", 2)
+                        sip.setapi("QVariant", 2)
+                    except:
+                        print("Cannot set sip API")
+                import PyQt4.QtCore
+            elif binding == "pyside2":
+                import PySide2.QtCore
+            elif binding == "pyside":
+                import PySide.QtCore
+            else:
+                raise ValueError("Unknown Qt binding <%s>" % binding)
+    if binding is None:
+        if qtversion == '3':
+            raise NotImplementedError("Qt3 is no longer supported")
+        elif qtversion == '4':
+            if sys.version_info < (3,):
+                try:
+                    import sip
+                    sip.setapi("QString", 2)
+                    sip.setapi("QVariant", 2)
+                except:
+                    print("Cannot set sip API")
+            import PyQt4.QtCore
+        elif qtversion == '5':
+            import PyQt5.QtCore
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 try:
