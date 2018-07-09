@@ -68,7 +68,7 @@ else: # Try the different bindings
                     sip.setapi("QString", 2)
                     sip.setapi("QVariant", 2)
                 except:
-                    print("Cannot set sip API") # Console widget not available                    
+                    print("Cannot set sip API") # Console widget not available
             import PyQt4
             BINDING = "PyQt4"
         except ImportError:
@@ -172,7 +172,7 @@ def exceptionHandler(type_, value, trace):
     msg.raise_()
     msg.exec_()
 
-# Overwrite the QFileDialog to make sure that by default it 
+# Overwrite the QFileDialog to make sure that by default it
 # returns non-native dialogs as it was the traditional behavior of Qt
 _QFileDialog = QFileDialog
 class QFileDialog(_QFileDialog):
