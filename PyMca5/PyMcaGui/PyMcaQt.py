@@ -34,11 +34,56 @@ import traceback
 This module simplifies writing code that has to deal with with PySide and PyQt4.
 
 """
+BINDING = None
 # force cx_freeze to consider sip among the modules to add
 # to the binary packages
-if (('PySide.QtCore' in sys.modules) or
-        (hasattr(sys, 'argv') and 'PySide' in sys.argv)):
-        # argv might not be defined for embedded python (e.g., in Qt designer)
+if 'PySide2.QtCore' in sys.modules:
+    BINDING = 'PySide2'
+
+elif 'PySide.QtCore' in sys.modules:
+    BINDING = 'PySide'
+
+elif 'PyQt5.QtCore' in sys.modules:
+    BINDING = 'PyQt5'
+
+elif 'PyQt4.QtCore' in sys.modules:
+    BINDING = 'PyQt4'
+
+elif hasattr(sys, 'argv') and ('PySide2' in sys.argv):
+    BINDING = 'PySide2'
+
+elif hasattr(sys, 'argv') and ('PySide' in sys.argv):
+    # argv might not be defined for embedded python (e.g., in Qt designer)
+    BINDING = 'PySide'
+
+else: # Try the different bindings
+    try:
+        import PyQt5
+        BINDING = "PyQt5"
+    except ImportError:
+        try:
+            if sys.version_info < (3,):
+                try:
+                    import sip
+                    sip.setapi("QString", 2)
+                    sip.setapi("QVariant", 2)
+                except:
+                    print("Cannot set sip API") # Console widget not available                    
+            import PyQt4
+            BINDING = "PyQt4"
+        except ImportError:
+            try:
+                import PySide
+                BINDING = "PySide"
+            except ImportError:
+                try:
+                    import PySide2
+                    BINDING = "PySide2"
+                except ImportError:
+                    raise ImportError(
+                        'No Qt wrapper found. Install PyQt5, PyQt4, PySide or PySide2.')
+
+if BINDING == "PySide":
     from PySide.QtCore import *
     from PySide.QtGui import *
     try:
@@ -50,6 +95,7 @@ if (('PySide.QtCore' in sys.modules) or
     except:
         pass
     pyqtSignal = Signal
+    pyqtSlot = Slot
 
     #matplotlib has difficulties to identify PySide
     try:
@@ -57,12 +103,29 @@ if (('PySide.QtCore' in sys.modules) or
         matplotlib.rcParams['backend.qt4']='PySide'
     except:
         pass
-elif "PyQt5.QtCore" in sys.modules:
+
+elif BINDING == "PyQt4":
+    if sys.version_info < (3,):
+        try:
+            import sip
+            sip.setapi("QString", 2)
+            sip.setapi("QVariant", 2)
+        except:
+            print("Cannot set sip API") # Console widget not available
+    from PyQt4.QtCore import *
+    from PyQt4.QtGui import *
     try:
-        import sip
+        from PyQt4.QtOpenGL import *
     except:
-        # PyQt5 always uses API 2
         pass
+    try:
+        from PyQt4.QtSvg import *
+    except:
+        pass
+    Signal = pyqtSignal
+    Slot = pyqtSlot
+
+elif BINDING == "PyQt5":
     from PyQt5.QtCore import *
     from PyQt5.QtGui import *
     from PyQt5.QtWidgets import *
@@ -75,59 +138,28 @@ elif "PyQt5.QtCore" in sys.modules:
         from PyQt5.QtSvg import *
     except:
         pass
-else:
-    if sys.version_info < (3,):
-        try:
-            import sip
-            sip.setapi("QString", 2)
-            sip.setapi("QVariant", 2)
-        except:
-            print("Cannot set sip API") # Console widget not available
-    try:
-        from PyQt4.QtCore import *
-        from PyQt4.QtGui import *
-        try:
-            from PyQt4.QtOpenGL import *
-        except:
-            pass
-        try:
-            from PyQt4.QtSvg import *
-        except:
-            pass
-    except ImportError:
-        try:
-            # try PySide
-            from PySide.QtCore import *
-            from PySide.QtGui import *
-            try:
-                from PySide.QtSvg import *
-            except:
-                pass
-            try:
-                from PySide.QtOpenGL import *
-            except:
-                pass
-            pyqtSignal = Signal
+    Signal = pyqtSignal
+    Slot = pyqtSlot
 
-            # matplotlib has difficulties to identify PySide
-            try:
-                import matplotlib
-                matplotlib.rcParams['backend.qt4']='PySide'
-            except:
-                pass
-        except ImportError:
-            from PyQt5.QtCore import *
-            from PyQt5.QtGui import *
-            from PyQt5.QtWidgets import *
-            from PyQt5.QtPrintSupport import *
-            try:
-                from PyQt5.QtOpenGL import *
-            except:
-                pass
-            try:
-                from PyQt5.QtSvg import *
-            except:
-                pass
+elif BINDING == "PySide2":
+    # try PySide2 (experimental)
+    from PySide2.QtCore import *
+    from PySide2.QtGui import *
+    from PySide2.QtWidgets import *
+    from PySide2.QtPrintSupport import *
+    try:
+        from PySide2.QtOpenGL import *
+    except:
+        pass
+    try:
+        from PySide2.QtSvg import *
+    except:
+        pass
+    pyqtSignal = Signal
+    pyqtSlot = Slot
+
+else:
+    raise ImportError('No Qt wrapper found. Install one of PyQt5, PyQt4, PySide or PySide2 (untested)')
 
 # provide a exception handler but not implement it by default
 def exceptionHandler(type_, value, trace):
