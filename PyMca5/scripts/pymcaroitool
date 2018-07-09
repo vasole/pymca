@@ -2,10 +2,18 @@
 
 import os
 import sys
-from PyMca5.PyMcaGui.pymca import QStackWidget as target
+import PyMca5.PyMcaGui.pymca as target
 
 fname = os.path.join(os.path.dirname(target.__file__), 'QStackWidget.py')
 if sys.version < '3.0':
     execfile(fname)
 else:
-    exec(compile(open(fname).read(), fname, 'exec'))
+    f = open(fname, "rb")
+    code_txt = f.read()
+    f.close()
+    if sys.version_info < (3, 7):
+        code = compile(code_txt, fname, 'exec')
+    else:
+        code = code_txt
+    exec(code)
+
