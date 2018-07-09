@@ -83,7 +83,6 @@ if __name__ == '__main__':
             import PySide.QtCore
         elif opt in ('--binding'):
             binding = arg.lower()
-            print("requested binding = ", binding)
             if binding == "pyqt5":
                 import PyQt5.QtCore
             elif binding == "pyqt4":
