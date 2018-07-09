@@ -41,7 +41,7 @@ if __name__ == "__main__":
     longoptions = ["fileindex=","old",
                    "filepattern=", "begin=", "end=", "increment=",
                    "nativefiledialogs=", "imagestack=", "image=",
-                   "backend=", "binding"]
+                   "backend=", "binding="]
     opts, args = getopt.getopt(
                  sys.argv[1:],
                  options,
