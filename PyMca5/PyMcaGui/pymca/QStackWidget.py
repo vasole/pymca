@@ -34,6 +34,39 @@ import traceback
 import numpy
 import weakref
 
+if __name__ == "__main__":
+    # we have to get the Qt binding prior to import PyMcaQt
+    import getopt
+    options = ''
+    longoptions = ["fileindex=","old",
+                   "filepattern=", "begin=", "end=", "increment=",
+                   "nativefiledialogs=", "imagestack=", "image=",
+                   "backend=", "binding"]
+    opts, args = getopt.getopt(
+                 sys.argv[1:],
+                 options,
+                 longoptions)
+    binding = None
+    for opt, arg in opts:
+        if opt in ('--binding'):
+            binding = arg.lower()
+            if binding == "pyqt5":
+                import PyQt5.QtCore
+            elif binding == "pyqt4":
+                if sys.version_info < (3,):
+                    try:
+                        import sip
+                        sip.setapi("QString", 2)
+                        sip.setapi("QVariant", 2)
+                    except:
+                        print("Cannot set sip API")
+                import PyQt4.QtCore
+            elif binding == "pyside2":
+                import PySide2.QtCore
+            elif binding == "pyside":
+                import PySide.QtCore
+            else:
+                raise ValueError("Unknown Qt binding <%s>" % binding)
 from PyMca5.PyMcaGui import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -1224,12 +1257,6 @@ def test():
 
 if __name__ == "__main__":
     sys.excepthook = qt.exceptionHandler
-    import getopt
-    options = ''
-    longoptions = ["fileindex=","old",
-                   "filepattern=", "begin=", "end=", "increment=",
-                   "nativefiledialogs=", "imagestack=", "image=",
-                   "backend="]
     try:
         opts, args = getopt.getopt(
                      sys.argv[1:],
