@@ -2333,6 +2333,9 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                 self._rightAxisEnabled = None
         try:
             self.graph.draw()
+            # Next line had to be added with MacOS, matplotlib 2.2.2
+            # and Python 3.7 I'm afraid it will affect performance.
+            self.graph.flush_events()
         except ValueError:
             # TODO: Understand why matplotlib 2.1.0rc0 raises an
             # error when toggling semilogarithmic axes and previous
