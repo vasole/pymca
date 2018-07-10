@@ -33,8 +33,15 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __doc__ = """
 
 A Stack plugin is a module that will be automatically added to the PyMca stack windows
-in order to perform user defined operations on the data stack. It has to
-inherit the :class:`StackPluginBase` class and implement the following methods:
+in order to perform user defined operations on the data stack. 
+
+Plugins can be automatically installed provided they are in the appropriate place:
+
+    - In the user home directory (POSIX systems): *${HOME}/.pymca/plugins* 
+      or *${HOME}/PyMca5/plugins* (older PyMca installation)
+    - In *"My Documents\\\\PyMca\\\\plugins"* (Windows)
+
+It has to inherit the :class:`StackPluginBase` class and implement the following methods:
 
     - :meth:`StackPluginBase.getMethods`
     - :meth:`StackPluginBase.getMethodToolTip` (optional but convenient)

@@ -64,11 +64,11 @@ class MarCCD(object):
         depth  = info["depth"]
         fd.seek(4096)
         if depth == 1:
-            data = numpy.fromstring(fd.read(nbytes), numpy.uint8)
+            data = numpy.array(numpy.frombuffer(fd.read(nbytes), numpy.uint8))
         elif depth == 2:
-            data = numpy.fromstring(fd.read(nbytes), numpy.uint16)
+            data = numpy.array(numpy.frombuffer(fd.read(nbytes), numpy.uint16))
         elif depth == 4:
-            data = numpy.fromstring(fd.read(nbytes), numpy.uint32)
+            data = numpy.array(numpy.frombuffer(fd.read(nbytes), numpy.uint32))
         if swap:
             data = data.byteswap()
         data.shape = info["nfast"], info["nslow"]
@@ -155,7 +155,7 @@ class MccdHeader(object):
         if 0:
             self.__format = struct.unpack("256I", self.raw[0:256*4])
         else:
-            self.__format = numpy.fromstring(self.raw[0:256*4], numpy.uint32)
+            self.__format = numpy.array(numpy.frombuffer(self.raw[0:256*4], numpy.uint32))
 
     def __unpack_gonio(self):
         idx= 640

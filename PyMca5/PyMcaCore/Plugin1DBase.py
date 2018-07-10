@@ -36,7 +36,8 @@ perform user defined operations of the plotted 1D data.
 
 Plugins can be automatically installed provided they are in the appropriate place:
 
-    - In the user home directory: *${HOME}/PyMca/plugins* (POSIX systems)
+    - In the user home directory (POSIX systems): *${HOME}/.pymca/plugins* 
+      or *${HOME}/PyMca5/plugins* (older PyMca installation)
     - In *"My Documents\\\\PyMca\\\\plugins"* (Windows)
 
 A plugin inherit the :class:`Plugin1DBase` class and implement the methods:

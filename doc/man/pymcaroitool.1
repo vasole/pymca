@@ -41,6 +41,10 @@ its format is supported.
 .P
 Start the program with a file browser to select the input files.
 
+.B pymcaroitool --binding=XX
+.P
+Start the program using the selected Qt binding. It has ot be one of PyQt5, PyQt4, PySide or PySide2.
+
 .B pymcaroitool file_0001.edf
 .P
 Tries to open the file named file_0001.edf and all indexed files of 
@@ -50,7 +54,6 @@ the form file_????.edf where ???? is a number.
 .P
 Tries to open the file named file_0001.edf and all indexed files of 
 the form file_????.edf where ???? is a number as a set of images.
-
 
 .B pymcaroitool uncompressed_tiff_file_0001.tif
 .P

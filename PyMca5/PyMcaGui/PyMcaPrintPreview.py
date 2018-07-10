@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -27,27 +27,5 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-import os
-import glob
 
-def getPackages(directory):
-    packages = []
-    fileList = glob.glob(os.path.join(directory, "*", "__init__.py"))
-    for fileName in fileList:
-        dirName = os.path.dirname(fileName)
-        packages.append(dirName)
-        packages += getPackages(dirName)
-    return packages
-
-from .plotting import PyMca_Icons
-from .plotting.PyMca_Icons import IconDict
-
-# this is the package level directory PyMcaGui
-baseDirectory = os.path.dirname(__file__)
-__path__ += [baseDirectory]
-for directory in ["io", "math", "misc",
-                  "physics", "plotting", "pymca"]:
-    tmpDir = os.path.join(baseDirectory, directory)
-    if os.path.exists(os.path.join(tmpDir, "__init__.py")):
-        __path__ += [tmpDir]
-    __path__ += getPackages(tmpDir)
+from .plotting.PyMcaPrintPreview import *
