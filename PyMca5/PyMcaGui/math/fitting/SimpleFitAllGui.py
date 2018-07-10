@@ -113,6 +113,7 @@ class SimpleFitAllGui(SimpleFitGui):
             w = SpecfitConfigGui.SpecfitConfigGui
             SpecfitFunctions.WIDGET = [w for _t in SpecfitFunctions.THEORY]
             fit.importFunctions(SpecfitFunctions)
+            fit.loadUserFunctions()
         SimpleFitGui.__init__(self, parent, fit, graph, actions)
 
         self.fitAllInstance = SimpleFitAll.SimpleFitAll(fit=self.fitModule)

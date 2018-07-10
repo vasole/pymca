@@ -34,11 +34,17 @@ import sys
 import os
 import numpy
 import copy
+import logging
+import glob
 import types
 from . import Gefit
 from . import SpecfitFuns
+from PyMca5 import getDefaultUserFitFunctionsDirectory
+
+_logger = logging.getLogger(__name__)
 
 DEBUG = 0
+
 
 class SimpleFit(object):
     def __init__(self):
@@ -221,6 +227,11 @@ class SimpleFit(object):
             except:
                 raise ValueError("Cannot interprete/find %s" % modname)
 
+        if isinstance(newfun.THEORY, dict):
+            # silx fit theories
+            self._importSilxFunctions(newfun)
+            return
+
         theory = newfun.THEORY
         function=newfun.FUNCTION
         parameters = newfun.PARAMETERS
@@ -241,11 +252,10 @@ class SimpleFit(object):
         except:
             widget=None
 
-        basename = os.path.basename(newfun.__file__)
-
         for i in range(len(theory)):
             ddict = {}
             functionName = theory[i]
+            ddict['signature'] = 'pymca'
             ddict['function'] = function[i]
             ddict['parameters'] = parameters[i]
             ddict['default_parameters'] = None
@@ -269,6 +279,80 @@ class SimpleFit(object):
                 ddict['widget'] = widget[i]
             self._fitConfiguration['functions'][functionName] = ddict
             self._fitConfiguration['fit']['functions'].append(functionName)
+
+    def _importSilxFunctions(self, mod):
+        """
+        :param mod: Module defining silx fit theories
+        """
+        theoryDict = mod.THEORY
+
+        for name, theory in theoryDict.items():
+            assert not theory.pymca_legacy,\
+                "It makes no sense to wrap a PyMca fit theory " +\
+                "in a silx theory to load it back in PyMca"
+            ddict = {}
+            functionName = name
+            ddict['signature'] = 'silx'
+            ddict['function'] = self._wrapSilxFunction(theory.function)
+            ddict['parameters'] = theory.parameters
+            ddict['default_parameters'] = None
+            ddict['estimate']   = self._wrapSilxEstimate(theory.estimate)
+            ddict['derivative'] = self._wrapSilxDerivate(theory.derivative)
+            ddict['configure']  = theory.configure
+            ddict['widget']     = None
+            ddict['file']       = mod.__file__
+            ddict['configuration'] = {}
+            if theory.configure is not None:
+                ddict['configuration'] = theory.configure()
+                if ddict['estimate'] is None:
+                    ddict['configuration']['estimation'] = None
+            self._fitConfiguration['functions'][functionName] = ddict
+            self._fitConfiguration['fit']['functions'].append(functionName)
+
+    def _wrapSilxEstimate(self, f):
+        if f is None:
+            return None
+
+        def wrapped(xx, yy, zzz, xscaling=1.0, yscaling=None):
+            estimated_param, constraints = f(xx, yy - zzz)
+            pymca_constraints = numpy.array(constraints).transpose()
+            return estimated_param, pymca_constraints
+        return wrapped
+
+    def _wrapSilxFunction(self, f):
+        if f is None:
+            return None
+
+        def wrapped(pars, x):
+            return f(x, *pars)
+        return wrapped
+
+    def _wrapSilxDerivate(self, f):
+        if f is None:
+            return None
+
+        def wrapped(parameters, index, x):
+            return f(x, parameters, index)
+        return wrapped
+
+    def loadUserFunctions(self):
+        userDirectory = getDefaultUserFitFunctionsDirectory()
+        fileList = glob.glob(os.path.join(userDirectory, "*.py"))
+        # simple filter to prevent unnecessary imports
+        filteredFileList = []
+        for fname in fileList:
+            # in Python 3, rb implies bytes and not strings
+            with open(fname, 'r') as f:
+                for line in f:
+                    if line.strip().startswith("THEORY"):
+                        filteredFileList.append(fname)
+                        break
+        for fname in filteredFileList:
+            try:
+                self.importFunctions(fname)
+            except:
+                _logger.error("Could not import user fit functions %s",
+                              fname)
 
     def setFitFunction(self, name):
         if name in [None, "None", "NONE"]:
