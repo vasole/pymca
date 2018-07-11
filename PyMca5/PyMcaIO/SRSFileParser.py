@@ -33,9 +33,11 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
 import numpy
+import logging
 from PyMca5.PyMcaIO import SpecFileAbstractClass
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class BufferedFile(object):
     def __init__(self, filename):
@@ -105,8 +107,7 @@ class SRSFileParser(object):
                     labels = line[:-1].replace("\t", "  ").split("  ")
                     readingData = True
             else:
-                if DEBUG:
-                    print("Unhandled line %s" % line[:-1])
+                _logger.debug("Unhandled line %s", line[:-1])
             line = _fileObject.readline()
         header.append("#N %d" % len(labels))
         txt = "#L "

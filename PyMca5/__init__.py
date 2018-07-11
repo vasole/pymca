@@ -31,13 +31,17 @@ __version__ = "5.3.2"
 
 import os
 import sys
+
 from PyMca5.PyMcaDataDir import PYMCA_DATA_DIR
 try:
     from fisx.DataDir import FISX_DATA_DIR
 except ImportError:
     FISX_DATA_DIR = None
 
-DEBUG = 0
+import logging as _logging
+_logging.getLogger(__name__).addHandler(_logging.NullHandler())
+_logger = _logging.getLogger(__name__)
+
 
 if sys.platform.startswith("win"):
     import ctypes
@@ -123,7 +127,7 @@ def getDefaultUserPluginsDirectory():
         else:
             return None
     except:
-        print("WARNING: Cannot initialize plugins directory")
+        _logger.info("WARNING: Cannot initialize plugins directory")
         return None
 
 def getDefaultUserFitFunctionsDirectory():
@@ -157,7 +161,7 @@ def getUserDataFile(fileName, directory=""):
             if not os.path.exists(userDataDir):
                 os.mkdir(userDataDir)
     except:
-        print("WARNING: cannot initialize user data directory")
+        _logger.info("WARNING: cannot initialize user data directory")
         
     if userDataDir is None:
         return fileName
@@ -168,12 +172,10 @@ def getUserDataFile(fileName, directory=""):
     else:
         userDataFile = os.path.join(userDataDir, baseName)
     if os.path.exists(userDataFile):
-        if DEBUG:
-            print("Using user data file: %s" % userDataFile)
+        _logger.debug("Using user data file: %s", userDataFile)
         return userDataFile
     else:
-        if DEBUG:
-            print("Using data file: %s" % fileName)
+        _logger.debug("Using data file: %s", fileName)
         return fileName
 
 def getDataFile(fileName, directory=None):
@@ -188,8 +190,7 @@ def getDataFile(fileName, directory=None):
 
     # return the input file name if exists
     if os.path.exists(fileName):
-        if DEBUG:
-            print("Filename as supplied <%s>" % fileName)
+        _logger.debug("Filename as supplied <%s>", fileName)
         return fileName
 
     # the list of sub-directories where to look for the file
@@ -202,8 +203,7 @@ def getDataFile(fileName, directory=None):
     for subdirectory in directoryList:
         newFileName = getUserDataFile(fileName, directory=subdirectory)
         if os.path.exists(newFileName):
-            if DEBUG:
-                print("Filename from user <%s>" % newFileName)
+            _logger.debug("Filename from user <%s>", newFileName)
             return newFileName
 
     # PyMca
@@ -212,8 +212,7 @@ def getDataFile(fileName, directory=None):
                                    subdirectory,
                                    os.path.basename(fileName))
         if os.path.exists(newFileName):
-            if DEBUG:
-                print("Filename from PyMca Data Directory <%s>" % newFileName)
+            _logger.debug("Filename from PyMca Data Directory <%s>", newFileName)
             return newFileName
 
     # fisx
@@ -223,9 +222,8 @@ def getDataFile(fileName, directory=None):
                                        subdirectory,
                                        os.path.basename(fileName))
             if os.path.exists(newFileName):
-                if DEBUG:
-                    print("Filename from fisx Data Directory <%s>" % \
-                                                  newFileName)
+                _logger.debug("Filename from fisx Data Directory <%s>",
+                              newFileName)
                 return newFileName
 
     # file not found
@@ -241,7 +239,7 @@ if sys.platform.startswith("win"):
         if os.getenv("MPLCONFIGDIR") is None:
             os.environ['MPLCONFIGDIR'] = getDefaultSettingsDirectory()
     except:
-        print("WARNING: Could not set MPLCONFIGDIR.", sys.exc_info()[1])
+        _logger.info("WARNING: Could not set MPLCONFIGDIR. %s", sys.exc_info()[1])
 
 # mandatory modules for backwards compatibility
 from .PyMcaCore import Plugin1DBase, StackPluginBase, PyMcaDirs, DataObject
@@ -251,7 +249,7 @@ from .PyMcaCore import Plugin1DBase, StackPluginBase, PyMcaDirs, DataObject
 try:
     from .PyMcaIO import specfilewrapper, EdfFile, specfile, ConfigDict
 except:
-    print("WARNING importing IO directly")
+    _logger.info("WARNING importing IO directly")
     from PyMcaIO import specfilewrapper, EdfFile, specfile, ConfigDict
 
 from .PyMcaMath.fitting import SpecfitFuns, Gefit, Specfit

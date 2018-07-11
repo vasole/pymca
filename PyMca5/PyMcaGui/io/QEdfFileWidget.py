@@ -30,9 +30,11 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os.path
 import numpy
+import logging
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.PyMcaGui import PlotWidget
+from silx.gui.plot import PlotWidget
+from silx.gui.plot.PrintPreviewToolButton import SingletonPrintPreviewToolButton
 
 if not hasattr(qt, 'QString'):
     QString = qt.safe_str
@@ -46,18 +48,42 @@ from PyMca5.PyMcaGui import QPyMcaMatplotlibSave
 MATPLOTLIB = True
 from PyMca5.PyMcaGui import IconDict
 from PyMca5.PyMcaGui import ColormapDialog
-from PyMca5.PyMcaGui import PyMcaPrintPreview
 from PyMca5.PyMcaIO import ArraySave
 from PyMca5 import PyMcaDirs
 from . import SpecFileDataInfo
 from PyMca5 import spslut
+
+_logger = logging.getLogger(__name__)
+
+
 COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
 
 
-DEBUG = 0
 SOURCE_TYPE = 'EdfFile'
 __revision__ = "$Revision: 1.35 $"
+
+
+def convertToRowAndColumn(x, y, shape, xScale=None, yScale=None, safe=True):
+    if xScale is None:
+        c = x
+    else:
+        c = (x - xScale[0]) / xScale[1]
+    if yScale is None:
+        r = y
+    else:
+        r = ( y - yScale[0]) / yScale[1]
+
+    if safe:
+        c = min(int(c), shape[1] - 1)
+        c = max(c, 0)
+        r = min(int(r), shape[0] - 1)
+        r = max(r, 0)
+    else:
+        c = int(c)
+        r = int(r)
+    return r, c
+
 
 class EdfFile_StandardArray(qt.QWidget):
     sigWidgetSignal = qt.pyqtSignal(object)
@@ -228,30 +254,28 @@ class QEdfFileWidget(qt.QWidget):
         self.lastInputDir = None
         self.colormapDialog = None
         self.colormap  = None
-        self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
-        if DEBUG:
-            print("printPreview id = %d" % id(self.printPreview))
 
         #self.selectPixmap= qt.QPixmap(icons.selected)
         #self.unselectPixamp= qt.QPixmap(icons.unselected)
         self.mapComboName= {}
 
-        self.mainLayout= qt.QVBoxLayout(self)
-        self.toolBar = None
-        self._buildToolBar()
-
         # --- splitter
-        self.splitter= qt.QSplitter(self)
+        self.splitter = qt.QSplitter(self)
         self.splitter.setOrientation(qt.Qt.Vertical)
 
         # --- graph
-        self.graph=PlotWidget.PlotWidget(self.splitter, backend=None)
+        self.graph = PlotWidget(self.splitter, backend=None)
         self.graph.setGraphTitle('')
         self.graph.setGraphXLabel('Columns')
         self.graph.setGraphYLabel('Rows')
         self.graph.sigPlotSignal.connect(self.widgetSignal)
         self._x1Limit = self.graph.getGraphXLimits()[-1]
         self._y1Limit = self.graph.getGraphYLimits()[-1]
+
+        self.mainLayout = qt.QVBoxLayout(self)
+        self.toolBar = None
+        self._buildToolBar()
+
         #self.graph.hide()
         # --- array parameter
         self.__dummyW = qt.QWidget(self.splitter)
@@ -346,8 +370,8 @@ class QEdfFileWidget(qt.QWidget):
         #save
         if MATPLOTLIB:
             tb = self._addToolButton(self.saveIcon,
-                                 self.__saveIconSignal,
-                                 'Export Graph')
+                                     self.__saveIconSignal,
+                                     'Export Graph')
             self._saveMenu = qt.QMenu()
             self._saveMenu.addAction(QString("Standard"),    self._saveIconSignal)
             self._saveMenu.addAction(QString("Matplotlib") , self._saveMatplotlibImage)
@@ -356,6 +380,14 @@ class QEdfFileWidget(qt.QWidget):
                                  self._saveIconSignal,
                                  'Export Graph')
 
+        self.printPreview = SingletonPrintPreviewToolButton(parent=self,
+                                                            plot=self.graph)
+        self.printPreview.setIcon(self.printIcon)
+        self.toolBarLayout.addWidget(self.printPreview)
+
+        _logger.debug("printPreview id = %d",
+                      id(self.printPreview.printPreviewDialog))
+
         #info
         self.infoText = qt.QLabel(self.toolBar)
         self.infoText.setText("    X = ???? Y = ???? Z = ????")
@@ -363,22 +395,12 @@ class QEdfFileWidget(qt.QWidget):
 
         self.toolBarLayout.addWidget(qt.HorizontalSpacer(self.toolBar))
 
-        # ---print
-        tb = self._addToolButton(self.printIcon,
-                                 self.printGraph,
-                                 'Print the Graph')
     def _hFlipIconSignal(self):
-        if DEBUG:
-            print("_hFlipIconSignal called")
-        if self.graph.isYAxisInverted():
-            self.graph.invertYAxis(False)
-        else:
-            self.graph.invertYAxis(True)
-        self.graph.replot()
+        _logger.debug("_hFlipIconSignal called")
+        self.graph.setYAxisInverted(not self.graph.isYAxisInverted())
 
     def _aspectButtonSignal(self):
-        if DEBUG:
-            print("_aspectButtonSignal")
+        _logger.debug("_aspectButtonSignal")
         if self._keepDataAspectRatioFlag:
             self.keepDataAspectRatio(False)
         else:
@@ -386,15 +408,13 @@ class QEdfFileWidget(qt.QWidget):
 
     def keepDataAspectRatio(self, flag=True):
         if flag:
-            self._keepDataAspectRatioFlag = True
             self.aspectButton.setIcon(self.solidEllipseIcon)
             self.aspectButton.setToolTip("Set free data aspect ratio")
         else:
-            self._keepDataAspectRatioFlag = False
             self.aspectButton.setIcon(self.solidCircleIcon)
             self.aspectButton.setToolTip("Keep data aspect ratio")
-        self.graph.keepDataAspectRatio(self._keepDataAspectRatioFlag)
-
+        self._keepDataAspectRatioFlag = flag
+        self.graph.setKeepDataAspectRatio(flag)
 
     def _addToolButton(self, icon, action, tip, toggle=None):
         tb      = qt.QToolButton(self.toolBar)
@@ -435,8 +455,7 @@ class QEdfFileWidget(qt.QWidget):
             self._dataInfoClosed(ddict)
 
     def _zoomReset(self):
-        if DEBUG:
-            print("_zoomReset")
+        _logger.debug("_zoomReset")
         self.graph.resetZoom()
 
     def _saveMatplotlibImage(self):
@@ -553,22 +572,25 @@ class QEdfFileWidget(qt.QWidget):
         else:
             self.saveGraphWidget(outputFile)
 
-    def saveGraphImage(self, filename,original=True):
-        fformat = filename[-3:].upper()
-        #This is the whole image, not the zoomed one ...
-        rgbData, legend, info, pixmap = self.graph.getActiveImage()
+    def saveGraphImage(self, filename, original=False):
+        format_ = filename[-3:].upper()
+        activeImage = self.graph.getActiveImage()
+        rgbdata = activeImage.getRgbaImageData()
+        # silx to pymca scale convention (a + b x)
+        xScale = activeImage.getOrigin()[0], activeImage.getScale()[0]
+        yScale = activeImage.getOrigin()[1], activeImage.getScale()[1]
         if original:
             # save whole image
-            bgrData = numpy.array(rgbData, copy=True)
-            bgrData[:,:,0] = rgbData[:, :, 2]
-            bgrData[:,:,2] = rgbData[:, :, 0]
+            bgradata = numpy.array(rgbdata, copy=True)
+            bgradata[:, :, 0] = rgbdata[:, :, 2]
+            bgradata[:, :, 2] = rgbdata[:, :, 0]
         else:
-            shape = rgbData.shape[:2]
+            shape = rgbdata.shape[:2]
             xmin, xmax = self.graph.getGraphXLimits()
             ymin, ymax = self.graph.getGraphYLimits()
             # save zoomed image, for that we have to get the limits
-            r0, c0 = ymin, xmin
-            r1, c1 = ymax, xmax
+            r0, c0 = convertToRowAndColumn(xmin, ymin, shape, xScale=xScale, yScale=yScale, safe=True)
+            r1, c1 = convertToRowAndColumn(xmax, ymax, shape, xScale=xScale, yScale=yScale, safe=True)
             row0 = int(min(r0, r1))
             row1 = int(max(r0, r1))
             col0 = int(min(c0, c1))
@@ -577,26 +599,27 @@ class QEdfFileWidget(qt.QWidget):
                 row1 += 1
             if col1 < shape[1]:
                 col1 += 1
-            tmpArray = rgbData[row0:row1, col0:col1, :]
-            bgrData = numpy.array(tmpArray, copy=True, dtype=rgbData.dtype)
-            bgrData[:,:,0] = tmpArray[:, :, 2]
-            bgrData[:,:,2] = tmpArray[:, :, 0]
+            tmpArray = rgbdata[row0:row1, col0:col1, :]
+            bgradata = numpy.array(tmpArray, copy=True, dtype=rgbdata.dtype)
+            bgradata[:, :, 0] = tmpArray[:, :, 2]
+            bgradata[:, :, 2] = tmpArray[:, :, 0]
         if self.graph.isYAxisInverted():
-            qImage = qt.QImage(bgrData, bgrData.shape[1], bgrData.shape[0],
-                                   qt.QImage.Format_RGB32)
+            qImage = qt.QImage(bgradata, bgradata.shape[1], bgradata.shape[0],
+                               qt.QImage.Format_ARGB32)
         else:
-            qImage = qt.QImage(bgrData, bgrData.shape[1], bgrData.shape[0],
-                                   qt.QImage.Format_RGB32).mirrored(False, True)
+            qImage = qt.QImage(bgradata, bgradata.shape[1], bgradata.shape[0],
+                               qt.QImage.Format_ARGB32).mirrored(False, True)
         pixmap = qt.QPixmap.fromImage(qImage)
-        if pixmap.save(filename, fformat):
+        if pixmap.save(filename, format_):
             return
         else:
-            qt.QMessageBox.critical(self, "Save Error", "%s" % sys.exc_info()[1])
+            qt.QMessageBox.critical(self, "Save Error",
+                                    "%s" % sys.exc_info()[1])
             return
 
     def saveGraphWidget(self, filename):
         fformat = filename[-3:].upper()
-        if hasattr(qt.QPixmap, "graphWidget"):
+        if hasattr(qt.QPixmap, "grabWidget"):
             # Qt4
             pixmap = qt.QPixmap.grabWidget(self.graph)
         else:
@@ -614,18 +637,6 @@ class QEdfFileWidget(qt.QWidget):
             return True
         else:
             return False
-
-    def printGraph(self):
-        if hasattr(qt.QPixmap, "graphWidget"):
-            # Qt4
-            pixmap = qt.QPixmap.grabWidget(self.graph)
-        else:
-            #Qt5
-            pixmap = self.graph.grab()
-        self.printPreview.addPixmap(pixmap)
-        if self.printPreview.isHidden():
-            self.printPreview.show()
-        self.printPreview.raise_()
 
     def _buildActions(self):
         self.buttonBox = qt.QWidget(self)
@@ -794,17 +805,14 @@ class QEdfFileWidget(qt.QWidget):
                     else:
                         self.removeSelection([nsel])
             elif dict['event']  == 'imageChanged':
-                if DEBUG:
-                    print("Image changed")
+                _logger.debug("Image changed")
                 if dict['index'] != self.currentArray:
                     self.currentArray = dict['index']
                     self.refresh()
-                if DEBUG:
-                    print("self.currentArray = ",self.currentArray)
+                _logger.debug("self.currentArray = %s", self.currentArray)
 
     def openFile(self, filename=None,justloaded=None):
-        if DEBUG:
-            print("openfile = %s" % filename)
+        _logger.debug("openfile = %s", filename)
         if justloaded is None:justloaded = 0
         if filename is None:
             self.lastInputDir = PyMcaDirs.inputDir
@@ -1023,10 +1031,9 @@ class QEdfFileWidget(qt.QWidget):
                              var[3],
                              var[4],
                              var[5]]
-        #self.graph.invertYAxis(True)
+        #self.graph.setYAxisInverted(True)
         pixmap = self.getPixmapFromData(self.lastData, self.colormap)
         self.graph.addImage(pixmap, legend="QEdfFileWidget")
-        self.graph.replot()
 
     def closeFile(self, filename=None):
         if filename is None:
@@ -1051,8 +1058,7 @@ class QEdfFileWidget(qt.QWidget):
                 try:
                     self.sigDelSelection.emit((self.data.SourceName, mcakeys))
                 except:
-                    if DEBUG:
-                        print("sigDelSelection is to be implemented")
+                    _logger.debug("sigDelSelection is to be implemented")
 
         for idx in range(self.fileCombo.count()):
             itext = self.fileCombo.itemText(idx)
@@ -1085,22 +1091,18 @@ class QEdfFileWidget(qt.QWidget):
         self.graph.removeImage(legend="QEdfFileWidget")
         self.oldsource = None
         self.graph.clearMarkers()
-        self.graph.replot()
         wid = self.__getParamWidget('array')
         wid.setImages(1)
-        wid.setDataSize(0,0)
-
+        wid.setDataSize(0, 0)
 
     def setDataSource(self,data=None):
-        if DEBUG:
-            print("setData(self, data) called")
-            print("data = ",data)
+        _logger.debug("setData(self, data) called")
+        _logger.debug("data = %s", data)
         self.data= data
         self.refresh()
 
     def refresh(self):
-        if DEBUG:
-            print("refresh method called")
+        _logger.debug("refresh method called")
         if self.data is None:
             self._reset()
             #wid = self.__getParamWidget('array')
@@ -1110,10 +1112,9 @@ class QEdfFileWidget(qt.QWidget):
             return
         self.currentFile = self.data.sourceName
         #this gives the number of images in the file
-        infoSource= self.data.getSourceInfo()
-        if DEBUG:
-            print("info :")
-            print(infoSource)
+        infoSource = self.data.getSourceInfo()
+        _logger.debug("info :")
+        _logger.debug("%s", infoSource)
 
         nimages=len(infoSource['KeyList'])
         #print self.data.SourceName,"nimages = ",nimages
@@ -1127,19 +1128,16 @@ class QEdfFileWidget(qt.QWidget):
         #print "SUM = ",loadsum, infoSource['KeyList']
         #print self.currentArray
         if (self.oldsource != self.currentFile) or (self.oldcurrentArray != self.currentArray):
-            if DEBUG:
-                print("I have to read again ... ")
+            _logger.debug("I have to read again ... ")
             if not loadsum:
-                if DEBUG:
-                    print("Not Loading the sum")
+                _logger.debug("Not Loading the sum")
                 dataObject = self.data.getDataObject(infoSource['KeyList']\
                                                      [self.currentArray])
                 info = dataObject.info
                 data = dataObject.data
                 imageinfo = infoSource['KeyList']
             else:
-                if DEBUG:
-                    print("Loading the sum")
+                _logger.debug("Loading the sum")
                 dataObject = self.data.getDataObject('0.0')
                 info = dataObject.info
                 data = dataObject.data
@@ -1157,9 +1155,9 @@ class QEdfFileWidget(qt.QWidget):
                         if 'Title' in header:
                             imageinfo[i] += "- " + header['Title']
                         i+=1
-                if DEBUG:
-                    print("NOT ADDING 0.0 - SUM KEY")
-                    wid.setImages(nimages+1,info = imageinfo+["0.0 - SUM"])
+                _logger.debug("NOT ADDING 0.0 - SUM KEY")
+                if _logger.getEffectiveLevel() == logging.DEBUG:
+                    wid.setImages(nimages+1, info = imageinfo+["0.0 - SUM"])
                 wid.setImages(nimages,info = imageinfo)
             else:
                 if 'Title' in info:
@@ -1168,10 +1166,9 @@ class QEdfFileWidget(qt.QWidget):
             wid.setCurrentImage(self.currentArray)
             #P.B. -> pointer(a,d1,d2,i1,i2) = a+ (i1+i2 * d1)
             wid.setDataSize(int(info["Dim_2"]), int(info["Dim_1"]))
-            if DEBUG:
-                print("Image size = %d x %d" % (int(info["Dim_2"]),
-                                                int(info["Dim_1"])))
-                print("data  size = ", data.shape)
+            _logger.debug("Image size = %d x %d",
+                          int(info["Dim_2"]), int(info["Dim_1"]))
+            _logger.debug("data  size = %s", data.shape)
 
             if self.graph.isHidden():
                 self.graph.show()
@@ -1205,7 +1202,6 @@ class QEdfFileWidget(qt.QWidget):
             pixmap = self.getPixmapFromData(data, self.colormap)
             self.graph.addImage(pixmap, legend="QEdfFileWidget")
         self.__refreshSelection()
-        self.graph.replot()
         self.oldsource       = "%s" % self.data.sourceName
         self.oldcurrentArray = self.currentArray * 1
 
@@ -1213,13 +1209,11 @@ class QEdfFileWidget(qt.QWidget):
         return self.paramWidget
 
     def _replaceClicked(self):
-        if DEBUG:
-            print("replace clicked")
+        _logger.debug("replace clicked")
         selkeys= self.__getSelectedKeys()
         if len(selkeys):
             #self.eh.event(self.repEvent, selkeys)
-            if DEBUG:
-                print("Replace event")
+            _logger.debug("Replace event")
             if self.allImages:
                 arraynamelist = self.data.getSourceInfo()['KeyList']
             else:
@@ -1268,8 +1262,7 @@ class QEdfFileWidget(qt.QWidget):
             self.sigReplaceSelection.emit(signalsellist)
 
     def _add2DClicked(self, replace=False, emit=True):
-        if DEBUG:
-            print("ADD 2D clicked")
+        _logger.debug("ADD 2D clicked")
         if (self.data is None) or \
            (self.currentArray is None):
             return
@@ -1299,8 +1292,7 @@ class QEdfFileWidget(qt.QWidget):
             return [sel]
 
     def _remove2DClicked(self):
-        if DEBUG:
-            print("REMOVE 2D clicked")
+        _logger.debug("REMOVE 2D clicked")
         infoSource= self.data.getSourceInfo()
         sel = {}
         sel['SourceType'] = infoSource['SourceType']
@@ -1318,8 +1310,7 @@ class QEdfFileWidget(qt.QWidget):
         self.sigRemoveSelection.emit([sel])
 
     def _replace2DClicked(self):
-        if DEBUG:
-            print("REPLACE 2D clicked")
+        _logger.debug("REPLACE 2D clicked")
         self._add2DClicked(replace=True)
 
     def currentSelectionList(self):
@@ -1329,15 +1320,12 @@ class QEdfFileWidget(qt.QWidget):
         return a
 
     def _addClicked(self, emit=True):
-        if DEBUG:
-            print("select clicked")
+        _logger.debug("select clicked")
         selkeys= self.__getSelectedKeys()
-        if DEBUG:
-            print("selected keys = ",selkeys)
+        _logger.debug("selected keys = %s", selkeys)
         if len(selkeys):
             #self.eh.event(self.addEvent, selkeys)
-            if DEBUG:
-                print("Select event")
+            _logger.debug("Select event")
             if self.allImages:
                 arraynamelist = self.data.getSourceInfo()['KeyList']
             else:
@@ -1416,16 +1404,14 @@ class QEdfFileWidget(qt.QWidget):
         return selkeys
 
     def _removeClicked(self):
-        if DEBUG:
-            print("remove clicked")
+        _logger.debug("remove clicked")
         selkeys= self.__getSelectedKeys()
         returnedselection=[]
         signalsellist = []
         if len(selkeys):
             #self.eh.event(self.delEvent, selkeys)
-            if DEBUG:
-                print("Remove Event")
-                print("self.selection before = ",self.selection)
+            _logger.debug("Remove Event")
+            _logger.debug("self.selection before = %s", self.selection)
             if self.allImages:
                 arraynamelist = self.data.getSourceInfo()['KeyList']
             else:
@@ -1453,17 +1439,13 @@ class QEdfFileWidget(qt.QWidget):
                     if selection['plot'] == 'rows':
                          sel[arrayname]['rows'].append({'x':selection['x'],'y':selection['y']})
                     if self.selection is not None:
-                        if DEBUG:
-                            print("step 1")
+                        _logger.debug("step 1")
                         if sel['SourceName'] in self.selection:
-                            if DEBUG:
-                                print("step 2")
+                            _logger.debug("step 2")
                             if arrayname in self.selection[sel['SourceName']]:
-                                if DEBUG:
-                                    print("step 3")
+                                _logger.debug("step 3")
                                 if 'rows' in self.selection[sel['SourceName']][arrayname]:
-                                    if DEBUG:
-                                        print("step 4")
+                                    _logger.debug("step 4")
                                     for couple in  sel[arrayname]['rows']:
                                         if couple in  self.selection[sel['SourceName']][arrayname]['rows']:
                                             index= self.selection[sel['SourceName']][arrayname]['rows'].index(couple)
@@ -1512,17 +1494,13 @@ class QEdfFileWidget(qt.QWidget):
         for sel in selection:
                 arrayname = sel['Key']
                 if self.selection is not None:
-                    if DEBUG:
-                        print("step 1")
+                    _logger.debug("step 1")
                     if sel['SourceName'] in self.selection:
-                        if DEBUG:
-                            print("step 2")
+                        _logger.debug("step 2")
                         if arrayname in self.selection[sel['SourceName']]:
-                            if DEBUG:
-                                print("step 3")
+                            _logger.debug("step 3")
                             if 'rows' in self.selection[sel['SourceName']][arrayname]:
-                                if DEBUG:
-                                    print("step 4")
+                                _logger.debug("step 4")
                                 for couple in  sel[arrayname]['rows']:
                                     if couple in  self.selection[sel['SourceName']][arrayname]['rows']:
                                         index= self.selection[sel['SourceName']][arrayname]['rows'].index(couple)
@@ -1564,11 +1542,10 @@ class QEdfFileWidget(qt.QWidget):
         self.sigRemoveSelection.emit(signalsellist)
 
     def setSelected(self,sellist,reset=1):
-        if DEBUG:
-            print("setSelected(self,sellist,reset=1) called")
-            print("sellist = ",sellist)
-            print("selection before = ",self.selection)
-            print("reset = ",reset)
+        _logger.debug("setSelected(self,sellist,reset=1) called")
+        _logger.debug("sellist = %s", sellist)
+        _logger.debug("selection before = %s", self.selection)
+        _logger.debug("reset = %s", reset)
         if reset:
             self.selection = {}
         elif self.selection is None:
@@ -1598,8 +1575,7 @@ class QEdfFileWidget(qt.QWidget):
                 for rowsel in sel[selkey]['cols']:
                     if rowsel not in self.selection[specname][selkey]['cols']:
                         self.selection[specname][selkey]['cols'].append(rowsel)
-        if DEBUG:
-            print("self.selection after = ",self.selection)
+        _logger.debug("self.selection after = %s", self.selection)
         self.__refreshSelection()
 
     def getSelection(self):
@@ -1621,10 +1597,9 @@ class QEdfFileWidget(qt.QWidget):
 
 
     def __refreshSelection(self):
-        if DEBUG:
-            print("__refreshSelection(self) called")
-            print(self.selection)
-            print("self.data.SourceName = ",self.data.sourceName)
+        _logger.debug("__refreshSelection(self) called")
+        _logger.debug(self.selection)
+        _logger.debug("self.data.SourceName = %s", self.data.sourceName)
         if self.selection is not None:
             if self.data is None:
                 return
@@ -1650,9 +1625,9 @@ class QEdfFileWidget(qt.QWidget):
             for key in sel.keys():
                 if (sel[key]['rows'] != []) or (sel[key]['cols'] !=  []):
                     selkeys.append(key)
-            if DEBUG:
-                print("selected images =",selkeys,"but self.selection = ",self.selection)
-                print("and self.selection.get(self.data.SourceName, {}) =",sel)
+            _logger.debug("selected images = %s but self.selection = %s",
+                          selkeys, self.selection)
+            _logger.debug("and self.selection.get(self.data.SourceName, {}) = %s ", sel)
 
             wid = self.__getParamWidget("array")
             wid.markImageSelected(selkeys)
@@ -1681,17 +1656,16 @@ class QEdfFileWidget(qt.QWidget):
             self.graph.clearMarkers()
             for i in rows:
                 label = "R%d" % i
-                marker=self.graph.insertYMarker(i,
-                                                label,
-                                                text=label,
-                                                color='white')
+                marker = self.graph.addYMarker(i,
+                                               label,
+                                               text=label,
+                                               color='white')
             for i in cols:
                 label = "C%d" % i
-                marker=self.graph.insertXMarker(i,
-                                                label,
-                                                text=label,
-                                                color='white')
-            self.graph.replot()
+                marker = self.graph.addXMarker(i,
+                                               label,
+                                               text=label,
+                                               color='white')
             return
 
     def closeEvent(self, event):
@@ -1720,9 +1694,12 @@ def test():
     def addSelection(sel):
         print("addSelection", sel)
 
-    a= qt.QApplication(sys.argv)
-    a.lastWindowClosed.connect(a.quit)
-
+    if qt.QApplication.instance() is None:
+        a = qt.QApplication(sys.argv)
+        a.lastWindowClosed.connect(a.quit)
+        sys.excepthook = qt.exceptionHandler
+    else:
+        a = None
     w = QEdfFileWidget()
     #print w
     if len(sys.argv) > 1:
@@ -1738,8 +1715,11 @@ def test():
     w.sigRemoveSelection.connect(removeSelection)
     w.sigReplaceSelection.connect(replaceSelection)
     w.show()
-    a.exec_()
+    if a is not None:
+        a.exec_()
+    else:
+        return w
 
-if __name__=="__main__":
+if __name__ == "__main__":
     test()
 

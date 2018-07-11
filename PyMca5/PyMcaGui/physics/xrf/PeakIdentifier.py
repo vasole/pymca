@@ -31,12 +31,14 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaPhysics import Elements
 from PyMca5.PyMcaGui import PyMca_Icons
 IconDict = PyMca_Icons.IconDict
 QTVERSION = qt.qVersion()
-DEBUG = 0
+
+_logger = logging.getLogger(__name__)
 
 
 class PeakIdentifier(qt.QWidget):
@@ -158,7 +160,7 @@ class PeakIdentifier(qt.QWidget):
             return
 
     def myslot(self):
-        print("PeakIdentifier.py myslot deprecated, use mySlot")
+        _logger.info("PeakIdentifier.py myslot deprecated, use mySlot")
         return self.mySlot()
 
     def _thresholdSlot(self, value):

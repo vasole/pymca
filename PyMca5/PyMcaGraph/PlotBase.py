@@ -58,9 +58,6 @@ The plugins will be compatible with any plot window that provides the methods:
 The simplest way to achieve that is to inherit from Plot
 """
 
-import os
-import sys
-import glob
 try:
     from numpy import argsort, nonzero, take
 except ImportError:
@@ -68,6 +65,16 @@ except ImportError:
 
 from . import PlotBackend
 from . import PluginLoader
+
+import logging
+import traceback
+_logger = logging.getLogger(__name__)
+
+_logger.warning("%s is deprecated, you are advised to use "
+                "silx.gui.plot.Colors instead",
+                __name__)
+for line in traceback.format_stack(limit=4):
+    _logger.warning(line.rstrip())
 
 DEBUG = 0
 

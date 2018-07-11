@@ -47,7 +47,10 @@ except ImportError:
         print("MotorInfoPlugin importing from somewhere else")
         import MotorInfoWindow
 
-DEBUG = 0
+import logging
+_logger = logging.getLogger(__name__)
+
+
 class MotorInfo(Plugin1DBase.Plugin1DBase):
     def __init__(self,  plotWindow,  **kw):
         Plugin1DBase.Plugin1DBase.__init__(self,  plotWindow,  **kw)
@@ -86,11 +89,10 @@ class MotorInfo(Plugin1DBase.Plugin1DBase):
     def _getLists(self):
         curves = self.getAllCurves()
         nCurves = len(curves)
-        if DEBUG:
-            print ("Received %d curve(s).." % nCurves)
+        _logger.debug("Received %d curve(s)..", nCurves)
         legendList = [leg for (xvals, yvals,  leg,  info) in curves]
         infoList = [info for (xvals, yvals,  leg,  info) in curves]
-        motorValuesList = self._convertInfoDictionary( infoList )
+        motorValuesList = self._convertInfoDictionary(infoList)
         return legendList,  motorValuesList
 
     def _convertInfoDictionary(self,  infosList):

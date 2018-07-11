@@ -27,6 +27,7 @@ __author__ = "Tonn Rueter"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import IconDict
 
@@ -40,7 +41,7 @@ if hasattr(qt, 'QString'):
 else:
     QString = qt.safe_str
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
 
 
 class MotorInfoComboBox(qt.QComboBox):
@@ -184,17 +185,15 @@ class MotorInfoTable(TableWidget):
         self.setItem(currentRow, 0, legend )
 
     def updateTable(self, legList, motList):
-        if DEBUG:
-            print("updateTable received lengths = ", len(legList), len(motList))
-            print("updateTable received legList = ", legList)
-            print("updateTable received motList = ", motList)
+        _logger.debug("updateTable received lengths = %d %d", len(legList), len(motList))
+        _logger.debug("updateTable received legList = %s", legList)
+        _logger.debug("updateTable received motList = %s", motList)
         if legList is None:
             nItems = 0
         else:
             nItems = len(legList)
         if self.legendsList == legList and self.motorsList == motList:
-            if DEBUG:
-                print("Ignoring update, no changes")
+            _logger.debug("Ignoring update, no changes")
         else:
             nRows = self.rowCount()
             if nRows != nItems:
@@ -268,7 +267,7 @@ class MotorInfoDialog(qt.QWidget):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle("Motor Info Plugin")
         if len(legends) != len(motorValues):
-            print('Consistency error: legends and motorValues do not have same length!')
+            _logger.warning('Consistency error: legends and motorValues do not have same length!')
         self.numCurves = len(legends)
         # Buttons
         self.buttonAddColumn = qt.QPushButton("Add", self)

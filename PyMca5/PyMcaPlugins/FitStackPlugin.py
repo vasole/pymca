@@ -38,19 +38,21 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-
+import logging
+_logger = logging.getLogger(__name__)
 try:
     from PyMca5 import StackPluginBase
     from PyMca5.PyMcaGui import StackSimpleFitWindow
     from PyMca5.PyMcaGui import PyMca_Icons
 except ImportError:
-    print("FitStackPlugin importing from somewhere else")
+    _logger.warning("FitStackPlugin importing from somewhere else")
 
-DEBUG = 0
 
 class FitStackPlugin(StackPluginBase.StackPluginBase):
     def __init__(self, stackWindow, **kw):
-        StackPluginBase.DEBUG = DEBUG
+        if _logger.getEffectiveLevel() == logging.DEBUG:
+            StackPluginBase.pluginBaseLogger.setLevel(logging.DEBUG)
+
         StackPluginBase.StackPluginBase.__init__(self, stackWindow, **kw)
         self.methodDict = {}
         function = self.fitStack

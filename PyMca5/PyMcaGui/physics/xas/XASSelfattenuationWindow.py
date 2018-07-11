@@ -31,8 +31,7 @@ __author__ = "V. Armando Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-import copy
-import numpy
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import PyMcaFileDialogs
 from PyMca5.PyMcaPhysics.xrf import Elements
@@ -45,7 +44,8 @@ if hasattr(qt, "QString"):
 else:
     qstring = str
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class SampleConfiguration(qt.QWidget):
     def __init__(self, parent=None,orientation="vertical"):
@@ -121,16 +121,13 @@ class SampleConfiguration(qt.QWidget):
     def materialSignal(self, txt):
         txt = str(txt)
         if Elements.isValidFormula(txt):
-            if DEBUG:
-                print("validFormula")
+            _logger.debug("validFormula")
             elementDict = Elements.getMaterialMassFractions([txt], [1.0])
         elif Elements.isValidMaterial(txt):
-            if DEBUG:
-                print("ValidMaterial")
+            _logger.debug("ValidMaterial")
             elementDict = Elements.getMaterialMassFractions([txt], [1.0])
         else:
-            if DEBUG:
-                print("to be defined")
+            _logger.debug("to be defined")
             msg=qt.QMessageBox.information(self,
                                     "Invalid Material %s" % txt,
                                     "The material %s is not a valid Formula " \
@@ -160,12 +157,10 @@ class SampleConfiguration(qt.QWidget):
                                          qstring(ele + "(%d)" % (z[i])))
         if currentElement in elementsList:
             #selection does not need to be changed
-            if DEBUG:
-                print("Element widget up to date")
+            _logger.debug("Element widget up to date")
         else:
             #selection needs to be changed
-            if DEBUG:
-                print("Setting the highest Z as default")
+            _logger.debug("Setting the highest Z as default")
             self.elementSignal(qstring(elementsList[iMaxZ]))
 
 

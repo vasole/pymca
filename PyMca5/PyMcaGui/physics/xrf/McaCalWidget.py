@@ -35,9 +35,10 @@ import sys
 import numpy
 from numpy.linalg import inv as inverse
 import copy
+import logging
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.PyMcaGui import PlotWidget
+from silx.gui.plot import PlotWidget
 
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -52,7 +53,7 @@ IconDict = PyMca_Icons.IconDict
 from . import PeakTableWidget
 if 0:
     from PyMca5 import XRDPeakTableWidget
-DEBUG = 0
+_logger = logging.getLogger(__name__)
 
 LOW_HEIGHT_THRESHOLD = 660
 
@@ -136,8 +137,8 @@ class McaCalWidget(qt.QDialog):
 
         self.layout.addWidget(self.container)
         #The graph
-        self.graph= PlotWidget.PlotWidget(self.container,
-                                          backend=None)
+        self.graph = PlotWidget(self.container,
+                                backend=None)
         self.graph.setGraphXLabel('Channel')
         self.graph.setGraphYLabel('Counts')
         self.graph.setDataMargins(0.0, 0.0, 0.0, 0.0)
@@ -289,8 +290,7 @@ class McaCalWidget(qt.QDialog):
         return tb
 
     def _toggleLogY(self):
-        if DEBUG:
-            print("_toggleLogY")
+        _logger.debug("_toggleLogY")
         if self.graph.isYAxisLogarithmic():
             self.setYAxisLogarithmic(False)
         else:
@@ -311,19 +311,19 @@ class McaCalWidget(qt.QDialog):
         self.okButton.clicked.connect(self.accept)
         self.cancelButton.clicked.connect(self.reject)
 
-    def plot(self,x,y,legend):
+    def plot(self, x, y, legend):
         #clear graph
         self.graph.clear()
-        self.graph.addCurve(x, y , legend=legend, replot=True)
+        self.graph.addCurve(x, y, legend=legend)
         self.dict['x']      = x
         self.dict['y']      = y
         self.dict['legend'] = legend
+        self.graph.setActiveCurve(legend)
         #reset the zoom
         self._resetZoom()
 
     def peakSearch(self):
-        if DEBUG:
-            print("Peak search called")
+        _logger.debug("Peak search called")
         if self.__manualsearch:
             self.__manualsearch = 0
             if QTVERSION < '4.0.0':
@@ -362,21 +362,18 @@ class McaCalWidget(qt.QDialog):
         for idx in peaksidx:
             self.foundPeaks.append(self.specfit.xdata[int(idx)])
             #self.graph.insertx1marker(self.specfit.xdata[int(idx)],self.specfit.ydata[int(idx)])
-            self.graph.insertXMarker(self.specfit.xdata[int(idx)],
-                                     legend="%d" % i,
-                                     text=None,
-                                     selectable=True,
-                                     draggable=False,
-                                     replot=False)
+            self.graph.addXMarker(self.specfit.xdata[int(idx)],
+                                  legend="%d" % i,
+                                  text=None,
+                                  selectable=True,
+                                  draggable=False)
             i += 1
-        self.graph.replot()
         #make sure marker mode is on
         self.markermode = 0
         self.__peakmarkermode()
 
-
     def clearpeaks(self):
-        print("DEPRECATED: Use clearPeaks")
+        _logger.info("DEPRECATED: Use clearPeaks")
         return self.clearPeaks()
 
     def clearPeaks(self):
@@ -384,7 +381,6 @@ class McaCalWidget(qt.QDialog):
         self.graph.clearMarkers()
         self.__destroylinewidgets()
         self.peakTable.clearPeaks()
-        self.graph.replot()
 
     def manualsearch(self):
         #disable peak selection
@@ -402,17 +398,16 @@ class McaCalWidget(qt.QDialog):
         if self.markermode:
             self.graph.setCursor(qt.QCursor(qt.Qt.CrossCursor))
             self.markermode = 0
-            self.graph.setZoomModeEnabled(False)
+            self.graph.setInteractiveMode('select')
         else:
             self.markermode = 1
             self.nomarkercursor = self.graph.cursor().shape()
             self.graph.setCursor(qt.QCursor(qt.Qt.PointingHandCursor))
-            self.graph.setZoomModeEnabled(True)
+            self.graph.setInteractiveMode('zoom')
         #self.markerButton.setOn(self.markermode == 1)
 
     def __calparsignal(self,dict):
-        if DEBUG:
-            print("__calparsignal called dict = ",dict)
+        _logger.debug("__calparsignal called dict = %s", dict)
         if dict['event'] == 'coeff':
             current = dict['calname' ]
             self.current  = current
@@ -445,10 +440,9 @@ class McaCalWidget(qt.QDialog):
                     calenergy = deltat * (i + 1)
                     self.foundPeaks.append(channel)
                     name = "%d" % i
-                    marker = self.graph.insertXMarker(channel,
-                                                      legend=name,
-                                                      color="red",
-                                                      replot=False)
+                    marker = self.graph.addXMarker(channel,
+                                                   legend=name,
+                                                   color="red")
                     if name in self.peakTable.peaks.keys():
                         self.peakTable.configure(number=name,
                                              channel=channel,
@@ -466,7 +460,6 @@ class McaCalWidget(qt.QDialog):
                 #make sure we cannot select the peaks again
                 self.markermode = 1
                 self.__peakmarkermode()
-                self.graph.replot()
             else:
                 self.caldict[current]['A']     = dict['caldict'][current]['A']
                 self.caldict[current]['B']     = dict['caldict'][current]['B']
@@ -493,25 +486,20 @@ class McaCalWidget(qt.QDialog):
             elif dict['boxname'] == 'Calibration':
                 pass
             else:
-                if DEBUG:
-                    print("Unknown combobox", dict['boxname'])
+                _logger.debug("Unknown combobox %s", dict['boxname'])
         else:
-            print("Unknown signal ", dict)
+            _logger.warning("Unknown signal %s", dict)
 
     def __graphsignal(self, ddict):
-        if DEBUG:
-            print("__graphsignal called with dict = ", ddict)
+        _logger.debug("__graphsignal called with dict = %s", ddict)
         if ddict['event'] in ['markerClicked', 'markerSelected']:
-            if DEBUG:
-                print("Setting marker color")
+            _logger.debug("Setting marker color")
             marker = int(ddict['label'])
             #The marker corresponds to the peak number
             channel = self.foundPeaks[marker]
-            self.graph.insertXMarker(channel,
-                                     legend=ddict['label'],
-                                     color='red',
-                                     replot=False)
-            self.graph.replot()
+            self.graph.addXMarker(channel,
+                                  legend=ddict['label'],
+                                  color='red')
             current = self.current
             calenergy = self.caldict[current]['A']+ \
                         self.caldict[current]['B'] * channel+ \
@@ -542,8 +530,7 @@ class McaCalWidget(qt.QDialog):
                 ret = linewidget.exec_()
             if ret == qt.QDialog.Accepted:
                 ddict=linewidget.getDict()
-                if DEBUG:
-                    print("dict got from dialog = ",ddict)
+                _logger.debug("dict got from dialog = %s", ddict)
                 if ddict != {}:
                     if name in self.peakTable.peaks.keys():
                         self.peakTable.configure(*ddict)
@@ -574,13 +561,10 @@ class McaCalWidget(qt.QDialog):
                         self.caldict[current]['C'] = newcal[2]
                     self.__peakTableSignal({'event':'use'}, calculate=False)
             else:
-                if DEBUG:
-                    print("Dialog cancelled or closed ")
-                self.graph.insertXMarker(channel,
-                                         legend=ddict['label'],
-                                         color='black',
-                                         replot=False)
-                self.graph.replot()
+                _logger.debug("Dialog cancelled or closed ")
+                self.graph.addXMarker(channel,
+                                      legend=ddict['label'],
+                                      color='black')
             del linewidget
         elif ddict['event'] in ["mouseMoved", 'MouseAt']:
             self.xpos.setText('%.1f' % ddict['x'])
@@ -602,19 +586,16 @@ class McaCalWidget(qt.QDialog):
                 self.foundPeaks.append(x)
                 legend = "%d" % (len(self.foundPeaks)-1)
                 #self.graph.insertx1marker(self.specfit.xdata[int(idx)],self.specfit.ydata[int(idx)])
-                self.graph.insertXMarker(x, legend=legend,
-                                         selectable=True, replot=False)
-                self.graph.replot()
+                self.graph.addXMarker(x, legend=legend,
+                                      selectable=True)
                 self.markermode = 0
                 self.__peakmarkermode()
             self.__msb.setChecked(0)
         else:
-            if DEBUG:
-                print("Unhandled event ",   ddict['event'])
+            _logger.debug("Unhandled event %s", ddict['event'])
 
     def __peakTableSignal(self, ddict, calculate=True):
-        if DEBUG:
-            print("__peaktablesignal called dict = ",ddict)
+        _logger.debug("__peaktablesignal called dict = %s", ddict)
         if (ddict['event'] == 'use') or (ddict['event'] == 'setenergy'):
             #get table dictionary
             peakdict = self.peakTable.getDict()
@@ -821,10 +802,9 @@ class McaCalWidget(qt.QDialog):
             return self.calculateTOF(usedpeaks)
         if len(usedpeaks) == 1:
             if (usedpeaks[0][0] - 0.0) > 1.0E-20:
-                return [0.0,usedpeaks[0][1]/usedpeaks[0][0],0.0]
+                return [0.0, usedpeaks[0][1]/usedpeaks[0][0], 0.0]
             else:
-                if DEBUG:
-                    print("Division by zero")
+                _logger.debug("Division by zero")
                 current = self.current
                 return [self.caldict[current]['A'],
                         self.caldict[current]['B'],
@@ -852,7 +832,7 @@ class McaCalWidget(qt.QDialog):
         return result
 
     def getdict(self):
-        print("DEPRECATED. Use getDict")
+        _logger.info("DEPRECATED. Use getDict")
         return self.getDict()
 
     def getDict(self):
@@ -1107,7 +1087,7 @@ class CalibrationParameters(qt.QWidget):
         return self.current
 
     def getdict(self):
-        print("DEPRECATED. Use getDict")
+        _logger.info("DEPRECATED. Use getDict")
         return self.getDict()
 
     def getDict(self):
@@ -1210,10 +1190,9 @@ class CalibrationParameters(qt.QWidget):
                 msg.exec_()
             self.CText.setFocus()
 
-    def myslot(self,*var,**kw):
-        if DEBUG:
-            print("Cal Parameters Slot ",var,kw)
-            print(self.caldict[self.currentcal])
+    def myslot(self, *var, **kw):
+        _logger.debug("Cal Parameters Slot %s %s", var, kw)
+        _logger.debug("%s", self.caldict[self.currentcal])
         if 'event' in kw:
             ddict={}
             if (kw['event'] == 'order'):
@@ -1361,8 +1340,9 @@ class InputLine(qt.QDialog):
                              setenergy=setenergy,
                              use=use,
                              calenergy=calenergy)
+
     def getdict(self):
-        print("DEPRECATED. Use getDict")
+        _logger.info("DEPRECATED. Use getDict")
         return self.getDict()
 
     def getDict(self):
@@ -1620,7 +1600,7 @@ class McaCalCopy(qt.QDialog):
         self.CText.setText("%.7g" % self.caldict[text]['C'])
 
     def getdict(self):
-        print("DEPRECATED. Use getDict")
+        _logger.info("DEPRECATED. Use getDict")
         return self.getDict()
 
     def getDict(self):

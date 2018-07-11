@@ -27,10 +27,9 @@ __author__ = "E. Papillon, V.A. Sole - ESRF Software Group"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-import sys
+
 from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
-DEBUG = 0
 
 try:
     import PyMca5.Object3D

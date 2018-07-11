@@ -31,15 +31,18 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
-import sys
-import time
+import logging
 from fisx import DataDir
 from fisx import Elements as FisxElements
 from fisx import Material
 from fisx import Detector
 from fisx import XRF
+import time
+import sys
 xcom = None
-DEBUG = 0
+
+_logger = logging.getLogger(__name__)
+
 
 def getElementsInstance(dataDir=None, bindingEnergies=None, xcomFile=None):
     if dataDir is None:
@@ -48,7 +51,7 @@ def getElementsInstance(dataDir=None, bindingEnergies=None, xcomFile=None):
         from PyMca5.PyMcaDataDir import PYMCA_DATA_DIR as pymcaDataDir
         from PyMca5 import getDataFile
     except:
-        print("Using fisx shell constants and ratios")
+        _logger.info("Using fisx shell constants and ratios")
         pymcaDataDir = None
     if bindingEnergies is None:
         if pymcaDataDir is None:
@@ -60,11 +63,9 @@ def getElementsInstance(dataDir=None, bindingEnergies=None, xcomFile=None):
             xcomFile = os.path.join(dataDir, "XCOM_CrossSections.dat")
         else:
             xcomFile = getDataFile("XCOM_CrossSections.dat")
-    if DEBUG:
-        t0 = time.time()
+    t0 = time.time()
     instance = FisxElements(dataDir, bindingEnergies, xcomFile)
-    if DEBUG:
-        print("Shell constants")
+    _logger.debug("Shell constants")
 
     # the files should be taken from PyMca to make sure the same data are used
     for key in ["K", "L", "M"]:
@@ -73,18 +74,15 @@ def getElementsInstance(dataDir=None, bindingEnergies=None, xcomFile=None):
             # we have to make sure we have got a string
             if hasattr(fname, "decode"):
                 fname = fname.decode("latin-1")
-        if DEBUG:
-            print("Before %s" % fname)
+        _logger.debug("Before %s", fname)
         if pymcaDataDir is not None:
             fname = getDataFile(key + "ShellConstants.dat")
         else:
             fname = os.path.join(os.path.dirname(fname),
                                  key + "ShellConstants.dat")
         instance.setShellConstantsFile(key, fname)
-        if DEBUG:
-            print("After %s" % instance.getShellConstantsFile(key))
-    if DEBUG:
-        print("Radiative transitions")
+        _logger.debug("After %s", instance.getShellConstantsFile(key))
+    _logger.debug("Radiative transitions")
 
     for key in ["K", "L", "M"]:
         fname = instance.getShellRadiativeTransitionsFile(key)
@@ -92,18 +90,15 @@ def getElementsInstance(dataDir=None, bindingEnergies=None, xcomFile=None):
             # we have to make sure we have got a string ...
             if hasattr(fname, "decode"):
                 fname = fname.decode("latin-1")
-        if DEBUG:
-            print("Before %s" % fname) 
+        _logger.debug("Before %s", fname)
         if pymcaDataDir is not None:
             fname = getDataFile(key + "ShellRates.dat")
         else:
             fname = os.path.join(os.path.dirname(fname), key + "ShellRates.dat")
         instance.setShellRadiativeTransitionsFile(key, fname)
-        if DEBUG:
-            print("After %s " % instance.getShellRadiativeTransitionsFile(key))
+        _logger.debug("After %s ", instance.getShellRadiativeTransitionsFile(key))
 
-    if DEBUG:
-        print("Reading Elapsed = ", time.time() - t0)
+    _logger.debug("Reading Elapsed = %s", time.time() - t0)
     return instance
 
 def getMultilayerFluorescence(multilayerSample,
@@ -129,35 +124,29 @@ def getMultilayerFluorescence(multilayerSample,
     if secondaryCalculationLimit is None:
         secondaryCalculationLimit=0.0
 
-    if DEBUG:
-        print("Library actually using secondary = ", secondary)
-        print("Library using secondary limit = ", secondaryCalculationLimit)
+    _logger.debug("Library actually using secondary = %s", secondary)
+    _logger.debug("Library using secondary limit = %s", secondaryCalculationLimit)
 
     global xcom
     if xcom is None:
-        if DEBUG:
-            print("Getting fisx elements instance")
+        _logger.debug("Getting fisx elements instance")
         xcom = getElementsInstance()
 
     if materials is not None:
-        if DEBUG:
-            print("Deleting materials")
+        _logger.debug("Deleting materials")
         xcom.removeMaterials()
         for material in materials:
-            if DEBUG:
-                print("Adding material making sure no duplicates")
+            _logger.debug("Adding material making sure no duplicates")
             xcom.addMaterial(material, errorOnReplace=1)
 
     # the instance
-    if DEBUG:
-        print("creating XRF instance")
+    _logger.debug("creating XRF instance")
     xrf = XRF()
 
     # the beam energies
     if not len(energyList):
         raise ValueError("Empty list of beam energies!!!")
-    if DEBUG:
-        print("setting beam")
+    _logger.debug("setting beam")
     xrf.setBeam(energyList, weights=weightList,
                             characteristic=flagList)
     # the beam filters (if any)
@@ -172,8 +161,7 @@ def getMultilayerFluorescence(multilayerSample,
 
     Unless you know what you are doing, the funny factors must be 1.0
     """
-    if DEBUG:
-        print("setting beamFilters")
+    _logger.debug("setting beamFilters")
     xrf.setBeamFilters(beamFilters)
 
     # the sample description
@@ -186,20 +174,17 @@ def getMultilayerFluorescence(multilayerSample,
 
     Unless you know what you are doing, the funny factors must be 1.0
     """
-    if DEBUG:
-        print("setting sample")
+    _logger.debug("setting sample")
     xrf.setSample(multilayerSample)
 
     # the attenuators
     if attenuatorList is not None:
         if len(attenuatorList) > 0:
-            if DEBUG:
-                print("setting attenuators")
+            _logger.debug("setting attenuators")
             xrf.setAttenuators(attenuatorList)
 
     # the geometry
-    if DEBUG:
-        print("setting Geometry")
+    _logger.debug("setting Geometry")
     if alphaIn is None:
         alphaIn = 45
     if alphaOut is None:
@@ -207,8 +192,7 @@ def getMultilayerFluorescence(multilayerSample,
     xrf.setGeometry(alphaIn, alphaOut)
 
     # the detector
-    if DEBUG:
-        print("setting Detector")
+    _logger.debug("setting Detector")
     if detector is not None:
         # Detector can be a list as [material, density, thickness]
         # or a Detector instance
@@ -260,9 +244,8 @@ def getMultilayerFluorescence(multilayerSample,
         elementsList = matrixElementsList
 
     # enabling the cascade cache gets a (miserable) 15 % speed up
-    if DEBUG:
-        print("Using cascade cache")
-        t0 = time.time()
+    _logger.debug("Using cascade cache")
+    t0 = time.time()
 
     treatedElements = []
     emittedLines = []
@@ -280,8 +263,7 @@ def getMultilayerFluorescence(multilayerSample,
                     treatedElements.append(element)
 
     if hasattr(xcom, "updateCache"):
-        if DEBUG:
-            print("Filling atenuation cache")
+        _logger.debug("Filling atenuation cache")
         composition = detectorInstance.getComposition(xcom)
         for element in composition.keys():
             xcom.setElementCascadeCacheEnabled(element, 1)
@@ -300,13 +282,13 @@ def getMultilayerFluorescence(multilayerSample,
         for element in treatedElements:
             # this limit seems overestimated but still reasonable
             if xcom.getCacheSize(element) > 5000:
-                print("Clearing cache")
+                _logger.info("Clearing cache")
                 xcom.clearCache(element)
             xcom.updateCache(element, energyList)
             xcom.updateCache(element, emittedLines)
             xcom.setCacheEnabled(element, 1)
-            if DEBUG:
-                print("Element %s cache size = %d" % (element, xcom.getCacheSize(element)))
+            _logger.debug("Element %s cache size = %d",
+                          element, xcom.getCacheSize(element))
 
         for element in actualElementsList:
             xcom.setElementCascadeCacheEnabled(element.split()[0], 1)
@@ -329,22 +311,19 @@ def getMultilayerFluorescence(multilayerSample,
                             alphaIn=detectorInstance.getEscapePeakAlphaIn(),
                             thickness=0)  # No escape by the back considered yet
     else:
-        if DEBUG:
-            print("NOT CALLING UPDATE CACHE")
-    if DEBUG:
-        print("C++ elapsed filling cache = ", time.time() - t0)
+        _logger.debug("NOT CALLING UPDATE CACHE")
+    _logger.debug("C++ elapsed filling cache = %s",
+                  time.time() - t0)
         
-    if DEBUG:
-        print("Calling getMultilayerFluorescence")
-        t0 = time.time()
+    _logger.debug("Calling getMultilayerFluorescence")
+    t0 = time.time()
     expectedFluorescence = xrf.getMultilayerFluorescence(actualElementsList,
                             xcom,
                             secondary=secondary,
                             useGeometricEfficiency=useGeometricEfficiency,
                             useMassFractions=elementsFromMatrix,
                             secondaryCalculationLimit=secondaryCalculationLimit)
-    if DEBUG:
-        print("C++ elapsed TWO = ", time.time() - t0)
+    _logger.debug("C++ elapsed TWO = %s", time.time() - t0)
 
     if not elementsFromMatrix:
         # If one element was present in one layer and not on others, PyMca only
@@ -417,7 +396,8 @@ def _getFisxMaterials(fitConfiguration):
                     if fractionList[n] > 0.0:
                         composition[compoundList[n]] = fractionList[n]
                     else:
-                        print("ignoring ", compoundList[n], "fraction = ", fractionList[n])
+                        _logger.info("ignoring %s, fraction = %s",
+                                     compoundList[n], fractionList[n])
                 # check the composition is expressed in terms of elements
                 # and not in terms of other undefined materials
                 totallyDefined = True
@@ -457,7 +437,7 @@ def _getFisxMaterials(fitConfiguration):
                                 txt += "contains <%s> (defined as <%s>), " % (compound, compound + " ")
                             else:
                                 txt += "contains <%s> (undefined)," % compound
-        print(txt)
+        _logger.info(txt)
         raise KeyError(txt)
     return fisxMaterials
 
@@ -570,7 +550,8 @@ def _getFisxDetector(fitConfiguration, attenuatorsDetector=None):
     else:
         # make sure information is consistent
         if attenuatorsDetector[0] not in [detectorMaterial, detectorMaterial+"1"]:
-            print("%s not equal to %s" % (attenuatorsDetector[0], detectorMaterial))
+            _logger.warning("%s not equal to %s",
+                            attenuatorsDetector[0], detectorMaterial)
             msg = "Inconsistent detector material between DETECTOR and ATTENUATORS tab"
             msg += "\n%s not equal to %s" % (attenuatorsDetector[0], detectorMaterial)
             raise ValueError(msg)
@@ -595,8 +576,7 @@ def  _getSecondaryCalculationLimitFromFitConfiguration(fitConfiguration):
         limit = float(\
             fitConfiguration["concentrations"]["secondarycalculationlimit"])
     except:
-        if DEBUG:
-            print("Exception. Forcing no limit")
+        _logger.debug("Exception. Forcing no limit")
         limit = 0.0
     return limit
 
@@ -651,7 +631,7 @@ def _fisxFromFitConfigurationAction(fitConfiguration,
     try:
         secondary = fitConfiguration["concentrations"]["usemultilayersecondary"]
     except:
-        print("Exception. Forcing tertiary")
+        _logger.warning("Exception. Forcing tertiary")
         secondary = 2
 
     if action.upper() == "FLUORESCENCE":
@@ -761,7 +741,7 @@ def getFisxCorrectionFactors(*var, **kw):
                 secondOrder = ddict[element][family][layerKey]["counts"][1]
                 if firstOrder <= 0:
                     if secondOrder > 0.0:
-                        print("Inconsistency? secondary with no primary?")
+                        _logger.warning("Inconsistency? secondary with no primary?")
                     ddict[element][family][layerKey]["correction_factor"][1] = 1
                     if nItems == 3:
                         ddict[element][family][layerKey]["correction_factor"][2] = 1
@@ -787,9 +767,7 @@ def getFisxCorrectionFactorsFromFitConfigurationFile(fileName,
                                             secondaryCalculationLimit)
 
 if __name__ == "__main__":
-    DEBUG = 1
-    import time
-    import sys
+    _logger.setLevel(logging.DEBUG)
     if len(sys.argv) < 2:
         print("Usage: python FisxHelper FitConfigurationFile [element] [matrix_flag]")
         sys.exit(0)

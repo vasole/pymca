@@ -27,11 +27,12 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-import sys
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 
 QTVERSION = qt.qVersion()
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class TextField(qt.QWidget):
     def __init__(self,parent = None,name = None,fl = 0):
@@ -40,8 +41,7 @@ class TextField(qt.QWidget):
         try:
             self.setSizePolicy(qt.QSizePolicy(1,1,0,0,self.sizePolicy().hasHeightForWidth()))
         except:
-            if DEBUG:
-                print("TextField Bad Size policy")
+            _logger.warning("TextField Bad Size policy")
 
         TextFieldLayout = qt.QHBoxLayout(self)
         Layout2 = qt.QHBoxLayout(None)
@@ -55,8 +55,7 @@ class TextField(qt.QWidget):
         try:
             self.TextLabel.setSizePolicy(qt.QSizePolicy(7,1,0,0,self.TextLabel.sizePolicy().hasHeightForWidth()))
         except:
-            if DEBUG:
-                print("TextField Bad Size policy")
+            _logger.warning("TextField Bad Size policy")
 
         self.TextLabel.setText(str("TextLabel"))
         Layout2.addWidget(self.TextLabel)

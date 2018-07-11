@@ -32,6 +32,7 @@ import sys
 import os
 import copy
 import traceback
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5 import PyMcaDirs
 from PyMca5 import DataObject
@@ -59,7 +60,7 @@ except ImportError:
     pass
 
 QTVERSION = qt.qVersion()
-DEBUG = 0
+_logger = logging.getLogger(__name__)
 
 
 class StackSelector(object):
@@ -206,7 +207,7 @@ class StackSelector(object):
                     msg.setInformativeText("%s" % sys.exc_info()[1])
                     msg.setDetailedText(traceback.format_exc())
                     msg.exec_()
-                    if DEBUG:
+                    if _logger.getEffectiveLevel() == logging.DEBUG:
                         raise
         elif len(filelist):
             if not omnicfile:
@@ -220,7 +221,7 @@ class StackSelector(object):
                         msg.exec_loop()
                     else:
                         msg.exec_()
-                    if DEBUG:
+                    if _logger.getEffectiveLevel() == logging.DEBUG:
                         raise
         if aifirafile:
             masterStack = DataObject.DataObject()
@@ -425,7 +426,7 @@ if __name__ == "__main__":
                      options,
                      longoptions)
     except:
-        print(sys.exc_info()[1])
+        _logger.error(sys.exc_info()[1])
         sys.exit(1)
     fileindex = 0
     filepattern = None

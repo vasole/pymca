@@ -34,6 +34,7 @@ import os
 import sys
 import numpy
 import re
+import logging
 from PyMca5.PyMcaIO import specfile
 from PyMca5.PyMcaIO import Fit2DChiFileParser
 from PyMca5.PyMcaIO import APSMEDFileParser
@@ -42,14 +43,16 @@ from PyMca5.PyMcaIO import BAXSCSVFileParser
 from PyMca5.PyMcaIO import OlympusCSVFileParser
 from PyMca5.PyMcaIO import ThermoEMSFileParser
 from PyMca5.PyMcaIO import JcampFileParser
+
+_logger = logging.getLogger(__name__)
+
 try:
     from PyMca5.PyMcaIO import SPXFileParser
     SPX = True
 except:
-    print("specfilewrapper cannot import SPXFileParser")
+    _logger.info("specfilewrapper cannot import SPXFileParser")
     SPX = False
 
-DEBUG = 0
 
 if sys.version >= '2.6':
     def safe_str(bytesObject):
@@ -106,16 +109,13 @@ def Specfile(filename):
     qxas   = False
     if len(line):
         #it is a Specfile
-        if DEBUG:
-            print("This looks as a specfile")
+        _logger.debug("This looks as a specfile")
         output=specfile.Specfile(filename)
     elif SPX and filename.upper().endswith("SPX"):
-        if DEBUG:
-            print("This looks as an SPX file")
+        _logger.debug("This looks as an SPX file")
         output = SPXFileParser.SPXFileParser(filename)
     else:
-        if DEBUG:
-            print("this does not look as a specfile")
+        _logger.debug("this does not look as a specfile")
         if len(line0) > 7:
             if line0.startswith('$SPEC_ID') or\
                line0.startswith('$DATE_MEA') or\
@@ -130,27 +130,22 @@ def Specfile(filename):
         if (not qxas) and (not amptek) and APSMEDFileParser.isAPSMEDFile(filename):
             return APSMEDFileParser.APSMEDFileParser(filename)
         if (not qxas) and (not amptek) and SRSFileParser.isSRSFile(filename):
-            if DEBUG:
-                print("SRSFileParser")
+            _logger.debug("SRSFileParser")
             return SRSFileParser.SRSFileParser(filename)
         if (not qxas) and (not amptek) and BAXSCSVFileParser.isBAXSCSVFile(filename):
-            if DEBUG:
-                print("BAXSCSVFileParser")
+            _logger.debug("BAXSCSVFileParser")
             return BAXSCSVFileParser.BAXSCSVFileParser(filename)
         if (not qxas) and (not amptek) and \
            OlympusCSVFileParser.isOlympusCSVFile(filename):
-            if DEBUG:
-                print("OlympusCSVFileParser")
+            _logger.debug("OlympusCSVFileParser")
             return OlympusCSVFileParser.OlympusCSVFileParser(filename)
         if (not qxas) and (not amptek) and \
            ThermoEMSFileParser.isThermoEMSFile(filename):
-            if DEBUG:
-                print("ThermoEMSFileParser")
+            _logger.debug("ThermoEMSFileParser")
             return ThermoEMSFileParser.ThermoEMSFileParser(filename)
         if (not qxas) and (not amptek) and \
            JcampFileParser.isJcampFile(filename):
-            if DEBUG:
-                print("JcampFileParser")
+            _logger.debug("JcampFileParser")
             return JcampFileParser.JcampFileParser(filename)
         output = specfilewrapper(filename, amptek=amptek, qxas=qxas)
     return output
@@ -427,8 +422,7 @@ class myscandata(object):
         return self.__cols
 
     def command(self):
-        if DEBUG:
-            print("command called")
+        _logger.debug("command called")
         if self.qxas is not None:
             if 'S' in self.qxas:
                 text = self.qxas['S']
@@ -467,8 +461,7 @@ class myscandata(object):
 
     def fileheader(self, key=''):
         # key is there for compatibility
-        if DEBUG:
-            print("file header called")
+        _logger.debug("file header called")
         return self._fileheader
 
     def header(self, key):

@@ -35,12 +35,15 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 from PyMca5 import StackPluginBase
 from PyMca5.PyMca import ScanWindow
 import numpy
+import logging
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class ShowSpectra(StackPluginBase.StackPluginBase):
     def __init__(self, stackWindow, **kw):
-        StackPluginBase.DEBUG = DEBUG
+        if _logger.getEffectiveLevel() == logging.DEBUG:
+            StackPluginBase.pluginBaseLogger.setLevel(logging.DEBUG)
         StackPluginBase.StackPluginBase.__init__(self, stackWindow, **kw)
         self.methodDict = {}
         function = self.showSpectra
@@ -112,7 +115,7 @@ class ShowSpectra(StackPluginBase.StackPluginBase):
         if self.widget is None:
             self.widget = ScanWindow.ScanWindow()
         data = stack.data
-        replot = False
+        resetzoom = False
         if step in [None, 1]:
             for i in range(data.shape[0]):
                 for j in range(data.shape[1]):
@@ -120,7 +123,8 @@ class ShowSpectra(StackPluginBase.StackPluginBase):
                         replace = True
                     else:
                         replace = False
-                    self.widget.addCurve(x, data[i, j], legend="Row %03d Col %03d" % (i, j), replace=replace, replot=replot)
+                    self.widget.addCurve(x, data[i, j], legend="Row %03d Col %03d" % (i, j),
+                                         replace=replace, resetzoom=resetzoom)
         else:
             counter = 0
             for i in range(data.shape[0]):
@@ -130,15 +134,16 @@ class ShowSpectra(StackPluginBase.StackPluginBase):
                             replace = True
                         else:
                             replace = False
-                        self.widget.addCurve(x, data[i, j],
-                                legend="Row %03d Col %03d" % (i, j),
-                                replace=replace, replot=replot)
+                        self.widget.addCurve(
+                            x, data[i, j],
+                            legend="Row %03d Col %03d" % (i, j),
+                            replace=replace, resetzoom=resetzoom)
                     counter += 1
         self.widget.resetZoom()
         self.widget.show()
         self.widget.raise_()
 
-MENU_TEXT="Show Spectra"
+MENU_TEXT = "Show Spectra"
 def getStackPluginInstance(plotWindow, **kw):
     ob = ShowSpectra(plotWindow)
     return ob

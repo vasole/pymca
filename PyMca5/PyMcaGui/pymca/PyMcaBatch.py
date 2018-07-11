@@ -32,6 +32,7 @@ import sys
 import os
 import time
 import subprocess
+import logging
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 
@@ -57,7 +58,8 @@ from PyMca5.PyMcaCore import PyMcaDirs
 from PyMca5.PyMcaCore import PyMcaBatchBuildOutput
 
 ROIWIDTH = 100.
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class McaBatchGUI(qt.QWidget):
     def __init__(self,parent=None,name="PyMca batch fitting",fl=None,
@@ -192,8 +194,7 @@ class McaBatchGUI(qt.QWidget):
         if QTVERSION < '4.0.0':
             palette.setDisabled(palette.active())
         else:
-            if DEBUG:
-                print("palette set disabled")
+            _logger.debug("palette set disabled")
         self.__imgBox.setChecked(True)
         self.__imgBox.setEnabled(False)
         vbox2.l.addWidget(self.__imgBox)
@@ -786,9 +787,8 @@ class McaBatchGUI(qt.QWidget):
                     allowSingleFileSplitProcesses = False
                     if HDF5SUPPORT:
                         if h5py.is_hdf5(self.fileList[0]):
-                            if DEBUG:
-                                print("Disallow single HDF5 process split")
-                                print("due to problems with concurrent access")
+                            _logger.debug("Disallow single HDF5 process split")
+                            _logger.debug("due to problems with concurrent access")
                             #allowSingleFileSplitProcesses = True
                             allowSingleFileSplitProcesses = False
                     if not allowSingleFileSplitProcesses:
@@ -1007,8 +1007,7 @@ class McaBatchGUI(qt.QWidget):
             self.hide()
             qApp = qt.QApplication.instance()
             qApp.processEvents()
-            if DEBUG:
-                print("cmd = %s" % cmd)
+            _logger.debug("cmd = %s", cmd)
             if self.__splitBox.isChecked():
                 nbatches = int(qt.safe_str(self.__splitSpin.text()))
                 if len(self.fileList) > 1:
@@ -1028,8 +1027,7 @@ class McaBatchGUI(qt.QWidget):
                                 subprocess.Popen(cmd1.encode(sys.getfilesystemencoding()),
                                                  cwd=os.getcwd()))
 
-                        if DEBUG:
-                            print("cmd = %s" % cmd1)
+                        _logger.debug("cmd = %s", cmd1)
                 else:
                     #f = open("CMD", 'wb')
                     processList = []
@@ -1037,8 +1035,7 @@ class McaBatchGUI(qt.QWidget):
                         #the mcastep has been dealt with above
                         cmd1        = cmd + " --mcaoffset=%d --chunk=%d" % (i, i)
                         processList.append(subprocess.Popen(cmd1, cwd=os.getcwd()))
-                        if DEBUG:
-                            print("CMD = %s" % cmd1)
+                        _logger.debug("CMD = %s", cmd1)
                         #f.write(cmd1+"\n")
                     #f.close()
                 self._processList = processList
@@ -1048,7 +1045,7 @@ class McaBatchGUI(qt.QWidget):
                 if not self._timer.isActive():
                     self._timer.start(1000)
                 else:
-                    print("timer was already active")
+                    _logger.info("timer was already active")
                 return
             else:
                 try:
@@ -1135,8 +1132,7 @@ class McaBatchGUI(qt.QWidget):
                                                     self.outputDir, overwrite,
                                                     filestep, mcastep, html, htmlindex,
                                                     listfile, concentrations, table, fitfiles, selectionFlag)
-            if DEBUG:
-                print("cmd = %s" % cmd)
+            _logger.debug("cmd = %s", cmd)
             if self.__splitBox.isChecked():
                 qApp = qt.QApplication.instance()
                 qApp.processEvents()
@@ -1168,11 +1164,11 @@ class McaBatchGUI(qt.QWidget):
                 if not self._timer.isActive():
                     self._timer.start(1000)
                 else:
-                    print("timer was already active")
+                    _logger.info("timer was already active")
                 return
             else:
                 os.system(cmd)
-                print(" COMMAND = ", cmd)
+                _logger.info(" COMMAND = %s", cmd)
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Information)
                 text = "Your batch has been started as an independent process."
@@ -1184,7 +1180,7 @@ class McaBatchGUI(qt.QWidget):
             try:
                 os.remove(listfile)
             except:
-                print("Cannot delete file %s" % listfile)
+                _logger.error("Cannot delete file %s", listfile)
                 raise
         if config is None:
             lst = self.fileList
@@ -1224,7 +1220,7 @@ class McaBatchGUI(qt.QWidget):
             self.raise_()
 
         work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(os.path.join(self.outputDir, "IMAGES"))
-        if DEBUG:
+        if _logger.getEffectiveLevel() == logging.DEBUG:
             a, b, c = work.buildOutput(delete=False)
         else:
             a, b, c = work.buildOutput(delete=True)
@@ -1245,7 +1241,7 @@ class McaBatchGUI(qt.QWidget):
                 else:
                     os.system("%s %s &" % (rgb, b[0]))
         work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(self.outputDir)
-        if DEBUG:
+        if _logger.getEffectiveLevel() == logging.DEBUG:
             work.buildOutput(delete=False)
         else:
             work.buildOutput(delete=True)
@@ -1301,8 +1297,7 @@ class McaBatch(McaAdvancedFitBatch.McaAdvancedFitBatch, qt.QThread):
             qt.QApplication.postEvent(self.parent, McaCustomEvent.McaCustomEvent(ddict))
 
     def onMca(self, mca, nmca, filename=None, key=None, info=None):
-        if DEBUG:
-            print("onMca key = %s" % key)
+        _logger.debug("onMca key = %s", key)
         ddict = {'mca':mca,
                  'nmca':nmca,
                  'mcastep':self.mcaStep,
@@ -1322,8 +1317,7 @@ class McaBatch(McaAdvancedFitBatch.McaAdvancedFitBatch, qt.QThread):
         if self.pleasePause:self.__pauseMethod()
 
     def onEnd(self):
-        if DEBUG:
-            print("onEnd")
+        _logger.debug("onEnd")
 
         ddict = {'event':'onEnd',
                  'filestep':self.fileStep,
@@ -1454,12 +1448,11 @@ class McaBatchWindow(qt.QWidget):
         elif event.dict['event'] == 'reportWritten':self.onReportWritten()
 
         else:
-            print("Unhandled event %s" % event)
+            _logger.warning("Unhandled event %s", event)
 
 
     def onNewFile(self, file, filelist, filestep, filebeginoffset =0, fileendoffset = 0):
-        if DEBUG:
-            print("onNewFile: %s" % file)
+        _logger.debug("onNewFile: %s", file)
         indexlist = list(range(0,len(filelist),filestep))
         index  = indexlist.index(filelist.index(file)) - filebeginoffset
         #print index + filebeginoffset
@@ -1474,7 +1467,7 @@ class McaBatchWindow(qt.QWidget):
                     try:
                         os.remove(self.htmlindex)
                     except:
-                        print("cannot delete file %s" % self.htmlindex)
+                        _logger.warning("cannot delete file %s", self.htmlindex)
         nfiles = len(indexlist)-filebeginoffset-fileendoffset
         self.status.setText("Processing file %s" % file)
         e = time.time()
@@ -1497,9 +1490,8 @@ class McaBatchWindow(qt.QWidget):
             qApp = qt.QApplication.instance()
             qApp.processEvents()
 
-    def onImage(self,key,keylist):
-        if DEBUG:
-            print("onImage %s" % key)
+    def onImage(self, key, keylist):
+        _logger.debug("onImage %s",  key)
         i = keylist.index(key) + 1
         n = len(keylist)
         if QTVERSION < '4.0.0':
@@ -1516,8 +1508,7 @@ class McaBatchWindow(qt.QWidget):
 
     #def onMca(self, mca, nmca, mcastep):
     def onMca(self, ddict):
-        if DEBUG:
-            print("onMca ", ddict['mca'])
+        _logger.debug("onMca %s", ddict['mca'])
         mca  = ddict['mca']
         nmca = ddict['nmca']
         mcastep  = ddict['mcastep']
@@ -1537,12 +1528,12 @@ class McaBatchWindow(qt.QWidget):
                         self.__htmlReport(filename, key, outputdir,
                                           useExistingFiles, info, firstmca = False)
             except:
-                print("ERROR on REPORT",sys.exc_info())
-                print(sys.exc_info()[1])
-                print("filename = %s key =%s " % (filename, key))
-                print("If your batch is stopped, please report this")
-                print("error sending the above mentioned file and the")
-                print("associated fit configuration file.")
+                _logger.warning("ERROR on REPORT %s", sys.exc_info())
+                _logger.warning("%s", sys.exc_info()[1])
+                _logger.warning("filename = %s key =%s ", (filename, key))
+                _logger.warning("If your batch is stopped, please report this")
+                _logger.warning("error sending the above mentioned file and the")
+                _logger.warning("associated fit configuration file.")
         if QTVERSION < '4.0.0':
             self.mcaBar.setTotalSteps(nmca)
             self.mcaBar.setProgress(mca)
@@ -1566,20 +1557,20 @@ class McaBatchWindow(qt.QWidget):
             try:
                 os.mkdir(fitdir)
             except:
-                print("I could not create directory %s" % fitdir)
+                _logger.warning("I could not create directory %s", fitdir)
                 return
-        fitdir = os.path.join(fitdir,filename+"_HTMLDIR")
+        fitdir = os.path.join(fitdir, filename+"_HTMLDIR")
         if not os.path.exists(fitdir):
             try:
                 os.mkdir(fitdir)
             except:
-                print("I could not create directory %s" % fitdir)
+                _logger.warning("I could not create directory %s", fitdir)
                 return
         localindex = os.path.join(fitdir, "index.html")
         if not os.path.isdir(fitdir):
-            print("%s does not seem to be a valid directory" % fitdir)
+            _logger.warning("%s does not seem to be a valid directory", fitdir)
         else:
-            outfile = filename +"_"+key+".html"
+            outfile = filename + "_" + key + ".html"
             outfile = os.path.join(fitdir,  outfile)
         useExistingResult = useExistingFiles
         if os.path.exists(outfile):
@@ -1587,7 +1578,7 @@ class McaBatchWindow(qt.QWidget):
                 try:
                     os.remove(outfile)
                 except:
-                    print("cannot delete file %s" % outfile)
+                    _logger.warning("cannot delete file %s", outfile)
                 useExistingResult = 0
         else:
             useExistingResult = 0
@@ -1596,7 +1587,7 @@ class McaBatchWindow(qt.QWidget):
         fitdir = os.path.join(fitdir,filename+"_FITDIR")
         fitfile= os.path.join(fitdir,  filename +"_"+key+".fit")
         if not os.path.exists(fitfile):
-            print("fit file %s does not exists!" % fitfile)
+            _logger.warning("fit file %s does not exists!", fitfile)
             return
         if self.report is None:
             #first file
@@ -1704,8 +1695,7 @@ class McaBatchWindow(qt.QWidget):
                 if sys.executable in ["PyMcaMain", "PyMcaMain.exe",
                                       "PyMcaBatch", "PyMcaBatch.exe"]:
                     frozen = True
-            if DEBUG:
-                print("final dirname = %s" % dirname)
+            _logger.debug("final dirname = %s", dirname)
             if frozen:
                 # we are at level PyMca5\PyMcaGui\pymca
                 dirname  = os.path.dirname(dirname)
@@ -1718,8 +1708,7 @@ class McaBatchWindow(qt.QWidget):
             else:
                 myself  = sys.executable+" "+os.path.join(dirname, "EdfFileSimpleViewer.py")
             cmd = "%s %s &" % (myself, filelist)
-            if DEBUG:
-                print("cmd = %s" % cmd)
+            _logger.debug("cmd = %s", cmd)
             os.system(cmd)
 
 def main():
@@ -1859,8 +1848,8 @@ def main():
                       mcaoffset=mcaoffset, chunk=chunk, selection=selection)
         except:
             if exitonend:
-                print("Error: " % sys.exc_info()[1])
-                print("Quitting as requested")
+                _logger.warning("Error: ", sys.exc_info()[1])
+                _logger.warning("Quitting as requested")
                 qt.QApplication.instance().quit()
             else:
                 msg = qt.QMessageBox()

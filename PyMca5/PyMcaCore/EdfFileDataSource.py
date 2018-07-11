@@ -36,9 +36,12 @@ import types
 import sys
 import os
 import numpy
+import logging
 
 SOURCE_TYPE = "EdfFile"
-DEBUG = 0
+
+_logger = logging.getLogger(__name__)
+
 
 class EdfFileDataSource(object):
     def __init__(self,nameInput, fastedf=False):
@@ -60,7 +63,7 @@ class EdfFileDataSource(object):
         #self._fastedf = True
         self._fastedf = fastedf
         if fastedf:
-            print("fastedf is unsafe!")
+            _logger.warning("fastedf is unsafe!")
         self.refresh()
 
     def refresh(self):
@@ -98,8 +101,7 @@ class EdfFileDataSource(object):
             return self.__getKeyInfo(key)
         else:
             #should we raise a KeyError?
-            if DEBUG:
-                print("Error key not in list ")
+            _logger.debug("Error key not in list ")
             return {}
 
     def __getKeyInfo(self,key):
@@ -109,8 +111,7 @@ class EdfFileDataSource(object):
             image = int(image)-1
         except:
             #should we rise an error?
-            if DEBUG:
-                print("Error trying to interpret key =",key)
+            _logger.debug("Error trying to interpret key = %s", key)
             return {}
 
         sourceObject = self._sourceObjectList[index]
@@ -179,8 +180,7 @@ class EdfFileDataSource(object):
         image = int(image)-1
         MCAIMP = 0
         if len(key_split) == 4:
-            if DEBUG:
-                print("mca like selection")
+            _logger.debug("mca like selection")
             #print data.info
             if 1:
                 MCAIMP = 1
@@ -192,8 +192,7 @@ class EdfFileDataSource(object):
                     size = (1,int(data.info['Dim_2']))
                 data.info['selectiontype'] = "1D"
             else:
-                if DEBUG:
-                    print("mca like selection not yet implemented")
+                _logger.debug("mca like selection not yet implemented")
                 pos = None
                 size = None
                 data.info['selectiontype'] = "1D"
@@ -263,7 +262,7 @@ if __name__ == "__main__":
         sourcename=sys.argv[1]
         key       =sys.argv[2]
     except:
-        print("Usage: EdfFileDataSource <file> <key>")
+        _logger.error("Usage: EdfFileDataSource <file> <key>")
         sys.exit()
     #one can use this:
     obj = EdfFileDataSource(sourcename)

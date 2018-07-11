@@ -42,15 +42,18 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
+import logging
 from PyMca5 import StackPluginBase
 from PyMca5.PyMcaGui.pymca import StackROIWindow
 from PyMca5.PyMcaGui import PyMca_Icons as PyMca_Icons
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class ROIStackPlugin(StackPluginBase.StackPluginBase):
     def __init__(self, stackWindow, **kw):
-        StackPluginBase.DEBUG = DEBUG
+        if _logger.getEffectiveLevel() == logging.DEBUG:
+            StackPluginBase.pluginBaseLogger.setLevel(logging.DEBUG)
         StackPluginBase.StackPluginBase.__init__(self, stackWindow, **kw)
         self.methodDict = {'Show':[self._showWidget,
                                    "Show ROIs",
@@ -59,8 +62,7 @@ class ROIStackPlugin(StackPluginBase.StackPluginBase):
         self.roiWindow = None
 
     def stackUpdated(self):
-        if DEBUG:
-            print("ROIStackPlugin.stackUpdated() called")
+        _logger.debug("ROIStackPlugin.stackUpdated() called")
         if self.roiWindow is None:
             return
         if self.roiWindow.isHidden():
@@ -86,8 +88,7 @@ class ROIStackPlugin(StackPluginBase.StackPluginBase):
         self.stackUpdated()
 
     def mySlot(self, ddict):
-        if DEBUG:
-            print("mySlot ", ddict['event'], ddict.keys())
+        _logger.debug("mySlot %s %s", ddict['event'], ddict.keys())
         if ddict['event'] == "selectionMaskChanged":
             self.setStackSelectionMask(ddict['current'])
         elif ddict['event'] == "addImageClicked":

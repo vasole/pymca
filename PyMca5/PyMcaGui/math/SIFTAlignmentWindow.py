@@ -29,20 +29,20 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
-import sys
 import numpy
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import ExternalImagesWindow
 from PyMca5.PyMcaGui import PyMcaFileDialogs
-from PyMca5.PyMcaMath import sift
+import silx.opencl
+from silx.image import sift
 
 DEBUG = 0
 
 if DEBUG:
     print("SIFT coming from %s" % os.path.abspath(sift.__file__))
 
-__doc__ ="""The SIFT algorithm belongs to the University of British Columbia. It is
-protected by patent US6711293. If you are on a country where this pattent
+__doc__ = """The SIFT algorithm belongs to the University of British Columbia. It is
+protected by patent US6711293. If you are in a country where this patent
 applies (like the USA), please check if you are allowed to use it. The
 University of British Columbia does not require a license for its use for
 non-commercial research applications.
@@ -50,7 +50,7 @@ non-commercial research applications.
 This SIFT implementation uses the code developed by Jerome Kieffer and
 Pierre Paleo. The project is hosted at:
 
-https://github.com/kif/sift_pyocl
+https://github.com/silx-kit/silx/tree/master/silx/opencl/sift
 
 This algorithm should provide better results than FFT based algorithms
 provided the images to be aligned provide enough registration points
@@ -72,7 +72,7 @@ Please note that introduces an additional dependency of PyMca on PyOpenCL.
 
 sift_pyocl license follows:
 
-Copyright(C) 2013 European Synchrotron Radiation Facility, Grenoble, France
+Copyright (C) 2013-2017  European Synchrotron Radiation Facility, Grenoble, France
 
  Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation
@@ -146,8 +146,8 @@ class ParametersWidget(qt.QWidget):
 
     def getOpenCLDevices(self):
         devices = []
-        if sift.opencl.ocl is not None:
-            for platformid, platform in enumerate(sift.opencl.ocl.platforms):
+        if silx.opencl.ocl is not None:
+            for platformid, platform in enumerate(silx.opencl.ocl.platforms):
                 for deviceid, dev in enumerate(platform.devices):
                     devices.append((platformid, deviceid, dev.name))
         return devices

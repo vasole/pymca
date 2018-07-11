@@ -31,10 +31,14 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import numpy
 import time
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from . import NNMAWindow
 NNMA = True
-DEBUG = 0
+
+
+_logger = logging.getLogger(__name__)
+
 
 class SimpleThread(qt.QThread):
     def __init__(self, function, *var, **kw):
@@ -46,13 +50,12 @@ class SimpleThread(qt.QThread):
         self._result   = None
 
     def run(self):
-        if DEBUG:
+        try:
             self._result = self._function(*self._var, **self._kw )
-        else:
-            try:
-                self._result = self._function(*self._var, **self._kw )
-            except:
-                self._result = ("Exception",) + sys.exc_info()
+        except:
+            if _logger.getEffectiveLevel() == logging.DEBUG:
+                raise
+            self._result = ("Exception",) + sys.exc_info()
 
 class NNMADialog(qt.QDialog):
     def __init__(self, parent=None, rgbwidget=None, selection=False):
@@ -106,8 +109,7 @@ class NNMADialog(qt.QDialog):
             self.nnmaParametersDialog.setParameters(ddict)
         ret = self.nnmaParametersDialog.exec_()
         if ret:
-            if DEBUG:
-                t0 = time.time()
+            t0 = time.time()
             nnmaParameters = self.nnmaParametersDialog.getParameters()
             self.nnmaParametersDialog.close()
             function = nnmaParameters['function']
@@ -116,7 +118,7 @@ class NNMADialog(qt.QDialog):
             kw = nnmaParameters['kw']
             data = self._data
             old_shape = self._data.shape
-            if DEBUG:
+            if _logger.getEffectiveLevel() == logging.DEBUG:
                 images, eigenvalues, eigenvectors = function(data,
                                                              npc,
                                                              binning=binning,
@@ -143,8 +145,7 @@ class NNMADialog(qt.QDialog):
                     return
             if isinstance(self._data, numpy.ndarray):
                 self._data.shape = old_shape
-            if DEBUG:
-                print("NNMA Elapsed = ", time.time() - t0)
+            _logger.debug("NNMA Elapsed = %s", time.time() - t0)
             self.nnmaWindow.setPCAData(images,
                                        eigenvalues,
                                        eigenvectors)

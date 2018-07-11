@@ -162,7 +162,7 @@ class PCAParametersDialog(qt.QDialog):
         self.graph.sigPlotSignal.connect(self._graphSlot)
         if not self.__regions:
             #I am adding after instantiation
-            self.mainLayout.insertWidget(2,self.regionsWidget)
+            self.mainLayout.insertWidget(2, self.regionsWidget)
             self.mainLayout.addWidget(self.graph)
         self.__regions = True
 
@@ -172,17 +172,16 @@ class PCAParametersDialog(qt.QDialog):
             toValue   = ddict['to']
             self.graph.setEnabled(True)
             self.graph.clearMarkers()
-            self.graph.insertXMarker(fromValue,
-                                      'From',
-                                       text='From',
-                                       color='blue',
-                                       draggable=True)
-            self.graph.insertXMarker(toValue,
-                                     'To',
-                                      text= 'To',
-                                      color='blue',
-                                      draggable=True)
-            self.graph.replot()
+            self.graph.addXMarker(fromValue,
+                                  'From',
+                                  text='From',
+                                  color='blue',
+                                  draggable=True)
+            self.graph.addXMarker(toValue,
+                                  'To',
+                                  text='To',
+                                  color='blue',
+                                  draggable=True)
         else:
             self.graph.clearMarkers()
             self.graph.setEnabled(False)

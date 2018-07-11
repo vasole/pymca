@@ -31,6 +31,7 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 
@@ -46,7 +47,8 @@ from PyMca5.PyMcaPhysics import Elements
 from . import MaterialEditor
 from . import MatrixEditor
 import re
-DEBUG = 0
+
+_logger = logging.getLogger(__name__)
 
 
 class MyQLabel(qt.QLabel):
@@ -342,9 +344,8 @@ class AttenuatorsTableWidget(QTable):
         self.matrixMode = matrixmode
         self.attenuators = attenuators
         self.verticalHeader().hide()
-        if DEBUG:
-            print("margin to adjust")
-            print("focus style")
+        _logger.debug("margin to adjust")
+        _logger.debug("focus style")
         self.setFrameShape(qt.QTableWidget.NoFrame)
         self.setSelectionMode(qt.QTableWidget.NoSelection)
         self.setColumnCount(len(labels))
@@ -544,14 +545,12 @@ class AttenuatorsTableWidget(QTable):
         self.setCellWidget(idx, 2, self.combo)
         self.combo.sigMaterialComboBoxSignal.connect(self._comboSlot)
 
-    def mySlot(self,row,col):
-        if DEBUG:
-            print("Value changed row = %d cole = &d" % (row, col))
-            print("Text = %s" % self.text(row, col))
+    def mySlot(self, row, col):
+        _logger.debug("Value changed row = %d cole = &d", row, col)
+        _logger.debug("Text = %s", self.text(row, col))
 
     def _comboSlot(self, ddict):
-        if DEBUG:
-            print("_comboSlot", ddict)
+        _logger.debug("_comboSlot %s", ddict)
         row = ddict['row']
         col = ddict['col']
         text = ddict['text']
@@ -564,8 +563,8 @@ class AttenuatorsTableWidget(QTable):
             return self.cellWidget(row, col).currentText()
         else:
             if col not in [1, 3, 4, 5]:
-                print("row, col = %d, %d" % (row, col))
-                print("I should not be here")
+                _logger.info("row, col = %d, %d", row, col)
+                _logger.info("I should not be here")
             else:
                 item = self.item(row, col)
                 return item.text()
@@ -575,7 +574,7 @@ class AttenuatorsTableWidget(QTable):
             self.cellWidget(row, 0).setText(text)
             return
         if col not in [1, 3, 4, 5]:
-            print("only compatible columns 1, 3 and 4")
+            _logger.debug("only compatible columns 1, 3 and 4")
             raise ValueError("method for column > 2")
         item = self.item(row, col)
         if item is None:

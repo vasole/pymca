@@ -33,9 +33,10 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
 import numpy
+import logging
 from PyMca5.PyMcaIO import EdfFile
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
 
 class PyMcaBatchBuildOutput(object):
     def __init__(self, inputdir=None, outputdir=None):
@@ -50,8 +51,7 @@ class PyMcaBatchBuildOutput(object):
         if delete is None:
             if outputdir == inputdir:
                 delete = True
-        if DEBUG:
-            print("delete option = ", delete)
+        _logger.debug("delete option = %s", delete)
         allfiles = os.listdir(inputdir)
         partialedflist = []
         partialdatlist = []
@@ -64,8 +64,7 @@ class PyMcaBatchBuildOutput(object):
         #IMAGES
         edfoutlist = []
         for filename in partialedflist:
-            if DEBUG:
-                print("Dealing with filename %s" % filename)
+            _logger.debug("Dealing with filename %s", filename)
             edflist = self.getIndexedFileList(os.path.join(inputdir, filename))
             i = 0
             for edfname in edflist:
@@ -83,11 +82,9 @@ class PyMcaBatchBuildOutput(object):
                 i += 1
             edfname  = filename.replace('_000000_partial.edf',".edf")
             edfoutname = os.path.join(outputdir, edfname)
-            if DEBUG:
-                print("Dealing with output filename %s" % edfoutname)
+            _logger.debug("Dealing with output filename %s", edfoutname)
             if os.path.exists(edfoutname):
-                if DEBUG:
-                    print("Output file already exists, trying to delete it")
+                _logger.debug("Output file already exists, trying to delete it")
                 os.remove(edfoutname)
             edfout   = EdfFile.EdfFile(edfoutname, access="wb")
             edfout.WriteImage (header , data, Append=0)
@@ -98,7 +95,7 @@ class PyMcaBatchBuildOutput(object):
                     try:
                         os.remove(filename)
                     except:
-                        print("Cannot delete file %s" % filename)
+                        _logger.warning("Cannot delete file %s" % filename)
 
         #DAT IMAGES
         datoutlist = []
@@ -215,8 +212,8 @@ class PyMcaBatchBuildOutput(object):
                 prefix = name[0:n-i+1]
             prefix = os.path.join(os.path.dirname(filename),prefix)
             if not os.path.exists(prefix + number + suffix):
-                print("Internal error in EDFStack")
-                print("file should exist: %s " % (prefix + number + suffix))
+                _logger.error("Internal error in EDFStack")
+                _logger.error("file should exist: %s " % (prefix + number + suffix))
                 return
             i = 0
             if begin is None:

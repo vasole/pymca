@@ -162,14 +162,19 @@ class Plugin1DBase(object):
         """
         self._plotWindow = weakref.proxy(plotWindow)
 
-        self._legacy = True
-        """The plot window can be a legacy PyMca plot, in which case
+        self._legacy = False
+        """
+        In the transition phase from PyMca plot to silx plot,
+        the plot window could be a legacy PyMca plot, in which case
         :attr:`_legacy` is set to *True*, or a :class:`PluginsToolButton`
         acting as proxy for a *silx* PlotWindow (*legacy=False*).
+        But now we don't expect to see PyMca plots any longer.
         """
 
-        if hasattr(plotWindow, "plot"):  # PluginsToolButton.plot -> silx plot
-            self._legacy = False
+        # PyMcaGraph.Plot has a PLUGINS_DIR class attribute,
+        # PluginsToolButton does not
+        if hasattr(plotWindow, "PLUGINS_DIR"):
+            self._legacy = True
 
     # Window related functions
     def windowTitle(self):

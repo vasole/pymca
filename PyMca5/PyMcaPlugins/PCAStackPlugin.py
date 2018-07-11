@@ -48,6 +48,7 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 import numpy
+import logging
 
 from PyMca5 import StackPluginBase
 from PyMca5.PyMcaGui import CalculationThread
@@ -57,12 +58,13 @@ from PyMca5.PyMcaGui import StackPluginResultsWindow
 from PyMca5.PyMcaGui import PyMca_Icons
 
 qt = StackPluginResultsWindow.qt
-DEBUG = 0
+_logger = logging.getLogger(__name__)
 
 
 class PCAStackPlugin(StackPluginBase.StackPluginBase):
     def __init__(self, stackWindow, **kw):
-        StackPluginBase.DEBUG = DEBUG
+        if _logger.getEffectiveLevel() == logging.DEBUG:
+            StackPluginBase.pluginBaseLogger.setLevel(logging.DEBUG)
         StackPluginBase.StackPluginBase.__init__(self, stackWindow, **kw)
         self.methodDict = {'Calculate': [self.calculate, "Perform PCA", None],
                            'Show': [self._showWidget,
@@ -74,8 +76,7 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
         self.thread = None
 
     def stackUpdated(self):
-        if DEBUG:
-            print("PCAStackPlugin.stackUpdated() called")
+        _logger.debug("PCAStackPlugin.stackUpdated() called")
         self.configurationWidget = None
         self.widget = None
 
@@ -88,8 +89,7 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
         self.widget.setSelectionMask(mask)
 
     def mySlot(self, ddict):
-        if DEBUG:
-            print("mySlot ", ddict['event'], ddict.keys())
+        _logger.debug("mySlot %s %s", ddict['event'], ddict.keys())
         if ddict['event'] == "selectionMaskChanged":
             self.setStackSelectionMask(ddict['current'])
         elif ddict['event'] == "addImageClicked":
@@ -166,7 +166,7 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
     def _executeFunctionAndParameters(self):
         self.widget = None
         self.configurationWidget.show()
-        if DEBUG:
+        if _logger.getEffectiveLevel() == logging.DEBUG:
             self.thread = CalculationThread.CalculationThread(\
                             calculation_method=self.actualCalculation)
             self.thread.result = self.actualCalculation()
@@ -223,7 +223,7 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
             stack = self.getStackDataObject()
             if isinstance(stack, numpy.ndarray):
                 if stack.data.dtype not in [numpy.float, numpy.float32]:
-                    print("WARNING: Non floating point data")
+                    _logger.warning("WARNING: Non floating point data")
                     text = "Calculation going on."
                     text += " WARNING: Non floating point data."
                     self._status.setText(text)

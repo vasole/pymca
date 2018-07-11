@@ -27,11 +27,13 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+import logging
 from PyMca5.PyMcaGui import DoubleSlider
 qt = DoubleSlider.qt
 
 QTVERSION = qt.qVersion()
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class RGBCorrelatorSlider(qt.QWidget):
     sigRGBCorrelatorSliderSignal = qt.pyqtSignal(object)
@@ -145,22 +147,19 @@ class RGBCorrelatorSlider(qt.QWidget):
         self.sigRGBCorrelatorSliderSignal.emit(ddict)
 
     def _redSliderChanged(self, ddict):
-        if DEBUG:
-            print("RGBCorrelatorSlider._redSliderChanged()")
+        _logger.debug("RGBCorrelatorSlider._redSliderChanged()")
         if self.__emitSignals:
             ddict['event'] = "redChanged"
             self.sigRGBCorrelatorSliderSignal.emit(ddict)
 
     def _greenSliderChanged(self, ddict):
-        if DEBUG:
-            print("RGBCorrelatorSlider._greenSliderChanged()")
+        _logger.debug("RGBCorrelatorSlider._greenSliderChanged()")
         if self.__emitSignals:
             ddict['event'] = "greenChanged"
             self.sigRGBCorrelatorSliderSignal.emit(ddict)
 
     def _blueSliderChanged(self, ddict):
-        if DEBUG:
-            print("RGBCorrelatorSlider._blueSliderChanged()")
+        _logger.debug("RGBCorrelatorSlider._blueSliderChanged()")
         if self.__emitSignals:
             ddict['event'] = "blueChanged"
             self.sigRGBCorrelatorSliderSignal.emit(ddict)

@@ -32,13 +32,15 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
 import sys
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import PyMca_Icons
 from PyMca5.PyMcaGui import XASNormalizationWindow
 from PyMca5.PyMca import XASNormalization
 IconDict = PyMca_Icons.IconDict
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class XASNormalizationParameters(qt.QGroupBox):
     sigNormalizationParametersSignal = qt.pyqtSignal(object)
@@ -172,8 +174,7 @@ class XASNormalizationParameters(qt.QGroupBox):
         self.postEdgeEndBox.valueChanged[float].connect(self._postEdgeEndChanged)
 
     def _normalizationChanged(self, value):
-        if DEBUG:
-            print("_normalizationChanged ", value)
+        _logger.debug("_normalizationChanged, %s ", value)
         if self.__connected:
             self._emitSignal("JumpNormalizationChanged")
 
@@ -204,8 +205,7 @@ class XASNormalizationParameters(qt.QGroupBox):
             self.e0SpinBox.setEnabled(True)
 
     def _e0Changed(self, value):
-        if DEBUG:
-            print("E0 CHANGED", value)
+        _logger.debug("E0 CHANGED, %s", value)
         if self.__connected:
             try:
                 self.__connected = False
@@ -215,14 +215,12 @@ class XASNormalizationParameters(qt.QGroupBox):
             self._emitSignal("E0Changed")
 
     def _preEdgeChanged(self, value):
-        if DEBUG:
-            print("Current pre-edge value = ", value)
+        _logger.debug("Current pre-edge value = %s", value)
         if self.__connected:
             self._emitSignal("PreEdgeChanged")
 
     def _preEdgeStartChanged(self, value):
-        if DEBUG:
-            print("pre start changed", value)
+        _logger.debug("pre start changed: %s", value)
         if self.__connected:
             try:
                 self.__connected = False
@@ -232,8 +230,7 @@ class XASNormalizationParameters(qt.QGroupBox):
             self._emitSignal("PreEdgeChanged")
 
     def _preEdgeEndChanged(self, value):
-        if DEBUG:
-            print("pre end changed", value)
+        _logger.debug("pre end changed: %s", value)
         if self.__connected:
             try:
                 self.__connected = False
@@ -243,14 +240,12 @@ class XASNormalizationParameters(qt.QGroupBox):
             self._emitSignal("PreEdgeChanged")
 
     def _postEdgeChanged(self, value):
-        if DEBUG:
-            print("post-edge changed", value)
+        _logger.debug("post-edge changed: %s", value)
         if self.__connected:
             self._emitSignal("PostEdgeChanged")
 
     def _postEdgeStartChanged(self, value):
-        if DEBUG:
-            print("post-edge start changed", value)
+        _logger.debug("post-edge start changed: %s", value)
         if self.__connected:
             try:
                 self.__connected = False
@@ -260,8 +255,7 @@ class XASNormalizationParameters(qt.QGroupBox):
             self._emitSignal("PostEdgeChanged")
 
     def _postEdgeEndChanged(self, value):
-        if DEBUG:
-            print("post-edge changed", value)
+        _logger.debug("post-edge changed: %s", value)
         if self.__connected:
             try:
                 self.__connected = False
@@ -343,8 +337,7 @@ class XASNormalizationParameters(qt.QGroupBox):
         return ddict
 
     def setParameters(self, ddict, signal=True):
-        if DEBUG:
-            print("setParameters called", ddict, signal)
+        _logger.debug("setParameters called, %s %s", ddict, signal)
         if "Normalization" in ddict:
             ddict = ddict["Normalization"]
         try:
@@ -408,7 +401,7 @@ class XASNormalizationParameters(qt.QGroupBox):
         self.setStyleSheet("QGroupBox {color: %s;}" % color)
 
 if __name__ == "__main__":
-    DEBUG = 1
+    _logger.setLevel(logging.DEBUG)
     app = qt.QApplication([])
     def mySlot(ddict):
         print("Signal received: ", ddict)
