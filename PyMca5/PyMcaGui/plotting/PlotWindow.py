@@ -1474,7 +1474,10 @@ class PlotWindow(PlotWidget.PlotWidget):
             os.remove(filename)
         if filterused[0].upper() == "WIDGET":
             fformat = filename[-3:].upper()
-            pixmap = qt.QPixmap.grabWidget(self)
+            if hasattr(qt.QPixmap,"grabWidget"):
+                pixmap = qt.QPixmap.grabWidget(self)
+            else:
+                pixmap = self.grab()
             if not pixmap.save(filename, fformat):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)

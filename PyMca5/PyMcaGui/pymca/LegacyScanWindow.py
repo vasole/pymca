@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -741,7 +741,10 @@ class ScanWindow(PlotWindow.PlotWindow):
             os.remove(filename)
         if filterused[0].upper() == "WIDGET":
             fformat = filename[-3:].upper()
-            pixmap = qt.QPixmap.grabWidget(self)
+            if hasattr(qt.QPixmap,"grabWidget"):
+                pixmap = qt.QPixmap.grabWidget(self)
+            else:
+                pixmap = self.grab()
             if not pixmap.save(filename, fformat):
                 qt.QMessageBox.critical(self,
                                     "Save Error",
