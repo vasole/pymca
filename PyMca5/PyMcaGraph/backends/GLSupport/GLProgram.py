@@ -110,7 +110,8 @@ class GLProgram(object):
         glValidateProgram(program)
         if glGetProgramiv(program, GL_VALIDATE_STATUS) != GL_TRUE:
             warnings.warn(
-                'Cannot validate program: ' + glGetProgramInfoLog(program),
+                'Cannot validate program: ' + \
+                glGetProgramInfoLog(program).decode('ascii'),
                 RuntimeWarning)
 
         attributes = {}
