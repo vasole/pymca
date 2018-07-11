@@ -283,8 +283,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 self.mdi.addWindow(self.scanWindow)
             else:
                 if backend is not None:
-                    from silx.gui.plot import PlotWidget
-                    PlotWidget.setDefaultBackend(backend)
+                    import silx
+                    silx.config.DEFAULT_PLOT_BACKEND = backend
                 self.mainTabWidget = qt.QTabWidget(self.mdi)
                 self.mainTabWidget.setWindowTitle("Main Window")
                 self.mcaWindow = McaWindow.McaWindow(backend=backend)
