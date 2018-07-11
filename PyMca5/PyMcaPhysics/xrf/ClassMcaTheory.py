@@ -34,6 +34,7 @@ import os
 import sys
 import numpy
 import copy
+import logging
 from .Strategies import STRATEGIES
 from . import ConcentrationsTool
 FISX = ConcentrationsTool.FISX
@@ -44,7 +45,7 @@ from PyMca5.PyMcaMath.fitting import SpecfitFuns
 from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaMath.fitting import Gefit
 from PyMca5 import PyMcaDataDir
-DEBUG = 0
+_logger = logging.getLogger(__name__)
 #"python ClassMcaTheory.py -s1.1 --file=03novs060sum.mca --pkm=McaTheory.dat --continuum=0 --strip=1 --sumflag=1 --maxiter=4"
 CONTINUUM_LIST = [None,'Constant','Linear','Parabolic','Linear Polynomial','Exp. Polynomial']
 OLDESCAPE = 0
@@ -154,10 +155,8 @@ class McaTheory(object):
     def configure(self, newdict=None):
         if newdict in [None, {}]:
             if self.__toBeConfigured:
-                if DEBUG:
-                    txt = "WARNING: This configuration is the one of last fit.\n"
-                    txt += "It does not correspond to the one of next fit."
-                    print(txt)
+                _logger.debug("WARNING: This configuration is the one of last fit.\n"
+                              "It does not correspond to the one of next fit.")
             return copy.deepcopy(self.config)
         self.config.update(newdict)
         self.__toBeConfigured = False
@@ -451,8 +450,7 @@ class McaTheory(object):
             _nescape_ = 0
             if self.config['fit']['escapeflag']:
                 if self.__USE_FISX_ESCAPE:
-                    if DEBUG:
-                        print("Using fisx escape")
+                    _logger.debug("Using fisx escape")
                     xcom = FisxHelper.xcom
                     detector_composition = Elements.getMaterialMassFractions([detele],
                                                                              [1.0])
@@ -764,8 +762,7 @@ class McaTheory(object):
                     _nescape_ = 0
                     if self.config['fit']['escapeflag']:
                         if self.__USE_FISX_ESCAPE:
-                            if DEBUG:
-                                print("Using fisx escape")
+                            _logger.debug("Using fisx escape")
                             xcom = FisxHelper.xcom
                             detector_composition = Elements.getMaterialMassFractions([detele],
                                                                              [1.0])
@@ -865,8 +862,7 @@ class McaTheory(object):
                                 _nescape_ = 0
                                 if self.config['fit']['escapeflag']:
                                     if self.__USE_FISX_ESCAPE:
-                                        if DEBUG:
-                                            print("Using fisx escape")
+                                        _logger.debug("Using fisx escape")
                                         xcom = FisxHelper.xcom
                                         detector_composition = Elements.getMaterialMassFractions([detele],
                                                                                                  [1.0])
@@ -995,8 +991,7 @@ class McaTheory(object):
         if (self.lastxmin != self.config['fit']['xmin']) or\
            (self.lastxmax != self.config['fit']['xmax']):
             if self.ydata0 is not None:
-                if DEBUG:
-                    print("Limits changed")
+                _logger.debug("Limits changed")
                 self.setData(x=self.xdata0,
                              y=self.ydata0,
                              sigmay=self.sigmay0,
@@ -1008,18 +1003,15 @@ class McaTheory(object):
         if hasattr(self, "xdata"):
             if self.STRIP:
                 if calculateStrip:
-                    if DEBUG:
-                        print("Calling to calculate non analytical background in config")
+                    _logger.debug("Calling to calculate non analytical background in config")
                     self.__getselfzz()
                 else:
-                    if DEBUG:
-                        print("Using previous non analytical background in config")
+                    _logger.debug("Using previous non analytical background in config")
                 self.datatofit = numpy.concatenate((self.xdata,
                                 self.ydata-self.zz, self.sigmay),1)
                 self.laststrip = 1
             else:
-                if DEBUG:
-                    print("Using previous data")
+                _logger.debug("Using previous data")
                 self.datatofit = numpy.concatenate((self.xdata,
                                 self.ydata, self.sigmay),1)
                 self.laststrip = 0
@@ -1049,8 +1041,7 @@ class McaTheory(object):
                a strategy based on concentrations
         """
         if self.__toBeConfigured:
-            if DEBUG:
-                print("setData RESTORE ORIGINAL CONFIGURATION")
+            _logger.debug("setData RESTORE ORIGINAL CONFIGURATION")
             self.configure(self.__originalConfiguration)
         if 'x' in kw:
             x=kw['x']
@@ -1216,8 +1207,7 @@ class McaTheory(object):
 
         #SNIP algorithm
         if self.config['fit']['stripalgorithm'] == 1:
-            if DEBUG:
-                print("CALCULATING SNIP")
+            _logger.debug("CALCULATING SNIP")
             if len(anchorslist) == 0:
                 anchorslist = [0, len(ysmooth)-1]
             anchorslist.sort()
@@ -1243,8 +1233,7 @@ class McaTheory(object):
         #strip background
         niter = self.config['fit']['stripiterations']
         if niter > 0:
-            if DEBUG:
-                print("CALCULATING STRIP")
+            _logger.debug("CALCULATING STRIP")
             if (niter > 1000) and (self.config['fit']['stripwidth'] == 1):
                 self.zz=SpecfitFuns.subac(ysmooth,
                                       self.config['fit']['stripconstant'],
@@ -1805,8 +1794,7 @@ class McaTheory(object):
 
     def estimate(self):
         if self.__toBeConfigured:
-            if DEBUG:
-                print("CONFIGURING FROM ESTIMATION")
+            _logger.debug("CONFIGURING FROM ESTIMATION")
             self.configure(self.__originalConfiguration)
         self.parameters, self.codes = self.specfitestimate(self.xdata, self.ydata,self.zz)
         #self.estimatelinpoly(self.xdata, self.ydata,self.zz)

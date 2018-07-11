@@ -28,15 +28,15 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import numpy
-from numpy import cos, sin
 import sys
+import logging
 from PyMca5 import Plugin1DBase
-import os
 from PyMca5.PyMcaGui import PyMcaQt as qt
 
 from PyMca5.PyMcaGui import MaskImageWidget
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
     def __init__(self, plotWindow, **kw):
@@ -76,14 +76,11 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
         """
         The plugin is asked to apply the method associated to name.
         """
-        if DEBUG:
-                self.methodDict[name][0]()
-        else:
-            try:
-                self.methodDict[name][0]()
-            except:
-                print(sys.exc_info())
-                raise
+        try:
+            self.methodDict[name][0]()
+        except:
+            _logger.error(sys.exc_info())
+            raise
 
     def _convert(self):
         x, y, legend, info = self.getActiveCurve()
@@ -112,7 +109,7 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
 
         #Didier's contribution: Try to do something if scan has been interrupted
         if y.size < (int(item[6])+1) * (int(item[10])+1):
-            print("WARNING: Incomplete mesh scan")
+            _logger.warning("WARNING: Incomplete mesh scan")
             self._motor1 = numpy.resize(self._motor1,(y.size/(int(item[6])+1),1))
             y = numpy.resize(y,((y.size/(int(item[6])+1)*(int(item[6])+1)),1))
 
@@ -130,8 +127,7 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
                 self._motor1 = self._x
                 self._motor1Mne = self._xLabel
         except:
-            if DEBUG:
-                print("XLabel should be one of the scanned motors")
+            _logger.debug("XLabel should be one of the scanned motors")
 
         self._legend = legend
         self._info = info
@@ -162,7 +158,7 @@ def getPlugin1DInstance(plotWindow, **kw):
 if __name__ == "__main__":
     from PyMca5.PyMcaGraph import Plot
     app = qt.QApplication([])
-    DEBUG = 1
+    _logger.setLevel(logging.DEBUG)
     x = numpy.arange(100.)
     y = x * x
     plot = Plot.Plot()

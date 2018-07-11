@@ -33,7 +33,6 @@ import numpy
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import ExternalImagesWindow
 from PyMca5.PyMcaGui import PyMcaFileDialogs
-DEBUG = 0
 
 class ParametersWidget(qt.QWidget):
     parametersWidgetSignal = qt.pyqtSignal(object)

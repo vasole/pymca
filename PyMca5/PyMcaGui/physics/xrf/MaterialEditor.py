@@ -33,19 +33,20 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
 import copy
+import logging
 import numpy
 import traceback
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaPhysics import Elements
-from PyMca5.PyMcaGui import PlotWindow
-ScanWindow = PlotWindow.PlotWindow
+from silx.gui.plot import PlotWindow
 
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:
     QString = str
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class MaterialEditor(qt.QWidget):
     def __init__(self, parent=None, name="Material Editor",
@@ -105,13 +106,10 @@ class MaterialEditor(qt.QWidget):
         if self.__toolMode:
             self.materialGUI.setCurrent(a[0])
             if (self.graph is None):
-                self.graph = ScanWindow(self, newplot=False,
-                                        fit=False,
-                                        plugins=False,
-                                        control=True,
-                                        position=True)
-                self.graph._togglePointsSignal()
-                self.graph.enableOwnSave(True)
+                self.graph = PlotWindow(self, control=True, position=True,
+                                        colormap=False, aspectRatio=False,
+                                        yInverted=False, roi=False, mask=False)
+                self.graph.setDefaultPlotPoints(True)
             layout.addWidget(self.materialGUI)
             layout.addWidget(self.graph)
         else:
@@ -146,7 +144,7 @@ class MaterialEditor(qt.QWidget):
                 #no message?
                 error = 1
                 del Elements.Material[material]
-                if DEBUG:
+                if _logger.getEffectiveLevel() == logging.DEBUG:
                     raise
                 continue
         return error
@@ -174,6 +172,8 @@ class MaterialEditor(qt.QWidget):
                                              density=density, thickness=thickness, listoutput=False)
             addButton = False
             if self.graph is None:
+                # probably dead code (ScanWindow.ScanWindow not imported)
+                # TODO: if needed, this should be updated for silx based ScanWindow
                 self.graphDialog = qt.QDialog(self)
                 self.graphDialog.mainLayout = qt.QVBoxLayout(self.graphDialog)
                 self.graphDialog.mainLayout.setContentsMargins(0, 0, 0, 0)
@@ -216,6 +216,8 @@ class MaterialEditor(qt.QWidget):
                                                                  energy)
             addButton = False
             if self.graph is None:
+                # probably dead code (ScanWindow.ScanWindow not imported)
+                # TODO: if needed, this should be updated for silx based ScanWindow
                 self.graphDialog = qt.QDialog(self)
                 self.graphDialog.mainLayout = qt.QVBoxLayout(self.graphDialog)
                 self.graphDialog.mainLayout.setContentsMargins(0, 0, 0, 0)
@@ -233,15 +235,13 @@ class MaterialEditor(qt.QWidget):
                                 legend=legend,
                                 xlabel='Energy (keV)',
                                 ylabel='Mass Att. (cm2/g)',
-                                replace=True,
-                                replot=False)
+                                replace=True)
             for legend in ['Compton', 'Photo','Total']:
                 self.graph.addCurve(energy, numpy.array(data[legend.lower()]),
-                                legend=legend,
-                                xlabel='Energy (keV)',
-                                ylabel='Mass Att. (cm2/g)',
-                                replace=False,
-                                replot=False)
+                                    legend=legend,
+                                    xlabel='Energy (keV)',
+                                    ylabel='Mass Att. (cm2/g)',
+                                    replace=False)
             self.graph.setActiveCurve(legend+' '+'Mass Att. (cm2/g)')
             self.graph.setGraphTitle(ddict['Comment'])
             if self.graphDialog is not None:
@@ -670,7 +670,7 @@ class MaterialGUI(qt.QWidget):
         self.__massAttButton.clicked.connect(self.__massAttSlot)
 
     def setCurrent(self, matkey0):
-        if DEBUG:"setCurrent(self, matkey0) ", matkey0
+        _logger.debug("setCurrent(self, matkey0=%s)", matkey0)
         matkey = Elements.getMaterialKey(matkey0)
         if matkey is not None:
             if self.__toolMode:
@@ -694,8 +694,7 @@ class MaterialGUI(qt.QWidget):
             self.__fillingValues = False
 
     def _fillValues(self):
-        if DEBUG:
-            print("fillValues(self)")
+        _logger.debug("fillValues(self)")
         self.__fillingValues = True
         if self.__comments:
             self.__nameLine.setText("%s" % self._current['Comment'])
@@ -733,9 +732,8 @@ class MaterialGUI(qt.QWidget):
 
     # http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=666503
     def _updateCurrent(self):
-        if DEBUG:
-            print("updateCurrent(self)")
-            print("self._current before = ", self._current)
+        _logger.debug("updateCurrent(self)")
+        _logger.debug("self._current before = %s", self._current)
 
         self._current['CompoundList']     = []
         self._current['CompoundFraction'] = []
@@ -755,8 +753,7 @@ class MaterialGUI(qt.QWidget):
                 self._current['CompoundFraction'].append(float(txt1))
         self.__densitySlot(silent=True)
         self.__thicknessSlot(silent=True)
-        if DEBUG:
-            print("self._current after = ", self._current)
+        _logger.debug("self._current after = %s", self._current)
 
     def __densitySlot(self, silent=False):
         try:
@@ -804,8 +801,7 @@ class MaterialGUI(qt.QWidget):
         self.sigMaterialMassAttenuationSignal.emit(ddict)
 
     def __nameLineSlot(self):
-        if DEBUG:
-            print("__nameLineSlot(self)")
+        _logger.debug("__nameLineSlot(self)")
         qstring = self.__nameLine.text()
         text = str(qstring)
         if self.__toolMode:
@@ -857,8 +853,7 @@ class MaterialGUI(qt.QWidget):
             return
         item = self.__table.item(row, col)
         if item is not None:
-            if DEBUG:
-                print("table item is None")
+            _logger.debug("table item is None")
             qstring = item.text()
         else:
             qstring = ""

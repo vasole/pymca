@@ -32,8 +32,11 @@ from PyMca5 import Plugin1DBase
 from PyMca5.PyMcaGui.pymca import XMCDWindow
 
 from platform import node as gethostname
+import logging
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
+
 class XMCDAnalysis(Plugin1DBase.Plugin1DBase):
     def __init__(self,  plotWindow,  **kw):
         Plugin1DBase.Plugin1DBase.__init__(self,  plotWindow,  **kw)
@@ -75,8 +78,7 @@ class XMCDAnalysis(Plugin1DBase.Plugin1DBase):
             if guess.startswith(hostname):
                 beamline = 'ID08'
                 break
-        if DEBUG:
-            print('_createWidget -- beamline = "%s"' % beamline)
+        _logger.debug('_createWidget -- beamline = "%s"', beamline)
         parent = None
         self.widget = XMCDWindow.XMCDWidget(parent,
                                               self._plotWindow,
@@ -106,13 +108,13 @@ if __name__ == "__main__":
     info2 = {'MotorNames': 'PhaseD oxPS Motor10 Motor8',
              'MotorValues': '2 0.44400576644 0.613870067852 0.901968648111'}
     x = numpy.arange(100.,1100.)
-    y0 =  10*x + 10000.*numpy.exp(-0.5*(x-500)**2/400) + 1500*numpy.random.random(1000.)
-    y1 =  10*x + 10000.*numpy.exp(-0.5*(x-600)**2/400) + 1500*numpy.random.random(1000.)
-    y2 =  10*x + 10000.*numpy.exp(-0.5*(x-400)**2/400) + 1500*numpy.random.random(1000.)
+    y0 =  10*x + 10000.*numpy.exp(-0.5*(x-500)**2/400) + 1500*numpy.random.random(1000)
+    y1 =  10*x + 10000.*numpy.exp(-0.5*(x-600)**2/400) + 1500*numpy.random.random(1000)
+    y2 =  10*x + 10000.*numpy.exp(-0.5*(x-400)**2/400) + 1500*numpy.random.random(1000)
 
-    swin.newCurve(x, y2, legend="Curve2", xlabel='ene_st2', ylabel='zratio2', info=info2, replot=False, replace=False)
-    swin.newCurve(x, y0, legend="Curve0", xlabel='ene_st0', ylabel='zratio0', info=info0, replot=False, replace=False)
-    swin.newCurve(x, y1, legend="Curve1", xlabel='ene_st1', ylabel='zratio1', info=info1, replot=False, replace=False)
+    swin.newCurve(x, y2, legend="Curve2", xlabel='ene_st2', ylabel='zratio2', info=info2)
+    swin.newCurve(x, y0, legend="Curve0", xlabel='ene_st0', ylabel='zratio0', info=info0)
+    swin.newCurve(x, y1, legend="Curve1", xlabel='ene_st1', ylabel='zratio1', info=info1)
 
     plugin = getPlugin1DInstance(swin)
     plugin.applyMethod(plugin.getMethods()[0])

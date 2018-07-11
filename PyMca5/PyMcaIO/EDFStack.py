@@ -37,6 +37,7 @@ from PyMca5.PyMcaMisc import PhysicalMemory
 import numpy
 import sys
 import os
+import logging
 
 # Offer automatic conversion to HDF5 in case of lacking
 # memory to hold the Stack.
@@ -49,7 +50,8 @@ except:
 
 
 SOURCE_TYPE = "EdfFileStack"
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 X_AXIS=0
 Y_AXIS=1
@@ -232,9 +234,9 @@ class EDFStack(DataObject.DataObject):
                             samplingStep = None
                             i = 2
                             while samplingStep is None:
-                                print("**************************************************")
-                                print(" Memory error!, attempting %dx%d sampling reduction ") % (i,i)
-                                print("**************************************************")
+                                _logger.warning("**************************************************")
+                                _logger.warning(" Memory error!, attempting %dx%d sampling reduction ", i,i)
+                                _logger.warning("**************************************************")
                                 s1, s2 = arrRet[::i, ::i].shape
                                 try:
                                     self.data = numpy.zeros((s1, s2,
@@ -451,14 +453,14 @@ class EDFStack(DataObject.DataObject):
                                 self.data[self.incrProgressBar, :,:] = pieceOfStack[:,:]
                             except:
                                 if pieceOfStack.shape[1] != arrRet.shape[1]:
-                                    print(" ERROR on file %s" % tempEdfFileName)
-                                    print(" DIM 1 error Assuming missing data were at the end!!!")
+                                    _logger.warning(" ERROR on file %s", tempEdfFileName)
+                                    _logger.warning(" DIM 1 error Assuming missing data were at the end!!!")
                                 if pieceOfStack.shape[0] != arrRet.shape[0]:
-                                    print(" ERROR on file %s" % tempEdfFileName)
-                                    print(" DIM 0 error Assuming missing data were at the end!!!")
-                                self.data[self.incrProgressBar,\
-                                         :pieceOfStack.shape[0],\
-                                         :pieceOfStack.shape[1]] = pieceOfStack[:,:]
+                                    _logger.warning(" ERROR on file %s", tempEdfFileName)
+                                    _logger.warning(" DIM 0 error Assuming missing data were at the end!!!")
+                                self.data[self.incrProgressBar,
+                                          :pieceOfStack.shape[0],
+                                          :pieceOfStack.shape[1]] = pieceOfStack[:, :]
                             self.incrProgressBar += 1
                             self.onProgress(self.incrProgressBar)
                     self.onEnd()
@@ -571,8 +573,9 @@ class EDFStack(DataObject.DataObject):
                 prefix = name[0:n-i+1]
             prefix = os.path.join(os.path.dirname(filename),prefix)
             if not os.path.exists(prefix + number + suffix):
-                print("Internal error in EDFStack")
-                print("file should exist: %s " % (prefix + number + suffix))
+                _logger.error("Internal error in EDFStack "
+                              "file should exist: %s ",
+                              prefix + number + suffix)
                 return
             i = 0
             if begin is None:
@@ -609,7 +612,7 @@ class EDFStack(DataObject.DataObject):
         sourceInfo["KeyList"]= self.__keyList
 
     def getKeyInfo(self, key):
-        print("Not implemented")
+        _logger.info("Not implemented")
         return {}
 
     def isIndexedStack(self):

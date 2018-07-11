@@ -34,6 +34,7 @@ import posixpath
 import gc
 import re
 from operator import itemgetter
+import logging
 
 import h5py
 import weakref
@@ -60,7 +61,8 @@ else:
         return x
 
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 QVERSION = qt.qVersion()
 
 
@@ -81,8 +83,7 @@ def h5py_sorting(object_list):
         posixNames = [item[1].name for item in object_list]
     except AttributeError:
         # Typical of broken external links
-        if DEBUG:
-            print("HDF5Widget: Cannot get posixNames")
+        _logger.debug("HDF5Widget: Cannot get posixNames")
         return object_list
 
     # This implementation only sorts entries
@@ -223,7 +224,7 @@ class H5NodeProxy(object):
                 except:
                     #one cannot afford any error, so I revert to the old
                     # method where values where used instead of items
-                    if DEBUG:
+                    if _logger.getEffectiveLevel() == logging.DEBUG:
                         raise
                     else:
                         # tmpList = list(self.getNode(self.name).values())
@@ -581,8 +582,7 @@ class FileModel(qt.QAbstractItemModel):
         self.sigFileAppended.emit(ddict)
 
     def clear(self):
-        if DEBUG:
-            print("Clear called")
+        _logger.debug("Clear called")
         # reset is considered obsolete under Qt 5.
         if hasattr(self, "reset"):
             self.reset()

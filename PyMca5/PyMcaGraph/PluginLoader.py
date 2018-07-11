@@ -41,10 +41,12 @@ directory and stores them into the attributes pluginList and pluginInstanceDict
 import os
 import sys
 import glob
+import logging
 
 PLUGINS_DIR = None
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class PluginLoader(object):
     def __init__(self, method=None, directoryList=None):
@@ -89,9 +91,8 @@ class PluginLoader(object):
             directoryList = self._pluginDirList
             if directoryList in [None, []]:
                 directoryList = [PLUGINS_DIR]
-        if DEBUG:
-            print("method: %s" % targetMethod)
-            print("directoryList: %s" % directoryList)
+        _logger.debug("method: %s", targetMethod)
+        _logger.debug("directoryList: %s", directoryList)
         exceptionMessage = ""
         self._pluginDirList = directoryList
         self.pluginList = []
@@ -118,8 +119,7 @@ class PluginLoader(object):
             for module in moduleList:
                 try:
                     pluginName = os.path.basename(module)[:-3]
-                    if DEBUG:
-                        print("pluginName %s" % pluginName)
+                    _logger.debug("pluginName %s", pluginName)
                     plugin = pluginName
                     if directory not in sys.path:
                         sys.path.insert(0, directory)
@@ -148,9 +148,8 @@ class PluginLoader(object):
                     exceptionMessage += "%s\n" % sys.exc_info()[1]
                     exceptionMessage += "%s\n" % sys.exc_info()[2]
 
-        if len(exceptionMessage):
-            if DEBUG:
-                raise IOError(exceptionMessage)
+        if len(exceptionMessage) and _logger.getEffectiveLevel() == logging.DEBUG:
+            raise IOError(exceptionMessage)
         if exceptions:
             return len(self.pluginList), exceptionMessage
         else:

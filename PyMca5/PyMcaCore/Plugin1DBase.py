@@ -167,7 +167,6 @@ class Plugin1DBase(object):
         :attr:`_legacy` is set to *True*, or a :class:`PluginsToolButton`
         acting as proxy for a *silx* PlotWindow (*legacy=False*).
         """
-
         if hasattr(plotWindow, "plot"):  # PluginsToolButton.plot -> silx plot
             self._legacy = False
 

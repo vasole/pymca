@@ -58,12 +58,15 @@ These plugins will be compatible with any stack window that provides the functio
     selectionMaskUpdated
 """
 import numpy
+import logging
+
+_logger = logging.getLogger(__name__)
 
 try:
     from PyMca5 import StackPluginBase
     from PyMca5.PyMcaGui import CalculationThread
 except ImportError:
-    print("XASStackNormalizationPlugin importing bases from somewhere else")
+    _logger.warning("XASStackNormalizationPlugin importing bases from somewhere else")
     from . import StackPluginBase
     from . import CalculationThread
 
@@ -72,11 +75,11 @@ from PyMca5.PyMcaGui import StackPluginResultsWindow
 from PyMca5.PyMcaPhysics.xas import XASNormalization
 from PyMca5.PyMcaGui.physics.xas import XASNormalizationWindow
 
-DEBUG = 0
 
 class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
     def __init__(self, stackWindow, **kw):
-        StackPluginBase.DEBUG = DEBUG
+        if _logger.getEffectiveLevel() == logging.DEBUG:
+            StackPluginBase.pluginBaseLogger.setLevel(logging.DEBUG)
         StackPluginBase.StackPluginBase.__init__(self, stackWindow, **kw)
         self.methodDict = {}
         text = "Replace current stack by a normalized one."
@@ -126,8 +129,7 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
 
     # own stuff
     def mySlot(self, ddict):
-        if DEBUG:
-            print("mySlot ", ddict['event'], ddict.keys())
+        _logger.debug("mySlot %s %s", ddict['event'], ddict.keys())
         if ddict['event'] == "selectionMaskChanged":
             self.setStackSelectionMask(ddict['current'])
         elif ddict['event'] == "addImageClicked":

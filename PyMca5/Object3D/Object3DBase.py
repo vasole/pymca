@@ -26,6 +26,7 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "LGPL2+"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+import logging
 import numpy
 import weakref
 import sys
@@ -37,7 +38,8 @@ try:
 except ImportError:
     raise ImportError("OpenGL must be installed to use these functionalities")
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 DRAW_MODES = ['NONE',
               'POINT',
@@ -97,9 +99,8 @@ class Object3D(object):
         if GL is not None:
             if self.boundingBoxList != 0:
                 GL.glDeleteLists(self.boundingBoxList, 1)
-        if DEBUG:
-            print("DELETING Object3d base")
-            print(self.name(), "DELETED")
+        _logger.debug("DELETING Object3d base")
+        _logger.debug("%s DELETED", self.name())
 
     def name(self):
         return self.__name

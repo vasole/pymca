@@ -32,11 +32,13 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
 import numpy
+import logging
 arctan = numpy.arctan
 from PyMca5.PyMcaMath.fitting import SpecfitFuns
 from PyMca5.PyMcaMath.fitting.Gefit import LeastSquaresFit
 
-DEBUG=0
+_logger = logging.getLogger(__name__)
+
 
 try:
     HOME=os.getenv('HOME')
@@ -276,7 +278,7 @@ class SpecfitFunctions(object):
             ngauss=1
         newpar=[]
         for i in range(ngauss):
-            print("Defining Gaussian numer %d " % (i+1))
+            _logger.info("Defining Gaussian numer %d ", i+1)
             newpar.append(input('Height   = '))
             newpar.append(input('Position = '))
             newpar.append(input('FWHM     = '))

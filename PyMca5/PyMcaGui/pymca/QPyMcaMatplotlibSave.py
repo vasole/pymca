@@ -24,6 +24,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
+from __future__ import absolute_import
 __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
@@ -32,12 +33,15 @@ import sys
 import os
 import numpy
 import traceback
+from io import StringIO
+import logging
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaCore import PyMcaMatplotlibSave
 from PyMca5.PyMcaGui import IconDict
-from PyMca5.PyMcaGui import PyMcaPrintPreview
 from PyMca5 import PyMcaDirs
+
+from silx.gui.widgets.PrintPreview import SingletonPrintPreviewDialog
 
 from matplotlib import cm
 from matplotlib.font_manager import FontProperties
@@ -46,7 +50,7 @@ from matplotlib.figure import Figure
 from matplotlib.colors import LinearSegmentedColormap, LogNorm, Normalize
 from matplotlib.ticker import MaxNLocator, AutoLocator
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
 
 
 class TopWidget(qt.QWidget):
@@ -108,7 +112,7 @@ class SaveImageSetup(qt.QWidget):
         self.setWindowTitle("PyMca - Matplotlib save image")
         self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
         self.lastOutputDir = None
-        self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
+        self.printPreview = SingletonPrintPreviewDialog(parent=self)
 
         #top
         self.top = TopWidget(self)
@@ -178,20 +182,31 @@ class SaveImageSetup(qt.QWidget):
             msg.setWindowTitle('Matplotlib Save Image')
             msg.exec_()
 
-
     def printClicked(self):
         try:
-            pixmap = qt.QPixmap.grabWidget(self.imageWidget)
-            self.printPreview.addPixmap(pixmap)
-            if self.printPreview.isHidden():
-                self.printPreview.show()
-            self.printPreview.raise_()
+            imgData = StringIO()
+            self.imageWidget.figure.savefig(imgData, format="svg")  # dpi=...)
+            imgData.flush()
+            imgData.seek(0)
+            svgData = imgData.read()
+            svgRenderer = qt.QSvgRenderer()
+            svgRenderer.load(qt.QXmlStreamReader(svgData.encode(errors="replace")))
+            self.printPreview.addSvgItem(svgRenderer)
         except:
-            msg = qt.QMessageBox(self)
-            msg.setIcon(qt.QMessageBox.Critical)
-            msg.setText("Error printing image: %s" % sys.exc_info()[1])
-            msg.setWindowTitle('Matplotlib Save Image')
-            msg.exec_()
+            try:
+                pixmap = qt.QPixmap.grabWidget(self.imageWidget)
+                self.printPreview.addPixmap(pixmap)
+            except:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Error printing image: %s" % sys.exc_info()[1])
+                msg.setWindowTitle('Matplotlib Save Image')
+                msg.exec_()
+                return
+        if self.printPreview.isHidden():
+            self.printPreview.show()
+        self.printPreview.raise_()
+
 
     def saveClicked(self):
         outfile = qt.QFileDialog(self)
@@ -274,7 +289,7 @@ class SaveImageSetup(qt.QWidget):
                                           format=finalFile[-3:],
                                           dpi=self.imageWidget.config['outputdpi'])
         except:
-            print("WARNING: trying to save using obsolete method")
+            _logger.warning("trying to save using obsolete method")
             config = self.imageWidget.getParameters()
             try:
                 s=PyMcaMatplotlibSave.PyMcaMatplotlibSaveImage(self.imageWidget.imageData)
@@ -728,8 +743,7 @@ class QPyMcaMatplotlibImage(FigureCanvas):
         elif self.config['colormap'] == 'ylgnbu_r':
             cmap = cm.YlGnBu_r
         else:
-            print("Unsupported colormap %s" % self.config['colormap'])
-
+            _logger.warning("Unsupported colormap %s", self.config['colormap'])
 
         if self.config['extent'] is None:
             h, w = self.imageData.shape
@@ -802,7 +816,7 @@ class QPyMcaMatplotlibImage(FigureCanvas):
                         self._colorbar.locator = tick_locator
                         self._colorbar.update_ticks()
                     except:
-                        print("Colorbar error", sys.exc_info())
+                        _logger.warning("Colorbar error %s", sys.exc_info())
                         pass
             else:
                 self._colorbar = self.figure.colorbar(self._image,

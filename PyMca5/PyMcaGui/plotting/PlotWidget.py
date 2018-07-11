@@ -28,7 +28,9 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
-import os
+import logging
+import traceback
+
 from PyMca5.PyMcaGraph import Plot
 
 SVG = True
@@ -82,9 +84,20 @@ else:
 if not hasattr(QtCore, "Signal"):
     QtCore.Signal = QtCore.pyqtSignal
 
+
+_logger = logging.getLogger(__name__)
+
 DEBUG = 0
 if DEBUG:
+    _logger.setLevel(logging.DEBUG)
     Plot.DEBUG = DEBUG
+
+_logger.warning("%s is deprecated, you are advised to use "
+                "silx.gui.plot.PlotWidget instead",
+                __name__)
+for line in traceback.format_stack(limit=3):
+    _logger.warning(line.rstrip())
+
 
 class PlotWidget(QtGui.QMainWindow, Plot.Plot):
     sigPlotSignal = QtCore.Signal(object)

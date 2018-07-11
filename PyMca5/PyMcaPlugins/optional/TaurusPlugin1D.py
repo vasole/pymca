@@ -160,7 +160,7 @@ if __name__ == "__main__":
     import os
     from PyMca5.PyMcaGui import ScanWindow
     plot = ScanWindow.ScanWindow()
-    plot.setPluginDirectoryList([os.path.dirname(__file__)])
-    plot.getPlugins()
+    plot.pluginsToolButton.setPluginDirectoryList([os.path.dirname(__file__)])
+    plot.pluginsToolButton.getPlugins()
     plot.show()
     app.exec_()

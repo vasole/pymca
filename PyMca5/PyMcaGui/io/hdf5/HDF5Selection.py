@@ -27,10 +27,10 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+
 from PyMca5.PyMcaGui import PyMcaQt as qt
 safe_str = qt.safe_str
 
-DEBUG = 0
 
 class HDF5Selection(qt.QWidget):
     def __init__(self, parent=None):

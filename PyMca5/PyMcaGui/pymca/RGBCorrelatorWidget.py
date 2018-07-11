@@ -31,6 +31,7 @@ import sys
 import os
 import numpy
 import traceback
+import logging
 from . import RGBCorrelatorSlider
 from . import RGBCorrelatorTable
 from PyMca5.PyMcaGui.pymca import RGBImageCalculator
@@ -73,7 +74,7 @@ try:
 except:
     TOMOGUI_FLAG = False
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
 
 
 class RGBCorrelatorWidget(qt.QWidget):
@@ -306,8 +307,7 @@ class RGBCorrelatorWidget(qt.QWidget):
             self.toggleSlidersButton.setIcon(self._slidersOnIcon)
 
     def _sliderSlot(self, ddict):
-        if DEBUG:
-            print("RGBCorrelatorWidget._sliderSlot()")
+        _logger.debug("RGBCorrelatorWidget._sliderSlot()")
         if self.__imageLength is None: return
         tableDict = self.tableWidget.getElementSelection()
         if ddict['event'] == 'redChanged':
@@ -339,8 +339,7 @@ class RGBCorrelatorWidget(qt.QWidget):
             self.__recolor(['r', 'g', 'b'])
 
     def _tableSlot(self, ddict):
-        if DEBUG:
-            print("RGBCorrelatorWidget._tableSlot()")
+        _logger.debug("RGBCorrelatorWidget._tableSlot()")
         if self.__imageLength is None: return
         if ddict['r'] == []:ddict['r'] = None
         if ddict['g'] == []:ddict['g'] = None
@@ -881,8 +880,7 @@ class RGBCorrelatorWidget(qt.QWidget):
                                         self.addImage(imgData, title)
                                 continue
                         except:
-                            if DEBUG:
-                                print("Built-in tif support unsuccessful")
+                            _logger.debug("Built-in tif support unsuccessful")
                             pass
                     #try a pure image format from PyQt
                     qimage = qt.QImage(fname)
@@ -939,7 +937,7 @@ class RGBCorrelatorWidget(qt.QWidget):
             msg.setInformativeText(str(sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
             msg.exec_()
-            if DEBUG:
+            if _logger.getEffectiveLevel() == logging.DEBUG:
                 raise
 
     def addBatchDatFile(self, filename, ignoresigma=None, csv=False):

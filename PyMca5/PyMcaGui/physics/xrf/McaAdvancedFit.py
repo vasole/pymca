@@ -35,6 +35,7 @@ import os
 import numpy
 import time
 import copy
+import logging
 import tempfile
 import shutil
 import traceback
@@ -66,7 +67,6 @@ from . import McaAdvancedTable
 from . import QtMcaAdvancedFitReport
 from . import ConcentrationsWidget
 from PyMca5.PyMcaPhysics.xrf import ConcentrationsTool
-from PyMca5.PyMcaGui import PlotWindow
 from PyMca5.PyMcaGui import PyMca_Icons
 IconDict = PyMca_Icons.IconDict
 from . import McaCalWidget
@@ -75,24 +75,27 @@ from PyMca5.PyMcaGui import SubprocessLogWidget
 from . import ElementsInfo
 Elements = ElementsInfo.Elements
 #import McaROIWidget
-from PyMca5.PyMcaGui import PyMcaPrintPreview
 from PyMca5.PyMcaCore import PyMcaDirs
 from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaGui import CalculationThread
-DEBUG = 0
-if DEBUG:
-    print("############################################")
-    print("#    McaAdvancedFit is in DEBUG mode %s     #" % DEBUG)
-    print("############################################")
+_logger = logging.getLogger(__name__)
+
+_logger.debug("############################################\n"
+              "#    McaAdvancedFit is in DEBUG mode       #\n"
+              "############################################")
 XRFMC_FLAG = False
 try:
     from PyMca5.PyMcaPhysics.xrf.XRFMC import XRFMCHelper
     XRFMC_FLAG = True
 except ImportError:
-    print("Cannot import XRFMCHelper module")
-    if DEBUG:
+    _logger.warning("Cannot import XRFMCHelper module")
+    if _logger.getEffectiveLevel() == logging.DEBUG:
         raise
 USE_BOLD_FONT = True
+
+from silx.gui.plot import PlotWindow
+from silx.gui.plot.PrintPreviewToolButton import SingletonPrintPreviewToolButton
+
 
 class McaAdvancedFit(qt.QWidget):
     """
@@ -162,7 +165,7 @@ class McaAdvancedFit(qt.QWidget):
             self.graph = self.graphWindow
             self.graph.setGraphXLabel('Channel')
             self.graph.setGraphYLabel('Counts')
-            self.mainTab.addTab(self.tabGraph,"GRAPH")
+            self.mainTab.addTab(self.tabGraph, "GRAPH")
             self.graphWindow.sigPlotSignal.connect(self._mcaGraphSignalSlot)
             #table
             self.tabMca  = qt.QWidget()
@@ -449,7 +452,6 @@ class McaAdvancedFit(qt.QWidget):
             #del dialog
 
         self.graph.clearMarkers()
-        self.graph.replot()
         self.__fitdone = False
         self._concentrationsDict = None
         self._concentrationsInfo = None
@@ -478,7 +480,7 @@ class McaAdvancedFit(qt.QWidget):
         else:
             self.matrixXRFMCSpectrumButton.show()
 
-        if DEBUG:
+        if _logger.getEffectiveLevel() == logging.DEBUG:
             self.mcafit.configure(config)
         elif 1:
             try:
@@ -550,8 +552,7 @@ class McaAdvancedFit(qt.QWidget):
                     self.mainTab.setCurrentIndex(0)
 
     def __configureFromConcentrations(self,ddict):
-        if DEBUG:
-            print("McaAdvancedFit.__configureFromConcentrations", ddict)
+        _logger.debug("McaAdvancedFit.__configureFromConcentrations %s", ddict)
         config = self.concentrationsWidget.getParameters()
         self.mcafit.config['concentrations'].update(config)
         if ddict['event'] == 'updated':
@@ -570,7 +571,6 @@ class McaAdvancedFit(qt.QWidget):
         ele = dict['current']
         items = []
         if not (ele in dict):
-            self.graph.replot()
             return
         for rays in dict[ele]:
             for transition in Elements.Element[ele][rays +" xrays"]:
@@ -590,18 +590,15 @@ class McaAdvancedFit(qt.QWidget):
             if (x < xmin) or (x > xmax):continue
             if not self._energyAxis:
                 if abs(calib[1]) > 0.0000001:
-                    marker=self.graph.insertXMarker(x,
-                                                    legend=transition,
-                                                    text=transition,
-                                                    color='orange',
-                                                    replot=False)
+                    marker=self.graph.addXMarker(x,
+                                                 legend=transition,
+                                                 text=transition,
+                                                 color='orange')
             else:
-                marker=self.graph.insertXMarker(energy,
-                                                legend=transition,
-                                                text=transition,
-                                                color='orange',
-                                                replot=False)
-        self.graph.replot()
+                marker=self.graph.addXMarker(energy,
+                                             legend=transition,
+                                             text=transition,
+                                             color='orange')
 
     def _updateTop(self):
         config = {}
@@ -619,11 +616,10 @@ class McaAdvancedFit(qt.QWidget):
     def __updatefromtop(self,ndict):
         config = self.mcafit.configure()
         for key in ndict.keys():
-            if DEBUG:
-                keylist = ['stripflag','hypermetflag','sumflag','escapeflag',
-                           'fitfunction', 'continuum']
-                if key not in keylist:
-                    print("UNKNOWN key ",key)
+            if key not in ['stripflag', 'hypermetflag',
+                           'sumflag', 'escapeflag',
+                           'fitfunction', 'continuum']:
+                _logger.debug("UNKNOWN key %s", key)
             config['fit'][key] = ndict[key]
         self.__fitdone = False
         #erase table
@@ -644,7 +640,7 @@ class McaAdvancedFit(qt.QWidget):
             self.graph.removeCurve(key)
         self.plot()
 
-        if DEBUG:
+        if _logger.getEffectiveLevel() == logging.DEBUG:
             self.mcafit.configure(config)
         elif 1:
             try:
@@ -689,8 +685,7 @@ class McaAdvancedFit(qt.QWidget):
                 return
 
     def _tabChanged(self, value):
-        if DEBUG:
-            print("_tabChanged(self, value) called")
+        _logger.debug("_tabChanged(self, value) called")
         if str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == "CONCENTRATIONS":
             self.printButton.setEnabled(False)
             w = self.concentrationsWidget
@@ -701,21 +696,19 @@ class McaAdvancedFit(qt.QWidget):
                 self.printButton.setEnabled(True)
                 #do not calculate again. It should be already updated
                 return
-            if DEBUG:
+            try:
                 self.concentrations()
                 self.printButton.setEnabled(True)
-            else:
-                try:
-                    self.concentrations()
-                    self.printButton.setEnabled(True)
-                except:
-                    #print "try to set"
-                    self.printButton.setEnabled(False)
-                    msg = qt.QMessageBox(self)
-                    msg.setIcon(qt.QMessageBox.Critical)
-                    msg.setText("Concentrations error: %s" % sys.exc_info()[1])
-                    msg.exec_()
-                    self.mainTab.setCurrentIndex(0)
+            except:
+                if _logger.getEffectiveLevel() == logging.DEBUG:
+                    raise
+                #print "try to set"
+                self.printButton.setEnabled(False)
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Concentrations error: %s" % sys.exc_info()[1])
+                msg.exec_()
+                self.mainTab.setCurrentIndex(0)
         elif str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == "TABLE":
             self.printButton.setEnabled(True)
             w = self.mcatable
@@ -804,7 +797,8 @@ class McaAdvancedFit(qt.QWidget):
     def printActiveTab(self):
         txt = str(self.mainTab.tabText(self.mainTab.currentIndex())).upper()
         if txt == "GRAPH":
-            self.graph.printps()
+            # trigger the 2nd action in the PrintPreviewToolButton drop-down menu
+            self.graph.printPreviewTB.menu().actions()[1].trigger()
         elif txt == "TABLE":
             self.printps(True)
         elif txt == "CONCENTRATIONS":
@@ -992,25 +986,21 @@ class McaAdvancedFit(qt.QWidget):
         ddict = {}
         ddict.update(config['concentrations'])
         tool.setParameters(ddict, signal=False)
-        if DEBUG:
-            ddict, info = tool.processFitResult(config=ddict,fitresult=fitresult,
+        try:
+            ddict, info = tool.processFitResult(config=ddict, fitresult=fitresult,
                                                 elementsfrommatrix=False,
-                                                fluorates = self.mcafit._fluoRates,
+                                                fluorates=self.mcafit._fluoRates,
                                                 addinfo=True)
-        else:
-            try:
-                ddict, info = tool.processFitResult(config=ddict,fitresult=fitresult,
-                                                    elementsfrommatrix=False,
-                                                    fluorates = self.mcafit._fluoRates,
-                                                    addinfo=True)
-            except:
-                msg = qt.QMessageBox(self)
-                msg.setIcon(qt.QMessageBox.Critical)
-                msg.setText("Error processing fit result: %s" % (sys.exc_info()[1]))
-                msg.exec_()
-                if str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == 'CONCENTRATIONS':
-                    self.mainTab.setCurrentIndex(0)
-                return
+        except:
+            if _logger.getEffectiveLevel() == logging.DEBUG:
+                raise
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Error processing fit result: %s" % (sys.exc_info()[1]))
+            msg.exec_()
+            if str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == 'CONCENTRATIONS':
+                self.mainTab.setCurrentIndex(0)
+            return
         self._concentrationsDict = ddict
         self._concentrationsInfo = info
         tool.show()
@@ -1043,7 +1033,7 @@ class McaAdvancedFit(qt.QWidget):
                 else:
                     delcurves.append(key)
         for key in delcurves:
-            self.graph.removeCurve(key, replot=False)
+            self.graph.removeCurve(key)
 
 
     def matrixSpectrum(self):
@@ -1066,17 +1056,17 @@ class McaAdvancedFit(qt.QWidget):
         ddict = {}
         ddict.update(config['concentrations'])
         tool.configure(ddict)
-        if DEBUG:
+        if _logger.getEffectiveLevel() == logging.DEBUG:
             ddict, info = tool.processFitResult(fitresult=fitresult,
-                                         elementsfrommatrix=True,
-                                         addinfo=True)
+                                                elementsfrommatrix=True,
+                                                addinfo=True)
         elif 1:
             try:
-                thread = CalculationThread.CalculationThread( \
-                                      calculation_method = tool.processFitResult,
-                                  calculation_kw = {'fitresult':fitresult,
-                                    'elementsfrommatrix':True,
-                                    'addinfo':True},
+                thread = CalculationThread.CalculationThread(
+                                      calculation_method=tool.processFitResult,
+                                      calculation_kw={'fitresult': fitresult,
+                                                      'elementsfrommatrix': True,
+                                                      'addinfo': True},
                                       expand_vars=True,
                                       expand_kw=True)
                 thread.start()
@@ -1174,27 +1164,23 @@ class McaAdvancedFit(qt.QWidget):
             self.dict['result']['ymatrix']= ddict['result']['ymatrix'] * 1.0
         """
         if self.graph is not None:
-            if self._logY:
-                logfilter = 1
-            else:
-                logfilter = 0
             if self._energyAxis:
                 xdata = dict['result']['energy'][:]
             else:
                 xdata = dict['result']['xdata'][:]
-            self.graph.newCurve("Matrix",xdata,dict['result']['ymatrix'],logfilter=logfilter)
+            self.graph.addCurve(xdata, dict['result']['ymatrix'], "Matrix")
         """
         try:
             self.__anasignal(ddict)
         except:
-            print("Error generating matrix output. ")
-            print("Try to perform your fit again.  ")
-            print(sys.exc_info())
-            print("If error persists, please report this error.")
-            print("ymatrix shape = ", ddict['result']['ymatrix'].shape)
-            print("xmatrix shape = ", xmatrix.shape)
-            print("continuum shape = ", ddict['result']['continuum'].shape)
-            print("zz      shape = ", self.mcafit.zz.shape)
+            _logger.warning("Error generating matrix output. ")
+            _logger.warning("Try to perform your fit again.  ")
+            _logger.warning("%s", sys.exc_info())
+            _logger.warning("If error persists, please report this error.")
+            _logger.warning("ymatrix shape = %s", ddict['result']['ymatrix'].shape)
+            _logger.warning("xmatrix shape = %s", xmatrix.shape)
+            _logger.warning("continuum shape = %s", ddict['result']['continuum'].shape)
+            _logger.warning("zz      shape = %s", self.mcafit.zz.shape)
 
     def fisxSpectrum(self):
         if not self.__fitdone:
@@ -1434,8 +1420,8 @@ class McaAdvancedFit(qt.QWidget):
                 try:
                     self.__anasignal(ddict)
                 except:
-                    print("Error generating Monte Carlo matrix output. ")
-                    print(sys.exc_info())
+                    _logger.warning("Error generating Monte Carlo matrix output. ")
+                    _logger.warning(sys.exc_info())
 
     def peaksSpectrum(self):
         if not self.__fitdone:
@@ -1477,14 +1463,14 @@ class McaAdvancedFit(qt.QWidget):
         try:
             self.__anasignal(ddict)
         except:
-            print("Error generating peaks output. ")
-            print("Try to perform your fit again.  ")
-            print(sys.exc_info())
-            print("If error persists, please report this error.")
-            print("ymatrix shape = ", ddict['result']['ymatrix'].shape)
-            print("xmatrix shape = ", xmatrix.shape)
-            print("continuum shape = ", ddict['result']['continuum'].shape)
-            print("zz      shape = ", self.mcafit.zz.shape)
+            _logger.warning("Error generating peaks output. ")
+            _logger.warning("Try to perform your fit again.  ")
+            _logger.warning("%s", sys.exc_info())
+            _logger.warning("If error persists, please report this error.")
+            _logger.warning("ymatrix shape = %s", ddict['result']['ymatrix'].shape)
+            _logger.warning("xmatrix shape = %s", xmatrix.shape)
+            _logger.warning("continuum shape = %s", ddict['result']['continuum'].shape)
+            _logger.warning("zz      shape = %s", self.mcafit.zz.shape)
 
     def __printps(self):
         self.__printmenu.exec_(self.cursor().pos())
@@ -1534,7 +1520,7 @@ class McaAdvancedFit(qt.QWidget):
                     selection=self.info['legend'],
                     fitresult=self.dict,
                     concentrations=self._concentrationsDict,
-                    plotdict={'logy':self.graph.isYAxisLogarithmic()})
+                    plotdict={'logy': self.graph.isYAxisLogarithmic()})
         if 0:
             #this forces to open and read the file
             self.__lastreport = report.writeReport()
@@ -1709,8 +1695,8 @@ class McaAdvancedFit(qt.QWidget):
         return h
 
     # pyflakes http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=666503
-    def __print(self,text):
-        print("__print not working yet")
+    def __print(self, text):
+        _logger.info("__print not working yet")
         return
         printer = qt.QPrinter()
         printDialog = qt.QPrintDialog(printer, self)
@@ -1729,9 +1715,8 @@ class McaAdvancedFit(qt.QWidget):
             document.print_(printer)
 
     def setdata(self, *var, **kw):
-        if DEBUG:
-            print("McaAdvancedFit.setdata deprecated, use setData instead.")
-        return self.setData( *var, **kw)
+        _logger.debug("McaAdvancedFit.setdata deprecated, use setData instead.")
+        return self.setData(*var, **kw)
 
     def setData(self,*var,**kw):
         """
@@ -1841,8 +1826,7 @@ class McaAdvancedFit(qt.QWidget):
         self.plot()
 
     def setheader(self, *var, **kw):
-        if DEBUG:
-            print("McaAdvancedFit.setheader deprecated, use setHeader instead.")
+        _logger.debug("McaAdvancedFit.setheader deprecated, use setHeader instead.")
         return self.setHeader( *var, **kw)
 
     def setHeader(self,*var,**kw):
@@ -1886,18 +1870,14 @@ class McaAdvancedFit(qt.QWidget):
             msg.setText("No peaks defined.\nPlease configure peaks")
             msg.exec_()
             return
-        if DEBUG:
-            if DEBUG:
-                print("calling estimate")
+        if _logger.getEffectiveLevel() == logging.DEBUG:
+            _logger.debug("calling estimate")
             self.mcafit.estimate()
-            if DEBUG:
-                print("calling startfit")
-            fitresult,result = self.mcafit.startfit(digest=1)
-            if DEBUG:
-                print("filling table")
+            _logger.debug("calling startfit")
+            fitresult, result = self.mcafit.startfit(digest=1)
+            _logger.debug("filling table")
             self.mcatable.fillfrommca(result)
-            if DEBUG:
-                print("finished")
+            _logger.debug("finished")
         elif 1:
             try:
                 self.mcafit.estimate()
@@ -2001,17 +1981,16 @@ class McaAdvancedFit(qt.QWidget):
             if (str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == 'CONCENTRATIONS') or \
                 (self.concentrationsWidget.parent() is None):
                 if not self.concentrationsWidget.isHidden():
-                    if DEBUG:
+                    try:
                         self.concentrations()
-                    else:
-                        try:
-                            self.concentrations()
-                        except:
-                            msg = qt.QMessageBox(self)
-                            msg.setIcon(qt.QMessageBox.Critical)
-                            msg.setText("Concentrations Error: %s" % (sys.exc_info()[1]))
-                            msg.exec_()
-                            return
+                    except:
+                        if _logger.getEffectiveLevel() == logging.DEBUG:
+                            raise
+                        msg = qt.QMessageBox(self)
+                        msg.setIcon(qt.QMessageBox.Critical)
+                        msg.setText("Concentrations Error: %s" % (sys.exc_info()[1]))
+                        msg.exec_()
+                        return
         if str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == 'DIAGNOSTICS':
             try:
                 self.diagnostics()
@@ -2084,8 +2063,8 @@ class McaAdvancedFit(qt.QWidget):
                     ydata  = self.mcafit.ydata * 1.0
                 xdata.shape= [len(xdata),]
                 ydata.shape= [len(ydata),]
-                self.graph.addCurve(xdata, ydata, legend="Data", replot=True, replace=True)
-                self.graph.updateLegends()
+                self.graph.addCurve(xdata, ydata, legend="Data", replace=True)
+                self.graph.setActiveCurve("Data")
                 return
             else:
                 ddict = self.dict
@@ -2093,22 +2072,19 @@ class McaAdvancedFit(qt.QWidget):
             xdata = ddict['result']['energy'][:]
         else:
             xdata = ddict['result']['xdata'][:]
-        self.graph.addCurve(xdata, ddict['result']['ydata'], legend="Data",
-                            replot=False)
-        self.graph.addCurve(xdata, ddict['result']['yfit'], legend="Fit",
-                            replot=False)
+        self.graph.addCurve(xdata, ddict['result']['ydata'], legend="Data")
+        self.graph.addCurve(xdata, ddict['result']['yfit'], legend="Fit")
         self.graph.addCurve(xdata, ddict['result']['continuum'],
-                            legend="Continuum",
-                            replot=False)
+                            legend="Continuum")
 
         curveList = self.graph.getAllCurves(just_legend=True)
 
         if config['fit']['sumflag']:
             self.graph.addCurve(xdata, ddict['result']['pileup'] + \
                                        ddict['result']['continuum'],
-                                       legend="Pile-up", replot=False)
+                                       legend="Pile-up")
         elif "Pile-up" in curveList:
-            self.graph.removeCurve("Pile-up", replot=False)
+            self.graph.removeCurve("Pile-up")
 
         if self.matrixSpectrumButton.isChecked():
             if 'ymatrix' in ddict['result']:
@@ -2130,12 +2106,10 @@ class McaAdvancedFit(qt.QWidget):
                 mcydatan = self._xrfmcMatrixSpectra[-1]
                 self.graph.addCurve(mcxdata,
                                     mcydata0,
-                                    legend='MC Matrix 1',
-                                    replot=False)
+                                    legend='MC Matrix 1')
                 self.graph.addCurve(mcxdata,
                                     mcydatan,
-                                    legend='MC Matrix %d' % (len(self._xrfmcMatrixSpectra) - 2),
-                                    replot=False)
+                                    legend='MC Matrix %d' % (len(self._xrfmcMatrixSpectra) - 2))
 
         if self.peaksSpectrumButton.isChecked():
             keep = ['Data','Fit','Continuum','Matrix','Pile-up']
@@ -2153,20 +2127,16 @@ class McaAdvancedFit(qt.QWidget):
                 if label in ddict['result']:
                     self.graph.addCurve(xdata,
                                         ddict['result'][label],
-                                        legend=label,
-                                        replot=False)
+                                        legend=label)
                 else:
                     if group in curveList:
-                        self.graph.removeCurve(label, replot=False)
+                        self.graph.removeCurve(label)
         else:
             self.__clearPeaksSpectrum()
-
-        self.graph.replot()
-        self.graph.updateLegends()
+        self.graph.setActiveCurve("Data")
 
     def _saveGraph(self, dict=None):
-        curves = self.graph.getAllCurves()
-        if not len(curves):
+        if not len(self.graph.getAllCurves(just_legend=True)):
             return
         if not self.__fitdone:
             if False:
@@ -2205,7 +2175,7 @@ class McaAdvancedFit(qt.QWidget):
                                                      fitresult['result']['xdata'][-1]))
         if MCLabels is not None:
             if MCSpectra[2].size != fitresult['result']['xdata'].size:
-                print("Monte Carlo Spectra not saved: Wrong spectrum length.")
+                _logger.warning("Monte Carlo Spectra not saved: Wrong spectrum length.")
                 MCLabels = None
                 MCSpectra = None
 
@@ -2855,13 +2825,13 @@ class Line(qt.QFrame):
 
 
     def mouseDoubleClickEvent(self, event):
-        if DEBUG:
-            print("Double Click Event")
+        _logger.debug("Double Click Event")
         ddict={}
         ddict['event']="DoubleClick"
         ddict['data'] = event
         ddict['info'] = self.info
         self.sigLineDoubleClickEvent.emit(ddict)
+
 
 class SimpleThread(qt.QThread):
     def __init__(self, function = None, kw = None):
@@ -2882,65 +2852,90 @@ class SimpleThread(qt.QThread):
         except:
             self._result = ("Exception",) + sys.exc_info()
 
-class McaGraphWindow(PlotWindow.PlotWindow):
-    def __init__(self, parent=None, backend=None, plugins=False,
-                 newplot=False, position=True, control=True, **kw):
+
+class McaGraphWindow(PlotWindow):
+    def __init__(self, parent=None, backend=None,
+                 position=True, control=True, **kw):
         super(McaGraphWindow, self).__init__(parent, backend=backend,
-                                       plugins=plugins,
-                                       newplot=newplot,
-                                       energy=True,
-                                       roi=True,
-                                       logx=False,
-                                       fit=True,
-                                       position=position,
-                                       control=control,
-                                       **kw)
+                                             position=position, control=control,
+                                             roi=True, aspectRatio=False,
+                                             print_=False, colormap=False,
+                                             yInverted=False, mask=False,
+                                             fit=False, **kw)
         self.setDataMargins(0, 0, 0.025, 0.025)
         self.setPanWithArrowKeys(True)
-        self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
+        self.setIconSize(qt.QSize(20, 20))
+
+        # No context menu by default, execute zoomBack on right click
+        plotArea = self.getWidgetHandle()
+        plotArea.setContextMenuPolicy(qt.Qt.CustomContextMenu)
+        plotArea.customContextMenuRequested.connect(self._zoomBack)
+
+        # toolbar
+        # hide unused actions and separators
+        self.getInteractiveModeToolBar().setVisible(False)
+        self.getXAxisLogarithmicAction().setVisible(False)
+        for action in self.toolBar().actions():
+            if action.isSeparator():
+                action.setVisible(False)
+
+        self.printPreviewTB = SingletonPrintPreviewToolButton(
+                parent=self.toolBar(), plot=self)
+        self.printPreviewTB.setIcon(
+                qt.QIcon(qt.QPixmap(IconDict["fileprint"])))
+
+        # self.fitIcon = qt.QIcon(qt.QPixmap(IconDict["fit"]))
+        self.fitButton = qt.QToolButton(self.toolBar())
+        self.fitButton.setIcon(qt.QIcon(qt.QPixmap(IconDict["fit"])))
+        self.fitButton.setToolTip('Fit of Active Curve')
+        self.fitButton.clicked.connect(self._fitIconSignal)
+
+        # self.energyIcon = qt.QIcon(qt.QPixmap(IconDict["energy"]))
+        self.energyButton = qt.QToolButton(self.toolBar())
+        self.energyButton.setCheckable(True)
+        self.energyButton.setIcon(qt.QIcon(qt.QPixmap(IconDict["energy"])))
+        self.energyButton.setToolTip('Toggle Energy Axis (On/Off)')
+        self.energyButton.clicked.connect(self._energyIconSignal)
+
+        self.fitAction = self.toolBar().insertWidget(self.getCopyAction(),
+                                                     self.fitButton)
+        self.energyAction = self.toolBar().insertWidget(self.getRoiAction(),
+                                                        self.energyButton)
+        self.toolBar().addWidget(qt.HorizontalSpacer(self.toolBar()))
+        self.printAction = self.toolBar().addWidget(self.printPreviewTB)
+
         self.setGraphYLabel("Counts")
         if self.energyButton.isChecked():
             self.setGraphXLabel("Energy")
         else:
             self.setGraphXLabel("Channel")
-
-    def printGraph(self):
-        pixmap = qt.QPixmap.grabWidget(self.getWidgetHandle())
-        self.printPreview.addPixmap(pixmap)
-        if self.printPreview.isHidden():
-            self.printPreview.show()
-        self.printPreview.raise_()
 
     def _energyIconSignal(self):
-        legend = self.getActiveCurve(just_legend=True)
-        ddict={}
-        ddict['event']  = 'EnergyClicked'
-        ddict['active'] = legend
-        self.sigPlotSignal.emit(ddict)
+        self.sigPlotSignal.emit(
+            {'event': 'EnergyClicked',
+             'active': self.getActiveCurve(just_legend=True)})
 
     def _fitIconSignal(self):
-        legend = self.getActiveCurve(just_legend=True)
-        ddict={}
-        ddict['event']  = 'FitClicked'
-        ddict['active'] = legend
-        self.sigPlotSignal.emit(ddict)
+        self.sigPlotSignal.emit(
+            {'event': 'FitClicked',
+             'active': self.getActiveCurve(just_legend=True)})
 
     def _saveIconSignal(self):
-        legend = self.getActiveCurve(just_legend=True)
-        ddict={}
-        ddict['event']  = 'SaveClicked'
-        ddict['active'] = legend
-        self.sigPlotSignal.emit(ddict)
+        self.sigPlotSignal.emit(
+            {'event': 'SaveClicked',
+             'active': self.getActiveCurve(just_legend=True)})
 
-    def setActiveCurve(self, legend, replot=True):
-        super(McaGraphWindow, self).setActiveCurve(legend, replot=False)
+    def setActiveCurve(self, legend, replot=None):
+        super(McaGraphWindow, self).setActiveCurve(legend, replot)
         self.setGraphYLabel("Counts")
         if self.energyButton.isChecked():
             self.setGraphXLabel("Energy")
         else:
             self.setGraphXLabel("Channel")
-        if replot:
-            self.replot()
+
+    def _zoomBack(self, pos):
+        self.getLimitsHistory().pop()
+
 
 def test(ffile='03novs060sum.mca', cfg=None):
     from PyMca5.PyMcaIO import specfilewrapper as specfile

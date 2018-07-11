@@ -42,6 +42,10 @@ def getPackages(directory):
 from .plotting import PyMca_Icons
 from .plotting.PyMca_Icons import IconDict
 
+# legacy (not used within PyMca)
+import silx.gui.widgets.PrintPreview as PyMcaPrintPreview
+PyMcaPrintPreview.PyMcaPrintPreview = PyMcaPrintPreview.SingletonPrintPreviewDialog
+
 # this is the package level directory PyMcaGui
 baseDirectory = os.path.dirname(__file__)
 __path__ += [baseDirectory]
@@ -51,3 +55,4 @@ for directory in ["io", "math", "misc",
     if os.path.exists(os.path.join(tmpDir, "__init__.py")):
         __path__ += [tmpDir]
     __path__ += getPackages(tmpDir)
+

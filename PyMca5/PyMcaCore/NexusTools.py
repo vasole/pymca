@@ -35,7 +35,9 @@ from operator import itemgetter
 import re
 import posixpath
 from h5py import File, Dataset, Group
-DEBUG = 0
+import logging
+
+_logger = logging.getLogger(__name__)
 
 #sorting method
 def h5py_sorting(object_list):
@@ -54,8 +56,7 @@ def h5py_sorting(object_list):
         posixNames = [item[1].name for item in object_list]
     except AttributeError:
         # Typical of broken external links
-        if DEBUG:
-            print("HDF5Widget: Cannot get posixNames")
+        _logger.debug("HDF5Widget: Cannot get posixNames")
         return object_list
 
     # This implementation only sorts entries
@@ -91,8 +92,8 @@ def h5py_sorting(object_list):
         #The only way to reach this point is to have different
         #structures among the different entries. In that case
         #defaults to the unfiltered case
-        print("WARNING: Default ordering")
-        print("Probably all entries do not have the key %s" % sorting_key)
+        _logger.warning("Default ordering. "
+                        "Probably all entries do not have the key %s", sorting_key)
         return object_list
 
 def _get_number_list(txt):
@@ -421,7 +422,7 @@ def getInstrumentGroup(h5file, path):
         return None
     else:
         if n > 1:
-            print("WARNING: More than one instrument associated to the same entry")
+            _logger.warning("More than one instrument associated to the same entry")
         return groups[0]
 
 def getScannedPositioners(h5file, path):

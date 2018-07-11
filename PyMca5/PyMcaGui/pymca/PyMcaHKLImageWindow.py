@@ -29,12 +29,14 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import numpy
+import logging
 from . import PyMcaImageWindow
 from PyMca5.PyMcaPhysics import SixCircle
 
 arctan = numpy.arctan
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class PyMcaHKLImageWindow(PyMcaImageWindow.PyMcaImageWindow):
     def __init__(self, *var, **kw):
@@ -276,8 +278,7 @@ class PyMcaHKLImageWindow(PyMcaImageWindow.PyMcaImageWindow):
                 ddict['lambda'] = float(info[key])
                 continue
 
-        if DEBUG:
-            for key in ddict.keys():
-                print(key, ddict[key])
+        for key in ddict.keys():
+            _logger.debug("%s: %s", key, ddict[key])
 
         return ddict

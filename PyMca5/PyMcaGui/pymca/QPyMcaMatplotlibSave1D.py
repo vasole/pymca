@@ -31,14 +31,12 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
 import numpy
+import logging
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import PyMca_Icons
 IconDict = PyMca_Icons.IconDict
-from PyMca5.PyMcaGui import PyMcaPrintPreview
-from PyMca5.PyMcaCore import PyMcaDirs
 
-from matplotlib import cm
 from matplotlib import __version__ as matplotlib_version
 from matplotlib.font_manager import FontProperties
 if "PyQt5" in sys.modules:
@@ -49,7 +47,7 @@ else:
     from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas    
 from matplotlib.figure import Figure
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
 
 colordict = {}
 colordict['blue']   = '#0000ff'
@@ -494,8 +492,7 @@ class QPyMcaMatplotlibSave(FigureCanvas):
         n = max(x.shape)
         if n == 0:
             #nothing to plot
-            if DEBUG:
-                print("nothing to plot")
+            _logger.debug("nothing to plot")
             return
 
         style = None

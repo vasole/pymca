@@ -32,6 +32,7 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import traceback
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 
@@ -48,19 +49,19 @@ from . import EnergyTable
 from PyMca5.PyMcaCore import PyMcaDirs
 from PyMca5.PyMcaGui import PyMcaFileDialogs
 XRFMC_FLAG = False
+_logger = logging.getLogger(__name__)
 try:
     from . import XRFMCPyMca
     XRFMC_FLAG = True
 except ImportError:
-    print("XRFMC_TO_BE_IMPORTED")
+    _logger.warning("XRFMC_TO_BE_IMPORTED")
     # no XRFMC support
     pass
 from PyMca5.PyMcaGui.math import StripBackgroundWidget
-from PyMca5.PyMcaGui import PlotWindow
 from PyMca5.PyMcaGui.physics.xrf import StrategyHandler
+from silx.gui.plot import PlotWindow
 import numpy
 
-DEBUG = 0
 
 FitParamSections= ["fit", "detector", "peaks", "peakshape", "attenuators","concentrations"]
 FitParamHeaders= ["FIT", "DETECTOR","BEAM","PEAKS", "PEAK SHAPE", "ATTENUATORS","MATRIX","CONCENTRATIONS"]
@@ -84,11 +85,14 @@ class FitParamWidget(FitParamForm):
         self.graphDialog.mainLayout = qt.QVBoxLayout(self.graphDialog)
         self.graphDialog.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.graphDialog.mainLayout.setSpacing(0)
-        self.graphDialog.graph = PlotWindow.PlotWindow(self.graphDialog,
-                                                       newplot=False,
-                                                       plugins=False, fit=False)
+        self.graphDialog.graph = PlotWindow(self.graphDialog,
+                                            position=False, colormap=False,
+                                            aspectRatio=False, yInverted=False,
+                                            roi=False, mask=False, fit=False)
         self.graph = self.graphDialog.graph
-        self.graph._togglePointsSignal()
+        self.graph.zoomModeAction.setVisible(False)
+        self.graph.panModeAction.setVisible(False)
+        self.graph.setDefaultPlotPoints(True)
         self.tabAttenuators   = AttenuatorsTable.AttenuatorsTab(self.tabAtt,
                                                 graph=self.graphDialog)
         self.graphDialog.mainLayout.addWidget(self.graph)
@@ -315,11 +319,11 @@ class FitParamWidget(FitParamForm):
                 efficiency *= (1.0 - numpy.exp(-coeffs))
 
         self.graph.setGraphTitle('Filter (not beam filter) and detector correction')
-        self.graph.addCurve(energies, efficiency,
-                            legend='Ta * (1.0 - Td)',
+        legend = 'Ta * (1.0 - Td)'
+        self.graph.addCurve(energies, efficiency, legend,
                             xlabel='Energy (keV)',
-                            ylabel='Efficiency Term',
-                            replace=True)
+                            ylabel='Efficiency Term')
+        self.graph.setActiveCurve(legend)
         self.graphDialog.exec_()
 
     def __contComboActivated(self, idx):
@@ -365,8 +369,8 @@ class FitParamWidget(FitParamForm):
                 msg.setText("Error configuring strategy")
                 msg.setInformativeText("You need to specify incident beam energy")
                 msg.exec_()
-        #print("TO check for matrix composition")
-        #print("TO check for peaks")
+        #_logger.debug("TO check for matrix composition")
+        #_logger.debug("TO check for peaks")
 
     def _strategySetupButtonClicked(self):
         maxEnergy = qt.safe_str(self.peakTable.energy.text())
@@ -617,7 +621,7 @@ class FitParamWidget(FitParamForm):
                     combo.setOptions(matlist)
                 combo.lineEdit().setText(str(attpar[1]))
             else:
-                print("ERROR in __setAttPar")
+                _logger.warning("ERROR in __setAttPar")
             if len(attpar) == 4:
                 attpar.append(1.0)
             self.attTable.setText(row, 3, str(attpar[2]))
@@ -686,7 +690,7 @@ class FitParamWidget(FitParamForm):
                 combo.setOptions(matlist)
                 combo.lineEdit().setText(str(attpar[1]))
             else:
-                print("ERROR in __setAttPar")
+                _logger.warning("ERROR in __setAttPar")
             self.multilayerTable.setText(row, 3, str(attpar[2]))
             self.multilayerTable.setText(row, 4, str(attpar[3]))
 
@@ -1039,8 +1043,7 @@ class SectionFileDialog(qt.QFileDialog):
                 else:
                     self.setDir(qt.safe_str(initdir))
 
-        if DEBUG:
-            print("right to be added")
+        _logger.debug("right to be added")
         if 0:
             self.sectionWidget= SectionFileWidget(self,
                                               sections=sections,

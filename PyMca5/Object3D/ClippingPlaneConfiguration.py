@@ -30,8 +30,11 @@ from . import Object3DQt as qt
 from . import Object3DSlider
 from .Object3DMovement import Object3DRotationWidget, Object3DTranslationWidget
 import numpy
+import logging
 
-DEBUG = 0
+
+_logger = logging.getLogger(__name__)
+
 
 class ClippingPlaneConfiguration(qt.QGroupBox):
     sigClippingPlaneSignal = qt.pyqtSignal(object)
@@ -107,8 +110,7 @@ class ClippingPlaneConfiguration(qt.QGroupBox):
 
     def _sliderSlot(self, *var):
         if self.__disconnected: return
-        if DEBUG:
-            print("sliderSlot")
+        _logger.debug("sliderSlot")
         for i in range(3):
             value = self.planeList[i][5].value()
             self.planeList[i][4].setText("%f" % value)
@@ -116,8 +118,7 @@ class ClippingPlaneConfiguration(qt.QGroupBox):
         self._signal()
 
     def _lineSlot(self):
-        if DEBUG:
-            print("lineSlot")
+        _logger.debug("lineSlot")
         for i in range(3):
             oldValue = self.planeList[i][5].value()
             value = float(str(self.planeList[i][4].text()))
@@ -219,8 +220,7 @@ class UserClippingPlaneWidget(qt.QWidget):
 
     def _emitSignal(self, event=None):
         if self.__disconnected: return
-        if DEBUG:
-            print("Emitting UserClippingPlaneSignal")
+        _logger.debug("Emitting UserClippingPlaneSignal")
         if event is None:
             event="U0PlaneUpdated"
         ddict = self.getParameters()
@@ -319,8 +319,7 @@ class ClippingPlaneWidget(qt.QWidget):
         return [A, B, C, D]
 
     def _emitSignal(self, event = None):
-        if DEBUG:
-            print("Emitting ClippingPlaneWidgetSignal")
+        _logger.debug("Emitting ClippingPlaneWidgetSignal")
         if event is None:
             event = 'ClippingPlaneWidgetUpdated'
         ddict = self.standardClippingPlane.getParameters()
@@ -337,7 +336,7 @@ if __name__ == "__main__":
     app = qt.QApplication(sys.argv)
     def myslot(ddict):
         print("Signal received")
-        print("ddict      = ", ddict)
+        print("ddict      = %s" % ddict)
     if 0:
         w = ClippingPlaneConfiguration()
         w.sigClippingPlaneSignal.connect(myslot)

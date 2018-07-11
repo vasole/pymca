@@ -92,10 +92,10 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
       section is going to be translated into an 1D, 2D or 3D Numpy Array, and accessed
       through GetData method call.
 """
-DEBUG = 0
 ################################################################################
 import sys
 import numpy
+import logging
 import os.path #, tempfile, shutil
 try:
     import gzip
@@ -129,6 +129,9 @@ try:
     CAN_USE_FASTEDF = 1
 except:
     CAN_USE_FASTEDF = 0
+
+_logger = logging.getLogger(__name__)
+
 
 ################################################################################
 # constants
@@ -630,7 +633,7 @@ class  EdfFile(object):
                 try:
                     datasize = self.__GetSizeNumpyType__(datatype)
                 except TypeError:
-                    print("What is the meaning of this error?")
+                    _logger.debug("What is the meaning of this error?")
                     datasize = 8
                 if self.Images[Index].NumDim == 3:
                     sizeToRead = self.Images[Index].Dim1 * \
@@ -702,7 +705,7 @@ class  EdfFile(object):
 
         else:
             if fastedf:
-                print("I could not use fast routines")
+                _logger.info("I could not use fast routines")
             type_ = self.__GetDefaultNumpyType__(self.Images[Index].DataType, index=Index)
             size_pixel = self.__GetSizeNumpyType__(type_)
             Data = numpy.array([], type_)
@@ -953,20 +956,16 @@ class  EdfFile(object):
     #Internal Methods
 
     def __makeSureFileIsOpen(self):
-        if DEBUG:
-            print("Making sure file is open")
+        _logger.debug("Making sure file is open")
         if not self.__ownedOpen:
             return
         if self.ADSC or self.MARCCD or self.PILATUS_CBF or self.SPE:
-            if DEBUG:
-                print("Special case. Image is buffered")
+            _logger.debug("Special case. Image is buffered")
             return
         if self.File in [0, None]:
-            if DEBUG:
-                print("File is None")
+            _logger.debug("File is None")
         elif self.File.closed:
-            if DEBUG:
-                print("Reopening closed file")
+            _logger.debug("Reopening closed file")
             accessMode = self.File.mode
             fileName = self.File.name
             newFile = open(fileName, accessMode)
@@ -974,20 +973,16 @@ class  EdfFile(object):
         return
 
     def __makeSureFileIsClosed(self):
-        if DEBUG:
-            print("Making sure file is closed")
+        _logger.debug("Making sure file is closed")
         if not self.__ownedOpen:
             return
         if self.ADSC or self.MARCCD or self.PILATUS_CBF or self.SPE:
-            if DEBUG:
-                print("Special case. Image is buffered")
+            _logger.debug("Special case. Image is buffered")
             return
         if self.File in [0, None]:
-            if DEBUG:
-                print("File is None")
+            _logger.debug("File is None")
         elif not self.File.closed:
-            if DEBUG:
-                print("Closing file")
+            _logger.debug("Closing file")
             self.File.close()
         return
 

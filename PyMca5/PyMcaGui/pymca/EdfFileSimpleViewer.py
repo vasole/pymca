@@ -28,10 +28,11 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 
 QTVERSION = qt.qVersion()
-DEBUG = 0
+_logger = logging.getLogger(__name__)
 
 from PyMca5.PyMcaGui import QSourceSelector
 from PyMca5.PyMcaGui.pymca import QDataSource
@@ -59,9 +60,8 @@ class EdfFileSimpleViewer(qt.QWidget):
                 self._sourceSelectorSlot)
 
     def _sourceSelectorSlot(self, ddict):
-        if DEBUG:
-            print("_sourceSelectorSlot(self, ddict)")
-            print("ddict = ",ddict)
+        _logger.debug("_sourceSelectorSlot(self, ddict)")
+        _logger.debug("ddict = %s", ddict)
         if ddict["event"] == "NewSourceSelected":
             source = QDataSource.QDataSource(ddict["sourcelist"])
             self.sourceList.append(source)
@@ -74,8 +74,7 @@ class EdfFileSimpleViewer(qt.QWidget):
                     found = 1
                     break
             if not found:
-                if DEBUG:
-                    print("WARNING: source not found")
+                _logger.debug("WARNING: source not found")
                 return
             sourceType = source.sourceType
             self.selectorWidget[sourceType].setDataSource(source)
@@ -86,8 +85,7 @@ class EdfFileSimpleViewer(qt.QWidget):
                     found = 1
                     break
             if not found:
-                if DEBUG:
-                    print("WARNING: source not found")
+                _logger.debug("WARNING: source not found")
                 return
             sourceType = source.sourceType
             del self.sourceList[self.sourceList.index(source)]

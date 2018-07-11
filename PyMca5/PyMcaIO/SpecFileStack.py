@@ -33,6 +33,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
 import numpy
+import logging
 from PyMca5.PyMcaCore import DataObject
 from PyMca5.PyMcaIO import specfilewrapper as specfile
 from PyMca5.PyMcaCore import SpecFileDataSource
@@ -44,11 +45,13 @@ try:
 except:
     pass
 SOURCE_TYPE = "SpecFileStack"
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 X_AXIS = 0
 Y_AXIS = 1
 Z_AXIS = 2
+
 
 class SpecFileStack(DataObject.DataObject):
     def __init__(self, filelist=None):
@@ -299,10 +302,10 @@ class SpecFileStack(DataObject.DataObject):
                     for i in range(5):
                         print("\7")
                     sampling_order += 1
-                    print("**************************************************")
-                    print(" Memory error!, attempting %dx%d sub-sampling " % \
-                          (sampling_order, sampling_order))
-                    print("**************************************************")
+                    _logger.warning("**************************************************")
+                    _logger.warning(" Memory error!, attempting %dx%d sub-sampling ",
+                                    sampling_order, sampling_order)
+                    _logger.warning("**************************************************")
                     s0 = int(shape[0] / sampling_order)
                     s1 = int(shape[1] / sampling_order)
                     #if shape[0] % sampling_order:
@@ -323,8 +326,8 @@ class SpecFileStack(DataObject.DataObject):
                     tempInstance = specfile.Specfile(tempFileName)
                     if tempInstance is None:
                         if not os.path.exists(tempFileName):
-                            print("File %s does not exists" % tempFileName)
-                            raise IOError( \
+                            _logger.error("File %s does not exists", tempFileName)
+                            raise IOError(
                                 "File %s does not exists" % tempFileName)
                     scan = tempInstance.select(keylist[-1])
                     for i in iterlist:
@@ -460,8 +463,8 @@ class SpecFileStack(DataObject.DataObject):
                 prefix = name[0:n - i + 1]
             prefix = os.path.join(os.path.dirname(filename), prefix)
             if not os.path.exists(prefix + number + suffix):
-                print("Internal error in EDFStack")
-                print("file should exist: %s" % (prefix + number + suffix))
+                _logger.warning("Internal error in EDFStack")
+                _logger.warning("file should exist: %s", prefix + number + suffix)
                 return
             i = 0
             if begin is None:
@@ -499,7 +502,7 @@ class SpecFileStack(DataObject.DataObject):
         sourceInfo["KeyList"] = self.__keyList
 
     def getKeyInfo(self, key):
-        print("Not implemented")
+        _logger.info("Not implemented")
         return {}
 
     def isIndexedStack(self):
