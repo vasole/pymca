@@ -28,6 +28,7 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import numpy, copy
+import logging
 import sys
 from os.path import splitext, basename, dirname, exists, join as pathjoin
 from PyMca5.PyMcaGui import IconDict
@@ -37,7 +38,7 @@ from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaIO import specfilewrapper as specfile
 from PyMca5 import PyMcaDataDir
-from PyMca5.PyMcaGui import ScanWindow as sw
+from PyMca5.PyMcaGui.pymca import ScanWindow
 
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -46,8 +47,9 @@ else:
     QString = str
     QStringList = list
 
-DEBUG = 0
-if DEBUG:
+_logger = logging.getLogger(__name__)
+
+if _logger.getEffectiveLevel() == logging.DEBUG:
     numpy.set_printoptions(threshold=50)
 
 NEWLINE = '\n'
@@ -257,8 +259,7 @@ class XMCDOptions(qt.QDialog):
             except IndexError:
                 # Returned list is empty
                 return
-            if DEBUG:
-                print('saveOptions -- Filename: "%s"' % filename)
+            _logger.debug('saveOptions -- Filename: "%s"', filename)
         if len(filename) == 0:
             self.saved = False
             return False
@@ -304,25 +305,22 @@ class XMCDOptions(qt.QDialog):
         try:
             self.setOptions(confDict['XMCDOptions'])
         except ValueError as e:
-            if DEBUG:
-                print('loadOptions -- int conversion failed:',)
-                print('Invalid value for option \'%s\'' % e)
-            else:
-                msg = qt.QMessageBox()
-                msg.setWindowTitle('XMCD Options Error')
-                msg.setText('Configuration file \'%s\' corruted' % filename)
-                msg.exec_()
-                return
+            _logger.debug('loadOptions -- int conversion failed:\n'
+                          'Invalid value for option \'%s\'', e)
+            msg = qt.QMessageBox()
+            msg.setWindowTitle('XMCD Options Error')
+            msg.setText('Configuration file \'%s\' corruted' % filename)
+            msg.exec_()
+            return
         except KeyError as e:
-            if DEBUG:
-                print('loadOptions -- invalid identifier:',)
-                print('option \'%s\' not found' % e)
-            else:
-                msg = qt.QMessageBox()
-                msg.setWindowTitle('XMCD Options Error')
-                msg.setText('Configuration file \'%s\' corruted' % filename)
-                msg.exec_()
-                return
+            _logger.debug('loadOptions -- invalid identifier:\n'
+                          'option \'%s\' not found', e)
+
+            msg = qt.QMessageBox()
+            msg.setWindowTitle('XMCD Options Error')
+            msg.setText('Configuration file \'%s\' corruted' % filename)
+            msg.exec_()
+            return
         self.saved = True
 
     def getOptions(self):
@@ -367,15 +365,8 @@ class XMCDOptions(qt.QDialog):
                 if type(button) == type(qt.QRadioButton()):
                         button.setChecked(True)
 
-class XMCDScanWindow(sw.ScanWindow):
 
-    xmcdToolbarOptions = {
-        'logx': False,
-        'logy': False,
-        'flip': False,
-        'fit': False,
-        'roi': False,
-    }
+class XMCDScanWindow(ScanWindow.ScanWindow):
 
     plotModifiedSignal = qt.pyqtSignal()
     saveOptionsSignal  = qt.pyqtSignal('QString')
@@ -389,22 +380,22 @@ class XMCDScanWindow(sw.ScanWindow):
         :param parent: Parent Widget, None per default
         :type parent: QWidget
         """
-        sw.ScanWindow.__init__(self,
-                               parent,
-                               name='XLD/XMCD Analysis',
-                               specfit=None,
-                               plugins=False,
-                               newplot=False,
-                               **self.xmcdToolbarOptions)
-        if hasattr(self, 'pluginsIconFlag'):
-            self.pluginsIconFlag = False
+        ScanWindow.ScanWindow.__init__(self,
+                                       parent,
+                                       name='XLD/XMCD Analysis',
+                                       specfit=None,
+                                       plugins=False,
+                                       roi=False, fit=False)
         self.plotWindow = origin
-        if hasattr(self, 'scanWindowInfoWidget'):
-            if self.scanWindowInfoWidget:
-                self.scanWindowInfoWidget.hide()
+
+        # hide the first 2 actions
+        self.xAxisLogarithmicAction.setVisible(False)
+        self.yAxisLogarithmicAction.setVisible(False)
+
+        # hide additional toolbar with simple math actions
+        self._mathToolBar.setVisible(False)
 
         # Buttons to push spectra to main Window
-        buttonWidget = qt.QWidget()
         buttonAdd = qt.QPushButton('Add', self)
         buttonAdd.setToolTip('Add active curve to main window')
         buttonReplace = qt.QPushButton('Replace', self)
@@ -419,11 +410,16 @@ class XMCDScanWindow(sw.ScanWindow):
         buttonReplaceAll.setToolTip(
             'Replace all curves in main window '
            +'with all curves from analysis window')
-        self.graphBottomLayout.addWidget(qt.HorizontalSpacer())
-        self.graphBottomLayout.addWidget(buttonAdd)
-        self.graphBottomLayout.addWidget(buttonAddAll)
-        self.graphBottomLayout.addWidget(buttonReplace)
-        self.graphBottomLayout.addWidget(buttonReplaceAll)
+
+        # this is a hack: silx does not provide an attribute for the
+        # bottom bar, but it has a handle for the last widget in the bar
+        # which uses a HBoxLayout.
+        bottomBarHLayout = self.positionWidget.layout()
+        bottomBarHLayout.addWidget(qt.HorizontalSpacer())
+        bottomBarHLayout.addWidget(buttonAdd)
+        bottomBarHLayout.addWidget(buttonAddAll)
+        bottomBarHLayout.addWidget(buttonReplace)
+        bottomBarHLayout.addWidget(buttonReplaceAll)
 
         buttonAdd.clicked.connect(self.add)
         buttonReplace.clicked.connect(self.replace)
@@ -448,8 +444,9 @@ class XMCDScanWindow(sw.ScanWindow):
         self.xmcd = None
         self.xas  = None
 
-        if hasattr(self, '_buildLegendWidget'):
-            self._buildLegendWidget()
+        self.getLegendsDockWidget().show()
+        self.addDockWidget(qt.Qt.RightDockWidgetArea,
+                           self.getLegendsDockWidget())
 
     def sizeHint(self):
         if self.parent():
@@ -551,8 +548,7 @@ class XMCDScanWindow(sw.ScanWindow):
             keys = sorted(self.curvesDict.keys())
             xRangeList = [self.curvesDict[k].x[0] for k in keys]
         if not len(xRangeList):
-            if DEBUG:
-                print('interpXRange -- Nothing to do')
+            _logger.debug('interpXRange -- Nothing to do')
             return None
 
         num = 0
@@ -586,11 +582,10 @@ class XMCDScanWindow(sw.ScanWindow):
             mask = numpy.nonzero((x > xmin) &
                                  (x < xmax))[0]
             out = numpy.sort(numpy.take(x, mask))
-        if DEBUG:
-            print('interpXRange -- Resulting xrange:')
-            print('\tmin = %f' % out.min())
-            print('\tmax = %f' % out.max())
-            print('\tnum = %f' % len(out))
+        _logger.debug('interpXRange -- Resulting xrange:')
+        _logger.debug('\tmin = %f', out.min())
+        _logger.debug('\tmax = %f', out.max())
+        _logger.debug('\tnum = %f', len(out))
         return out
 
     def processSelection(self, groupA, groupB):
@@ -612,8 +607,8 @@ class XMCDScanWindow(sw.ScanWindow):
         self.curvesDict = self.copyCurves(groupA + groupB)
 
         if (len(self.curvesDict) == 0) or\
-           ((len(self.selectionDict['A']) == 0) and\
-           (len(self.selectionDict['B']) == 0)):
+                ((len(self.selectionDict['A']) == 0) and
+                 (len(self.selectionDict['B']) == 0)):
             # Nothing to do
             return
 
@@ -622,19 +617,16 @@ class XMCDScanWindow(sw.ScanWindow):
             # Get active curve
             active = self.plotWindow.getActiveCurve()
             if active:
-                if DEBUG:
-                    print('processSelection -- xrange: use active')
-                x, y, leg, info = active[0:4]
+                _logger.debug('processSelection -- xrange: use active')
+                x = active.getXData()
                 xRange = self.interpXRange(xRange=x)
             else:
                 return
         elif self.optsDict['equidistant']:
-            if DEBUG:
-                print('processSelection -- xrange: use equidistant')
+            _logger.debug('processSelection -- xrange: use equidistant')
             xRange = self.interpXRange(equidistant=True)
         else:
-            if DEBUG:
-                print('processSelection -- xrange: use first')
+            _logger.debug('processSelection -- xrange: use first')
             xRange = self.interpXRange()
         if hasattr(self.plotWindow, 'graph'):
             activeLegend = self.plotWindow.graph.getActiveCurve(justlegend=True)
@@ -687,9 +679,9 @@ class XMCDScanWindow(sw.ScanWindow):
                           ylabel=ylabel,
                           color=color)
             if idx == 'A':
-                self.avgA = self.dataObjectsList[-1]
+                self.avgA = self.getAllCurves(just_legend=True)[-1]
             if idx == 'B':
-                self.avgB = self.dataObjectsList[-1]
+                self.avgB = self.getAllCurves(just_legend=True)[-1]
 
         if (self.avgA and self.avgB):
             self.performXMCD()
@@ -740,8 +732,7 @@ class XMCDScanWindow(sw.ScanWindow):
                 out[legend] = tmp
             else:
                 # TODO: Errorhandling, curve not found
-                if DEBUG:
-                    print("copyCurves -- Retrieved none type curve")
+                _logger.debug("copyCurves -- Retrieved none type curve")
                 continue
         return out
 
@@ -769,9 +760,8 @@ class XMCDScanWindow(sw.ScanWindow):
         """
         if (len(xarr) != len(yarr)) or\
            (len(xarr) == 0) or (len(yarr) == 0):
-            if DEBUG:
-                print('specAverage -- invalid input!')
-                print('Array lengths do not match or are 0')
+            _logger.debug('specAverage -- invalid input!')
+            _logger.debug('Array lengths do not match or are 0')
             return None, None
 
         same = True
@@ -819,9 +809,8 @@ class XMCDScanWindow(sw.ScanWindow):
                 if xmax < xmax0:
                     xmax0 = xmax
             if xmax <= xmin:
-                if DEBUG:
-                    print('specAverage -- ')
-                    print('No overlap between spectra!')
+                _logger.debug('specAverage --\n'
+                              'No overlap between spectra!')
                 return numpy.array([]), numpy.array([])
 
         # Clip xRange to maximal overlap in spectra
@@ -869,17 +858,15 @@ class XMCDScanWindow(sw.ScanWindow):
             a = self.dataObjectsDict[self.avgA]
             b = self.dataObjectsDict[self.avgB]
         else:
-            if DEBUG:
-                print('performXAS -- Data not found: ')
-                print('\tavg_m = %f' % self.avgA)
-                print('\tavg_p = %f' % self.avgB)
+            _logger.debug('performXAS -- Data not found: ')
+            _logger.debug('\tavg_m = %f', self.avgA)
+            _logger.debug('\tavg_p = %f', self.avgB)
             return
         if numpy.all( a.x[0] == b.x[0] ):
             avg = .5*(b.y[0] + a.y[0])
         else:
-            if DEBUG:
-                print('performXAS -- x ranges are not the same! ')
-                print('Force interpolation')
+            _logger.debug('performXAS -- x ranges are not the same! ')
+            _logger.debug('Force interpolation')
             avg = self.performAverage([a.x[0], b.x[0]],
                                       [a.y[0], b.y[0]],
                                        b.x[0])
@@ -893,7 +880,7 @@ class XMCDScanWindow(sw.ScanWindow):
                       xlabel=xlabel,
                       ylabel=ylabel,
                       color="pink")
-        self.xas = self.dataObjectsList[-1]
+        self.xas = self.getAllCurves(just_legend=True)[-1]
 
     def performXMCD(self):
         keys = self.dataObjectsDict.keys()
@@ -901,15 +888,13 @@ class XMCDScanWindow(sw.ScanWindow):
             a = self.dataObjectsDict[self.avgA]
             b = self.dataObjectsDict[self.avgB]
         else:
-            if DEBUG:
-                print('performXMCD -- Data not found:')
+            _logger.debug('performXMCD -- Data not found:')
             return
         if numpy.all( a.x[0] == b.x[0] ):
             diff = b.y[0] - a.y[0]
         else:
-            if DEBUG:
-                print('performXMCD -- x ranges are not the same! ')
-                print('Force interpolation using p Average xrange')
+            _logger.debug('performXMCD -- x ranges are not the same! ')
+            _logger.debug('Force interpolation using p Average xrange')
             # Use performAverage d = 2 * avg(y1, -y2)
             # and force interpolation on p-xrange
             diff = 2. * self.performAverage([a.x[0], b.x[0]],
@@ -927,8 +912,8 @@ class XMCDScanWindow(sw.ScanWindow):
                       ylabel=ylabel,
                       yaxis="right")
         # DELETE ME self.graph.mapToY2(' '.join([xmcdLegend, ylabel]))
-        self._zoomReset()
-        self.xmcd = self.dataObjectsList[-1]
+        self.resetZoom()
+        self.xmcd = self.getAllCurves(just_legend=True)[-1]
 
     def selectionInfo(self, idx, key):
         """
@@ -1012,7 +997,7 @@ class XMCDScanWindow(sw.ScanWindow):
             return
 
         title = ''
-        legends = self.dataObjectsList
+        legends = self.getAllCurves(just_legend=True)
         tmpLegs = sorted(self.curvesDict.keys())
         if len(tmpLegs) > 0:
             title += self.curvesDict[tmpLegs[0]].info.get('selectionlegend','')
@@ -1080,12 +1065,12 @@ class XMCDScanWindow(sw.ScanWindow):
             self.saveOptionsSignal.emit(splitext(sepFileName)[0])
 
     def add(self):
-        if len(self.dataObjectsList) == 0:
+        if len(self.getAllCurves(just_legend=True)) == 0:
             return
         activeCurve = self.getActiveCurve()
         if activeCurve is None:
             return
-        (xVal,  yVal,  legend,  info) = activeCurve
+        (xVal,  yVal,  legend,  info) = activeCurve[0:4]
         #if 'selectionlegend' in info:
         #    newLegend = info['selectionlegend']
         #elif 'operation' in info:
@@ -1100,7 +1085,8 @@ class XMCDScanWindow(sw.ScanWindow):
         self.plotModifiedSignal.emit()
 
     def addAll(self):
-        for (xVal,  yVal,  legend,  info) in self.getAllCurves():
+        for curve in self.getAllCurves():
+            (xVal, yVal, legend, info) = curve[0:4]
             #if 'selectionlegend' in info:
             #    newLegend = info['selectionlegend']
             #elif 'operation' in info:
@@ -1115,12 +1101,12 @@ class XMCDScanWindow(sw.ScanWindow):
         self.plotModifiedSignal.emit()
 
     def replace(self):
-        if len(self.dataObjectsList) == 0:
+        if len(self.getAllCurves(just_legend=True)) == 0:
             return
         activeCurve = self.getActiveCurve()
         if activeCurve is None:
             return
-        (xVal,  yVal,  legend,  info) = activeCurve
+        (xVal,  yVal,  legend,  info) = activeCurve[0:4]
         if 'selectionlegend' in info:
             newLegend = info['selectionlegend']
         elif 'operation' in info:
@@ -1136,7 +1122,8 @@ class XMCDScanWindow(sw.ScanWindow):
 
     def replaceAll(self):
         allCurves = self.getAllCurves()
-        for (idx, (xVal,  yVal,  legend,  info)) in enumerate(allCurves):
+        for (idx, curve) in enumerate(allCurves):
+            (xVal, yVal, legend, info) = curve[0:4]
             if 'selectionlegend' in info:
                 newLegend = info['selectionlegend']
             elif 'operation' in info:
@@ -1258,10 +1245,8 @@ class XMCDTreeWidget(qt.QTreeWidget):
         out = []
         convert = (convertType != str)
         if ncol > (self.columnCount()-1):
-            if DEBUG:
-                print('getColum -- Selected column out of bounds')
+            _logger.debug('getColum -- Selected column out of bounds')
             raise IndexError("Selected column '%d' out of bounds" % ncol)
-            return out
         if selectedOnly:
             sel = self.selectedItems()
         else:
@@ -1276,8 +1261,7 @@ class XMCDTreeWidget(qt.QTreeWidget):
                     if convertType == float:
                         tmp = float('NaN')
                     else:
-                        if DEBUG:
-                            print('getColum -- Conversion failed!')
+                        _logger.debug('getColum -- Conversion failed!')
                         raise TypeError
             out += [tmp]
         return out
@@ -1477,8 +1461,7 @@ class XMCDWidget(qt.QWidget):
             helpFileHandle.close()
             self.helpFileBrowser.setHtml(helpFileHTML)
         except IOError:
-            if DEBUG:
-                print('XMCDWindow -- init: Unable to read help file')
+            _logger.debug('XMCDWindow -- init: Unable to read help file')
             self.helpFileBrowser = None
 
         self.selectionDict = {'D': [],
@@ -2004,7 +1987,7 @@ class XMCDWidget(qt.QWidget):
             if len(namesList) == len(valuesList):
                 ret.append(dict(zip(namesList,  valuesList)))
             else:
-                print("Number of motors and values does not match!")
+                _logger.warning("Number of motors and values does not match!")
         return ret
 
     def _setLists(self):
@@ -2024,12 +2007,11 @@ class XMCDWidget(qt.QWidget):
         if self.plotWindow is not None:
             curves = self.plotWindow.getAllCurves()
         else:
-            if DEBUG:
-                print('_setLists -- Set self.plotWindow before calling self._setLists')
+            _logger.debug('_setLists -- Set self.plotWindow before calling self._setLists')
             return
         # nCurves = len(curves)
-        self.legendList = [leg for (xvals, yvals,  leg,  info) in curves]
-        self.infoList   = [info for (xvals, yvals,  leg,  info) in curves]
+        self.legendList = [curve.getLegend() for curve in curves]
+        self.infoList   = [curve.getInfo() for curve in curves]
         # Try to recover the scan number from the legend, if not set
         # Requires additional import:
         #from re import search as regexpSearch
@@ -2086,7 +2068,7 @@ def main():
     app = qt.QApplication([])
 
     # Create dummy ScanWindow
-    swin = sw.ScanWindow()
+    swin = ScanWindow.ScanWindow()
     info0 = {'xlabel': 'foo',
              'ylabel': 'arb',
              'MotorNames': 'oxPS PhaseA Phase BRUKER CRYO OXFORD',
@@ -2096,13 +2078,13 @@ def main():
     info2 = {'MotorNames': 'PhaseD oxPS PhaseA Phase BRUKER CRYO OXFORD',
              'MotorValues': '-9.45353059 -25.37448851 24.37665651 18.88048044 -0.26018745 2 0.901968648111 '}
     x = numpy.arange(100.,1100.)
-    y0 =  10*x + 10000.*numpy.exp(-0.5*(x-500)**2/400) + 1500*numpy.random.random(1000.)
-    y1 =  10*x + 10000.*numpy.exp(-0.5*(x-600)**2/400) + 1500*numpy.random.random(1000.)
-    y2 =  10*x + 10000.*numpy.exp(-0.5*(x-400)**2/400) + 1500*numpy.random.random(1000.)
+    y0 =  10*x + 10000.*numpy.exp(-0.5*(x-500)**2/400) + 1500*numpy.random.random(1000)
+    y1 =  10*x + 10000.*numpy.exp(-0.5*(x-600)**2/400) + 1500*numpy.random.random(1000)
+    y2 =  10*x + 10000.*numpy.exp(-0.5*(x-400)**2/400) + 1500*numpy.random.random(1000)
 
-    swin.newCurve(x, y2, legend="Curve2", xlabel='ene_st2', ylabel='Ihor', info=info2, replot=False, replace=False)
-    swin.newCurve(x, y0, legend="Curve0", xlabel='ene_st0', ylabel='Iver', info=info0, replot=False, replace=False)
-    swin.newCurve(x, y1, legend="Curve1", xlabel='ene_st1', ylabel='Ihor', info=info1, replot=False, replace=False)
+    swin.newCurve(x, y2, legend="Curve2", xlabel='ene_st2', ylabel='Ihor', info=info2, replace=False)
+    swin.newCurve(x, y0, legend="Curve0", xlabel='ene_st0', ylabel='Iver', info=info0, replace=False)
+    swin.newCurve(x, y1, legend="Curve1", xlabel='ene_st1', ylabel='Ihor', info=info1, replace=False)
 
     # info['Key'] is overwritten when using newCurve
     swin.dataObjectsDict['Curve2 Ihor'].info['Key'] = '1.1'

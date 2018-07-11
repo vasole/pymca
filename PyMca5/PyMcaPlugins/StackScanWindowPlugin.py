@@ -34,15 +34,18 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 import numpy
+import logging
 
 from PyMca5.PyMcaGui import ScanWindow
 from PyMca5 import StackPluginBase
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class StackScanWindowPlugin(StackPluginBase.StackPluginBase):
     def __init__(self, stackWindow, **kw):
-        StackPluginBase.DEBUG = DEBUG
+        if _logger.getEffectiveLevel() == logging.DEBUG:
+            StackPluginBase.pluginBaseLogger.setLevel(logging.DEBUG)
         StackPluginBase.StackPluginBase.__init__(self, stackWindow, **kw)
         self.methodDict = {}
         text  = "Add active curve to plugin scan window\n"
@@ -90,7 +93,7 @@ class StackScanWindowPlugin(StackPluginBase.StackPluginBase):
         x, y, legend, info = self.getActiveCurve()
         if self.widget is None:
             self.widget = ScanWindow.ScanWindow()
-        self.widget.addCurve(x, y, legend=legend, replot=True, replace=replace)
+        self.widget.addCurve(x, y, legend=legend, resetzoom=True, replace=replace)
         self.widget.show()
         self.widget.raise_()
 

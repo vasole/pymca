@@ -33,6 +33,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
 import numpy
+import logging
 from . import QXTube
 from PyMca5.PyMcaCore import PyMcaDirs
 from PyMca5.PyMcaGui import PyMca_Icons as Icons
@@ -41,7 +42,9 @@ qt = QXTube.qt
 
 QTVERSION = qt.qVersion()
 
-DEBUG=0
+_logger = logging.getLogger(__name__)
+
+
 class EnergyTab(qt.QWidget):
     def __init__(self,parent=None, name="Energy Tab"):
         qt.QWidget.__init__(self, parent)
@@ -304,13 +307,12 @@ class EnergyTable(QTable):
             self.setNumCols(3 * self.dataColumns)
             self.setFocusStyle(qttable.QTable.FollowStyle)
         else:
-                if DEBUG:
-                    print("margin")
-                    print("frame shape")
-                    print("selection mode")
-                    print("focus style")
-                    print("all of them missing")
-                self.setColumnCount(3 * self.dataColumns)
+            _logger.debug("margin\n"
+                          "frame shape\n"
+                          "selection mode\n"
+                          "focus style\n"
+                          "all of them missing")
+            self.setColumnCount(3 * self.dataColumns)
 
         labels = []
         for i in range(self.dataColumns):
@@ -321,9 +323,8 @@ class EnergyTable(QTable):
             for label in labels:
                 self.horizontalHeader().setLabel(labels.index(label),label)
         else:
-            if DEBUG:
-                print("margin to addjust")
-                print("focus style")
+            _logger.debug("margin to adjust")
+            _logger.debug("focus style")
             self.setFrameShape(qt.QTableWidget.NoFrame)
             self.setSelectionMode(qt.QTableWidget.NoSelection)
             self.setColumnCount(len(labels))
@@ -337,8 +338,7 @@ class EnergyTable(QTable):
         self.__build(self.dataColumns * 20)
         self.__disconnected = False
         for i in range(self.dataColumns):
-            if DEBUG:
-                print("column adjustment missing")
+            _logger.debug("column adjustment missing")
         self.cellChanged[int, int].connect(self.mySlot)
 
     def _itemSlot(self, *var):
@@ -505,8 +505,7 @@ class EnergyTable(QTable):
                 if QTVERSION < '4.0.0':
                     self.adjustColumn(0 + 3*i)
                 else:
-                    if DEBUG:
-                        print("column adjustment missing")
+                    _logger.debug("column adjustment missing")
         except:
             self.__disconnected = False
             raise
@@ -520,9 +519,8 @@ class EnergyTable(QTable):
 
     def mySlot(self,row,col):
         if self.__disconnected:return
-        if DEBUG:
-            print("Value changed row = %d col = %d" % (row, col))
-            print("Text = %s" % self.text(row,col))
+        _logger.debug("Value changed row = %d col = %d", row, col)
+        _logger.debug("Text = %s", self.text(row, col))
         if (col != 0) and (col !=3) and (col != 6) and (col != 9):
             try:
                 s = str(self.text(row, col))
@@ -561,8 +559,7 @@ class EnergyTable(QTable):
             else:
                 item.setText(text)
         else:
-            if DEBUG:
-                print("checkbox can be called?")
+            _logger.debug("checkbox can be called?")
             pass
 
     def _getDict(self):

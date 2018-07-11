@@ -35,10 +35,8 @@ The purpose of using this class instead of using StackBase is to simplify the
 use of McaAdvancedFitBatch with in-memory arrays.
 """
 
-import numpy
 from PyMca5.PyMcaCore import DataObject
 
-DEBUG = 0
 SOURCE_TYPE = "EdfFileStack"
 
 class NumpyStack(DataObject.DataObject):

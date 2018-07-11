@@ -29,6 +29,7 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
+import logging
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
@@ -39,7 +40,8 @@ else:
 
 from PyMca5 import PyMcaDirs
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 class McaCalibrationControlGUI(qt.QWidget):
     sigMcaCalibrationControlGUISignal = qt.pyqtSignal(object)
 
@@ -82,29 +84,26 @@ class McaCalibrationControlGUI(qt.QWidget):
         self.calbut.clicked.connect(self._calbuttonclicked)
 
     def _calboxactivated(self, item=None):
-        if DEBUG:
-            item = qt.safe_str(item)
-            print("Calibration box activated %s" % item)
+        _logger.debug("Calibration box activated %s", qt.safe_str(item))
         comboitem, combotext = self.calbox.getCurrent()
-        self._emitpysignal(box=[comboitem,combotext],
+        self._emitpysignal(box=[comboitem, combotext],
                            boxname='Calibration',
                            event='activated')
 
     def _calbuttonclicked(self):
-        if DEBUG:
-            print("Calibration button clicked")
+        _logger.debug("Calibration button clicked")
         self.calmenu.exec_(self.cursor().pos())
 
     def _copysignal(self):
-        comboitem,combotext = self.calbox.getCurrent()
+        comboitem, combotext = self.calbox.getCurrent()
         self._emitpysignal(button="CalibrationCopy",
-                           box=[comboitem,combotext],
+                           box=[comboitem, combotext],
                            event='clicked')
 
     def _computesignal(self):
-        comboitem,combotext = self.calbox.getCurrent()
+        comboitem, combotext = self.calbox.getCurrent()
         self._emitpysignal(button="Calibration",
-                           box=[comboitem,combotext],
+                           box=[comboitem, combotext],
                            event='clicked')
 
     def _loadsignal(self):
@@ -118,7 +117,7 @@ class McaCalibrationControlGUI(qt.QWidget):
             windir = self.lastInputDir
             if windir is None:
                 windir = os.getcwd()
-            filename= qt.safe_str(qt.QFileDialog.getOpenFileName(self,
+            filename = qt.safe_str(qt.QFileDialog.getOpenFileName(self,
                           "Load existing calibration file",
                           windir,
                           self.lastInputFilter))
@@ -225,8 +224,7 @@ class McaCalibrationControlGUI(qt.QWidget):
                             checkbox=None,
                             line_edit=None,
                             event=None):
-        if DEBUG:
-            print("_emitpysignal called ",button,box)
+        _logger.debug("_emitpysignal called %s %s", button, box)
         data={}
         data['button']        = button
         data['box']           = box

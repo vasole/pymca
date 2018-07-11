@@ -29,12 +29,14 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
 import sys
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from . import Parameters
 QTVERSION = qt.qVersion()
 from . import McaTable
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class ParametersTab(qt.QTabWidget):
     sigMultiParametersSignal = qt.pyqtSignal(object)
@@ -77,7 +79,6 @@ class ParametersTab(qt.QTabWidget):
             self.addTab(table,str(name))
         if fitparameterslist is not None:
             table.fillfromfit(fitparameterslist)
-        #print "SHowing page ",name
         if QTVERSION < '4.0.0':
             self.showPage(self.views[name])
         else:
@@ -188,8 +189,7 @@ class ParametersTab(qt.QTabWidget):
             hb = table.horizontalHeader().paletteBackgroundColor()
             hcolor = ("#%x%x%x" % (hb.red(), hb.green(), hb.blue())).upper()
         else:
-            if DEBUG:
-                print("Actual color to ge got")
+            _logger.debug("Actual color to ge got")
             hcolor = ("#%x%x%x" % (230,240,249)).upper()
         text=""
         text+=("<nobr>")

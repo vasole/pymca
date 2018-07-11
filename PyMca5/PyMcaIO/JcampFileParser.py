@@ -31,32 +31,31 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
+import logging
 import sys
 import numpy
 import mmap
 import re
+import time
 from PyMca5.PyMcaIO import JcampReader
 from PyMca5.PyMcaIO import SpecFileAbstractClass
 if sys.version < "3":
     from StringIO import StringIO
 else:
     from io import StringIO
-DEBUG = 0
-if DEBUG:
-    import time
+_logger = logging.getLogger(__name__)
+
 
 class JcampFileParser(SpecFileAbstractClass.SpecFileAbstractClass):
     def __init__(self, filename, single=False):
         # get the number of entries in the file
         self.__lastEntryData = -1
-        if DEBUG:
-            t0 = time.time()
+        t0 = time.time()
         if sys.maxsize > 2**32:
             self._useMMap = True
         else:
             self._useMMap = False
-        if DEBUG:
-            print("USING MMPA = ", self._useMMap)
+        _logger.debug("USING MMPA = %s", self._useMMap)
         if self._useMMap:
             # 64-bit supported
             f = open(filename, "rb")
@@ -95,18 +94,16 @@ class JcampFileParser(SpecFileAbstractClass.SpecFileAbstractClass):
                 current = f.tell()
                 line = f.readline()
             f.close()
-        if DEBUG:
-            print("Elapsed CURRENT = ", time.time() - t0)
+        _logger.debug("Elapsed CURRENT = %s",
+                      time.time() - t0)
         self._filename = os.path.abspath(filename)
-        if DEBUG:
-            print("PARSING FIRST ")
-            t0 = time.time()
+        _logger.debug("PARSING FIRST ")
+        t0 = time.time()
         self._parseEntryData(0)
-        if DEBUG:
-            elapsed = time.time() - t0
-            print("ELAPSED PER SCAN = ", elapsed)
-            print("N SCANS = ", self.scanno())
-            print("EXPECTED = ", elapsed * self.scanno())
+        elapsed = time.time() - t0
+        _logger.debug("ELAPSED PER SCAN = %s", elapsed)
+        _logger.debug("N SCANS = %s", self.scanno())
+        _logger.debug("EXPECTED = %s", elapsed * self.scanno())
 
     def _parseEntryData(self, idx):
         if idx == self.__lastEntryData:
@@ -141,7 +138,7 @@ class JcampFileParser(SpecFileAbstractClass.SpecFileAbstractClass):
         try:
             fileheader = instance._header
         except:
-            print("JCampFileParser cannot access '_header' attribute")
+            _logger.warning("JCampFileParser cannot access '_header' attribute")
             fileheader=None
         data = numpy.zeros((x.size, 2), numpy.float32)
         data[:, 0] = x

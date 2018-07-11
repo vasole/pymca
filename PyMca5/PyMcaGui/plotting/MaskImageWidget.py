@@ -30,6 +30,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
 import numpy
+import logging
 from PyMca5.PyMcaGraph.ctools import pnpoly
 from . import RGBCorrelatorGraph
 from . import ColormapDialog
@@ -61,7 +62,8 @@ OVERLAY_DRAW = True
 
 DEFAULT_COLORMAP_INDEX = 2
 DEFAULT_COLORMAP_LOG_FLAG = False
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 USE_PICKER = False
 
@@ -85,7 +87,6 @@ class MaskImageWidget(qt.QWidget):
                 self.setMaximumWidth(int(screenWidth)-5)
                 self.setMinimumWidth(min(int(0.5*screenWidth),800))
 
-        self._y1AxisInverted = False
         self.__selectionMask = None
         self._selectionColors = None
         self.__imageData = None
@@ -185,13 +186,12 @@ class MaskImageWidget(qt.QWidget):
             self.buildStandaloneSaveMenu()
 
         self.graphWidget.zoomResetToolButton.clicked.connect(self._zoomResetSignal)
-        self.graphWidget.graph.setDrawModeEnabled(False)
-        self.graphWidget.graph.setZoomModeEnabled(True)
+        self.graphWidget.graph.setInteractiveMode('zoom')
         if self.__selectionFlag:
             if self.__imageIconsFlag:
                 self.setSelectionMode(False)
                 self._toggleSelectionMode()
-                self.graphWidget.graph.setDrawModeEnabled(True,
+                self.graphWidget.graph.setInteractiveMode('draw',
                                                           shape="rectangle",
                                                           label="mask")
             else:
@@ -323,9 +323,8 @@ class MaskImageWidget(qt.QWidget):
                 self._profileSignalSlot(ddict)
 
     def _profileSignalSlot(self, ddict):
-        if DEBUG:
-            print("_profileSignalSLot, event = %s" % ddict['event'])
-            print("Received ddict = ", ddict)
+        _logger.debug("_profileSignalSLot, event = %s", ddict['event'])
+        _logger.debug("Received ddict = %s", ddict)
 
         if ddict['event'] in [None, "NONE"]:
             #Nothing to be made
@@ -333,10 +332,10 @@ class MaskImageWidget(qt.QWidget):
 
         if ddict['event'] == "profileWidthChanged":
             if self.__lastOverlayLegend is not None:
-                legend = self.__lastOverlayLegend
-                #TODO: Find a better way to deal with this
-                if legend in self.graphWidget.graph._itemDict:
-                    info = self.graphWidget.graph._itemDict[legend]['info']
+                shape = self.graphWidget.graph._getItem(kind='item',
+                                                        legend=self.__lastOverlayLegend)
+                if shape is not None:
+                    info = shape.getInfo(copy=False)
                     if info['mode'] == ddict['mode']:
                         newDict = {}
                         newDict['event'] = "updateProfile"
@@ -344,7 +343,6 @@ class MaskImageWidget(qt.QWidget):
                         newDict['ydata'] = info['ydata'] * 1
                         newDict['mode'] = info['mode'] * 1
                         newDict['pixelwidth'] = ddict['pixelwidth'] * 1
-                        info = None
                         #self._updateProfileCurve(newDict)
                         self._profileSignalSlot(newDict)
             return
@@ -355,13 +353,13 @@ class MaskImageWidget(qt.QWidget):
                 self._profileSelectionWindow = ProfileScanWidget.ProfileScanWidget(actions=False)
             else:
                 self._profileSelectionWindow = ProfileScanWidget.ProfileScanWidget(actions=True)
-                self._profileSelectionWindow.sigAddClicked.connect( \
+                self._profileSelectionWindow.sigAddClicked.connect(
                              self._profileSelectionSlot)
-                self._profileSelectionWindow.sigRemoveClicked.connect( \
+                self._profileSelectionWindow.sigRemoveClicked.connect(
                              self._profileSelectionSlot)
                 self._profileSelectionWindow.sigReplaceClicked.connect(
                              self._profileSelectionSlot)
-            self._interpolate =  SpecfitFuns.interpol
+            self._interpolate = SpecfitFuns.interpol
             #if I do not return here and the user interacts with the graph while
             #the profileSelectionWindow is not shown, I get crashes under Qt 4.5.3 and MacOS X
             #when calling _getProfileCurve
@@ -376,16 +374,14 @@ class MaskImageWidget(qt.QWidget):
         if curve is None:
             return
         xdata, ydata, legend, info = curve
-        replot=True
-        replace=True
         idx = numpy.isfinite(ydata)
         xdata = xdata[idx]
         ydata = ydata[idx]
         self._profileSelectionWindow.addCurve(xdata, ydata,
                                               legend=legend,
                                               info=info,
-                                              replot=replot,
-                                              replace=replace)
+                                              resetzoom=True,
+                                              replace=True)
 
     def getGraphTitle(self):
         try:
@@ -438,7 +434,7 @@ class MaskImageWidget(qt.QWidget):
 
         if ddict['event'] == 'profileModeChanged':
             if self.__lastOverlayLegend:
-                self.graphWidget.graph.removeItem(self.__lastOverlayLegend, replot=True)
+                self.graphWidget.graph.removeItem(self.__lastOverlayLegend)
             return
 
         #if I show the image here it does not crash, but it is not nice because
@@ -476,13 +472,12 @@ class MaskImageWidget(qt.QWidget):
                 ydata  = imageData[row, :]
                 legend = "Row = %d"  % row
                 if overlay:
-                    #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
+                    #self.drawOverlayItem(x, y, legend=name, info=info, replace)
                     self.drawOverlayItem([0.0, shape[1], shape[1], 0.0],
                                          [row, row, row+1, row+1],
                                          legend=ddict['mode'],
                                          info=ddict,
-                                         replace=True,
-                                         replot=True)
+                                         replace=True)
             else:
                 row0 = int(int(ddict['row'][0]) - 0.5 * width)
                 if row0 < 0:
@@ -497,13 +492,12 @@ class MaskImageWidget(qt.QWidget):
                 ydata = imageData[row0:row1+1, :].sum(axis=0)
                 legend = "Row = %d to %d"  % (row0, row1)
                 if overlay:
-                    #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
+                    #self.drawOverlayItem(x, y, legend=name, info=info, replace)
                     self.drawOverlayItem([0.0, 0.0, shape[1], shape[1]],
                                          [row0, row1+1, row1+1, row0],
                                          legend=ddict['mode'],
                                          info=ddict,
-                                         replace=True,
-                                         replot=True)
+                                         replace=True)
             xdata  = numpy.arange(shape[1]).astype(numpy.float)
             if self._xScale is not None:
                 xdata = self._xScale[0] + xdata * self._xScale[1]
@@ -519,13 +513,12 @@ class MaskImageWidget(qt.QWidget):
                 ydata  = imageData[:, column]
                 legend = "Column = %d"  % column
                 if overlay:
-                    #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
+                    #self.drawOverlayItem(x, y, legend=name, info=info, replace)
                     self.drawOverlayItem([column, column, column+1, column+1],
                                          [0.0, shape[0], shape[0], 0.0],
                                          legend=ddict['mode'],
                                          info=ddict,
-                                         replace=True,
-                                         replot=True)
+                                         replace=True)
             else:
                 col0 = int(int(ddict['column'][0]) - 0.5 * width)
                 if col0 < 0:
@@ -540,13 +533,12 @@ class MaskImageWidget(qt.QWidget):
                 ydata = imageData[:, col0:col1+1].sum(axis=1)
                 legend = "Col = %d to %d"  % (col0, col1)
                 if overlay:
-                    #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
+                    #self.drawOverlayItem(x, y, legend=name, info=info, replace)
                     self.drawOverlayItem([col0, col0, col1+1, col1+1],
                                          [0, shape[0], shape[0], 0.],
                                          legend=ddict['mode'],
                                          info=ddict,
-                                         replace=True,
-                                         replot=True)
+                                         replace=True)
             xdata  = numpy.arange(shape[0]).astype(numpy.float)
             if self._yScale is not None:
                 xdata = self._yScale[0] + xdata * self._yScale[1]
@@ -577,8 +569,7 @@ class MaskImageWidget(qt.QWidget):
 
             if npoints == 1:
                 #all points are the same
-                if DEBUG:
-                    print("START AND END POINT ARE THE SAME!!")
+                _logger.debug("START AND END POINT ARE THE SAME!!")
                 return
 
             if width < 0:  # width = pixelwidth - 1
@@ -591,13 +582,12 @@ class MaskImageWidget(qt.QWidget):
                 xdata = numpy.arange(float(npoints))
 
                 if overlay:
-                    #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
+                    #self.drawOverlayItem(x, y, legend=name, info=info, replace)
                     self.drawOverlayItem([col0, col1],
                                          [row0, row1],
                                          legend=ddict['mode'],
                                          info=ddict,
-                                         replace=True,
-                                         replot=True)
+                                         replace=True)
             elif deltaCol == 0:
                 #vertical line
                 col0 = int(int(ddict['column'][0]) - 0.5 * width)
@@ -624,13 +614,12 @@ class MaskImageWidget(qt.QWidget):
                 npoints = max(ydata.shape)
                 xdata = numpy.arange(float(npoints))
                 if overlay:
-                    #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
+                    #self.drawOverlayItem(x, y, legend=name, info=info, replace)
                     self.drawOverlayItem([col0, col0, col1+1, col1+1],
                                          [row0, row1+1, row1+1, row0],
                                          legend=ddict['mode'],
                                          info=ddict,
-                                         replace=True,
-                                         replot=True)
+                                         replace=True)
             elif deltaRow == 0:
                 #horizontal line
                 row0 = int(int(ddict['row'][0]) - 0.5 * width)
@@ -657,13 +646,12 @@ class MaskImageWidget(qt.QWidget):
                 npoints = max(ydata.shape)
                 xdata = numpy.arange(float(npoints))
                 if overlay:
-                    #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
+                    #self.drawOverlayItem(x, y, legend=name, info=info, replace)
                     self.drawOverlayItem([col0, col0, col1+1, col1+1],
                                          [row0, row1+1, row1+1, row0],
                                          legend=ddict['mode'],
                                          info=ddict,
-                                         replace=True,
-                                         replot=True)
+                                         replace=True)
             else:
                 #restore original value of width
                 width = ddict['pixelwidth']
@@ -687,9 +675,8 @@ class MaskImageWidget(qt.QWidget):
                 newRow0 = 0.0
                 newRow1 = -(col1-col0) * sinalpha + (row1-row0) * cosalpha
 
-                if DEBUG:
-                    print("new X0 Y0 = %f, %f  " % (newCol0, newRow0))
-                    print("new X1 Y1 = %f, %f  " % (newCol1, newRow1))
+                _logger.debug("new X0 Y0 = %f, %f  ", newCol0, newRow0)
+                _logger.debug("new X1 Y1 = %f, %f  ", newCol1, newRow1)
 
                 tmpX   = numpy.linspace(newCol0, newCol1, npoints).astype(numpy.float)
                 rotMatrix = numpy.zeros((2,2), numpy.float)
@@ -697,19 +684,19 @@ class MaskImageWidget(qt.QWidget):
                 rotMatrix[0,1] = - sinalpha
                 rotMatrix[1,0] =   sinalpha
                 rotMatrix[1,1] =   cosalpha
-                if DEBUG:
+                if _logger.getEffectiveLevel() == logging.DEBUG:
                     #test if I recover the original points
-                    testX = numpy.zeros((2, 1) , numpy.float)
+                    testX = numpy.zeros((2, 1), numpy.float)
                     colRow = numpy.dot(rotMatrix, testX)
-                    print("Recovered X0 = %f" % (colRow[0,0] + col0))
-                    print("Recovered Y0 = %f" % (colRow[1,0] + row0))
-                    print("It should be = %f, %f" % (col0, row0))
-                    testX[0,0] = newCol1
-                    testX[1,0] = newRow1
+                    _logger.debug("Recovered X0 = %f", colRow[0, 0] + col0)
+                    _logger.debug("Recovered Y0 = %f", colRow[1, 0] + row0)
+                    _logger.debug("It should be = %f, %f", col0, row0)
+                    testX[0, 0] = newCol1
+                    testX[1, 0] = newRow1
                     colRow = numpy.dot(rotMatrix, testX)
-                    print("Recovered X1 = %f" % (colRow[0,0] + col0))
-                    print("Recovered Y1 = %f" % (colRow[1,0] + row0))
-                    print("It should be = %f, %f" % (col1, row1))
+                    _logger.debug("Recovered X1 = %f", colRow[0, 0] + col0)
+                    _logger.debug("Recovered Y1 = %f", colRow[1, 0] + row0)
+                    _logger.debug("It should be = %f, %f", col1, row1)
 
                 #find the drawing limits
                 testX = numpy.zeros((2, 4) , numpy.float)
@@ -727,21 +714,18 @@ class MaskImageWidget(qt.QWidget):
 
                 for a in rowLimits0:
                     if (a >= shape[0]) or (a < 0):
-                        if DEBUG:
-                            print("outside row limits",a)
+                        _logger.debug("outside row limits %s", a)
                         return
                 for a in colLimits0:
                     if (a >= shape[1]) or (a < 0):
-                        if DEBUG:
-                            print("outside column limits",a)
+                        _logger.debug("outside column limits %s", a)
                         return
 
                 r0 = rowLimits0[0]
                 r1 = rowLimits0[1]
 
                 if r0 > r1:
-                    if DEBUG:
-                        print("r0 > r1", r0, r1)
+                    _logger.debug("r0 > r1 %s %s", r0, r1)
                     raise ValueError("r0 > r1")
 
                 x = numpy.zeros((2, npoints) , numpy.float)
@@ -809,8 +793,7 @@ class MaskImageWidget(qt.QWidget):
                                          rowLimits0,
                                          legend=ddict['mode'],
                                          info=ddict,
-                                         replace=True,
-                                         replot=True)
+                                         replace=True)
             if self.__lineProjectionMode == 'X':
                 xLabel = self.getXLabel()
                 xdata += col0
@@ -831,8 +814,7 @@ class MaskImageWidget(qt.QWidget):
                                     float(deltaRow) * deltaRow)/(npoints-1.0)
                 xdata *= deltaDistance
         else:
-            if DEBUG:
-                print("Mode %s not supported yet" % ddict['mode'])
+            _logger.debug("Mode %s not supported yet", ddict['mode'])
             return
 
         self.__lastOverlayWidth = ddict['pixelwidth']
@@ -842,8 +824,7 @@ class MaskImageWidget(qt.QWidget):
         return xdata, ydata, legend, info
 
     def _profileSelectionSlot(self, ddict):
-        if DEBUG:
-            print(ddict)
+        _logger.debug("%s", ddict)
         # the curves as [[x0, y0, legend0, info0], ...]
         curveList = ddict['curves']
         label = ddict['label']
@@ -851,25 +832,17 @@ class MaskImageWidget(qt.QWidget):
         if ddict['event'] == 'ADD':
             for i in range(n):
                 x, y, legend, info = curveList[i]
-                info['profilelabel'] = label
-                if i == (n-1):
-                    replot = True
+                resetzoom = (i == (n-1))
                 self._profileScanWindow.addCurve(x, y, legend=legend, info=info,
-                                                 replot=replot, replace=False)
+                                                 resetzoom=resetzoom, replace=False)
         elif ddict['event'] == 'REPLACE':
             for i in range(n):
                 x, y, legend, info = curveList[i]
                 info['profilelabel'] = label
-                if i in [0, n-1]:
-                    replace = True
-                else:
-                    replace = False
-                if i == (n-1):
-                    replot = True
-                else:
-                    replot = False
+                replace = (i in [0, n-1])
+                resetzoom = (i == (n-1))
                 self._profileScanWindow.addCurve(x, y, legend=legend, info=info,
-                                                 replot=replot, replace=replace)
+                                                 resetzoom=resetzoom, replace=replace)
         elif ddict['event'] == 'REMOVE':
             curveList = self._profileScanWindow.getAllCurves()
             if curveList in [None, []]:
@@ -885,13 +858,10 @@ class MaskImageWidget(qt.QWidget):
             n = len(toDelete)
             for i in range(n):
                 legend = toDelete[i]
-                if i == (n-1):
-                    replot = True
-                else:
-                    replot = False
-                self._profileScanWindow.removeCurve(legend, replot=replot)
+                resetzoom = (i == (n-1))
+                self._profileScanWindow.removeCurve(legend, resetzoom=resetzoom)
 
-    def drawOverlayItem(self, x, y, legend=None, info=None, replace=False, replot=True):
+    def drawOverlayItem(self, x, y, legend=None, info=None, replace=False):
         #same call as the plot1D addCurve command
         if legend is None:
             legend="UnnamedOverlayItem"
@@ -911,31 +881,22 @@ class MaskImageWidget(qt.QWidget):
             for i in y:
                 yList.append(self._yScale[0] + i * self._yScale[1])
         self.graphWidget.graph.addItem(xList, yList, legend=legend, info=info,
-                                               replace=replace, replot=replot,
-                                               shape="polygon", fill=True)
+                                       replace=replace, shape="polygon", fill=True)
         self.__lastOverlayLegend = legend
 
     def _hFlipIconSignal(self):
-        self._y1AxisInverted = self.graphWidget.graph.isYAxisInverted()
-        if self._y1AxisInverted:
-            self._y1AxisInverted = False
-        else:
-            self._y1AxisInverted = True
-        #self.graphWidget.graph.zoomReset()
-        self.graphWidget.graph.invertYAxis(self._y1AxisInverted)
-        self._y1AxisInverted = self.graphWidget.graph.isYAxisInverted()
-        self.graphWidget.graph.replot()
+        yaxis = self.graphWidget.graph.getYAxis()
+        yaxis.setInverted(not yaxis.isInverted())
 
         #inform the other widgets
         ddict = {}
         ddict['event'] = "hFlipSignal"
-        ddict['current'] = self._y1AxisInverted * 1
+        ddict['current'] = yaxis.isInverted() * 1
         ddict['id'] = id(self)
         self.emitMaskImageSignal(ddict)
 
     def setY1AxisInverted(self, value):
-        self._y1AxisInverted = value
-        self.graphWidget.graph.invertYAxis(self._y1AxisInverted)
+        self.graphWidget.graph.getYAxis().setInverted(value)
 
     def setXLabel(self, label="Column"):
         return self.graphWidget.setXLabel(label)
@@ -988,38 +949,34 @@ class MaskImageWidget(qt.QWidget):
                                 self._replaceImageClicked)
 
     def _setEraseSelectionMode(self):
-        if DEBUG:
-            print("_setEraseSelectionMode")
+        _logger.debug("_setEraseSelectionMode")
         self.__eraseMode = True
         self.__brushMode = True
-        self.graphWidget.graph.setDrawModeEnabled(False)
+        self.graphWidget.graph.setInteractiveMode('select')
 
     def _setRectSelectionMode(self):
-        if DEBUG:
-            print("_setRectSelectionMode")
+        _logger.debug("_setRectSelectionMode")
         self.__eraseMode = False
         self.__brushMode = False
-        self.graphWidget.graph.setDrawModeEnabled(True,
+        self.graphWidget.graph.setInteractiveMode("draw",
                                                   shape="rectangle",
                                                   label="mask")
 
     def _setPolygonSelectionMode(self):
         self.__eraseMode = False
         self.__brushMode = False
-        self.graphWidget.graph.setDrawModeEnabled(True,
+        self.graphWidget.graph.setInteractiveMode('draw',
                                                   shape="polygon",
                                                   label="mask")
 
     def _setBrushSelectionMode(self):
-        if DEBUG:
-            print("_setBrushSelectionMode")
+        _logger.debug("_setBrushSelectionMode")
         self.__eraseMode = False
         self.__brushMode = True
-        self.graphWidget.graph.setDrawModeEnabled(False)
+        self.graphWidget.graph.setInteractiveMode('select')
 
     def _setBrush(self):
-        if DEBUG:
-            print("_setBrush")
+        _logger.debug("_setBrush")
         if self.__brushMenu is None:
             self.__brushMenu = qt.QMenu()
             self.__brushMenu.addAction(QString(" 1 Image Pixel Width"),
@@ -1055,25 +1012,25 @@ class MaskImageWidget(qt.QWidget):
         self.__brushWidth = 20
 
     def _toggleSelectionMode(self):
-        drawMode = self.graphWidget.graph.getDrawMode()
-        if drawMode is None:
+        mode = self.graphWidget.graph.getInteractiveMode()
+        if mode['mode'] != 'draw':
             # we are not drawing anything
-            if self.graphWidget.graph.isZoomModeEnabled():
+            if self.graphWidget.graph.getInteractiveMode()['mode'] == 'zoom':
                 # we have to pass to mask mode
                 self.setSelectionMode(True)
             else:
                 # we set zoom mode and show the line icons
                 self.setSelectionMode(False)
-        elif drawMode['label'] is not None:
-            if drawMode['label'].startswith('mask'):
-                #we set the zoom mode and show the line icons
+        elif mode['label'] is not None:
+            if mode['label'].startswith('mask'):
+                # we set the zoom mode and show the line icons
                 self.setSelectionMode(False)
             else:
                 # we disable zoom and drawing and set mask mode
                 self.setSelectionMode(True)
-        elif drawMode['label'] in [None]:
+        elif mode['label'] in [None]:
             # we are not drawing anything
-            if self.graphWidget.graph.isZoomModeEnabled():
+            if self.graphWidget.graph.getInteractiveMode()['mode'] == 'zoom':
                 # we have to pass to mask mode
                 self.setSelectionMode(True)
             else:
@@ -1085,17 +1042,17 @@ class MaskImageWidget(qt.QWidget):
         #if not self.__imageIconsFlag:
         #    mode = False
         if mode:
-            self.graphWidget.graph.setDrawModeEnabled(True,
-                                                      'rectangle',
+            self.graphWidget.graph.setInteractiveMode('draw',
+                                                      shape='rectangle',
                                                       label='mask')
-            self.__brushMode  = False
+            self.__brushMode = False
             self.graphWidget.hideProfileSelectionIcons()
             self.graphWidget.selectionToolButton.setChecked(True)
             self.graphWidget.selectionToolButton.setDown(True)
             self.graphWidget.showImageIcons()
         else:
             self.graphWidget.showProfileSelectionIcons()
-            self.graphWidget.graph.setZoomModeEnabled(True)
+            self.graphWidget.graph.setInteractiveMode('zoom')
             self.graphWidget.selectionToolButton.setChecked(False)
             self.graphWidget.selectionToolButton.setDown(False)
             self.graphWidget.hideImageIcons()
@@ -1169,8 +1126,7 @@ class MaskImageWidget(qt.QWidget):
         self._resetSelection(True)
 
     def _resetSelection(self, owncall=True):
-        if DEBUG:
-            print("_resetSelection")
+        _logger.debug("_resetSelection")
         self.__selectionMask = None
         if self.__imageData is None:
             return
@@ -1210,8 +1166,8 @@ class MaskImageWidget(qt.QWidget):
         if data is None:
             self.__imageData = data
             self.__selectionMask = None
-            self.plotImage(update = True)
-            self.graphWidget._zoomReset(replot=True)
+            self.plotImage(update=True)
+            self.graphWidget.graph.resetZoom()
             return
         else:
             self.__imageData = data
@@ -1226,8 +1182,8 @@ class MaskImageWidget(qt.QWidget):
                 self.colormapDialog.setDisplayedMaxValue(maxData)
             self.colormapDialog.setDataMinMax(minData, maxData, update=True)
         else:
-            self.plotImage(update = True)
-            self.graphWidget._zoomReset(replot=True)
+            self.plotImage(update=True)
+            self.graphWidget.graph.resetZoom()
 
     def getImageData(self):
         return self.__imageData
@@ -1282,8 +1238,8 @@ class MaskImageWidget(qt.QWidget):
         self.__pixmap0 = pixmap
         if clearmask:
             self.__selectionMask = None
-        self.plotImage(update = True)
-        self.graphWidget._zoomReset(replot=True)
+        self.plotImage(update=True)
+        self.graphWidget.graph.resetZoom()
 
     def plotImage(self, update=True):
         if self.__imageData is None:
@@ -1295,13 +1251,14 @@ class MaskImageWidget(qt.QWidget):
             self.__pixmap0 = self.__pixmap.copy()
         self.__applyMaskToImage()
 
-        # replot=False as it triggers a zoom reset in Plot.py
+        origin, scale = None, None
+        if self._xScale is not None:
+            origin = (self._xScale[0], self._yScale[0])
+            scale = (self._xScale[1], self._yScale[1])
         self.graphWidget.graph.addImage(self.__pixmap,
-                                        "image",
-                                        xScale=self._xScale,
-                                        yScale=self._yScale,
-                                        replot=False)
-        self.graphWidget.graph.replot()
+                                        "image", resetzoom=False,
+                                        origin=origin,
+                                        scale=scale)
         self.updateProfileSelectionWindow()
 
     def getPixmapFromData(self):
@@ -1535,18 +1492,15 @@ class MaskImageWidget(qt.QWidget):
             alteration = (1 - (0.2 * (self.__selectionMask > 0))) - \
                          0.1 * (self.__selectionMask == self._roiTags[self._nRoi - 1])
         if self.colormap is None:
-            if DEBUG:
-                print("Colormap is None")
+            _logger.debug("Colormap is None")
             if self.__image is not None:
                 if self.__image.format() == qt.QImage.Format_ARGB32:
-                    if DEBUG:
-                        print("__applyMaskToImage CASE 1")
+                    _logger.debug("__applyMaskToImage CASE 1")
                     for i in range(4):
                         self.__pixmap[:,:,i]  = (self.__pixmap0[:,:,i] *\
                                 alteration).astype(numpy.uint8)
                 else:
-                    if DEBUG:
-                        print("__applyMaskToImage CASE 2")
+                    _logger.debug("__applyMaskToImage CASE 2")
                     self.__pixmap = self.__pixmap0.copy()
                     tmp = self.__selectionMask > 0
                     self.__pixmap[tmp, 0] = 0x40
@@ -1559,8 +1513,7 @@ class MaskImageWidget(qt.QWidget):
                         self.__pixmap[roiTag, 3] = 2*0x40
             else:
                 if self.__defaultColormap > 1:
-                    if DEBUG:
-                        print("__applyMaskToImage CASE 3")
+                    _logger.debug("__applyMaskToImage CASE 3")
                     self.__pixmap = self.__pixmap0.copy()
                     for i in range(3):
                         self.__pixmap[:,:,i]  = (self.__pixmap0[:,:,i] *\
@@ -1573,8 +1526,7 @@ class MaskImageWidget(qt.QWidget):
                             for i in range(3):
                                 self.__pixmap[:,:,i] *= tmpMask
                 else:
-                    if DEBUG:
-                        print("__applyMaskToImage CASE 4")
+                    _logger.debug("__applyMaskToImage CASE 4")
                     self.__pixmap = self.__pixmap0.copy()
                     self.__pixmap[self.__selectionMask>0,0]    = 0x40
                     self.__pixmap[self.__selectionMask>0,2]    = 0x70
@@ -1594,8 +1546,7 @@ class MaskImageWidget(qt.QWidget):
                             self.__pixmap[tmpMask,2]    = 0xff
                             self.__pixmap[tmpMask,3]    = 0xff
         elif int(str(self.colormap[0])) > 1:     #color
-            if DEBUG:
-                print("__applyMaskToImage CASE 5")
+            _logger.debug("__applyMaskToImage CASE 5")
             for i in range(3):
                 self.__pixmap[:,:,i]  = (self.__pixmap0[:,:,i] * alteration)
             if 0:
@@ -1606,8 +1557,7 @@ class MaskImageWidget(qt.QWidget):
                         for i in range(3):
                             self.__pixmap[:,:,i] *= tmpMask
         elif self._maxNRois > 1:
-            if DEBUG:
-                print("__applyMaskToImage CASE 6")
+            _logger.debug("__applyMaskToImage CASE 6")
             tmp  = 1 - (self.__selectionMask>0)
             tmp2 = (self.__selectionMask == self._roiTags[self._nRoi - 1])
             self.__pixmap[:, :, 2] = (0x70 * (self.__selectionMask>0) + \
@@ -1616,8 +1566,7 @@ class MaskImageWidget(qt.QWidget):
             self.__pixmap[:,:, 3] = (0x40 * (self.__selectionMask>0)   + 0x40 * tmp2) +\
                                       tmp * self.__pixmap0[:,:,3]
         else:
-            if DEBUG:
-                print("__applyMaskToImage CASE 7")
+            _logger.debug("__applyMaskToImage CASE 7")
             self.__pixmap = self.__pixmap0.copy()
             tmp  = 1 - self.__selectionMask
             self.__pixmap[:, :, 2] = (0x70 * self.__selectionMask) +\
@@ -1802,7 +1751,7 @@ class MaskImageWidget(qt.QWidget):
         elif self.__pixmap0 is not None:
             imageShape = self.__pixmap0.shape[0:2]
         else:
-            print("Cannot handle polygon mask")
+            _logger.warning("Cannot handle polygon mask")
             return
         x = self._xScale[0] + self._xScale[1] * numpy.arange(imageShape[1])
         y = self._yScale[0] + self._yScale[1] * numpy.arange(imageShape[0])
@@ -1888,8 +1837,7 @@ class MaskImageWidget(qt.QWidget):
             if ownsignal:
                 pass
             if None in [ddict['x'], ddict['y']]:
-                if DEBUG:
-                    print("Signal from outside region", ddict)
+                _logger.debug("Signal from outside region %s", ddict)
                 return
 
             if self.graphWidget.infoWidget.isHidden() or self.__brushMode:
@@ -1948,7 +1896,7 @@ class MaskImageWidget(qt.QWidget):
                 self.setMouseText("%g, %g, %g" % (x, y, self.__imageData[row, column]))
 
             if self.__brushMode:
-                if self.graphWidget.graph.isZoomModeEnabled():
+                if self.graphWidget.graph.getInteractiveMode()['mode'] == 'zoom':
                     return
                 if ddict['button'] != "left":
                     return
@@ -1982,9 +1930,8 @@ class MaskImageWidget(qt.QWidget):
         self.sigMaskImageWidgetSignal.emit(ddict)
 
     def _zoomResetSignal(self):
-        if DEBUG:
-            print("_zoomResetSignal")
-        self.graphWidget._zoomReset(replot=False)
+        _logger.debug("_zoomResetSignal")
+        self.graphWidget.graph.resetZoom()
         self.plotImage(True)
 
     def getOutputFileName(self):

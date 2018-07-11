@@ -28,7 +28,8 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
-import os
+import logging
+import traceback
 from PyMca5.PyMcaGui import PyMcaQt as qt
 DEBUG = 0
 __revision__="$Revision: 1.7 $"
@@ -38,6 +39,14 @@ __revision__="$Revision: 1.7 $"
 # - print quality
 
 QTVERSION = qt.qVersion()
+
+_logger = logging.getLogger(__name__)
+_logger.warning("%s is deprecated, you are advised to use "
+                "silx.gui.widgets.PrintPreview instead",
+                __name__)
+
+for line in traceback.format_stack(limit=3):
+    _logger.warning(line.rstrip())
 
 
 ################################################################################

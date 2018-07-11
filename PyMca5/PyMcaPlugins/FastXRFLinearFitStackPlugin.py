@@ -60,7 +60,7 @@ These plugins will be compatible with any stack window that provides the functio
 import sys
 import os
 import numpy
-import time
+import logging
 import traceback
 from PyMca5 import StackPluginBase
 from PyMca5.PyMcaPhysics import FastXRFLinearFit
@@ -71,11 +71,13 @@ from PyMca5.PyMcaGui import PyMca_Icons as PyMca_Icons
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaIO import ArraySave
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
     def __init__(self, stackWindow, **kw):
-        StackPluginBase.DEBUG = DEBUG
+        if _logger.getEffectiveLevel() == logging.DEBUG:
+            StackPluginBase.pluginBaseLogger.setLevel(logging.DEBUG)
         StackPluginBase.StackPluginBase.__init__(self, stackWindow, **kw)
         self.methodDict = {}
         function = self.calculate
@@ -97,8 +99,7 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
         self.thread = None
 
     def stackUpdated(self):
-        if DEBUG:
-            print("FastXRFLinearFitStackPlugin.stackUpdated() called")
+        _logger.debug("FastXRFLinearFitStackPlugin.stackUpdated() called")
         self._widget = None
 
     def selectionMaskUpdated(self):
@@ -110,8 +111,7 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
         self._widget.setSelectionMask(mask)
 
     def mySlot(self, ddict):
-        if DEBUG:
-            print("mySlot ", ddict['event'], ddict.keys())
+        _logger.debug("mySlot ", ddict['event'], ddict.keys())
         if ddict['event'] == "selectionMaskChanged":
             self.setStackSelectionMask(ddict['current'])
         elif ddict['event'] == "addImageClicked":
@@ -158,7 +158,7 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
             self.fitInstance = FastXRFLinearFit.FastXRFLinearFit()
         #self._fitConfigurationFile="E:\DATA\COTTE\CH1777\G4-4720eV-NOWEIGHT-Constant-batch.cfg"
 
-        if DEBUG:
+        if _logger.getEffectiveLevel() == logging.DEBUG:
             self.thread = CalculationThread.CalculationThread(\
                             calculation_method=self.actualCalculation)
             self.thread.result = self.actualCalculation()
@@ -248,8 +248,8 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
         parameters = self.configurationWidget.getParameters()
         outputDir = parameters["output_dir"]
         if outputDir in [None, ""]:
-            if DEBUG:
-                print("Nothing to be saved")
+            _logger.debug("Nothing to be saved")
+            if _logger.getEffectiveLevel() == logging.DEBUG:
                 return
         if parameters["file_root"] is None:
             fileRoot = ""

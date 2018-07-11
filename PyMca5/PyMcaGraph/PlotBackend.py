@@ -177,6 +177,16 @@ DEBUG = 0
 
 from . import Colors
 
+import logging
+import traceback
+_logger = logging.getLogger(__name__)
+
+_logger.warning("%s is deprecated, you are advised to use "
+                "silx.gui.plot.backends.BackendBase instead",
+                __name__)
+for line in traceback.format_stack(limit=4):
+    _logger.warning(line.rstrip())
+
 class PlotBackend(object):
 
     COLORDICT = Colors.COLORDICT

@@ -38,6 +38,7 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
+import logging
 from PyMca5 import StackPluginBase
 from PyMca5.PyMcaGui import SGWindow
 from PyMca5.PyMcaGui import SNIPWindow
@@ -45,12 +46,13 @@ from PyMca5.PyMcaGui import PyMca_Icons as PyMca_Icons
 
 import numpy
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
 
 
 class BackgroundStackPlugin(StackPluginBase.StackPluginBase):
     def __init__(self, stackWindow, **kw):
-        StackPluginBase.DEBUG = DEBUG
+        if _logger.getEffectiveLevel() == logging.DEBUG:
+            StackPluginBase.pluginBaseLogger.setLevel(logging.DEBUG)
         StackPluginBase.StackPluginBase.__init__(self, stackWindow, **kw)
         SGtext = "Replace current stack by a\n"
         SGtext += "Savitsky-Golay treated one."

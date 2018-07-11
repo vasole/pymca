@@ -30,13 +30,13 @@ __author__ = "V. Armando Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-import os
-import sys
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import PyMca_Icons
 IconDict = PyMca_Icons.IconDict
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class XASFourierTransformParameters(qt.QGroupBox):
     sigFTParametersSignal = qt.pyqtSignal(object)
@@ -164,8 +164,7 @@ class XASFourierTransformParameters(qt.QGroupBox):
         self.pointsSelector.activated[int].connect(self._pointsChanged)
 
     def _windowChanged(self, value):
-        if DEBUG:
-            print("_windowChanged ", value)
+        _logger.debug("_windowChanged %s", value)
         current = str(self.windowSelector.currentText())
         if current.lower() in ["gaussian", "gauss", "tukey", "papul"]:
             self.apodizationBox.setEnabled(False)
@@ -177,20 +176,17 @@ class XASFourierTransformParameters(qt.QGroupBox):
             self.emitSignal("FTWindowChanged")
 
     def _apodizationChanged(self, value):
-        if DEBUG:
-            print("_apodizationChanged ", value)
+        _logger.debug("_apodizationChanged %s", value)
         if self.__connected:
             self.emitSignal("FTApodizationChanged")
 
     def _kMinChanged(self, value):
-        if DEBUG:
-            print("Current kMin Value =", value)
+        _logger.debug("Current kMin Value = %s", value)
         if self.__connected:
             self.emitSignal("FTKMinChanged")
 
     def _kMaxChanged(self, value):
-        if DEBUG:
-            print("Current kMax Value =", value)
+        _logger.debug("Current kMax Value = %s", value)
         if self.__connected:
             if value > self.kMinBox.value():
                 self.emitSignal("FTKMaxChanged")
@@ -201,20 +197,17 @@ class XASFourierTransformParameters(qt.QGroupBox):
                 pass
 
     def _kStepChanged(self, value):
-        if DEBUG:
-            print("Current kStep value = ", value)
+        _logger.debug("Current kStep value = %s", value)
         if self.__connected:
             self.emitSignal("FTKStepChanged")
 
     def _rMaxChanged(self, value):
-        if DEBUG:
-            print("Current rMax Value =", value)
+        _logger.debug("Current rMax Value = %s", value)
         if self.__connected:
             self.emitSignal("FTRMaxChanged")
 
     def _pointsChanged(self, value):
-        if DEBUG:
-            print("_pointsChanged ", value)
+        _logger.debug("_pointsChanged %s", value)
         if self.__connected:
             self.emitSignal("FTPointsChanged")
 
@@ -234,8 +227,8 @@ class XASFourierTransformParameters(qt.QGroupBox):
         return ddict
 
     def setParameters(self, ddict, signal=True):
-        if DEBUG:
-            print("setParameters called", ddict, signal)
+        _logger.debug("setParameters called, ddict %s, signal %s",
+                      ddict, signal)
         if "FT" in ddict:
             ddict = ddict["FT"]
         try:
@@ -295,7 +288,7 @@ class XASFourierTransformParameters(qt.QGroupBox):
         self.setStyleSheet("QGroupBox {color: %s;}" % color)
 
 if __name__ == "__main__":
-    DEBUG = 1
+    _logger.setLevel(logging.DEBUG)
     app = qt.QApplication([])
     def mySlot(ddict):
         print("Signal received: ", ddict)

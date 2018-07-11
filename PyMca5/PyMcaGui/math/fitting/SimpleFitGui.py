@@ -29,14 +29,16 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaMath.fitting import SimpleFitModule
 from . import SimpleFitConfigurationGui
 from PyMca5.PyMcaMath.fitting import SimpleFitUserEstimatedFunctions
 from . import Parameters
-from PyMca5.PyMcaGui import PlotWindow
+from silx.gui.plot import PlotWindow
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class TopWidget(qt.QWidget):
     def __init__(self, parent=None):
@@ -141,11 +143,15 @@ class SimpleFitGui(qt.QWidget):
             self.fitModule = fit
         if graph is None:
             self.__useTab = True
-            self.graph = PlotWindow.PlotWindow(newplot=False,
-                                               plugins=False,
-                                               fit=False,
-                                               control=True,
-                                               position=True)
+            self.graph = PlotWindow(self,
+                                    aspectRatio=False, colormap=False,
+                                    yInverted=False, roi=False, mask=False,
+                                    fit=False, control=True, position=True)
+            self.graph.getInteractiveModeToolBar().setVisible(False)
+            # No context menu by default, execute zoomBack on right click
+            plotArea = self.graph.getWidgetHandle()
+            plotArea.setContextMenuPolicy(qt.Qt.CustomContextMenu)
+            plotArea.customContextMenuRequested.connect(self._zoomBack)
         else:
             self.__useTab = False
             self.graph = graph
@@ -221,14 +227,14 @@ class SimpleFitGui(qt.QWidget):
                 functionsfile= qt.safe_str(fn)
             if not len(functionsfile):
                 return
-        if DEBUG:
+
+        try:
             self.fitModule.importFunctions(functionsfile)
-        else:
-            try:
-                self.fitModule.importFunctions(functionsfile)
-            except:
-                qt.QMessageBox.critical(self, "ERROR",
-                                        "Function not imported")
+        except:
+            if _logger.getEffectiveLevel() == logging.DEBUG:
+                raise
+            qt.QMessageBox.critical(self, "ERROR",
+                                    "Function not imported")
 
         config = self.fitModule.getConfiguration()
         self.topWidget.setFunctions(config['fit']['functions'])
@@ -253,8 +259,7 @@ class SimpleFitGui(qt.QWidget):
                 SimpleFitConfigurationGui.SimpleFitConfigurationGui()
         self._configurationDialog.setSimpleFitInstance(self.fitModule)
         if not self._configurationDialog.exec_():
-            if DEBUG:
-                print("NOT UPDATING CONFIGURATION")
+            _logger.debug("NOT UPDATING CONFIGURATION")
             oldConfig = self.fitModule.getConfiguration()
             self._configurationDialog.setConfiguration(oldConfig)
             return
@@ -276,8 +281,7 @@ class SimpleFitGui(qt.QWidget):
             idx = newConfig['fit']['functions'].index(fname) + 1
         idx = self.topWidget.backgroundCombo.findText(fname)
         self.topWidget.backgroundCombo.setCurrentIndex(idx)
-        if DEBUG:
-            print("TABLE TO BE CLEANED")
+        _logger.debug("TABLE TO BE CLEANED")
         #self.estimate()
 
     def setFitFunction(self, fname):
@@ -298,16 +302,18 @@ class SimpleFitGui(qt.QWidget):
         returnValue = self.fitModule.setData(*var, **kw)
         if self.__useTab:
             if hasattr(self.graph, "addCurve"):
+                self.graph.clear()
                 self.graph.addCurve(self.fitModule._x,
                                     self.fitModule._y,
-                                    legend='Data',
-                                    replace=True)
+                                    legend='Data')
+                self.graph.setActiveCurve('Data')
             elif hasattr(self.graph, "newCurve"):
+                # TODO: remove if not used
                 self.graph.clearCurves()
                 self.graph.newCurve('Data',
                                     self.fitModule._x,
                                     self.fitModule._y)
-            self.graph.replot()
+                self.graph.replot()
         return returnValue
 
     def estimate(self):
@@ -318,11 +324,12 @@ class SimpleFitGui(qt.QWidget):
             y = self.fitModule._y
             self.graph.clear()
             self.graph.addCurve(x, y, 'Data')
+            self.graph.setActiveCurve('Data')
             self.fitModule.estimate()
             self.setStatus()
             self.parametersTable.fillTableFromFit(self.fitModule.paramlist)
         except:
-            if DEBUG:
+            if _logger.getEffectiveLevel() == logging.DEBUG:
                 raise
             text = "%s:%s" % (sys.exc_info()[0], sys.exc_info()[1])
             msg = qt.QMessageBox(self)
@@ -330,7 +337,6 @@ class SimpleFitGui(qt.QWidget):
             msg.setText(text)
             msg.exec_()
             self.setStatus("Ready (after estimate error)")
-
 
     def setStatus(self, text=None):
         if text is None:
@@ -345,7 +351,7 @@ class SimpleFitGui(qt.QWidget):
             values,chisq,sigma,niter,lastdeltachi = self.fitModule.startFit()
             self.setStatus()
         except:
-            if DEBUG:
+            if _logger.getEffectiveLevel() == logging.DEBUG:
                 raise
             text = "%s:%s" % (sys.exc_info()[0], sys.exc_info()[1])
             msg = qt.QMessageBox(self)
@@ -376,10 +382,9 @@ class SimpleFitGui(qt.QWidget):
         #ddict['yfit'] = self.evaluateDefinedFunction()
         #ddict['background'] = self.fitModule._evaluateBackground()
         self.graph.clear()
-        self.graph.addCurve(ddict['x'], ddict['y'], 'Data', replot=False)
-        self.graph.addCurve(ddict['x'], ddict['yfit'], 'Fit', replot=False)
-        self.graph.addCurve(ddict['x'], ddict['background'], 'Background',
-                                                replot=False)
+        self.graph.addCurve(ddict['x'], ddict['y'], 'Data')
+        self.graph.addCurve(ddict['x'], ddict['yfit'], 'Fit')
+        self.graph.addCurve(ddict['x'], ddict['background'], 'Background')
         contributions = ddict['contributions']
         if len(contributions) > 1:
             background = ddict['background']
@@ -387,9 +392,8 @@ class SimpleFitGui(qt.QWidget):
             for contribution in contributions:
                 i += 1
                 self.graph.addCurve(ddict['x'], background + contribution,
-                                    legend='Contribution %d' % i,
-                                    replot=False)
-        self.graph.replot()
+                                    legend='Contribution %d' % i)
+        self.graph.setActiveCurve('Data')
         self.graph.show()
 
     def dismiss(self):
@@ -400,6 +404,9 @@ class SimpleFitGui(qt.QWidget):
 
     def evaluateContributions(self, x=None):
         return self.fitModule.evaluateContributions(x)
+
+    def _zoomBack(self, pos):
+        self.graph.getLimitsHistory().pop()
 
 
 def test():
@@ -433,7 +440,7 @@ def test():
     return w
 
 if __name__=="__main__":
-    DEBUG = 0
+    _logger.setLevel(logging.DEBUG)
     app = qt.QApplication([])
     w = test()
     app.exec_()

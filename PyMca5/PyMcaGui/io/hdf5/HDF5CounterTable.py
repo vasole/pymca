@@ -28,10 +28,12 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import posixpath
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 safe_str = qt.safe_str
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class HDF5CounterTable(qt.QTableWidget):
 
@@ -256,8 +258,7 @@ class HDF5CounterTable(qt.QTableWidget):
         return ddict
 
     def setCounterSelection(self, ddict):
-        if DEBUG:
-            print("HDF5CounterTable.setCounterSelection", ddict)
+        _logger.debug("HDF5CounterTable.setCounterSelection %s", ddict)
         keys = ddict.keys()
         if 'cntlist' in keys:
             cntlist = ddict['cntlist']

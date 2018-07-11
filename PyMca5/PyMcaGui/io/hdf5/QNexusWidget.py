@@ -33,6 +33,7 @@ import posixpath
 import weakref
 import gc
 import h5py
+import logging
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaCore import NexusTools
@@ -57,7 +58,8 @@ from PyMca5.PyMcaIO import ConfigDict
 if "PyMcaDirs" in sys.modules:
     from PyMca5 import PyMcaDirs
 
-DEBUG=0
+_logger = logging.getLogger(__name__)
+
 
 class Buttons(qt.QWidget):
 
@@ -296,8 +298,7 @@ class QNexusWidget(qt.QWidget):
         else:
             ddict['HDF5'] ={'WidgetConfiguration':\
                              self.getWidgetConfiguration()}
-        if DEBUG:
-            print("TODO - Add selection options")
+        _logger.debug("TODO - Add selection options")
         ddict.write(fname)
 
     def _deleteAllCountersFromTable(self):
@@ -401,8 +402,7 @@ class QNexusWidget(qt.QWidget):
             if type(self._aliasList) == type(""):
                 self._aliasList = [ddict['aliases']]
         self.cntTable.build(self._cntList, self._aliasList)
-        if DEBUG:
-            print("TODO - Add selection options")
+        _logger.debug("TODO - Add selection options")
 
     def setDataSource(self, dataSource):
         self.data = dataSource
@@ -480,7 +480,7 @@ class QNexusWidget(qt.QWidget):
                     try:
                         widget.w.setDataset(dataset)
                     except:
-                        print("Error filling table")
+                        _logger.error("Error filling table")
                     widget.addTab(widget.w, 'DataView')
                     widget.setCurrentWidget(widget.w)
         elif Hdf5NodeView is not None:
@@ -661,19 +661,16 @@ class QNexusWidget(qt.QWidget):
                     self.tableTab.insertTab(2, self.mcaTable, "MCA")
                 elif (len(mcaList)==0) and (nTabs > 2):
                     self.tableTab.removeTab(2)
-            if DEBUG:
-                print("currentTab = ", currentTab)
+            _logger.debug("currentTab = %s", currentTab)
             if currentTab != "USER":
                 if (len(mcaList) > 0) and (len(cntList) == 0):
                     idx = self.tableTabOrder.index("MCA")
                     self.tableTab.setCurrentIndex(idx)
-                    if DEBUG:
-                        print("setting tab = ", idx, "MCA")
+                    _logger.debug("setting tab = %s MCA", idx)
                 elif (len(mcaList) == 0) and (len(cntList) > 0):
                     idx = self.tableTabOrder.index("AUTO")
                     self.tableTab.setCurrentIndex(idx)
-                    if DEBUG:
-                        print("setting tab = ", idx, "AUTO")
+                    _logger.debug("setting tab = %s AUTO", idx)
             self._lastEntry = currentEntry
         if ddict['event'] == 'itemClicked':
             if ddict['mouse'] == "right":
@@ -697,8 +694,7 @@ class QNexusWidget(qt.QWidget):
                     else:
                         self.tableTab.setCurrentIndex(0)
                 if not self._isNumericType(ddict['dtype']):
-                    if DEBUG:
-                        print("string like %s" % ddict['dtype'])
+                    _logger.debug("string like %s", ddict['dtype'])
                 else:
                     root = ddict['name'].split('/')
                     root = "/" + root[1]
@@ -737,8 +733,7 @@ class QNexusWidget(qt.QWidget):
                         root = "/" + root[1]
                         cnt  = ddict['name'].split(root)[-1]
                         if cnt not in self._cntList:
-                            if DEBUG:
-                                print("USING SECOND WAY")
+                            _logger.debug("USING SECOND WAY")
                             self._cntList.append(cnt)
                             basename = posixpath.basename(cnt)
                             if basename not in self._aliasList:
@@ -747,36 +742,30 @@ class QNexusWidget(qt.QWidget):
                                 self._aliasList.append(cnt)
                             self.cntTable.build(self._cntList, self._aliasList)
                         return
-                if DEBUG:
-                    print("Unhandled item type: %s" % ddict['dtype'])
+                _logger.debug("Unhandled item type: %s", ddict['dtype'])
 
 
     def _addMcaAction(self):
-        if DEBUG:
-            print("_addMcaAction received")
+        _logger.debug("_addMcaAction received")
         self.mcaAction("ADD")
 
     def _removeMcaAction(self):
-        if DEBUG:
-            print("_removeMcaAction received")
+        _logger.debug("_removeMcaAction received")
         self.mcaAction("REMOVE")
 
     def _replaceMcaAction(self):
-        if DEBUG:
-            print("_replaceMcaAction received")
+        _logger.debug("_replaceMcaAction received")
         self.mcaAction("REPLACE")
 
     def mcaAction(self, action="ADD"):
-        if DEBUG:
-            print("mcaAction %s" % action)
+        _logger.debug("mcaAction %s", action)
         self.mcaTable.getMcaSelection()
         ddict = {}
         ddict['action'] = "%s MCA" % action
         self.buttonsSlot(ddict, emit=True)
 
     def _addAction(self):
-        if DEBUG:
-            print("_addAction received")
+        _logger.debug("_addAction received")
         # formerly we had action and selection type
         text = qt.safe_str(self.tableTab.tabText(self.tableTab.currentIndex()))
         if text.upper() == "MCA":
@@ -791,8 +780,7 @@ class QNexusWidget(qt.QWidget):
             self.buttonsSlot(ddict, emit=True)
 
     def _removeAction(self):
-        if DEBUG:
-            print("_removeAction received")
+        _logger.debug("_removeAction received")
         text = qt.safe_str(self.tableTab.tabText(self.tableTab.currentIndex()))
         if text.upper() == "MCA":
             self._removeMcaAction()
@@ -806,8 +794,7 @@ class QNexusWidget(qt.QWidget):
             self.buttonsSlot(ddict, emit=True)
 
     def _replaceAction(self):
-        if DEBUG:
-            print("_replaceAction received")
+        _logger.debug("_replaceAction received")
         text = qt.safe_str(self.tableTab.tabText(self.tableTab.currentIndex()))
         if text.upper() == "MCA":
             self._replaceMcaAction()
@@ -821,8 +808,7 @@ class QNexusWidget(qt.QWidget):
             self.buttonsSlot(ddict, emit=True)
 
     def _configurationChangedAction(self, ddict):
-        if DEBUG:
-            print("_configurationChangedAction received", ddict)
+        _logger.debug("_configurationChangedAction received %s", ddict)
         if ddict["3d"]:
             self.autoTable.set3DEnabled(True, emit=False)
             self.cntTable.set3DEnabled(True, emit=False)
@@ -834,8 +820,7 @@ class QNexusWidget(qt.QWidget):
             self.cntTable.set2DEnabled(False, emit=False)
 
     def _autoTableUpdated(self, ddict):
-        if DEBUG:
-            print("_autoTableUpdated(self, ddict) ", ddict)
+        _logger.debug("_autoTableUpdated(self, ddict) %s", ddict)
         text = qt.safe_str(self.tableTab.tabText(self.tableTab.currentIndex()))
         if text.upper() == "AUTO":
             actions = self.actions.getConfiguration()
@@ -846,8 +831,7 @@ class QNexusWidget(qt.QWidget):
                     self._replaceAction()
 
     def _userTableUpdated(self, ddict):
-        if DEBUG:
-            print("_userTableUpdated(self, ddict) ", ddict)
+        _logger.debug("_userTableUpdated(self, ddict) %s", ddict)
         text = qt.safe_str(self.tableTab.tabText(self.tableTab.currentIndex()))
         if text.upper() == "USER":
             actions = self.actions.getConfiguration()
@@ -858,8 +842,7 @@ class QNexusWidget(qt.QWidget):
                     self._replaceAction()
 
     def _mcaTableUpdated(self, ddict):
-        if DEBUG:
-            print("_mcaTableUpdated(self, ddict) ", ddict)
+        _logger.debug("_mcaTableUpdated(self, ddict) %s", ddict)
         text = qt.safe_str(self.tableTab.tabText(self.tableTab.currentIndex()))
         if text.upper() == "MCA":
             actions = self.actions.getConfiguration()
@@ -870,8 +853,7 @@ class QNexusWidget(qt.QWidget):
                     self._replaceAction()
 
     def buttonsSlot(self, ddict, emit=True):
-        if DEBUG:
-            print("buttonsSlot(self, ddict,emit=True)", ddict, "emit = ", emit)
+        _logger.debug("buttonsSlot(self, %s,emit=%s)", ddict, emit)
         if self.data is None:
             return
         action, selectionType = ddict['action'].split()
@@ -1057,10 +1039,10 @@ class QNexusWidget(qt.QWidget):
             if 'event' in ddict:
                 if ddict['event'] == "closeEventSignal":
                     if ddict['id'] in self._widgetDict:
-                        if DEBUG:
+                        if _logger.getEffectiveLevel() == logging.DEBUG:
                             try:
                                 widget = self._widgetDict[ddict['id']]
-                                print("DELETING %s" % widget.windowTitle())
+                                _logger.debug("DELETING %s", widget.windowTitle())
                             except:
                                 pass
                         del self._widgetDict[ddict['id']]

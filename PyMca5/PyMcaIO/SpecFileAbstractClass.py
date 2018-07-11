@@ -38,7 +38,12 @@ It can be used to wrap other formats as specile
 """
 import os
 import numpy
-DEBUG = 0
+import logging
+
+
+_logger = logging.getLogger(__name__)
+
+
 class SpecFileAbstractClass(object):
     def __init__(self, filename):
         if not os.path.exists(filename):
@@ -50,16 +55,14 @@ class SpecFileAbstractClass(object):
         If there is only one scan returns 1:1
         with two scans returns 1:2
         """
-        if DEBUG:
-            print("list method called")
+        _logger.debug("list method called")
         return "1:1"
 
     def __getitem__(self, item):
         """
         Returns the scan data
         """
-        if DEBUG:
-            print("__getitem__ called")
+        _logger.debug("__getitem__ called")
         return self.scandata[item]
 
     def select(self, key):
@@ -139,8 +142,7 @@ class SpecFileAbstractScan(object):
         return self.__cols
 
     def command(self):
-        if DEBUG:
-            print("command called")
+        _logger.debug("command called")
         text = ""
         if self.scanheader is not None:
             if len(self.scanheader):
@@ -162,8 +164,7 @@ class SpecFileAbstractScan(object):
         return text
 
     def fileheader(self):
-        if DEBUG:
-            print("file header called")
+        _logger.debug("file header called")
         labels = '#L '
         for label in self.labels:
             labels += '  '+label
@@ -173,8 +174,7 @@ class SpecFileAbstractScan(object):
             else:
                 return ['#S 1  Unknown command']
         else:
-            if DEBUG:
-                print("returning ",self.scanheader)
+            _logger.debug("returning %s", self.scanheader)
             return self.scanheader
 
     def header(self,key):

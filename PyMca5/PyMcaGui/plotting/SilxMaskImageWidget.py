@@ -112,7 +112,8 @@ def convertToRowAndColumn(x, y, shape,
 
 class MyMaskToolsWidget(MaskToolsWidget):
     """Backport of the setSelectionMask behavior implemented in silx 0.6.0,
-    to synchronize mask parameters with the active image."""
+    to synchronize mask parameters with the active image.
+    This widget must not be used with silx >= 0.6"""
     def setSelectionMask(self, mask, copy=True):
         """Set the mask to a new array.
         :param numpy.ndarray mask: The array to use for the mask.
@@ -157,7 +158,7 @@ class MyMaskToolsDockWidget(MaskToolsDockWidget):
     """
     def __init__(self, parent=None, plot=None, name='Mask'):
         super(MyMaskToolsDockWidget, self).__init__(parent, plot, name)
-        if silx.version < "0.6":
+        if silx.version_info < (0, 6):
             self.setWidget(MyMaskToolsWidget(plot=plot))
             self.widget().sigMaskChanged.connect(self._emitSigMaskChanged)
 
@@ -756,15 +757,16 @@ class SilxMaskImageWidget(qt.QMainWindow):
                  The mask can be cropped or padded to fit active image,
                  the returned shape is that of the active image.
         """
-        if mask is None:
-            mask = numpy.zeros_like(self._getMaskToolsDockWidget().getSelectionMask())
-        if not len(mask):
-            return
         # disconnect temporarily to avoid infinite loop
         self._getMaskToolsDockWidget().sigMaskChanged.disconnect(
                     self._emitMaskImageWidgetSignal)
-        ret = self._getMaskToolsDockWidget().setSelectionMask(mask,
-                                                              copy=copy)
+        if mask is None and silx.version_info <= (0, 7, 0):
+            self._getMaskToolsDockWidget().resetSelectionMask()
+            ret = None
+        else:
+            # from silx 0.8 onwards, setSelectionMask(None) is supported
+            ret = self._getMaskToolsDockWidget().setSelectionMask(mask,
+                                                                  copy=copy)
         self._getMaskToolsDockWidget().sigMaskChanged.connect(
                     self._emitMaskImageWidgetSignal)
         return ret
@@ -775,7 +777,7 @@ class SilxMaskImageWidget(qt.QMainWindow):
         :param bool copy: True (default) to get a copy of the mask.
                           If False, the returned array MUST not be modified.
         :return: The array of the mask with dimension of the 'active' image.
-                 If there is no active image, an empty array is returned.
+                 If there is no active image, None is returned.
         :rtype: 2D numpy.ndarray of uint8
         """
         return self._getMaskToolsDockWidget().getSelectionMask(copy=copy)

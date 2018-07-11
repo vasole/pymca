@@ -30,13 +30,14 @@ __author__ = "V. Armando Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:
     QString = str
 QTVERSION = qt.qVersion()
-DEBUG=0
+_logger = logging.getLogger(__name__)
 
 QTable = qt.QTableWidget
 
@@ -244,8 +245,7 @@ class McaTable(QTable):
             hb = self.horizontalHeader().paletteBackgroundColor()
             hcolor = ("#%x%x%x" % (hb.red(),hb.green(),hb.blue())).upper()
         else:
-            if DEBUG:
-                print("color background to implement")
+            _logger.debug("color background to implement")
             hcolor = ("#%x%x%x" % (230,240,249)).upper()
         text = ""
         text += ("<nobr>")

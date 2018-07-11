@@ -32,6 +32,7 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
 import time
+import logging
 import numpy
 import numpy.linalg
 try:
@@ -50,13 +51,15 @@ except:
 
 from . import Lanczos
 from . import PCATools
-DEBUG = 0
+
+
+_logger = logging.getLogger(__name__)
+
 
 # Make these functions accept arguments not relevant to
 # them in order to simplify having a common graphical interface
 def lanczosPCA(stack, ncomponents=10, binning=None, legacy=True, **kw):
-    if DEBUG:
-        print("lanczosPCA")
+    _logger.debug("lanczosPCA")
     if binning is None:
         binning = 1
 
@@ -322,7 +325,7 @@ def multipleArrayPCA(stackList0, ncomponents=10, binning=None, legacy=True, **kw
     totalVariance = numpy.diag(covMatrix).sum()
     evalues, evectors = numpy.linalg.eigh(covMatrix)
     covMatrix = None
-    print("Total Variance = ", totalVariance.sum())
+    _logger.info("Total Variance = %s", totalVariance.sum())
 
     images = numpy.zeros((ncomponents, npixels), numpy.float32)
     eigenvectors = numpy.zeros((ncomponents, eigenvectorLength), numpy.float32)
@@ -377,8 +380,7 @@ def expectationMaximizationPCA(stack, ncomponents=10, binning=None, legacy=True,
     """
     This is a fast method when the number of components is small
     """
-    if DEBUG:
-        print("expectationMaximizationPCA")
+    _logger.debug("expectationMaximizationPCA")
     #This part is common to all ...
     if binning is None:
         binning = 1
@@ -466,8 +468,7 @@ def numpyPCA(stack, ncomponents=10, binning=None, legacy=True, **kw):
     """
     This is a covariance method using numpy
     """
-    if DEBUG:
-        print("PCAModule.numpyPCA called")
+    _logger.debug("PCAModule.numpyPCA called")
     if hasattr(stack, "info"):
         index = stack.info.get('McaIndex', -1)
     elif "index" in kw:
@@ -508,13 +509,12 @@ def mdpICAFloat64(stack, ncomponents=10, binning=None,
 
 def mdpPCA(stack, ncomponents=10, binning=None, dtype='float64', svd='True',
            mask=None, spectral_mask=None, legacy=True, **kw):
-    if DEBUG:
-        print("MDP Method")
-        print("binning =", binning)
-        print("dtype = ", dtype)
-        print("svd = ", svd)
+    _logger.debug("MDP Method")
+    _logger.debug("binning = %s", binning)
+    _logger.debug("dtype = %s", dtype)
+    _logger.debug("svd = %s", svd)
     for key in kw:
-        print("mdpPCA Key ignored: %s" % key)
+        _logger.info("mdpPCA Key ignored: %s", key)
     #This part is common to all ...
     if binning is None:
         binning = 1
@@ -620,14 +620,12 @@ def mdpPCA(stack, ncomponents=10, binning=None, dtype='float64', svd='True',
                 pca.train(data[:i, :])
             else:
                 pca.train(data[:i, spectral_mask > 0])
-            if DEBUG:
-                print("Half training")
+            _logger.debug("Half training")
             if spectral_mask is None:
                 pca.train(data[i:, :])
             else:
                 pca.train(data[i:, spectral_mask > 0])
-            if DEBUG:
-                print("Full training")
+            _logger.debug("Full training")
         else:
             if spectral_mask is None:
                 pca.train(data)
@@ -729,14 +727,12 @@ def mdpICA(stack, ncomponents=10, binning=None, dtype='float64',
 
     if 1:
         if (mdp.__version__ >= "2.5"):
-            if DEBUG:
-                print("TDSEPNone")
+            _logger.debug("TDSEPNone")
             ica = mdp.nodes.TDSEPNode(white_comp=ncomponents,
                                       verbose=False,
                                       dtype="float64",
                                       white_parm={'svd': svd})
-            if DEBUG:
-                t0 = time.time()
+            t0 = time.time()
             shape = data.shape
             if len(data.shape) == 3:
                 if r > 10:
@@ -802,22 +798,19 @@ def mdpICA(stack, ncomponents=10, binning=None, dtype='float64',
                         ica.train(data[:i, :])
                     else:
                         ica.train(data[:i, spectral_mask > 0])
-                    if DEBUG:
-                        print("Half training")
+                    _logger.debug("Half training")
                     if spectral_mask is None:
                         ica.train(data[i:, :])
                     else:
                         ica.train(data[i:, spectral_mask > 0])
-                    if DEBUG:
-                        print("Full training")
+                    _logger.debug("Full training")
                 else:
                     if spectral_mask is None:
                         ica.train(data)
                     else:
                         ica.train(data[:, spectral_mask > 0])
             ica.stop_training()
-            if DEBUG:
-                print("training elapsed = %f" % (time.time() - t0))
+            _logger.debug("training elapsed = %f", time.time() - t0)
         else:
             if 0:
                 print("ISFANode (alike)")
@@ -826,14 +819,12 @@ def mdpICA(stack, ncomponents=10, binning=None, dtype='float64',
                                             dtype='float64',
                                             white_parm={'svd':svd})
             elif 1:
-                if DEBUG:
-                    print("FastICANode")
+                _logger.debug("FastICANode")
                 ica = mdp.nodes.FastICANode(white_comp=ncomponents,
                                             verbose=False,
                                             dtype=dtype)
             else:
-                if DEBUG:
-                    print("CuBICANode")
+                _logger.debug("CuBICANode")
                 ica = mdp.nodes.CuBICANode(white_comp=ncomponents,
                                             verbose=False,
                                             dtype=dtype)
@@ -858,8 +849,8 @@ def mdpICA(stack, ncomponents=10, binning=None, dtype='float64',
         if (len(data.shape) == 3):
             images = numpy.zeros((2 * ncomponents, r, c), data.dtype)
             for i in range(r):
-                print("Building images. Projecting data %d out of %d" %\
-                          (i + 1, r))
+                _logger.info("Building images. Projecting data %d out of %d",
+                             i + 1, r)
                 if binning > 1:
                     if spectral_mask is None:
                         tmpData = data[i, :, :]

@@ -32,7 +32,10 @@ except ImportError:
     raise ImportError("OpenGL must be installed to use these functionalities")
 from . import Object3DQt as qt
 import numpy
-DEBUG = 0
+import logging
+
+_logger = logging.getLogger(__name__)
+
 
 class GLWidgetCachePixmap(object):
     def __init__(self, name="Unnamed"):
@@ -47,8 +50,7 @@ class GLWidgetCachePixmap(object):
         return self.__textureId
 
     def openGLCleanup(self):
-        if DEBUG:
-            print("CLEANING OPENGL")
+        _logger.debug("CLEANING OPENGL")
         if self.drawList <= 0:
             GL.glDeleteLists(self.drawList, 1)
             self.drawList = 0
@@ -162,7 +164,7 @@ class GLWidgetCachePixmap(object):
                 GL.glDeleteTextures([self.__textureId])
                 self.__textureId = GL.glGenTextures(1)
         if self.__textureId is None:
-            print("no valid texture id?")
+            _logger.info("no valid texture id?")
             return
         if self._useNewTexture:
             GL.glBindTexture(GL.GL_TEXTURE_2D, self.__textureId)

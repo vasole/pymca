@@ -35,8 +35,7 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import copy
-import os
-import sys
+import logging
 import numpy
 import time
 from PyMca5.PyMca import XASNormalization
@@ -46,7 +45,8 @@ try:
     _XAS = True
 except ImportError:
     _XAS = False
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 def polynom(x, parameters):
     if hasattr(x, 'shape'):
@@ -134,7 +134,7 @@ def polspl_evaluate(set2,xl,xh,c,nc,nr):
     #;
     #; now the rest of the points
     #;
-    if DEBUG:
+    if _logger.getEffectiveLevel() == logging.DEBUG:
         fit2 = fit *1
         for i in range(len(set2[0,:])):  # loop over all the points
             for j in range(1,int(nr+1)): # loop over the # of intervals
@@ -156,8 +156,9 @@ def polspl_evaluate(set2,xl,xh,c,nc,nr):
             yval += c[cstart+k] * numpy.power(xval,(k-1))
         fit[0, idx] = xval
         fit[1, idx] = yval
-    if DEBUG:
-        print("GOOD? = ", numpy.allclose(fit, fit2))
+
+    if _logger.getEffectiveLevel() == logging.DEBUG:
+        _logger.debug("GOOD? = %s", numpy.allclose(fit, fit2))
     return fit
 
 def polspl(x,y,w,npts,xl,xh,nr,nc):
@@ -428,8 +429,8 @@ def postEdge(set2,kmin=None,kmax=None,polDegree=[3,3,3],knots=None, full=False):
     c = numpy.zeros(36)
     nc = numpy.zeros(10, numpy.int32)
     if len(polDegree) > 10:
-        print("Error: Maximum number of intervals is 10")
-        print("       Number of intervals forced to 10")
+        _logger.warning("Error: Maximum number of intervals is 10")
+        _logger.warning("       Number of intervals forced to 10")
         polDegree = polDegree[0:9]
 
     x1 = 0.0 # set2[:,0].min()
@@ -441,8 +442,7 @@ def postEdge(set2,kmin=None,kmax=None,polDegree=[3,3,3],knots=None, full=False):
         x2 = kmax
 
     xrange1 = [x1,x2]
-    if DEBUG:
-        print("++++++++++++++++++",xrange1)
+    _logger.debug("++++++++++++++++++%s", xrange1)
     if knots not in [None, []]:
         if len(knots) == len(polDegree):
             if knots[0] > kmin:
@@ -456,8 +456,8 @@ def postEdge(set2,kmin=None,kmax=None,polDegree=[3,3,3],knots=None, full=False):
             if knots[-1] < kmax:
                 knots = list(knots) + [kmax]
         if ( (len(polDegree)+1) != len(knots) ):
-            print("Error: dimension of knots must be dimension of polDegree+1")
-            print("       Forced automatic (equidistant) knot definition.")
+            _logger.warning("Error: dimension of knots must be dimension of polDegree+1")
+            _logger.warning("       Forced automatic (equidistant) knot definition.")
             knots = None
         else:
             xrange1 = knots[0],knots[-1]
@@ -486,12 +486,12 @@ def postEdge(set2,kmin=None,kmax=None,polDegree=[3,3,3],knots=None, full=False):
     goodi = (set2[:,0] >= xrange1[0]) & (set2[:,0] <= xrange1[1])
     set22 = set2[goodi,:]
 
-    if DEBUG:
-        print(' Number of fitting points: %d'%(len(set22[:,0])))
-        print(' polynomials used for fitting: %d'%(nr))
-        print('#        degree   min      max')
-        for i in range(1,nr+1):
-            print("%d %9d %9.2f %9.2f "%(i,nc[i]-1,xl[i],xh[i]))
+    _logger.debug(' Number of fitting points: %d', len(set22[:,0]))
+    _logger.debug(' polynomials used for fitting: %d', nr)
+    _logger.debug('#        degree   min      max')
+    for i in range(1,nr+1):
+        _logger.debug("%d %9d %9.2f %9.2f ",
+                      i, nc[i]-1, xl[i], xh[i])
 
     # ;
     # ; call spline
@@ -506,11 +506,11 @@ def postEdge(set2,kmin=None,kmax=None,polDegree=[3,3,3],knots=None, full=False):
     #t0 = time.time()
     if _XAS:
         c = _xas.polspl(xx,yy,w,npts,xl,xh,nr,nc)
-        if DEBUG:
+        if _logger.getEffectiveLevel() == logging.DEBUG:
             t0 = time.time()
             c2 = polspl(xx,yy,w,npts,xl,xh,nr,nc)
-            print("polspl elapsed = ", time.time() - t0)
-            print("OK?", numpy.allclose(c, c2))
+            _logger.debug("polspl elapsed = %s", time.time() - t0)
+            _logger.debug("OK? %s", numpy.allclose(c, c2))
     else:
         c = polspl(xx,yy,w,npts,xl,xh,nr,nc)
 
@@ -589,8 +589,7 @@ def getFTWindowWeights(tk, window="Gaussian", windpar=0.2, wrange=None):
         window = window[0].upper() + window[1:].lower()
     else:
         window = names[window]
-    if DEBUG:
-        print("Using window ", window)
+    _logger.debug("Using window %s", window)
 
     if wrange == None:
         xmax = tk.max()
@@ -791,16 +790,14 @@ def getBackFT(fourier,npoint=4096,krange=[2.0,12.0],rstep=None,rmin=None,rmax=No
         rstep = fourier[nn+1,0] - fourier[nn,0]
         rstep2 = fourier[nn+2,0] - fourier[nn+1,0]
         rdiff = numpy.abs (rstep - rstep2)
-        if DEBUG:
-            print(' back rstep = %f'%(rstep))
-            print(' rdiff = %f'%rdiff)
+        _logger.debug(' back rstep = %f', rstep)
+        _logger.debug(' rdiff = %f', rdiff)
         if (rdiff >= 1e-6):
             raise ValueError("r griding is not regular; Use rstep keyword -> Abort")
             #return fou
         ptstart = int(rmin/rstep)
-        if DEBUG:
-            print(' ptstart = %d'%ptstart)
-            print(' ptstart+npt = %d'%(ptstart+npt))
+        _logger.debug(' ptstart = %d', ptstart)
+        _logger.debug(' ptstart+npt = %d', ptstart+npt)
         fou[ptstart:ptstart+npt,:]=fourier
     else: #;--- interpolation
         fou[:,0] = numpy.linspace(0,0,npoint-1,npoint)*rstep
@@ -1243,8 +1240,7 @@ class XASClass(object):
             raise ValueError("Edge energy not set")
         if (id(energy) == id(self._energy)) and self._equidistant:
             # data do not need to be interpolated
-            if DEBUG:
-                print("NO INTERPOLATION")
+            _logger.debug("NO INTERPOLATION")
             eWork = energy
             muWork = mu
         else:
@@ -1412,7 +1408,7 @@ class XASClass(object):
             normalizedSpectrum[i:] *= (jump / \
                                       (data["PostEdge"] - data["PreEdge"])[i:])
         else:
-            print("WARNING: Undefined jump normalization method. Assume Flattened")
+            _logger.warning("WARNING: Undefined jump normalization method. Assume Flattened")
             jumpMethod = "Flattened"
             i = numpy.argmin(energy < e0)
             normalizedSpectrum[i:] *= (jump / \
@@ -1487,25 +1483,25 @@ if __name__ == "__main__":
     #sys.exit()
     from PyMca5.PyMca import PyMcaQt as qt
     app = qt.QApplication([])
-    from PyMca5.PyMca import PlotWindow
-    w = PlotWindow.PlotWindow()
-    w.addCurve(energy, mu, legend="original", replot=False)
+    from silx.gui.plot import Plot1D
+    w = Plot1D()
+    w.addCurve(energy, mu, legend="original")
     w.addCurve(ddict["NormalizedEnergy"],
-               ddict["NormalizedMu"], legend="Mu", yaxis="right", replot=False)
+               ddict["NormalizedMu"], legend="Mu", yaxis="right")
     w.addCurve(ddict["NormalizedEnergy"],
-               ddict["NormalizedSignal"], legend="Post", replot=False)
+               ddict["NormalizedSignal"], legend="Post")
     w.addCurve(ddict["NormalizedEnergy"],
-               ddict["NormalizedBackground"], legend="Pre",replot=False)
+               ddict["NormalizedBackground"], legend="Pre")
     w.resetZoom()
     w.show()
-    exafs = PlotWindow.PlotWindow()
+    exafs = Plot1D()
     idx = (ddict["EXAFSKValues"] >= ddict["KMin"]) & \
           (ddict["EXAFSKValues"] <= ddict["KMax"])
     exafs.addCurve(ddict["EXAFSKValues"][idx], ddict["EXAFSNormalized"][idx],
                    legend="Normalized EXAFS")
     exafs.show()
     #"""
-    ft = PlotWindow.PlotWindow()
+    ft = Plot1D()
     ft.addCurve(ddict["FT"]["FTRadius"], ddict["FT"]["FTIntensity"])
     ft.resetZoom()
     ft.show()

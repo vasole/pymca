@@ -27,12 +27,13 @@ __author__ = "E. Papillon, V.A. Sole - ESRF Software Group"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-import sys
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 
 QTVERSION = qt.qVersion()
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class SpecFileMcaTable(qt.QWidget):
     sigMcaDeviceSelected = qt.pyqtSignal(object)
@@ -131,16 +132,14 @@ class SpecFileMcaTable(qt.QWidget):
             item.setText("X")
 
     def _cellClicked(self, row, col):
-        if DEBUG:
-            print("_cellClicked %d %d " % (row, col))
+        _logger.debug("_cellClicked %d %d ", row, col)
         item = self.table.item(row, col)
         if item is None:
             item = qt.QTableWidgetItem('',qt.QTableWidgetItem.Type)
             self.table.setItem(row, col, item)
 
     def _cellDoubleClicked(self, row, col):
-        if DEBUG:
-            print("_cellDoubleClicked %d %d" % (row, col))
+        _logger.debug("_cellDoubleClicked %d %d", (row, col))
         #self._toggleCell(row, col)
         pass
 
