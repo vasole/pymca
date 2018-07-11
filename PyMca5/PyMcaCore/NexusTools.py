@@ -484,7 +484,7 @@ if __name__ == "__main__":
     except:
         print("Usage: NexusTools <file> <key>")
         sys.exit()
-    h5 = h5py.File(sourcename)
+    h5 = h5py.File(sourcename, 'r')
     entries = getNXClassGroups(h5, "/", ["NXentry", b"NXentry"], single=False)
     if not len(entries):
         entries = [item for name, item in h5["/"].items() if isGroup(item)]

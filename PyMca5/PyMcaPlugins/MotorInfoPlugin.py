@@ -23,6 +23,11 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
+"""This plugin opens a widget displaying values of various motors associated
+with each spectrum, if the curve originates from a file whose format provides
+this information.
+"""
+
 __author__ = "Tonn Rueter"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"

@@ -138,6 +138,7 @@ class SimpleFitGui(qt.QWidget):
         if fit is None:
             self.fitModule = SimpleFitModule.SimpleFit()
             self.fitModule.importFunctions(SimpleFitUserEstimatedFunctions)
+            self.fitModule.loadUserFunctions()
         else:
             self.fitModule = fit
         if graph is None:

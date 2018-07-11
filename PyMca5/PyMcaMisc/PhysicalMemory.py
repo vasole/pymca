@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -86,13 +86,33 @@ if sys.platform == 'win32':
             self.dwLength = ctypes.sizeof(self)
             super(MEMORYSTATUSEX, self).__init__()
 
-    #print("MemoryLoad: %d%%" % (stat.dwMemoryLoad))
-    #print("Physical memory = %d" % stat.ullTotalPhys)
-    #print(stat.ullAvailPhys)
     def getPhysicalMemory():
+        #print("MemoryLoad: %d%%" % (stat.dwMemoryLoad))
+        #print("Physical memory = %d" % stat.ullTotalPhys)
+        #print(stat.ullAvailPhys)
         stat = MEMORYSTATUSEX()
         ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(stat))
         return stat.ullTotalPhys
+
+    def getAvailablePhysicalMemory():
+        stat = MEMORYSTATUSEX()
+        ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(stat))
+        value = stat.ullAvailPhys
+        return value
+
+    def getAvailablePhysicalMemoryOrNone():
+        try:
+            value = getAvailablePhysicalMemory()
+            if value < 0:
+                # Value makes no sense.
+                # return None as requested in case of failure
+                print("WARNING: Returned physical memory does not make sense %d" % \
+                          value)
+                return None
+            else:
+                return value
+        except:
+            return None
 
 elif sys.platform.startswith('linux'):
     def getPhysicalMemory():

@@ -45,7 +45,8 @@ if __name__ == '__main__':
                    'qt=',
                    'backend=',
                    'nativefiledialogs=',
-                   'PySide=']
+                   'PySide=',
+                   'binding=']
     try:
         opts, args = getopt.getopt(
                      sys.argv[1:],
@@ -58,6 +59,7 @@ if __name__ == '__main__':
     keywords={}
     debugreport = 0
     qtversion = None
+    binding = None
     for opt, arg in opts:
         if  opt in ('--spec'):
             keywords['spec'] = arg
@@ -78,25 +80,49 @@ if __name__ == '__main__':
             else:
                 nativeFileDialogs = False
         elif opt in ('--PySide'):
+            print("Please use --binding=PySide")
             import PySide.QtCore
-    if qtversion == '3':
-        raise NotImplementedError("Qt3 is no longer supported")
-    elif qtversion == '4':
-        try:
-            import sip
-            sip.setapi("QString", 2)
-            sip.setapi("QVariant", 2)
-        except:
-            _logger.info("Cannot set sip API") # Console widget not available
-        import PyQt4.QtCore
-    elif qtversion == '5':
-        try:
-            import sip
-        except:
-            pass
-        import PyQt5.QtCore
+        elif opt in ('--binding'):
+            binding = arg.lower()
+            if binding == "pyqt5":
+                import PyQt5.QtCore
+            elif binding == "pyqt4":
+                if sys.version_info < (3,):
+                    try:
+                        import sip
+                        sip.setapi("QString", 2)
+                        sip.setapi("QVariant", 2)
+                    except:
+                        print("Cannot set sip API")
+                import PyQt4.QtCore
+            elif binding == "pyside2":
+                import PySide2.QtCore
+            elif binding == "pyside":
+                import PySide.QtCore
+            else:
+                raise ValueError("Unknown Qt binding <%s>" % binding)
+    if binding is None:
+        if qtversion == '3':
+            raise NotImplementedError("Qt3 is no longer supported")
+        elif qtversion == '4':
+            if sys.version_info < (3,):
+                try:
+                    import sip
+                    sip.setapi("QString", 2)
+                    sip.setapi("QVariant", 2)
+                except:
+                    print("Cannot set sip API")
+            import PyQt4.QtCore
+        elif qtversion == '5':
+            import PyQt5.QtCore
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
+QTVERSION = qt.qVersion()
+if sys.platform == 'darwin':
+    if backend is not None:
+        if backend.lower() in ["gl", "opengl"]:
+            if hasattr(qt, 'QOpenGLWidget'):
+                print("Warning: OpenGL backend not fully supported")
 try:
     # try to import silx prior to import matplotlib
     import silx.gui.plot
@@ -109,8 +135,6 @@ if hasattr(qt, "QString"):
     QString = qt.QString
 else:
     QString = qt.safe_str
-
-QTVERSION = qt.qVersion()
 
 try:
     from PyMca5.PyMcaGui.physics.xrf import XRFMCPyMca
@@ -332,7 +356,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                     self.mcaWindow.showMaximized()
             currentConfigDict = ConfigDict.ConfigDict()
             try:
-                defaultFileName = self.__getDefaultSettingsFile()
+                defaultFileName = PyMca5.getDefaultSettingsFile()
                 self.configDir  = os.path.dirname(defaultFileName)
             except:
                 if not ('fresh' in kw):
@@ -535,7 +559,6 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Error: %s" % sys.exc_info()[1])
             msg.exec_()
-
 
     def _dispatcherRemoveSelectionSlot(self, dictOrList):
         _logger.debug("self.dispatcherRemoveSelectionSlot(ddict), ddict = %s", dictOrList)
@@ -744,7 +767,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         d = ConfigDict.ConfigDict()
         d.update(config)
         if filename is None:
-            filename = self.__getDefaultSettingsFile()
+            filename = PyMca5.getDefaultSettingsFile()
         d.write(filename)
 
     def __configurePyMca(self, ddict):
@@ -1453,46 +1476,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
 
     def _saveAs(self, filename=None):
         if filename is None:
-            filename = self.__getDefaultSettingsFile()
+            filename = PyMca5.getDefaultSettingsFile()
         self.saveConfig(self.getConfig(), filename)
-
-    def __getDefaultSettingsFile(self):
-        filename = "PyMca.ini"
-        if sys.platform == 'win32':
-            # recipe based on: http://bugs.python.org/issue1763#msg62242
-            dll = ctypes.windll.shell32
-            buf = ctypes.create_unicode_buffer(MAX_PATH + 1)
-            if dll.SHGetSpecialFolderPathW(None, buf, 0x0005, False):
-                directory = buf.value
-            else:
-                # the above should have worked
-                home = os.getenv('USERPROFILE')
-                try:
-                    l = len(home)
-                    directory = os.path.join(home, "My Documents")
-                except:
-                    home = '\\'
-                    directory = '\\'
-                #print home
-                #print directory
-            if os.path.isdir('%s' % directory):
-                directory = os.path.join(directory, "PyMca")
-            else:
-                #print "My Documents is not there"
-                directory = os.path.join(home, "PyMca")
-            if not os.path.exists('%s' % directory):
-                #print "PyMca directory not present"
-                os.mkdir('%s' % directory)
-            #print filename
-            finalfile = os.path.join(directory, filename)
-            #print finalfile
-        else:
-            home = os.getenv('HOME')
-            directory = os.path.join(home, "PyMca")
-            if not os.path.exists('%s' % directory):
-                os.mkdir('%s' % directory)
-            finalfile =  os.path.join(directory, filename)
-        return finalfile
 
     def loadTrainingData(self):
         try:

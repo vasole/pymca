@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -23,40 +23,36 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
+"""This plugin provides normalisation methods.
+
+Two methods can be applied to normalize the stack based on the
+active curve (I0):
+
+ - I/I0 Normalization: divide all spectra by the active curve
+ - -log(I/I0) Normalization
+
+Three methods are provided to normalize the stack images based on
+an external image (I0) read from a file:
+
+ - Image I/I0 Normalization
+ - Image I * (max(I0)/I0) Scaling
+ - Image -log(I/I0) Normalization
+
+External images can be read from following file formats:
+
+ - EDF
+ - HDF5
+ - ASCII
+
+If a multiframe EDF file is opened, the first frame is used. In case
+a HDF5 file is selected, a browser is used to select a 2D dataset.
+"""
+
 __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-"""
 
-A Stack plugin is a module that will be automatically added to the PyMca stack windows
-in order to perform user defined operations on the data stack.
-
-These plugins will be compatible with any stack window that provides the functions:
-    #data related
-    getStackDataObject
-    getStackData
-    getStackInfo
-    setStack
-
-    #images related
-    addImage
-    removeImage
-    replaceImage
-
-    #mask related
-    setSelectionMask
-    getSelectionMask
-
-    #displayed curves
-    getActiveCurve
-    getGraphXLimits
-    getGraphYLimits
-
-    #information method
-    stackUpdated
-    selectionMaskUpdated
-"""
 import numpy
 import logging
 from PyMca5 import StackPluginBase
@@ -145,7 +141,7 @@ class StackNormalizationPlugin(StackPluginBase.StackPluginBase):
         getfilter = True
         fileTypeList = ["EDF Files (*edf *ccd *tif)"]
         if HDF5:
-            fileTypeList.append('HDF5 Files (*.h5 *.nxs *.hdf)')
+            fileTypeList.append('HDF5 Files (*.h5 *.nxs *.hdf *.hdf5)')
         fileTypeList.append('ASCII Files (*)') 
         fileTypeList.append("EDF Files (*)")
         message = "Open data file"

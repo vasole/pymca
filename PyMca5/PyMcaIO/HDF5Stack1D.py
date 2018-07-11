@@ -255,7 +255,10 @@ class HDF5Stack1D(DataObject.DataObject):
             if self.__dtype in [numpy.int16, numpy.uint16]:
                 self.__dtype = numpy.float32
             elif self.__dtype in [numpy.int32, numpy.uint32]:
-                self.__dtype = numpy.float64
+                if mSelection:
+                    self.__dtype = numpy.float32
+                else:
+                    self.__dtype = numpy.float64
             elif self.__dtype not in [numpy.float16, numpy.float32,
                                       numpy.float64]:
                 # Some datasets form CLS (origin APS?) arrive as data format
@@ -264,7 +267,10 @@ class HDF5Stack1D(DataObject.DataObject):
                 if ("%s" % self.__dtype).endswith("2"):
                     self.__dtype = numpy.float32
                 else:
-                    self.__dtype = numpy.float64
+                    if mSelection:
+                        self.__dtype = numpy.float32
+                    else:
+                        self.__dtype = numpy.float64
 
         # figure out the shape of the stack
         shape = yDataset.shape
@@ -286,9 +292,14 @@ class HDF5Stack1D(DataObject.DataObject):
                 bytefactor = 8
 
             neededMegaBytes = nFiles * dim0 * dim1 * (mcaDim * bytefactor/(1024*1024.))
-            physicalMemory = PhysicalMemory.getPhysicalMemoryOrNone()
+            physicalMemory = None
+            if hasattr(PhysicalMemory, "getAvailablePhysicalMemoryOrNone"):
+                physicalMemory = PhysicalMemory.getAvailablePhysicalMemoryOrNone()
+            if not physicalMemory:
+                physicalMemory = PhysicalMemory.getPhysicalMemoryOrNone()
             if physicalMemory is None:
-                # 5 Gigabytes should be a good compromise
+                # 6 Gigabytes of available memory
+                # should be a good compromise in 2018
                 physicalMemory = 6000
             else:
                 physicalMemory /= (1024*1024.)
@@ -297,6 +308,7 @@ class HDF5Stack1D(DataObject.DataObject):
                 if self.__dtype0 is None:
                     if (bytefactor == 8) and (neededMegaBytes < (2*physicalMemory)):
                         # try reading as float32
+                        print("Forcing the use of float32 data")
                         self.__dtype = numpy.float32
                     else:
                         raise MemoryError("Force dynamic loading")

@@ -23,18 +23,27 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
+"""This plugin replaces all curves with a normalized and shifted
+curve.
+The minimum is subtracted, than the data is normalized to the maximum, and
+finally it is shifted up by i*0.1 (i being the curve index).
+"""
+
 __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+
+
 from PyMca5 import Plugin1DBase
+
 class Shifting(Plugin1DBase.Plugin1DBase):
 
     def getMethods(self, plottype=None):
         return ["Shift"]
     def getMethodToolTip(self, methodName):
         if methodName != "Shift":
-            raise InvalidArgument("Method %s not valid" % methodName)
+            raise KeyError("Method %s not valid" % methodName)
         return "Subtract minimum, normalize to maximum, and shift up by 0.1"
 
     def applyMethod(self, methodName):
@@ -57,7 +66,7 @@ class Shifting(Plugin1DBase.Plugin1DBase):
             else:
                 replace = False
             self.addCurve(x, y, legend=legend + " %.2f" % (i * increment),
-                                info=info, replace=replace, replot=replot)
+                          info=info, replace=replace, replot=replot)
      
 MENU_TEXT="Simple Vertical Shift"
 def getPlugin1DInstance(plotWindow, **kw):

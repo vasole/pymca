@@ -23,42 +23,30 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
+"""
+This plugin opens a window allowing to configure and compute the principal
+component analysis.
+Each spectrum is considered an *observation*, and each channel is considered
+a *variable*.
+
+The user can configure following parameters:
+
+  - PCA method (*Covariance, Expectation Max, Covariance Multiple Arrays*)
+  - Number of Principal Components
+  - Spectral Binning
+  - Spectral Regions
+
+After the configuration dialog is validated, the eigenimages and the
+eigenvectors are computed and displayed in another window.
+
+"""
+# TODO: explain PCA methods and regions
+# TODO: provide a practical use case for a PCA. Isolating elements?
 __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-"""
 
-A Stack plugin is a module that will be automatically added to the PyMca
-stack windows in order to perform user defined operations on the data stack.
-
-These plugins will be compatible with any stack window that provides the
-functions:
-    #data related
-    getStackDataObject
-    getStackData
-    getStackInfo
-    setStack
-    isStackFinite
-
-    #images related
-    addImage
-    removeImage
-    replaceImage
-
-    #mask related
-    setSelectionMask
-    getSelectionMask
-
-    #displayed curves
-    getActiveCurve
-    getGraphXLimits
-    getGraphYLimits
-
-    #information method
-    stackUpdated
-    selectionMaskUpdated
-"""
 import numpy
 import logging
 

@@ -23,6 +23,9 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
+"""
+
+"""
 __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
