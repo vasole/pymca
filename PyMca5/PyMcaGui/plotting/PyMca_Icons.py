@@ -4055,7 +4055,7 @@ TRANSLATION_TABLE = {
     "peak": "math-peak",
     "peakreset": "math-peak-reset",
     "peaksearch": "math-peak-search",
-    "roi": "plot-roi",
+    #"roi": "plot-roi",
     "roireset": "plot-roi-reset",
     "selected": "selected",
     #"unselected": unselected,
