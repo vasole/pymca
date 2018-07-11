@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -178,8 +178,9 @@ class XRFMCProgramFile(GetFileList):
             filedialog.setWindowTitle("Select xmimsim-pymca executable")
         filedialog.setDirectory(wdir)
         filedialog.setModal(1)
-        filedialog.setFileMode(filedialog.ExistingFiles)
         if sys.platform == 'darwin':
+            filedialog.setFileMode(qt.QFileDialog.Directory)
+            filedialog.setOption(qt.QFileDialog.ShowDirsOnly)
             filelist = filedialog.exec_()
             if filelist:
                 filelist = filedialog.selectedFiles()
@@ -190,6 +191,7 @@ class XRFMCProgramFile(GetFileList):
                                        "xmimsim-pymca")
                 filelist = [xmimsim]
         else:
+            filedialog.setFileMode(qt.QFileDialog.ExistingFiles)
             filelist = qt.QFileDialog.getOpenFileName(self,
                         "Selec xmimsim-pymca executable",
                         wdir,

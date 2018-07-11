@@ -30,7 +30,6 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 import logging
 import sys
-from PyMca5.PyMcaGui import PyMcaQt as qt
 
 if sys.version_info < (3, ):
     from collections import MutableMapping
@@ -4056,7 +4055,7 @@ TRANSLATION_TABLE = {
     "peak": "math-peak",
     "peakreset": "math-peak-reset",
     "peaksearch": "math-peak-search",
-    "roi": "plot-roi",
+    #"roi": "plot-roi",
     "roireset": "plot-roi-reset",
     "selected": "selected",
     #"unselected": unselected,
@@ -4117,15 +4116,7 @@ class _PatchedIconDict(MutableMapping):
     """
     def __init__(self, *args, **kw):
         self._unpatched_icons = dict(*args, **kw)
-        try:
-            from silx.gui import icons as silx_icons
-        except ImportError:
-            _logger.debug("Could not import silx. Legacy icons will be used.")
-            silx_icons = None
-
-        self._silx_icons = silx_icons
-        # keep an internal copy:
-        self._translation_table = TRANSLATION_TABLE.copy()
+        self.__initialized = False
 
     def __iter__(self):
         for key in self._unpatched_icons:
@@ -4136,6 +4127,19 @@ class _PatchedIconDict(MutableMapping):
         return len(self._unpatched_icons)
 
     def __getitem__(self, key):
+        if not self.__initialized:
+            from PyMca5.PyMcaGui import PyMcaQt as qt
+            self._qt = qt
+            try:
+                from silx.gui import icons as silx_icons
+            except ImportError:
+                _logger.debug("Could not import silx. Legacy icons will be used.")
+                silx_icons = None
+
+            self._silx_icons = silx_icons
+            # keep an internal copy:
+            self._translation_table = TRANSLATION_TABLE.copy()
+            self.__initialized = True
         if key not in self._unpatched_icons:
             raise KeyError("Unknown icon '%s'" % key)
 
@@ -4145,7 +4149,7 @@ class _PatchedIconDict(MutableMapping):
                           key)
             return self._unpatched_icons[key]
 
-        if qt.QApplication.instance() is None:
+        if self._qt.QApplication.instance() is None:
             _logger.warning("Cannot fetch QPixmap without a QApplication."
                             " Using legacy PyMca icon as fallback.")
             return self._unpatched_icons[key]
@@ -4173,7 +4177,6 @@ class _PatchedIconDict(MutableMapping):
             # we also need to remove the key from internal translation table
             del self._translation_table[key]
 
-
 IconDict = _PatchedIconDict(IconDict0)
 
 
@@ -4199,6 +4202,7 @@ def showIcons():
     return w
 
 if __name__ == '__main__':
+    from PyMca5.PyMcaGui import PyMcaQt as qt
     app = qt.QApplication(sys.argv)
     app.lastWindowClosed.connect(app.quit)
     logging.basicConfig()

@@ -317,8 +317,8 @@ class testXrf(unittest.TestCase):
         self.assertTrue(referenceElement == "Co",
                "referenceElement is <%s> instead of <Co>" % referenceElement)
         cobalt = concentrationsResult["mass fraction"]["Co K"]
-        self.assertTrue( cobalt == 0.0005,
-                        "Wrong Co concentration %f" % cobalt)
+        self.assertTrue( abs(cobalt-0.0005) < 1.0E-7,
+                        "Wrong Co concentration %f expected 0.0005" % cobalt)
 
         # we should get the same result with internal parameters
         cTool = ConcentrationsTool.ConcentrationsTool()

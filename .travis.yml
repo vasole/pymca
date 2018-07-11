@@ -12,8 +12,16 @@ matrix:
 
         - language: generic
           os: osx
-          env: BUILD_COMMAND=bdist_wheel
+          env: 
+              - BUILD_COMMAND=bdist_wheel
+              - PYTHON_VERSION=2
 
+        - language: generic
+          os: osx
+          env: 
+              - BUILD_COMMAND=bdist_wheel
+              - PYTHON_VERSION=3
+                
 cache:
     apt: true
 

@@ -23,6 +23,15 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
+"""
+This plugin provides 3 methods:
+
+  - subtract a SNIP1D background from the active curve
+  - apply a Savitsky-Golay filter on the active curve
+  - smooth and replace current curve by its SNIP1D background (deglitch)
+
+
+"""
 __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"

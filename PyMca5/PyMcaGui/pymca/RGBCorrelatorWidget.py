@@ -894,18 +894,20 @@ class RGBCorrelatorWidget(qt.QWidget):
                     height = qimage.height()
                     width  = qimage.width()
                     if qimage.format() == qt.QImage.Format_Indexed8:
-                        pixmap0 = numpy.fromstring(qimage.bits().asstring(width * height),
-                                             dtype = numpy.uint8)
+                        pixmap0 = numpy.frombuffer(qimage.bits().asstring(width * height),
+                                                   dtype=numpy.uint8)
                         pixmap = numpy.zeros((height * width, 4), numpy.uint8)
-                        pixmap[:,0] = pixmap0[:]
-                        pixmap[:,1] = pixmap0[:]
-                        pixmap[:,2] = pixmap0[:]
-                        pixmap[:,3] = 255
+                        pixmap[:, 0] = pixmap0[:]
+                        pixmap[:, 1] = pixmap0[:]
+                        pixmap[:, 2] = pixmap0[:]
+                        pixmap[:, 3] = 255
                         pixmap.shape = height, width, 4
                     else:
                         image = qimage.convertToFormat(qt.QImage.Format_ARGB32)
-                        pixmap = numpy.fromstring(qimage.bits().asstring(width * height * 4),
-                                             dtype = numpy.uint8)
+                        pixmap0 = numpy.frombuffer(image.bits().asstring(width * height * 4),
+                                                   dtype=numpy.uint8)
+                        pixmap = numpy.array(pixmap0, copy=True)
+
                     pixmap.shape = height, width, -1
                     data = pixmap[:,:,0] * 0.114 +\
                                 pixmap[:,:,1] * 0.587 +\

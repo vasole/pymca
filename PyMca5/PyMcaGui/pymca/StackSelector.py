@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -280,7 +280,7 @@ class StackSelector(object):
             stack = SupaVisioMap.SupaVisioMap(args[0])
         elif args[0][-3:].upper() in ["RBS"]:
             stack = SupaVisioMap.SupaVisioMap(args[0])
-        elif args[0][-3:].lower() in [".h5", "nxs", "hdf"]:
+        elif args[0][-3:].lower() in [".h5", "nxs", "hdf", "hdf5"]:
             if not HDF5:
                 raise IOError(\
                     "No HDF5 support while trying to read an HDF5 file")
@@ -358,7 +358,7 @@ class StackSelector(object):
                         "Image Files (*edf *ccd *raw *edf.gz *ccd.gz *raw.gz *cbf)",
                         "Image Files (*tif *tiff *TIF *TIFF)",
                         "TextImage Files (*txt)",
-                        "HDF5 Files (*.nxs *.hdf *.h5)",
+                        "HDF5 Files (*.nxs *.hdf *.hdf5 *.h5)",
                         "EDF Files (*ccd)",
                         "Specfile Files (*mca)",
                         "Specfile Files (*dat)",
@@ -373,7 +373,7 @@ class StackSelector(object):
                         "MRC files (*.mrc *.st)",
                         "All Files (*)"]
         if not HDF5:
-            idx = fileTypeList.index("HDF5 Files (*.nxs *.hdf *.h5)")
+            idx = fileTypeList.index("HDF5 Files (*.nxs *.hdf *.hdf5 *.h5)")
             del fileTypeList[idx]
         message = "Open ONE indexed stack or SEVERAL files"
         return self._getFileList(fileTypeList, message=message,

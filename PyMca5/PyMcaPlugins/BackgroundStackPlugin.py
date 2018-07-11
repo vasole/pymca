@@ -23,42 +23,22 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
+
 __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-"""
+__doc__ = """
+This stack plugin provides filtering and background subtraction methods:
 
-A Stack plugin is a module that will be automatically added to the PyMca
-stack windows in order to perform user defined operations on the data stack.
-
-These plugins will be compatible with any stack window that provides the
-functions:
-    #data related
-    getStackDataObject
-    getStackData
-    getStackInfo
-    setStack
-
-    #images related
-    addImage
-    removeImage
-    replaceImage
-
-    #mask related
-    setSelectionMask
-    getSelectionMask
-
-    #displayed curves
-    getActiveCurve
-    getGraphXLimits
-    getGraphYLimits
-
-    #information method
-    stackUpdated
-    selectionMaskUpdated
+  - Savitzky-Golay Filtering (smoothing)
+  - Deglitch with SNIP 1D Background
+  - Subtract SNIP 1D Background
+  - Subtract SNIP 2D Background
+  - Subtract active curve
 """
 import logging
+
 from PyMca5 import StackPluginBase
 from PyMca5.PyMcaGui import SGWindow
 from PyMca5.PyMcaGui import SNIPWindow

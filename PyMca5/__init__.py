@@ -27,7 +27,7 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-__version__ = "5.3.1"
+__version__ = "5.3.2"
 
 import os
 import sys
@@ -64,14 +64,13 @@ if os.path.exists(os.path.join(\
 def version():
     return __version__
 
-def getDefaultSettingsFile():
+def getDefaultSettingsDirectory():
     """
-    Return the path to the default settings file (PyMca.ini).
+    Return the path to the directory containing the default settings file,
+    user plugins and user fit functions.
 
-    The file itself may not exist, but this function tries to create
-    the containing directory if not already created.
+    This function tries to create the directory if not already created.
     """
-    filename = "PyMca.ini"
     if sys.platform == 'win32':
         # recipe based on: http://bugs.python.org/issue1763#msg62242
         dll = ctypes.windll.shell32
@@ -82,7 +81,6 @@ def getDefaultSettingsFile():
             # the above should have worked
             home = os.getenv('USERPROFILE')
             try:
-                l = len(home)
                 directory = os.path.join(home, "My Documents")
             except:
                 home = '\\'
@@ -91,16 +89,30 @@ def getDefaultSettingsFile():
             directory = os.path.join(directory, "PyMca")
         else:
             directory = os.path.join(home, "PyMca")
-        if not os.path.exists('%s' % directory):
-            os.mkdir('%s' % directory)
-        finalfile = os.path.join(directory, filename)
     else:
         home = os.getenv('HOME')
-        directory = os.path.join(home, "PyMca")
-        if not os.path.exists('%s' % directory):
-            os.mkdir('%s' % directory)
-        finalfile =  os.path.join(directory, filename)
-    return finalfile
+        directory = os.path.join(home, ".pymca")
+        if not os.path.isdir('%s' % directory):
+            # if legacy directory exists, possibly containing user plugins,
+            # we should keep using it
+            legacy_directory = os.path.join(home, "PyMca")
+            if os.path.exists(os.path.join(legacy_directory, "plugins")):
+                directory = legacy_directory
+
+    if not os.path.exists('%s' % directory):
+        os.mkdir('%s' % directory)
+    return directory
+
+def getDefaultSettingsFile():
+    """
+    Return the path to the default settings file (PyMca.ini).
+
+    The file itself may not exist, but this function tries to create
+    the containing directory if not already created.
+    """
+    filename = "PyMca.ini"
+    return os.path.join(getDefaultSettingsDirectory(),
+                        filename)
 
 def getDefaultUserPluginsDirectory():
     """
@@ -109,7 +121,7 @@ def getDefaultUserPluginsDirectory():
     The directory will be created if not existing. In case of error it returns None.
     """
     try:
-        settingsDir = os.path.dirname(getDefaultSettingsFile())
+        settingsDir = getDefaultSettingsDirectory()
         if os.path.exists(settingsDir):
             userPluginDir = os.path.join(settingsDir, "plugins")
             if not os.path.exists(userPluginDir):
@@ -118,7 +130,26 @@ def getDefaultUserPluginsDirectory():
         else:
             return None
     except:
-        _logger.info("WARNING: Cannot initialize plugis directory")
+        _logger.info("WARNING: Cannot initialize plugins directory")
+        return None
+
+def getDefaultUserFitFunctionsDirectory():
+    """
+    Return the default directory to look for user defined fit functions.
+
+    The directory will be created if not existing. In case of error it returns None.
+    """
+    try:
+        settingsDir = os.path.dirname(getDefaultSettingsFile())
+        if os.path.exists(settingsDir):
+            fitFunctionsDir = os.path.join(settingsDir, "fit")
+            if not os.path.exists(fitFunctionsDir):
+                os.mkdir(fitFunctionsDir)
+            return fitFunctionsDir
+        else:
+            return None
+    except:
+        _logger.warning("Cannot initialize fit functions directory")
         return None
 
 def getUserDataFile(fileName, directory=""):
@@ -127,7 +158,7 @@ def getUserDataFile(fileName, directory=""):
     """
     userDataDir = None
     try:
-        settingsDir = os.path.dirname(getDefaultSettingsFile())
+        settingsDir = getDefaultSettingsDirectory()
         if os.path.exists(settingsDir):
             userDataDir = os.path.join(settingsDir, "data")
             if not os.path.exists(userDataDir):
@@ -156,7 +187,7 @@ def getDataFile(fileName, directory=None):
     Look for the provided file name in directories following the priority:
 
     0 - The provided file
-    1 - User data directory (~/PyMca/PyMcaData)
+    1 - User data directory (~/.pymca/PyMcaData)
     2 - PyMca data directory (PyMcaDataDir.PYMCA_DATA_DIR)
     3 - fisx data directory (fisx.DataDir.FISX_DATA_DIR)
     """
@@ -210,7 +241,7 @@ if sys.platform.startswith("win"):
     try:
         #try to avoid matplotlib config dir problem under windows
         if os.getenv("MPLCONFIGDIR") is None:
-            os.environ['MPLCONFIGDIR'] = os.path.dirname(getDefaultSettingsFile())
+            os.environ['MPLCONFIGDIR'] = getDefaultSettingsDirectory()
     except:
         _logger.info("WARNING: Could not set MPLCONFIGDIR. %s", sys.exc_info()[1])
 

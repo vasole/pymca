@@ -23,8 +23,9 @@
 # THE SOFTWARE.
 #
 # ###########################################################################*/
-"""Plugin opening a stack plot and a another window displaying motor positions
-at the current mouse position."""
+"""If positioners data is available for this stack, this plugin opens
+a stack plot with a widget displaying motor positions at the current mouse
+position in the plot."""
 
 __authors__ = ["P. Knobel"]
 __contact__ = "sole@esrf.fr"

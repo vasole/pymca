@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -222,19 +222,23 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
         if self._dynamic:
             self._dynamicAction(index)
         elif self._stack:
-            self.setImageData(self.imageList[index])
+            # with matplotlib 2.2.2 the graph title is not updated
+            # if set after the image data
             if self.imageNames is None:
                 self.graphWidget.graph.setGraphTitle("Image %d" % index)
             else:
                 self.graphWidget.graph.setGraphTitle(self.imageNames[index])
+            self.setImageData(self.imageList[index])
         else:
             qimage = self._imageDict[self.imageNames[index]]
+            # with matplotlib 2.2.2 the graph title is not updated
+            # if set after the image data
+            self.graphWidget.graph.setGraphTitle(self.imageNames[index])
             self.setQImage(qimage,
                        qimage.width(),
                        qimage.height(),
                        clearmask=False,
                        data=self.imageList[index])
-            self.graphWidget.graph.setGraphTitle(self.imageNames[index])
         if moveslider:
             self.slider.setValue(index)
 

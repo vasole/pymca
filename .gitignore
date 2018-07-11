@@ -6,6 +6,8 @@ __pycache__/
 # C extensions
 *.so
 
+# MacOS
+*.DS_Store
 
 # Distribution / packaging
 #bin/
@@ -58,7 +60,8 @@ coverage.xml
 docs/_build/
 
 # cython generated files
-PyMca/plotting/ctools/_ctools/cython/*.c
+PyMca5/PyMcaGraph/ctools/_ctools/cython/*.c
+PyMca5/PyMcaPhysics/xas/_xas/cython/*.c
 
 # PyCharm meta data
 .idea/

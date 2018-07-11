@@ -40,5 +40,17 @@ Open the LShellConstants.dat and list its contents in the source browser.
 .P
 Allows one to browse the HDF5 file your_HDF5_file.h5 in PyMca if the Python module h5py is installed.
 
+.B pymca --nativefiledialogs=X
+.P
+With X set to 1, the program will use the file dialogs from the operating system. With X set to 0, the program will use Qt file dialogs.
+
+.B pymca --backend=XX
+.P
+Start the program using the selected graphics backend (mpl for matplotlib, gl for OpenGL)
+i
+.B pymca --binding=XX
+.P
+Start the program using the selected Qt binding. It has ot be one of PyQt5, PyQt4, PySide or PySide2.
+
 .SH SEE ALSO
 HDF5, h5py

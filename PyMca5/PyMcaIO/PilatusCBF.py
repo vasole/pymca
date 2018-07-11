@@ -173,24 +173,27 @@ class PilatusCBF(object):
 #                lns = len(stream)
                 idx = stream.find(key16)
                 if idx == -1:
-                    listnpa.append(np.fromstring(stream, dtype="int8"))
+                    listnpa.append(np.array(np.frombuffer(stream, dtype="int8")))
                     break
-                listnpa.append(np.fromstring(stream[:idx], dtype="int8"))
+                listnpa.append(np.array(np.frombuffer(stream[:idx], dtype="int8")))
 #                position += listnpa[-1].size
 
                 if stream[idx + 1:idx + 3] == key32:
                     if stream[idx + 3:idx + 7] == key64:
-                        listnpa.append(np.fromstring(stream[idx + 7:idx + 15], dtype="int64"))
+                        listnpa.append(np.array(np.frombuffer(stream[idx + 7:idx + 15],
+                                                              dtype="int64")))
 #                        position += 1
 #                        print "loop64 x=%4i y=%4i in idx %4i lns %4i value=%s" % ((position % 2463), (position // 2463), idx, lns, listnpa[-1])
                         shift = 15
                     else: #32 bit int
-                        listnpa.append(np.fromstring(stream[idx + 3:idx + 7], dtype="int32"))
+                        listnpa.append(np.array(np.frombuffer(stream[idx + 3:idx + 7],
+                                                              dtype="int32")))
 #                        position += 1
 #                        print "loop32 x=%4i y=%4i in idx %4i lns %4i value=%s" % ((position % 2463), (position // 2463), idx, lns, listnpa[-1])
                         shift = 7
                 else: #int16
-                    listnpa.append(np.fromstring(stream[idx + 1:idx + 3], dtype="int16"))
+                    listnpa.append(np.array(np.frombuffer(stream[idx + 1:idx + 3],
+                                                          dtype="int16")))
 #                    position += 1
 #                    print "loop16 x=%4i y=%4i in idx %4i lns %4i value=%s" % ((position % 2463), (position // 2463), idx, lns, listnpa[-1])
                     shift = 3

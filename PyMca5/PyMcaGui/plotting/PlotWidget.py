@@ -34,13 +34,36 @@ import traceback
 from PyMca5.PyMcaGraph import Plot
 
 SVG = True
-if "PySide" in sys.modules:
+if "PySide.QtCore" in sys.modules:
     from PySide import QtCore, QtGui
     try:
         from PySide import QtSvg
     except ImportError:
         SVG = False
-elif ("PyQt5" in sys.modules) or ("PyQt5" in sys.argv):
+elif "PySide2.QtCore" in sys.modules:
+    from PySide2 import QtCore, QtGui, QtWidgets
+    QtGui.QApplication = QtWidgets.QApplication
+    QtGui.QMainWindow = QtWidgets.QMainWindow
+    QtGui.QWidget = QtWidgets.QWidget
+    QtGui.QVBoxLayout = QtWidgets.QVBoxLayout
+    QtGui.qApp = QtWidgets.qApp
+    try:
+        from PySide2.QtPrintSupport import QPrinter, QPrintDialog
+        QtGui.QPrinter = QPrinter
+        QtGui.QPrintDialog = QPrintDialog
+    except ImportError:
+        print("PyQt5 No print support available")
+    try:
+        from PySide2 import QtSvg
+    except ImportError:
+        SVG = False
+elif ("PyQt4.QtCore" in sys.modules) or ("PyQt4" in sys.argv):
+    from PyQt4 import QtCore, QtGui
+    try:
+        from PyQt4 import QtSvg
+    except ImportError:
+        SVG = False
+else:
     from PyQt5 import QtCore, QtGui, QtWidgets
     QtGui.QApplication = QtWidgets.QApplication
     QtGui.QMainWindow = QtWidgets.QMainWindow
@@ -57,12 +80,7 @@ elif ("PyQt5" in sys.modules) or ("PyQt5" in sys.argv):
         from PyQt5 import QtSvg
     except ImportError:
         SVG = False
-else:
-    from PyQt4 import QtCore, QtGui
-    try:
-        from PyQt4 import QtSvg
-    except ImportError:
-        SVG = False
+
 if not hasattr(QtCore, "Signal"):
     QtCore.Signal = QtCore.pyqtSignal
 
