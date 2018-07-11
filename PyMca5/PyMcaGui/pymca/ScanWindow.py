@@ -96,7 +96,6 @@ class BaseScanWindow(PlotWindow):
                                              copy=False,
                                              print_=False)
         self.setDataMargins(0, 0, 0.025, 0.025)
-        self.setIconSize(qt.QSize(20, 20))
 
         self.setPanWithArrowKeys(True)
         self._plotType = "SCAN"     # needed by legacy plugins
