@@ -116,6 +116,12 @@ if __name__ == '__main__':
             import PyQt5.QtCore
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
+QTVERSION = qt.qVersion()
+if sys.platform == 'darwin':
+    if backend is not None:
+        if backend.lower() in ["gl", "opengl"]:
+            if hasattr(qt, 'QOpenGLWidget'):
+                print("Warning: OpenGL backend not fully supported")
 try:
     # try to import silx prior to import matplotlib
     import silx.gui.plot
@@ -128,8 +134,6 @@ if hasattr(qt, "QString"):
     QString = qt.QString
 else:
     QString = qt.safe_str
-
-QTVERSION = qt.qVersion()
 
 try:
     from PyMca5.PyMcaGui.physics.xrf import XRFMCPyMca
