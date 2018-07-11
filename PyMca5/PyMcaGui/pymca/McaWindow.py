@@ -1124,10 +1124,9 @@ class McaWindow(ScanWindow.ScanWindow):
             self.removeCurve(legend, replot=False)
 
     def removeCurve(self, legend, replot=True):
-        super(McaWindow, self).removeCurve(legend, replot=False)
+        super(McaWindow, self).removeCurve(legend)
         if legend in self.dataObjectsDict.keys():
             del self.dataObjectsDict[legend]
-        self.dataObjectsList = self._curveList
         if replot:
             self.replot()
 
