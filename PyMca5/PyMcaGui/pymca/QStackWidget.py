@@ -1259,12 +1259,6 @@ def test():
 
 if __name__ == "__main__":
     sys.excepthook = qt.exceptionHandler
-    import getopt
-    options = ''
-    longoptions = ["fileindex=", "old",
-                   "filepattern=", "begin=", "end=", "increment=",
-                   "nativefiledialogs=", "imagestack=", "image=",
-                   "backend="]
     try:
         opts, args = getopt.getopt(
                      sys.argv[1:],
