@@ -2864,7 +2864,6 @@ class McaGraphWindow(PlotWindow):
                                              fit=False, **kw)
         self.setDataMargins(0, 0, 0.025, 0.025)
         self.setPanWithArrowKeys(True)
-        self.setIconSize(qt.QSize(20, 20))
 
         # No context menu by default, execute zoomBack on right click
         plotArea = self.getWidgetHandle()
