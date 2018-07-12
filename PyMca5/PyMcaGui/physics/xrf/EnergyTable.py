@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -316,12 +316,13 @@ class EnergyTable(QTable):
 
         labels = []
         for i in range(self.dataColumns):
-            labels.append("Use" + i * " ")
-            labels.append("Energy" + i * " ")
-            labels.append("Weight" + i * " ")
+            labels.append("Use")
+            labels.append("Energy")
+            labels.append("Weight")
         if QTVERSION < '4.0.0':
-            for label in labels:
-                self.horizontalHeader().setLabel(labels.index(label),label)
+            for i in range(len(labels)):
+                label = labels[i]
+                self.horizontalHeader().setLabel(i, label)
         else:
             _logger.debug("margin to adjust")
             _logger.debug("focus style")
