@@ -191,7 +191,8 @@ class BaseScanWindow(PlotWindow):
         self.matplotlibDialog = None
 
         saveAction = self.getOutputToolBar().getSaveAction()
-        saveAction.setFileFilter(dataKind='curve',
+        # if silx-kit/silx#2013 is merged, the following line can be removed for silx 0.9
+        saveAction.setFileFilter(dataKind='curve',  # single curve case
                                  nameFilter='Curves as graphics (*.png *.eps *.png)',
                                  func=self._graphicsSave)
         saveAction.setFileFilter(dataKind='curves',
