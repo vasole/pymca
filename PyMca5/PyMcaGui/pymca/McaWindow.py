@@ -58,6 +58,7 @@ from . import McaSimpleFit
 from PyMca5.PyMcaMath.fitting import Specfit
 from PyMca5 import PyMcaDirs
 from PyMca5.PyMcaGui.pymca.McaLegendselector import McaLegendsDockWidget
+from PyMca5.PyMcaGui.pymca import QPyMcaMatplotlibSave1D
 
 MATPLOTLIB = True
 
@@ -97,7 +98,6 @@ class McaWindow(ScanWindow.ScanWindow):
 
         self.outputDir = None
         self.outputFilter = None
-        self.matplotlibDialog = None
 
         self.calibration = 'None'
         self.calboxoptions = ['None', 'Original (from Source)',
@@ -1351,7 +1351,7 @@ class McaWindow(ScanWindow.ScanWindow):
         if MATPLOTLIB:
             try:
                 if specFile[-3:].upper() in ['EPS', 'PNG', 'SVG']:
-                    self.graphicsSave(specFile)
+                    self._graphicsSave(plot=self, filename=specFile)
                     return
             except:
                 msg = qt.QMessageBox(self)
