@@ -119,7 +119,7 @@ class Calculations(object):
         # Determine number of states in outer shell
         if econf == '3d':
             _logger.debug(
-                    'Calculations.magneticMoment -- considering 3d material:''
+                    'Calculations.magneticMoment -- considering 3d material:'
                     '\n\tp: %s, q: %s, r:%s', str(p), str(q), str(r))
             nMax = 10.
             # Calculate Integrals
