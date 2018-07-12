@@ -32,6 +32,7 @@ import os
 import copy
 import logging
 import numpy
+import sys
 
 from silx.gui.plot import PlotWindow
 from silx.gui.plot.PrintPreviewToolButton import SingletonPrintPreviewToolButton
@@ -44,6 +45,7 @@ from PyMca5.PyMcaGui.math import SimpleActions
 from PyMca5.PyMcaGui.pymca import ScanFit
 from PyMca5.PyMcaGui.pymca.ScanFitToolButton import ScanFitToolButton
 from PyMca5.PyMcaCore import DataObject
+from PyMca5.PyMcaGui.pymca import QPyMcaMatplotlibSave1D
 
 if hasattr(qt, 'QString'):
     QString = qt.QString
@@ -186,6 +188,15 @@ class BaseScanWindow(PlotWindow):
             self.sigActiveCurveChanged.connect(self.__updateInfoWidget)
 
         self.sigActiveCurveChanged.connect(self.__updateGraphTitle)
+        self.matplotlibDialog = None
+
+        saveAction = self.getOutputToolBar().getSaveAction()
+        saveAction.setFileFilter(dataKind='curve',
+                                 nameFilter='Curves as graphics (*.png *.eps *.png)',
+                                 func=self._graphicsSave)
+        saveAction.setFileFilter(dataKind='curves',
+                                 nameFilter='Curves as graphics (*.png *.eps *.png)',
+                                 func=self._graphicsSave)
 
     def _customControlButtonMenu(self):
         """Display Options button sub-menu. Overloaded to add
@@ -224,6 +235,53 @@ class BaseScanWindow(PlotWindow):
 
     def _zoomBack(self, pos):
         self.getLimitsHistory().pop()
+
+    def _graphicsSave(self, plot, filename, nameFilter=""):
+        # note: the method's signature must conform to
+        #       saveAction.setFileFilter requirements
+        x, y, legend, info = plot.getActiveCurve()[:4]
+        curveList = plot.getAllCurves()
+        size = (6, 3)  # in inches
+        legends = len(curveList) > 1
+        if self.matplotlibDialog is None:
+            self.matplotlibDialog = QPyMcaMatplotlibSave1D.\
+                                    QPyMcaMatplotlibSaveDialog(size=size,
+                                                        logx=plot.isXAxisLogarithmic(),
+                                                        logy=plot.isYAxisLogarithmic(),
+                                                        legends=legends,
+                                                        bw=False)
+
+        mtplt = self.matplotlibDialog.plot
+
+        mtplt.setParameters({'logy': plot.isXAxisLogarithmic(),
+                             'logx': plot.isYAxisLogarithmic(),
+                             'legends': legends,
+                             'bw': False})
+        xmin, xmax = plot.getGraphXLimits()
+        ymin, ymax = plot.getGraphYLimits()
+        mtplt.setLimits(xmin, xmax, ymin, ymax)
+
+        legend0 = legend
+        dataCounter = 1
+        alias = "%c" % (96 + dataCounter)
+        mtplt.addDataToPlot(x, y, legend=legend0, alias=alias)
+        for curve in curveList:
+            x, y, legend, info = curve[0:4]
+            if legend == legend0:
+                continue
+            dataCounter += 1
+            alias = "%c" % (96 + dataCounter)
+            mtplt.addDataToPlot(x, y, legend=legend, alias=alias)
+
+        self.matplotlibDialog.setXLabel(plot.getGraphXLabel())
+        self.matplotlibDialog.setYLabel(plot.getGraphYLabel())
+
+        if legends:
+            mtplt.plotLegends()
+        ret = self.matplotlibDialog.exec_()
+        if ret == qt.QDialog.Accepted:
+            mtplt.saveFile(filename)
+        return
 
 
 class ScanWindow(BaseScanWindow):

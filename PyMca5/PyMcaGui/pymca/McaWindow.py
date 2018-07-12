@@ -98,7 +98,6 @@ class McaWindow(ScanWindow.ScanWindow):
 
         self.outputDir = None
         self.outputFilter = None
-        self.matplotlibDialog = None
 
         self.calibration = 'None'
         self.calboxoptions = ['None', 'Original (from Source)',
@@ -1352,7 +1351,7 @@ class McaWindow(ScanWindow.ScanWindow):
         if MATPLOTLIB:
             try:
                 if specFile[-3:].upper() in ['EPS', 'PNG', 'SVG']:
-                    self.graphicsSave(specFile)
+                    self._graphicsSave(plot=self, filename=specFile)
                     return
             except:
                 msg = qt.QMessageBox(self)
@@ -1611,58 +1610,6 @@ class McaWindow(ScanWindow.ScanWindow):
         if activeCurve is not None:
             self.setActiveCurve(activeCurve)
         self.resetZoom()
-
-    def graphicsSave(self, filename):
-        #use the plugin interface
-        x, y, legend, info = self.getActiveCurve()[:4]
-        curveList = self.getAllCurves()
-        size = (6, 3) #in inches
-        legends = len(curveList) > 1
-        if self.matplotlibDialog is None:
-            self.matplotlibDialog = QPyMcaMatplotlibSave1D.\
-                                    QPyMcaMatplotlibSaveDialog(size=size,
-                                                        logx=self.isXAxisLogarithmic(),
-                                                        logy=self.isYAxisLogarithmic(),
-                                                        legends=legends,
-                                                        bw=False)
-
-        mtplt = self.matplotlibDialog.plot
-
-        mtplt.setParameters({'logy': self.isXAxisLogarithmic(),
-                             'logx': self.isYAxisLogarithmic(),
-                             'legends':legends,
-                             'bw': False})
-        xmin, xmax = self.getGraphXLimits()
-        ymin, ymax = self.getGraphYLimits()
-        mtplt.setLimits(xmin, xmax, ymin, ymax)
-
-        legend0 = legend
-        xdata = x
-        ydata = y
-        dataCounter = 1
-        alias = "%c" % (96+dataCounter)
-        mtplt.addDataToPlot(xdata, ydata, legend=legend0, alias=alias)
-        for curve in curveList:
-            xdata, ydata, legend, info = curve[0:4]
-            if legend == legend0:
-                continue
-            dataCounter += 1
-            alias = "%c" % (96+dataCounter)
-            mtplt.addDataToPlot(xdata, ydata, legend=legend, alias=alias)
-
-        if sys.version < '3.0':
-            self.matplotlibDialog.setXLabel(qt.safe_str(self.getGraphXLabel()))
-            self.matplotlibDialog.setYLabel(qt.safe_str(self.getGraphYLabel()))
-        else:
-            self.matplotlibDialog.setXLabel(self.getGraphXLabel())
-            self.matplotlibDialog.setYLabel(self.getGraphYLabel())
-
-        if legends:
-            mtplt.plotLegends()
-        ret = self.matplotlibDialog.exec_()
-        if ret == qt.QDialog.Accepted:
-            mtplt.saveFile(filename)
-        return
 
 
 def test():
