@@ -36,6 +36,7 @@ Table of contents
    overview.rst
    install.rst
    tutorials.rst
+   recipes.rst
    changelog.rst
    license.rst
    faq.rst
