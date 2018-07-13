@@ -1258,6 +1258,7 @@ def test():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     sys.excepthook = qt.exceptionHandler
     try:
         opts, args = getopt.getopt(

@@ -1749,6 +1749,7 @@ class PixmapLabel(qt.QLabel):
         self.sigPixmapLabelMousePressEvent.emit(ddict)
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
     PROFILING = 0
     if PROFILING:
         import profile

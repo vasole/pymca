@@ -1712,6 +1712,7 @@ class McaBatchWindow(qt.QWidget):
             os.system(cmd)
 
 def main():
+    logging.basicConfig(level=logging.INFO)
     sys.excepthook = qt.exceptionHandler
     import getopt
     options     = 'f'

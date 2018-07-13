@@ -109,6 +109,7 @@ class EdfFileSimpleViewer(qt.QWidget):
 def main():
     import sys
     import getopt
+    logging.basicConfig(level=logging.INFO)
     app=qt.QApplication(sys.argv)
     winpalette = qt.QPalette(qt.QColor(230,240,249),qt.QColor(238,234,238))
     app.setPalette(winpalette)
@@ -127,6 +128,7 @@ def main():
         w.setFileList(filelist)
     w.show()
     app.exec_()
+
 
 if __name__ == "__main__":
     main()

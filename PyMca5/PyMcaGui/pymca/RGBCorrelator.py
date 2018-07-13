@@ -157,6 +157,8 @@ class RGBCorrelator(qt.QWidget):
         qt.QWidget.show(self)
 
 def test():
+    import logging
+    logging.basicConfig(level=logging.INFO)
     app = qt.QApplication([])
     app.lastWindowClosed.connect(app.quit)
     if 0:

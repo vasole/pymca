@@ -533,6 +533,8 @@ class Mca2EdfWindow(qt.QWidget):
         pass
 
 def main():
+    import logging
+    logging.basicConfig(level=logging.INFO)
     import getopt
     options     = 'f'
     longoptions = ['outdir=', 'listfile=', 'mcastep=']

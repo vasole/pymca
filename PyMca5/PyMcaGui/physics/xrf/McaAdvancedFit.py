@@ -2971,6 +2971,7 @@ def main():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     if len(sys.argv) >1:
         ffile = sys.argv[1]
     else:

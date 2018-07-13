@@ -116,6 +116,8 @@ class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
         return filelist
 
 def test():
+    import logging
+    logging.basicConfig(level=logging.INFO)
     sys.excepthook = qt.exceptionHandler
     app = qt.QApplication([])
     app.lastWindowClosed.connect(app.quit)
