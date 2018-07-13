@@ -36,9 +36,17 @@ from silx.gui.plot import PlotWidget
 from silx.gui.plot.PrintPreviewToolButton import SingletonPrintPreviewToolButton
 from .PyMca_Icons import IconDict
 from PyMca5.PyMcaCore import PyMcaDirs
+from silx.gui import icons as silx_icons
+
+if sys.version_info[0] == 3:
+    from io import BytesIO
+else:
+    import cStringIO as _StringIO
+    BytesIO = _StringIO.StringIO
 
 QTVERSION = qt.qVersion()
 _logger = logging.getLogger(__name__)
+
 
 
 def convertToRowAndColumn(x, y, shape, xScale=None, yScale=None, safe=True):
@@ -128,6 +136,7 @@ class RGBCorrelatorGraph(qt.QWidget):
         self.hLineIcon     = qt.QIcon(qt.QPixmap(IconDict["horizontal"]))
         self.vLineIcon     = qt.QIcon(qt.QPixmap(IconDict["vertical"]))
         self.lineIcon     = qt.QIcon(qt.QPixmap(IconDict["diagonal"]))
+        self.copyIcon     = silx_icons.getQIcon("edit-copy")
 
         self.toolBar = qt.QWidget(self)
         self.toolBarLayout = qt.QHBoxLayout(self.toolBar)
@@ -195,6 +204,10 @@ class RGBCorrelatorGraph(qt.QWidget):
                                  'Save')
         self.saveToolButton = tb
 
+        self.copyToolButton = self._addToolButton(self.copyIcon,
+                                                  self._copyIconSignal,
+                                                  "Copy graph to clipboard")
+
         #Selection
         if selection:
             tb = self._addToolButton(self.selectionIcon,
@@ -225,7 +238,6 @@ class RGBCorrelatorGraph(qt.QWidget):
                                      None,
                                      'Brush Selection')
             self.brushSelectionToolButton = tb
-
 
             tb = self._addToolButton(self.brushIcon,
                                      None,
@@ -550,6 +562,16 @@ class RGBCorrelatorGraph(qt.QWidget):
                     not self.graph.isXAxisAutoScale())
             self.graph.setXAxisAutoScale(
                     not self.graph.isXAxisAutoScale())
+
+    def _copyIconSignal(self):
+        pngFile = BytesIO()
+        self.graph.saveGraph(pngFile, fileFormat='png')
+        pngFile.flush()
+        pngFile.seek(0)
+        pngData = pngFile.read()
+        pngFile.close()
+        image = qt.QImage.fromData(pngData, 'png')
+        qt.QApplication.clipboard().setImage(image)
 
     def _saveIconSignal(self):
         self.saveDirectory = PyMcaDirs.outputDir
