@@ -127,7 +127,7 @@ class McaWindow(ScanWindow.ScanWindow):
         self.mcaSaveButton.setIcon(silx.gui.icons.getQIcon('document-save'))
         self.mcaSaveButton.setToolTip('Save as')
         self.mcaSaveButton.clicked.connect(self._saveIconSignal)
-        self._mathToolBar.insertWidget(self.pluginsAction, self.mcaSaveButton)
+        self.getOutputToolBar().addWidget(self.mcaSaveButton)
 
         # Fit icon
         self.fitToolButton = qt.QToolButton(self)
