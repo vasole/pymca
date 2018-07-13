@@ -31,9 +31,9 @@ import sys
 import os
 import numpy
 import logging
+from PyMca5.PyMcaGui import PyMcaQt as qt
 from silx.gui.plot import PlotWidget
 from silx.gui.plot.PrintPreviewToolButton import SingletonPrintPreviewToolButton
-from PyMca5.PyMcaGui import PyMcaQt as qt
 from .PyMca_Icons import IconDict
 from PyMca5.PyMcaCore import PyMcaDirs
 
@@ -61,6 +61,7 @@ def convertToRowAndColumn(x, y, shape, xScale=None, yScale=None, safe=True):
         r = int(r)
     return r, c
 
+
 class RGBCorrelatorGraph(qt.QWidget):
     sigProfileSignal = qt.pyqtSignal(object)
 
@@ -73,8 +74,7 @@ class RGBCorrelatorGraph(qt.QWidget):
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
         self._keepDataAspectRatioFlag = False
-
-        self.graph = PlotWidget(self, backend=backend)
+        self.graph = PlotWidget(parent=self, backend=backend)
         self.graph.setGraphXLabel("Column")
         self.graph.setGraphYLabel("Row")
         self.graph.setYAxisAutoScale(True)
