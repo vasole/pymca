@@ -683,11 +683,11 @@ class McaWindow(ScanWindow.ScanWindow):
                     self.controlWidget.calbox.setCurrentIndex(options.index(legend))
                     self.calibration = legend
                     self.controlWidget._calboxactivated(legend)
-                    self.setGraphYLimits(ymin, ymax, replot=False)
+                    self.setGraphYLimits(ymin, ymax)
                     if emin < emax:
-                        self.setGraphXLimits(emin, emax, replot=True)
+                        self.setGraphXLimits(emin, emax)
                     else:
-                        self.setGraphXLimits(emax, emin, replot=True)
+                        self.setGraphXLimits(emax, emin)
             except:
                 _logger.debug("Refreshing due to exception %s", sys.exc_info()[1])
                 self.refresh()
