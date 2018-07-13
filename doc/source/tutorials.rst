@@ -1,5 +1,5 @@
-Tutorials and sample code
-=========================
+Tutorials
+=========
 
 .. toctree::
    :hidden:
