@@ -1365,6 +1365,7 @@ class FitParamDialog(qt.QDialog):
                 self.saveParameters(filename, None)
                 self.initDir = os.path.dirname(filename)
 
+
 def openWidget():
     app= qt.QApplication(sys.argv)
     app.lastWindowClosed.connect(app.quit)
@@ -1372,6 +1373,7 @@ def openWidget():
     app.setMainWidget(wid)
     wid.show()
     app.exec_loop()
+
 
 def openDialog():
     app= qt.QApplication(sys.argv)
@@ -1384,6 +1386,8 @@ def openDialog():
         del wid
     app.quit()
 
+
 if __name__=="__main__":
+    logging.basicConfig(level=logging.INFO)
     #openWidget()
     openDialog()

@@ -469,6 +469,7 @@ class MyQComboBox(qt.QComboBox):
         self.sigMyQComboBoxSignal.emit(d)
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     app = qt.QApplication([])
     w = QXTube()
     w.show()
