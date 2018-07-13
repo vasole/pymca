@@ -35,8 +35,6 @@ import time
 import traceback
 import logging
 
-import silx.gui.icons
-
 from PyMca5.PyMcaGui import PyMcaQt as qt
 if hasattr(qt, 'QString'):
     QString = qt.QString
@@ -58,7 +56,9 @@ from . import McaSimpleFit
 from PyMca5.PyMcaMath.fitting import Specfit
 from PyMca5 import PyMcaDirs
 from PyMca5.PyMcaGui.pymca.McaLegendselector import McaLegendsDockWidget
-from PyMca5.PyMcaGui.pymca import QPyMcaMatplotlibSave1D
+
+import silx.gui.icons
+
 
 MATPLOTLIB = True
 
@@ -123,7 +123,6 @@ class McaWindow(ScanWindow.ScanWindow):
         self.setGraphYLabel('Counts')
 
         # custom save
-        self.getOutputToolBar().setVisible(False)
         self.mcaSaveButton = qt.QToolButton(self)
         self.mcaSaveButton.setIcon(silx.gui.icons.getQIcon('document-save'))
         self.mcaSaveButton.setToolTip('Save as')
@@ -145,7 +144,9 @@ class McaWindow(ScanWindow.ScanWindow):
         if fit:
             self._mathToolBar.insertWidget(self.avgAction, self.fitToolButton)
 
-        # hide a bunch of actions
+        # hide a bunch of PlotWindow and ScanWindow actions
+        self.getOutputToolBar().getSaveAction().setVisible(False)
+        self.getOutputToolBar().getPrintAction().setVisible(False)
         self.avgAction.setVisible(False)
         self.derivativeAction.setVisible(False)
         self.smoothAction.setVisible(False)
