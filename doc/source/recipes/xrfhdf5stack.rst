@@ -5,7 +5,7 @@ There is a recurrent cuestion concerning how one should write the spectra associ
 experiment to be compatible with PyMca.
 
 The solution is not unique, because PyMca can deal with (too) many data formats. For instance, if
-you have a map of 10000 spectra corresponding to a map of 10 rows per 100 columns, 10000 single-column
+you have a map of 1000 spectra corresponding to a map of 10 rows per 100 columns, 1000 single-column
 ASCII files containing the measured counts would do the job. You would be "compatible" with PyMca but
 you would be missing relevant information known at acquisition time like live_time and calibration 
 parameters.
@@ -13,7 +13,7 @@ parameters.
 The most versatile file format supported by PyMca is without doubt HDF5. You can find information about it
 at the `HDF Group web site <https://portal.hdfgroup.org/display/HDF5/HDF5>`_ 
 
-Let's assume data is a 3-dimensional array or 10000 spectra corresponding to a raster scan of 10 rows per
+Let's assume data is a 3-dimensional array or 1000 spectra corresponding to a raster scan of 10 rows per
 100 columns. If each spectrum has 2048 channels, the shape of that array will be (following C-convention)
 (10, 100, 2048). The simplest HDF5 file compatible with PyMca would contain a single 3-dimensional dataset
 and it could be written using the code snipset shown below.
@@ -26,8 +26,8 @@ and it could be written using the code snipset shown below.
     h5.flush()
     h5.close()
 
-Obviously, besides a faster readout of the data by PyMca, one would not gain anything compared to the use
-of single-column ASCII files.
+Obviously, besides a faster readout of the data by PyMca, one would not gain any information compared to
+the use of single-column ASCII files.
 
 PyMca will automatically look for information associated to a dataset by provided that information is
 stored within the same container group in the file. 
