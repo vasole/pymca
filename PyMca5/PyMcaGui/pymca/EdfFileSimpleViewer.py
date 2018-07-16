@@ -109,19 +109,28 @@ class EdfFileSimpleViewer(qt.QWidget):
 def main():
     import sys
     import getopt
-    logging.basicConfig(level=logging.INFO)
     app=qt.QApplication(sys.argv)
     winpalette = qt.QPalette(qt.QColor(230,240,249),qt.QColor(238,234,238))
     app.setPalette(winpalette)
     options=''
-    longoptions=[]
+    longoptions=['logging=']
     opts, args = getopt.getopt(
                     sys.argv[1:],
                     options,
                     longoptions)
-    for opt,arg in opts:
-        pass
-    filelist=args
+    logging_level = logging.INFO  # default
+    for opt, arg in opts:
+        if opt == '--logging':
+            levels_dict = {'debug': logging.DEBUG,
+                           'info': logging.INFO,
+                           'warning': logging.WARNING,
+                           'error': logging.ERROR, }
+
+            logging_level = levels_dict.get(arg.lower())
+            if logging_level is None:
+                raise ValueError("Unknown logging level <%s>" % arg)
+    logging.basicConfig(level=logging_level)
+    filelist = args
     app.lastWindowClosed.connect(app.quit)
     w=EdfFileSimpleViewer()
     if len(filelist):

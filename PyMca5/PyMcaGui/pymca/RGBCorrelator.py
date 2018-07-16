@@ -158,7 +158,6 @@ class RGBCorrelator(qt.QWidget):
 
 def test():
     import logging
-    logging.basicConfig(level=logging.INFO)
     app = qt.QApplication([])
     app.lastWindowClosed.connect(app.quit)
     if 0:
@@ -169,14 +168,24 @@ def test():
         w = RGBCorrelator()
         w.resize(800, 600)
     import getopt
-    options=''
-    longoptions=[]
+    options = ''
+    longoptions = ["logging="]
     opts, args = getopt.getopt(
                     sys.argv[1:],
                     options,
                     longoptions)
+    logging_level = logging.INFO
     for opt,arg in opts:
-        pass
+        if opt == '--logging':
+            levels_dict = {'debug': logging.DEBUG,
+                           'info': logging.INFO,
+                           'warning': logging.WARNING,
+                           'error': logging.ERROR}
+
+            logging_level = levels_dict.get(arg.lower())
+            if logging_level is None:
+                raise ValueError("Unknown logging level <%s>" % arg)
+    logging.basicConfig(level=logging_level)
     filelist=args
     if len(filelist):
         try:

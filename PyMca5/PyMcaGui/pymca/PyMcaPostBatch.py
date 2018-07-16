@@ -117,19 +117,20 @@ class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
 
 def test():
     import logging
-    logging.basicConfig(level=logging.INFO)
     sys.excepthook = qt.exceptionHandler
     app = qt.QApplication([])
     app.lastWindowClosed.connect(app.quit)
 
     import getopt
     options=''
-    longoptions=["nativefiledialogs=","transpose=", "fileindex="]
+    longoptions=["nativefiledialogs=", "transpose=", "fileindex=",
+                 "logging="]
     opts, args = getopt.getopt(
                     sys.argv[1:],
                     options,
                     longoptions)
     transpose=False
+    logging_level = logging.INFO
     for opt,arg in opts:
         if opt in '--nativefiledialogs':
             if int(arg):
@@ -142,6 +143,17 @@ def test():
         elif opt in '--fileindex':
             if int(arg):
                 transpose=True
+        elif opt == '--logging':
+            levels_dict = {'debug': logging.DEBUG,
+                           'info': logging.INFO,
+                           'warning': logging.WARNING,
+                           'error': logging.ERROR}
+
+            logging_level = levels_dict.get(arg.lower())
+            if logging_level is None:
+                raise ValueError("Unknown logging level <%s>" % arg)
+    logging.basicConfig(level=logging_level)
+
     filelist=args
     w = PyMcaPostBatch()
     w.layout().setContentsMargins(11, 11, 11, 11)

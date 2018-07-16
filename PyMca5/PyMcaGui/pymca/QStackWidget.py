@@ -42,7 +42,7 @@ if __name__ == "__main__":
     longoptions = ["fileindex=","old",
                    "filepattern=", "begin=", "end=", "increment=",
                    "nativefiledialogs=", "imagestack=", "image=",
-                   "backend=", "binding="]
+                   "backend=", "binding=", "logging="]
     opts, args = getopt.getopt(
                  sys.argv[1:],
                  options,
@@ -1266,7 +1266,7 @@ if __name__ == "__main__":
                      options,
                      longoptions)
     except:
-        _logger.error("%s", sys.exc_info()[1])
+        print("%s" % sys.exc_info()[1])
         sys.exit(1)
     fileindex = 0
     filepattern=None
@@ -1276,6 +1276,7 @@ if __name__ == "__main__":
     increment=None
     backend=None
     PyMcaDirs.nativeFileDialogs=True
+    logging_level = logging.INFO
     for opt, arg in opts:
         if opt in '--begin':
             if "," in arg:
@@ -1309,6 +1310,17 @@ if __name__ == "__main__":
         #elif opt in '--old':
         #    import QEDFStackWidget
         #    sys.exit(QEDFStackWidget.runAsMain())
+        elif opt == '--logging':
+            levels_dict = {'debug': logging.DEBUG,
+                           'info': logging.INFO,
+                           'warning': logging.WARNING,
+                           'error': logging.ERROR}
+
+            logging_level = levels_dict.get(arg.lower())
+            if logging_level is None:
+                raise ValueError("Unknown logging level <%s>" % arg)
+    logging.basicConfig(level=logging_level)
+
     if filepattern is not None:
         if (begin is None) or (end is None):
             raise ValueError("A file pattern needs at least a set of begin and end indices")

@@ -534,25 +534,35 @@ class Mca2EdfWindow(qt.QWidget):
 
 def main():
     import logging
-    logging.basicConfig(level=logging.INFO)
     import getopt
     options     = 'f'
-    longoptions = ['outdir=', 'listfile=', 'mcastep=']
+    longoptions = ['outdir=', 'listfile=', 'mcastep=', 'logging=']
     filelist = None
     outdir   = None
     listfile = None
     mcastep  = 1
+    logging_level = logging.INFO
     opts, args = getopt.getopt(
                     sys.argv[1:],
                     options,
                     longoptions)
-    for opt,arg in opts:
+    for opt, arg in opts:
         if opt in ('--outdir'):
             outdir = arg
         elif opt in  ('--listfile'):
             listfile  = arg
         elif opt in  ('--mcastep'):
             mcastep  = int(arg)
+        elif opt in ('--logging'):
+            levels_dict = {'debug': logging.DEBUG,
+                           'info': logging.INFO,
+                           'warning': logging.WARNING,
+                           'error': logging.ERROR}
+
+            logging_level = levels_dict.get(arg.lower())
+            if logging_level is None:
+                raise ValueError("Unknown logging level <%s>" % arg)
+    logging.basicConfig(level=logging_level)
     if listfile is None:
         filelist=[]
         for item in args:

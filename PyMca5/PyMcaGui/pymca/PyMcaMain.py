@@ -46,20 +46,22 @@ if __name__ == '__main__':
                    'backend=',
                    'nativefiledialogs=',
                    'PySide=',
-                   'binding=']
+                   'binding=',
+                   'logging=']
     try:
         opts, args = getopt.getopt(
                      sys.argv[1:],
                      options,
                      longoptions)
     except getopt.error:
-        _logger.error("%s", sys.exc_info()[1])
+        print("%s" % sys.exc_info()[1])
         sys.exit(1)
 
     keywords={}
     debugreport = 0
     qtversion = None
     binding = None
+    logging_level = None
     for opt, arg in opts:
         if  opt in ('--spec'):
             keywords['spec'] = arg
@@ -79,6 +81,16 @@ if __name__ == '__main__':
                 nativeFileDialogs = True
             else:
                 nativeFileDialogs = False
+        elif opt in ('--logging'):
+            # default is logging.INFO
+            levels_dict = {'debug': logging.DEBUG,
+                           'info': logging.INFO,
+                           'warning': logging.WARNING,
+                           'error': logging.ERROR}
+
+            logging_level = levels_dict.get(arg.lower())
+            if logging_level is None:
+                raise ValueError("Unknown logging level <%s>" % arg)
         elif opt in ('--PySide'):
             print("Please use --binding=PySide")
             import PySide.QtCore
@@ -115,6 +127,7 @@ if __name__ == '__main__':
             import PyQt4.QtCore
         elif qtversion == '5':
             import PyQt5.QtCore
+    logging.basicConfig(level=logging_level or logging.INFO)
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
@@ -1749,7 +1762,6 @@ class PixmapLabel(qt.QLabel):
         self.sigPixmapLabelMousePressEvent.emit(ddict)
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
     PROFILING = 0
     if PROFILING:
         import profile
