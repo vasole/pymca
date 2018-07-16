@@ -378,7 +378,7 @@ class SumRulesWindow(qt.QMainWindow):
             colormap=False,
             aspectRatio=False,
             yInverted=False,
-            copy=False,
+            copy=True,
             print_=False,
             mask=False)
 
