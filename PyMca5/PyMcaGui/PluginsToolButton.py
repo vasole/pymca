@@ -88,7 +88,7 @@ class PluginsToolButton(qt.QToolButton, PluginLoader):
 
         self.clicked.connect(self._pluginClicked)
 
-    def _ooPlotDestroyed(self, obj):
+    def _ooPlotDestroyed(self, obj=None):
         self.setEnabled(False)
 
     def __getattr__(self, attr):
