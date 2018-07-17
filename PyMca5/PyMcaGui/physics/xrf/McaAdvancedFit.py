@@ -2046,10 +2046,7 @@ class McaAdvancedFit(qt.QWidget):
         self.plot()
 
     def plot(self, ddict=None):
-        if self.graph.isYAxisLogarithmic():
-            logfilter = 1
-        else:
-            logfilter = 0
+        self.graph.clearCurves()
         config = self.mcafit.configure()
         if ddict is None:
             if not self.__fitdone:
