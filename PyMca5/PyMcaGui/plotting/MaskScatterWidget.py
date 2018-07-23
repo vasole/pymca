@@ -79,7 +79,7 @@ class MaskScatterWidget(PlotWindow):
                                                 mask=False,
                                                 yInverted=False,
                                                 roi=False,
-                                                copy=False,
+                                                copy=True,
                                                 print_=False)
         if parent is None:
             self.setWindowTitle("MaskScatterWidget")

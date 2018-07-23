@@ -95,7 +95,7 @@ class BaseScanWindow(PlotWindow):
                                              colormap=False,
                                              aspectRatio=False,
                                              yInverted=False,
-                                             copy=False,
+                                             copy=True,
                                              print_=False)
         self.setDataMargins(0, 0, 0.025, 0.025)
 

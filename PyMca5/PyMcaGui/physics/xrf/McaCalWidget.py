@@ -39,6 +39,7 @@ import logging
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from silx.gui.plot import PlotWidget
+from silx.gui.plot.tools.toolbars import OutputToolBar
 
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -221,6 +222,13 @@ class McaCalWidget(qt.QDialog):
                             self.manualsearch,
                             'Add a peak to the graph',
                             toggle=True)
+        # copy to clipboard
+        output_tb = OutputToolBar(parent=self.toolbar,
+                                  plot=self.graph)
+        output_tb.getPrintAction().setVisible(False)
+        output_tb.getSaveAction().setVisible(False)
+        self.toolbar.layout.addWidget(output_tb)
+
         self.toolbar.layout.addWidget(qt.HorizontalSpacer(toolbar))
         label=qt.QLabel(toolbar)
         label.setText('<b>Channel:</b>')
@@ -249,7 +257,6 @@ class McaCalWidget(qt.QDialog):
         self.epos.setReadOnly(1)
         self.epos.setFixedWidth(self.epos.fontMetrics().width('#########'))
         self.toolbar.layout.addWidget(self.epos)
-
 
         #rest
         toolbar2 = qt.QWidget(self)

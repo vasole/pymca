@@ -35,6 +35,13 @@ import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from silx.gui.plot import PlotWidget
 from silx.gui.plot.PrintPreviewToolButton import SingletonPrintPreviewToolButton
+from silx.gui import icons as silx_icons
+
+if sys.version_info[0] == 3:
+    from io import BytesIO
+else:
+    import cStringIO as _StringIO
+    BytesIO = _StringIO.StringIO
 
 if not hasattr(qt, 'QString'):
     QString = qt.safe_str
@@ -329,6 +336,7 @@ class QEdfFileWidget(qt.QWidget):
         self.zoomResetIcon	= qt.QIcon(qt.QPixmap(IconDict["zoomreset"]))
         self.printIcon	= qt.QIcon(qt.QPixmap(IconDict["fileprint"]))
         self.saveIcon	= qt.QIcon(qt.QPixmap(IconDict["filesave"]))
+        self.copyIcon     = silx_icons.getQIcon("edit-copy")
         try:
             self.infoIcon	= qt.QApplication.style().\
                               standardIcon(qt.QStyle.SP_MessageBoxInformation)
@@ -379,6 +387,10 @@ class QEdfFileWidget(qt.QWidget):
             tb = self._addToolButton(self.saveIcon,
                                  self._saveIconSignal,
                                  'Export Graph')
+
+        self.copyToolButton = self._addToolButton(self.copyIcon,
+                                                  self._copyIconSignal,
+                                                  "Copy graph to clipboard")
 
         self.printPreview = SingletonPrintPreviewToolButton(parent=self,
                                                             plot=self.graph)
@@ -457,6 +469,16 @@ class QEdfFileWidget(qt.QWidget):
     def _zoomReset(self):
         _logger.debug("_zoomReset")
         self.graph.resetZoom()
+
+    def _copyIconSignal(self):
+        pngFile = BytesIO()
+        self.graph.saveGraph(pngFile, fileFormat='png')
+        pngFile.flush()
+        pngFile.seek(0)
+        pngData = pngFile.read()
+        pngFile.close()
+        image = qt.QImage.fromData(pngData, 'png')
+        qt.QApplication.clipboard().setImage(image)
 
     def _saveMatplotlibImage(self):
         if self._matplotlibSaveImage is None:
