@@ -63,7 +63,7 @@ class Plugin2DBase(object):
         self._plotWindow = weakref.proxy(plotWindow)
 
     # Methods to be implemented by the plugin
-    def getMethods(self):
+    def getMethods(self, plottype=None):
         """
 
         :return:  A list with the NAMES  associated to the callable methods

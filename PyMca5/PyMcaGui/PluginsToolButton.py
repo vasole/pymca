@@ -88,6 +88,7 @@ class PluginsToolButton(qt.QToolButton, PluginLoader):
 
         # plugins expect a legacy API, not the silx Plot API
         self.plot = weakref.proxy(plot, self._ooPlotDestroyed)
+        self._plotType = getattr(self.plot, "_plotType", None)
 
         self.clicked.connect(self._pluginClicked)
 
@@ -136,7 +137,7 @@ class PluginsToolButton(qt.QToolButton, PluginLoader):
                     text = text[:-3]
 
             methods = pluginInstances[pluginName].getMethods(
-                    plottype=self.plot._plotType)
+                    plottype=self._plotType)
             if not len(methods):
                 continue
             elif len(methods) == 1:
@@ -184,7 +185,7 @@ class PluginsToolButton(qt.QToolButton, PluginLoader):
         key = callableKeys[idx]
 
         methods = pluginInstances[key].getMethods(
-                plottype=self.plot._plotType)
+                plottype=self._plotType)
         if len(methods) == 1:
             idx = 0
         else:
