@@ -134,7 +134,7 @@ class Plot1DViewWithPlugins(DataViews._Plot1dView):
         return Plot1DWithPlugins(parent=parent)
 
 
-class Plot2DWithPlugins(Plot1D):
+class Plot2DWithPlugins(Plot2D):
     """Add a plugin toolbutton to a Plot2D"""
     def __init__(self, parent=None):
         Plot2D.__init__(self, parent)
