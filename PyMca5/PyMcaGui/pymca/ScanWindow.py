@@ -418,7 +418,7 @@ class ScanWindow(BaseScanWindow):
                     newLegend = legend + " " + ylegend
                     self.dataObjectsDict[newLegend] = dataObject
                     self.addCurve(xdata, ydata, legend=newLegend, info=dataObject.info,
-                                  xlabel=xlabel, ylabel=ylabel)
+                                  xlabel=xlabel, ylabel=ylabel, resetzoom=False)
                     if self.scanWindowInfoWidget is not None:
                         if not self.infoDockWidget.isHidden():
                             activeLegend = self.getActiveCurve(just_legend=True)
@@ -513,7 +513,8 @@ class ScanWindow(BaseScanWindow):
                                   symbol=symbol,
                                   yaxis=yaxis,
                                   xlabel=xlabel,
-                                  ylabel=ylabel)
+                                  ylabel=ylabel,
+                                  resetzoom=False)
         try:
             if activeCurve is None and self._curveList:
                 self.setActiveCurve(self._curveList[0])

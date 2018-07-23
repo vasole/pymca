@@ -146,11 +146,13 @@ class ScanFitToolButton(qt.QToolButton):
             xplot = self.scanFit.specfit.xdata * 1.0
             yplot = self.scanFit.specfit.gendata(parameters=ddict['data'])
 
-            self.plot.addCurve(x=xplot, y=yplot, legend=self._scanFitLegend)
+            self.plot.addCurve(x=xplot, y=yplot, legend=self._scanFitLegend,
+                               resetzoom=False)
 
     def _customFitSignalReceived(self, ddict):
         if ddict['event'] == "FitFinished":
             xplot = ddict['x']
             yplot = ddict['yfit']
 
-            self.plot.addCurve(xplot, yplot, legend=self._customFitLegend)
+            self.plot.addCurve(xplot, yplot, legend=self._customFitLegend,
+                               resetzoom=False)
