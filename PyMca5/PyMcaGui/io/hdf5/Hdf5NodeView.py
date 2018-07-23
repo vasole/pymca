@@ -233,7 +233,7 @@ class Hdf5NodeView(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         self.viewWidget.replaceView(DataViews.PLOT1D_MODE,
                                     Plot1DViewWithPlugins(self))
         self.viewWidget.replaceView(DataViews.PLOT2D_MODE,
-                                    Plot2DViewWithPlugins)
+                                    Plot2DViewWithPlugins(self))
         self.viewWidget.replaceView(DataViews.NXDATA_CURVE_MODE,
                                     NXdataCurveViewWithPlugins(self))
         self.viewWidget.replaceView(DataViews.NXDATA_IMAGE_MODE,
