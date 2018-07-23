@@ -1313,7 +1313,7 @@ class McaAdvancedFit(qt.QWidget):
         fileNamesDict = XRFMCHelper.getOutputFileNames(newFile,
                                                        outputDir=self.__tmpMatrixSpectrumDir)
         if newFile != fileNamesDict['fit']:
-            removeDirectory(self.__tmpMatrixSpectrumDir)
+            self.removeDirectory(self.__tmpMatrixSpectrumDir)
             raise ValueError("Inconsistent internal behaviour!")
 
         self._xrfmcFileNamesDict = fileNamesDict
@@ -2858,7 +2858,8 @@ class McaGraphWindow(PlotWindow):
                                              roi=True, aspectRatio=False,
                                              print_=False, colormap=False,
                                              yInverted=False, mask=False,
-                                             fit=False, **kw)
+                                             fit=False, save=False,
+                                             **kw)
         self.setDataMargins(0, 0, 0.025, 0.025)
         self.setPanWithArrowKeys(True)
 
@@ -2893,18 +2894,26 @@ class McaGraphWindow(PlotWindow):
         self.energyButton.setToolTip('Toggle Energy Axis (On/Off)')
         self.energyButton.clicked.connect(self._energyIconSignal)
 
+        self.saveButton = qt.QToolButton(self.toolBar())
+        self.saveButton.setIcon(qt.QIcon(qt.QPixmap(IconDict["filesave"])))
+        self.saveButton.setToolTip('Save plot snapshot or curves data')
+        self.saveButton.clicked.connect(self._saveIconSignal)
+
         self.fitAction = self.toolBar().insertWidget(self.getCopyAction(),
                                                      self.fitButton)
         self.energyAction = self.toolBar().insertWidget(self.getRoiAction(),
                                                         self.energyButton)
-        self.toolBar().addWidget(qt.HorizontalSpacer(self.toolBar()))
-        self.printAction = self.toolBar().addWidget(self.printPreviewTB)
+
+        self.saveAction = self.getOutputToolBar().addWidget(self.saveButton)
+        self.getOutputToolBar().addWidget(qt.HorizontalSpacer(self.toolBar()))
+        self.printAction = self.getOutputToolBar().addWidget(self.printPreviewTB)
 
         self.setGraphYLabel("Counts")
         if self.energyButton.isChecked():
             self.setGraphXLabel("Energy")
         else:
             self.setGraphXLabel("Channel")
+
 
     def _energyIconSignal(self):
         self.sigPlotSignal.emit(

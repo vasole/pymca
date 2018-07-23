@@ -191,13 +191,15 @@ class BaseScanWindow(PlotWindow):
         self.matplotlibDialog = None
 
         saveAction = self.getOutputToolBar().getSaveAction()
-        # if silx-kit/silx#2013 is merged, the following line can be removed for silx 0.9
-        saveAction.setFileFilter(dataKind='curve',  # single curve case
-                                 nameFilter='Curves as graphics (*.png *.eps *.png)',
-                                 func=self._graphicsSave)
-        saveAction.setFileFilter(dataKind='curves',
-                                 nameFilter='Curves as graphics (*.png *.eps *.png)',
-                                 func=self._graphicsSave)
+        for ext in ["png", "eps", "svg"]:
+            name_filter = 'Customized graphics (*.%s)' % ext
+            # if silx-kit/silx#2013 is merged, the following line can be removed for silx 0.9
+            saveAction.setFileFilter(dataKind='curve',  # single curve case
+                                     nameFilter=name_filter,
+                                     func=self._graphicsSave)
+            saveAction.setFileFilter(dataKind='curves',
+                                     nameFilter=name_filter,
+                                     func=self._graphicsSave)
 
     def _customControlButtonMenu(self):
         """Display Options button sub-menu. Overloaded to add
