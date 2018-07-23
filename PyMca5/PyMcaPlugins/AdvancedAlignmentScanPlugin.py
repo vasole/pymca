@@ -27,6 +27,109 @@ __author__ = "Tonn Rueter & V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+__doc__ = """
+Due to uncertainties in the experimental set-up, recorded data might be shifted unrelated
+to physical effects probed in the experiment. The present plug-in calculates this shift and
+corrects the data using a variety of different methods.
+
+Usage and Description
+---------------------
+
+Data that is subject to a shift must be loaded into the plot window of the main application.
+The plug-in offers two ways to treat the data:
+
+ - A shortcut options, called *Perform FFT Shift*, calculates the shift and directly corrects
+   the data.
+ - The *Show Alignment Window* option, showing a window that allows for specification of the
+   shift and alignment methods, as well as offering the possibility to save calculated shifts
+   and load previously calculated shifts from a file.
+   It is also possible to enter shift values by hand.
+
+
+Once the *Alignment Window* is opened, the alignment method and the shift method must be specified.
+The alignment method specifies how the shift is calculated, while the shift method determines
+how the shift is applied to the data.
+
+The table shows three columns:
+
+ - The first one shows the plot legend of the data that will be
+   corrected by the shift method.
+ - The second column shows the plot legend from which the shift
+   is calculated.
+ - The third column shows the shift values calculated by the alignment method in
+   units of the plot windows x-axis.
+
+While columns one and two can not be edited, shift values
+can be entered by hand. Another way of setting the shift values is to load them from a existing
+\*.shift file using the Load button.
+
+Once the shift values are set, they can either be directly applied to the data present in the
+plot window, using the *Apply* button, or the data can be stored in memory. The latter options allow
+to use a reference signal recorded during the experiment, to determine the shift and then apply
+the shift values to a different set of data.
+
+.. note::
+
+  In order to match different sets of data to another, as necessary in the case of a
+  reference signal, the order in which the data is added to the plot window is crucial. If one
+  switches between two sets of data, where one set aligns the other one, it is highly encouraged
+  to consult the table in the *Alignment window* to check if every element in the two different
+  sets of data is assigned to its correct counterpart before applying the shift.
+
+
+If the data in the plot window is zoomed-in to a distinct feature, only this range of the data
+is used to calculate the shift.
+
+Methods used by the plug-in
+---------------------------
+
+Alignment methods are used to calculate the shift. Present methods include FFT, MAX, FIT and
+FIT DRV.
+
+*FFT*:
+
+    Uses the Fourier Transform of the curves to calculate their cross-correlation. The maximum
+    of the correlation is determined, and yields the shift value. This method is the default option.
+    Since it is not affected by the peak shape, it is fast and numerically robust.
+
+    .. note:: The shifts are given in real space values.
+
+*MAX*:
+
+    Determines the maximum of each curve. The shift is given by the differences in the x-position
+    of the maxima. Note that this method is highly vulnerable to noise in the data and spikes.
+
+*FIT*:
+
+    This method subtracts a background from the data using the SNIP algorithm and searches for peaks
+    in the data. For every curve, the single most pronounced feature is selected.
+    The peak is fitted by a Gaussian model. The shifts are then given by differences in the x-offsets
+    of the fitted Gaussians.
+
+*FIT DRV*:
+
+    Uses the same procedure as the FIT method. However the fit is applied to the first derivative of
+    the data. This method is only recommended for X-ray absorption data.
+
+Shift methods are used to apply the calculated shift to the data. Present methods include *Shift x-range*
+and *Inverse FFT shift*.
+
+*Shift x-range*:
+
+    This method adds the calculated shift value to every point.
+
+*Inverse FFT shift*:
+
+    Takes the Fourier Transform of a curve and multiplies the shift as a phase factor. The multiplication
+    of a phase factor in Fourier space translates to a shift in the x-range in real space. The shifted data
+    is given by the inverse Fourier transform.
+
+    .. note::
+
+        For this  process, the data needs to have a equidistant x-range. If this is not the case, the data
+        will be interpolated on a equidistant x-range. Due to the cyclic nature of the Fourier transform, this
+        method is recommended for data that has linear background.
+"""
 import numpy
 import logging
 import sys

@@ -50,11 +50,15 @@ Alignment plugin
 
 .. automodule:: PyMca5.PyMcaPlugins.AlignmentScanPlugin
 
+Advanced alignment plugin
++++++++++++++++++++++++++
+
+.. automodule:: PyMca5.PyMcaPlugins.AdvancedAlignmentScanPlugin
+
 .. TODO: Kinetic tools
 
 .. TODO: XASNormalization
 
-.. TODO: AdvancedAlignmentScanPlugin (see .html file in PYMCA_DOC_DIR)
 
 Remove glitches from curves
 +++++++++++++++++++++++++++

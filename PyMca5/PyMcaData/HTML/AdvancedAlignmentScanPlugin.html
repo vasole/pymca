@@ -177,14 +177,14 @@ switches between two sets of data where one set aligns the other one it is highl
 to consult the table in the Alignment window to check if every element in the two different
 sets of data is assigned to its correct counterpart before applying the shift.</br>
 </br>
-If the data in the plot window is zoomed in to a distinct feature, only of the data is used to 
-calculate the shift.
+If the data in the plot window is zoomed in to a distinct feature, only the visible data range
+is used to calculate the shift.
 </div>
 
 <br><a href=#Up>up</a>
 
 <H3><a NAME=Methods>
-1. Usage and Description
+2. Methods used by the plug-in
 </a></H3>
 
 <div class='main'>
@@ -194,30 +194,30 @@ FIT DRV.
 
 <div class=elem><i>FFT</i></div>
     <div class='indent'>
-    Uses the Fourier Transform of the curves to calculated their cross-correlation. The maximum
-    of the correlation is determined and yields the shift value. This method is the default option,
-    since it is not affected by the peak shape, fast and numerically robust. Notice: the shifts
+    Uses the Fourier Transform of the curves to calculate their cross-correlation. The maximum
+    of the correlation is determined and yields the shift value. This method is the default option.
+    Since it is not affected by the peak shape, it is fast and numerically robust. Notice: the shifts
     are given in real space values.
     </div>
     
 <div class=elem><i>MAX</i></div>
     <div class='indent'>
-    Determines the maximum of each curve, the shift is given by its the differences in the x-position
+    Determines the maximum of each curve. The shift is given by the differences in the x-position
     of the maxima. Notice that this method is highly vulnerable to noise in the data and spikes.
     </div>
 
 <div class=elem><i>FIT</i></div>
     <div class='indent'>
-    Method subtracts a background from the data using the SNIP algorithm (c.f. plug-in section,
+    This method subtracts a background from the data using the SNIP algorithm (c.f. plug-in section,
     Background subtraction tools) and searches for peaks in the data. For every curve, the single
-    most pronounced feature is selected. The peak is fitted by a Gaussian model, the shifts are then
+    most pronounced feature is selected. The peak is fitted by a Gaussian model. The shifts are then
     given by differences in the x-offsets of the fitted Gaussians.
     </div>
     
-<div class=elem><i>FIT</i></div>
+<div class=elem><i>FIT DRV</i></div>
     <div class='indent'>
-    Uses the same procedure as the FIT method, however the fit is applied to the first derivative of
-    the data. This method only recommended for X-ray absorption data.
+    Uses the same procedure as the FIT method. However the fit is applied to the first derivative of
+    the data. This method is only recommended for X-ray absorption data.
     </div>
     
 <div class='main'>
