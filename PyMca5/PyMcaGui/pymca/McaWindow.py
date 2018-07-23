@@ -1428,7 +1428,10 @@ class McaWindow(ScanWindow.ScanWindow):
         os.linesep = '\n'
         if filterused[0].upper() == "WIDGET":
             fformat = specFile[-3:].upper()
-            pixmap = qt.QPixmap.grabWidget(self.getWidgetHandle())
+            if hasattr(qt.QPixmap, "grabWidget"):
+                pixmap = qt.QPixmap.grabWidget(self.getWidgetHandle())
+            else:
+                pixmap = self.getWidgetHandle().grab()
             if not pixmap.save(specFile, fformat):
                 qt.QMessageBox.critical(self,
                         "Save Error",
