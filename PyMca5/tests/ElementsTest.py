@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -295,6 +295,19 @@ class testElements(unittest.TestCase):
                     self.assertTrue((100.0 * abs(yTest-yRef)/yRef) < 0.01)
                 energyIndex += 1
 
+    def testMaterialCompositionCalculation(self):
+        if DEBUG:
+            print()
+            print("Testing Material Composition Calculation (issue #298)")
+        mat1 = "Kapton"
+        mat2 = "Mylar"
+
+        c1 = self._elements.getMaterialMassFractions([mat1, mat2], [0.5, 0.5])
+        c2 = self._elements.getMaterialMassFractions([mat2, mat1], [0.5, 0.5])
+
+        for key in c1:
+            self.assertTrue(abs(c1[key] - c2[key]) < 1.0e-7,
+                            "Inconsistent calculation for element %s" % key)
 
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()
@@ -307,6 +320,7 @@ def getSuite(auto=True):
         testSuite.addTest(testElements("testElementCrossSectionsReadout"))
         testSuite.addTest(testElements("testElementCrossSectionsCalculation"))
         testSuite.addTest(testElements("testMaterialCrossSectionsCalculation"))
+        testSuite.addTest(testElements("testMaterialCompositionCalculation"))
     return testSuite
 
 def test(auto=False):
