@@ -536,7 +536,8 @@ def main():
     import logging
     import getopt
     options     = 'f'
-    longoptions = ['outdir=', 'listfile=', 'mcastep=', 'logging=']
+    longoptions = ['outdir=', 'listfile=', 'mcastep=',
+                   'logging=', 'debug=']
     filelist = None
     outdir   = None
     listfile = None
@@ -562,6 +563,13 @@ def main():
             logging_level = levels_dict.get(arg.lower())
             if logging_level is None:
                 raise ValueError("Unknown logging level <%s>" % arg)
+        elif opt == '--debug':
+            if arg.lower() in ["0", "false"]:
+                logging_level = logging.INFO
+            elif arg.lower() == ["1", "true"]:
+                logging_level = logging.DEBUG
+            else:
+                raise ValueError("Incorrect debug parameter <%s> (should be 0 or 1)" % arg)
     logging.basicConfig(level=logging_level)
     if listfile is None:
         filelist=[]

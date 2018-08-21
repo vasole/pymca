@@ -169,7 +169,7 @@ def test():
         w.resize(800, 600)
     import getopt
     options = ''
-    longoptions = ["logging="]
+    longoptions = ["logging=", "debug="]
     opts, args = getopt.getopt(
                     sys.argv[1:],
                     options,
@@ -185,6 +185,13 @@ def test():
             logging_level = levels_dict.get(arg.lower())
             if logging_level is None:
                 raise ValueError("Unknown logging level <%s>" % arg)
+        elif opt == '--debug':
+            if arg.lower() in ["0", "false"]:
+                logging_level = logging.INFO
+            elif arg.lower() == ["1", "true"]:
+                logging_level = logging.DEBUG
+            else:
+                raise ValueError("Incorrect debug parameter <%s> (should be 0 or 1)" % arg)
     logging.basicConfig(level=logging_level)
     filelist=args
     if len(filelist):
