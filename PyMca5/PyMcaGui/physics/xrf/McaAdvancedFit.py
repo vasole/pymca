@@ -2046,7 +2046,6 @@ class McaAdvancedFit(qt.QWidget):
         self.plot()
 
     def plot(self, ddict=None):
-        self.graph.clearCurves()
         config = self.mcafit.configure()
         if ddict is None:
             if not self.__fitdone:
@@ -2069,25 +2068,26 @@ class McaAdvancedFit(qt.QWidget):
             xdata = ddict['result']['energy'][:]
         else:
             xdata = ddict['result']['xdata'][:]
-        self.graph.addCurve(xdata, ddict['result']['ydata'], legend="Data")
-        self.graph.addCurve(xdata, ddict['result']['yfit'], legend="Fit")
+        self.graph.addCurve(xdata, ddict['result']['ydata'], legend="Data",
+                            replace=True, resetzoom=False)
+        self.graph.addCurve(xdata, ddict['result']['yfit'], legend="Fit",
+                            resetzoom=False)
         self.graph.addCurve(xdata, ddict['result']['continuum'],
-                            legend="Continuum")
+                            legend="Continuum", resetzoom=False)
 
         curveList = self.graph.getAllCurves(just_legend=True)
 
         if config['fit']['sumflag']:
             self.graph.addCurve(xdata, ddict['result']['pileup'] + \
                                        ddict['result']['continuum'],
-                                       legend="Pile-up")
+                                       legend="Pile-up", resetzoom=False)
         elif "Pile-up" in curveList:
             self.graph.removeCurve("Pile-up")
 
         if self.matrixSpectrumButton.isChecked():
             if 'ymatrix' in ddict['result']:
-                self.graph.addCurve(xdata,
-                                    ddict['result']['ymatrix'],
-                                    legend="Matrix")
+                self.graph.addCurve(xdata, ddict['result']['ymatrix'],
+                                    legend="Matrix", resetzoom=False)
             else:
                 self.graph.removeCurve("Matrix")
         else:
@@ -2101,12 +2101,13 @@ class McaAdvancedFit(qt.QWidget):
                     mcxdata = self._xrfmcMatrixSpectra[0]
                 mcydata0 = self._xrfmcMatrixSpectra[2]
                 mcydatan = self._xrfmcMatrixSpectra[-1]
-                self.graph.addCurve(mcxdata,
-                                    mcydata0,
-                                    legend='MC Matrix 1')
+                self.graph.addCurve(mcxdata, mcydata0,
+                                    legend='MC Matrix 1',
+                                    resetzoom=False)
                 self.graph.addCurve(mcxdata,
                                     mcydatan,
-                                    legend='MC Matrix %d' % (len(self._xrfmcMatrixSpectra) - 2))
+                                    legend='MC Matrix %d' % (len(self._xrfmcMatrixSpectra) - 2),
+                                    resetzoom=False)
 
         if self.peaksSpectrumButton.isChecked():
             keep = ['Data','Fit','Continuum','Matrix','Pile-up']
@@ -2124,7 +2125,8 @@ class McaAdvancedFit(qt.QWidget):
                 if label in ddict['result']:
                     self.graph.addCurve(xdata,
                                         ddict['result'][label],
-                                        legend=label)
+                                        legend=label,
+                                        resetzoom=False)
                 else:
                     if group in curveList:
                         self.graph.removeCurve(label)
