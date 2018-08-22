@@ -67,8 +67,10 @@ if __name__ == '__main__':
         elif opt in ('--shm'):
             keywords['shm']  = arg
         elif opt in ('--debug'):
-            debugreport = 1
-            _logger.setLevel(logging.DEBUG)
+            if arg.lower() not in ['0', 'false']:
+                debugreport = 1
+                _logger.setLevel(logging.DEBUG)
+            # --debug is also parsed later for the global logging level
         elif opt in ('-f'):
             keywords['fresh'] = 1
         elif opt in ('--qt'):

@@ -37,10 +37,18 @@ DEFAULT_LOGGING_LEVEL = logging.INFO
 
 
 def getLoggingLevel(opts):
-    """Find logging level from the output of getopt.getopt().
+    """Find logging level from the output of `getopt.getopt()`.
     This level can be specified via one of two long options:
     --debug or --logging. If both are specified, --logging overrules
     --debug.
+
+    When specifying the level with --logging, the level can be
+    specified explicitly as a string (debug, info, warning, error, critical),
+    or as an integer in the range 0--4, in increasing order of verbosity
+    (0 is "critical", 4 is "debug").
+
+    The option --debug only allows to chose between the default logging level
+    (--debug=0) or debugging mode with maximum verbosity (--debug=1).
 
     :param opts: Command line options as a list of 2-tuples of strings
         (e.g. ``[('--logging', 'debug'), ('--cfg', 'config.ini')]``).
