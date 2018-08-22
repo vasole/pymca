@@ -168,31 +168,15 @@ def test():
         w = RGBCorrelator()
         w.resize(800, 600)
     import getopt
+    from PyMca5.PyMcaCore.LoggingLevel import getLoggingLevel
     options = ''
     longoptions = ["logging=", "debug="]
     opts, args = getopt.getopt(
                     sys.argv[1:],
                     options,
                     longoptions)
-    logging_level = logging.INFO
-    for opt,arg in opts:
-        if opt == '--logging':
-            levels_dict = {'debug': logging.DEBUG,
-                           'info': logging.INFO,
-                           'warning': logging.WARNING,
-                           'error': logging.ERROR}
 
-            logging_level = levels_dict.get(arg.lower())
-            if logging_level is None:
-                raise ValueError("Unknown logging level <%s>" % arg)
-        elif opt == '--debug':
-            if arg.lower() in ["0", "false"]:
-                logging_level = logging.INFO
-            elif arg.lower() == ["1", "true"]:
-                logging_level = logging.DEBUG
-            else:
-                raise ValueError("Incorrect debug parameter <%s> (should be 0 or 1)" % arg)
-    logging.basicConfig(level=logging_level)
+    logging.basicConfig(level=getLoggingLevel(opts))
     filelist=args
     if len(filelist):
         try:

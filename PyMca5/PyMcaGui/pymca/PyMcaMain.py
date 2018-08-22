@@ -47,8 +47,7 @@ if __name__ == '__main__':
                    'nativefiledialogs=',
                    'PySide=',
                    'binding=',
-                   'logging=',
-                   'debug=']
+                   'logging=']
     try:
         opts, args = getopt.getopt(
                      sys.argv[1:],
@@ -62,7 +61,6 @@ if __name__ == '__main__':
     debugreport = 0
     qtversion = None
     binding = None
-    logging_level = None
     for opt, arg in opts:
         if  opt in ('--spec'):
             keywords['spec'] = arg
@@ -82,23 +80,6 @@ if __name__ == '__main__':
                 nativeFileDialogs = True
             else:
                 nativeFileDialogs = False
-        elif opt in ('--logging'):
-            # default is logging.INFO
-            levels_dict = {'debug': logging.DEBUG,
-                           'info': logging.INFO,
-                           'warning': logging.WARNING,
-                           'error': logging.ERROR}
-
-            logging_level = levels_dict.get(arg.lower())
-            if logging_level is None:
-                raise ValueError("Unknown logging level <%s>" % arg)
-        elif opt == '--debug':
-            if arg.lower() in ["0", "false"]:
-                logging_level = logging.INFO
-            elif arg.lower() == ["1", "true"]:
-                logging_level = logging.DEBUG
-            else:
-                raise ValueError("Incorrect debug parameter <%s> (should be 0 or 1)" % arg)
         elif opt in ('--PySide'):
             print("Please use --binding=PySide")
             import PySide.QtCore
@@ -135,7 +116,9 @@ if __name__ == '__main__':
             import PyQt4.QtCore
         elif qtversion == '5':
             import PyQt5.QtCore
-    logging.basicConfig(level=logging_level or logging.INFO)
+
+    from PyMca5.PyMcaCore.LoggingLevel import getLoggingLevel
+    logging.basicConfig(level=getLoggingLevel(opts))
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()

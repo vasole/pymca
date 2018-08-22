@@ -534,6 +534,7 @@ class Mca2EdfWindow(qt.QWidget):
 
 def main():
     import logging
+    from PyMca5.PyMcaCore.LoggingLevel import getLoggingLevel
     import getopt
     options     = 'f'
     longoptions = ['outdir=', 'listfile=', 'mcastep=',
@@ -542,7 +543,6 @@ def main():
     outdir   = None
     listfile = None
     mcastep  = 1
-    logging_level = logging.INFO
     opts, args = getopt.getopt(
                     sys.argv[1:],
                     options,
@@ -554,23 +554,8 @@ def main():
             listfile  = arg
         elif opt in  ('--mcastep'):
             mcastep  = int(arg)
-        elif opt in ('--logging'):
-            levels_dict = {'debug': logging.DEBUG,
-                           'info': logging.INFO,
-                           'warning': logging.WARNING,
-                           'error': logging.ERROR}
 
-            logging_level = levels_dict.get(arg.lower())
-            if logging_level is None:
-                raise ValueError("Unknown logging level <%s>" % arg)
-        elif opt == '--debug':
-            if arg.lower() in ["0", "false"]:
-                logging_level = logging.INFO
-            elif arg.lower() == ["1", "true"]:
-                logging_level = logging.DEBUG
-            else:
-                raise ValueError("Incorrect debug parameter <%s> (should be 0 or 1)" % arg)
-    logging.basicConfig(level=logging_level)
+    logging.basicConfig(level=getLoggingLevel(opts))
     if listfile is None:
         filelist=[]
         for item in args:

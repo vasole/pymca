@@ -1258,7 +1258,7 @@ def test():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    from PyMca5.PyMcaCore.LoggingLevel import getLoggingLevel
     sys.excepthook = qt.exceptionHandler
     try:
         opts, args = getopt.getopt(
@@ -1276,7 +1276,7 @@ if __name__ == "__main__":
     increment=None
     backend=None
     PyMcaDirs.nativeFileDialogs=True
-    logging_level = logging.INFO
+
     for opt, arg in opts:
         if opt in '--begin':
             if "," in arg:
@@ -1310,23 +1310,8 @@ if __name__ == "__main__":
         #elif opt in '--old':
         #    import QEDFStackWidget
         #    sys.exit(QEDFStackWidget.runAsMain())
-        elif opt == '--logging':
-            levels_dict = {'debug': logging.DEBUG,
-                           'info': logging.INFO,
-                           'warning': logging.WARNING,
-                           'error': logging.ERROR}
 
-            logging_level = levels_dict.get(arg.lower())
-            if logging_level is None:
-                raise ValueError("Unknown logging level <%s>" % arg)
-        elif opt == '--debug':
-            if arg.lower() in ["0", "false"]:
-                logging_level = logging.INFO
-            elif arg.lower() == ["1", "true"]:
-                logging_level = logging.DEBUG
-            else:
-                raise ValueError("Incorrect debug parameter <%s> (should be 0 or 1)" % arg)
-    logging.basicConfig(level=logging_level)
+    logging.basicConfig(level=getLoggingLevel(opts))
 
     if filepattern is not None:
         if (begin is None) or (end is None):

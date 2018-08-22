@@ -109,6 +109,7 @@ class EdfFileSimpleViewer(qt.QWidget):
 def main():
     import sys
     import getopt
+    from PyMca5.PyMcaCore.LoggingLevel import getLoggingLevel
     app=qt.QApplication(sys.argv)
     winpalette = qt.QPalette(qt.QColor(230,240,249),qt.QColor(238,234,238))
     app.setPalette(winpalette)
@@ -118,25 +119,8 @@ def main():
                     sys.argv[1:],
                     options,
                     longoptions)
-    logging_level = logging.INFO  # default
-    for opt, arg in opts:
-        if opt == '--logging':
-            levels_dict = {'debug': logging.DEBUG,
-                           'info': logging.INFO,
-                           'warning': logging.WARNING,
-                           'error': logging.ERROR, }
 
-            logging_level = levels_dict.get(arg.lower())
-            if logging_level is None:
-                raise ValueError("Unknown logging level <%s>" % arg)
-        elif opt == '--debug':
-            if arg.lower() in ["0", "false"]:
-                logging_level = logging.INFO
-            elif arg.lower() == ["1", "true"]:
-                logging_level = logging.DEBUG
-            else:
-                raise ValueError("Incorrect debug parameter <%s> (should be 0 or 1)" % arg)
-    logging.basicConfig(level=logging_level)
+    logging.basicConfig(level=getLoggingLevel(opts))
     filelist = args
     app.lastWindowClosed.connect(app.quit)
     w=EdfFileSimpleViewer()

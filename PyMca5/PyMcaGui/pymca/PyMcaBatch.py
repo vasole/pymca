@@ -1714,6 +1714,7 @@ class McaBatchWindow(qt.QWidget):
 def main():
     sys.excepthook = qt.exceptionHandler
     import getopt
+    from PyMca5.PyMcaCore.LoggingLevel import getLoggingLevel
     options     = 'f'
     longoptions = ['cfg=','outdir=','roifit=','roi=','roiwidth=',
                    'overwrite=', 'filestep=', 'mcastep=', 'html=','htmlindex=',
@@ -1742,7 +1743,6 @@ def main():
     mcaoffset = 0
     chunk = None
     exitonend = False
-    logging_level = logging.INFO
     opts, args = getopt.getopt(
                     sys.argv[1:],
                     options,
@@ -1797,23 +1797,8 @@ def main():
                 PyMcaDirs.nativeFileDialogs = False
         elif opt in ('--exitonend'):
             exitonend = int(arg)
-        elif opt in ('--logging'):
-            levels_dict = {'debug': logging.DEBUG,
-                           'info': logging.INFO,
-                           'warning': logging.WARNING,
-                           'error': logging.ERROR}
 
-            logging_level = levels_dict.get(arg.lower())
-            if logging_level is None:
-                raise ValueError("Unknown logging level <%s>" % arg)
-        elif opt == '--debug':
-            if arg.lower() in ["0", "false"]:
-                logging_level = logging.INFO
-            elif arg.lower() == ["1", "true"]:
-                logging_level = logging.DEBUG
-            else:
-                raise ValueError("Incorrect debug parameter <%s> (should be 0 or 1)" % arg)
-    logging.basicConfig(level=logging_level)
+    logging.basicConfig(level=getLoggingLevel(opts))
 
     if listfile is None:
         filelist=[]
