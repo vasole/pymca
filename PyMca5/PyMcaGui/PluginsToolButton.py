@@ -110,8 +110,18 @@ class PluginsToolButton(qt.QToolButton, PluginLoader):
                 # Can we just assume it has the proper signature?
                 self.plot.sigActiveImageChanged.connect(plugin.activeImageChanged)
 
+    def _disconnectPlotSignals(self):
+        for name, plugin in self.pluginInstanceDict.items():
+            if hasattr(plugin, "activeCurveChanged") and callable(plugin.activeCurveChanged):
+                # Can we just assume it has the proper signature?
+                self.plot.sigActiveCurveChanged.disconnect(plugin.activeCurveChanged)
+            if hasattr(plugin, "activeImageChanged") and callable(plugin.activeImageChanged):
+                # Can we just assume it has the proper signature?
+                self.plot.sigActiveImageChanged.disconnect(plugin.activeImageChanged)
+
     def getPlugins(self, method=None, directoryList=None, exceptions=False):
-        """method overloaded to update signal connections when reloading plugins"""
+        """method overloaded to update signal connections when loading plugins"""
+        self._disconnectPlotSignals()
         PluginLoader.getPlugins(self, method, directoryList, exceptions)
         self._connectPlotSignals()
 
