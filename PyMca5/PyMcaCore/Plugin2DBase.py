@@ -36,15 +36,17 @@ Plugins can be automatically installed provided they are in the appropriate plac
       or *${HOME}/PyMca5/plugins* (older PyMca installation)
     - In *"My Documents\\\\PyMca\\\\plugins"* (Windows)
 
-A plugin inherit the :class:`Plugin2DBase` class and implement the methods:
+A plugin inherits the :class:`Plugin2DBase` class and implements the methods:
 
     - :meth:`Plugin2DBase.getMethods`
     - :meth:`Plugin2DBase.getMethodToolTip` (optional but convenient)
     - :meth:`Plugin2DBase.getMethodPixmap` (optional)
     - :meth:`Plugin2DBase.applyMethod`
 
-and modify the static module variable :const:`MENU_TEXT` and the static module function
+and modifies the static module variable :const:`MENU_TEXT` and the static module function
 :func:`getPlugin2DInstance` according to the defined plugin.
+
+It may also optionally implement :meth:`Plugin2DBase.activeImageChanged`.
 
 """
 __license__ = "MIT"
@@ -95,6 +97,17 @@ class Plugin2DBase(object):
         """
         print("applyMethod not implemented")
         return
+
+    def activeImageChanged(self, prev, new):
+        """A plugin may implement this method which is called
+        when the active image changes in the plot.
+
+        :param prev: Legend of the previous active image,
+            or None if no image was active.
+        :param new: Legend of the new active curve,
+            or None if no image is currently active.
+        """
+        pass
 
 
 MENU_TEXT = "Plugin2D Base"
