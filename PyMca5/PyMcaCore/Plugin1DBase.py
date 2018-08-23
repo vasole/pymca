@@ -488,7 +488,7 @@ class Plugin1DBase(object):
         print("applyMethod not implemented")
         return
 
-    def activeImageChanged(self, prev, new):
+    def activeCurveChanged(self, prev, new):
         """A plugin may implement this method which is called
         when the active curve changes in the plot.
 
