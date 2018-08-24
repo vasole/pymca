@@ -142,7 +142,8 @@ class McaWindow(ScanWindow.ScanWindow):
                                      self.mcaAdvancedFitSignal)
 
         if fit:
-            self._mathToolBar.insertWidget(self.avgAction, self.fitToolButton)
+            self.toolBar().insertWidget(self.getMaskAction(),
+                                        self.fitToolButton)
 
         # hide a bunch of PlotWindow and ScanWindow actions
         self.getOutputToolBar().getSaveAction().setVisible(False)
