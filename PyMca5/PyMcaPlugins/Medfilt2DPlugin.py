@@ -29,6 +29,7 @@ from PyMca5.PyMcaGui import PyMcaQt as qt
 from silx.gui.plot import Plot2D
 from silx.math.medianfilter import medfilt2d
 
+
 class Medfilt2DPlugin(Plugin2DBase):
     def __init__(self, plotWindow):
         Plugin2DBase.__init__(self, plotWindow)
@@ -98,6 +99,7 @@ class Medfilt2DPlugin(Plugin2DBase):
 
 
 class Plot2DMedFilt(Plot2D):
+    # TODO: we could allow setting different X- and Y-filter width.
     def __init__(self, parent=None):
         Plot2D.__init__(self, parent=parent)
         self.toolBar().addSeparator()
@@ -168,3 +170,39 @@ def getPlugin2DInstance(plotWindow, **kw):
     """
     ob = Medfilt2DPlugin(plotWindow)
     return ob
+
+
+if __name__ == "__main__":
+    # python -m PyMca5.PyMcaPlugins.Medfilt2DPlugin
+    from PyMca5.PyMcaGui.PluginsToolButton import PluginsToolButton
+    from PyMca5 import PyMcaPlugins
+    import numpy
+    import os
+    from silx.test.utils import add_relative_noise
+    from silx.gui.plot import PlotWidget
+
+    # build a plot widget with a plugin toolbar button
+    app = qt.QApplication([])
+    master_plot = PlotWidget()
+    toolb = qt.QToolBar(master_plot)
+    plugins_tb_2d = PluginsToolButton(plot=master_plot,
+                                      parent=toolb,
+                                      method="getPlugin2DInstance")
+    plugins_tb_2d.getPlugins(
+                    method="getPlugin2DInstance",
+                    directoryList=[os.path.dirname(PyMcaPlugins.__file__)])
+    toolb.addWidget(plugins_tb_2d)
+    master_plot.addToolBar(toolb)
+    master_plot.show()
+
+    # add a noisy image
+    a, b = numpy.meshgrid(numpy.linspace(-10, 10, 500),
+                          numpy.linspace(-10, 5, 400),
+                          indexing="ij")
+    myimg = numpy.asarray(numpy.sin(a * b) / (a * b),
+                          dtype='float32')
+    myimg = add_relative_noise(myimg,
+                               max_noise=10.)    # %
+    master_plot.addImage(myimg)
+
+    app.exec_()
