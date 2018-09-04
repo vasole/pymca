@@ -42,9 +42,9 @@ def getPackages(directory):
 from .plotting import PyMca_Icons
 from .plotting.PyMca_Icons import IconDict
 
-# legacy (not used within PyMca)
-import silx.gui.widgets.PrintPreview as PyMcaPrintPreview
-PyMcaPrintPreview.PyMcaPrintPreview = PyMcaPrintPreview.SingletonPrintPreviewDialog
+## legacy (not used within PyMca)
+#import silx.gui.widgets.PrintPreview as PyMcaPrintPreview
+#PyMcaPrintPreview.PyMcaPrintPreview = PyMcaPrintPreview.SingletonPrintPreviewDialog
 
 # this is the package level directory PyMcaGui
 baseDirectory = os.path.dirname(__file__)
