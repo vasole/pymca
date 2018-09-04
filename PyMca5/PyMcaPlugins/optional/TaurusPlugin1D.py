@@ -37,7 +37,7 @@ __doc__ = """
     You can also run it as a stand alone script.
 """
 import numpy
-from PyMca5 import Plugin1DBase
+from PyMca5.PyMcaCore import Plugin1DBase
 from PyMca5.PyMcaGui import PyMcaQt as qt
 Qt = qt
 from taurus import Attribute
@@ -160,7 +160,7 @@ if __name__ == "__main__":
     import os
     from PyMca5.PyMcaGui import ScanWindow
     plot = ScanWindow.ScanWindow()
-    plot.pluginsToolButton.setPluginDirectoryList([os.path.dirname(__file__)])
+    plot.pluginsToolButton.setPluginDirectoryList([os.path.dirname(os.path.abspath(__file__))])
     plot.pluginsToolButton.getPlugins()
     plot.show()
     app.exec_()
