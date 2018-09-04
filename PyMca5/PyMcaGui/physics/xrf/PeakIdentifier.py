@@ -283,6 +283,7 @@ class MyQLineEdit(qt.QLineEdit):
         qt.QLineEdit.focusOutEvent(self, event)
 
 def main():
+    logging.basicConfig(level=logging.INFO)
     app  = qt.QApplication(sys.argv)
     winpalette = qt.QPalette(qt.QColor(230,240,249),qt.QColor(238,234,238))
     app.setPalette(winpalette)

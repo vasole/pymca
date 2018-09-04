@@ -46,14 +46,15 @@ if __name__ == '__main__':
                    'backend=',
                    'nativefiledialogs=',
                    'PySide=',
-                   'binding=']
+                   'binding=',
+                   'logging=']
     try:
         opts, args = getopt.getopt(
                      sys.argv[1:],
                      options,
                      longoptions)
     except getopt.error:
-        _logger.error("%s", sys.exc_info()[1])
+        print("%s" % sys.exc_info()[1])
         sys.exit(1)
 
     keywords={}
@@ -66,8 +67,10 @@ if __name__ == '__main__':
         elif opt in ('--shm'):
             keywords['shm']  = arg
         elif opt in ('--debug'):
-            debugreport = 1
-            _logger.setLevel(logging.DEBUG)
+            if arg.lower() not in ['0', 'false']:
+                debugreport = 1
+                _logger.setLevel(logging.DEBUG)
+            # --debug is also parsed later for the global logging level
         elif opt in ('-f'):
             keywords['fresh'] = 1
         elif opt in ('--qt'):
@@ -115,6 +118,9 @@ if __name__ == '__main__':
             import PyQt4.QtCore
         elif qtversion == '5':
             import PyQt5.QtCore
+
+    from PyMca5.PyMcaCore.LoggingLevel import getLoggingLevel
+    logging.basicConfig(level=getLoggingLevel(opts))
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()

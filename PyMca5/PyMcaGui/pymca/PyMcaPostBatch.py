@@ -116,13 +116,16 @@ class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
         return filelist
 
 def test():
+    import logging
+    from PyMca5.PyMcaCore.LoggingLevel import getLoggingLevel
     sys.excepthook = qt.exceptionHandler
     app = qt.QApplication([])
     app.lastWindowClosed.connect(app.quit)
 
     import getopt
     options=''
-    longoptions=["nativefiledialogs=","transpose=", "fileindex="]
+    longoptions=["nativefiledialogs=", "transpose=", "fileindex=",
+                 "logging=", "debug="]
     opts, args = getopt.getopt(
                     sys.argv[1:],
                     options,
@@ -140,6 +143,9 @@ def test():
         elif opt in '--fileindex':
             if int(arg):
                 transpose=True
+
+    logging.basicConfig(level=getLoggingLevel(opts))
+
     filelist=args
     w = PyMcaPostBatch()
     w.layout().setContentsMargins(11, 11, 11, 11)

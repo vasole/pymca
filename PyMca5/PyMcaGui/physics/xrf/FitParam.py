@@ -90,10 +90,10 @@ class FitParamWidget(FitParamForm):
                                             aspectRatio=False, yInverted=False,
                                             roi=False, mask=False, fit=False)
         self.graph = self.graphDialog.graph
-        self.graph.zoomModeAction.setVisible(False)
-        self.graph.panModeAction.setVisible(False)
+        self.graph.getInteractiveModeToolBar().getZoomModeAction().setVisible(False)
+        self.graph.getInteractiveModeToolBar().getPanModeAction.setVisible(False)
         self.graph.setDefaultPlotPoints(True)
-        self.tabAttenuators   = AttenuatorsTable.AttenuatorsTab(self.tabAtt,
+        self.tabAttenuators = AttenuatorsTable.AttenuatorsTab(self.tabAtt,
                                                 graph=self.graphDialog)
         self.graphDialog.mainLayout.addWidget(self.graph)
         self.graphDialog.okButton = qt.QPushButton(self.graphDialog)
@@ -1365,6 +1365,7 @@ class FitParamDialog(qt.QDialog):
                 self.saveParameters(filename, None)
                 self.initDir = os.path.dirname(filename)
 
+
 def openWidget():
     app= qt.QApplication(sys.argv)
     app.lastWindowClosed.connect(app.quit)
@@ -1372,6 +1373,7 @@ def openWidget():
     app.setMainWidget(wid)
     wid.show()
     app.exec_loop()
+
 
 def openDialog():
     app= qt.QApplication(sys.argv)
@@ -1384,6 +1386,8 @@ def openDialog():
         del wid
     app.quit()
 
+
 if __name__=="__main__":
+    logging.basicConfig(level=logging.INFO)
     #openWidget()
     openDialog()

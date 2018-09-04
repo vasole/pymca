@@ -1714,12 +1714,14 @@ class McaBatchWindow(qt.QWidget):
 def main():
     sys.excepthook = qt.exceptionHandler
     import getopt
+    from PyMca5.PyMcaCore.LoggingLevel import getLoggingLevel
     options     = 'f'
     longoptions = ['cfg=','outdir=','roifit=','roi=','roiwidth=',
                    'overwrite=', 'filestep=', 'mcastep=', 'html=','htmlindex=',
                    'listfile=','cfglistfile=', 'concentrations=', 'table=', 'fitfiles=',
                    'filebeginoffset=','fileendoffset=','mcaoffset=', 'chunk=',
-                   'nativefiledialogs=','selection=', 'exitonend=']
+                   'nativefiledialogs=','selection=', 'exitonend=',
+                   'logging=', 'debug=']
     filelist = None
     outdir   = None
     cfg      = None
@@ -1795,6 +1797,8 @@ def main():
                 PyMcaDirs.nativeFileDialogs = False
         elif opt in ('--exitonend'):
             exitonend = int(arg)
+
+    logging.basicConfig(level=getLoggingLevel(opts))
 
     if listfile is None:
         filelist=[]

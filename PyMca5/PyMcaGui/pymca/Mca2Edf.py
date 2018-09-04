@@ -533,9 +533,12 @@ class Mca2EdfWindow(qt.QWidget):
         pass
 
 def main():
+    import logging
+    from PyMca5.PyMcaCore.LoggingLevel import getLoggingLevel
     import getopt
     options     = 'f'
-    longoptions = ['outdir=', 'listfile=', 'mcastep=']
+    longoptions = ['outdir=', 'listfile=', 'mcastep=',
+                   'logging=', 'debug=']
     filelist = None
     outdir   = None
     listfile = None
@@ -544,13 +547,15 @@ def main():
                     sys.argv[1:],
                     options,
                     longoptions)
-    for opt,arg in opts:
+    for opt, arg in opts:
         if opt in ('--outdir'):
             outdir = arg
         elif opt in  ('--listfile'):
             listfile  = arg
         elif opt in  ('--mcastep'):
             mcastep  = int(arg)
+
+    logging.basicConfig(level=getLoggingLevel(opts))
     if listfile is None:
         filelist=[]
         for item in args:

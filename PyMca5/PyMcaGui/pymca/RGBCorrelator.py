@@ -157,6 +157,7 @@ class RGBCorrelator(qt.QWidget):
         qt.QWidget.show(self)
 
 def test():
+    import logging
     app = qt.QApplication([])
     app.lastWindowClosed.connect(app.quit)
     if 0:
@@ -167,14 +168,15 @@ def test():
         w = RGBCorrelator()
         w.resize(800, 600)
     import getopt
-    options=''
-    longoptions=[]
+    from PyMca5.PyMcaCore.LoggingLevel import getLoggingLevel
+    options = ''
+    longoptions = ["logging=", "debug="]
     opts, args = getopt.getopt(
                     sys.argv[1:],
                     options,
                     longoptions)
-    for opt,arg in opts:
-        pass
+
+    logging.basicConfig(level=getLoggingLevel(opts))
     filelist=args
     if len(filelist):
         try:

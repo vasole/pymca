@@ -709,6 +709,7 @@ def getFileListFromPattern(pattern, begin, end, increment=None):
     return fileList
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     _logger.setLevel(logging.DEBUG)
     import glob
     import sys

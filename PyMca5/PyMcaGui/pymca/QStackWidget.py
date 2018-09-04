@@ -42,7 +42,7 @@ if __name__ == "__main__":
     longoptions = ["fileindex=","old",
                    "filepattern=", "begin=", "end=", "increment=",
                    "nativefiledialogs=", "imagestack=", "image=",
-                   "backend=", "binding="]
+                   "backend=", "binding=", "logging=", "debug="]
     opts, args = getopt.getopt(
                  sys.argv[1:],
                  options,
@@ -1258,6 +1258,7 @@ def test():
 
 
 if __name__ == "__main__":
+    from PyMca5.PyMcaCore.LoggingLevel import getLoggingLevel
     sys.excepthook = qt.exceptionHandler
     try:
         opts, args = getopt.getopt(
@@ -1265,7 +1266,7 @@ if __name__ == "__main__":
                      options,
                      longoptions)
     except:
-        _logger.error("%s", sys.exc_info()[1])
+        print("%s" % sys.exc_info()[1])
         sys.exit(1)
     fileindex = 0
     filepattern=None
@@ -1275,6 +1276,7 @@ if __name__ == "__main__":
     increment=None
     backend=None
     PyMcaDirs.nativeFileDialogs=True
+
     for opt, arg in opts:
         if opt in '--begin':
             if "," in arg:
@@ -1308,6 +1310,9 @@ if __name__ == "__main__":
         #elif opt in '--old':
         #    import QEDFStackWidget
         #    sys.exit(QEDFStackWidget.runAsMain())
+
+    logging.basicConfig(level=getLoggingLevel(opts))
+
     if filepattern is not None:
         if (begin is None) or (end is None):
             raise ValueError("A file pattern needs at least a set of begin and end indices")
