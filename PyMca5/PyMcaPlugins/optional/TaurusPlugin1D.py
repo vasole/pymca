@@ -37,10 +37,11 @@ __doc__ = """
     You can also run it as a stand alone script.
 """
 import numpy
-from PyMca5 import Plugin1DBase
+from PyMca5.PyMcaCore import Plugin1DBase
 from PyMca5.PyMcaGui import PyMcaQt as qt
 Qt = qt
 from taurus import Attribute
+from taurus import Release
 from taurus.core import TaurusEventType
 from taurus.qt.qtcore.taurusqlistener import QObjectTaurusListener
 from taurus.qt.qtgui.panel import TaurusModelChooser
@@ -145,9 +146,12 @@ class TaurusPlugin1D(Plugin1DBase.Plugin1DBase, QObjectTaurusListener):
         if self._widget is None:
             self._widget = TaurusModelChooser()
             #self._adapter = TaurusPyMcaAdapter()
-            Qt.QObject.connect(self._widget, 
-                    Qt.SIGNAL("updateModels"),
-                    self.onSelectionChanged)
+            if Release.version_info >= (4,):
+                self._widget.updateModels.connect(self.onSelectionChanged)
+            else:
+                Qt.QObject.connect(self._widget, 
+                        Qt.SIGNAL("updateModels"),
+                        self.onSelectionChanged)
         self._widget.show()
 
 MENU_TEXT = "Taurus Device Browser"
@@ -160,7 +164,7 @@ if __name__ == "__main__":
     import os
     from PyMca5.PyMcaGui import ScanWindow
     plot = ScanWindow.ScanWindow()
-    plot.pluginsToolButton.setPluginDirectoryList([os.path.dirname(__file__)])
+    plot.pluginsToolButton.setPluginDirectoryList([os.path.dirname(os.path.abspath(__file__))])
     plot.pluginsToolButton.getPlugins()
     plot.show()
     app.exec_()
