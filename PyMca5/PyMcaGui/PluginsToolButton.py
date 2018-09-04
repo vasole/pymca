@@ -178,6 +178,7 @@ class PluginsToolButton(qt.QToolButton, PluginLoader):
             return
         if "Toggle DEBUG mode" in a.text():
             _toggleLogger()
+            return
         key = callableKeys[idx]
 
         methods = pluginInstances[key].getMethods(
