@@ -91,7 +91,7 @@ class FitParamWidget(FitParamForm):
                                             roi=False, mask=False, fit=False)
         self.graph = self.graphDialog.graph
         self.graph.getInteractiveModeToolBar().getZoomModeAction().setVisible(False)
-        self.graph.getInteractiveModeToolBar().getPanModeAction.setVisible(False)
+        self.graph.getInteractiveModeToolBar().getPanModeAction().setVisible(False)
         self.graph.setDefaultPlotPoints(True)
         self.tabAttenuators = AttenuatorsTable.AttenuatorsTab(self.tabAtt,
                                                 graph=self.graphDialog)
