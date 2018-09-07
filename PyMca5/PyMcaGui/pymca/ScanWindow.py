@@ -120,11 +120,12 @@ class BaseScanWindow(PlotWindow):
         self.addToolBar(self._mathToolBar)
 
         self.fitToolButton = None
+        self.scanFit = None
         if fit:
-            # attr needed by scanFitToolButton
             self.scanFit = ScanFit.ScanFit(specfit=specfit)
             self.fitToolButton = ScanFitToolButton(self)
-            self._mathToolBar.addWidget(self.fitToolButton)
+            self.toolBar().insertWidget(self.getMaskAction(),  # before MaskAction (hidden)
+                                        self.fitToolButton)
 
         self.avgAction = SimpleActions.AverageAction(plot=self)
         self.derivativeAction = SimpleActions.DerivativeAction(plot=self)
