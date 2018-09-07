@@ -4177,7 +4177,20 @@ class _PatchedIconDict(MutableMapping):
             # we also need to remove the key from internal translation table
             del self._translation_table[key]
 
+
 IconDict = _PatchedIconDict(IconDict0)
+
+
+def change_icons(plot):
+    """Replace some of the silx icons with PyMca icons.
+
+    :param plot: Silx plot window, or ScanWindow, or McaWindow
+    :return:
+    """
+    from PyMca5.PyMcaGui import PyMcaQt as qt
+    plot.getRoiAction().setIcon(qt.QIcon(qt.QPixmap(IconDict["roi"])))
+    if hasattr(plot, "printPreview"):
+        plot.printPreview.setIcon(qt.QIcon(qt.QPixmap(IconDict["fileprint"])))
 
 
 def showIcons():

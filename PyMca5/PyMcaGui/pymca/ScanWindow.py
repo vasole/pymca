@@ -46,6 +46,7 @@ from PyMca5.PyMcaGui.pymca import ScanFit
 from PyMca5.PyMcaGui.pymca.ScanFitToolButton import ScanFitToolButton
 from PyMca5.PyMcaCore import DataObject
 from PyMca5.PyMcaGui.pymca import QPyMcaMatplotlibSave1D
+from PyMca5.PyMcaGui.plotting.PyMca_Icons import change_icons
 
 if hasattr(qt, 'QString'):
     QString = qt.QString
@@ -200,6 +201,8 @@ class BaseScanWindow(PlotWindow):
             saveAction.setFileFilter(dataKind='curves',
                                      nameFilter=name_filter,
                                      func=self._graphicsSave)
+
+        change_icons(self)
 
     def _customControlButtonMenu(self):
         """Display Options button sub-menu. Overloaded to add

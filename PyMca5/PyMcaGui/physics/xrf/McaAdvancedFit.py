@@ -78,6 +78,8 @@ Elements = ElementsInfo.Elements
 from PyMca5.PyMcaCore import PyMcaDirs
 from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaGui import CalculationThread
+from PyMca5.PyMcaGui.plotting import PyMca_Icons
+
 _logger = logging.getLogger(__name__)
 
 _logger.debug("############################################\n"
@@ -2916,6 +2918,7 @@ class McaGraphWindow(PlotWindow):
         else:
             self.setGraphXLabel("Channel")
 
+        PyMca_Icons.change_icons(self)
 
     def _energyIconSignal(self):
         self.sigPlotSignal.emit(
