@@ -40,7 +40,7 @@ Plugins can be automatically installed provided they are in the appropriate plac
       or *${HOME}/PyMca5/plugins* (older PyMca installation)
     - In *"My Documents\\\\PyMca\\\\plugins"* (Windows)
 
-A plugin inherit the :class:`Plugin1DBase` class and implement the methods:
+Plugins inherit the :class:`Plugin1DBase` class and implement the methods:
 
     - :meth:`Plugin1DBase.getMethods`
     - :meth:`Plugin1DBase.getMethodToolTip` (optional but convenient)
@@ -49,6 +49,9 @@ A plugin inherit the :class:`Plugin1DBase` class and implement the methods:
 
 and modify the static module variable :const:`MENU_TEXT` and the static module function
 :func:`getPlugin1DInstance` according to the defined plugin.
+
+Optionally, plugins may also implement :meth:`Plugin1DBase.activeCurveChanged`
+to react to data selection in the plot.
 
 These plugins will be compatible with any 1D-plot window that implements the Plot1D
 interface. The plot window interface is described in the Plot1DBase class.
@@ -484,6 +487,17 @@ class Plugin1DBase(object):
         """
         print("applyMethod not implemented")
         return
+
+    def activeCurveChanged(self, prev, new):
+        """A plugin may implement this method which is called
+        when the active curve changes in the plot.
+
+        :param prev: Legend of the previous active curve,
+            or None if no curve was active.
+        :param new: Legend of the new active curve,
+            or None if no curve is currently active.
+        """
+        pass
 
 
 MENU_TEXT = "Plugin1D Base"
