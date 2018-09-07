@@ -46,7 +46,7 @@ import silx
 from silx.gui.data.DataViewerFrame import DataViewerFrame
 from silx.gui.data import DataViews
 from silx.gui.data import NXdataWidgets
-from silx.gui.plot import Plot1D
+from silx.gui.plot import Plot1D, Plot2D
 from silx.gui import icons
 
 
@@ -134,6 +134,35 @@ class Plot1DViewWithPlugins(DataViews._Plot1dView):
         return Plot1DWithPlugins(parent=parent)
 
 
+class Plot2DWithPlugins(Plot2D):
+    """Add a plugin toolbutton to a Plot2D"""
+    def __init__(self, parent=None):
+        Plot2D.__init__(self, parent)
+
+        self._toolbar = qt.QToolBar(self)
+        self.addToolBar(self._toolbar)
+        pluginsToolButton = PluginsToolButton(plot=self, parent=self,
+                                              method="getPlugin2DInstance")
+
+        if PLUGINS_DIR:
+            pluginsToolButton.getPlugins(
+                    method="getPlugin2DInstance",
+                    directoryList=PLUGINS_DIR)
+        self._toolbar.addWidget(pluginsToolButton)
+
+
+class Plot2DViewWithPlugins(DataViews._Plot2dView):
+    def createWidget(self, parent):
+        widget = Plot2DWithPlugins(parent=parent)
+        widget.setDefaultColormap(self.defaultColormap())
+        widget.getColormapAction().setColorDialog(self.defaultColorDialog())
+        widget.getIntensityHistogramAction().setVisible(True)
+        widget.setKeepDataAspectRatio(True)
+        widget.getXAxis().setLabel('X')
+        widget.getYAxis().setLabel('Y')
+        return widget
+
+
 class ArrayCurvePlotWithPlugins(NXdataWidgets.ArrayCurvePlot):
     """Adds a plugin toolbutton to an ArrayCurvePlot widget"""
     def __init__(self, parent=None):
@@ -159,43 +188,30 @@ class NXdataCurveViewWithPlugins(DataViews._NXdataCurveView):
         return ArrayCurvePlotWithPlugins(parent=parent)
 
 
-class NXdataViewWithPlugins(DataViews.CompositeDataView):
-    """Re-implement DataViews._NXdataView to use the 1D view with
-    a plugin toolbutton in the composite view."""
-    # This widget is needed only for silx < 0.7.
-    def __init__(self, parent):
-        super(NXdataViewWithPlugins, self).__init__(
-            parent=parent,
-            label="NXdata",
-            icon=icons.getQIcon("view-nexus"))
+class ArrayImagePlotWithPlugins(NXdataWidgets.ArrayImagePlot):
+    """Adds a plugin toolbutton to an ArrayImagePlot widget"""
+    def __init__(self, parent=None):
+        NXdataWidgets.ArrayImagePlot.__init__(self, parent)
 
-        if silx.version >= "0.7.0":
-            self.addView(DataViews._InvalidNXdataView(parent))
-        self.addView(DataViews._NXdataScalarView(parent))
-        self.addView(NXdataCurveViewWithPlugins(parent))
-        self.addView(DataViews._NXdataXYVScatterView(parent))
-        self.addView(DataViews._NXdataImageView(parent))
-        self.addView(DataViews._NXdataStackView(parent))
+        self._toolbar = qt.QToolBar(self)
+        self.getPlot().addToolBar(self._toolbar)
+        pluginsToolButton = PluginsToolButton(plot=self.getPlot(),
+                                              parent=self,
+                                              method="getPlugin2DInstance")
+        if PLUGINS_DIR:
+            pluginsToolButton.getPlugins(
+                    method="getPlugin2DInstance",
+                    directoryList=PLUGINS_DIR)
+        self._toolbar.addWidget(pluginsToolButton)
 
 
-class DataViewerFrameWithPlugins(DataViewerFrame):
-    """Overloaded DataViewerFrame with the 1D view replaced by
-    Plot1DViewWithPlugins"""
-    # This widget is needed only for silx < 0.7.
-    def createDefaultViews(self, parent=None):
-        views = list(DataViewerFrame.createDefaultViews(self, parent=parent))
-
-        # replace 1d view
-        oldView = [v for v in views if v.modeId() == DataViews.PLOT1D_MODE][0]
-        newView = Plot1DViewWithPlugins(parent=parent)
-        views[views.index(oldView)] = newView
-
-        # replace NXdataView
-        oldView = [v for v in views if isinstance(v, DataViews._NXdataView)][0]
-        newView = NXdataViewWithPlugins(parent=parent)
-        views[views.index(oldView)] = newView
-
-        return views
+class NXdataImageViewWithPlugins(DataViews._NXdataImageView):
+    """Use the widget with a :class:`PluginsToolButton`"""
+    def createWidget(self, parent):
+        widget = ArrayImagePlotWithPlugins(parent)
+        widget.getPlot().setDefaultColormap(self.defaultColormap())
+        widget.getPlot().getColormapAction().setColorDialog(self.defaultColorDialog())
+        return widget
 
 
 class Hdf5NodeView(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
@@ -213,14 +229,15 @@ class Hdf5NodeView(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
 
-        if silx.hexversion >= 0x000700f0:       # 0.7.0 final
-            self.viewWidget = DataViewerFrame(self)
-            self.viewWidget.replaceView(DataViews.PLOT1D_MODE,
-                                        Plot1DViewWithPlugins(self))
-            self.viewWidget.replaceView(DataViews.NXDATA_CURVE_MODE,
-                                        NXdataCurveViewWithPlugins(self))
-        else:
-            self.viewWidget = DataViewerFrameWithPlugins(self)
+        self.viewWidget = DataViewerFrame(self)
+        self.viewWidget.replaceView(DataViews.PLOT1D_MODE,
+                                    Plot1DViewWithPlugins(self))
+        self.viewWidget.replaceView(DataViews.PLOT2D_MODE,
+                                    Plot2DViewWithPlugins(self))
+        self.viewWidget.replaceView(DataViews.NXDATA_CURVE_MODE,
+                                    NXdataCurveViewWithPlugins(self))
+        self.viewWidget.replaceView(DataViews.NXDATA_IMAGE_MODE,
+                                    NXdataImageViewWithPlugins(self))
 
         self.mainLayout.addWidget(self.viewWidget)
 

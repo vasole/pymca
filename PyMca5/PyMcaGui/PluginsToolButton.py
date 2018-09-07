@@ -74,17 +74,21 @@ class PluginsToolButton(qt.QToolButton, PluginLoader):
     :param parent: Parent QWidget widget
     """
 
-    def __init__(self, plot, parent=None):
+    def __init__(self, plot, parent=None, method="getPlugin1DInstance"):
 
         qt.QToolButton.__init__(self, parent)
         self.setIcon(qt.QIcon(qt.QPixmap(IconDict["plugin"])))
-        self.setToolTip("Call/Load 1D Plugins")
+        if method == "getPlugin1DInstance":
+            self.setToolTip("Call/Load 1D Plugins")
+        elif method == "getPlugin2DInstance":
+            self.setToolTip("Call/Load 2D Plugins")
 
         # fill attr pluginList and pluginInstanceDict with existing plugins
-        PluginLoader.__init__(self, method='getPlugin1DInstance')
+        PluginLoader.__init__(self, method=method)
 
         # plugins expect a legacy API, not the silx Plot API
         self.plot = weakref.proxy(plot, self._ooPlotDestroyed)
+        self._plotType = getattr(self.plot, "_plotType", None)
 
         self.clicked.connect(self._pluginClicked)
 
@@ -133,7 +137,7 @@ class PluginsToolButton(qt.QToolButton, PluginLoader):
                     text = text[:-3]
 
             methods = pluginInstances[pluginName].getMethods(
-                    plottype=self.plot._plotType)
+                    plottype=self._plotType)
             if not len(methods):
                 continue
             elif len(methods) == 1:
@@ -181,7 +185,7 @@ class PluginsToolButton(qt.QToolButton, PluginLoader):
         key = callableKeys[idx]
 
         methods = pluginInstances[key].getMethods(
-                plottype=self.plot._plotType)
+                plottype=self._plotType)
         if len(methods) == 1:
             idx = 0
         else:
