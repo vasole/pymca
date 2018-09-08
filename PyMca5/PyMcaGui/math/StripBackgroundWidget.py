@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -239,8 +239,9 @@ class StripBackgroundWidget(qt.QWidget):
         self.graphWidget = PlotWindow(self, position=False, aspectRatio=False,
                                       colormap=False, yInverted=False,
                                       roi=False, mask=False, fit=False)
-        self.graphWidget.zoomModeAction.setVisible(False)
-        self.graphWidget.panModeAction.setVisible(False)
+        toolBar = self.graphWidget.getInteractiveModeToolBar()
+        toolBar.getZoomModeAction().setVisible(False)
+        toolBar.getPanModeAction().setVisible(False)
 
         self.mainLayout.addWidget(self.parametersWidget)
         self.mainLayout.addWidget(self.graphWidget)
