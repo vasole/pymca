@@ -80,7 +80,7 @@ def getLoggingLevel(opts):
             # simpler option to choose between the default logging or DEBUG
             if arg.lower() in ["0", "false"]:
                 logging_level = logging.INFO
-            elif arg.lower() == ["1", "true"]:
+            elif arg.lower() in ["1", "true"]:
                 logging_level = logging.DEBUG
             else:
                 raise ValueError("Incorrect debug parameter <%s> (should be 0 or 1)" % arg)
