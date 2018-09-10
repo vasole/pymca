@@ -2936,7 +2936,9 @@ class McaGraphWindow(PlotWindow):
              'active': self.getActiveCurve(just_legend=True)})
 
     def setActiveCurve(self, legend, replot=None):
-        super(McaGraphWindow, self).setActiveCurve(legend, replot)
+        if legend is not None:
+            # see vasole/pymca#314
+            super(McaGraphWindow, self).setActiveCurve(legend, replot)
         self.setGraphYLabel("Counts")
         if self.energyButton.isChecked():
             self.setGraphXLabel("Energy")
