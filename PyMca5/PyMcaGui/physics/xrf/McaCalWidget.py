@@ -1066,6 +1066,7 @@ class CalibrationParameters(qt.QWidget):
         self.CFixed.clicked.connect(self._CFixSlot)
 
         self.orderbox.activated[str].connect(self.__orderbox)
+        self.savebox.lineEdit().editingFinished[()].connect(self.__savebox)
         self.savebox.activated[str].connect(self.__savebox)
 
     def setParameters(self, pars):
@@ -1133,8 +1134,10 @@ class CalibrationParameters(qt.QWidget):
                 self.CFixed.hide()
         self.myslot(event='order')
 
-    def __savebox(self,qstring):
-        key = str(qstring)
+    def __savebox(self, qstring=None):
+        if qstring is None:
+            qstring = self.savebox.currentText()
+        key = qt.safe_str(qstring)
         if key not in self.caldict.keys():
             self.caldict[key] = {}
         if QTVERSION < '4.0.0':
