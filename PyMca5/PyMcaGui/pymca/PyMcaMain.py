@@ -305,6 +305,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                          self.sourceWidget.sourceSelector._openFileSlot)
             self.openMenu.addAction("Load Training Data",
                                         self.loadTrainingData)
+            self.trainingDataMenu = None
 
             self.__useTabWidget = True
 
@@ -1505,10 +1506,27 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         self.saveConfig(self.getConfig(), filename)
 
     def loadTrainingData(self):
+        if self.trainingDataMenu is None:
+            self.trainingDataMenu = qt.QMenu()
+            self.trainingSources = {"Thin Sample": os.path.join(PyMcaDataDir.PYMCA_DATA_DIR, 'XRFSpectrum.mca'),
+                        "Tertiary Excitation": os.path.join(PyMcaDataDir.PYMCA_DATA_DIR, 'Steel.spe')}
+            self.trainingActions = []
+            for key in ["Thin Sample", "Tertiary Excitation"]:
+                action = qt.QAction(key, None)
+                self.trainingActions.append(action)
+                self.trainingDataMenu.addAction(action)
         try:
-            source = os.path.join(PyMcaDataDir.PYMCA_DATA_DIR,
-                                    'XRFSpectrum.mca')
+            selectedAction = self.trainingDataMenu.exec_(qt.QCursor.pos())
+            key = qt.safe_str(selectedAction.text())
+            source = self.trainingSources[key]
             self.sourceWidget.sourceSelector.openSource(source)
+            # only in case of the steel sample we set the input dir to simplify accessing the supplied cfg file
+            if key in ["Tertiary Excitation"]:
+                # we do not change the input dir currently used by the source selector
+                #self.sourceWidget.sourceSelector.lastInputDir = os.path.dirname(source)
+                # but we change the input dir to allow easy loading of the config file from the
+                # fit configuration window
+                PyMcaDirs.inputDir = os.path.dirname(source)
         except:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
