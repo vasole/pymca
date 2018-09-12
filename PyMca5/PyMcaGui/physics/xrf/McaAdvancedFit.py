@@ -95,6 +95,7 @@ except ImportError:
         raise
 USE_BOLD_FONT = True
 
+import silx
 from silx.gui.plot import PlotWindow
 from silx.gui.plot.PrintPreviewToolButton import SingletonPrintPreviewToolButton
 
@@ -2947,6 +2948,18 @@ class McaGraphWindow(PlotWindow):
 
     def _zoomBack(self, pos):
         self.getLimitsHistory().pop()
+
+    if silx.version_info < (0, 9):
+        # overloaded to force dock widgets area to right
+        def addTabbedDockWidget(self, dock_widget):
+            if dock_widget not in self._dockWidgets:
+                self._dockWidgets.append(dock_widget)
+            if len(self._dockWidgets) == 1:
+                self.addDockWidget(qt.Qt.RightDockWidgetArea, dock_widget)
+            else:
+                # Other dock widgets are added as tabs to the same widget area
+                self.tabifyDockWidget(self._dockWidgets[0],
+                                      dock_widget)
 
 
 def test(ffile='03novs060sum.mca', cfg=None):
