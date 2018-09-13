@@ -1943,7 +1943,8 @@ class MaskImageWidget(qt.QWidget):
         filedialog.setFileMode(filedialog.AnyFile)
         filedialog.setAcceptMode(qt.QFileDialog.AcceptSave)
         filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict["gioconda16"])))
-        formatlist = ["ASCII Files *.dat",
+        formatlist = ["TIFF Files *.tif",
+                      "ASCII Files *.dat",
                       "EDF Files *.edf",
                       'CSV(, separated) Files *.csv',
                       'CSV(; separated) Files *.csv',
@@ -1955,7 +1956,7 @@ class MaskImageWidget(qt.QWidget):
         for f in formatlist:
                 strlist.append(f)
         if self._saveFilter is None:
-            self._saveFilter =formatlist[0]
+            self._saveFilter = formatlist[0]
         if hasattr(filedialog, "setFilters"):
             filedialog.setFilters(strlist)
             filedialog.selectFilter(self._saveFilter)
@@ -1974,12 +1975,12 @@ class MaskImageWidget(qt.QWidget):
                 self._saveFilter = qt.safe_str(filedialog.selectedFilter())
             else:
                 self._saveFilter = qt.safe_str(filedialog.selectedNameFilter())
-            filterused = "."+self._saveFilter[-3:]
+            filterused = "." + self._saveFilter[-3:]
             PyMcaDirs.outputDir = os.path.dirname(filename)
             if len(filename) < 4:
-                filename = filename+ filterused
+                filename = filename + filterused
             elif filename[-4:] != filterused :
-                filename = filename+ filterused
+                filename = filename + filterused
         else:
             filename = ""
         return filename
@@ -2010,10 +2011,15 @@ class MaskImageWidget(qt.QWidget):
             return
         if filename is None:
             filename = self.getOutputFileName()
-            if not len(filename):return
+            if not len(filename):
+                return
 
         if filename.lower().endswith(".edf"):
             ArraySave.save2DArrayListAsEDF(imageList, filename, labels)
+        elif filename.lower().endswith(".tif"):
+            ArraySave.save2DArrayListAsMonochromaticTiff(imageList,
+                                                         filename,
+                                                         labels)
         elif filename.lower().endswith(".csv"):
             if "," in self._saveFilter:
                 csvseparator = ","
