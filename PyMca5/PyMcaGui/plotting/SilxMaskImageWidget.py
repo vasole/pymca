@@ -1,5 +1,5 @@
 # /*#########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -207,6 +207,10 @@ class SaveImageListAction(qt.QAction):
 
         if filename.lower().endswith(".edf"):
             ArraySave.save2DArrayListAsEDF(imageList, filename, labels)
+        elif filename.lower().endswith(".tif"):
+            ArraySave.save2DArrayListAsMonochromaticTiff(imageList,
+                                                         filename,
+                                                         labels)
         elif filename.lower().endswith(".csv"):
             assert csvseparator is not None
             ArraySave.save2DArrayListAsASCII(imageList, filename, labels,
@@ -268,7 +272,8 @@ class SaveImageListAction(qt.QAction):
         filedialog.setFileMode(filedialog.AnyFile)
         filedialog.setAcceptMode(qt.QFileDialog.AcceptSave)
         filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict["gioconda16"])))
-        formatlist = ["ASCII Files *.dat",
+        formatlist = ["TIFF Files *.tif",
+                      "ASCII Files *.dat",
                       "EDF Files *.edf",
                       'CSV(, separated) Files *.csv',
                       'CSV(; separated) Files *.csv',
@@ -308,8 +313,7 @@ class SaveImageListAction(qt.QAction):
 
 
 class SaveMatplotlib(qt.QAction):
-    """Save current image  and mask (if any) in a :class:`MaskImageWidget`
-    to EDF or CSV"""
+    """Save current image ho high quality graphics using matplotlib"""
     def __init__(self, title, maskImageWidget):
         super(SaveMatplotlib, self).__init__(QString(title),
                                              maskImageWidget)
