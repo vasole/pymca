@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -213,16 +213,17 @@ def _getDataAndDescriptionFileName(filename):
 
     If the associated file is not existing, it returns None.
     """
-    if filename.lower().endswith("raw"):
+    tmpFileName = filename.lower()
+    if tmpFileName.endswith("raw"):
         dataDile = filename 
         headerFile = filename[:-3] + "rpl"
     else:
         headerFile = filename
-    if not os.path.exists(headerFile):
-        headerFile = None
+    if os.path.exists(headerFile):
+        dataFile = headerFile[:-3] + "raw"
     else:
-        headerFile = filename
-        dataFile = filename[:-3] + "raw"
+        headerFile = ".rpl file not found"
+        dataFile = ".raw file not found"
     return dataFile, headerFile
 
 def _parseHeaderFile(headerFile):
@@ -241,15 +242,17 @@ def _parseHeaderFile(headerFile):
     record-by       vector           # image, vector, or dont-care
     
     """
-    data = open(headerFile, "r").readlines()
-    numericKeyList = ["width", "Width",
-                      "height", "Height",
-                      "depth", "Depth",
-                      "offset", "Offset",
-                      "data-length", "Data-length"]
-    asciiKeyList = ["data-type", "Data-type",
-                    "byte-order", "Byte-order",
-                    "record-by", "Record-by"]
+    f = open(headerFile, "r")
+    data = f.readlines()
+    f.close()
+    numericKeyList = ["width",
+                      "height",
+                      "depth",
+                      "offset",
+                      "data-length"]
+    asciiKeyList = ["data-type",
+                    "byte-order",
+                    "record-by"]
     otherKeys = []
     description = {}
     description["depth"] = 1
@@ -257,8 +260,9 @@ def _parseHeaderFile(headerFile):
     description["data-length"] = 1
     description["data-type"] = "unsigned"
     description["byte-order"] = "little-endian"
-    for line in data:
+    for tmpLine in data:
         treated = False
+        line = tmpLine.lower()
         for key in numericKeyList:
             if line.startswith(key):
                 cleanLine = line.replace("\t", " ")
