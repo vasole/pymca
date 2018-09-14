@@ -1,5 +1,5 @@
-Tutorials
-=========
+Tutorials and Exercises
+=======================
 
 .. toctree::
    :hidden:
@@ -8,6 +8,10 @@ Tutorials
    ./xrf/strip-background/index.rst
    ./customization/index.rst
    ./hdf5/index.rst
+   ./training/tertiary/index.rst
+
+Tutorials
+---------
 
 There are several tutorials explaining different aspects of the program.
 
@@ -36,3 +40,8 @@ Illustration of the use of the ROI Imaging tool for kinetics studies.
 
 :doc:`./customization/index` Description about how to add your own add-ons to PyMca.
 
+
+Exercises
+---------
+
+:doc:`./training/tertiary/index`. Press-button exercise to show how to deal with secondary and higher order excitations in X-ray fluorescence quantification problems.
