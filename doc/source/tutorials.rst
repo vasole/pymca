@@ -9,6 +9,7 @@ Tutorials and Exercises
    ./customization/index.rst
    ./hdf5/index.rst
    ./training/tertiary/index.rst
+   ./training/matrix/index.rst
 
 Tutorials
 ---------
@@ -45,3 +46,5 @@ Exercises
 ---------
 
 :doc:`./training/tertiary/index`. Press-button exercise to show how to deal with secondary and higher order excitations in X-ray fluorescence quantification problems.
+
+:doc:`./training/matrix/index`. This exercise shows the user one way to tell the program how to automatically update the sample composition.
