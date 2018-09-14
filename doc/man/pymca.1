@@ -3,7 +3,7 @@
 .\" 
 
 
-.TH pymca 1 "March 2012" "ESRF" "PyMca X-Ray Fluorescence Toolkit"
+.TH pymca 1 "September 2018" "ESRF" "PyMca X-Ray Fluorescence Toolkit"
 
 .SH NAME
 
@@ -50,7 +50,12 @@ Start the program using the selected graphics backend (mpl for matplotlib, gl fo
 i
 .B pymca --binding=XX
 .P
-Start the program using the selected Qt binding. It has ot be one of PyQt5, PyQt4, PySide or PySide2.
+Start the program using the selected Qt binding. It has to be one of PyQt5 (default), PyQt4, PySide or PySide2.
+i
+.B pymca --logging=XX
+.P
+Set the logging level. Allowed values are, in increasing order of verbosity: critical, error, warning (default), info, debug.
+Alternatively, you can specify an integer in range 0 (critical) to 4 (debug).
 
 .SH SEE ALSO
 HDF5, h5py

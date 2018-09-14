@@ -33,7 +33,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import logging
 
 
-DEFAULT_LOGGING_LEVEL = logging.INFO
+DEFAULT_LOGGING_LEVEL = logging.WARNING
 
 
 def getLoggingLevel(opts):
