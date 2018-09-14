@@ -43,7 +43,7 @@ Start the program with a file browser to select the input files.
 
 .B pymcaroitool --binding=XX
 .P
-Start the program using the selected Qt binding. It has ot be one of PyQt5, PyQt4, PySide or PySide2.
+Start the program using the selected Qt binding. It has to be one of PyQt5 (default), PyQt4, PySide or PySide2.
 
 .B pymcaroitool file_0001.edf
 .P
@@ -68,6 +68,13 @@ file_00200.edf
 .P
 Load the double indexed files from row10_col0100.dat, row10_col0101.dat, ... 
 to row20_col0199.dat, row20_col0200.dat
+
+.B pymcaroitool --logging=XX
+.P
+Set the logging level. Allowed values are, in increasing order of verbosity: critical, error, warning (default), info, debug.
+Alternatively, you can specify a value in range 0 (critical) to 4 (debug).
+
+
 
 .SH CAVEATS
 If files f_000.xxx and f_001.xxx are present in the same directory, and 
