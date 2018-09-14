@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, T. Coutinho, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 V.A. Sole, T. Coutinho, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -76,6 +76,7 @@ class TaurusPlugin1D(Plugin1DBase.Plugin1DBase, QObjectTaurusListener):
 
     def onSelectionChanged(self, models):
         if self._oldModels in [None, []]:
+            self._attrDict = {}
             for model in models:
                 try:
                     attr = Attribute(model)
@@ -84,6 +85,8 @@ class TaurusPlugin1D(Plugin1DBase.Plugin1DBase, QObjectTaurusListener):
                     attr = Attribute(str(model))
                 #force a read -> attr.read()
                 attr.addListener(self)
+                legend = qt.safe_str(attr.getNormalName())
+                self._attrDict[legend] = attr
             self._oldModels = models
         else:
             keptModels = []
@@ -94,16 +97,20 @@ class TaurusPlugin1D(Plugin1DBase.Plugin1DBase, QObjectTaurusListener):
                 else:
                     newModels.append(model)
             for model in self._oldModels:
-                if model not in newModels:
+                if model not in keptModels:
                     attr = Attribute(model)
                     attr.removeListener(self)
-                    legend = attr.getNormalName()
+                    legend = qt.safe_str(attr.getNormalName())
+                    if legend in self._attrDict:
+                        del self._attrDict[legend]
                     print("Trying to remove ", legend)
                     self.removeCurve(legend, replot=False)
             for model in newModels:
                 attr = Attribute(model)
                 # attr.read()
                 attr.addListener(self)
+                legend = qt.safe_str(attr.getNormalName())
+                self._attrDict[legend] = attr
             self._oldModels = keptModels + newModels
 
     #Methods to be implemented by the plugin
