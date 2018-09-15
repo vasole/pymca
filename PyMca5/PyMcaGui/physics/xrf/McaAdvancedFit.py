@@ -2049,6 +2049,7 @@ class McaAdvancedFit(qt.QWidget):
         self.plot()
 
     def plot(self, ddict=None):
+        self.graph.clearCurves()
         config = self.mcafit.configure()
         if ddict is None:
             if not self.__fitdone:
