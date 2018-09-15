@@ -104,7 +104,7 @@ At this point you should be back to the main window without any change respect t
 
 |img_03|
 
-Under the calibration combo box, following *Active curve uses* , you will see the calibration actually applied. It should be close t0 A=-0.5, B=-0.005 and C=0. (Hint: Make sure you have selected a first order calibration when calculating the calibration). If it is very different your calibration is wrong and you will experience a lot of difficulties later on.
+Under the calibration combo box, following *Active curve uses*, you will see the calibration actually applied. It should be close to A=-0.5, B=-0.005 and C=0. (Hint: Make sure you have selected a first order calibration when calculating the calibration). If it is very different your calibration is wrong and you will experience a lot of difficulties later on.
 
 
 Step 3: Select your fit region
@@ -112,7 +112,7 @@ Step 3: Select your fit region
 
 We already have a calibrated spectrum. The rest of the exercise will use the McaAdvancedFit window.
 
-Prior to reach that window, we should select the region of the sample we'd like to analyze. For that, whe have to zoom in that region by pressing and dragging the mouse. PyMca implements a zoom stack, you can go back by pressing the mouse right button or by pressing the the reset zoom icon.
+Prior to reach that window, we should select the region of the sample we'd like to analyze. For that, we have to zoom in that region by pressing and dragging the mouse. PyMca implements a zoom stack, you can go back by pressing the mouse right button or by pressing the reset zoom icon.
 
 At the very least, you should always leave the cut at the low energy side corresponding to the low-level discriminator of your acquisition system out of the fitting region. Something around 1.0 keV should be OK in this case.
 
@@ -127,7 +127,7 @@ Step 4: Using the Peak Identifier
 
 The first thing you will get is a message telling you that no peaks have been defined. PyMca has very good peak search routines and it could do a very good guess about the elements present. However, the author(s) consider that the responsibility should fall on the person carrying the analysis.
 
-In order to allow PyMca to give you some hints about what elements can be associatedd to a peak, you need to toggle the energy axis on. Your next target should be to obtain the image below.
+In order to allow PyMca to give you some hints about what elements can be associated to a peak, you need to toggle the energy axis on. Your next target should be to obtain the image below.
 
 |img_05|
 
@@ -137,12 +137,12 @@ If you now click on top of a peak, PyMca will show you the peaks that can be ass
 
 You will be presented with a table of elements, peak families and rates within the family of all the elements emitting x-ray within the specified energy threshold around the selected energy.
 
-As a rule of thumb, you should aim at identifying the most intense peaks. Why? Because that can help you decide to what element belongs. For instance, the L3 lines are usually more intense than the L2 lines or L1 lines. If the program proposes you the L2 lines of one element and the L3 lines of other element, there are strong chances of having the element with the L3 lines because if it would be the element with the L2 lines there should be a stronger peak in the spectrum corresponding to the L3 lines of that element. Of course, that is to be considered as a hint. It may well happen that the intense L3 lines os hidden beneath the peak of another already identified element...
+As a rule of thumb, you should aim at identifying the most intense peaks. Why? Because that can help you decide to what element belongs. For instance, the L3 lines are usually more intense than the L2 lines or L1 lines. If the program proposes you the L2 lines of one element and the L3 lines of other element, there are strong chances of having the element with the L3 lines because if it would be the element with the L2 lines there should be a stronger peak in the spectrum corresponding to the L3 lines of that element. Of course, that is to be considered as a hint. It may well happen that the intense L3 lines is hidden beneath the peak of another already identified element...
 
 Step 5: Fit Configuration
 .........................
 
-This example would allow you to start adding peaks families to be fitted inmediatelly because the sample is relatively thin and matrix effects are small. However, you should aim at doing the things properly and enter as much information as possible into the fit configuration.
+This example would allow you to start adding peaks families to be fitted immediately because the sample is relatively thin and matrix effects are small. However, you should aim at doing the things properly and enter as much information as possible into the fit configuration.
 
 The experimental conditions are excitation energy around 17.5 keV, Si detector 450 micron thickness and Be window of 8 micron thickness. For the sake of simplicity assume the sample is 100 micron water and contains 500 ppm of Co. Incident beam angle is 0.1 degrees and fluorescence beam angle is 90 degrees. There is an air path between sample and detector window of 2 mm.
 
@@ -164,7 +164,7 @@ As you see the background still needs some adjustment. You can do it via the cor
 
 You should spend some time going to the fit configuration to add peaks and back to the fit window to perform fits. WARNING: It is advisable to save your fit configuration from the fit configuration widget via the Save button. That can save you a lot of time in case of problems because you could restart form that point.
 
-You can take the image below as a encouragement.
+You can take the image below as encouragement.
 
 |img_09|
 
@@ -188,7 +188,7 @@ advanced fit window after performing a fit.
 
 Hint: If everything is OK, the concentrations of all the elements present in the sample should be in the vicinity of 500 ppm (0.0005 mass fraction).
 
-In real life you often do not have an internal standard. However, you could imagine that you have just emasured a reference sample you have just prepared with a concentration of 500 ppm Co in water and that you want to calibrate your system. Then, obviously, the Co concentration given by the program is exactly 0.0005 because it is used as internal standard. To calibrate your system all what you have to do is to select the *From fundamental parameters* check box and modify the Active area, distance, time to match those of your experiment and finally play with the flux until the concentration of Co is back to 0.0005. From there on you will be ready to use your system without an internal standard. You would have removed the water-with-Co sample and measured our unknown sample.
+In real life you often do not have an internal standard. However, you could imagine that you have just measured a reference sample you have just prepared with a concentration of 500 ppm Co in water and that you want to calibrate your system. Then, obviously, the Co concentration given by the program is exactly 0.0005 because it is used as internal standard. To calibrate your system all what you have to do is to select the *From fundamental parameters* check box and modify the Active area, distance, time to match those of your experiment and finally play with the flux until the concentration of Co is back to 0.0005. From there on you will be ready to use your system without an internal standard. You would have removed the water-with-Co sample and measured our unknown sample.
 
 Step 7: Using the Matrix Spectrum
 .................................
@@ -199,7 +199,7 @@ If you have performed the previous steps, you just have to perform a fit and pre
 
 |img_11|
 
-We can use this PyMca feature to measure the thickess of layers or to estimate confidence limits. Let's take a look at the later case.
+We can use this PyMca feature to measure the thickness of layers or to estimate confidence limits. Let's take a look at the later.
 
 We go back to the fit configuration and select the Sc K-line as element family of peaks to be fitted and we perform a fit. If we go to the CONCENTRATIONS tab we'll see that PyMca reports a concentration of the order of some ppms. The question is, can we trust that information?
 
