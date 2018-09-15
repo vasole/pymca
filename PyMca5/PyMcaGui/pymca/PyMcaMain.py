@@ -1508,10 +1508,10 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
     def loadTrainingData(self):
         if self.trainingDataMenu is None:
             self.trainingDataMenu = qt.QMenu()
-            self.trainingSources = {"Thin Sample": os.path.join(PyMcaDataDir.PYMCA_DATA_DIR, 'XRFSpectrum.mca'),
+            self.trainingSources = {"XRF Spectrum": os.path.join(PyMcaDataDir.PYMCA_DATA_DIR, 'XRFSpectrum.mca'),
                         "Tertiary Excitation": os.path.join(PyMcaDataDir.PYMCA_DATA_DIR, 'Steel.spe')}
             self.trainingActions = []
-            for key in ["Thin Sample", "Tertiary Excitation"]:
+            for key in ["XRF Spectrum", "Tertiary Excitation"]:
                 action = qt.QAction(key, None)
                 self.trainingActions.append(action)
                 self.trainingDataMenu.addAction(action)
