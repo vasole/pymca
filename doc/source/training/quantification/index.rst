@@ -81,7 +81,7 @@ The objective of this exercise is to get familiar with x-ray fluorescence analys
 Step 1: Loading the data
 ........................
 
-The data required for this exercise are supplied with PyMca and can be loaded into the program via the main window File menu following the sequence File->Open->Load Training Data->XRF Spectrum.
+The data required for this exercise are supplied with PyMca and can be loaded into the program via the main window File menu following the sequence File->Open->Load Training Data->XRF Analysis.
 
 The format associated to that spectrum is the simplest that PyMca can read. It is just a single column of numbers corresponding to the counts in the different channels. Under that situation, PyMca does not know if those data belong to an XRF experiment or to something else and offers two different visualization modes. One generic and one specific to XRF. 
 
