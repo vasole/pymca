@@ -8,6 +8,7 @@ Tutorials and Exercises
    ./xrf/strip-background/index.rst
    ./customization/index.rst
    ./hdf5/index.rst
+   ./training/quantification/index.rst
    ./training/tertiary/index.rst
    ./training/matrix/index.rst
 
@@ -44,6 +45,8 @@ Illustration of the use of the ROI Imaging tool for kinetics studies.
 
 Exercises
 ---------
+
+:doc:`./training/quantification/index`. The classical exercise to learn how to carry out XRF analysis with PyMca.
 
 :doc:`./training/tertiary/index`. Press-button exercise to show how to deal with secondary and higher order excitations in X-ray fluorescence quantification problems.
 
