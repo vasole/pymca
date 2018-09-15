@@ -40,7 +40,7 @@ XRF Analysis
    :align: middle
    :alt: Initial Fit
 
-.. |img_09| image:: ./img/quantification_08.png
+.. |img_09| image:: ./img/quantification_09.png
    :width: 400px
    :align: middle
    :alt: Final Fit
@@ -66,19 +66,17 @@ XRF Analysis
 Introduction
 ------------
 
-Many users coming to synchrotrons to perform X-ray fluorescence experiments focus on imaging the distribution of elements in the sample and they show little interest in learning how to perform quantitative X-ray fluorescence (XRF) analysis.
+Many users coming to synchrotrons to perform X-ray fluorescence experiments are interested in imaging the distribution of elements in the sample and they show little interest in learning how to perform quantitative X-ray fluorescence (XRF) analysis.
 
-In fact, the additional step to take to pass from pure qualitative to quantitative analysis is a very small one. One has to take into account that even for pure imaging experiments one needs to calibrate the spectra, to identify the different elements in the sample and, most of the times, perform some fitting in order to resolve overlapping peaks of different elements. At this point the might not be aware that the relative peak areas they are extracting may be wrong because they did not take into account the modification of the theoretical peak ratios by the conditions of the experiment.
+However, one has to take into account that even for pure imaging experiments one needs to calibrate the spectra, to identify the different elements in the sample and, most of the times, perform some fitting in order to resolve overlapping peaks of different elements. At this point they might not be aware that the relative peak areas they are extracting may be wrong because they did not take into account the modification of the theoretical peak ratios by the conditions of the experiment. Simply introducing the experimental conditions and a guestimate of the sample composition is often enough to properly extract the signal from the different elements.
 
-Simply introducing the experimental conditions and a guestimate of the sample composition is often enough to properly extract the signal from the different elements. At this point, quantitative analysis just comes as a by-product.
-
-Many X-ray fluorescence experiments at synchrotrons focus on imaging the distribution of elements in the sample. It is not uncommon that users just calibrate their spectra and proceed to identify elements and either assign regions of interest or perform  qualitative fits to obtain beautiful maps. However, they might not be aware that the relative peak areas they are extracting may be wrong because they did not take into account the modification of the theoretical peak ratios by the conditions of the experiment.
+The additional step to take to go from pure qualitative to quantitative analysis is a very small one if a minimum of care was taken (for instance recording the acquisition time and incoming flux and a known sample has been measured).
 
 
 Exercise
 --------
 
-The objective of this exercise is to get familiar with x-ray fluorescence analysis. For this, we are going to work with a spectrum frmom a thin film standard. However, we are going to make some simplifications.
+The objective of this exercise is to get familiar with x-ray fluorescence analysis. For this, we are going to work with a spectrum from a thin film standard although we'll make some simplifications.
 
 Step 1: Loading the data
 ........................
@@ -106,13 +104,13 @@ At this point you should be back to the main window without any change respect t
 
 |img_03|
 
-Under the calibration combo box, following *Active curve uses* , you will see the calibration actually applied. It should be close t0 A=-0.5, B=-0.005 and C=0. (Hint: Make sure you have selected a first order calibration when calculating the spectrum). It it isvery different your calibration is wrong and you will experience a lot of difficulties later on.
+Under the calibration combo box, following *Active curve uses* , you will see the calibration actually applied. It should be close t0 A=-0.5, B=-0.005 and C=0. (Hint: Make sure you have selected a first order calibration when calculating the calibration). If it is very different your calibration is wrong and you will experience a lot of difficulties later on.
 
 
 Step 3: Select your fit region
 ..............................
 
-At this point we have a calibrated spectrum. The rest of the exercise will use the McaAdvancedFit window.
+We already have a calibrated spectrum. The rest of the exercise will use the McaAdvancedFit window.
 
 Prior to reach that window, we should select the region of the sample we'd like to analyze. For that, whe have to zoom in that region by pressing and dragging the mouse. PyMca implements a zoom stack, you can go back by pressing the mouse right button or by pressing the the reset zoom icon.
 
@@ -154,7 +152,7 @@ To enter the experimental setup you will need to use the ATTENUATORS tab and the
 
 Concerning the FIT tab, at this point just make sure the *Stripping* check box is selected in order to have some baseline to be applied to your fit.
 
-If you have done that and you select the PEAKS tab, you will see the excitation energy in read. Below you will see the selection of the Co K lines as peaks to be fitted.
+If you have done that and you select the PEAKS tab, you will see the excitation energy in red. Below you will see the selection of the Co K lines as peaks to be fitted.
 
 |img_07|
 
@@ -162,11 +160,17 @@ Press OK to accept the changes. You will be back to the fit window and by pressi
 
 |img_08|
 
-As you see the background still needs some adjustment. You can do it via the SETUP button at the FIT tab of the fit configuration widget.
+As you see the background still needs some adjustment. You can do it via the corresponding SETUP button at the FIT tab of the fit configuration widget.
 
 You should spend some time going to the fit configuration to add peaks and back to the fit window to perform fits. WARNING: It is advisable to save your fit configuration from the fit configuration widget via the Save button. That can save you a lot of time in case of problems because you could restart form that point.
 
+You can take the image below as a encouragement.
+
+|img_09|
+
 If you need to take a look at the individual contributions of the different elements to the fitted spectrum, you can do so by selecting the *Peaks Spectrum* button.
+
+|img_10|
 
 If you want to highlight a particular element contribution, you should make the legends widget appear by pressing on Options and selecting Legends. It is not shown here in order not to make the exercise too simple (remember *No pain, no gain*).
 
@@ -193,11 +197,15 @@ PyMca can be used to calculate the expected measured spectrum given the experime
 
 If you have performed the previous steps, you just have to perform a fit and press the Matrix Spectrum button. You can see something similar to the figure below where besides the spectrum and the fit there is a spectrum corresponding to the matrix (in this case is shown in magenta but the colors may vary). In our case it is just Co what is shown.
 
+|img_11|
+
 We can use this PyMca feature to measure the thickess of layers or to estimate confidence limits. Let's take a look at the later case.
 
 We go back to the fit configuration and select the Sc K-line as element family of peaks to be fitted and we perform a fit. If we go to the CONCENTRATIONS tab we'll see that PyMca reports a concentration of the order of some ppms. The question is, can we trust that information?
 
 A simple exercise is to add Sc at different amounts to the sample composition and to ask the program to calculate the matrix spectrum. We can start with a fairly large amount like 1 % to visualize where the signal should appear. Then we just have to repeat the exercise lowering the concentration until we reach a point below which we would not trust anything. The figure below shows the matrix spectrum with 1 % of Scandium.
+
+|img_12|
 
 After performing the exercise, you will easily conclude that the concentration of Sc in the sample, if any, it is below the detection limits of our system under the exact conditions of our experiment (including sample!).
 
