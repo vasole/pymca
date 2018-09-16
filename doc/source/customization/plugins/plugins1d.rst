@@ -23,7 +23,7 @@ Overview
 .. autofunction:: getPlugin1DInstance
 
 
-Builtin 1D plugins
+Built-in 1D plugins
 ******************
 
 Background subtraction tools
