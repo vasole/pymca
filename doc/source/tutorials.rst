@@ -40,8 +40,7 @@ Illustration of the use of the ROI Imaging tool for kinetics studies.
 
 :doc:`./xrf/strip-background/index`. Description of the parameters defining your favorite background.
 
-:doc:`./customization/index` Description about how to add your own add-ons to PyMca.
-
+:doc:`./customization/index` Description about how to provide customized settings and add-ons to PyMca.
 
 Exercises
 ---------
