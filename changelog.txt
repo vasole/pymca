@@ -1,16 +1,19 @@
 VERSION 5.4.0
 -------------
 
+- Add trraining exercises to the tutorials
+
 - Support quantification accounting for live time when using HDF5 files
 
 - Add higher order excitations example to the training data
 
 - Use silx toolkit for graphics
 
-- Allow the user to select a particular Qt binding (--binding option, default
-is PyQt5)
+- Allow the user to select a particular Qt binding (--binding option, default is PyQt5)
 
 - Implement a user selectable logging level (--logging option, default is warning) 
+
+- Correct handling of repeated elements in the sample matrix
 
 - Correct readout of lispix data
 
