@@ -40,7 +40,7 @@ The goal of the exercise it to show the user one way to instruct the program to 
 Preparation
 ...........
 
-This starting point of this exercise is the same as the one of the previous exercise  `Accounting for higher order excitations <../tertiary/index.html>`_
+This starting point of this exercise is the same as the one of the previous exercise `Accounting for higher order excitations <../tertiary/index.html>`_
 
 In that exercise the reader was able to properly account for multiple order excitations in the sample. However, the actual composition of the sample was provided. A more realistic situation would be to know that we are dealing with a stainless steel sample of unknown composition. Despite the fact the spectrum itself tells us what elements are present, we are going to ask the program to perform a quantification starting from a pure Fe sample.
 
@@ -59,7 +59,7 @@ To properly configure the program we'll have to follow these steps:
 - Make sure we have selected the Consider Tertiary Excitation checkbox of the CONCENTRATIONS tab.
 - Move to the FIT tab of the configuration widget and select the Perform a fit using the selected strategy checkbox and click the SETUP button.
 
-You will be presented with the a screen similar to the screenshot below.
+You will be presented a screen similar to the screenshot below.
 
 |img2|
 
