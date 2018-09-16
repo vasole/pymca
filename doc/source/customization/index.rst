@@ -5,5 +5,5 @@ Customizing PyMca
 .. toctree::
     :maxdepth: 3
 
-    settings
+    settings/index.rst
     plugins/index.rst
