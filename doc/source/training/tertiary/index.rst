@@ -31,7 +31,7 @@ It can happen that the X-rays emitted by a sample element j excite other element
 
 |img1|
 
-Obviously it may happen that the element i excite in turn other element up to a non-negligible amount and so son. PyMca can account for this processes using two totally different approaches. One based on the use of analytical formulae and one based on the use of a Monte Carlo code.
+Obviously it may happen that the element i excite in turn other element up to a non-negligible amount and so son. PyMca can account for these processes using two totally different approaches. One based on the use of analytical formulae and one based on the use of a Monte Carlo code.
 
 The analytical approach implemented in PyMca makes use of the `formulation of D.K.G. de Boer  <https://doi.org/10.1002/xrs.1300190312>`_ that is well adapted for its use with multiple-layer samples.
 
