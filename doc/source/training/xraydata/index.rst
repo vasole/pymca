@@ -20,7 +20,7 @@ Introduction
 
 A program for X-ray fluorescence analysis needs:
 
-- A theoretical database
+- A database
 - A Physics library
 - A set of algorithms for spectrum deconvolution
 - A user interface. 
@@ -57,7 +57,7 @@ DISCLAIMER: The goal of this exercise is to show you how to update the data used
 Step 3: Modifying the data
 ..........................
 
-You need an editor not modifying line endings. That is not a problem for Linux or MacOS users.  For windows users `Notepad++ <https://notepad-plus-plus.org>`_ or `Vim for windows <https://www.vim.org>`_ should be good choices.
+You need an editor not modifying line endings. That is usually not a problem for Linux or MacOS users.  For windows users `Notepad++ <https://notepad-plus-plus.org>`_ or `Vim for windows <https://www.vim.org>`_ could be good choices.
 
 We just have to get to the line 93 of the file, replace the value 0.0932 by the value 0.128 and save the changes.
 
