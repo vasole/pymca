@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -26,13 +26,16 @@
 """
 This plugin opens a stack ROI window providing alternative views:
 
- - ICR Energy at Max.
- - ICR Energy at Min.
- - 3 energy slices
- - ICR Background
+ - Usual sum of counts in the region
+ - Channel/Energy at data Max in the region.
+ - Channel/Energy at data Min in the region.
+ - Map of the counts at the first channel of the region
+ - Map of the counts at the middle cahnnel of the region
+ - Map of the counts at the last channel of the region
+ - Background counts
 
 This window also provides a median filter tool, with a configurable filter
-width, to smooth the stack image.
+width, to get rid of outlier pixel.
 
 The mask of this plot widget is synchronized with the master stack widget.
 
