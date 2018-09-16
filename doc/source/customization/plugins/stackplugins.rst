@@ -24,7 +24,7 @@ Stack plugin API
 
 
 Built-in stack plugins
-*********************
+**********************
 
 Alternative ROI options
 +++++++++++++++++++++++

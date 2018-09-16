@@ -24,7 +24,7 @@ Overview
 
 
 Built-in 1D plugins
-******************
+*******************
 
 Background subtraction tools
 ++++++++++++++++++++++++++++
