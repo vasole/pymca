@@ -53,10 +53,10 @@ This feature is accessible from the File menu either by choosing *File->Save def
 
 The PyMca.ini file contains the default settings used by the application on start up. They can be bypassed by a fresh start of PyMca (typing *pymca -f*  from the command line or selecting "*PyMca Fresh Start* from the Windows start menu).
 
-XRF settings
+XRF Database
 ------------
 
-The subdirectory data allows the user to modify the data used by PyMca when performing X-ray fluorescence calculations. It is enough to copy to this directory any of the original ASCII files contained in the `fisx_data <https://github.com/vasole/fisx/tree/master/fisx_data>`_ directory of the fisx module to force the program to use that file. The user can then proceed to edit the file and PyMca will use the modified file the next time is started.
+The subdirectory data allows the user to modify the data used by *PyMca* when performing X-ray fluorescence calculations. It is enough to copy to this directory any of the original ASCII files contained in the `fisx_data <https://github.com/vasole/fisx/tree/master/fisx_data>`_ directory of the fisx module to force the program to use that file. The user can then proceed to edit the file and PyMca will use the modified file the next time is started.
 
 CAUTION: At this point it is not advisable to modify the EADL97_* or the XCOM_CrossSoections.dat files.
 
