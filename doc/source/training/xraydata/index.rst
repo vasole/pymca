@@ -25,7 +25,7 @@ A program for X-ray fluorescence analysis needs:
 - A set of algorithms for spectrum deconvolution
 - A user interface. 
   
-The developers of *PyMca* put the maximum degree effort into correctness and transparency but they are not at the origin of the theoretical data used by the program. The theoretical data may not be reliable in some cases (in fact we know they are not!) and, since we do not have the time to perform a systematic study or to determine them ourselves, we have made sure the program can be modified by the user in order to adapt it to other data that the user may consider more reliable.
+The developers of *PyMca* put the maximum degree of effort into correctness and transparency but they are not at the origin of the data used by the program. The theoretical data may not be reliable in some cases (in fact we know they are not!) and, since we do not have the time to perform a systematic study or to determine them ourselves, we have made sure the program can be modified by the user in order to adapt it to other data that the user may consider more reliable.
 
 Exercise
 --------
