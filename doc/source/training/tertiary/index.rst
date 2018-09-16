@@ -27,7 +27,7 @@ Accounting for higher order excitations
 Introduction
 ------------
 
-It can happen that the X-rays emitted by a sample element j excite other element i present in the sample up to a non-negligible extent as compared to the direct excitation process. The figure below ilustrates the case for secondary excitation.
+It can happen that the X-rays emitted by a sample element j excite other element i present in the sample up to a non-negligible extent as compared to the direct excitation process. The figure below illustrates the case for secondary excitation.
 
 |img1|
 
@@ -56,10 +56,10 @@ At this point we can calculate the concentrations by selecting the CONCENTRATION
 
 |img3|
 
-If XMI-MSIM is not installed, the MC Matrix Spectrum button will not be shown. If it is installed, you can also calculate the corrections using it. You just need to press the MC Matrix Spectrum button. You should get a window open where the output of the code will be shown. Under windows sometimes you need to use the 32-bit version of XMI-MSIM. The first time you run the XMI-MSIM code for a given detector and geometry it can take quite long. Subsequent runs are very fast for a Monte Carlo code. Besides showing the Monte Carlo calculated spectrum following 1 or 4 interactin in the sample, the logging window will show you the correctinons we are interested on.
+If XMI-MSIM is not installed, the MC Matrix Spectrum button will not be shown. If it is installed, you can also calculate the corrections using it. You just need to press the MC Matrix Spectrum button. You should get a window open where the output of the code will be shown. Under windows sometimes you need to use the 32-bit version of XMI-MSIM. The first time you run the XMI-MSIM code for a given detector and geometry it can take quite long. Subsequent runs are very fast for a Monte Carlo code. Besides showing the Monte Carlo calculated spectrum following 1 or 4 interactions in the sample, the logging window will show you the corrections we are interested on.
 
 |img4|
 
-Whether using the analytical formulas or the Monte Carlo approach, accounting for those corrections is as simple as selecting the appropriate option in the CONCENTRATIONS tab. You willsee how the different concentrations are corrected following the selection of the appropriate checkbox to consider secondary, tertiary or Monte Carlo correction. If you know your samples require account for secondary or higher order excitations, you should select the appropriate checkbox of the CONCENTRATIONS tab of the fit configuration as part of the fir configuration itself.
+Whether using the analytical formulas or the Monte Carlo approach, accounting for those corrections is as simple as selecting the appropriate option in the CONCENTRATIONS tab. You will see how the different concentrations are corrected following the selection of the appropriate checkbox to consider secondary, tertiary or Monte Carlo correction. If you know your samples require account for secondary or higher order excitations, you should select the appropriate checkbox of the CONCENTRATIONS tab of the fit configuration as part of the fir configuration itself.
 
 
