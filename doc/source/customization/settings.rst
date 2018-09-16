@@ -56,9 +56,11 @@ The PyMca.ini file contains the default settings used by the application on star
 XRF settings
 ------------
 
-The subdirectory data allows the user to modify the data used by PyMca when performing X-ray fluorescence calculations. It is enough to copy to this directory any of the original ASCII files contained in the data directory of the program to force the program to use that file. The user can then proceed to edit the file and PyMca will use the mofified file the next time is started.
+The subdirectory data allows the user to modify the data used by PyMca when performing X-ray fluorescence calculations. It is enough to copy to this directory any of the original ASCII files contained in the `fisx_data <https://github.com/vasole/fisx/tree/master/fisx_data>`_ directory of the fisx module to force the program to use that file. The user can then proceed to edit the file and PyMca will use the modified file the next time is started.
 
-CAUTION: Those file use unix line endings (LF) and not windows line endings (CR/LF). If you are under windows you have to make sure you do not use an editor modifying line endings. Convenient and free editors for windows are `Notepad++ <https://notepad-plus-plus.org>`_ or `Vim for windows <https://www.vim.org>`_
+CAUTION: At this point it is not advisable to modify the EADL97_* or the XCOM_CrossSoections.dat files.
+
+CAUTION: Those files use unix line endings (LF) and not windows line endings (CR/LF). If you are under windows you have to make sure you do not use an editor modifying line endings. Convenient and free editors for windows are `Notepad++ <https://notepad-plus-plus.org>`_ or `Vim for windows <https://www.vim.org>`_
 
 User Plugins
 ------------

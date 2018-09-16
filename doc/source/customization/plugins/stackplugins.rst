@@ -23,8 +23,8 @@ Stack plugin API
 .. autofunction:: getStackPluginInstance
 
 
-Builtin stack plugins
-*********************
+Built-in stack plugins
+**********************
 
 Alternative ROI options
 +++++++++++++++++++++++
