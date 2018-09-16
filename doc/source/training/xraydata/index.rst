@@ -39,7 +39,7 @@ The L1-shell fluorescence yields are stored in the `LShellConstants.dat <https:/
 
 As explained in the `Customizing PyMca section <../../customization/settings/index.html>`_, we have to download that file and locate it into the data directory of the settings folder. You can do it by opening the `link <https://github.com/vasole/fisx/blob/master/fisx_data/LShellConstants.dat>`_ above in your browser, clicking on the button with the text Raw shown at the right side of the page and saving it to the mentioned directory.
 
-Step 2: Initial Verification
+Step 2: Initial verification
 ............................
 
 In order to check the data *PyMca* is using, we can open the *Elements Info* tool available from the *Tools* option of the menu of the *PyMca* main window.
@@ -61,7 +61,7 @@ You need an editor not modifying line endings. That is not a problem for Linux o
 
 We just have to get to the line 93 of the file, replace the value 0.0932 by the value 0.128 and save the changes.
 
-Step 4: Final Verification
+Step 4: Final verification
 ..........................
 
 We close *PyMca* if we did not do it yet and we start it again.
