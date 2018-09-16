@@ -14,7 +14,7 @@ The proper way to cite PyMca is:
 
 V.A. Sole, E. Papillon, M. Cotte, Ph. Walter, J. Susini, A multiplatform code for the analysis of energy-dispersive X-ray fluorescence spectra, Spectrochim. Acta Part B 62 (2007) 63-68.
 
-Due to the copyright transfer to the publisher, the online availability of the article will depend on your subscription to ScienceDirect. The article doi is 10.1016/j.sab.2006.12.002. The abstract should be available in any case.
+Due to the copyright transfer to the publisher, the online availability of the article will depend on your subscription to ScienceDirect. The article `doi is 10.1016/j.sab.2006.12.002 <https://www.doi.org/10.1016/j.sab.2006.12.002>`_. The abstract should be available in any case.
 
 The current version features:
 
