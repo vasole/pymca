@@ -52,4 +52,4 @@ Exercises
 
 :doc:`./training/matrix/index`. This exercise shows the user one way to tell the program how to automatically update the sample composition.
 
-:doc:`./training/xraydata/index`. Exercise to teach the use how to modify the theoretical data used by PyMca.
+:doc:`./training/xraydata/index`. Exercise to teach the user how to modify the theoretical data used by PyMca.
