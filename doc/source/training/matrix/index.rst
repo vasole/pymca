@@ -40,7 +40,7 @@ The goal of the exercise it to show the user one way to instruct the program to 
 Preparation
 ...........
 
-This starting point of this exercise is the same as the one of the previous exercise  `Accounting for higher order excitations`_.
+This starting point of this exercise is the same as the one of the previous exercise  `Accounting for higher order excitations <../tertiary/index.html>`_
 
 In that exercise the reader was able to properly account for multiple order excitations in the sample. However, the actual composition of the sample was provided. A more realistic situation would be to know that we are dealing with a stainless steel sample of unknown composition. Despite the fact the spectrum itself tells us what elements are present, we are going to ask the program to perform a quantification starting from a pure Fe sample.
 
