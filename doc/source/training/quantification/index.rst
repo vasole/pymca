@@ -137,12 +137,12 @@ If you now click on top of a peak, PyMca will show you the peaks that can be ass
 
 You will be presented with a table of elements, peak families and rates within the family of all the elements emitting x-ray within the specified energy threshold around the selected energy.
 
-As a rule of thumb, you should aim at identifying the most intense peaks. Why? Because that can help you decide to what element belongs. For instance, the L3 lines are usually more intense than the L2 lines or L1 lines. If the program proposes you the L2 lines of one element and the L3 lines of other element, there are strong chances of having the element with the L3 lines because if it would be the element with the L2 lines there should be a stronger peak in the spectrum corresponding to the L3 lines of that element. Of course, that is to be considered as a hint. It may well happen that the intense L3 lines is hidden beneath the peak of another already identified element...
+As a rule of thumb, you should aim at identifying the most intense peaks. Why? Because that can help you decide to what element they belong. For instance, the L3 lines are usually more intense than the L2 lines or L1 lines. If the program proposes you the L2 lines of one element and the L3 lines of other element, there are strong chances of having the element with the L3 lines because if it would be the element with the L2 lines there should be a stronger peak somewhere in the spectrum corresponding to the L3 lines of that element. Of course, that is to be considered as a hint. It may well happen that the intense L3 lines are hidden beneath the peak of another already identified element...
 
 Step 5: Fit Configuration
 .........................
 
-This example would allow you to start adding peaks families to be fitted immediately because the sample is relatively thin and matrix effects are small. However, you should aim at doing the things properly and enter as much information as possible into the fit configuration.
+In this example you could already start adding peaks families to be fitted immediately because the sample is relatively thin and matrix effects are small. However, you should aim at doing the things properly and enter as much information as possible into the fit configuration.
 
 The experimental conditions are excitation energy around 17.5 keV, Si detector 450 micron thickness and Be window of 8 micron thickness. For the sake of simplicity assume the sample is 100 micron water and contains 500 ppm of Co. Incident beam angle is 0.1 degrees and fluorescence beam angle is 90 degrees. There is an air path between sample and detector window of 2 mm.
 
