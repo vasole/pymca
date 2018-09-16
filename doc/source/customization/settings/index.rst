@@ -35,7 +35,7 @@ MacOS, Linux,...
 
 The settings directory is created in the user $HOME directory.
 
-The name of the directory was PyMca in older versionf of the program. Recent versionstry to use the more standard way of using a .pymca directory. Nevertheless, if they find a PyMca directory at he $HOME level, they will keep using it.
+The name of the directory was PyMca in older versions of the program. Recent versionstry to use the more standard way of using a .pymca directory. Nevertheless, if they find a PyMca directory at he $HOME level, they will keep using it.
 
 
 GUI settings
