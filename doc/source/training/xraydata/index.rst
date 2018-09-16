@@ -4,12 +4,12 @@ Customizing X-Ray Data
 .. |img_01| image:: ./img/xraydata_01.png
    :width: 400px
    :align: middle
-   :alt: XRF Spectrum
+   :alt: Initial data
 
 .. |img_02| image:: ./img/xraydata_02.png
    :width: 400px
    :align: middle
-   :alt: Calibration Widget
+   :alt: Final data
 
 
 .. contents::
