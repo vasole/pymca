@@ -117,15 +117,21 @@ def getMultilayerFluorescence(multilayerSample,
                               elementsFromMatrix=False,
                               secondary=None,
                               materials=None,
-                              secondaryCalculationLimit=None):
+                              secondaryCalculationLimit=None,
+                              cache=1):
 
     if secondary is None:
         secondary=0
     if secondaryCalculationLimit is None:
         secondaryCalculationLimit=0.0
+    if cache:
+        cache = 1
+    else:
+        cache = 0
 
-    _logger.debug("Library actually using secondary = %s", secondary)
-    _logger.debug("Library using secondary limit = %s", secondaryCalculationLimit)
+    _logger.info("Library requested to use secondary = %s", secondary)
+    _logger.info("Library requested to use secondary limit = %s", secondaryCalculationLimit)
+    _logger.info("Library requested to use cache = %d", cache)
 
     global xcom
     if xcom is None:
@@ -243,36 +249,61 @@ def getMultilayerFluorescence(multilayerSample,
     if elementsFromMatrix:
         elementsList = matrixElementsList
 
-    # enabling the cascade cache gets a (miserable) 15 % speed up
-    _logger.debug("Using cascade cache")
     t0 = time.time()
+    if cache:
+        # enabling the cascade cache gets a (miserable) 15 % speed up
+        _logger.debug("FisxHelper Using cache")
+    else:
+        _logger.debug("FisxHelper Not using cache")
 
     treatedElements = []
     emittedLines = []
-    for layer in multilayerSample:
-        composition = xcom.getComposition(layer[0])
-        for element in composition.keys():
-            xcom.setElementCascadeCacheEnabled(element, 1)
-            if hasattr(xcom, "updateCache"):
-                if element not in treatedElements:
-                    lines = xcom.getEmittedXRayLines(element)
-                    sampleEnergies = [lines[key] for key in lines]
-                    for e in sampleEnergies:
-                        if e not in emittedLines:
-                            emittedLines.append(e)
-                    treatedElements.append(element)
-
-    if hasattr(xcom, "updateCache"):
-        _logger.debug("Filling atenuation cache")
-        composition = detectorInstance.getComposition(xcom)
-        for element in composition.keys():
-            xcom.setElementCascadeCacheEnabled(element, 1)
-            if element not in treatedElements:
+    for actualElement in actualElementsList:
+        element = actualElement.split()[0]
+        if element not in treatedElements:
+            if cache:
                 lines = xcom.getEmittedXRayLines(element)
                 sampleEnergies = [lines[key] for key in lines]
                 for e in sampleEnergies:
                     if e not in emittedLines:
                         emittedLines.append(e)
+            treatedElements.append(element)
+
+    for layer in multilayerSample:
+        composition = xcom.getComposition(layer[0])
+        for element in composition.keys():
+            if element not in treatedElements:
+                if cache:
+                    lines = xcom.getEmittedXRayLines(element)
+                    sampleEnergies = [lines[key] for key in lines]
+                    for e in sampleEnergies:
+                        if e not in emittedLines:
+                            emittedLines.append(e)
+                treatedElements.append(element)
+
+    if attenuatorList is not None:
+        for layer in attenuatorList:
+            composition = xcom.getComposition(layer[0])
+            for element in composition.keys():
+                if element not in treatedElements:
+                    if cache:
+                        lines = xcom.getEmittedXRayLines(element)
+                        sampleEnergies = [lines[key] for key in lines]
+                        for e in sampleEnergies:
+                            if e not in emittedLines:
+                                emittedLines.append(e)
+                    treatedElements.append(element)
+
+    if hasattr(xcom, "updateCache"):
+        composition = detectorInstance.getComposition(xcom)
+        for element in composition.keys():
+            if element not in treatedElements:
+                if cache:
+                    lines = xcom.getEmittedXRayLines(element)
+                    sampleEnergies = [lines[key] for key in lines]
+                    for e in sampleEnergies:
+                        if e not in emittedLines:
+                            emittedLines.append(e)
                 treatedElements.append(element)
 
         for element in actualElementsList:
@@ -282,28 +313,40 @@ def getMultilayerFluorescence(multilayerSample,
         for element in treatedElements:
             # this limit seems overestimated but still reasonable
             if xcom.getCacheSize(element) > 5000:
-                _logger.info("Clearing cache")
+                _logger.info("Clearing cache for %s" % element)
                 xcom.clearCache(element)
-            xcom.updateCache(element, energyList)
-            xcom.updateCache(element, emittedLines)
-            xcom.setCacheEnabled(element, 1)
-            _logger.debug("Element %s cache size = %d",
+            if cache:
+                _logger.info("Updating cache for %s" % element)
+                xcom.updateCache(element, energyList)
+                xcom.updateCache(element, emittedLines)
+            else:
+                # should I clear the cache to be sure?
+                # for the time being, yes.
+                _logger.info("No cache. Clearing cache for %s" % element)
+                xcom.clearCache(element)
+            xcom.setCacheEnabled(element, cache)
+            _logger.info("Element %s cache size = %d",
                           element, xcom.getCacheSize(element))
-
         for element in actualElementsList:
-            xcom.setElementCascadeCacheEnabled(element.split()[0], 1)
+            xcom.setElementCascadeCacheEnabled(element.split()[0], cache)
 
     if hasattr(xcom, "updateEscapeCache") and \
        hasattr(xcom, "setEscapeCacheEnabled"):
         if detector is not None:
             for element in actualElementsList:
-                lines = xcom.getEmittedXRayLines(element.split()[0])
-                lines_energy = [lines[key] for key in lines]
-                for e in lines_energy:
-                    if e not in emittedLines:
-                        emittedLines.append(e)
-            xcom.setEscapeCacheEnabled(1)
-            xcom.updateEscapeCache(detectorInstance.getComposition(xcom),
+                if cache:
+                    lines = xcom.getEmittedXRayLines(element.split()[0])
+                    lines_energy = [lines[key] for key in lines]
+                    for e in lines_energy:
+                        if e not in emittedLines:
+                            emittedLines.append(e)
+            if not cache:
+                if hasattr(xcom, "clearEscapeCache"):
+                    # the method is there but nor wrapped yet
+                    xcom.clearEscapeCache()
+            xcom.setEscapeCacheEnabled(cache)
+            if cache:
+                xcom.updateEscapeCache(detectorInstance.getComposition(xcom),
                             emittedLines,
                             energyThreshold=detectorInstance.getEscapePeakEnergyThreshold(), \
                             intensityThreshold=detectorInstance.getEscapePeakIntensityThreshold(), \
@@ -312,7 +355,7 @@ def getMultilayerFluorescence(multilayerSample,
                             thickness=0)  # No escape by the back considered yet
     else:
         _logger.debug("NOT CALLING UPDATE CACHE")
-    _logger.debug("C++ elapsed filling cache = %s",
+    _logger.info("C++ elapsed filling cache = %s",
                   time.time() - t0)
         
     _logger.debug("Calling getMultilayerFluorescence")
@@ -323,8 +366,7 @@ def getMultilayerFluorescence(multilayerSample,
                             useGeometricEfficiency=useGeometricEfficiency,
                             useMassFractions=elementsFromMatrix,
                             secondaryCalculationLimit=secondaryCalculationLimit)
-    _logger.debug("C++ elapsed TWO = %s", time.time() - t0)
-
+    _logger.info("C++ elapsed TWO = %s", time.time() - t0)
     if not elementsFromMatrix:
         # If one element was present in one layer and not on others, PyMca only
         # calculated contributions from the layers in which the element was
