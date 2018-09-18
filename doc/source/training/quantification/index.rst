@@ -66,9 +66,9 @@ XRF Analysis
 Introduction
 ------------
 
-Many users coming to synchrotrons to perform X-ray fluorescence experiments are interested in imaging the distribution of elements in the sample and they show little interest in learning how to perform quantitative X-ray fluorescence (XRF) analysis.
+Many synchrotron users performing X-ray fluorescence experiments are interested in imaging the distribution of elements in their samples. However, they tend to show little interest in learning how to perform quantitative X-ray fluorescence (XRF) analysis and that can lead to the obtention of wrong elemental distribution maps.
 
-However, one has to take into account that even for pure imaging experiments one needs to calibrate the spectra, to identify the different elements in the sample and, most of the times, perform some fitting in order to resolve overlapping peaks of different elements. At this point they might not be aware that the relative peak areas they are extracting may be wrong because they did not take into account the modification of the theoretical peak ratios by the conditions of the experiment. Simply introducing the experimental conditions and a guestimate of the sample composition is often enough to properly extract the signal from the different elements.
+One has to take into account that even for pure imaging experiments one needs to calibrate the spectra, to identify the different elements in the sample and, most of the times, perform some fitting in order to resolve overlapping peaks of different elements. At this point users might not be aware that the relative peak areas they are extracting may be wrong because they did not take into account the modification of the database peak ratios by the conditions of the experiment. Simply introducing the experimental conditions and a guestimate of the sample composition is often enough to properly extract the signal from the different elements.
 
 The additional step to take to go from pure qualitative to quantitative analysis is a very small one if a minimum of care was taken (for instance recording the acquisition time and incoming flux and a known sample has been measured).
 
