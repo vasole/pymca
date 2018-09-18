@@ -19,9 +19,9 @@ Introduction
 A program for X-ray fluorescence analysis needs:
 
 - A database
-- A Physics library
+- A Physics engine
 - A set of algorithms for spectrum deconvolution
-- A user interface. 
+- A user interface 
   
 The developers of *PyMca* put the maximum degree of effort into correctness and transparency but they are not at the origin of the data used by the program. The theoretical data may not be reliable in some cases (in fact we know they are not!) and, since we do not have the time to perform a systematic study or to determine them ourselves, we have made sure the program can be modified by the user in order to adapt it to other data that the user may consider more reliable.
 
@@ -46,9 +46,9 @@ We can click on the atomic symbol of Pb in order to display the information used
 
 |img_01|
 
-We should find a value of the L1-shell fluorescence yield of 0.0932 obtained by interpolating the theoretical values in TABLE I of the article by M.H. Chen, B. Crasemann, H. Mark in *Widths and fluorescence yields of atomic L-shell vacancy states Physical Review A volume 24 number 1 (1981) 177-182* 
+We should find a value of of 0.0932 for the lead L1-shell fluorescence yield. This value was obtained by interpolating the theoretical values in TABLE I from the article by M.H. Chen, B. Crasemann, H. Mark in *Widths and fluorescence yields of atomic L-shell vacancy states Physical Review A volume 24 number 1 (1981) 177-182* 
 
-We are going to update that value with the value 0.128 recommended in Table 2 of the article by J.L. Campbell *Fluorescence yields and Coster-Kronig probabilities for the atomic L subshells. Part II: The L1 subshell revisited* with `doi:10.1016/j.adt.2008.08.002 <https://dx.doi.org/10.1016/j.adt.2008.08.002>`_
+We are going to update that value with the value 0.128 recommended in Table 2 from the article by J.L. Campbell *Fluorescence yields and Coster-Kronig probabilities for the atomic L subshells. Part II: The L1 subshell revisited* with `doi:10.1016/j.adt.2008.08.002 <https://dx.doi.org/10.1016/j.adt.2008.08.002>`_
 
 DISCLAIMER: The goal of this exercise is to show you how to update the data used by the application. We are not endorsing the use of the data provided by Campbell because we have not made an exhaustive study for all the elements. Despite that, we have to say that Campbell has performed such systematic studies and the value Campbell recommends for lead is indeed much closer to the value used in our own research than the theoretical one. You SHOULD verify yourself if, when calculating concentrations using the L1, L2 and L3 lines of Pb, you find a) a systematic discrepancy of the value of the L1-derived concentrations respect to the concentration values derived from the L2 and L3 shells and b) if you can correct the discrepancy by changing the L1-shell fluorescence yield of lead.
 
