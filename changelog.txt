@@ -1,7 +1,7 @@
 VERSION 5.4.0
 -------------
 
-- Add trraining exercises to the tutorials
+- Add training exercises to the tutorials
 
 - Support quantification accounting for live time when using HDF5 files
 
