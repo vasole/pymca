@@ -13,7 +13,7 @@ Tutorials and Exercises
    ./training/matrix/index.rst
    ./training/xraydata/index.rst
 
-Things learned by practice usually require a greater effort than just reading or listening and tend to be better retained. Therefore we have prepared some `Exercises`_  (practice) to complement the usual set of `Tutorials`_ (reading) teaching different aspects of *PyMca*.
+Things learned by practice usually require a greater effort than just reading or listening and tend to be better retained. Therefore we have prepared some `Exercises`_ to complement the usual set of `Tutorials`_ teaching different aspects of *PyMca*.
 
 Their combination should provide a good starting point to use the program.
 
