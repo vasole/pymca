@@ -145,8 +145,7 @@ MATPLOTLIB = True
 try:
     import pyopencl
     OPENCL = True
-    from PyMca5.PyMcaMath import sift
-except :
+except:
     OPENCL = False
 
 if sys.platform.lower().startswith("linux"):
@@ -170,7 +169,7 @@ elif h5py.version.version < '2.0.0':
                 'h5py._conv', 'h5py._proxy']
 else:
     H5PY_SPECIAL = True
-includes = []
+    includes = []
 
 import fisx
 FISX = True
@@ -182,14 +181,16 @@ includes.append('encodings.latin_1')
 import PyMca5
 import hdf5plugin
 import silx
+import pkg_resources
 SILX = True
 
 special_modules = [os.path.dirname(PyMca5.__file__),
-                   os.path.dirname(matplotlib.__file__),                   
+                   os.path.dirname(matplotlib.__file__),
                    os.path.dirname(ctypes.__file__),
                    os.path.dirname(fisx.__file__),
                    os.path.dirname(hdf5plugin.__file__),
-                   os.path.dirname(silx.__file__)]
+                   os.path.dirname(silx.__file__),
+                   os.path.dirname(pkg_resources.__file__)]
 
 try:
     import tomogui
