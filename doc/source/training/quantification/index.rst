@@ -72,7 +72,6 @@ One has to take into account that even for pure imaging experiments one needs to
 
 The additional step to take to go from pure qualitative to quantitative analysis is a very small one if a minimum of care was taken (for instance recording the acquisition time and incoming flux and a known sample has been measured).
 
-
 Exercise
 --------
 
