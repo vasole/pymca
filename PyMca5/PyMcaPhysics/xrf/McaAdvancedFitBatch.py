@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -221,8 +221,11 @@ class McaAdvancedFitBatch(object):
                 if h5py.is_hdf5(inputfile):
                     self._HDF5 = True
                     try:
+                        # if (len(self._filelist) == 1) && (self.mcaStep > 1)
+                        # it should attempt to avoid loading  many times
+                        # the stack into memory in case of multiple processes
                         return HDF5Stack1D.HDF5Stack1D(self._filelist,
-                                                      self.selection)
+                                                       self.selection)
                     except:
                         raise
             
