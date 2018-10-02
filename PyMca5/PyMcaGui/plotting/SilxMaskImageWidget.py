@@ -407,7 +407,7 @@ class SaveToolButton(qt.QToolButton):
 
 
 class MedianParameters(qt.QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, use_conditional=False):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QHBoxLayout(self)
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
@@ -419,8 +419,18 @@ class MedianParameters(qt.QWidget):
         self.widthSpin.setMaximum(99)
         self.widthSpin.setValue(1)
         self.widthSpin.setSingleStep(2)
+        if use_conditional:
+            self.conditionalLabel = qt.QLabel(self)
+            self.conditionalLabel.setText("Conditional:")
+            self.conditionalSpin = qt.QSpinBox(self)
+            self.conditionalSpin.setMinimum(0)
+            self.conditionalSpin.setMaximum(1)
+            self.conditionalSpin.setValue(0)
         self.mainLayout.addWidget(self.label)
         self.mainLayout.addWidget(self.widthSpin)
+        if use_conditional:
+            self.mainLayout.addWidget(self.conditionalLabel)
+            self.mainLayout.addWidget(self.conditionalSpin)
 
 
 class SilxMaskImageWidget(qt.QMainWindow):
@@ -508,11 +518,15 @@ class SilxMaskImageWidget(qt.QMainWindow):
 
         # median filter widget
         self._medianParameters = {'row_width': 1,
-                                  'column_width': 1}
-        self._medianParametersWidget = MedianParameters(self)
+                                  'column_width': 1,
+                                  'conditional': 0}
+        self._medianParametersWidget = MedianParameters(self,
+                                                        use_conditional=True)
         self._medianParametersWidget.widthSpin.setValue(1)
         self._medianParametersWidget.widthSpin.valueChanged[int].connect(
                      self._setMedianKernelWidth)
+        self._medianParametersWidget.conditionalSpin.valueChanged[int].connect(
+                     self._setMedianConditionalFlag)
         layout.addWidget(self._medianParametersWidget)
 
         self.setCentralWidget(centralWidget)
@@ -679,8 +693,12 @@ class SilxMaskImageWidget(qt.QMainWindow):
         self._medianParameters['row_width'] = kernelSize[0]
         self._medianParameters['column_width'] = kernelSize[1]
         self._medianParametersWidget.widthSpin.setValue(int(kernelSize[0]))
-        current = self.slider.value()
-        self.showImage(current)
+        self.showImage(self.slider.value())
+
+    def _setMedianConditionalFlag(self, value):
+        self._medianParameters['conditional'] = int(value)
+        self._medianParametersWidget.conditionalSpin.setValue(int(value))
+        self.showImage(self.slider.value())
 
     def _subtractBackground(self):
         """When background button is clicked, this causes showImage to
@@ -887,8 +905,10 @@ class SilxMaskImageWidget(qt.QMainWindow):
         data = copy.copy(data)
         if max(self._medianParameters['row_width'],
                self._medianParameters['column_width']) > 1:
-            data = medfilt2d(data, [self._medianParameters['row_width'],
-                                    self._medianParameters['column_width']])
+            data = medfilt2d(data,
+                             [self._medianParameters['row_width'],
+                              self._medianParameters['column_width']],
+                             conditional=self._medianParameters['conditional'])
         return data
 
     def setImages(self, images, labels=None,
