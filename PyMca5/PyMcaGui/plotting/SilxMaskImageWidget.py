@@ -49,6 +49,7 @@ else:
 from PyMca5.PyMcaGui.plotting.PyMca_Icons import IconDict
 from PyMca5.PyMcaIO import ArraySave
 from PyMca5.PyMcaCore import PyMcaDirs
+from PyMca5.PyMcaPlugins import MotorInfoWindow
 
 try:
     from PyMca5.PyMcaGui.pymca import QPyMcaMatplotlibSave
@@ -529,6 +530,17 @@ class SilxMaskImageWidget(qt.QMainWindow):
                      self._setMedianConditionalFlag)
         layout.addWidget(self._medianParametersWidget)
 
+        # motor positions (hidden by default)
+        self.motorPositionsWidget = MotorInfoWindow.MotorInfoDialog(self,
+                                                                    [""],
+                                                                    [{}])
+        self.motorPositionsWidget.setMaximumHeight(100)
+        self.plot.sigPlotSignal.connect(self._updateMotors)
+        self.motorPositionsWidget.hide()
+        self._motors_first_update = True
+
+        layout.addWidget(self.motorPositionsWidget)
+
         self.setCentralWidget(centralWidget)
 
         # Init actions
@@ -635,6 +647,10 @@ class SilxMaskImageWidget(qt.QMainWindow):
         self._bg_deltaXY = []
         self._bg_origins = []
 
+    def setMotorPositionsVisible(self, flag):
+        """Show or hide motor positions widget"""
+        self.motorPositionsWidget.setVisible(flag)
+
     def sizeHint(self):
         return qt.QSize(500, 400)
 
@@ -709,6 +725,69 @@ class SilxMaskImageWidget(qt.QMainWindow):
         whose label ends with 'background'."""
         current = self.getCurrentIndex()
         self.showImage(current)
+
+    def _updateMotors(self, ddict):
+        if not ddict["event"] == "mouseMoved":
+            return
+
+        motorsValuesAtCursor = self._getPositionersFromXY(ddict["x"],
+                                                          ddict["y"])
+        if motorsValuesAtCursor is None:
+            return
+
+        self.motorPositionsWidget.table.updateTable(
+                legList=[self.plot.getActiveImage().getLegend()],
+                motList=[motorsValuesAtCursor])
+
+        if self._motors_first_update:
+            self._select_motors()
+            self._motors_first_update = False
+
+    def _select_motors(self):
+        """This methods sets the motors in the comboboxes when the widget
+        is first initialized."""
+        for i, combobox in enumerate(self.motorPositionsWidget.table.header.boxes):
+            # First item (index 0) in combobox is "", so first motor name is at index 1.
+            # First combobox in header.boxes is at index 1 (boxes[0] is None).
+            if i == 0:
+                continue
+            if i < combobox.count():
+                combobox.setCurrentIndex(i)
+
+    def _getPositionersFromXY(self, x, y):
+        """Return positioner values for a stack pixel identified
+        by it's (x, y) coordinates.
+        """
+        activeImage = self.plot.getActiveImage()
+        if activeImage is None:
+            return None
+        info = activeImage.getInfo()
+        if not info or not isinstance(info, dict):
+            return None
+        positioners = info.get("positioners", {})
+
+        nRows, nCols = activeImage.getData().shape
+        xScale, yScale = activeImage.getScale()
+        r, c = convertToRowAndColumn(
+                x, y,
+                shape=(nRows, nCols),
+                xScale=xScale,
+                yScale=yScale,
+                safe=True)
+
+        idx1d = r * nCols + c
+        positionersAtIdx = {}
+
+        for motorName, motorValues in positioners.items():
+            if numpy.isscalar(motorValues):
+                positionersAtIdx[motorName] = motorValues
+            elif len(motorValues.shape) == 1:
+                positionersAtIdx[motorName] = motorValues[idx1d]
+            else:
+                positionersAtIdx[motorName] = motorValues.reshape((-1,))[idx1d]
+
+        return positionersAtIdx
+
 
     def setBackgroundActionVisible(self, visible):
         """Set visibility of the background toolbar button.

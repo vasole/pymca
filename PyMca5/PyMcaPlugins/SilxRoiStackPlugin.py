@@ -145,6 +145,7 @@ class SilxRoiStackPlugin(StackPluginBase.StackPluginBase):
             self.widget.setMedianFilterWidgetVisible(True)
             self.widget.setBackgroundActionVisible(True)
             self.widget.setProfileToolbarVisible(True)
+            self.widget.setMotorPositionsVisible(True)
             self.widget.sigMaskImageWidget.connect(self.mySlot)
 
         # Show
