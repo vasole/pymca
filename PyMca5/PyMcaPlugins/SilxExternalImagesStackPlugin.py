@@ -273,6 +273,8 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
         h = delta[1] * image_shape[0]
         w = delta[0] * image_shape[1]
 
+        stack_images, stack_names = self.getStackROIImagesAndNames()
+
         for bgimg, bglabel in zip(imagelist, imagenames):
             if bglabel not in self.windows:
                 self.windows[bglabel] = SilxExternalImagesWindow.SilxExternalImagesWindow()
@@ -281,8 +283,8 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
 
             self.windows[bglabel].show()
             # add the stack image for mask operation
-            self.windows[bglabel].setImages([self.getStackOriginalImage()],
-                                            labels=["stack data"],
+            self.windows[bglabel].setImages([stack_images[0]],
+                                            labels=[stack_names[0]],
                                             origin=origin, width=w, height=h)
             self.windows[bglabel].plot.getImage("current").setAlpha(0)
 
