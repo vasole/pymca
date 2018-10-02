@@ -90,11 +90,15 @@ class SilxRoiStackPlugin(StackPluginBase.StackPluginBase):
         image_shape = self._getStackImageShape()
         origin, scale = self._getStackOriginScale()
 
+        info = {"positioners": self.getStackInfo().get("positioners", {})}
+        infos = [info for _img in images]
+
         h = scale[1] * image_shape[0]
         w = scale[0] * image_shape[1]
 
         self.widget.setImages(images, labels=names,
-                              origin=origin, width=w, height=h)
+                              origin=origin, width=w, height=h,
+                              infos=infos)
 
         self.widget.setSelectionMask(self.getStackSelectionMask())
 

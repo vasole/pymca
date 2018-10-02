@@ -768,11 +768,12 @@ class SilxMaskImageWidget(qt.QMainWindow):
 
         nRows, nCols = activeImage.getData().shape
         xScale, yScale = activeImage.getScale()
+        xOrigin, yOrigin = activeImage.getOrigin()
         r, c = convertToRowAndColumn(
                 x, y,
                 shape=(nRows, nCols),
-                xScale=xScale,
-                yScale=yScale,
+                xScale=(xOrigin, xScale),
+                yScale=(yOrigin, yScale),
                 safe=True)
 
         idx1d = r * nCols + c
@@ -976,7 +977,8 @@ class SilxMaskImageWidget(qt.QMainWindow):
                            origin=self._origin,
                            scale=self._deltaXY,
                            replace=False,
-                           z=0)
+                           z=0,
+                           info=self._infos[index])
         self.plot.setActiveImage("current")
         self.slider.setValue(index)
 
@@ -991,7 +993,8 @@ class SilxMaskImageWidget(qt.QMainWindow):
         return data
 
     def setImages(self, images, labels=None,
-                  origin=None, height=None, width=None):
+                  origin=None, height=None, width=None,
+                  infos=None):
         """Set the list of data images.
 
         All images share the same origin, width and height.
@@ -1006,12 +1009,16 @@ class SilxMaskImageWidget(qt.QMainWindow):
             image height in number of pixels.
         :param width: Image width in X axis units. If None, use the
             image width in number of pixels.
+        :param infos: List of info dicts, one per image, or None.
         """
         self._images = images
         if labels is None:
             labels = ["Image %d" % (i + 1) for i in range(len(images))]
+        if infos is None:
+            infos = [{} for _img in images]
 
         self._labels = labels
+        self._infos = infos
 
         height_pixels, width_pixels = images[0].shape[0:2]
         height = height or height_pixels
