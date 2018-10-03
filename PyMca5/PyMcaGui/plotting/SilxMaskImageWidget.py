@@ -647,10 +647,6 @@ class SilxMaskImageWidget(qt.QMainWindow):
         self._bg_deltaXY = []
         self._bg_origins = []
 
-    def setMotorPositionsVisible(self, flag):
-        """Show or hide motor positions widget"""
-        self.motorPositionsWidget.setVisible(flag)
-
     def sizeHint(self):
         return qt.QSize(500, 400)
 
@@ -789,7 +785,7 @@ class SilxMaskImageWidget(qt.QMainWindow):
 
         return positionersAtIdx
 
-
+    # widgets visibility toggling
     def setBackgroundActionVisible(self, visible):
         """Set visibility of the background toolbar button.
 
@@ -810,6 +806,10 @@ class SilxMaskImageWidget(qt.QMainWindow):
         :param visible: True to show widget, False to hide it.
         """
         self._medianParametersWidget.setVisible(visible)
+
+    def setMotorPositionsVisible(self, flag):
+        """Show or hide motor positions widget"""
+        self.motorPositionsWidget.setVisible(flag)
 
     def setAlphaSliderVisible(self, visible):
         """Set visibility of the transparency slider widget in the right
