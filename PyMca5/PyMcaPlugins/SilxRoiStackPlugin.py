@@ -37,6 +37,14 @@ This plugin opens a stack ROI window providing alternative views:
 The background image can be subtracted from the other images to show
 a net count.
 
+If positioner data is available, the values corresponding to the mouse cursor
+position in the plot are displayed in a widget underneath the plot.
+
+If an external background images, such as a photo of the sample, has been
+loaded using the external images plugin, it is displayed on the background
+layer. A slider allows to increase the transparency of the foreground data
+image to view this background image.
+
 This window also provides a median filter tool, with a configurable filter
 width, to smooth the stack image.
 
