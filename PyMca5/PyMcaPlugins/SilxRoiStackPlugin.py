@@ -91,6 +91,11 @@ class SilxRoiStackPlugin(StackPluginBase.StackPluginBase):
         origin, scale = self._getStackOriginScale()
 
         info = {"positioners": self.getStackInfo().get("positioners", {})}
+        if info["positioners"]:
+            self.widget.setMotorPositionsVisible(True)
+        else:
+            self.widget.setMotorPositionsVisible(False)
+
         infos = [info for _img in images]
 
         h = scale[1] * image_shape[0]
@@ -164,7 +169,6 @@ class SilxRoiStackPlugin(StackPluginBase.StackPluginBase):
             self.widget.setMedianFilterWidgetVisible(True)
             self.widget.setBackgroundActionVisible(True)
             self.widget.setProfileToolbarVisible(True)
-            self.widget.setMotorPositionsVisible(True)
             self.widget.setAlphaSliderVisible(True)
             self.widget.sigMaskImageWidget.connect(self.mySlot)
 
