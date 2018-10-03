@@ -1067,9 +1067,9 @@ class SilxMaskImageWidget(qt.QMainWindow):
         :param origins: Images origins: list of coordinate tuples (x, y)
             of sample located at (row, column) = (0, 0).
             If None, use (0., 0.) for all images.
-        :param height: Image height in Y axis units. If None, use the
+        :param heights: Image height in Y axis units. If None, use the
             image height in number of pixels.
-        :param width: Image width in X axis units. If None, use the
+        :param widths: Image width in X axis units. If None, use the
             image width in number of pixels.
         """
         self._bg_images = images
@@ -1100,9 +1100,9 @@ class SilxMaskImageWidget(qt.QMainWindow):
         self._updateBgScales(heights, widths)
 
         for bg_deltaXY, bg_orig, label, img in zip(self._bg_deltaXY,
-                                                 self._bg_origins,
-                                                 labels,
-                                                 images):
+                                                  self._bg_origins,
+                                                  labels,
+                                                  images):
             # FIXME: we use z=-1 because the mask is always on z=1,
             # so the data must be on z=0. To be fixed after the silx mask
             # is improved

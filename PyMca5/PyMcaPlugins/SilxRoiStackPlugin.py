@@ -102,6 +102,19 @@ class SilxRoiStackPlugin(StackPluginBase.StackPluginBase):
 
         self.widget.setSelectionMask(self.getStackSelectionMask())
 
+        bgimages = self.getStackInfo().get("bgimages", {})
+
+        if bgimages:
+            datas, labels, origins, heights, widths = [], [], [], [], []
+            for lab, bgimg in bgimages.items():
+                labels.append(lab)
+                datas.append(bgimg["data"])
+                origins.append(bgimg["origin"])
+                heights.append(bgimg["height"])
+                widths.append(bgimg["width"])
+
+            self.widget.setBackgroundImages(datas, labels, origins, heights, widths)
+
     def selectionMaskUpdated(self):
         if self.widget is None:
             return
@@ -150,6 +163,7 @@ class SilxRoiStackPlugin(StackPluginBase.StackPluginBase):
             self.widget.setBackgroundActionVisible(True)
             self.widget.setProfileToolbarVisible(True)
             self.widget.setMotorPositionsVisible(True)
+            self.widget.setAlphaSliderVisible(True)
             self.widget.sigMaskImageWidget.connect(self.mySlot)
 
         # Show
