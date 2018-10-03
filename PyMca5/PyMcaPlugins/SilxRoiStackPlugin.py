@@ -101,7 +101,9 @@ class SilxRoiStackPlugin(StackPluginBase.StackPluginBase):
                               infos=infos)
 
         self.widget.setSelectionMask(self.getStackSelectionMask())
+        self._updateBgImages()
 
+    def _updateBgImages(self):
         bgimages = self.getStackInfo().get("bgimages", {})
 
         if bgimages:
