@@ -918,6 +918,20 @@ class SilxMaskImageWidget(qt.QMainWindow):
         image = self._bg_images[0]
         return self._RgbaToGrayscale(image)
 
+    def getBgImagesDict(self):
+        """Return a dict containing the data for all background images."""
+        bgimages = {}
+        for i, label in enumerate(self._bg_labels):
+            data = self._bg_images[i]
+            origin = self._bg_origins[i]
+            delta_w, delta_h = self._bg_deltaXY[i]
+            w, h = delta_w * data.shape[1], delta_h * data.shape[0]
+            bgimages[label] = {"data": data,
+                               "origin": origin,
+                               "width": w,
+                               "height": h}
+        return bgimages
+
     def _addImageClicked(self):
         imageData = self.getImageData()
         ddict = {

@@ -137,6 +137,10 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
                 self.replaceImage(resized_image, ddict['title'])
         elif ddict['event'] == "resetSelection":
             self.setStackSelectionMask(None)
+        elif ddict['event'] in ["cropSignal", "flipUpDownSignal",
+                                "flipLeftRightSignal", "rotateRight",
+                                "rotateLeft"]:
+            self._onBgImageChanged()
 
     #Methods implemented by the plugin
     def getMethods(self):
@@ -307,6 +311,14 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
                                                "height": h}
 
             self._showWidget(bglabel)
+
+    def _onBgImageChanged(self):
+        """Update bg images in stack info dict"""
+        stack_info = self.getStackInfo()
+        if "bgimages" not in stack_info:
+            stack_info["bgimages"] = {}
+        for win in self.windows:
+            stack_info["bgimages"].update(win.getBgImagesDict())
 
     def _getStackOriginDelta(self):
         info = self.getStackInfo()
