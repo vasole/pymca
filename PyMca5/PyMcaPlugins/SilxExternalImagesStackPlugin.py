@@ -275,6 +275,10 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
 
         stack_images, stack_names = self.getStackROIImagesAndNames()
 
+        stack_info = self.getStackInfo()
+        if "bgimages" not in stack_info:
+            stack_info["bgimages"] = {}
+
         for bgimg, bglabel in zip(imagelist, imagenames):
             if bglabel not in self.windows:
                 self.windows[bglabel] = SilxExternalImagesWindow.SilxExternalImagesWindow()
@@ -295,6 +299,12 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
                                                       widths=[w],
                                                       heights=[h])
             self.windows[bglabel].plot.setGraphTitle(bglabel)
+
+            # also store bg images as a stack info attribute
+            stack_info["bgimages"][bglabel] = {"data": bgimg,
+                                               "origin": origin,
+                                               "width": w,
+                                               "height": h}
 
             self._showWidget(bglabel)
 
