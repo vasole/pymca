@@ -725,6 +725,8 @@ class SilxMaskImageWidget(qt.QMainWindow):
     def _updateMotors(self, ddict):
         if not ddict["event"] == "mouseMoved":
             return
+        if not self.motorPositionsWidget.isVisible():
+            return
 
         motorsValuesAtCursor = self._getPositionersFromXY(ddict["x"],
                                                           ddict["y"])
