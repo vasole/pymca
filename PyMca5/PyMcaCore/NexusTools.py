@@ -462,18 +462,24 @@ def getScannedPositioners(h5file, path):
             entry = h5file[entry_name]
             if "title" in entry:
                 title = entry["title"].value
+                if hasattr(title, "dtype"):
+                    _logger.warning("entry title should be a string not an array")
+                    if hasattr(title, "__len__"):
+                        if len(a) == 1:
+                            title = a[0]
                 if hasattr(title, "decode"):
                     title = title.decode("utf-8")
-                tokens = title.split()
-                candidates = [key for key, item in measurement.items() if \
-                                            isDataset(item) and \
-                                            (key in tokens)]
-                indices = []
-                for key in candidates:
-                    indices.append((tokens.index(key), key))
-                indices.sort()
-                if len(indices):
-                    scanned = [measurement[key].name for idx, key in indices]
+                if hasattr(title, "split"):
+                    tokens = title.split()
+                    candidates = [key for key, item in measurement.items() if \
+                                                isDataset(item) and \
+                                                (key in tokens)]
+                    indices = []
+                    for key in candidates:
+                        indices.append((tokens.index(key), key))
+                    indices.sort()
+                    if len(indices):
+                        scanned = [measurement[key].name for idx, key in indices]
     return scanned
 
 if __name__ == "__main__":
