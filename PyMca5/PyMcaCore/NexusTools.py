@@ -465,12 +465,13 @@ def getScannedPositioners(h5file, path):
                 if hasattr(title, "dtype"):
                     _logger.warning("entry title should be a string not an array")
                     if hasattr(title, "__len__"):
-                        if len(a) == 1:
-                            title = a[0]
+                        if len(title) == 1:
+                            title = title[0]
                 if hasattr(title, "decode"):
                     title = title.decode("utf-8")
                 if hasattr(title, "split"):
                     tokens = title.split()
+                else:
                     candidates = [key for key, item in measurement.items() if \
                                                 isDataset(item) and \
                                                 (key in tokens)]
