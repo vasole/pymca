@@ -317,7 +317,7 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
         stack_info = self.getStackInfo()
         if "bgimages" not in stack_info:
             stack_info["bgimages"] = {}
-        for win in self.windows:
+        for win in self.windows.values():
             stack_info["bgimages"].update(win.getBgImagesDict())
 
     def _getStackOriginDelta(self):
