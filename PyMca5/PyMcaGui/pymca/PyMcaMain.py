@@ -1665,8 +1665,9 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
 
     def onPrint(self):
         _logger.debug("onPrint called")
+
         if not self.scanWindow.isHidden():
-            self.scanWindow.printGraph()
+            self.scanWindow.printPreview.menu().exec_(self.cursor().pos())
             return
 
         if not self.__useTabWidget:
@@ -1674,7 +1675,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             self.mcaWindow.raise_()
         else:
             self.mainTabWidget.setCurrentWidget(self.mcaWindow)
-        self.mcaWindow.printGraph()
+        self.mcaWindow.printPreview.menu().exec_(self.cursor().pos())
 
 if 0:
 

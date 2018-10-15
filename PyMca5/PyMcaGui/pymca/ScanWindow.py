@@ -290,6 +290,14 @@ class BaseScanWindow(PlotWindow):
             mtplt.saveFile(filename)
         return
 
+    def printHtml(self, text):
+        printer = qt.QPrinter()
+        printDialog = qt.QPrintDialog(printer, self)
+        if printDialog.exec_():
+            document = qt.QTextDocument()
+            document.setHtml(text)
+            document.print_(printer)
+
 
 class ScanWindow(BaseScanWindow):
     """ScanWindow, adding dataObject management to BaseScanWindow

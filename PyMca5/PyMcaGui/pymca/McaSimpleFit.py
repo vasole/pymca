@@ -146,7 +146,7 @@ class McaSimpleFit(qt.QWidget):
     def _emitSignal(self, ddict):
         self.sigMcaSimpleFitSignal.emit(ddict)
 
-    def __anasignal(self,ddict):
+    def __anasignal(self, ddict):
         if type(ddict) != type({}):
             return
         if 'event' in ddict:
