@@ -346,7 +346,6 @@ class McaWindow(ScanWindow.ScanWindow):
 
     def __anasignal(self, dict):
         _logger.debug("__anasignal called dict = %s", dict)
-
         if dict['event'] == 'clicked':
             # A button has been clicked
             if dict['button'] == 'Source':
@@ -784,19 +783,14 @@ class McaWindow(ScanWindow.ScanWindow):
             # this has been moved to the fit window
             pass
 
-        elif dict['event'] == 'McaAdvancedFitPrint':
-            self.printHtml(dict['text'])
-
-        elif dict['event'] == 'McaSimpleFitPrint':
+        elif dict['event'] in ['McaAdvancedFitPrint',
+                               'McaSimpleFitPrint']:
             self.printHtml(dict['text'])
 
         elif dict['event'] == 'McaSimpleFitClosed':
             if self.peakmarker is not None:
                 self.removeMarker(self.peakmarker)
             self.peakmarker = None
-
-        elif dict['event'] == 'ScanFitPrint':
-            self.printHtml(dict['text'])
 
         elif dict['event'] == 'selectionChanged':
             _logger.error("Selection changed event not implemented any more")
@@ -1613,13 +1607,6 @@ class McaWindow(ScanWindow.ScanWindow):
             self.setActiveCurve(activeCurve)
         self.resetZoom()
 
-    def printHtml(self, text):
-        printer = qt.QPrinter()
-        printDialog = qt.QPrintDialog(printer, self)
-        if printDialog.exec_():
-            document = qt.QTextDocument()
-            document.setHtml(text)
-            document.print_(printer)
 
 def test():
     w = McaWindow()

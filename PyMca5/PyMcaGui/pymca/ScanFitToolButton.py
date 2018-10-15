@@ -148,6 +148,9 @@ class ScanFitToolButton(qt.QToolButton):
 
             self.plot.addCurve(x=xplot, y=yplot, legend=self._scanFitLegend,
                                resetzoom=False)
+        elif ddict['event'] == "ScanFitPrint":
+            if hasattr(self.plot, "printHtml"):
+                self.plot.printHtml(ddict['text'])
 
     def _customFitSignalReceived(self, ddict):
         if ddict['event'] == "FitFinished":
