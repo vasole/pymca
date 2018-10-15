@@ -344,13 +344,13 @@ class McaWindow(ScanWindow.ScanWindow):
             msg.exec_()
         return
 
-    def __anasignal(self, dict):
-        _logger.debug("__anasignal called dict = %s", dict)
-        if dict['event'] == 'clicked':
+    def __anasignal(self, ddict):
+        _logger.debug("__anasignal called dict = %s", ddict)
+        if ddict['event'] == 'clicked':
             # A button has been clicked
-            if dict['button'] == 'Source':
+            if ddict['button'] == 'Source':
                 pass
-            elif dict['button'] == 'Calibration':
+            elif ddict['button'] == 'Calibration':
                 legend = self.getActiveCurve(just_legend=True)
                 if legend is None:
                     msg = qt.QMessageBox(self)
@@ -406,7 +406,7 @@ class McaWindow(ScanWindow.ScanWindow):
                         self.controlWidget.calbox.setCurrentIndex(item)
                         self.refresh()
                     del caldialog
-            elif dict['button'] == 'CalibrationCopy':
+            elif ddict['button'] == 'CalibrationCopy':
                 legend = self.getActiveCurve(just_legend=True)
                 if legend is None:
                     msg = qt.QMessageBox(self)
@@ -494,10 +494,10 @@ class McaWindow(ScanWindow.ScanWindow):
                         self.controlWidget.calbox.setCurrentIndex(item)
                         self.refresh()
                     del caldialog
-            elif dict['button'] == 'CalibrationLoad':
+            elif ddict['button'] == 'CalibrationLoad':
                 # item = dict['box'][0]
-                itemtext = dict['box'][1]
-                filename = dict['line_edit']
+                itemtext = ddict['box'][1]
+                filename = ddict['line_edit']
                 if not os.path.exists(filename):
                     text = "Error. Calibration file %s not found " % filename
                     msg = qt.QMessageBox(self)
@@ -534,8 +534,8 @@ class McaWindow(ScanWindow.ScanWindow):
                     msg.setText(text)
                     msg.exec_()
                     return
-            elif dict['button'] == 'CalibrationSave':
-                filename = dict['line_edit']
+            elif ddict['button'] == 'CalibrationSave':
+                filename = ddict['line_edit']
                 cald = ConfigDict.ConfigDict()
                 if os.path.exists(filename):
                     try:
@@ -549,39 +549,39 @@ class McaWindow(ScanWindow.ScanWindow):
                         return
                 cald.update(self.caldict)
                 cald.write(filename)
-            elif dict['button'] == 'Detector':
+            elif ddict['button'] == 'Detector':
                 pass
-            elif dict['button'] == 'Search':
+            elif ddict['button'] == 'Search':
                 pass
-            elif dict['button'] == 'Fit':
-                if dict['box'][1] == 'Simple':
+            elif ddict['button'] == 'Fit':
+                if ddict['box'][1] == 'Simple':
                     self.mcasimplefitsignal()
-                elif dict['box'][1] == 'Advanced':
+                elif ddict['box'][1] == 'Advanced':
                     self.mcaadvancedfitsignal()
                 else:
                     _logger.error("Unknown Fit Event")
-        elif dict['event'] == 'activated':
+        elif ddict['event'] == 'activated':
             # A comboBox has been selected
-            if dict['boxname'] == 'Source':
+            if ddict['boxname'] == 'Source':
                 pass
-            elif dict['boxname'] == 'Calibration':
-                self.calibration = dict['box'][1]
+            elif ddict['boxname'] == 'Calibration':
+                self.calibration = ddict['box'][1]
                 self.clearMarkers()
                 self.refresh()
                 self.resetZoom()
 
-            elif dict['boxname'] == 'Detector':
+            elif ddict['boxname'] == 'Detector':
                 pass
-            elif dict['boxname'] == 'Search':
+            elif ddict['boxname'] == 'Search':
                 pass
-            elif dict['boxname'] == 'ROI':
-                if dict['combotext'] == 'Add':
+            elif ddict['boxname'] == 'ROI':
+                if ddict['combotext'] == 'Add':
                     pass
-                elif dict['combotext'] == 'Del':
+                elif ddict['combotext'] == 'Del':
                     pass
                 else:
                     pass
-            elif dict['boxname'] == 'Fit':
+            elif ddict['boxname'] == 'Fit':
                 """
                 if dict['box'][1] == 'Simple':
                     self.anacontainer.hide()
@@ -590,22 +590,22 @@ class McaWindow(ScanWindow.ScanWindow):
                 """
                 pass
             else:
-                _logger.debug("Unknown combobox %s", dict['boxname'])
+                _logger.debug("Unknown combobox %s", ddict['boxname'])
 
-        elif dict['event'] == 'EstimateFinished':
+        elif ddict['event'] == 'EstimateFinished':
             pass
-        elif (dict['event'] == 'McaAdvancedFitFinished') or \
-             (dict['event'] == 'McaAdvancedFitMatrixFinished'):
-            x = dict['result']['xdata']
-            yb = dict['result']['continuum']
-            legend0 = dict['info']['legend']
-            fitcalibration = [dict['result']['fittedpar'][0],
-                              dict['result']['fittedpar'][1],
+        elif (ddict['event'] == 'McaAdvancedFitFinished') or \
+             (ddict['event'] == 'McaAdvancedFitMatrixFinished'):
+            x = ddict['result']['xdata']
+            yb = ddict['result']['continuum']
+            legend0 = ddict['info']['legend']
+            fitcalibration = [ddict['result']['fittedpar'][0],
+                              ddict['result']['fittedpar'][1],
                               0.0]
-            if dict['event'] == 'McaAdvancedFitMatrixFinished':
-                legend = dict['info']['legend'] + " Fit"
-                legend3 = dict['info']['legend'] + " Matrix"
-                ymatrix = dict['result']['ymatrix'] * 1.0
+            if ddict['event'] == 'McaAdvancedFitMatrixFinished':
+                legend = ddict['info']['legend'] + " Fit"
+                legend3 = ddict['info']['legend'] + " Matrix"
+                ymatrix = ddict['result']['ymatrix'] * 1.0
                 # copy the original info from the curve
                 newDataObject = DataObject.DataObject()
                 newDataObject.info = copy.deepcopy(self.dataObjectsDict[legend0].info)
@@ -620,8 +620,8 @@ class McaWindow(ScanWindow.ScanWindow):
                 self.dataObjectsDict[legend3] = newDataObject
                 #self.graph.newCurve(legend3,x=x,y=ymatrix,logfilter=1)
             else:
-                legend = dict['info']['legend'] + " Fit"
-                yfit = dict['result']['yfit'] * 1.0
+                legend = ddict['info']['legend'] + " Fit"
+                yfit = ddict['result']['yfit'] * 1.0
 
                 # copy the original info from the curve
                 newDataObject = DataObject.DataObject()
@@ -640,7 +640,7 @@ class McaWindow(ScanWindow.ScanWindow):
                 #self.graph.newCurve(legend,x=x,y=yfit,logfilter=1)
 
                 # the same for the background
-                legend2 = dict['info']['legend'] + " Bkg"
+                legend2 = ddict['info']['legend'] + " Bkg"
                 newDataObject2 = DataObject.DataObject()
                 newDataObject2.info = copy.deepcopy(self.dataObjectsDict[legend0].info)
                 newDataObject2.info['SourceType'] = 'AdvancedFit'
@@ -658,8 +658,8 @@ class McaWindow(ScanWindow.ScanWindow):
             if legend not in self.caldict:
                 self.caldict[legend] = {}
             self.caldict[legend]['order'] = 1
-            self.caldict[legend]['A'] = dict['result']['fittedpar'][0]
-            self.caldict[legend]['B'] = dict['result']['fittedpar'][1]
+            self.caldict[legend]['A'] = ddict['result']['fittedpar'][0]
+            self.caldict[legend]['B'] = ddict['result']['fittedpar'][1]
             self.caldict[legend]['C'] = 0.0
             options = []
             for option in self.calboxoptions:
@@ -670,14 +670,14 @@ class McaWindow(ScanWindow.ScanWindow):
             try:
                 self.controlWidget.calbox.setOptions(options)
                 # I only reset the graph scale after a fit, not on a matrix spectrum
-                if dict['event'] == 'McaAdvancedFitFinished':
+                if ddict['event'] == 'McaAdvancedFitFinished':
                     # get current limits
                     if self.calibration == 'None':
                         xmin, xmax = self.getGraphXLimits()
-                        emin = dict['result']['fittedpar'][0] + \
-                               dict['result']['fittedpar'][1] * xmin
-                        emax = dict['result']['fittedpar'][0] + \
-                               dict['result']['fittedpar'][1] * xmax
+                        emin = ddict['result']['fittedpar'][0] + \
+                               ddict['result']['fittedpar'][1] * xmin
+                        emax = ddict['result']['fittedpar'][0] + \
+                               ddict['result']['fittedpar'][1] * xmax
                     else:
                         emin, emax = self.getGraphXLimits()
                     ymin, ymax = self.getGraphYLimits()
@@ -693,14 +693,14 @@ class McaWindow(ScanWindow.ScanWindow):
                 _logger.debug("Refreshing due to exception %s", sys.exc_info()[1])
                 self.refresh()
 
-        elif dict['event'] == 'McaFitFinished':
-            mcaresult = dict['data']
+        elif ddict['event'] == 'McaFitFinished':
+            mcaresult = ddict['data']
             i = 0
             xfinal = []
             yfinal = []
             ybfinal = []
             regions = []
-            legend0 = dict['info']['legend']
+            legend0 = ddict['info']['legend']
             mcamode = True
             for result in mcaresult:
                 i += 1
@@ -751,16 +751,16 @@ class McaWindow(ScanWindow.ScanWindow):
             self.refresh()
             return
 
-        elif dict['event'] == 'McaTableFilled':
+        elif ddict['event'] == 'McaTableFilled':
             if self.peakmarker is not None:
                 self.removeMarker(self.peakmarker)
             self.peakmarker = None
 
-        elif dict['event'] == 'McaTableRowHeaderClicked':
+        elif ddict['event'] == 'McaTableRowHeaderClicked':
             # I have to mark the peaks
-            if dict['row'] >= 0:
-                pos = dict['Position']
-                label = 'PEAK %d' % (dict['row']+1)
+            if ddict['row'] >= 0:
+                pos = ddict['Position']
+                label = 'PEAK %d' % (ddict['row'] + 1)
                 if self.peakmarker is not None:
                     self.removeMarker(self.peakmarker)
                 self.addXMarker(pos,
@@ -773,29 +773,29 @@ class McaWindow(ScanWindow.ScanWindow):
                 if self.peakmarker is not None:
                     self.removeMarker(self.peakmarker)
                 self.peakmarker = None
-        elif dict['event'] == 'McaTableClicked':
+        elif ddict['event'] == 'McaTableClicked':
             if self.peakmarker is not None:
                 self.removeMarker(self.peakmarker)
             self.peakmarker = None
 
-        elif (dict['event'] == 'McaAdvancedFitElementClicked' or
-              dict['event'] == 'ElementClicked'):
+        elif (ddict['event'] == 'McaAdvancedFitElementClicked' or
+              ddict['event'] == 'ElementClicked'):
             # this has been moved to the fit window
             pass
 
-        elif dict['event'] in ['McaAdvancedFitPrint',
-                               'McaSimpleFitPrint']:
-            self.printHtml(dict['text'])
+        elif ddict['event'] in ['McaAdvancedFitPrint',
+                                'McaSimpleFitPrint']:
+            self.printHtml(ddict['text'])
 
-        elif dict['event'] == 'McaSimpleFitClosed':
+        elif ddict['event'] == 'McaSimpleFitClosed':
             if self.peakmarker is not None:
                 self.removeMarker(self.peakmarker)
             self.peakmarker = None
 
-        elif dict['event'] == 'selectionChanged':
+        elif ddict['event'] == 'selectionChanged':
             _logger.error("Selection changed event not implemented any more")
         else:
-            _logger.debug("Unknown or ignored event %s", dict['event'])
+            _logger.debug("Unknown or ignored event %s", ddict['event'])
 
     def emitCurrentROISignal(self, ddict=None):
         """Emit a custom ROISignal with calibration info.
