@@ -1613,6 +1613,13 @@ class McaWindow(ScanWindow.ScanWindow):
             self.setActiveCurve(activeCurve)
         self.resetZoom()
 
+    def printHtml(self, text):
+        printer = qt.QPrinter()
+        printDialog = qt.QPrintDialog(printer, self)
+        if printDialog.exec_():
+            document = qt.QTextDocument()
+            document.setHtml(text)
+            document.print_(printer)
 
 def test():
     w = McaWindow()
