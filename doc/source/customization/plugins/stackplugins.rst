@@ -117,10 +117,6 @@ Stack Simple Fitting
 
 .. automodule:: PyMca5.PyMcaPlugins.FitStackPlugin
 
-Stack motor positions
-+++++++++++++++++++++
-
-.. automodule:: PyMca5.PyMcaPlugins.StackMotorInfoPlugin
 
 .. TODO: XAS Batch
 

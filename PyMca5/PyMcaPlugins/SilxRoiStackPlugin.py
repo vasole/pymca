@@ -37,6 +37,14 @@ This plugin opens a stack ROI window providing alternative views:
 The background image can be subtracted from the other images to show
 a net count.
 
+If positioner data is available, the values corresponding to the mouse cursor
+position in the plot are displayed in a widget underneath the plot.
+
+If an external background images, such as a photo of the sample, has been
+loaded using the external images plugin, it is displayed on the background
+layer. A slider allows to increase the transparency of the foreground data
+image to view this background image.
+
 This window also provides a median filter tool, with a configurable filter
 width, to smooth the stack image.
 
@@ -90,13 +98,37 @@ class SilxRoiStackPlugin(StackPluginBase.StackPluginBase):
         image_shape = self._getStackImageShape()
         origin, scale = self._getStackOriginScale()
 
+        info = {"positioners": self.getStackInfo().get("positioners", {})}
+        if info["positioners"]:
+            self.widget.setMotorPositionsVisible(True)
+        else:
+            self.widget.setMotorPositionsVisible(False)
+
+        infos = [info for _img in images]
+
         h = scale[1] * image_shape[0]
         w = scale[0] * image_shape[1]
 
         self.widget.setImages(images, labels=names,
-                              origin=origin, width=w, height=h)
+                              origin=origin, width=w, height=h,
+                              infos=infos)
 
         self.widget.setSelectionMask(self.getStackSelectionMask())
+        self._updateBgImages()
+
+    def _updateBgImages(self):
+        bgimages = self.getStackInfo().get("bgimages", {})
+
+        if bgimages:
+            datas, labels, origins, heights, widths = [], [], [], [], []
+            for lab, bgimg in bgimages.items():
+                labels.append(lab)
+                datas.append(bgimg["data"])
+                origins.append(bgimg["origin"])
+                heights.append(bgimg["height"])
+                widths.append(bgimg["width"])
+
+            self.widget.setBackgroundImages(datas, labels, origins, heights, widths)
 
     def selectionMaskUpdated(self):
         if self.widget is None:
@@ -145,6 +177,7 @@ class SilxRoiStackPlugin(StackPluginBase.StackPluginBase):
             self.widget.setMedianFilterWidgetVisible(True)
             self.widget.setBackgroundActionVisible(True)
             self.widget.setProfileToolbarVisible(True)
+            self.widget.setAlphaSliderVisible(True)
             self.widget.sigMaskImageWidget.connect(self.mySlot)
 
         # Show

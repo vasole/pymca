@@ -137,6 +137,10 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
                 self.replaceImage(resized_image, ddict['title'])
         elif ddict['event'] == "resetSelection":
             self.setStackSelectionMask(None)
+        elif ddict['event'] in ["cropSignal", "flipUpDownSignal",
+                                "flipLeftRightSignal", "rotateRight",
+                                "rotateLeft"]:
+            self._onBgImageChanged()
 
     #Methods implemented by the plugin
     def getMethods(self):
@@ -273,6 +277,12 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
         h = delta[1] * image_shape[0]
         w = delta[0] * image_shape[1]
 
+        stack_images, stack_names = self.getStackROIImagesAndNames()
+
+        stack_info = self.getStackInfo()
+        if "bgimages" not in stack_info:
+            stack_info["bgimages"] = {}
+
         for bgimg, bglabel in zip(imagelist, imagenames):
             if bglabel not in self.windows:
                 self.windows[bglabel] = SilxExternalImagesWindow.SilxExternalImagesWindow()
@@ -281,8 +291,8 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
 
             self.windows[bglabel].show()
             # add the stack image for mask operation
-            self.windows[bglabel].setImages([self.getStackOriginalImage()],
-                                            labels=["stack data"],
+            self.windows[bglabel].setImages([stack_images[0]],
+                                            labels=[stack_names[0]],
                                             origin=origin, width=w, height=h)
             self.windows[bglabel].plot.getImage("current").setAlpha(0)
 
@@ -294,7 +304,21 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
                                                       heights=[h])
             self.windows[bglabel].plot.setGraphTitle(bglabel)
 
+            # also store bg images as a stack info attribute
+            stack_info["bgimages"][bglabel] = {"data": bgimg,
+                                               "origin": origin,
+                                               "width": w,
+                                               "height": h}
+
             self._showWidget(bglabel)
+
+    def _onBgImageChanged(self):
+        """Update bg images in stack info dict"""
+        stack_info = self.getStackInfo()
+        if "bgimages" not in stack_info:
+            stack_info["bgimages"] = {}
+        for win in self.windows.values():
+            stack_info["bgimages"].update(win.getBgImagesDict())
 
     def _getStackOriginDelta(self):
         info = self.getStackInfo()

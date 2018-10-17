@@ -49,6 +49,7 @@ else:
 from PyMca5.PyMcaGui.plotting.PyMca_Icons import IconDict
 from PyMca5.PyMcaIO import ArraySave
 from PyMca5.PyMcaCore import PyMcaDirs
+from PyMca5.PyMcaPlugins import MotorInfoWindow
 
 try:
     from PyMca5.PyMcaGui.pymca import QPyMcaMatplotlibSave
@@ -407,7 +408,7 @@ class SaveToolButton(qt.QToolButton):
 
 
 class MedianParameters(qt.QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, use_conditional=False):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QHBoxLayout(self)
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
@@ -419,8 +420,18 @@ class MedianParameters(qt.QWidget):
         self.widthSpin.setMaximum(99)
         self.widthSpin.setValue(1)
         self.widthSpin.setSingleStep(2)
+        if use_conditional:
+            self.conditionalLabel = qt.QLabel(self)
+            self.conditionalLabel.setText("Conditional:")
+            self.conditionalSpin = qt.QSpinBox(self)
+            self.conditionalSpin.setMinimum(0)
+            self.conditionalSpin.setMaximum(1)
+            self.conditionalSpin.setValue(0)
         self.mainLayout.addWidget(self.label)
         self.mainLayout.addWidget(self.widthSpin)
+        if use_conditional:
+            self.mainLayout.addWidget(self.conditionalLabel)
+            self.mainLayout.addWidget(self.conditionalSpin)
 
 
 class SilxMaskImageWidget(qt.QMainWindow):
@@ -508,12 +519,27 @@ class SilxMaskImageWidget(qt.QMainWindow):
 
         # median filter widget
         self._medianParameters = {'row_width': 1,
-                                  'column_width': 1}
-        self._medianParametersWidget = MedianParameters(self)
+                                  'column_width': 1,
+                                  'conditional': 0}
+        self._medianParametersWidget = MedianParameters(self,
+                                                        use_conditional=True)
         self._medianParametersWidget.widthSpin.setValue(1)
         self._medianParametersWidget.widthSpin.valueChanged[int].connect(
                      self._setMedianKernelWidth)
+        self._medianParametersWidget.conditionalSpin.valueChanged[int].connect(
+                     self._setMedianConditionalFlag)
         layout.addWidget(self._medianParametersWidget)
+
+        # motor positions (hidden by default)
+        self.motorPositionsWidget = MotorInfoWindow.MotorInfoDialog(self,
+                                                                    [""],
+                                                                    [{}])
+        self.motorPositionsWidget.setMaximumHeight(100)
+        self.plot.sigPlotSignal.connect(self._updateMotors)
+        self.motorPositionsWidget.hide()
+        self._motors_first_update = True
+
+        layout.addWidget(self.motorPositionsWidget)
 
         self.setCentralWidget(centralWidget)
 
@@ -679,8 +705,12 @@ class SilxMaskImageWidget(qt.QMainWindow):
         self._medianParameters['row_width'] = kernelSize[0]
         self._medianParameters['column_width'] = kernelSize[1]
         self._medianParametersWidget.widthSpin.setValue(int(kernelSize[0]))
-        current = self.slider.value()
-        self.showImage(current)
+        self.showImage(self.slider.value())
+
+    def _setMedianConditionalFlag(self, value):
+        self._medianParameters['conditional'] = int(value)
+        self._medianParametersWidget.conditionalSpin.setValue(int(value))
+        self.showImage(self.slider.value())
 
     def _subtractBackground(self):
         """When background button is clicked, this causes showImage to
@@ -692,6 +722,72 @@ class SilxMaskImageWidget(qt.QMainWindow):
         current = self.getCurrentIndex()
         self.showImage(current)
 
+    def _updateMotors(self, ddict):
+        if not ddict["event"] == "mouseMoved":
+            return
+        if not self.motorPositionsWidget.isVisible():
+            return
+
+        motorsValuesAtCursor = self._getPositionersFromXY(ddict["x"],
+                                                          ddict["y"])
+        if motorsValuesAtCursor is None:
+            return
+
+        self.motorPositionsWidget.table.updateTable(
+                legList=[self.plot.getActiveImage().getLegend()],
+                motList=[motorsValuesAtCursor])
+
+        if self._motors_first_update:
+            self._select_motors()
+            self._motors_first_update = False
+
+    def _select_motors(self):
+        """This methods sets the motors in the comboboxes when the widget
+        is first initialized."""
+        for i, combobox in enumerate(self.motorPositionsWidget.table.header.boxes):
+            # First item (index 0) in combobox is "", so first motor name is at index 1.
+            # First combobox in header.boxes is at index 1 (boxes[0] is None).
+            if i == 0:
+                continue
+            if i < combobox.count():
+                combobox.setCurrentIndex(i)
+
+    def _getPositionersFromXY(self, x, y):
+        """Return positioner values for a stack pixel identified
+        by it's (x, y) coordinates.
+        """
+        activeImage = self.plot.getActiveImage()
+        if activeImage is None:
+            return None
+        info = activeImage.getInfo()
+        if not info or not isinstance(info, dict):
+            return None
+        positioners = info.get("positioners", {})
+
+        nRows, nCols = activeImage.getData().shape
+        xScale, yScale = activeImage.getScale()
+        xOrigin, yOrigin = activeImage.getOrigin()
+        r, c = convertToRowAndColumn(
+                x, y,
+                shape=(nRows, nCols),
+                xScale=(xOrigin, xScale),
+                yScale=(yOrigin, yScale),
+                safe=True)
+
+        idx1d = r * nCols + c
+        positionersAtIdx = {}
+
+        for motorName, motorValues in positioners.items():
+            if numpy.isscalar(motorValues):
+                positionersAtIdx[motorName] = motorValues
+            elif len(motorValues.shape) == 1:
+                positionersAtIdx[motorName] = motorValues[idx1d]
+            else:
+                positionersAtIdx[motorName] = motorValues.reshape((-1,))[idx1d]
+
+        return positionersAtIdx
+
+    # widgets visibility toggling
     def setBackgroundActionVisible(self, visible):
         """Set visibility of the background toolbar button.
 
@@ -712,6 +808,10 @@ class SilxMaskImageWidget(qt.QMainWindow):
         :param visible: True to show widget, False to hide it.
         """
         self._medianParametersWidget.setVisible(visible)
+
+    def setMotorPositionsVisible(self, flag):
+        """Show or hide motor positions widget"""
+        self.motorPositionsWidget.setVisible(flag)
 
     def setAlphaSliderVisible(self, visible):
         """Set visibility of the transparency slider widget in the right
@@ -820,6 +920,20 @@ class SilxMaskImageWidget(qt.QMainWindow):
         image = self._bg_images[0]
         return self._RgbaToGrayscale(image)
 
+    def getBgImagesDict(self):
+        """Return a dict containing the data for all background images."""
+        bgimages = {}
+        for i, label in enumerate(self._bg_labels):
+            data = self._bg_images[i]
+            origin = self._bg_origins[i]
+            delta_w, delta_h = self._bg_deltaXY[i]
+            w, h = delta_w * data.shape[1], delta_h * data.shape[0]
+            bgimages[label] = {"data": data,
+                               "origin": origin,
+                               "width": w,
+                               "height": h}
+        return bgimages
+
     def _addImageClicked(self):
         imageData = self.getImageData()
         ddict = {
@@ -879,7 +993,8 @@ class SilxMaskImageWidget(qt.QMainWindow):
                            origin=self._origin,
                            scale=self._deltaXY,
                            replace=False,
-                           z=0)
+                           z=0,
+                           info=self._infos[index])
         self.plot.setActiveImage("current")
         self.slider.setValue(index)
 
@@ -887,12 +1002,15 @@ class SilxMaskImageWidget(qt.QMainWindow):
         data = copy.copy(data)
         if max(self._medianParameters['row_width'],
                self._medianParameters['column_width']) > 1:
-            data = medfilt2d(data, [self._medianParameters['row_width'],
-                                    self._medianParameters['column_width']])
+            data = medfilt2d(data,
+                             [self._medianParameters['row_width'],
+                              self._medianParameters['column_width']],
+                             conditional=self._medianParameters['conditional'])
         return data
 
     def setImages(self, images, labels=None,
-                  origin=None, height=None, width=None):
+                  origin=None, height=None, width=None,
+                  infos=None):
         """Set the list of data images.
 
         All images share the same origin, width and height.
@@ -907,12 +1025,16 @@ class SilxMaskImageWidget(qt.QMainWindow):
             image height in number of pixels.
         :param width: Image width in X axis units. If None, use the
             image width in number of pixels.
+        :param infos: List of info dicts, one per image, or None.
         """
         self._images = images
         if labels is None:
             labels = ["Image %d" % (i + 1) for i in range(len(images))]
+        if infos is None:
+            infos = [{} for _img in images]
 
         self._labels = labels
+        self._infos = infos
 
         height_pixels, width_pixels = images[0].shape[0:2]
         height = height or height_pixels
@@ -961,9 +1083,9 @@ class SilxMaskImageWidget(qt.QMainWindow):
         :param origins: Images origins: list of coordinate tuples (x, y)
             of sample located at (row, column) = (0, 0).
             If None, use (0., 0.) for all images.
-        :param height: Image height in Y axis units. If None, use the
+        :param heights: Image height in Y axis units. If None, use the
             image height in number of pixels.
-        :param width: Image width in X axis units. If None, use the
+        :param widths: Image width in X axis units. If None, use the
             image width in number of pixels.
         """
         self._bg_images = images
@@ -994,9 +1116,9 @@ class SilxMaskImageWidget(qt.QMainWindow):
         self._updateBgScales(heights, widths)
 
         for bg_deltaXY, bg_orig, label, img in zip(self._bg_deltaXY,
-                                                 self._bg_origins,
-                                                 labels,
-                                                 images):
+                                                  self._bg_origins,
+                                                  labels,
+                                                  images):
             # FIXME: we use z=-1 because the mask is always on z=1,
             # so the data must be on z=0. To be fixed after the silx mask
             # is improved
