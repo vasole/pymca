@@ -36,11 +36,33 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import logging
 import numpy
 from contextlib import contextmanager
+
+from PyMca5.PyMcaGui import PyMcaQt    # just to be sure PyMcaQt is imported before silx.gui.qt
+from silx.gui import qt as silx_qt
+
 from PyMca5 import StackPluginBase
 
 from silx.gui.plot.ScatterView import ScatterView
 
 _logger = logging.getLogger(__name__)
+
+
+# Probe OpenGL availability and widget
+backend = "mpl"
+try:
+    import OpenGL
+except ImportError:
+    backend = "mpl"
+else:
+    # sanity check from silx.gui._glutils.OpenGLWidget
+    if not hasattr(silx_qt, 'QOpenGLWidget') or\
+            not silx_qt.HAS_OPENGL or \
+            (silx_qt.QApplication.instance() and not silx_qt.QGLFormat.hasOpenGL()):
+        backend = "mpl"
+    else:
+        backend = "gl"
+
+_logger.info("Using backend %s", backend)
 
 
 class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
@@ -54,8 +76,9 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
 
     def _showWidget(self):
         if self._scatterView is None:
-            self._scatterView = ScatterView(parent=None,) # backend="gl") # FIXME (does not work, but probably my config at fault)
+            self._scatterView = ScatterView(parent=None, backend=backend)
             self._setData()
+            self._scatterView.resetZoom()
             self._scatterView.getMaskToolsWidget().sigMaskChanged.connect(
                     self._scatterMaskChanged)
 
