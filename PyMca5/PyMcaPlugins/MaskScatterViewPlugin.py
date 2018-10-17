@@ -35,6 +35,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 import logging
 import numpy
+from contextlib import contextmanager
 from PyMca5 import StackPluginBase
 
 from silx.gui.plot.ScatterView import ScatterView
@@ -45,7 +46,7 @@ _logger = logging.getLogger(__name__)
 class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
     def __init__(self, stackWindow, **kw):
         StackPluginBase.StackPluginBase.__init__(self, stackWindow, **kw)
-        self.methodDict = {'Show': [self._showWidget,   # TODO
+        self.methodDict = {'Show': [self._showWidget,
                                     "Show ROIs",
                                     None]}
         self.__methodKeys = ['Show']
@@ -53,13 +54,27 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
 
     def _showWidget(self):
         if self._scatterView is None:
-            self._scatterView = ScatterView(parent=None)
+            self._scatterView = ScatterView(parent=None,) # backend="gl") # FIXME (does not work, but probably my config at fault)
             self._setData()
+            self._scatterView.getMaskToolsWidget().sigMaskChanged.connect(
+                    self._scatterMaskChanged)
 
-            # TODO connect maskToolsWidget
         # Show
         self._scatterView.show()
         self._scatterView.raise_()
+
+    @contextmanager
+    def _scatterMaskDisconnected(self):
+        # This context manager allows to call self.setStackSelectionMask
+        # without entering an infinite loop, by temporarily disconnecting
+        # callbacks from our mask signals.
+        self._scatterView.getMaskToolsWidget().sigMaskChanged.disconnect(
+                self._scatterMaskChanged)
+        try:
+            yield
+        finally:
+            self._scatterView.getMaskToolsWidget().sigMaskChanged.connect(
+                    self._scatterMaskChanged)
 
     def _setData(self):
         stack_images, stack_names = self.getStackROIImagesAndNames()
@@ -83,6 +98,16 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
             return False
         return True
 
+    def _scatterMaskChanged(self):
+        scattermask = self._scatterView.getMaskToolsWidget().getSelectionMask()
+        if scattermask is not None:
+            shape = self.getStackOriginalImage().shape
+            mask = scattermask.reshape(shape)
+        else:
+            mask = scattermask
+        with self._scatterMaskDisconnected():
+            self.setStackSelectionMask(mask)
+
     def stackUpdated(self):
         if not self._isScatterViewVisible():
             return
@@ -92,7 +117,8 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
         if not self._isScatterViewVisible():
             return
         mask = self.getStackSelectionMask()
-        self._scatterView.getMaskToolsWidget().setSelectionMask(mask)
+        scatterMask = mask.reshape((-1,))
+        self._scatterView.getMaskToolsWidget().setSelectionMask(scatterMask)
 
     def stackClosed(self):
         if self._scatterView is not None:
