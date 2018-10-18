@@ -37,7 +37,7 @@ import logging
 import numpy
 from contextlib import contextmanager
 
-from PyMca5.PyMcaGui import PyMcaQt    # just to be sure PyMcaQt is imported before silx.gui.qt
+from PyMca5.PyMcaGui import PyMcaQt as qt    # just to be sure PyMcaQt is imported before silx.gui.qt
 from silx.gui import qt as silx_qt
 
 from PyMca5 import StackPluginBase
@@ -72,6 +72,60 @@ else:
 _logger.debug("Using backend %s", backend)
 
 
+class AxesPositionersSelector(qt.QWidget):
+    def __init__(self, parent=None):
+        qt.QWidget.__init__(self, parent)
+        hlayout = qt.QHBoxLayout()
+        self.setLayout(hlayout)
+
+        xlabel = qt.QLabel("X:", parent=parent)
+        self.xPositioner = qt.QComboBox(parent)
+
+        ylabel = qt.QLabel("Y:", parent=parent)
+        self.yPositioner = qt.QComboBox(parent)
+
+        hlayout.addWidget(xlabel)
+        hlayout.addWidget(self.xPositioner)
+        hlayout.addWidget(ylabel)
+        hlayout.addWidget(self.yPositioner)
+
+        self._nPoints = None
+        """If set to an integer, only motors with this number of data points
+        can be added."""
+
+        self._initComboBoxes()
+
+    def _initComboBoxes(self):
+        self.xPositioner.clear()
+        self.xPositioner.insertItem(0, "None")
+        self.yPositioner.clear()
+        self.yPositioner.insertItem(0, "None")
+
+    def setNumPoints(self, n):
+        self._nPoints = n
+
+    def unsetNumPoints(self):
+        self._nPoints = None
+
+    def setPositioners(self, positioners):
+        """
+
+        :param dict positioners: Dictionary of positioners
+            The key is the motor name, the value are the motor's position data
+        """
+        self._initComboBoxes()
+        i = 0
+        for motorName, motorValues in positioners.items():
+            if numpy.isscalar(motorValues) or len(motorValues.shape) == 1:
+                continue
+            elif self._nPoints is not None and self._nPoints != motorValues.size:
+                continue
+            else:
+                i += 1
+                self.xPositioner.insertItem(i, motorName)
+                self.yPositioner.insertItem(i, motorName)
+
+
 class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
     def __init__(self, stackWindow, **kw):
         StackPluginBase.StackPluginBase.__init__(self, stackWindow, **kw)
@@ -88,6 +142,7 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
             self._scatterView.resetZoom()
             self._scatterView.getMaskToolsWidget().sigMaskChanged.connect(
                     self._scatterMaskChanged)
+            # TODO: add AxesPositionersSelector
 
         # Show
         self._scatterView.show()
