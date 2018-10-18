@@ -45,6 +45,7 @@ from PyMca5 import StackPluginBase
 from silx.gui.plot.ScatterView import ScatterView
 
 _logger = logging.getLogger(__name__)
+# _logger.setLevel(logging.DEBUG)
 
 
 # Probe OpenGL availability and widget
@@ -53,16 +54,22 @@ try:
     import OpenGL
 except ImportError:
     backend = "mpl"
+    _logger.debug("pyopengl not installed")
 else:
     # sanity check from silx.gui._glutils.OpenGLWidget
-    if not hasattr(silx_qt, 'QOpenGLWidget') or\
-            not silx_qt.HAS_OPENGL or \
-            (silx_qt.QApplication.instance() and not silx_qt.QGLFormat.hasOpenGL()):
+    if not hasattr(silx_qt, 'QOpenGLWidget') and\
+            (not silx_qt.HAS_OPENGL or
+             silx_qt.QApplication.instance() and not silx_qt.QGLFormat.hasOpenGL()):
         backend = "mpl"
+        _logger.debug("qt has a QOpenGLWidget: %s", hasattr(silx_qt, 'QOpenGLWidget'))
+        _logger.debug("qt.HAS_OPENGL: %s", silx_qt.HAS_OPENGL)
+        _logger.debug("silx_qt.QGLFormat.hasOpenGL(): %s",
+                      silx_qt.QApplication.instance() and not silx_qt.QGLFormat.hasOpenGL())
+
     else:
         backend = "gl"
 
-_logger.info("Using backend %s", backend)
+_logger.debug("Using backend %s", backend)
 
 
 class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
