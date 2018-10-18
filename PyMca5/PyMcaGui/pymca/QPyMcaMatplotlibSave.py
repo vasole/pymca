@@ -45,7 +45,7 @@ from silx.gui.widgets.PrintPreview import SingletonPrintPreviewDialog
 
 from matplotlib import cm
 from matplotlib.font_manager import FontProperties
-from PyMca5.PyMcaGraph.backends.MatplotlibBackend import FigureCanvas
+from silx.gui.plot.matplotlib import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.colors import LinearSegmentedColormap, LogNorm, Normalize
 from matplotlib.ticker import MaxNLocator, AutoLocator
