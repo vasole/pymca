@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 T. Rueter, V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 T. Rueter, V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -942,7 +942,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
         is strictly monotonically increasing.
         Conserves curves legend and info dictionary.
         """
-        curves = Plugin1DBase.Plugin1DBase.getAllCurves(self)
+        curves = Plugin1DBase.Plugin1DBase.getAllCurves(self, just_legend=just_legend)
         if just_legend:
             return curves
 
