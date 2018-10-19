@@ -43,6 +43,7 @@ from silx.gui import qt as silx_qt
 from PyMca5 import StackPluginBase
 
 from silx.gui.plot.ScatterView import ScatterView
+from silx.gui.widgets.BoxLayoutDockWidget import BoxLayoutDockWidget
 
 _logger = logging.getLogger(__name__)
 # _logger.setLevel(logging.DEBUG)
@@ -135,14 +136,22 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
         self.__methodKeys = ['Show']
         self._scatterView = None
 
+    def _buildWidget(self):
+        self._scatterView = ScatterView(parent=None, backend=backend)
+        self._setData()
+        self._scatterView.resetZoom()
+        self._scatterView.getMaskToolsWidget().sigMaskChanged.connect(
+                self._scatterMaskChanged)
+        
+        self._axesSelector = AxesPositionersSelector(parent=self._scatterView)
+        self._axesSelectorDock = BoxLayoutDockWidget()
+        self._axesSelectorDock.setWindowTitle('Axes selection')
+        self._axesSelectorDock.setWidget(self._axesSelector)
+        self._scatterView.addDockWidget(qt.Qt.BottomDockWidgetArea, self._axesSelectorDock)
+
     def _showWidget(self):
         if self._scatterView is None:
-            self._scatterView = ScatterView(parent=None, backend=backend)
-            self._setData()
-            self._scatterView.resetZoom()
-            self._scatterView.getMaskToolsWidget().sigMaskChanged.connect(
-                    self._scatterMaskChanged)
-            # TODO: add AxesPositionersSelector
+            self._buildWidget()
 
         # Show
         self._scatterView.show()
