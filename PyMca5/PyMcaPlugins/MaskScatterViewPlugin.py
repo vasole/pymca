@@ -183,13 +183,8 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
         self._scatterView.raise_()
 
     def _getStackPositioners(self):
-        # info = self.getStackInfo()
-        # return info.get("positioners", {})
-        stack_images, stack_names = self.getStackROIImagesAndNames()
-        shape2d = stack_images[0].shape
-        return {"toto": numpy.arange(stack_images[0].size + 1) ** 1.2,
-                "tata": 3.14,
-                "pipo": numpy.arange(stack_images[0].size).reshape(shape2d) ** 0.5}
+        info = self.getStackInfo()
+        return info.get("positioners", {})
 
     def _setAxesData(self, xPositioner, yPositioner):
         """
