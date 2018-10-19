@@ -74,6 +74,8 @@ _logger.debug("Using backend %s", backend)
 
 
 class AxesPositionersSelector(qt.QWidget):
+    sigSelectionChanged = qt.pyqtSignal(list)
+
     def __init__(self, parent=None):
         qt.QWidget.__init__(self, parent)
         hlayout = qt.QHBoxLayout()
@@ -81,9 +83,11 @@ class AxesPositionersSelector(qt.QWidget):
 
         xlabel = qt.QLabel("X:", parent=parent)
         self.xPositioner = qt.QComboBox(parent)
+        self.xPositioner.currentIndexChanged.connect(self._emitSelectionChanged)
 
         ylabel = qt.QLabel("Y:", parent=parent)
         self.yPositioner = qt.QComboBox(parent)
+        self.yPositioner.currentIndexChanged.connect(self._emitSelectionChanged)
 
         hlayout.addWidget(xlabel)
         hlayout.addWidget(self.xPositioner)
@@ -102,13 +106,16 @@ class AxesPositionersSelector(qt.QWidget):
         self.yPositioner.clear()
         self.yPositioner.insertItem(0, "None")
 
+    def _emitSelectionChanged(self, idx):
+        self.sigSelectionChanged.emit(self.getSelectedPositioners())
+
     def setNumPoints(self, n):
         self._nPoints = n
 
     def unsetNumPoints(self):
         self._nPoints = None
 
-    def setPositioners(self, positioners):
+    def fillPositioners(self, positioners):
         """
 
         :param dict positioners: Dictionary of positioners
@@ -117,7 +124,7 @@ class AxesPositionersSelector(qt.QWidget):
         self._initComboBoxes()
         i = 0
         for motorName, motorValues in positioners.items():
-            if numpy.isscalar(motorValues) or len(motorValues.shape) == 1:
+            if numpy.isscalar(motorValues):
                 continue
             elif self._nPoints is not None and self._nPoints != motorValues.size:
                 continue
@@ -125,6 +132,18 @@ class AxesPositionersSelector(qt.QWidget):
                 i += 1
                 self.xPositioner.insertItem(i, motorName)
                 self.yPositioner.insertItem(i, motorName)
+
+    def getSelectedPositioners(self):
+        """
+
+        :return: 2-tuple of selected positioner names (or None)
+        """
+        selected = [None, None]
+        if self.xPositioner.currentText() != "None":
+            selected[0] = self.xPositioner.currentText()
+        if self.yPositioner.currentText() != "None":
+            selected[1] = self.yPositioner.currentText()
+        return selected
 
 
 class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
@@ -142,12 +161,18 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
         self._scatterView.resetZoom()
         self._scatterView.getMaskToolsWidget().sigMaskChanged.connect(
                 self._scatterMaskChanged)
-        
+
         self._axesSelector = AxesPositionersSelector(parent=self._scatterView)
         self._axesSelectorDock = BoxLayoutDockWidget()
         self._axesSelectorDock.setWindowTitle('Axes selection')
         self._axesSelectorDock.setWidget(self._axesSelector)
         self._scatterView.addDockWidget(qt.Qt.BottomDockWidgetArea, self._axesSelectorDock)
+
+        #self._axesSelector.fillPositioners(self._getStackPositioners())
+        # debugging
+        stack_images, stack_names = self.getStackROIImagesAndNames()
+        self._axesSelector.fillPositioners({"toto": numpy.arange(stack_images[0].size) ** 1.2})
+        self._axesSelector.sigSelectionChanged.connect(self._setAxesData)
 
     def _showWidget(self):
         if self._scatterView is None:
@@ -156,6 +181,13 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
         # Show
         self._scatterView.show()
         self._scatterView.raise_()
+
+    def _getStackPositioners(self):
+        info = self.getStackInfo()
+        return info.get("positioners", {})
+
+    def _setAxesData(self, *args):
+        print(args)
 
     @contextmanager
     def _scatterMaskDisconnected(self):
@@ -206,6 +238,7 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
         if not self._isScatterViewVisible():
             return
         self._setData()
+        self._axesSelector.fillPositioners(self._getStackPositioners())
 
     def selectionMaskUpdated(self):
         if not self._isScatterViewVisible():
