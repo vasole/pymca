@@ -124,9 +124,7 @@ class AxesPositionersSelector(qt.QWidget):
         self._initComboBoxes()
         i = 0
         for motorName, motorValues in positioners.items():
-            if numpy.isscalar(motorValues):
-                continue
-            elif self._nPoints is not None and self._nPoints != motorValues.size:
+            if not numpy.isscalar(motorValues) and self._nPoints is not None and self._nPoints != motorValues.size:
                 continue
             else:
                 i += 1
@@ -186,7 +184,10 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
         # info = self.getStackInfo()
         # return info.get("positioners", {})
         stack_images, stack_names = self.getStackROIImagesAndNames()
-        return {"toto": numpy.arange(stack_images[0].size) ** 1.2}
+        shape2d = stack_images[0].shape
+        return {"toto": numpy.arange(stack_images[0].size) ** 1.2,
+                "tata": 3.14,
+                "pipo": numpy.arange(stack_images[0].size).reshape(shape2d) ** 0.5}
 
     def _setAxesData(self, xPositioner, yPositioner):
         """
@@ -237,7 +238,20 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
         xdata = self._xdata if self._xdata is not None else defaultX
         ydata = self._ydata if self._ydata is not None else defaultY
 
-        # todo: 2D -> 1D, scalar -> 1D
+        if numpy.isscalar(xdata):
+            xdata = xdata * numpy.ones_like(stackValues)
+            _logger.debug("converting scalar to constant 1D array for x")
+        elif len(xdata.shape) > 1:
+            _logger.debug("flattening %s array", str(xdata.shape))
+            xdata = xdata.reshape((-1,))
+
+        if numpy.isscalar(ydata):
+            ydata = ydata * numpy.ones_like(stackValues)
+            _logger.debug("converting scalar to constant 1D array for y")
+        elif len(ydata.shape) > 1:
+            _logger.debug("flattening %s array", str(ydata.shape))
+            ydata = ydata.reshape((-1,))
+
         self._scatterView.setData(xdata, ydata, stackValues,
                                   copy=False)
 
