@@ -125,6 +125,7 @@ class AxesPositionersSelector(qt.QWidget):
         i = 0
         for motorName, motorValues in positioners.items():
             if not numpy.isscalar(motorValues) and self._nPoints is not None and self._nPoints != motorValues.size:
+                # checks consistency of number of data points (but accepts scalars)
                 continue
             else:
                 i += 1
@@ -169,6 +170,7 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
         self._axesSelectorDock.setWidget(self._axesSelector)
         self._scatterView.addDockWidget(qt.Qt.BottomDockWidgetArea, self._axesSelectorDock)
 
+        self._axesSelector.setNumPoints(self._getNumStackPoints())
         self._axesSelector.fillPositioners(self._getStackPositioners())
         self._axesSelector.sigSelectionChanged.connect(self._setAxesData)
 
@@ -185,7 +187,7 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
         # return info.get("positioners", {})
         stack_images, stack_names = self.getStackROIImagesAndNames()
         shape2d = stack_images[0].shape
-        return {"toto": numpy.arange(stack_images[0].size) ** 1.2,
+        return {"toto": numpy.arange(stack_images[0].size + 1) ** 1.2,
                 "tata": 3.14,
                 "pipo": numpy.arange(stack_images[0].size).reshape(shape2d) ** 0.5}
 
@@ -272,10 +274,15 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
         with self._scatterMaskDisconnected():
             self.setStackSelectionMask(mask)
 
+    def _getNumStackPoints(self):
+        stack_images, stack_names = self.getStackROIImagesAndNames()
+        return stack_images[0].size
+
     def stackUpdated(self):
         if not self._isScatterViewVisible():
             return
         self._setData()
+        self._axesSelector.setNumPoints(self._getNumStackPoints())
         self._axesSelector.fillPositioners(self._getStackPositioners())
 
     def selectionMaskUpdated(self):
