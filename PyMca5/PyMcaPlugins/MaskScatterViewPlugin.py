@@ -251,6 +251,7 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
 
         self._scatterView.setData(xdata, ydata, stackValues,
                                   copy=False)
+        self._scatterView.resetZoom()
 
     def _isScatterViewVisible(self):
         if self._scatterView is None:
