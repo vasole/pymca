@@ -312,10 +312,11 @@ All dependencies may be simply installed with pip. Please replace pip by pip3 if
 
     pip install -r https://raw.githubusercontent.com/vasole/pymca/master/requirements.txt
 
-Installing for Anaconda
------------------------
+Conda installation
+------------------
 
-*PyMca* can be installed with `conda` from the conda-forge repository:
+*PyMca* can be installed with `conda` from the *conda-forge* repository
+for all versions of Anaconda and Miniconda:
 
 To install *PyMca* with all dependencies, including the GUI, use:
 
