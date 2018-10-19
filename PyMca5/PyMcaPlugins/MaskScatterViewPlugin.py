@@ -74,7 +74,7 @@ _logger.debug("Using backend %s", backend)
 
 
 class AxesPositionersSelector(qt.QWidget):
-    sigSelectionChanged = qt.pyqtSignal(list)
+    sigSelectionChanged = qt.pyqtSignal(object, object)
 
     def __init__(self, parent=None):
         qt.QWidget.__init__(self, parent)
@@ -107,7 +107,7 @@ class AxesPositionersSelector(qt.QWidget):
         self.yPositioner.insertItem(0, "None")
 
     def _emitSelectionChanged(self, idx):
-        self.sigSelectionChanged.emit(self.getSelectedPositioners())
+        self.sigSelectionChanged.emit(*self.getSelectedPositioners())
 
     def setNumPoints(self, n):
         self._nPoints = n
@@ -155,6 +155,9 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
         self.__methodKeys = ['Show']
         self._scatterView = None
 
+        self._xdata = None
+        self._ydata = None
+
     def _buildWidget(self):
         self._scatterView = ScatterView(parent=None, backend=backend)
         self._setData()
@@ -168,10 +171,7 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
         self._axesSelectorDock.setWidget(self._axesSelector)
         self._scatterView.addDockWidget(qt.Qt.BottomDockWidgetArea, self._axesSelectorDock)
 
-        #self._axesSelector.fillPositioners(self._getStackPositioners())
-        # debugging
-        stack_images, stack_names = self.getStackROIImagesAndNames()
-        self._axesSelector.fillPositioners({"toto": numpy.arange(stack_images[0].size) ** 1.2})
+        self._axesSelector.fillPositioners(self._getStackPositioners())
         self._axesSelector.sigSelectionChanged.connect(self._setAxesData)
 
     def _showWidget(self):
@@ -183,11 +183,30 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
         self._scatterView.raise_()
 
     def _getStackPositioners(self):
-        info = self.getStackInfo()
-        return info.get("positioners", {})
+        # info = self.getStackInfo()
+        # return info.get("positioners", {})
+        stack_images, stack_names = self.getStackROIImagesAndNames()
+        return {"toto": numpy.arange(stack_images[0].size) ** 1.2}
 
-    def _setAxesData(self, *args):
-        print(args)
+    def _setAxesData(self, xPositioner, yPositioner):
+        """
+
+        :param str xPositioner: motor name, or None
+        :param str yPositioner: motor name, or None
+        :return:
+        """
+        positioners = self._getStackPositioners()
+        if xPositioner is not None:
+            assert xPositioner in positioners
+            self._xdata = positioners[xPositioner]
+        else:
+            self._xdata = None
+        if yPositioner is not None:
+            assert yPositioner in positioners
+            self._ydata = positioners[yPositioner]
+        else:
+            self._ydata = None
+        self._setData()
 
     @contextmanager
     def _scatterMaskDisconnected(self):
@@ -209,12 +228,17 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
         # flatten image
         stackValues = stack_images[0].reshape((-1,))
         # get regular grid coordinates as a 1D array
-        defaultX, defaultY = numpy.meshgrid(numpy.arange(ncols),
-                                            numpy.arange(nrows))
-        defaultX.shape = stackValues.shape
-        defaultY.shape = stackValues.shape
+        if self._xdata is None or self._ydata is None:
+            defaultX, defaultY = numpy.meshgrid(numpy.arange(ncols),
+                                                numpy.arange(nrows))
+            defaultX.shape = stackValues.shape
+            defaultY.shape = stackValues.shape
 
-        self._scatterView.setData(defaultX, defaultY, stackValues,
+        xdata = self._xdata if self._xdata is not None else defaultX
+        ydata = self._ydata if self._ydata is not None else defaultY
+
+        # todo: 2D -> 1D, scalar -> 1D
+        self._scatterView.setData(xdata, ydata, stackValues,
                                   copy=False)
 
     def _isScatterViewVisible(self):
