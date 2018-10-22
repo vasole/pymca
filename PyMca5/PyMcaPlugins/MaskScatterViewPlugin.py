@@ -151,13 +151,12 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
                                           tooltip + " (matplotlib backend)",
                                           None]}
         self.__methodKeys = ['Show (mpl)']
-        self._backends = ['mpl']
+        self._createdBackends = []
         if isGlAvailable:
             self.methodDict['Show (gl)'] = [self._showWidgetGl,
                                             tooltip + " (OpenGL backend)",
                                             None]
             self.__methodKeys.append('Show (gl)')
-            self._backends.append('gl')
 
         self._scatterViews = {"gl": None,
                               "mpl": None}
@@ -172,6 +171,7 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
     def _buildWidget(self, backend):
         scatterView = ScatterView(parent=None, backend=backend)
         self._scatterViews[backend] = scatterView
+        self._createdBackends.append(backend)
 
         self._setData(backend)
         scatterView.resetZoom()
@@ -235,18 +235,24 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
         self._setData(backend)
 
     @contextmanager
-    def _scatterMaskDisconnected(self, backend):
+    def _scatterMasksDisconnected(self):
         # This context manager allows to call self.setStackSelectionMask
         # without entering an infinite loop, by temporarily disconnecting
         # callbacks from our mask signals.
-        callback = self._scatterMaskChangedGl if backend == "gl" else self._scatterMaskChangedMpl
-        self._scatterViews[backend].getMaskToolsWidget().sigMaskChanged.disconnect(
-                callback)
+
+        # Disconnect
+        for backend in self._createdBackends:
+            callback = self._scatterMaskChangedGl if backend == "gl" else self._scatterMaskChangedMpl
+            self._scatterViews[backend].getMaskToolsWidget().sigMaskChanged.disconnect(
+                    callback)
         try:
             yield
         finally:
-            self._scatterViews[backend].getMaskToolsWidget().sigMaskChanged.connect(
-                    callback)
+            # Reconnect
+            for backend in self._createdBackends:
+                callback = self._scatterMaskChangedGl if backend == "gl" else self._scatterMaskChangedMpl
+                self._scatterViews[backend].getMaskToolsWidget().sigMaskChanged.connect(
+                        callback)
 
     def _setData(self, backend):
         stack_images, stack_names = self.getStackROIImagesAndNames()
@@ -302,7 +308,7 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
             mask = scattermask.reshape(shape)
         else:
             mask = scattermask
-        with self._scatterMaskDisconnected(backend):
+        with self._scatterMasksDisconnected():
             self.setStackSelectionMask(mask)
 
     def _getNumStackPoints(self):
@@ -314,7 +320,7 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
         return info.get("positioners", {})
 
     def stackUpdated(self):
-        for backend in self._backends:
+        for backend in self._createdBackends:
             if not self._isScatterViewVisible(backend):
                 return
             self._setData(backend)
@@ -322,7 +328,7 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
             self._axesSelectors[backend].fillPositioners(self._getStackPositioners())
 
     def selectionMaskUpdated(self):
-        for backend in self._backends:
+        for backend in self._createdBackends:
             if not self._isScatterViewVisible(backend):
                 return
             mask = self.getStackSelectionMask()
