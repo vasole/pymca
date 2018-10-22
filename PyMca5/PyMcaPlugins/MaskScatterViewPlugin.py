@@ -326,7 +326,10 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
             if not self._isScatterViewVisible(backend):
                 return
             mask = self.getStackSelectionMask()
-            scatterMask = mask.reshape((-1,))
+            if mask is not None:
+                scatterMask = mask.reshape((-1,))
+            else:
+                scatterMask = None
             self._scatterViews[backend].getMaskToolsWidget().setSelectionMask(scatterMask)
 
     def stackClosed(self):
