@@ -175,8 +175,9 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
 
         self._setData(backend)
         scatterView.resetZoom()
+        callback = self._scatterMaskChangedGl if backend == "gl" else self._scatterMaskChangedMpl
         scatterView.getMaskToolsWidget().sigMaskChanged.connect(
-                self._scatterMaskChanged)
+                callback)
 
         self._axesSelectors[backend] = AxesPositionersSelector(parent=scatterView)
         _axesSelectorDock = BoxLayoutDockWidget()
