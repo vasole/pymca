@@ -205,6 +205,9 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
         self._scatterViews[backend].show()
         self._scatterViews[backend].raise_()
 
+        # Draw mask, if any
+        self.selectionMaskUpdated()
+
     def _setAxesDataMpl(self, xPositioner, yPositioner):
         self._setAxesData(xPositioner, yPositioner, "mpl")
 
