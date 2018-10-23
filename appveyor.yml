@@ -1,3 +1,5 @@
+version: 5.4-dev{build}
+
 os:
     - Visual Studio 2015
 
