@@ -143,6 +143,103 @@ class AxesPositionersSelector(qt.QWidget):
         return selected
 
 
+class MaskScatterViewWidget(qt.QMainWindow):
+    def __init__(self, parent=None, backend="mpl"):
+        qt.QMainWindow.__init__(self, parent)
+        self._scatterView = ScatterView(parent=self, backend=backend)
+
+        self._axesSelector = AxesPositionersSelector(parent=self._scatterView)
+        self._axesSelector.sigSelectionChanged.connect(self._setAxesData)
+
+        self.setCentralWidget(self._scatterView)
+        _axesSelectorDock = BoxLayoutDockWidget()
+        _axesSelectorDock.setWindowTitle('Axes selection')
+        _axesSelectorDock.setWidget(self._axesSelector)
+        self.addDockWidget(qt.Qt.BottomDockWidgetArea, _axesSelectorDock)
+
+        self.sigAxesSelectionChanged = self._axesSelector.sigSelectionChanged
+
+        self._positioners = {}
+        self._xdata = None
+        self._ydata = None
+        self._stackImage = None
+
+    def getMaskToolsWidget(self):
+        return self._scatterView.getMaskToolsWidget()
+
+    def fillPositioners(self, positioners):
+        self._positioners = positioners
+        self._axesSelector.fillPositioners(positioners)
+
+    def setNumPoints(self, n):
+        self._axesSelector.setNumPoints(n)
+
+    def _setAxesData(self, xPositioner, yPositioner):
+        """
+
+        :param str xPositioner: motor name, or None
+        :param str yPositioner: motor name, or None
+        :return:
+        """
+        if xPositioner not in [None, ""]:
+            assert xPositioner in self._positioners
+            self._xdata = self._positioners[xPositioner]
+        else:
+            self._xdata = None
+        if yPositioner not in [None, ""]:
+            assert yPositioner in self._positioners
+            self._ydata = self._positioners[yPositioner]
+        else:
+            self._ydata = None
+        if self._stackImage is not None:
+            self.setData()
+
+    def setData(self, stackImage=None):
+        first_time = self._stackImage is None
+        if first_time:
+            assert stackImage is not None
+
+        if stackImage is None:
+            # use previous data
+            stackImage = self._stackImage
+        else:
+            # update stored data
+            self._stackImage = stackImage
+        nrows, ncols = stackImage.shape
+
+        # flatten image
+        stackValues = stackImage.reshape((-1,))
+
+        # get regular grid coordinates as a 1D array
+        if self._xdata is None or self._ydata is None:
+            defaultX, defaultY = numpy.meshgrid(numpy.arange(ncols),
+                                                numpy.arange(nrows))
+            defaultX.shape = stackValues.shape
+            defaultY.shape = stackValues.shape
+
+        xdata = self._xdata if self._xdata is not None else defaultX
+        ydata = self._ydata if self._ydata is not None else defaultY
+
+        if numpy.isscalar(xdata):
+            xdata = xdata * numpy.ones_like(stackValues)
+            _logger.debug("converting scalar to constant 1D array for x")
+        elif len(xdata.shape) > 1:
+            _logger.debug("flattening %s array", str(xdata.shape))
+            xdata = xdata.reshape((-1,))
+
+        if numpy.isscalar(ydata):
+            ydata = ydata * numpy.ones_like(stackValues)
+            _logger.debug("converting scalar to constant 1D array for y")
+        elif len(ydata.shape) > 1:
+            _logger.debug("flattening %s array", str(ydata.shape))
+            ydata = ydata.reshape((-1,))
+
+        self._scatterView.setData(xdata, ydata, stackValues,
+                                  copy=False)
+        if first_time:
+            self._scatterView.resetZoom()
+
+
 class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
     def __init__(self, stackWindow, **kw):
         StackPluginBase.StackPluginBase.__init__(self, stackWindow, **kw)
@@ -160,36 +257,20 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
 
         self._scatterViews = {"gl": None,
                               "mpl": None}
-        self._axesSelectors = {"gl": None,
-                               "mpl": None}
-
-        self._xdata = {"gl": None,
-                       "mpl": None}
-        self._ydata = {"gl": None,
-                       "mpl": None}
 
     def _buildWidget(self, backend):
-        scatterView = ScatterView(parent=None, backend=backend)
+        scatterView = MaskScatterViewWidget(parent=None, backend=backend)
         self._scatterViews[backend] = scatterView
         self._createdBackends.append(backend)
 
         self._setData(backend)
-        scatterView.resetZoom()
+
         callback = self._scatterMaskChangedGl if backend == "gl" else self._scatterMaskChangedMpl
         scatterView.getMaskToolsWidget().sigMaskChanged.connect(
                 callback)
 
-        self._axesSelectors[backend] = AxesPositionersSelector(parent=scatterView)
-        _axesSelectorDock = BoxLayoutDockWidget()
-        _axesSelectorDock.setWindowTitle('Axes selection')
-        _axesSelectorDock.setWidget(self._axesSelectors[backend])
-        scatterView.addDockWidget(qt.Qt.BottomDockWidgetArea, _axesSelectorDock)
-
-        self._axesSelectors[backend].setNumPoints(self._getNumStackPoints())
-        self._axesSelectors[backend].fillPositioners(self._getStackPositioners())
-
-        callback = self._setAxesDataGl if backend == "gl" else self._setAxesDataMpl
-        self._axesSelectors[backend].sigSelectionChanged.connect(callback)
+        scatterView.setNumPoints(self._getNumStackPoints())
+        scatterView.fillPositioners(self._getStackPositioners())
 
     def _showWidgetMpl(self):
         self._showWidget(backend="mpl")
@@ -207,32 +288,6 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
 
         # Draw mask, if any
         self.selectionMaskUpdated()
-
-    def _setAxesDataMpl(self, xPositioner, yPositioner):
-        self._setAxesData(xPositioner, yPositioner, "mpl")
-
-    def _setAxesDataGl(self, xPositioner, yPositioner):
-        self._setAxesData(xPositioner, yPositioner, "gl")
-
-    def _setAxesData(self, xPositioner, yPositioner, backend):
-        """
-
-        :param str xPositioner: motor name, or None
-        :param str yPositioner: motor name, or None
-        :return:
-        """
-        positioners = self._getStackPositioners()
-        if xPositioner is not None:
-            assert xPositioner in positioners
-            self._xdata[backend] = positioners[xPositioner]
-        else:
-            self._xdata[backend] = None
-        if yPositioner is not None:
-            assert yPositioner in positioners
-            self._ydata[backend] = positioners[yPositioner]
-        else:
-            self._ydata[backend] = None
-        self._setData(backend)
 
     @contextmanager
     def _scatterMaskDisconnected(self, backend):
@@ -254,37 +309,8 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
 
     def _setData(self, backend):
         stack_images, stack_names = self.getStackROIImagesAndNames()
-        nrows, ncols = stack_images[0].shape
 
-        # flatten image
-        stackValues = stack_images[0].reshape((-1,))
-        # get regular grid coordinates as a 1D array
-        if self._xdata[backend] is None or self._ydata[backend] is None:
-            defaultX, defaultY = numpy.meshgrid(numpy.arange(ncols),
-                                                numpy.arange(nrows))
-            defaultX.shape = stackValues.shape
-            defaultY.shape = stackValues.shape
-
-        xdata = self._xdata[backend] if self._xdata[backend] is not None else defaultX
-        ydata = self._ydata[backend] if self._ydata[backend] is not None else defaultY
-
-        if numpy.isscalar(xdata):
-            xdata = xdata * numpy.ones_like(stackValues)
-            _logger.debug("converting scalar to constant 1D array for x")
-        elif len(xdata.shape) > 1:
-            _logger.debug("flattening %s array", str(xdata.shape))
-            xdata = xdata.reshape((-1,))
-
-        if numpy.isscalar(ydata):
-            ydata = ydata * numpy.ones_like(stackValues)
-            _logger.debug("converting scalar to constant 1D array for y")
-        elif len(ydata.shape) > 1:
-            _logger.debug("flattening %s array", str(ydata.shape))
-            ydata = ydata.reshape((-1,))
-
-        self._scatterViews[backend].setData(xdata, ydata, stackValues,
-                                            copy=False)
-        self._scatterViews[backend].resetZoom()
+        self._scatterViews[backend].setData(stack_images[0])
 
     def _isScatterViewVisible(self, backend):
         if self._scatterViews[backend] is None:
@@ -322,8 +348,8 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
             if not self._isScatterViewVisible(backend):
                 return
             self._setData(backend)
-            self._axesSelectors[backend].setNumPoints(self._getNumStackPoints())
-            self._axesSelectors[backend].fillPositioners(self._getStackPositioners())
+            self._scatterViews[backend].setNumPoints(self._getNumStackPoints())
+            self._scatterViews[backend].fillPositioners(self._getStackPositioners())
 
     def selectionMaskUpdated(self):
         for backend in self._createdBackends:
