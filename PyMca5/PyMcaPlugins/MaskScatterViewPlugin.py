@@ -235,24 +235,22 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
         self._setData(backend)
 
     @contextmanager
-    def _scatterMasksDisconnected(self):
+    def _scatterMaskDisconnected(self, backend):
         # This context manager allows to call self.setStackSelectionMask
         # without entering an infinite loop, by temporarily disconnecting
         # callbacks from our mask signals.
 
         # Disconnect
-        for backend in self._createdBackends:
-            callback = self._scatterMaskChangedGl if backend == "gl" else self._scatterMaskChangedMpl
-            self._scatterViews[backend].getMaskToolsWidget().sigMaskChanged.disconnect(
-                    callback)
+        callback = self._scatterMaskChangedGl if backend == "gl" else self._scatterMaskChangedMpl
+        self._scatterViews[backend].getMaskToolsWidget().sigMaskChanged.disconnect(
+                callback)
         try:
             yield
         finally:
             # Reconnect
-            for backend in self._createdBackends:
-                callback = self._scatterMaskChangedGl if backend == "gl" else self._scatterMaskChangedMpl
-                self._scatterViews[backend].getMaskToolsWidget().sigMaskChanged.connect(
-                        callback)
+            callback = self._scatterMaskChangedGl if backend == "gl" else self._scatterMaskChangedMpl
+            self._scatterViews[backend].getMaskToolsWidget().sigMaskChanged.connect(
+                    callback)
 
     def _setData(self, backend):
         stack_images, stack_names = self.getStackROIImagesAndNames()
@@ -308,7 +306,7 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
             mask = scattermask.reshape(shape)
         else:
             mask = scattermask
-        with self._scatterMasksDisconnected():
+        with self._scatterMaskDisconnected(backend):
             self.setStackSelectionMask(mask)
 
     def _getNumStackPoints(self):
