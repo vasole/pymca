@@ -37,7 +37,8 @@ import logging
 import numpy
 from contextlib import contextmanager
 
-from PyMca5.PyMcaGui import PyMcaQt as qt    # just to be sure PyMcaQt is imported before silx.gui.qt
+# import order may matter for qt binding selection
+from PyMca5.PyMcaGui import PyMcaQt as qt
 from silx.gui import qt as silx_qt
 
 from PyMca5 import StackPluginBase
@@ -194,6 +195,7 @@ class MaskScatterViewWidget(qt.QMainWindow):
             self._ydata = None
         if self._stackImage is not None:
             self.setData()
+            self._scatterView.resetZoom()
 
     def setData(self, stackImage=None):
         first_time = self._stackImage is None
