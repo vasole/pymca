@@ -195,6 +195,12 @@ class MaskScatterViewWidget(qt.QMainWindow):
             self._ydata = None
         if self._stackImage is not None:
             self.setData()
+            if not self._scatterView.getMaskToolsWidget().isVisible():
+                # synchronization inactive, force mask redrawing
+                mask = self._scatterView.getMaskToolsWidget().getSelectionMask()
+                if mask is not None:
+                    self._scatterView.getMaskToolsWidget().setSelectionMask(mask)
+
             self._scatterView.resetZoom()
 
     def setData(self, stackImage=None):
@@ -344,8 +350,15 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
         return stack_images[0].size
 
     def _getStackPositioners(self):
-        info = self.getStackInfo()
-        return info.get("positioners", {})
+        # info = self.getStackInfo()
+        # return info.get("positioners", {})
+        lin = numpy.arange(self._getNumStackPoints())
+        return {"const": 3.1415,
+                "lin": lin,
+                "quad": lin**2,
+                "sin": numpy.sin(lin),
+                "cos": numpy.cos(lin),
+                "incorrect len": numpy.ones((256,))}
 
     def stackUpdated(self):
         for backend in self._createdBackends:
