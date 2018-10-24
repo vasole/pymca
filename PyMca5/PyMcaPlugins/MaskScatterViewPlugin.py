@@ -157,8 +157,6 @@ class MaskScatterViewWidget(qt.QMainWindow):
         _axesSelectorDock.setWidget(self._axesSelector)
         self.addDockWidget(qt.Qt.BottomDockWidgetArea, _axesSelectorDock)
 
-        self.sigAxesSelectionChanged = self._axesSelector.sigSelectionChanged
-
         self._positioners = {}
         self._xdata = None
         self._ydata = None
@@ -166,6 +164,9 @@ class MaskScatterViewWidget(qt.QMainWindow):
 
     def getMaskToolsWidget(self):
         return self._scatterView.getMaskToolsWidget()
+
+    def resetZoom(self):
+        return self._scatterView.resetZoom()
 
     def fillPositioners(self, positioners):
         self._positioners = positioners
@@ -311,6 +312,7 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
         stack_images, stack_names = self.getStackROIImagesAndNames()
 
         self._scatterViews[backend].setData(stack_images[0])
+        self._scatterViews[backend].resetZoom()
 
     def _isScatterViewVisible(self, backend):
         if self._scatterViews[backend] is None:
