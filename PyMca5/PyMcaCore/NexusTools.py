@@ -127,6 +127,45 @@ def getEntryName(path):
         candidate = posixpath.dirname(entry)
     return entry
 
+def getNXdataList(h5file, path, objects=False):
+    """
+    Retrieve the hdf5 group names down a given path where the NXclass attribute
+    is set to "NXdata".
+
+    If groups is False (default) it returns the dataset names.
+    If groups is True it returns the actual objects.
+    """
+    return getNXClassList(h5file, path, classes=["NX_class", b"NX_class"], objects=objects)
+
+def getNXClassList(h5file, path, classes, objects=False):
+    """
+    Retrieve the hdf5 group names down a given path where the NXclass attribute
+    is set to one of the items in the classes list.
+
+    If objects is False (default) it returns the group names.
+    If objects is True it returns the actual HDF5 group objects.
+    """
+    pathList =[]
+    def visit_function(name, obj):
+        if isGroup(obj):
+            append = False
+            forget = False
+            namebased = False
+            for key, value in obj.attrs.items():
+                if key in ["NX_class", b"NX_class"]:
+                    if value in classes:
+                        append = True
+                    else:
+                        forget = True
+            if append:
+                if objects:
+                    pathList.append(obj)
+                else:
+                    pathList.append(obj.name)
+    if hasattr(h5file[path], "visititems"):
+        # prevent errors dealing with toplevel datasets
+        h5file[path].visititems(visit_function)
+    return pathList
 
 def getMcaList(h5file, path, dataset=False, ignore=None):
     """
