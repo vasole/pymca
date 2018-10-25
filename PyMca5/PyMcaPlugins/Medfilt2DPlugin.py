@@ -91,8 +91,8 @@ class Medfilt2DPlugin(Plugin2DBase):
         if data.ndim > 2:
             raise NotImplementedError("Median filter not implemented for RGB images")
         self.widget.setColormap(active_image.getColormap())
-        self.widget.setRawData(data)
         self.widget.setLegend("medfilt2d(%s)" % active_image.getLegend())
+        self.widget.setRawData(data)
 
     def activeImageChanged(self, prev, new):
         if self.widget is None or not self.widget.isVisible() or new is None:
@@ -163,7 +163,7 @@ class Plot2DMedFilt(Plot2D):
         self.addImage(medfilt2d(numpy.ascontiguousarray(self._data),
                                 kernel_size=self.medfilt_width),
                       colormap=self._colormap,
-                      legend="medfilt2d(%s)" % self._legend)
+                      legend=self._legend)
 
 
 MENU_TEXT = "2D median filter"
