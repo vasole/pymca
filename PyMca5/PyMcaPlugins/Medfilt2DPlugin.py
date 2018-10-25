@@ -157,7 +157,9 @@ class Plot2DMedFilt(Plot2D):
         self._applyFilter()
 
     def _applyFilter(self):
-        self.addImage(medfilt2d(self._data, kernel_size=self.medfilt_width),
+        # medfilt2D requires the data to be C-contiguous with silx <= 0.9
+        self.addImage(medfilt2d(numpy.ascontiguousarray(self._data),
+                                kernel_size=self.medfilt_width),
                       colormap=self._colormap,
                       legend="medfilt2d(%s)" % self._legend)
 
