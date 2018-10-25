@@ -93,7 +93,7 @@ class Medfilt2DPlugin(Plugin2DBase):
         self.widget.setLegend("medfilt2d(%s)" % active_image.getLegend())
 
     def activeImageChanged(self, prev, new):
-        if new is None:
+        if self.widget is None or new is None:
             return
         self._medfilt2D()
 
