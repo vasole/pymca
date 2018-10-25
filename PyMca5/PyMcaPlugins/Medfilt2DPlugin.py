@@ -24,6 +24,8 @@
 #
 #############################################################################*/
 
+import numpy
+
 from PyMca5.PyMcaCore.Plugin2DBase import Plugin2DBase
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from silx.gui.plot import Plot2D
@@ -93,7 +95,7 @@ class Medfilt2DPlugin(Plugin2DBase):
         self.widget.setLegend("medfilt2d(%s)" % active_image.getLegend())
 
     def activeImageChanged(self, prev, new):
-        if self.widget is None or new is None:
+        if self.widget is None or not self.widget.isVisible() or new is None:
             return
         self._medfilt2D()
 
@@ -178,7 +180,6 @@ if __name__ == "__main__":
     # python -m PyMca5.PyMcaPlugins.Medfilt2DPlugin
     from PyMca5.PyMcaGui.PluginsToolButton import PluginsToolButton
     from PyMca5 import PyMcaPlugins
-    import numpy
     import os
     from silx.test.utils import add_relative_noise
     from silx.gui.plot import PlotWidget
