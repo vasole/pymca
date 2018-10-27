@@ -135,7 +135,7 @@ def getNXdataList(h5file, path, objects=False):
     If groups is False (default) it returns the dataset names.
     If groups is True it returns the actual objects.
     """
-    return getNXClassList(h5file, path, classes=["NX_class", b"NX_class"], objects=objects)
+    return getNXClassList(h5file, path, classes=["NXdata", b"NXdata"], objects=objects)
 
 def getNXClassList(h5file, path, classes, objects=False):
     """
