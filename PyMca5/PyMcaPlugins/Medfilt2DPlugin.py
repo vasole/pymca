@@ -24,6 +24,8 @@
 #
 #############################################################################*/
 
+import numpy
+
 from PyMca5.PyMcaCore.Plugin2DBase import Plugin2DBase
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from silx.gui.plot import Plot2D
@@ -89,11 +91,11 @@ class Medfilt2DPlugin(Plugin2DBase):
         if data.ndim > 2:
             raise NotImplementedError("Median filter not implemented for RGB images")
         self.widget.setColormap(active_image.getColormap())
-        self.widget.setRawData(data)
         self.widget.setLegend("medfilt2d(%s)" % active_image.getLegend())
+        self.widget.setRawData(data)
 
     def activeImageChanged(self, prev, new):
-        if new is None:
+        if self.widget is None or not self.widget.isVisible() or new is None:
             return
         self._medfilt2D()
 
@@ -157,9 +159,11 @@ class Plot2DMedFilt(Plot2D):
         self._applyFilter()
 
     def _applyFilter(self):
-        self.addImage(medfilt2d(self._data, kernel_size=self.medfilt_width),
+        # medfilt2D requires the data to be C-contiguous with silx <= 0.9
+        self.addImage(medfilt2d(numpy.ascontiguousarray(self._data),
+                                kernel_size=self.medfilt_width),
                       colormap=self._colormap,
-                      legend="medfilt2d(%s)" % self._legend)
+                      legend=self._legend)
 
 
 MENU_TEXT = "2D median filter"
@@ -176,7 +180,6 @@ if __name__ == "__main__":
     # python -m PyMca5.PyMcaPlugins.Medfilt2DPlugin
     from PyMca5.PyMcaGui.PluginsToolButton import PluginsToolButton
     from PyMca5 import PyMcaPlugins
-    import numpy
     import os
     from silx.test.utils import add_relative_noise
     from silx.gui.plot import PlotWidget
