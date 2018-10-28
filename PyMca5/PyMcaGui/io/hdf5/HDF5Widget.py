@@ -325,7 +325,7 @@ class H5NodeProxy(object):
                         self._type = _type
                         if _type in ["NXdata"]:
                             self._color = qt.QColor(qt.Qt.blue)
-                        elif _type in ["NXroot", "NXentry"] and ("default" in attrs):
+                        elif ("default" in attrs):
                             self._color = qt.QColor(qt.Qt.blue)                        
                         #self._attrs = attrs
                         break
