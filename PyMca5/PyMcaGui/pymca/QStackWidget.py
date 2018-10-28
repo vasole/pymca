@@ -34,6 +34,7 @@ import traceback
 import numpy
 import weakref
 import logging
+_logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     # we have to get the Qt binding prior to import PyMcaQt
@@ -49,7 +50,12 @@ if __name__ == "__main__":
                  longoptions)
     binding = None
     for opt, arg in opts:
-        if opt in ('--binding'):
+        if opt in ('--debug'):
+            if arg.lower() not in ['0', 'false']:
+                debugreport = 1
+                _logger.setLevel(logging.DEBUG)
+            # --debug is also parsed later for the global logging level
+        elif opt in ('--binding'):
             binding = arg.lower()
             if binding == "pyqt5":
                 import PyQt5.QtCore
@@ -73,6 +79,9 @@ if __name__ == "__main__":
                 import PySide.QtCore
             else:
                 raise ValueError("Unknown Qt binding <%s>" % binding)
+    from PyMca5.PyMcaCore.LoggingLevel import getLoggingLevel
+    logging.basicConfig(level=getLoggingLevel(opts))
+
 from PyMca5.PyMcaGui import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -101,7 +110,6 @@ from PyMca5 import PyMcaDirs
 from PyMca5.PyMcaIO import ArraySave
 HDF5 = ArraySave.HDF5
 
-_logger = logging.getLogger(__name__)
 # _logger.setLevel(logging.DEBUG)
 QTVERSION = qt.qVersion()
 if _logger.getEffectiveLevel() == logging.DEBUG:
@@ -1263,7 +1271,6 @@ def test():
 
 
 if __name__ == "__main__":
-    from PyMca5.PyMcaCore.LoggingLevel import getLoggingLevel
     sys.excepthook = qt.exceptionHandler
     try:
         opts, args = getopt.getopt(
@@ -1315,9 +1322,6 @@ if __name__ == "__main__":
         #elif opt in '--old':
         #    import QEDFStackWidget
         #    sys.exit(QEDFStackWidget.runAsMain())
-
-    logging.basicConfig(level=getLoggingLevel(opts))
-
     if filepattern is not None:
         if (begin is None) or (end is None):
             raise ValueError("A file pattern needs at least a set of begin and end indices")
