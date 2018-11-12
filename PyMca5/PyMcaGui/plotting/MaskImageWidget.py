@@ -1476,7 +1476,8 @@ class MaskImageWidget(qt.QWidget):
 
     def __applyMaskToImage(self):
         if self.__selectionMask is None:
-            return
+            self.__selectionMask = numpy.zeros(self.__imageData.shape,
+                                               numpy.uint8)
         #if not self.__selectionFlag:
         #    print("Return because of selection flag")
         #    return
