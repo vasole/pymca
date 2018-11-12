@@ -252,6 +252,9 @@ class StackSelector(object):
         #read 10 characters
         line = f.read(10)
         f.close()
+        if hasattr(line, "decode"):
+            # convert to string ignoring errors
+            line = line.decode("utf-8", "ignore")
 
         specfile = False
         marCCD = False
@@ -259,7 +262,7 @@ class StackSelector(object):
             marCCD = True
         if line[0] == "\n":
             line = line[1:]
-        if (line[0] == "{") or marCCD:
+        if line.startswith("{") or marCCD:
             if imagestack is None:
                 if marCCD:
                     imagestack = True
@@ -354,7 +357,7 @@ class StackSelector(object):
     def _getStackOfFiles(self, getfilter=None):
         if getfilter is None:
             getfilter = False
-        fileTypeList = ["EDF Files (*edf)",
+        fileTypeList = ["EDF Files (*edf *edf.gz)",
                         "Image Files (*edf *ccd *raw *edf.gz *ccd.gz *raw.gz *cbf)",
                         "Image Files (*tif *tiff *TIF *TIFF)",
                         "TextImage Files (*txt)",
