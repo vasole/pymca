@@ -40,9 +40,7 @@ override_dh_install:
 	python setup.py install_man -d debian/pymca/usr/share/man
 
 	dh_install -p pymca package/desktop/*.desktop usr/share/applications
-	dh_install -p pymca package/desktop/32px/PyMca.png usr/share/icons/hicolor/32x32/apps
-	dh_install -p pymca package/desktop/48px/PyMca.png usr/share/icons/hicolor/48x48/apps
-	dh_install -p pymca package/desktop/256px/PyMca.png usr/share/icons/hicolor/256x256/apps
+	dh_install -p pymca package/desktop/PyMca.png usr/share/icons/hicolor/256x256/apps
 	dh_install -p pymca package/desktop/pymca.xml usr/share/mime/packages
 
 	# pymca-data
