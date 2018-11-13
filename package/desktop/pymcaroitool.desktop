@@ -6,7 +6,7 @@ GenericName=Region of Interest imaging tool for XRF analysis
 GenericName[en_GB]=Region Of Interest imaging tool for XRF analysis
 Type=Application
 Exec=pymcaroitool
-Icon=/usr/share/pixmaps/pymca.xpm
+Icon=PyMca
 Terminal=false
 Categories=Science;Education;Physics;
 
