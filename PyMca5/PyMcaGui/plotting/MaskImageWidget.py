@@ -1488,7 +1488,7 @@ class MaskImageWidget(qt.QWidget):
                 self.__pixmap[self.__selectionMask == i] = color
             return
         if self._maxNRois < 2:
-            alteration = (1 - (0.2 * self.__selectionMask))
+            alteration = (1 - (0.3 * (self.__selectionMask > 0)))
         else:
             alteration = (1 - (0.2 * (self.__selectionMask > 0))) - \
                          0.1 * (self.__selectionMask == self._roiTags[self._nRoi - 1])
@@ -1548,8 +1548,25 @@ class MaskImageWidget(qt.QWidget):
                             self.__pixmap[tmpMask,3]    = 0xff
         elif int(str(self.colormap[0])) > 1:     #color
             _logger.debug("__applyMaskToImage CASE 5")
+            # default color should be black, pink or green
+            if int(str(self.colormap[0])) == 2:
+                # expected to be temp, use black
+                color = [0x00, 0x00, 0x00, 0xff]
+            elif int(str(self.colormap[0])) == 3:
+                # expected to be red, use green
+                color = [0x00, 0xff, 0x00, 0xff]
+            elif int(str(self.colormap[0])) == 4:
+                # expected to be green, use pink
+                color = [0xff, 0x66, 0xff, 0xff]
+            elif int(str(self.colormap[0])) == 5:
+                # expected to be blue, use yellow
+                color = [0xff, 0xff, 0x00, 0xff]
+            else:
+                color = [0x00, 0x00, 0x00, 0xff]
+
             for i in range(3):
-                self.__pixmap[:,:,i]  = (self.__pixmap0[:,:,i] * alteration)
+                self.__pixmap[:,:,i] = (self.__pixmap0[:,:,i] * alteration) + \
+                                       (1 - alteration) * color[i]
             if 0:
                 tmpMask = numpy.isfinite(self.__imageData)
                 goodData = numpy.isfinite(self.__imageData).min()
@@ -1568,12 +1585,10 @@ class MaskImageWidget(qt.QWidget):
                                       tmp * self.__pixmap0[:,:,3]
         else:
             _logger.debug("__applyMaskToImage CASE 7")
-            self.__pixmap = self.__pixmap0.copy()
-            tmp  = 1 - self.__selectionMask
-            self.__pixmap[:, :, 2] = (0x70 * self.__selectionMask) +\
-                                  tmp * self.__pixmap0[:,:,2]
-            self.__pixmap[:, :, 3] = (0x40 * self.__selectionMask) +\
-                                  tmp * self.__pixmap0[:,:,3]
+            color = numpy.array([0xff, 0x66, 0xff, 0xff], dtype=numpy.uint8)
+            for i in range(3):
+                self.__pixmap[:,:,i] = (self.__pixmap0[:,:,i] * alteration) +\
+                            (1 - alteration) * color[i]
             if 0:
                 tmpMask = ~numpy.isfinite(self.__imageData)
                 badData = numpy.isfinite(self.__imageData).max()
