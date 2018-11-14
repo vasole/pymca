@@ -9,4 +9,5 @@ Exec=pymcaroitool
 Icon=PyMca
 Terminal=false
 Categories=Science;Education;Physics;
+MimeType=image/tiff;application/x-hdf;application/x-pymca-hdf5;application/x-pymca-nexus;application/x-pymca-specfile;image/x-pymca-edf;
 
