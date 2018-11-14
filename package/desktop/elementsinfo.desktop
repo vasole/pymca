@@ -6,6 +6,6 @@ GenericName=Display X-ray information on elements
 GenericName[en_GB]=Display X-ray information on elements
 Type=Application
 Exec=elementsinfo
-Icon=/usr/share/pixmaps/pymca.xpm
+Icon=PyMca
 Terminal=false
 Categories=Science;Education;Physics;

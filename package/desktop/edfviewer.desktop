@@ -6,7 +6,8 @@ GenericName=Display files in ESRF Data Format
 GenericName[en_GB]=Display files in ESRF Data Format
 Type=Application
 Exec=edfviewer
-Icon=/usr/share/pixmaps/pymca.xpm
+Icon=PyMca
 Terminal=false
 Categories=Science;Education;Physics;
+MimeType=image/x-pymca-edf;
 
