@@ -21,7 +21,7 @@ recursive-include PyMca5/EPDL97 *.DAT
 include PyMca5/EPDL97/LICENSE
 recursive-include PyMca5/Object3D/doc *.py
 recursive-include PyMca5/Object3D/Object3DQhull *.py *.c *.pyx *.pxd *.pxi
-recursive-include PyMca5/Object3D/Object3DCTools *.py *.c *.cpp
+recursive-include PyMca5/Object3D/Object3DCTools *.py *.c
 recursive-include PyMca5/Object3D/scripts *.py
 include PyMca5/Object3D/LICENSE.LGPL
 include PyMca5/Object3D/qtconffile

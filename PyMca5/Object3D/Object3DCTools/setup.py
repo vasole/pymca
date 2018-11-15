@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -48,14 +48,14 @@ elif sys.platform == "darwin":
     libraries = []
     define_macros = []
 else:
-    libraries = ['GL', 'GLU']
+    libraries = ['GL']
     define_macros = []
 
 sources = glob.glob('*.c')
 #sources = glob.glob('*.cpp')
 setup (
         name         = "Object3DCTools",
-        version      = "1.0",
+        version      = "1.1",
         description  = "Object3D helper module",
         author       = "V.A. Sole - ESRF",
         author_email = "sole@esrf.fr",

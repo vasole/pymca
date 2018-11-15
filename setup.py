@@ -347,7 +347,7 @@ def build_Object3DCTools(ext_modules):
     elif sys.platform == "darwin":
         libraries = []
     else:
-        libraries = ['GL', 'GLU']
+        libraries = ['GL']
     # if sys.platform == 'windows':
     #     WindowsSDK = os.getenv('WindowsSdkDir')
     #     if WindowsSDK is not None:
