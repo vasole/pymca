@@ -7,6 +7,8 @@ VERSION 5.4.1
 
 - Fix ScanFit print
 
+- Fix mask visibility on monocrome colormaps.
+
 - Prevent problems accessing NeXus files when title is incorrectly written as an
 array instead of being a string.
 
