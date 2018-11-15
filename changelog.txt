@@ -1,3 +1,19 @@
+VERSION 5.4.1
+-------------
+
+- Support NeXus default attribute at any level
+
+- Fix problems in systems where both PyQt4 and PyQt5 are installed.
+
+- Fix ScanFit print
+
+- Fix mask visibility on monocrome colormaps.
+
+- Prevent problems accessing NeXus files when title is incorrectly written as an
+array instead of being a string.
+
+- Enable multiple processes batch fitting a single HDF5 file.
+
 VERSION 5.4.0
 -------------
 
