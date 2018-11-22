@@ -42,9 +42,7 @@ class SceneGLWindow(SceneWidget):
             sellist = [selectionlist]
 
         for sel in sellist:
-            source = sel['SourceName']
-            key    = sel['Key']
-            legend = sel['legend'] # expected form sourcename + scan key
+            legend = sel['legend']  # expected form sourcename + scan key
             dataObject = sel['dataobject']
             # one-dimensional selections not considered
             if dataObject.info["selectiontype"] == "1D":
@@ -58,9 +56,7 @@ class SceneGLWindow(SceneWidget):
                 continue
 
             # we have to loop for all y values
-            ycounter = -1
-            for i, ydata in enumerate(dataObject.y):
-                ycounter += 1
+            for ycounter, ydata in enumerate(dataObject.y):
                 ylegend = 'y%d' % ycounter
                 if sel['selection'] is not None:
                     if type(sel['selection']) == type({}):
@@ -70,10 +66,9 @@ class SceneGLWindow(SceneWidget):
                 object3Dlegend = legend + " " + ylegend
                 self.addDataObject(dataObject,
                                    legend=object3Dlegend,
-                                       update_scene=False)
+                                   update_scene=False)
         self.sceneControl.updateView()
         self.glWidget.setZoomFactor(self.glWidget.getZoomFactor())
-
 
     def _removeSelection(self, selectionlist):
         _logger.debug("_removeSelection(self, selectionlist=%s)", selectionlist)
@@ -83,9 +78,7 @@ class SceneGLWindow(SceneWidget):
             sellist = [selectionlist]
 
         for sel in sellist:
-            source = sel['SourceName']
-            key    = sel['Key']
-            legend = sel['legend'] #expected form sourcename + scan key
+            legend = sel['legend']
             if 'LabelNames' in sel['selection']:
                 labelNames = sel['selection']['LabelNames']
             else:
@@ -93,17 +86,12 @@ class SceneGLWindow(SceneWidget):
             for ycounter in sel['selection']['y']:
                 ylegend = labelNames[ycounter]
                 object3Dlegend = legend + " " + ylegend
-            self.removeObject(object3Dlegend, update_scene=False)
+            self.removeObject(object3Dlegend, update_scene=False)   # fixme: should this line be incremented?
         self.sceneControl.updateView()
         self.glWidget.setZoomFactor(self.glWidget.getZoomFactor())
 
-
     def _replaceSelection(self, selectionlist):
         _logger.debug("_replaceSelection(self, selectionlist=%s)", selectionlist)
-        if type(selectionlist) == type([]):
-            sellist = selectionlist
-        else:
-            sellist = [selectionlist]
         self.clear(update_scene=False)
         self._addSelection(selectionlist)
 
@@ -111,39 +99,34 @@ class SceneGLWindow(SceneWidget):
         if legend is None:
             legend = dataObject.info['legend']
 
-        if (dataObject.m is None) or (dataObject.m == []):
+        if dataObject.m is None or dataObject.m == []:
             data = dataObject.y[0]
         else:
-            #I would have to check for the presence of zeros in monitor
-            data = dataObject.y[0]/dataObject.m[0]
+            # I would have to check for the presence of zeros in monitor
+            data = dataObject.y[0] / dataObject.m[0]
 
         if dataObject.x is None:
             if len(data.shape) == 3:
-                object3D=self.stack(data,
-                           legend=legend,
-                           update_scene=False)
+                object3D = self.stack(data,
+                                      legend=legend,
+                                      update_scene=False)
             else:
-                object3D=self.mesh(data,
-                          legend=legend,
-                          update_scene=False)
+                object3D = self.mesh(data,
+                                     legend=legend,
+                                     update_scene=False)
             return object3D
 
-        ndata = 1
-        for dimension in data.shape:
-            ndata *= dimension
+        ndata = numpy.prod(data.shape)
 
-        ndim = 1
         xDimList = []
         for dataset in dataObject.x:
-            xdim = 1
-            for dimension in dataset.shape:
-                xdim *= dimension
+            xdim = numpy.prod(dataset.shape)
             xDimList.append(xdim)
-            ndim *=xdim
+        ndim = numpy.prod(xDimList)
 
         if len(dataObject.x) == len(data.shape):
-            #two possibilities, the product is equal to the dimension
-            #or not
+            # two possibilities, the product is equal to the dimension
+            # or not
             if ndim == ndata:
                 if len(data.shape) == 3:
                     _logger.debug("CASE 1")
@@ -169,15 +152,15 @@ class SceneGLWindow(SceneWidget):
                     object3D = self.mesh(data,
                                          x=dataObject.x[0],
                                          y=dataObject.x[1],
-                                         z=0, #This is 2D
-                                         #z=data[:], #This is 3D
+                                         z=0,  # This is 2D
+                                         # z=data[:], #This is 3D
                                          legend=legend,
                                          update_scene=update_scene)
                 elif len(data.shape) == 1:
                     _logger.debug("CASE 3")
                     object3D = self.mesh(data,
                                          x=dataObject.x[0],
-                                         y=numpy.zeros((1,1), numpy.float32),
+                                         y=numpy.zeros((1, 1), numpy.float32),
                                          z=data[:],
                                          legend=legend,
                                          update_scene=update_scene)
@@ -203,27 +186,26 @@ class SceneGLWindow(SceneWidget):
                                   update_scene=update_scene)
             return object3D
 
-
-        #I have to assume all the x are of 1 element or of as many elements as data
+        # I have to assume all the x are of 1 element or of as many elements as data
         xyzData = numpy.zeros((ndata, 3), numpy.float32)
-        values  = numpy.zeros((ndata, 1), numpy.float32)
-        values[:,0]  = data
+        values = numpy.zeros((ndata, 1), numpy.float32)
+        values[:, 0] = data
         xdataCounter = 0
         for xdata in dataObject.x:
             ndim = 1
             for dimension in xdata.shape:
                 ndim *= dimension
             if ndim == 1:
-                xyzData[:,xdataCounter] = xdata * numpy.ones(ndata)
+                xyzData[:, xdataCounter] = xdata * numpy.ones(ndata)
             else:
-                xyzData[:,xdataCounter] = xdata
+                xyzData[:, xdataCounter] = xdata
             xdataCounter += 1
 
-        object3D = Object3D.Object3DScene.Object3DMesh.Object3DMesh(legend)
-        #if the number of points is reasonable
-        #I force a surface plot.
+        object3D = Object3D.Object3DScene.Object3DMesh.Object3DMesh(legend)  # fixme
+        # if the number of points is reasonable
+        # I force a surface plot.
         if ndata < 200000:
-            cfg = object3D.setConfiguration({'common':{'mode':3}})
+            cfg = object3D.setConfiguration({'common': {'mode': 3}})
         _logger.debug("DEFAULT CASE")
         object3D.setData(values, xyz=xyzData)
         self.addObject(object3D, legend, update_scene=update_scene)
