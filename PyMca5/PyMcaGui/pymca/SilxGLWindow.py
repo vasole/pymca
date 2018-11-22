@@ -34,7 +34,7 @@ from silx.gui.plot3d import SceneWidget
 
 
 class SceneGLWindow(SceneWidget):
-    def _addSelection(self, selectionlist, replot=True):
+    def _addSelection(self, selectionlist):
         _logger.debug("addSelection(self, selectionlist=%s)", selectionlist)
         if type(selectionlist) == type([]):
             sellist = selectionlist
@@ -65,8 +65,7 @@ class SceneGLWindow(SceneWidget):
                             ylegend = dataObject.info['LabelNames'][ilabel]
                 object3Dlegend = legend + " " + ylegend
                 self.addDataObject(dataObject,
-                                   legend=object3Dlegend,
-                                   update_scene=False)
+                                   legend=object3Dlegend)
         self.sceneControl.updateView()
         self.glWidget.setZoomFactor(self.glWidget.getZoomFactor())
 
@@ -86,16 +85,14 @@ class SceneGLWindow(SceneWidget):
             for ycounter in sel['selection']['y']:
                 ylegend = labelNames[ycounter]
                 object3Dlegend = legend + " " + ylegend
-            self.removeObject(object3Dlegend, update_scene=False)   # fixme: should this line be incremented?
-        self.sceneControl.updateView()
-        self.glWidget.setZoomFactor(self.glWidget.getZoomFactor())
+                self.removeObject(object3Dlegend, update_scene=False)
 
     def _replaceSelection(self, selectionlist):
         _logger.debug("_replaceSelection(self, selectionlist=%s)", selectionlist)
-        self.clear(update_scene=False)
+        self.clearItems()     # TODO
         self._addSelection(selectionlist)
 
-    def addDataObject(self, dataObject, legend=None, update_scene=True):
+    def addDataObject(self, dataObject, legend=None):
         if legend is None:
             legend = dataObject.info['legend']
 
@@ -107,14 +104,12 @@ class SceneGLWindow(SceneWidget):
 
         if dataObject.x is None:
             if len(data.shape) == 3:
-                object3D = self.stack(data,
-                                      legend=legend,
-                                      update_scene=False)
+                item3d = self.add3DScalarField(data)
+                item3d.setLabel(legend)
             else:
-                object3D = self.mesh(data,
-                                     legend=legend,
-                                     update_scene=False)
-            return object3D
+                item3d = self.mesh(data)    # TODO: add image as height map
+            item3d.setLabel(legend)
+            return
 
         ndata = numpy.prod(data.shape)
 
@@ -141,31 +136,34 @@ class SceneGLWindow(SceneWidget):
                                                                data.shape[1],
                                                                data.shape[2])
                         raise ValueError(text)
-                    object3D = self.stack(data,
-                                          x=dataObject.x[0],
-                                          y=dataObject.x[1],
-                                          z=dataObject.x[2],
-                                          legend=legend,
-                                          update_scene=update_scene)
+                    item3d = self.add3DScalarField(data)
+                    # TODO: setScale(sx, sy, sz)   setTranslation(x, y, z)
+                    # TODO: or if axes are not regular, add3DScatter
+                    # object3D = self.stack(data,
+                    #                       x=dataObject.x[0],     # Check convention (Dataset order is zyx)
+                    #                       y=dataObject.x[1],
+                    #                       z=dataObject.x[2],
                 elif len(data.shape) == 2:
                     _logger.debug("CASE 2")
-                    object3D = self.mesh(data,
-                                         x=dataObject.x[0],
-                                         y=dataObject.x[1],
-                                         z=0,  # This is 2D
-                                         # z=data[:], #This is 3D
-                                         legend=legend,
-                                         update_scene=update_scene)
+
+                    item3d = self.addImage(data)
+                    # TODO: item3d.setScale() setOrigin()
+                    #           x=dataObject.x[0],
+                    #           y=dataObject.x[1],
+
                 elif len(data.shape) == 1:
                     _logger.debug("CASE 3")
-                    object3D = self.mesh(data,
-                                         x=dataObject.x[0],
-                                         y=numpy.zeros((1, 1), numpy.float32),
-                                         z=data[:],
-                                         legend=legend,
-                                         update_scene=update_scene)
-                return object3D
-        elif (len(data.shape) == 3) and (len(xDimList) == 2):
+                    item3d = self.add3DScatter(value=data,
+                                               x=dataObject.x[0],
+                                               y=numpy.zeros_like(data),
+                                               z=data)
+                else:
+                    # this case was ignored in the original code,
+                    # so it probably cannot happen
+                    raise TypeError("Could not understand data dimensionality")
+                item3d.setLabel(legend)
+                return
+        elif len(data.shape) == 3 and len(xDimList) == 2:
             _logger.warning("Assuming last dimension")
             _logger.debug("CASE 1.1")
             if (xDimList[0] != data.shape[0]) or\
@@ -177,29 +175,27 @@ class SceneGLWindow(SceneWidget):
                                                     data.shape[1],
                                                     data.shape[2])
                 raise ValueError(text)
-            z = numpy.arange(data.shape[2])
-            object3D = self.stack(data,
-                                  x=dataObject.x[0],
-                                  y=dataObject.x[1],
-                                  z=z,
-                                  legend=legend,
-                                  update_scene=update_scene)
-            return object3D
+            # z = numpy.arange(data.shape[2])
+            item3d = self.add3DScalarField(data)
+            # TODO: setScale()   setTranslation()
+            # TODO: or if axes are not regular, add3DScatter
+                                  # x=dataObject.x[0],
+                                  # y=dataObject.x[1],
+                                  # z=z,
+            item3d.setLabel(legend)
+            return
 
         # I have to assume all the x are of 1 element or of as many elements as data
+        # TODO: add3DScatter
         xyzData = numpy.zeros((ndata, 3), numpy.float32)
         values = numpy.zeros((ndata, 1), numpy.float32)
         values[:, 0] = data
-        xdataCounter = 0
-        for xdata in dataObject.x:
-            ndim = 1
-            for dimension in xdata.shape:
-                ndim *= dimension
+        for xdataCounter, xdata in enumerate(dataObject.x):
+            ndim = numpy.prod(xdata.shape)
             if ndim == 1:
                 xyzData[:, xdataCounter] = xdata * numpy.ones(ndata)
             else:
                 xyzData[:, xdataCounter] = xdata
-            xdataCounter += 1
 
         object3D = Object3D.Object3DScene.Object3DMesh.Object3DMesh(legend)  # fixme
         # if the number of points is reasonable
@@ -208,5 +204,5 @@ class SceneGLWindow(SceneWidget):
             cfg = object3D.setConfiguration({'common': {'mode': 3}})
         _logger.debug("DEFAULT CASE")
         object3D.setData(values, xyz=xyzData)
-        self.addObject(object3D, legend, update_scene=update_scene)
+        self.addObject(object3D, legend)
         return object3D
