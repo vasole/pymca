@@ -187,22 +187,32 @@ class SceneGLWindow(SceneWidget):
 
         # I have to assume all the x are of 1 element or of as many elements as data
         # TODO: add3DScatter
-        xyzData = numpy.zeros((ndata, 3), numpy.float32)
-        values = numpy.zeros((ndata, 1), numpy.float32)
-        values[:, 0] = data
+
+        axes = [numpy.zeros_like(data),
+                numpy.zeros_like(data),
+                numpy.zeros_like(data)]
+        # overwrite initialized axes, if provided
         for xdataCounter, xdata in enumerate(dataObject.x):
+            assert xdataCounter <= 2, "Wrong data dimensionality"
             ndim = numpy.prod(xdata.shape)
             if ndim == 1:
-                xyzData[:, xdataCounter] = xdata * numpy.ones(ndata)
+                axis = xdata * numpy.ones(ndata)
             else:
-                xyzData[:, xdataCounter] = xdata
+                axis = xdata
+            axes[xdataCounter] = axis
 
-        object3D = Object3D.Object3DScene.Object3DMesh.Object3DMesh(legend)  # fixme
-        # if the number of points is reasonable
-        # I force a surface plot.
-        if ndata < 200000:
-            cfg = object3D.setConfiguration({'common': {'mode': 3}})
-        _logger.debug("DEFAULT CASE")
-        object3D.setData(values, xyz=xyzData)
-        self.addObject(object3D, legend)
-        return object3D
+        if len(dataObject.x) == 2:
+            item3d = self.add2DScatter(x=axes[0],
+                                       y=axes[1],
+                                       value=data)
+            # if the number of points is reasonable, do a surface plot
+            if ndata < 200000:
+                item3d.setVisualization("solid")
+
+        else:
+            item3d = self.add3DScatter(x=axes[0],
+                                       y=axes[1],
+                                       z=axes[2],
+                                       value=data)
+        item3d.setLabel(legend)
+
