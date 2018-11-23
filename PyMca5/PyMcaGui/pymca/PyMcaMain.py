@@ -229,19 +229,33 @@ from PyMca5.PyMcaGui.pymca import McaWindow
 
 from PyMca5.PyMcaGui.pymca import PyMcaImageWindow
 from PyMca5.PyMcaGui.pymca import PyMcaHKLImageWindow
+
+# OpenGl availability (former Object3D)
+isGlAvailable = False
 try:
-    #This is to make sure it is properly frozen
-    #and that Object3D is fully supported
-    import OpenGL.GL
-    #import Object3D.SceneGLWindow as SceneGLWindow
-    import PyMca5.PyMcaGui.pymca.PyMcaGLWindow as SceneGLWindow
-    OBJECT3D = False
-    if ("PyQt4.QtOpenGL" in sys.modules) or \
-       ("PySide.QtOpenGL") in sys.modules or \
-       ("PyQt5.QtOpenGL") in sys.modules:
-        OBJECT3D = True
-except:
-    OBJECT3D = False
+    import OpenGL
+except ImportError:
+    _logger.debug("pyopengl not installed")
+else:
+    # sanity check from silx.gui._glutils.OpenGLWidget
+    from silx.gui import qt as silx_qt
+    if not hasattr(silx_qt, 'QOpenGLWidget') and\
+            (not silx_qt.HAS_OPENGL or
+             silx_qt.QApplication.instance() and not silx_qt.QGLFormat.hasOpenGL()):
+        _logger.debug("qt has a QOpenGLWidget: %s", hasattr(silx_qt, 'QOpenGLWidget'))
+        _logger.debug("qt.HAS_OPENGL: %s", silx_qt.HAS_OPENGL)
+        _logger.debug("qt.QGLFormat.hasOpenGL(): %s",
+                      silx_qt.QApplication.instance() and not silx_qt.QGLFormat.hasOpenGL())
+
+    else:
+        isGlAvailable = True
+try:
+    import PyMca5.PyMcaGui.pymca.SilxGLWindow as SceneGLWindow
+except ImportError:
+    isGlAvailable = False
+
+_logger.debug("Gl availability: %s", isGlAvailable)
+
 from PyMca5.PyMcaGui.pymca import QDispatcher
 from PyMca5.PyMcaGui import ElementsInfo
 from PyMca5.PyMcaGui import PeakIdentifier
@@ -327,11 +341,11 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 self.scanWindow = ScanWindow.ScanWindow(info=True,
                                                         backend=backend)
                 self.scanWindow.getCurveStyleAction().trigger()
-                if OBJECT3D:
+                if isGlAvailable:
                     self.glWindow = SceneGLWindow.SceneGLWindow()
                 self.mainTabWidget.addTab(self.mcaWindow, "MCA")
                 self.mainTabWidget.addTab(self.scanWindow, "SCAN")
-                if OBJECT3D:
+                if isGlAvailable:
                     self.mainTabWidget.addTab(self.glWindow, "OpenGL")
                 if QTVERSION < '5.0.0':
                     self.mdi.addWindow(self.mainTabWidget)
@@ -549,7 +563,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             widget.show()
             self._widgetDict[id(widget)] = widget
         else:
-            if OBJECT3D:
+            if isGlAvailable:
                 if ddict['dataobject'].info['selectiontype'] == "1D":
                     _logger.debug("1D selection")
                     self.mcaWindow._addSelection(dictOrList)
