@@ -27,13 +27,14 @@ __license__ = "MIT"
 
 import numpy
 import logging
-_logger = logging.getLogger(__name__)
-
 
 from silx.gui.plot3d import SceneWidget
 
 
-class SceneGLWindow(SceneWidget):
+_logger = logging.getLogger(__name__)
+
+
+class SceneGLWindow(SceneWidget.SceneWidget):
     def _addSelection(self, selectionlist):
         _logger.debug("addSelection(self, selectionlist=%s)", selectionlist)
         if type(selectionlist) == type([]):
@@ -66,8 +67,6 @@ class SceneGLWindow(SceneWidget):
                 object3Dlegend = legend + " " + ylegend
                 self.addDataObject(dataObject,
                                    legend=object3Dlegend)
-        self.sceneControl.updateView()
-        self.glWidget.setZoomFactor(self.glWidget.getZoomFactor())
 
     def _removeSelection(self, selectionlist):
         _logger.debug("_removeSelection(self, selectionlist=%s)", selectionlist)
@@ -75,6 +74,8 @@ class SceneGLWindow(SceneWidget):
             sellist = selectionlist
         else:
             sellist = [selectionlist]
+
+        items = self.getItems()
 
         for sel in sellist:
             legend = sel['legend']
@@ -85,11 +86,13 @@ class SceneGLWindow(SceneWidget):
             for ycounter in sel['selection']['y']:
                 ylegend = labelNames[ycounter]
                 object3Dlegend = legend + " " + ylegend
-                self.removeObject(object3Dlegend, update_scene=False)
+                for it in items:
+                    if it.getLabel() == object3Dlegend:
+                        self.removeItem(it)
 
     def _replaceSelection(self, selectionlist):
         _logger.debug("_replaceSelection(self, selectionlist=%s)", selectionlist)
-        self.clearItems()     # TODO
+        self.clearItems()
         self._addSelection(selectionlist)
 
     def addDataObject(self, dataObject, legend=None):
