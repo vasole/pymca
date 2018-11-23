@@ -28,13 +28,36 @@ __license__ = "MIT"
 import numpy
 import logging
 
+from PyMca5.PyMcaGui import PyMcaQt as qt
+
 from silx.gui.plot3d import SceneWidget
+from silx.gui.plot3d.tools import OutputToolBar, InteractiveModeToolBar, ViewpointToolBar
 
 
 _logger = logging.getLogger(__name__)
 
 
-class SceneGLWindow(SceneWidget.SceneWidget):
+class SceneGLWindow(qt.QMainWindow):
+    def __init__(self, parent=None):
+        super(SceneGLWindow, self).__init__(parent)
+
+        if parent is not None:
+            # behave as a widget
+            self.setWindowFlags(qt.Qt.Widget)
+
+        self._plot3D = SceneWidget.SceneWidget(self)
+        self.setCentralWidget(self._plot3D)
+
+        for klass in (InteractiveModeToolBar, ViewpointToolBar, OutputToolBar):
+            toolbar = klass(parent=self)
+            toolbar.setPlot3DWidget(self._plot3D)
+            self.addToolBar(toolbar)
+            self.addActions(toolbar.actions())
+
+    def getSceneWidget(self):
+        """Get the :class:`SceneWidget` of this window"""
+        return self._plot3D
+
     def _addSelection(self, selectionlist):
         _logger.debug("addSelection(self, selectionlist=%s)", selectionlist)
         if type(selectionlist) == type([]):
@@ -75,7 +98,7 @@ class SceneGLWindow(SceneWidget.SceneWidget):
         else:
             sellist = [selectionlist]
 
-        items = self.getItems()
+        items = self._plot3D.getItems()
 
         for sel in sellist:
             legend = sel['legend']
@@ -88,11 +111,11 @@ class SceneGLWindow(SceneWidget.SceneWidget):
                 object3Dlegend = legend + " " + ylegend
                 for it in items:
                     if it.getLabel() == object3Dlegend:
-                        self.removeItem(it)
+                        self._plot3D.removeItem(it)
 
     def _replaceSelection(self, selectionlist):
         _logger.debug("_replaceSelection(self, selectionlist=%s)", selectionlist)
-        self.clearItems()
+        self._plot3D.clearItems()
         self._addSelection(selectionlist)
 
     def addDataObject(self, dataObject, legend=None):
@@ -107,10 +130,10 @@ class SceneGLWindow(SceneWidget.SceneWidget):
 
         if dataObject.x is None:
             if len(data.shape) == 3:
-                item3d = self.add3DScalarField(data)
+                item3d = self._plot3D.add3DScalarField(data)
                 item3d.setLabel(legend)
             else:
-                item3d = self.mesh(data)    # TODO: add image as height map
+                item3d = self._plot3D.mesh(data)    # TODO: add image as height map
             item3d.setLabel(legend)
             return
 
@@ -139,7 +162,7 @@ class SceneGLWindow(SceneWidget.SceneWidget):
                                                                data.shape[1],
                                                                data.shape[2])
                         raise ValueError(text)
-                    item3d = self.add3DScalarField(data)
+                    item3d = self._plot3D.add3DScalarField(data)
                     # TODO: setScale(sx, sy, sz)   setTranslation(x, y, z)
                     # TODO: or if axes are not regular, add3DScatter
                     # object3D = self.stack(data,
@@ -149,17 +172,17 @@ class SceneGLWindow(SceneWidget.SceneWidget):
                 elif len(data.shape) == 2:
                     _logger.debug("CASE 2")
 
-                    item3d = self.addImage(data)
+                    item3d = self._plot3D.addImage(data)
                     # TODO: item3d.setScale() setOrigin()
                     #           x=dataObject.x[0],
                     #           y=dataObject.x[1],
 
                 elif len(data.shape) == 1:
                     _logger.debug("CASE 3")
-                    item3d = self.add3DScatter(value=data,
-                                               x=dataObject.x[0],
-                                               y=numpy.zeros_like(data),
-                                               z=data)
+                    item3d = self._plot3D.add3DScatter(value=data,
+                                                       x=dataObject.x[0],
+                                                       y=numpy.zeros_like(data),
+                                                       z=data)
                 else:
                     # this case was ignored in the original code,
                     # so it probably cannot happen
@@ -179,12 +202,12 @@ class SceneGLWindow(SceneWidget.SceneWidget):
                                                     data.shape[2])
                 raise ValueError(text)
             # z = numpy.arange(data.shape[2])
-            item3d = self.add3DScalarField(data)
+            item3d = self._plot3D.add3DScalarField(data)
             # TODO: setScale()   setTranslation()
             # TODO: or if axes are not regular, add3DScatter
-                                  # x=dataObject.x[0],
-                                  # y=dataObject.x[1],
-                                  # z=z,
+            #     x=dataObject.x[0],
+            #     y=dataObject.x[1],
+            #     z=z,
             item3d.setLabel(legend)
             return
 
@@ -205,17 +228,17 @@ class SceneGLWindow(SceneWidget.SceneWidget):
             axes[xdataCounter] = axis
 
         if len(dataObject.x) == 2:
-            item3d = self.add2DScatter(x=axes[0],
-                                       y=axes[1],
-                                       value=data)
+            item3d = self._plot3D.add2DScatter(x=axes[0],
+                                               y=axes[1],
+                                               value=data)
             # if the number of points is reasonable, do a surface plot
             if ndata < 200000:
                 item3d.setVisualization("solid")
 
         else:
-            item3d = self.add3DScatter(x=axes[0],
-                                       y=axes[1],
-                                       z=axes[2],
-                                       value=data)
+            item3d = self._plot3D.add3DScatter(x=axes[0],
+                                               y=axes[1],
+                                               z=axes[2],
+                                               value=data)
         item3d.setLabel(legend)
 
