@@ -27,7 +27,7 @@ override_dh_clean:
 
 override_dh_auto_build:
 	dh_auto_build
-	python setup.py build build_doc
+	env -u PYMCA_DATA_DIR -u PYMCA_DOC_DIR python setup.py build build_doc
 
 override_dh_installchangelogs:
 	dh_installchangelogs changelog.txt
