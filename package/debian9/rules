@@ -53,8 +53,7 @@ override_dh_install:
 	dh_numpy3
 
 override_dh_auto_test:
-	PYBUILD_SYSTEM=custom \
-	PYBUILD_TEST_ARGS="cd {build_dir} && PYMCA_DATA_DIR=./PyMca5/PyMcaData/ {interpreter} PyMca5/tests/TestAll.py" dh_auto_test
+	echo "Remember to run tests after installing the packages"
 
 override_dh_installdocs:
 	dh_installdocs "build/sphinx/html" -p pymca-doc
