@@ -30,6 +30,8 @@ import logging
 
 from silx.gui.plot3d import SceneWindow
 
+from silx.math.calibration import ArrayCalibration
+
 
 _logger = logging.getLogger(__name__)
 
@@ -109,7 +111,8 @@ class SceneGLWindow(SceneWindow.SceneWindow):
         if dataObject.x is None:
             if len(data.shape) == 3:
                 item3d = self.getSceneWidget().add3DScalarField(data)
-                item3d.setLabel(legend)
+            elif len(data.shape) == 2:
+                item3d = self.getSceneWidget().addImage(data)
             else:
                 item3d = self.getSceneWidget().mesh(data)    # TODO: add image as height map
             item3d.setLabel(legend)
@@ -121,52 +124,60 @@ class SceneGLWindow(SceneWindow.SceneWindow):
         for dataset in dataObject.x:
             xdim = numpy.prod(dataset.shape)
             xDimList.append(xdim)
-        ndim = numpy.prod(xDimList)
 
-        if len(dataObject.x) == len(data.shape):
-            # two possibilities, the product is equal to the dimension
-            # or not
-            if ndim == ndata:
-                if len(data.shape) == 3:
-                    _logger.debug("CASE 1")
-                    if (xDimList[0] != data.shape[0]) or\
-                       (xDimList[1] != data.shape[1]) or\
-                       (xDimList[2] != data.shape[2]):
-                        text = "Wrong dimensions:"
-                        text += " %dx%dx%d != (%d, %d, %d)" % (xDimList[0],
-                                                               xDimList[1],
-                                                               xDimList[2],
-                                                               data.shape[0],
-                                                               data.shape[1],
-                                                               data.shape[2])
-                        raise ValueError(text)
-                    item3d = self.getSceneWidget().add3DScalarField(data)
-                    # TODO: setScale(sx, sy, sz)   setTranslation(x, y, z)
-                    # TODO: or if axes are not regular, add3DScatter
-                    # object3D = self.stack(data,
-                    #                       x=dataObject.x[0],     # Check convention (Dataset order is zyx)
-                    #                       y=dataObject.x[1],
-                    #                       z=dataObject.x[2],
-                elif len(data.shape) == 2:
-                    _logger.debug("CASE 2")
+        # case with one axis per signal dimension
+        if len(dataObject.x) == len(data.shape) and \
+                numpy.prod(xDimList) == ndata:
+            for axis_dim, data_dim in zip(xDimList, data.shape):
+                if axis_dim != data_dim:
+                    text = "Dimensions mismatch: axes %s, data %s" % (xDimList, data.shape)
+                    raise ValueError(text)
 
-                    item3d = self.getSceneWidget().addImage(data)
-                    # TODO: item3d.setScale() setOrigin()
-                    #           x=dataObject.x[0],
-                    #           y=dataObject.x[1],
+            if len(data.shape) == 3:
+                _logger.debug("CASE 1: 3D data with 3 axes")
+                # 3D scalar field convention is ZYX
+                zcal = ArrayCalibration(dataObject.x[0])
+                ycal = ArrayCalibration(dataObject.x[1])
+                xcal = ArrayCalibration(dataObject.x[2])
 
-                elif len(data.shape) == 1:
-                    _logger.debug("CASE 3")
-                    item3d = self.getSceneWidget().add3DScatter(value=data,
-                                                                x=dataObject.x[0],
-                                                                y=numpy.zeros_like(data),
-                                                                z=data)
-                else:
-                    # this case was ignored in the original code,
-                    # so it probably cannot happen
-                    raise TypeError("Could not understand data dimensionality")
-                item3d.setLabel(legend)
-                return
+                item3d = self.getSceneWidget().add3DScalarField(data)
+                scales = [1., 1., 1.]
+                origins = [0., 0., 0.]
+                for i, cal in enumerate((xcal, ycal, zcal)):
+                    arr = cal.calibration_array
+                    origins[i] = arr[0]
+                    if not cal.is_affine() and len(arr):
+                        _logger.warning("axis is not affine. "
+                                        "deltaX will be estimated")
+                        scales[i] = (arr[-1] - arr[0]) / (len(arr) - 1)
+                        # todo: check != 0
+                    else:
+                        scales[i] = cal.get_slope()
+                item3d.setScale(*scales)
+                item3d.setTranslation(*origins)
+            elif len(data.shape) == 2:
+                _logger.debug("CASE 2: 2D data with 2 axes")
+                zcal = ArrayCalibration(dataObject.x[0])
+                ycal = ArrayCalibration(dataObject.x[1])
+                xcal = ArrayCalibration(dataObject.x[2])
+
+                item3d = self.getSceneWidget().addImage(data)
+                # TODO: item3d.setScale() setOrigin()
+                #           x=dataObject.x[0],
+                #           y=dataObject.x[1],
+
+            elif len(data.shape) == 1:
+                _logger.debug("CASE 3: 1D scatter (x and values)")
+                item3d = self.getSceneWidget().add3DScatter(value=data,
+                                                            x=dataObject.x[0],
+                                                            y=numpy.zeros_like(data),
+                                                            z=data)
+            else:
+                # this case was ignored in the original code,
+                # so it probably cannot happen
+                raise TypeError("Could not understand data dimensionality")
+            item3d.setLabel(legend)
+            return
         elif len(data.shape) == 3 and len(xDimList) == 2:
             _logger.warning("Assuming last dimension")
             _logger.debug("CASE 1.1")
@@ -209,14 +220,14 @@ class SceneGLWindow(SceneWindow.SceneWindow):
             item3d = self.getSceneWidget().add2DScatter(x=axes[0],
                                                         y=axes[1],
                                                         value=data)
-            # if the number of points is reasonable, do a surface plot
-            if ndata < 200000:
-                item3d.setVisualization("solid")
 
+            item3d.setVisualization("solid")
+            # item3d.setHeightMap(True)
         else:
+            # TODO: if one axis is constant, add it as a 2D scatter to
+            #       be able to benefit from solid visualisation
             item3d = self.getSceneWidget().add3DScatter(x=axes[0],
                                                         y=axes[1],
                                                         z=axes[2],
                                                         value=data)
         item3d.setLabel(legend)
-
