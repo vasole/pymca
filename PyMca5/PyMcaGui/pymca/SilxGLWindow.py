@@ -146,25 +146,33 @@ class SceneGLWindow(SceneWindow.SceneWindow):
                 for i, cal in enumerate((xcal, ycal, zcal)):
                     arr = cal.calibration_array
                     origins[i] = arr[0]
-                    if not cal.is_affine() and len(arr):
-                        _logger.warning("axis is not affine. "
+                    if not cal.is_affine() and len(arr) > 1:
+                        _logger.warning("axis is not linear. "
                                         "deltaX will be estimated")
                         scales[i] = (arr[-1] - arr[0]) / (len(arr) - 1)
-                        # todo: check != 0
                     else:
                         scales[i] = cal.get_slope()
+                    # todo: check != 0
                 item3d.setScale(*scales)
                 item3d.setTranslation(*origins)
             elif len(data.shape) == 2:
                 _logger.debug("CASE 2: 2D data with 2 axes")
-                zcal = ArrayCalibration(dataObject.x[0])
+                xcal = ArrayCalibration(dataObject.x[0])
                 ycal = ArrayCalibration(dataObject.x[1])
-                xcal = ArrayCalibration(dataObject.x[2])
 
                 item3d = self.getSceneWidget().addImage(data)
-                # TODO: item3d.setScale() setOrigin()
-                #           x=dataObject.x[0],
-                #           y=dataObject.x[1],
+                origins = [xcal(0), ycal(0)]
+                scales = [1., 1.]
+                for i, cal in enumerate((xcal, ycal)):
+                    arr = cal.calibration_array
+                    if not cal.is_affine() and len(arr) > 1:
+                        _logger.warning("axis is not linear. "
+                                        "deltaX will be estimated")
+                        scales[i] = (arr[-1] - arr[0]) / (len(arr) - 1)
+                    else:
+                        scales[i] = cal.get_slope()
+                item3d.setTranslation(*origins)
+                item3d.setScale(*scales)
 
             elif len(data.shape) == 1:
                 _logger.debug("CASE 3: 1D scatter (x and values)")
@@ -181,8 +189,7 @@ class SceneGLWindow(SceneWindow.SceneWindow):
         elif len(data.shape) == 3 and len(xDimList) == 2:
             _logger.warning("Assuming last dimension")
             _logger.debug("CASE 1.1")
-            if (xDimList[0] != data.shape[0]) or\
-               (xDimList[1] != data.shape[1]):
+            if list(xDimList) != list(data.shape[0:1]):
                 text = "Wrong dimensions:"
                 text += " %dx%d != (%d, %d, %d)" % (xDimList[0],
                                                     xDimList[1],
@@ -190,13 +197,22 @@ class SceneGLWindow(SceneWindow.SceneWindow):
                                                     data.shape[1],
                                                     data.shape[2])
                 raise ValueError(text)
-            # z = numpy.arange(data.shape[2])
             item3d = self.getSceneWidget().add3DScalarField(data)
-            # TODO: setScale()   setTranslation()
-            # TODO: or if axes are not regular, add3DScatter
-            #     x=dataObject.x[0],
-            #     y=dataObject.x[1],
-            #     z=z,
+            zcal = ArrayCalibration(dataObject.x[0])
+            ycal = ArrayCalibration(dataObject.x[1])
+            scales = [1., 1., 1.]
+            origins = [0., 0., 0.]
+            for i, cal in enumerate((ycal, zcal)):
+                arr = cal.calibration_array
+                origins[i + 1] = arr[0]
+                if not cal.is_affine() and len(arr) > 1:
+                    _logger.warning("axis is not linear. "
+                                    "deltaX will be estimated")
+                    scales[i + 1] = (arr[-1] - arr[0]) / (len(arr) - 1)
+                else:
+                    scales[i + 1] = cal.get_slope()
+            item3d.setScale(*scales)
+            item3d.setTranslation(*origins)
             item3d.setLabel(legend)
             return
 
@@ -208,9 +224,9 @@ class SceneGLWindow(SceneWindow.SceneWindow):
                 numpy.zeros_like(data)]
         # overwrite initialized axes, if provided
         for xdataCounter, xdata in enumerate(dataObject.x):
-            assert xdataCounter <= 2, "Wrong data dimensionality"
-            ndim = numpy.prod(xdata.shape)
-            if ndim == 1:
+            assert xdataCounter <= 2, \
+                "Wrong scatter dimensionality (more than 3 axes)"
+            if numpy.prod(xdata.shape) == 1:
                 axis = xdata * numpy.ones(ndata)
             else:
                 axis = xdata
@@ -224,8 +240,16 @@ class SceneGLWindow(SceneWindow.SceneWindow):
             item3d.setVisualization("solid")
             # item3d.setHeightMap(True)
         else:
-            # TODO: if one axis is constant, add it as a 2D scatter to
-            #       be able to benefit from solid visualisation
+            # const_axes_indices = []
+            # for i, axis in axes:
+            #     if numpy.all(axis == axis[0]):
+            #         const_axes_indices.append(i)
+            # if len(const_axes_indices) == 1:
+            #     item3d = self.getSceneWidget().add2DScatter(x=axes[0],  ????? TODO
+            #                                                 y=axes[1],  ?????
+            #                                                 value=data)
+            #     # TODO: rotate adequately
+            # else:
             item3d = self.getSceneWidget().add3DScatter(x=axes[0],
                                                         y=axes[1],
                                                         z=axes[2],
