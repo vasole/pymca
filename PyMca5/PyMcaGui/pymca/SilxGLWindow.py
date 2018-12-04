@@ -28,7 +28,10 @@ __license__ = "MIT"
 import numpy
 import logging
 
+from PyMca5.PyMcaGui import PyMcaQt as qt
+
 from silx.gui.plot3d import SceneWindow
+from silx.gui import icons
 
 from silx.math.calibration import ArrayCalibration
 
@@ -36,7 +39,46 @@ from silx.math.calibration import ArrayCalibration
 _logger = logging.getLogger(__name__)
 
 
+class OpenAction(qt.QAction):
+    """This action opens a menu with sub-actions to load data from a file,
+    build a dataObject and add it to a :class:`SceneGlWindow`.
+    """
+    def __init__(self, parent=None, sceneGlWindow=None):
+        """
+
+        :param QWidget parent: Parent widget
+        :param SceneGLWindow sceneGlWindow: :class:`SceneGlWindow` displaying
+            the data.
+        """
+        super(OpenAction, self).__init__(parent)
+        self._sceneGlWindow = sceneGlWindow
+
+        self.setIcon(icons.getQIcon("document-open"))
+        self.setText("Load data from a file")
+        self.setCheckable(False)
+        self.triggered[bool].connect(self._openMenu)
+
+    def _openMenu(self, checked):
+        # note: opening a context menu over a QGLWidget causes a warning (fixed in Qt 5.4.1)
+        #       See: https://bugreports.qt.io/browse/QTBUG-42464
+        menu = qt.QMenu(self._sceneGlWindow)
+        menu.addAction("Pixmap")  # todo: add an actual QAction
+        menu.addAction("3D mesh")
+        menu.addAction("4D mesh")
+        menu.addAction("4D chimera")
+        a = menu.exec_(qt.QCursor.pos())
+
+
 class SceneGLWindow(SceneWindow.SceneWindow):
+    def __init__(self, parent=None):
+        super(SceneGLWindow, self).__init__(parent)
+
+        self._openAction = OpenAction(parent=self.getOutputToolBar(),
+                                      sceneGlWindow=self)
+        # insert before first action
+        self.getOutputToolBar().insertAction(
+                self.getOutputToolBar().actions()[0],
+                self._openAction)
 
     def _addSelection(self, selectionlist):
         _logger.debug("addSelection(self, selectionlist=%s)", selectionlist)
