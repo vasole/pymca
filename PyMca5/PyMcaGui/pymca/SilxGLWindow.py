@@ -35,6 +35,8 @@ from silx.gui import icons
 
 from silx.math.calibration import ArrayCalibration
 
+from PyMca5.Object3D.Object3DPlugins.ChimeraStack import getObject3DInstance as getChimeraO3d
+
 
 _logger = logging.getLogger(__name__)
 
@@ -65,8 +67,17 @@ class OpenAction(qt.QAction):
         menu.addAction("Pixmap")  # todo: add an actual QAction
         menu.addAction("3D mesh")
         menu.addAction("4D mesh")
-        menu.addAction("4D chimera")
+
+        loadChimeraAction = qt.QAction("4D chimera", self)
+        loadChimeraAction.triggered[bool].connect(self._onLoadChimeraStack)
+        menu.addAction(loadChimeraAction)
+
         a = menu.exec_(qt.QCursor.pos())
+
+    def _onLoadChimeraStack(self, checked):
+        ob3d = getChimeraO3d()
+        if ob3d is not None:
+            self._sceneGlWindow.addDataObject(ob3d)
 
 
 class SceneGLWindow(SceneWindow.SceneWindow):
@@ -259,8 +270,6 @@ class SceneGLWindow(SceneWindow.SceneWindow):
             return
 
         # I have to assume all the x are of 1 element or of as many elements as data
-        # TODO: add3DScatter
-
         axes = [numpy.zeros_like(data),
                 numpy.zeros_like(data),
                 numpy.zeros_like(data)]
