@@ -35,13 +35,7 @@ from silx.gui import icons
 
 from silx.math.calibration import ArrayCalibration
 
-from PyMca5.Object3D.Object3DPlugins.ChimeraStack import getObject3DInstance as getChimeraObj3D
-from PyMca5.Object3D.Object3DPlugins.Object3DStack import getObject3DInstance as get4DStackObj3D
-from PyMca5.Object3D.Object3DPlugins.Object3DPixmap import getObject3DInstance as getPixmapObj3D
-from PyMca5.Object3D.Object3DPlugins.Object3DMesh import getObject3DInstance as get3DMeshObj3D
-
-
-
+from PyMca5.Object3D.Object3DPlugins import Object3DPixmap, Object3DStack, Object3DMesh, ChimeraStack
 
 
 _logger = logging.getLogger(__name__)
@@ -90,16 +84,16 @@ class OpenAction(qt.QAction):
         a = menu.exec_(qt.QCursor.pos())
 
     def _onLoadPixmap(self, checked):
-        self._load(getPixmapObj3D)
+        self._load(method=Object3DPixmap.getObject3DInstance)
 
     def _onLoad3DMesh(self, checked):
-        self._load(get3DMeshObj3D)
+        self._load(method=Object3DMesh.getObject3DInstance)
 
     def _onLoad4DStack(self, checked):
-        self._load(get4DStackObj3D)
+        self._load(method=Object3DStack.getObject3DInstance)
 
     def _onLoadChimeraStack(self, checked):
-        self._load(getChimeraObj3D)
+        self._load(method=ChimeraStack.getObject3DInstance)
 
     def _load(self, method):
         """
