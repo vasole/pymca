@@ -35,7 +35,13 @@ from silx.gui import icons
 
 from silx.math.calibration import ArrayCalibration
 
-from PyMca5.Object3D.Object3DPlugins.ChimeraStack import getObject3DInstance as getChimeraO3d
+from PyMca5.Object3D.Object3DPlugins.ChimeraStack import getObject3DInstance as getChimeraObj3D
+from PyMca5.Object3D.Object3DPlugins.Object3DStack import getObject3DInstance as get4DStackObj3D
+from PyMca5.Object3D.Object3DPlugins.Object3DPixmap import getObject3DInstance as getPixmapObj3D
+from PyMca5.Object3D.Object3DPlugins.Object3DMesh import getObject3DInstance as get3DMeshObj3D
+
+
+
 
 
 _logger = logging.getLogger(__name__)
@@ -64,9 +70,18 @@ class OpenAction(qt.QAction):
         # note: opening a context menu over a QGLWidget causes a warning (fixed in Qt 5.4.1)
         #       See: https://bugreports.qt.io/browse/QTBUG-42464
         menu = qt.QMenu(self._sceneGlWindow)
-        menu.addAction("Pixmap")  # todo: add an actual QAction
-        menu.addAction("3D mesh")
-        menu.addAction("4D mesh")
+
+        loadPixmapAction = qt.QAction("Pixmap", self)
+        loadPixmapAction.triggered[bool].connect(self._onLoadPixmap)
+        menu.addAction(loadPixmapAction)
+
+        load3DMeshAction = qt.QAction("3D mesh", self)
+        load3DMeshAction.triggered[bool].connect(self._onLoad3DMesh)
+        menu.addAction(load3DMeshAction)
+
+        load4DStackAction = qt.QAction("4D stack", self)
+        load4DStackAction.triggered[bool].connect(self._onLoad4DStack)
+        menu.addAction(load4DStackAction)
 
         loadChimeraAction = qt.QAction("4D chimera", self)
         loadChimeraAction.triggered[bool].connect(self._onLoadChimeraStack)
@@ -74,8 +89,24 @@ class OpenAction(qt.QAction):
 
         a = menu.exec_(qt.QCursor.pos())
 
+    def _onLoadPixmap(self, checked):
+        self._load(getPixmapObj3D)
+
+    def _onLoad3DMesh(self, checked):
+        self._load(get3DMeshObj3D)
+
+    def _onLoad4DStack(self, checked):
+        self._load(get4DStackObj3D)
+
     def _onLoadChimeraStack(self, checked):
-        ob3d = getChimeraO3d()
+        self._load(getChimeraObj3D)
+
+    def _load(self, method):
+        """
+
+        :param method: Callable returning an Object3D instance or None
+        """
+        ob3d = method()
         if ob3d is not None:
             self._sceneGlWindow.addDataObject(ob3d)
 
