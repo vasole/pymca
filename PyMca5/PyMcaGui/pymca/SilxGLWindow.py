@@ -30,17 +30,20 @@ import logging
 import os.path
 
 from PyMca5.PyMcaIO import EdfFile
+from PyMca5.PyMcaIO import EDFStack
+from PyMca5.PyMcaIO import TiffStack
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.PyMcaGui.pymca import PyMcaFileDialogs
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 
 from silx.gui.plot3d import SceneWindow
+from silx.gui.plot3d import items
 from silx.gui import icons
 from silx.gui.utils.image import convertQImageToArray
 
 from silx.math.calibration import ArrayCalibration
 
-from PyMca5.Object3D.Object3DPlugins import Object3DStack, Object3DMesh, ChimeraStack
+from PyMca5.Object3D.Object3DPlugins import Object3DMesh, ChimeraStack
 
 
 _logger = logging.getLogger(__name__)
@@ -80,6 +83,49 @@ def getPixmap():
         data = edf.GetData(0)
         return os.path.basename(fname), data
     return None, None
+
+
+def get4DStack():
+    """
+    Open a stack of image files in EDF or TIFF format, and return
+    the filename and the data.
+
+    Return ``None, None`` in case of failure.
+    """
+    fileTypeList = ['EDF Z Stack (*edf *ccd)',
+                    'EDF X Stack (*edf *ccd)',
+                    'TIFF Stack (*tif *tiff)']
+    old = PyMcaFileDialogs.PyMcaDirs.nativeFileDialogs * 1
+    PyMcaFileDialogs.PyMcaDirs.nativeFileDialogs = False
+    fileList, filterUsed = PyMcaFileDialogs.getFileList(
+        parent=None,
+        filetypelist=fileTypeList,
+        message="Please select the object file(s)",
+        mode="OPEN",
+        getfilter=True)
+    PyMcaFileDialogs.PyMcaDirs.nativeFileDialogs = old
+    if not fileList:
+        return None, None
+    if filterUsed.startswith('EDF Z'):
+        fileindex = 2
+    else:
+        fileindex = 1
+    filename = fileList[0]
+    legend = os.path.basename(filename)
+    if filterUsed.startswith('TIFF'):
+        stack = TiffStack.TiffStack(dtype=numpy.float32, imagestack=False)
+        stack.loadFileList(fileList, fileindex=1)
+    else:
+        stack = EDFStack.EDFStack(dtype=numpy.float32, imagestack=False)
+        if len(fileList) == 1:
+            stack.loadIndexedStack(filename, fileindex=fileindex)
+        else:
+            stack.loadFileList(fileList, fileindex=fileindex)
+    if stack is None:
+        raise IOError("Problem reading stack.")
+    xScale = stack.info.get("xScale")
+    yScale = stack.info.get("yScale")
+    return legend, stack.data, xScale, yScale, fileindex
 
 
 class OpenAction(qt.QAction):
@@ -126,17 +172,59 @@ class OpenAction(qt.QAction):
 
     def _onLoadPixmap(self, checked):
         legend, data = getPixmap()
-        if legend is None:
-            return
         if legend is not None and data.ndim in [2, 3]:
             item3d = self._sceneGlWindow.getSceneWidget().addImage(data)
             item3d.setLabel(legend)
 
     def _onLoad3DMesh(self, checked):
+
         self._load(method=Object3DMesh.getObject3DInstance)
 
     def _onLoad4DStack(self, checked):
-        self._load(method=Object3DStack.getObject3DInstance)
+        # fixme: use fileIndex to decide the slicing direction of the cube
+        # todo: check that the scaling is applied to the proper axes
+        legend, stackData, xScale, yScale, fileIndex = get4DStack()
+        if legend is None:
+            return
+        origin = [0., 0., 0.]
+        delta = [1., 1., 1.]
+        if xScale is not None:
+            origin[0] = xScale[0]
+            delta[0] = xScale[1]
+        if yScale is not None:
+            origin[1] = yScale[0]
+            delta[1] = yScale[1]
+
+        # Uncomment this block for a stack of images (may be slow)
+        # group = items.GroupItem()
+        # group.setLabel(legend)
+        # for i in range(stackData.shape[0]):
+        #     item3d = items.ImageData()
+        #     item3d.setData(stackData[i])
+        #     item3d.setLabel("frame %d" % i)
+        #     origin[2] = i                  # shift each frame by 1
+        #     item3d.setTranslation(*origin)
+        #     item3d.setScale(*delta)
+        #     group.addItem(item3d)
+        # self._sceneGlWindow.getSceneWidget().addItem(group)
+
+        def mean_isolevel(data):
+            """Compute a default isosurface level: mean + 1 std
+
+            :param numpy.ndarray data: The data to process
+            :rtype: float
+            """
+            data = data[numpy.isfinite(data)]
+            if len(data) == 0:
+                return 0
+            else:
+                return numpy.mean(data) + numpy.std(data)
+
+        item3d = self._sceneGlWindow.getSceneWidget().add3DScalarField(stackData)
+        item3d.setLabel(legend)
+        item3d.setTranslation(*origin)
+        item3d.setScale(*delta)
+        item3d.addIsosurface(mean_isolevel, "blue")
 
     def _onLoadChimeraStack(self, checked):
         self._load(method=ChimeraStack.getObject3DInstance)
