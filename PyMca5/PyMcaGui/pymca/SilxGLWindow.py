@@ -27,18 +27,59 @@ __license__ = "MIT"
 
 import numpy
 import logging
+import os.path
+
+from PyMca5.PyMcaIO import EdfFile
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaGui.pymca import PyMcaFileDialogs
 
 from silx.gui.plot3d import SceneWindow
 from silx.gui import icons
+from silx.gui.utils.image import convertQImageToArray
 
 from silx.math.calibration import ArrayCalibration
 
-from PyMca5.Object3D.Object3DPlugins import Object3DPixmap, Object3DStack, Object3DMesh, ChimeraStack
+from PyMca5.Object3D.Object3DPlugins import Object3DStack, Object3DMesh, ChimeraStack
 
 
 _logger = logging.getLogger(__name__)
+
+
+def getPixmap():
+    """
+    Open an image file and return the filename and the data.
+
+    Return ``None, None`` in case of failure.
+    """
+    fileTypeList = ['Picture Files (*jpg *jpeg *tif *tiff *png)',
+                    'EDF Files (*edf)',
+                    'EDF Files (*ccd)',
+                    'ADSC Files (*img)',
+                    'EDF Files (*)']
+    fileList, filterUsed = PyMcaFileDialogs.getFileList(
+        parent=None,
+        filetypelist=fileTypeList,
+        message="Please select one object data file",
+        mode="OPEN",
+        getfilter=True)
+    if not fileList:
+        return None, None
+    fname = fileList[0]
+    if filterUsed.split()[0] == "Picture":
+        qimage = qt.QImage(fname)
+        if qimage.isNull():
+            msg = qt.QMessageBox()
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Cannot read file %s as an image" % fname)
+            msg.exec_()
+            return None, None
+        return os.path.basename(fname), convertQImageToArray(qimage)
+    if filterUsed.split()[0] in ["EDF", "ADSC"]:
+        edf = EdfFile.EdfFile(fname)
+        data = edf.GetData(0)
+        return os.path.basename(fname), data
+    return None, None
 
 
 class OpenAction(qt.QAction):
@@ -84,7 +125,12 @@ class OpenAction(qt.QAction):
         a = menu.exec_(qt.QCursor.pos())
 
     def _onLoadPixmap(self, checked):
-        self._load(method=Object3DPixmap.getObject3DInstance)
+        legend, data = getPixmap()
+        if legend is None:
+            return
+        if legend is not None and data.ndim in [2, 3]:
+            item3d = self._sceneGlWindow.getSceneWidget().addImage(data)
+            item3d.setLabel(legend)
 
     def _onLoad3DMesh(self, checked):
         self._load(method=Object3DMesh.getObject3DInstance)
@@ -102,7 +148,7 @@ class OpenAction(qt.QAction):
         """
         ob3d = method()
         if ob3d is not None:
-            self._sceneGlWindow.addDataObject(ob3d)
+            self._sceneGlWindow.addObject3DStack(ob3d)
 
 
 class SceneGLWindow(SceneWindow.SceneWindow):
@@ -235,7 +281,7 @@ class SceneGLWindow(SceneWindow.SceneWindow):
                 item3d.setTranslation(*origins)
             elif len(data.shape) == 2:
                 _logger.debug("CASE 2: 2D data with 2 axes")
-                xcal = ArrayCalibration(dataObject.x[0])
+                xcal = ArrayCalibration(dataObject.x[0])   # Fixme: probably the opposite axis order
                 ycal = ArrayCalibration(dataObject.x[1])
 
                 item3d = self.getSceneWidget().addImage(data)
@@ -331,3 +377,13 @@ class SceneGLWindow(SceneWindow.SceneWindow):
                                                         z=axes[2],
                                                         value=data)
         item3d.setLabel(legend)
+
+    def addObject3DStack(self, obj):
+        """Make an object3DStack mimick a DataObject before calling addDataObject."""
+        # todo: fix getObject3DInstance methods to directly send a dataObject, so that
+        #       we can get rid of the Object3DBase dependency.
+        obj.y = [obj.values]
+        obj.m = []
+        obj.x = [obj._x, obj._y, obj._z]
+        obj.info = {'legend': obj.name()}
+        self.addDataObject(obj)
