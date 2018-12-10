@@ -43,8 +43,6 @@ from silx.gui.utils.image import convertQImageToArray
 
 from silx.math.calibration import ArrayCalibration
 
-from PyMca5.Object3D.Object3DPlugins import Object3DMesh, ChimeraStack
-
 
 _logger = logging.getLogger(__name__)
 
@@ -160,6 +158,36 @@ def getChimeraStack():
     return os.path.basename(filename), stack
 
 
+def getMesh():
+    """
+    Read an image data file (EDF, ADSC), return the data and image name.
+    This is then used to display the image as a height map.
+    Returns *None, None* if the file dialog is cancelled or loaing fails.
+
+    :return: legend, data
+    """
+    fileTypeList = ['EDF Files (*edf)',
+                    'EDF Files (*ccd)',
+                    'ADSC Files (*img)',
+                    'All Files (*)']
+    old = PyMcaFileDialogs.PyMcaDirs.nativeFileDialogs * 1
+    PyMcaFileDialogs.PyMcaDirs.nativeFileDialogs = False
+    fileList, filterUsed = PyMcaFileDialogs.getFileList(
+        parent=None,
+        filetypelist=fileTypeList,
+        message="Please select one object data file",
+        mode="OPEN",
+        getfilter=True)
+    PyMcaFileDialogs.PyMcaDirs.nativeFileDialogs = old
+    if not fileList:
+        return None, None
+
+    filename = fileList[0]
+    edf = EdfFile.EdfFile(filename, access='rb')
+    data = edf.GetData(0).astype(numpy.float32)
+    return os.path.basename(filename), data
+
+
 def mean_isolevel(data):
     """Compute a default isosurface level: mean + 1 std
 
@@ -222,8 +250,20 @@ class OpenAction(qt.QAction):
             item3d.setLabel(legend)
 
     def _onLoad3DMesh(self, checked):
-        # todo
-        self._load(method=Object3DMesh.getObject3DInstance)
+        legend, data = getMesh()
+        if legend is None:
+            return
+
+        xSize, ySize = data.shape
+        x, y = numpy.meshgrid(numpy.arange(xSize), numpy.arange(ySize))
+        x = x.reshape(-1)
+        y = y.reshape(-1)
+
+        item3d = self.getSceneWidget().add2DScatter(x=x,
+                                                    y=y,
+                                                    value=data)
+        item3d.setVisualization("solid")   # this is expensive for large images
+        item3d.setHeightMap(True)
 
     def _onLoad4DStack(self, checked):
         # fixme: use fileIndex to decide the slicing direction of the cube
@@ -266,15 +306,6 @@ class OpenAction(qt.QAction):
         item3d = self._sceneGlWindow.getSceneWidget().add3DScalarField(data)
         item3d.setLabel(legend)
         item3d.addIsosurface(mean_isolevel, "blue")
-
-    def _load(self, method):
-        """
-
-        :param method: Callable returning an Object3D instance or None
-        """
-        ob3d = method()
-        if ob3d is not None:
-            self._sceneGlWindow.addObject3DStack(ob3d)
 
 
 class SceneGLWindow(SceneWindow.SceneWindow):
