@@ -26,6 +26,7 @@
 __license__ = "MIT"
 
 import numpy
+import h5py
 import logging
 import os.path
 
@@ -37,7 +38,6 @@ from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 
 from silx.gui.plot3d import SceneWindow
-from silx.gui.plot3d import items
 from silx.gui import icons
 from silx.gui.utils.image import convertQImageToArray
 
@@ -88,9 +88,14 @@ def getPixmap():
 def get4DStack():
     """
     Open a stack of image files in EDF or TIFF format, and return
-    the filename and the data.
+    the data with metadata.
 
-    Return ``None, None`` in case of failure.
+    :returns: legend, data, xScale, yScale, fileindex
+        Legend and data are both ``None`` in case of failure.
+        Scales are 2-tuples (originX, deltaX).
+        fileindex indicates the dimension/axis in the data corresponding to
+        the Z-axis.
+    :raise IOError: If the data could not be read
     """
     fileTypeList = ['EDF Z Stack (*edf *ccd)',
                     'EDF X Stack (*edf *ccd)',
@@ -126,6 +131,46 @@ def get4DStack():
     xScale = stack.info.get("xScale")
     yScale = stack.info.get("yScale")
     return legend, stack.data, xScale, yScale, fileindex
+
+
+def getChimeraStack():
+    """
+    Open an chimera file and return the filename and the data.
+
+    Return ``None, None`` in case the user cancelled the file dialog.
+    :raise IOError: If the data is not a 3D stack
+    """
+    fileTypeList = ['Chimera Stack (*cmp)',
+                    'Chimera Stack (*)']
+    old = PyMcaFileDialogs.PyMcaDirs.nativeFileDialogs * 1
+    fileList, filterUsed = PyMcaFileDialogs.getFileList(
+        parent=None,
+        filetypelist=fileTypeList,
+        message="Please select the object file(s)",
+        mode="OPEN",
+        getfilter=True)
+    PyMcaFileDialogs.PyMcaDirs.nativeFileDialogs = old
+    if not fileList:
+        return None, None
+    filename = fileList[0]
+    with h5py.File(filename) as f:
+        stack = f['Image/data'][...]
+    if not isinstance(stack, numpy.ndarray) or stack.ndim != 3:
+        raise IOError("Problem reading stack.")
+    return os.path.basename(filename), stack
+
+
+def mean_isolevel(data):
+    """Compute a default isosurface level: mean + 1 std
+
+    :param numpy.ndarray data: The data to process
+    :rtype: float
+    """
+    data = data[numpy.isfinite(data)]
+    if len(data) == 0:
+        return 0
+    else:
+        return numpy.mean(data) + numpy.std(data)
 
 
 class OpenAction(qt.QAction):
@@ -177,7 +222,7 @@ class OpenAction(qt.QAction):
             item3d.setLabel(legend)
 
     def _onLoad3DMesh(self, checked):
-
+        # todo
         self._load(method=Object3DMesh.getObject3DInstance)
 
     def _onLoad4DStack(self, checked):
@@ -208,18 +253,6 @@ class OpenAction(qt.QAction):
         #     group.addItem(item3d)
         # self._sceneGlWindow.getSceneWidget().addItem(group)
 
-        def mean_isolevel(data):
-            """Compute a default isosurface level: mean + 1 std
-
-            :param numpy.ndarray data: The data to process
-            :rtype: float
-            """
-            data = data[numpy.isfinite(data)]
-            if len(data) == 0:
-                return 0
-            else:
-                return numpy.mean(data) + numpy.std(data)
-
         item3d = self._sceneGlWindow.getSceneWidget().add3DScalarField(stackData)
         item3d.setLabel(legend)
         item3d.setTranslation(*origin)
@@ -227,7 +260,12 @@ class OpenAction(qt.QAction):
         item3d.addIsosurface(mean_isolevel, "blue")
 
     def _onLoadChimeraStack(self, checked):
-        self._load(method=ChimeraStack.getObject3DInstance)
+        legend, data = getChimeraStack()
+        if legend is None:
+            return
+        item3d = self._sceneGlWindow.getSceneWidget().add3DScalarField(data)
+        item3d.setLabel(legend)
+        item3d.addIsosurface(mean_isolevel, "blue")
 
     def _load(self, method):
         """
