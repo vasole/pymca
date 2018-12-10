@@ -251,17 +251,16 @@ class OpenAction(qt.QAction):
 
     def _onLoad3DMesh(self, checked):
         legend, data = getMesh()
-        if legend is None:
+        if legend is None or data.ndim != 2:
             return
 
         xSize, ySize = data.shape
         x, y = numpy.meshgrid(numpy.arange(xSize), numpy.arange(ySize))
         x = x.reshape(-1)
         y = y.reshape(-1)
-
-        item3d = self.getSceneWidget().add2DScatter(x=x,
-                                                    y=y,
-                                                    value=data)
+        item3d = self._sceneGlWindow.getSceneWidget().add2DScatter(x=x,
+                                                                   y=y,
+                                                                   value=data)
         item3d.setVisualization("solid")   # this is expensive for large images
         item3d.setHeightMap(True)
 
