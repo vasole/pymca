@@ -391,6 +391,14 @@ class SceneGLWindow(SceneWindow.SceneWindow):
         if legend is None:
             legend = dataObject.info['legend']
 
+        # we need to remove existing items with the same legend
+        to_be_removed = []
+        for it in self.getSceneWidget().getItems():
+            if it.getLabel() == legend:
+                to_be_removed.append(it)
+        for i in range(len(to_be_removed)):
+            self.getSceneWidget().removeItem(to_be_removed.pop())
+
         if dataObject.m is None or dataObject.m == []:
             data = dataObject.y[0]
         else:
