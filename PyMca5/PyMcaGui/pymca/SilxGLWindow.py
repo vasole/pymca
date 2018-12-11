@@ -40,6 +40,8 @@ from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from silx.gui.plot3d import SceneWindow
 from silx.gui import icons
 from silx.gui.utils.image import convertQImageToArray
+from silx.gui.colors import Colormap
+from silx.gui.plot3d import items
 
 from silx.math.calibration import ArrayCalibration
 
@@ -248,6 +250,8 @@ class OpenAction(qt.QAction):
         if legend is not None and data.ndim in [2, 3]:
             item3d = self._sceneGlWindow.getSceneWidget().addImage(data)
             item3d.setLabel(legend)
+            if not isinstance(item3d, items.ImageRgba):
+                item3d.setColormap(Colormap(name="temperature"))
 
     def _onLoad3DMesh(self, checked):
         legend, data = getMesh()
@@ -263,6 +267,7 @@ class OpenAction(qt.QAction):
                                                                    value=data)
         item3d.setVisualization("solid")   # this is expensive for large images
         item3d.setHeightMap(True)
+        item3d.setColormap(Colormap(name="temperature"))
 
     def _onLoad4DStack(self, checked):
         # fixme: use fileIndex to decide the slicing direction of the cube
@@ -297,6 +302,8 @@ class OpenAction(qt.QAction):
         item3d.setTranslation(*origin)
         item3d.setScale(*delta)
         item3d.addIsosurface(mean_isolevel, "blue")
+        for cp in item3d.getCutPlanes():
+            cp.setColormap(Colormap(name="temperature"))
 
     def _onLoadChimeraStack(self, checked):
         legend, data = getChimeraStack()
@@ -305,6 +312,8 @@ class OpenAction(qt.QAction):
         item3d = self._sceneGlWindow.getSceneWidget().add3DScalarField(data)
         item3d.setLabel(legend)
         item3d.addIsosurface(mean_isolevel, "blue")
+        for cp in item3d.getCutPlanes():
+            cp.setColormap(Colormap(name="temperature"))
 
 
 class SceneGLWindow(SceneWindow.SceneWindow):
@@ -391,8 +400,12 @@ class SceneGLWindow(SceneWindow.SceneWindow):
         if dataObject.x is None:
             if len(data.shape) == 3:
                 item3d = self.getSceneWidget().add3DScalarField(data)
+                item3d.addIsosurface(mean_isolevel, "blue")
+                for cp in item3d.getCutPlanes():
+                    cp.setColormap(Colormap(name="temperature"))
             elif len(data.shape) == 2:
                 item3d = self.getSceneWidget().addImage(data)
+                item3d.setColormap(Colormap(name="temperature"))
             else:
                 item3d = self.getSceneWidget().mesh(data)    # TODO: add image as height map
             item3d.setLabel(legend)
@@ -435,10 +448,13 @@ class SceneGLWindow(SceneWindow.SceneWindow):
                     # todo: check != 0
                 item3d.setScale(*scales)
                 item3d.setTranslation(*origins)
+                item3d.addIsosurface(mean_isolevel, "blue")
+                for cp in item3d.getCutPlanes():
+                    cp.setColormap(Colormap(name="temperature"))
             elif len(data.shape) == 2:
                 _logger.debug("CASE 2: 2D data with 2 axes")
-                xcal = ArrayCalibration(dataObject.x[0])   # Fixme: probably the opposite axis order
-                ycal = ArrayCalibration(dataObject.x[1])
+                ycal = ArrayCalibration(dataObject.x[0])
+                xcal = ArrayCalibration(dataObject.x[1])
 
                 item3d = self.getSceneWidget().addImage(data)
                 origins = [xcal(0), ycal(0)]
@@ -448,11 +464,12 @@ class SceneGLWindow(SceneWindow.SceneWindow):
                     if not cal.is_affine() and len(arr) > 1:
                         _logger.warning("axis is not linear. "
                                         "deltaX will be estimated")
-                        scales[i] = (arr[-1] - arr[0]) / (len(arr) - 1)
+                        scales[i] = (arr[-1] - arr[0]) / (len(arr) - 1)    # TODO: do a scatter instead with numpy.meshgrid
                     else:
                         scales[i] = cal.get_slope()
                 item3d.setTranslation(*origins)
                 item3d.setScale(*scales)
+                item3d.setColormap(Colormap(name="temperature"))
 
             elif len(data.shape) == 1:
                 _logger.debug("CASE 3: 1D scatter (x and values)")
@@ -460,6 +477,7 @@ class SceneGLWindow(SceneWindow.SceneWindow):
                                                             x=dataObject.x[0],
                                                             y=numpy.zeros_like(data),
                                                             z=data)
+                item3d.setColormap(Colormap(name="temperature"))
             else:
                 # this case was ignored in the original code,
                 # so it probably cannot happen
@@ -494,6 +512,9 @@ class SceneGLWindow(SceneWindow.SceneWindow):
             item3d.setScale(*scales)
             item3d.setTranslation(*origins)
             item3d.setLabel(legend)
+            item3d.addIsosurface(mean_isolevel, "blue")
+            for cp in item3d.getCutPlanes():
+                cp.setColormap(Colormap(name="temperature"))
             return
 
         # I have to assume all the x are of 1 element or of as many elements as data
@@ -514,7 +535,7 @@ class SceneGLWindow(SceneWindow.SceneWindow):
             item3d = self.getSceneWidget().add2DScatter(x=axes[0],
                                                         y=axes[1],
                                                         value=data)
-
+            item3d.setColormap(Colormap(name="temperature"))
             item3d.setVisualization("solid")
             # item3d.setHeightMap(True)
         else:
@@ -532,14 +553,5 @@ class SceneGLWindow(SceneWindow.SceneWindow):
                                                         y=axes[1],
                                                         z=axes[2],
                                                         value=data)
+            item3d.setColormap(Colormap(name="temperature"))
         item3d.setLabel(legend)
-
-    def addObject3DStack(self, obj):
-        """Make an object3DStack mimick a DataObject before calling addDataObject."""
-        # todo: fix getObject3DInstance methods to directly send a dataObject, so that
-        #       we can get rid of the Object3DBase dependency.
-        obj.y = [obj.values]
-        obj.m = []
-        obj.x = [obj._x, obj._y, obj._z]
-        obj.info = {'legend': obj.name()}
-        self.addDataObject(obj)
