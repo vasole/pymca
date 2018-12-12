@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -37,7 +37,7 @@ perform user defined operations of the plotted 1D data.
 Plugins can be automatically installed provided they are in the appropriate place:
 
     - In the user home directory (POSIX systems): *${HOME}/.pymca/plugins* 
-      or *${HOME}/PyMca5/plugins* (older PyMca installation)
+      or *${HOME}/PyMca/plugins* (older PyMca installation)
     - In *"My Documents\\\\PyMca\\\\plugins"* (Windows)
 
 Plugins inherit the :class:`Plugin1DBase` class and implement the methods:
