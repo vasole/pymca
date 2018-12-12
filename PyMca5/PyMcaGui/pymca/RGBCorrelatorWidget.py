@@ -960,9 +960,7 @@ class RGBCorrelatorWidget(qt.QWidget):
                     f = open(filename, "r")
                 lines =f.read()
                 f.close()
-                if sys.version < '3.0':
-                    pass
-                else:
+                if (sys.version_info > (3, 0)) and hasattr(lines, "decode"):
                     lines = lines.decode()
                 lines = lines.replace("\r","\n")
                 lines = lines.replace("\n\n","\n")
