@@ -48,6 +48,7 @@ except ImportError:
 from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaPhysics.xrf import McaAdvancedFitBatch
 from PyMca5.PyMcaGui.physics.xrf import QtMcaAdvancedFitReport
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from PyMca5.PyMcaCore import EdfFileLayer
 from PyMca5.PyMcaCore import SpecFileLayer
 from PyMca5.PyMcaGui import IconDict
@@ -75,15 +76,17 @@ class McaBatchGUI(qt.QWidget):
         self._processList = []
         self._selection = None
         self.__build(actions)
-        if filelist is None: filelist = []
-        self.inputDir   = None
+        if filelist is None:
+            filelist = []
+        self.inputDir = None
+        self.inputFilter = None
         self.outputDir  = None
         if outputdir is not None:
             if os.path.exists(outputdir):
                 self.outputDir = outputdir
             else:
                 qt.QMessageBox.information(self, "INFO",
-                    "Directory %s does not exists\nUsing %s"% (outputdir, self.outputDir))
+                    "Directory %s does not exist\nUsing %s"% (outputdir, self.outputDir))
 
         self.configFile = None
         self.setFileList(filelist)
@@ -551,7 +554,7 @@ class McaBatchGUI(qt.QWidget):
         for ffile in filelist:
             if not os.path.exists(ffile):
                 qt.QMessageBox.critical(self, "ERROR",
-                                    'File %s\ndoes not exists' % ffile)
+                                    'File %s\ndoes not exist' % ffile)
                 if QTVERSION < '4.0.0':
                     self.raiseW()
                 else:
@@ -567,7 +570,7 @@ class McaBatchGUI(qt.QWidget):
         for configfile in configfileList:
             if not os.path.exists(configfile):
                 qt.QMessageBox.critical(self,
-                             "ERROR",'File %s\ndoes not exists' % configfile)
+                             "ERROR",'File %s\ndoes not exist' % configfile)
                 if QTVERSION < '4.0.0':
                     self.raiseW()
                 else:
@@ -630,49 +633,24 @@ class McaBatchGUI(qt.QWidget):
         if not os.path.exists(self.inputDir):
             self.inputDir =  os.getcwd()
         wdir = self.inputDir
-        filedialog = qt.QFileDialog(self)
-        filedialog.setWindowTitle("Open a set of files")
-        filedialog.setDirectory(wdir)
-        filedialog.setModal(1)
-        filedialog.setFileMode(filedialog.ExistingFiles)
-
+        wfilter = self.inputFilter
         filetypes  = "McaFiles (*.mca)\nEdfFiles (*.edf)\n"
         if HDF5SUPPORT:
             filetypes += "HDF5 (*.nxs *.h5 *.hdf *.hdf5)\n"
         filetypes += "SpecFiles (*.spec)\nSpecFiles (*.dat)\nAll files (*)"
-        #if (QTVERSION < '4.3.0') and sys.platform == "win32":
-        if False and PyMcaDirs.nativeFileDialogs:
-            #windows file dialogs have difficulties when dealing with
-            #thousands of files, I do not know if other platforms too
-            try:
-                # API 1
-                filelist = qt.QFileDialog.getOpenFileNames(self,
-                            "Open a set of files",
-                            wdir,
-                            filetypes,
-                            None)    #This should be the last file filter used
-            except:
-                # API 2
-                filelist, andFilter = \
-                            qt.QFileDialog.getOpenFileNamesAndFilter(self,
-                            "Open a set of files",
-                            wdir,
-                            filetypes,
-                            None)    #This should be the last file filter used
-        else:
-            if hasattr(filedialog, "setFilters"):
-                filedialog.setFilters(filetypes.split("\n"))
-            else:
-                filedialog.setNameFilters(filetypes.split("\n"))
-            ret = filedialog.exec_()
-            if  ret == qt.QDialog.Accepted:
-                filelist=filedialog.selectedFiles()
-            else:
-                self.raise_()
-                return
+        filetypelist = filetypes.split("\n")
+        filelist, filefilter = PyMcaFileDialogs.getFileList(self,
+                                                filetypelist=filetypelist,
+                                                message="Open a set of files",
+                                                currentdir=wdir,
+                                                mode="OPEN",
+                                                getfilter=True,
+                                                single=False,
+                                                currentfilter=wfilter)
+
         if len(filelist):
-            filelist = [qt.safe_str(x) for x in filelist]
             self.setFileList(filelist)
+            self.inputFilter = filefilter
         self.raise_()
 
     def browseConfig(self):
@@ -680,56 +658,20 @@ class McaBatchGUI(qt.QWidget):
         if not os.path.exists(self.inputDir):
             self.inputDir =  os.getcwd()
         wdir = self.inputDir
-        if QTVERSION < '4.0.0':
-            filename = qt.QFileDialog(self,"Open a new fit config file",1)
-            filename.setMode(filename.ExistingFiles)
-            filename.setDir(wdir)
-        else:
-            filename = qt.QFileDialog(self)
-            filename.setWindowTitle("Open a new fit config file")
-            filename.setModal(1)
-            filename.setFileMode(filename.ExistingFiles)
-            filename.setDirectory(wdir)
-        filetypes = "Config Files (*.cfg)\nAll files (*)"
-        if PyMcaDirs.nativeFileDialogs:
-            try:
-                # API 1
-                filenameList = qt.QFileDialog.getOpenFileNames(self,
-                                "Open a new fit config file",
-                                wdir,
-                                filetypes,
-                                None)    #This should be the filter used
-            except:
-                # API 2
-                filenameList, andFilter = \
-                              qt.QFileDialog.getOpenFileNamesAndFilter(self,
-                                "Open a new fit config file",
-                                wdir,
-                                filetypes,
-                                None)    #This should be the filter used
-        else:
-            if hasattr(filename, "setFilters"):
-                filename.setFilters(["Config Files (*.cfg)",
-                                     "All files (*)"])
-            else:
-                filename.setNameFilters(["Config Files (*.cfg)",
-                                         "All files (*)"])
-            ret = filename.exec_()
+        filetypelist = ["Config Files (*.cfg)", "All files (*)"]
+        fileList, filefilter = PyMcaFileDialogs.getFileList(self,
+                                                filetypelist=filetypelist,
+                                                message="Open a new fit config file",
+                                                currentdir=wdir,
+                                                mode="OPEN",
+                                                getfilter=True,
+                                                single=False,
+                                                currentfilter=None)
 
-            if  ret == qt.QDialog.Accepted:
-                filenameList = filename.selectedFiles()
-            else:
-                self.raise_()
-                return
-
-        filename = []
-        for f in filenameList:
-            filename.append(qt.safe_str(f))
-
-        if len(filename) == 1:
-            self.setConfigFile(qt.safe_str(filename[0]))
-        elif len(filenameList):
-            self.setConfigFile(filename)
+        if len(fileList) == 1:
+            self.setConfigFile(fileList[0])
+        elif len(fileList):
+            self.setConfigFile(fileList)
         if QTVERSION < '4.0.0':
             self.raiseW()
         else:
