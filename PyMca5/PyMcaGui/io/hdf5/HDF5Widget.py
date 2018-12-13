@@ -124,7 +124,7 @@ def h5py_sorting(object_list):
         return object_list
 
 def _get_number_list(txt):
-    rexpr = '[/a-zA-Z:-]'
+    rexpr = '[/a-zA-Z:_-]'
     nbs= [float(w) for w in re.split(rexpr, txt) if w not in ['',' ']]
     return nbs
 
