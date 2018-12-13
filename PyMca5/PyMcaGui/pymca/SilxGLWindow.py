@@ -270,8 +270,7 @@ class OpenAction(qt.QAction):
         item3d.setColormap(Colormap(name="temperature"))
 
     def _onLoad4DStack(self, checked):
-        # fixme: use fileIndex to decide the slicing direction of the cube
-        # todo: check that the scaling is applied to the proper axes
+        # todo: use fileIndex to decide the slicing direction of the cube
         legend, stackData, xScale, yScale, fileIndex = get4DStack()
         if legend is None:
             return
@@ -349,6 +348,7 @@ class SceneGLWindow(SceneWindow.SceneWindow):
                 continue
 
             # we have to loop for all y values
+            # note: In addDataObject we currently only ever access y[0].
             for ycounter, ydata in enumerate(dataObject.y):
                 ylegend = 'y%d' % ycounter
                 if sel['selection'] is not None:
@@ -396,7 +396,7 @@ class SceneGLWindow(SceneWindow.SceneWindow):
         for it in self.getSceneWidget().getItems():
             if it.getLabel() == legend:
                 to_be_removed.append(it)
-        for i in range(len(to_be_removed)):
+        for _i in range(len(to_be_removed)):
             self.getSceneWidget().removeItem(to_be_removed.pop())
 
         if dataObject.m is None or dataObject.m == []:
@@ -406,6 +406,8 @@ class SceneGLWindow(SceneWindow.SceneWindow):
             data = dataObject.y[0] / dataObject.m[0]
 
         if dataObject.x is None:
+            # note: this does not seem to be possible if data is sent from the main selector,
+            #       at least 2 axs must be selected for the data to be sent to this widget
             if len(data.shape) == 3:
                 item3d = self.getSceneWidget().add3DScalarField(data)
                 item3d.addIsosurface(mean_isolevel, "blue")
@@ -415,7 +417,8 @@ class SceneGLWindow(SceneWindow.SceneWindow):
                 item3d = self.getSceneWidget().addImage(data)
                 item3d.setColormap(Colormap(name="temperature"))
             else:
-                item3d = self.getSceneWidget().mesh(data)    # TODO: add image as height map
+                raise NotImplementedError("case dataObject.x is None and ndim not in [2, 3]")
+                # item3d = self.getSceneWidget().mesh(data)
             item3d.setLabel(legend)
             return
 
@@ -453,7 +456,7 @@ class SceneGLWindow(SceneWindow.SceneWindow):
                         scales[i] = (arr[-1] - arr[0]) / (len(arr) - 1)
                     else:
                         scales[i] = cal.get_slope()
-                    # todo: check != 0
+                        # todo: check != 0
                 item3d.setScale(*scales)
                 item3d.setTranslation(*origins)
                 item3d.addIsosurface(mean_isolevel, "blue")
