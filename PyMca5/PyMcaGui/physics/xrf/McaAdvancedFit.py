@@ -2116,7 +2116,7 @@ class McaAdvancedFit(qt.QWidget):
         if self.peaksSpectrumButton.isChecked():
             keep = ['Data','Fit','Continuum','Matrix','Pile-up']
             for group in ddict['result']['groups']:
-                keep += ['y'+group]
+                keep += [group]
             for key in curveList:
                 if key not in keep:
                     if key.startswith('MC Matrix'):
@@ -2125,15 +2125,15 @@ class McaAdvancedFit(qt.QWidget):
                     else:
                         self.graph.removeCurve(key)
             for group in ddict['result']['groups']:
-                label = 'y'+group
+                label = 'y' + group
                 if label in ddict['result']:
                     self.graph.addCurve(xdata,
                                         ddict['result'][label],
-                                        legend=label,
+                                        legend=group,
                                         resetzoom=False)
                 else:
                     if group in curveList:
-                        self.graph.removeCurve(label)
+                        self.graph.removeCurve(group)
         else:
             self.__clearPeaksSpectrum()
         self.graph.setActiveCurve("Data")
@@ -2265,9 +2265,12 @@ class McaAdvancedFit(qt.QWidget):
                         bw = True
                     else:
                         bw = False
-                    if self.peaksSpectrumButton.isChecked():  legends = True
-                    elif 'ymatrix' in fitresult['result'].keys(): legends = False
-                    else: legends = False
+                    if self.peaksSpectrumButton.isChecked():
+                        legends = True
+                    elif 'ymatrix' in fitresult['result'].keys():
+                        legends = False
+                    else:
+                        legends = False
                     if self.matplotlibDialog is None:
                         self.matplotlibDialog = QPyMcaMatplotlibSave1D.\
                                                 QPyMcaMatplotlibSaveDialog(size=size,
