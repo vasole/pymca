@@ -9,9 +9,6 @@ export PYMCA_DATA_DIR=/usr/share/pymca
 export PYMCA_DOC_DIR=$(PYMCA_DATA_DIR)/doc
 export PYMCA_DISTUTILS=1
 
-export PYMCA_DATA_DIR_TEST=$(CURDIR)/PyMca5/PyMcaData/
-export PYMCA_DOC_DIR_TEST=$(PYMCA_DATA_DIR_TEST)/doc
-
 export PYBUILD_NAME=pymca5
 export PYBUILD_AFTER_INSTALL=rm -rf {destdir}/usr/bin/ {destdir}/usr/share/man {destdir}$(PYMCA_DATA_DIR)
 
@@ -27,7 +24,7 @@ override_dh_clean:
 
 override_dh_auto_build:
 	dh_auto_build
-	python setup.py build build_doc
+	env -u PYMCA_DATA_DIR -u PYMCA_DOC_DIR python setup.py build build_doc
 
 override_dh_installchangelogs:
 	dh_installchangelogs changelog.txt
@@ -56,8 +53,7 @@ override_dh_install:
 	dh_numpy3
 
 override_dh_auto_test:
-	PYBUILD_SYSTEM=custom \
-	PYBUILD_TEST_ARGS="cd {build_dir} && PYMCA_DATA_DIR=$(PYMCA_DATA_DIR_TEST) {interpreter} PyMca5/tests/TestAll.py" dh_auto_test
+	echo "Remember to run tests after installing the packages"
 
 override_dh_installdocs:
 	dh_installdocs "build/sphinx/html" -p pymca-doc
