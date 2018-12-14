@@ -522,7 +522,7 @@ class EnergyTable(QTable):
         if self.__disconnected:return
         _logger.debug("Value changed row = %d col = %d", row, col)
         _logger.debug("Text = %s", self.text(row, col))
-        if (col != 0) and (col !=3) and (col != 6) and (col != 9):
+        if (col % 3) != 0:
             try:
                 s = str(self.text(row, col))
                 s=s.replace(" ","")
@@ -542,7 +542,7 @@ class EnergyTable(QTable):
             self.sigEnergyTableSignal.emit(ddict)
 
     def text(self, row, col):
-        if (col % 3) in [1,2]:
+        if (col % 3) != 0:
             item = self.item(row , col)
             if item is not None:
                 return item.text()
@@ -551,7 +551,7 @@ class EnergyTable(QTable):
 
     def setText(self, row, col, text):
         #ncol = self.columnCount()
-        if (col % 3) in [1,2]:
+        if (col % 3) != 0:
             item = self.item(row, col)
             if item is None:
                 item = qt.QTableWidgetItem(text,
@@ -579,7 +579,6 @@ class EnergyTable(QTable):
                     r = i
                     coffset= 0
                 try:
-                #if 1:
                     s = str(self.text(r, 1+coffset))
                     s=s.replace(" ","")
                     if len(s):
@@ -602,7 +601,6 @@ class EnergyTable(QTable):
                             ddict['rate'].append(rate)
                             ddict['scatterflag'].append(scatterflag)
                 except:
-                #else:
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText("EnergyTable: Error on energy %d" % i)
