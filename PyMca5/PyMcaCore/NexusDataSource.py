@@ -143,29 +143,6 @@ def get_family_pattern(filelist):
         rootname = name1[0:]
     return rootname
 
-# tool to retrieve the positioners group associated to a path
-# retrieving them from the same entry (assuming they are in
-# NXentry/instrument/positioners)
-def getPositionersGroup(h5file, path):
-    entry = path
-    candidate = os.path.dirname(entry)
-    while len(candidate) > 1:
-        entry = candidate
-        candidate = os.path.dirname(entry)
-    instrument = None
-    for key, group in h5file[entry].items():
-        for attr in group.attrs:
-            if attr in ["NX_class", b"NX_class"]:
-                if group.attrs[attr] in ["NXinstrument", b"NXinstrument"]:
-                    instrument = group
-                    break
-    positioners = None
-    if instrument is not None:
-        for key in instrument.keys():
-            if key in ["positioners", b"positioners"]:
-                positioners = instrument[key]
-    return positioners
-
 class NexusDataSource(object):
     def __init__(self,nameInput):
         if type(nameInput) == type([]):
@@ -428,11 +405,15 @@ class NexusDataSource(object):
             output.info['LabelNames'] = selection['cntlist']
         if entry != "/":
             try:
-                positioners = getPositionersGroup(phynxFile, entry)
+                positioners = NexusTools.getPositionersGroup(phynxFile, entry)
                 if positioners is not None:
                     output.info['MotorNames'] = []
                     output.info['MotorValues'] = []
                     for key in positioners.keys():
+                        if positioners[key].dtype == numpy.object:
+                            # not a standard value
+                            _logger.info("Skipping object key %s" % key)
+                            continue
                         output.info['MotorNames'].append(key)
                         value = positioners[key].value
                         if hasattr(value, "size"):
