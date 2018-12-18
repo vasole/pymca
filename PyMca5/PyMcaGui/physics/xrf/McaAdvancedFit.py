@@ -67,7 +67,7 @@ from . import McaAdvancedTable
 from . import QtMcaAdvancedFitReport
 from . import ConcentrationsWidget
 from PyMca5.PyMcaPhysics.xrf import ConcentrationsTool
-from PyMca5.PyMcaGui import PyMca_Icons
+from PyMca5.PyMcaGui.plotting import PyMca_Icons
 IconDict = PyMca_Icons.IconDict
 from . import McaCalWidget
 from . import PeakIdentifier
@@ -78,7 +78,7 @@ Elements = ElementsInfo.Elements
 from PyMca5.PyMcaCore import PyMcaDirs
 from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaGui import CalculationThread
-from PyMca5.PyMcaGui.plotting import PyMca_Icons
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 
 _logger = logging.getLogger(__name__)
 
@@ -1488,22 +1488,13 @@ class McaAdvancedFit(qt.QWidget):
         oldoutdir = self.outdir
         if self.outdir is None:
             cwd = PyMcaDirs.outputDir
-            outfile = qt.QFileDialog(self)
-            outfile.setWindowTitle("Output Directory Selection")
-            outfile.setModal(1)
-            outfile.setFileMode(outfile.DirectoryOnly)
-            outfile.setDirectory(cwd)
-            ret = outfile.exec_()
-            if ret:
-                self.outdir = qt.safe_str(outfile.selectedFiles()[0])
-                outfile.close()
-                del outfile
-            else:
-                # pyflakes http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=666494
-                outfile.close()
-                del outfile
-                return
-            if self.outdir[-1]=="/":self.outdir=self.outdir[0:-1]
+            self.outdir =PyMcaFileDialogs.getExistingDirectory(self,
+                                    message="Output Directory Selection",
+                                    mode="SAVE",
+                                    currentdir=cwd)
+            if len(self.outdir):
+                if self.outdir[-1]=="/":
+                    self.outdir=self.outdir[:-1]
         try:
             self.__htmlReport()
         except IOError:
@@ -1513,7 +1504,10 @@ class McaAdvancedFit(qt.QWidget):
                     self.outdir = oldoutdir
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
+            msg.setWindowTitle("IO error")
             msg.setText("Input Output Error: %s" % (sys.exc_info()[1]))
+            msg.setInformativeText(str(sys.exc_info()[1]))
+            msg.setDetailedText(traceback.format_exc())
             msg.exec_()
 
     def __htmlReport(self,outfile=None):
@@ -2182,16 +2176,8 @@ class McaAdvancedFit(qt.QWidget):
                 MCLabels = None
                 MCSpectra = None
 
-        #get outputfile
-        outfile = qt.QFileDialog(self)
-        outfile.setModal(1)
         if self.lastInputDir is None:
             self.lastInputDir = PyMcaDirs.outputDir
-        outfile.setWindowTitle("Output File Selection")
-        if hasattr(qt, "QStringList"):
-            strlist = qt.QStringList()
-        else:
-            strlist = []
         format_list = ['Specfile MCA  *.mca',
                        'Specfile Scan *.dat',
                        'Raw ASCII  *.txt',
@@ -2205,45 +2191,35 @@ class McaAdvancedFit(qt.QWidget):
             format_list.append('B/WGraphics PNG *.png')
             format_list.append('B/WGraphics EPS *.eps')
             format_list.append('B/WGraphics SVG *.svg')
-        for f in format_list:
-            strlist.append(f)
-        if hasattr(outfile, "setFilters"):
-            outfile.setFilters(strlist)
-        else:
-            outfile.setNameFilters(strlist)
+        wdir = self.lastInputDir
+        outputFile, filterused = PyMcaFileDialogs.getFileList(self,
+                                        filetypelist=format_list,
+                                        message="Output File Selection",
+                                        currentdir=wdir,
+                                        mode="SAVE",
+                                        getfilter=True,
+                                        single=True,
+                                        currentfilter=None)
 
-        outfile.setFileMode(outfile.AnyFile)
-        outfile.setAcceptMode(qt.QFileDialog.AcceptSave)
-        outfile.setDirectory(self.lastInputDir)
-        ret = outfile.exec_()
 
-        if ret:
-            if hasattr(outfile, "selectedFilter"):
-                filterused = qt.safe_str(outfile.selectedFilter()).split()
-            else:
-                filterused = qt.safe_str(outfile.selectedNameFilter()).split()
+        if len(outputFile):
+            outputFile = outputFile[0]
+            print("outputfile = ", outputFile)
+            print("filterused = ", filterused)
+            filterused = filterused.split()
             filedescription = filterused[0]
             filetype  = filterused[1]
             extension = filterused[2]
-            outstr = qt.safe_str(outfile.selectedFiles()[0])
             try:
-                outputDir  = os.path.dirname(outstr)
+                outputDir  = os.path.dirname(outputFile)
                 self.lastInputDir   = outputDir
                 PyMcaDirs.outputDir = outputDir
             except:
                 outputDir  = "."
             #self.outdir = outputDir
-            try:
-                outputFile = os.path.basename(outstr)
-            except:
-                outputFile  = outstr
-            outfile.close()
-            del outfile
         else:
-            # pyflakes bug http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=666494
-            outfile.close()
-            del outfile
             return
+
         #always overwrite for the time being
         if len(outputFile) < len(extension[1:]):
             outputFile += extension[1:]
@@ -2257,115 +2233,114 @@ class McaAdvancedFit(qt.QWidget):
         systemline = os.linesep
         os.linesep = '\n'
         try:
-            if MATPLOTLIB:
-                if filetype in ['EPS', 'PNG', 'SVG']:
-                    size = (7, 3.5) #in inches
-                    logy = self.graph.isYAxisLogarithmic()
-                    if filedescription == "B/WGraphics":
-                        bw = True
-                    else:
-                        bw = False
-                    if self.peaksSpectrumButton.isChecked():
-                        legends = True
-                    elif 'ymatrix' in fitresult['result'].keys():
-                        legends = False
-                    else:
-                        legends = False
-                    if self.matplotlibDialog is None:
-                        self.matplotlibDialog = QPyMcaMatplotlibSave1D.\
-                                                QPyMcaMatplotlibSaveDialog(size=size,
-                                                                    logy=logy,
-                                                                    legends=legends,
-                                                                    bw = bw)
-                    mtplt = self.matplotlibDialog.plot
-                    mtplt.setParameters({'logy':logy,
-                                         'legends':legends,
-                                         'bw':bw})
-                    """
-                        mtplt = PyMcaMatplotlibSave.PyMcaMatplotlibSave(size=size,
-                                                                    logy=logy,
-                                                                    legends=legends,
-                                                                    bw = bw)
-                        self.matplotlibDialog = None
-                    """
-                    if self._energyAxis:
-                        x = fitresult['result']['energy']
-                    else:
-                        x = fitresult['result']['xdata']
-                    xmin, xmax = self.graph.getGraphXLimits()
-                    ymin, ymax = self.graph.getGraphYLimits()
-                    mtplt.setLimits(xmin, xmax, ymin, ymax)
-                    index = numpy.nonzero((xmin <= x) & (x <= xmax))[0]
-                    x = numpy.take(x, index)
-                    if bw:
-                        mtplt.addDataToPlot( x,
-                                numpy.take(fitresult['result']['ydata'],index),
-                                legend='data',
-                                color='k',linestyle=':', linewidth=1.5, markersize=3)
-                    else:
-                        mtplt.addDataToPlot( x,
-                                numpy.take(fitresult['result']['ydata'],index),
-                                legend='data',
-                                linewidth=1)
-
+            if filetype in ['EPS', 'PNG', 'SVG']:
+                size = (7, 3.5) #in inches
+                logy = self.graph.isYAxisLogarithmic()
+                if filedescription == "B/WGraphics":
+                    bw = True
+                else:
+                    bw = False
+                if self.peaksSpectrumButton.isChecked():
+                    legends = True
+                elif 'ymatrix' in fitresult['result'].keys():
+                    legends = False
+                else:
+                    legends = False
+                if self.matplotlibDialog is None:
+                    self.matplotlibDialog = QPyMcaMatplotlibSave1D.\
+                                            QPyMcaMatplotlibSaveDialog(size=size,
+                                                                logy=logy,
+                                                                legends=legends,
+                                                                bw = bw)
+                mtplt = self.matplotlibDialog.plot
+                mtplt.setParameters({'logy':logy,
+                                     'legends':legends,
+                                     'bw':bw})
+                """
+                    mtplt = PyMcaMatplotlibSave.PyMcaMatplotlibSave(size=size,
+                                                                logy=logy,
+                                                                legends=legends,
+                                                                bw = bw)
+                    self.matplotlibDialog = None
+                """
+                if self._energyAxis:
+                    x = fitresult['result']['energy']
+                else:
+                    x = fitresult['result']['xdata']
+                xmin, xmax = self.graph.getGraphXLimits()
+                ymin, ymax = self.graph.getGraphYLimits()
+                mtplt.setLimits(xmin, xmax, ymin, ymax)
+                index = numpy.nonzero((xmin <= x) & (x <= xmax))[0]
+                x = numpy.take(x, index)
+                if bw:
                     mtplt.addDataToPlot( x,
-                                numpy.take(fitresult['result']['yfit'],index),
-                                legend='fit',
-                                linewidth=1.5)
-                    if not self.peaksSpectrumButton.isChecked():
-                        mtplt.addDataToPlot( x,
-                                    numpy.take(fitresult['result']['continuum'],index),
-                                    legend='bck', linewidth=1.5)
-                    if self.top.sumbox.isChecked():
-                        mtplt.addDataToPlot( x,
-                                numpy.take(fitresult['result']['pileup']+\
-                                             fitresult['result']['continuum'],index),
-                                             legend="pile up",
-                                             linewidth=1.5)
-                    if 'ymatrix' in fitresult['result'].keys():
-                        mtplt.addDataToPlot( x,
-                                numpy.take(fitresult['result']['ymatrix'],index),
-                                legend='matrix',
-                                linewidth=1.5)
-                    if self._xrfmcMatrixSpectra is not None:
-                        if len(self._xrfmcMatrixSpectra):
-                            if self._energyAxis:
-                                mcxdata = self._xrfmcMatrixSpectra[1]
-                            else:
-                                mcxdata = self._xrfmcMatrixSpectra[0]
-                            mcindex = numpy.nonzero((xmin <= mcxdata) & (mcxdata <= xmax))[0]
-                            mcxdatax = numpy.take(mcxdata, mcindex)
-                            mcydata0 = numpy.take(self._xrfmcMatrixSpectra[2], mcindex)
-                            mcydatan = numpy.take(self._xrfmcMatrixSpectra[-1], mcindex)
-                            mtplt.addDataToPlot(mcxdatax,
-                                                mcydata0,
-                                                legend='MC Matrix 1',
-                                                linewidth=1.5)
-                            mtplt.addDataToPlot(mcxdatax,
-                                                mcydatan,
-                                                legend='MC Matrix %d' % (len(self._xrfmcMatrixSpectra) - 2),
-                                                linewidth=1.5)
-                    if self.peaksSpectrumButton.isChecked():
-                        for group in fitresult['result']['groups']:
-                            label = 'y'+group
-                            if label in fitresult['result'].keys():
-                                mtplt.addDataToPlot( x,
-                                    numpy.take(fitresult['result'][label],index),
-                                                legend=group,
-                                                linewidth=1.5)
-                    if self._energyAxis:
-                        mtplt.setXLabel('Energy (keV)')
-                    else:
-                        mtplt.setXLabel('Channel')
-                    mtplt.setYLabel('Counts')
-                    mtplt.plotLegends()
-                    if self.matplotlibDialog is not None:
-                        ret = self.matplotlibDialog.exec_()
-                        if ret == qt.QDialog.Accepted:
-                            mtplt.saveFile(specFile)
-                    else:
+                            numpy.take(fitresult['result']['ydata'],index),
+                            legend='data',
+                            color='k',linestyle=':', linewidth=1.5, markersize=3)
+                else:
+                    mtplt.addDataToPlot( x,
+                            numpy.take(fitresult['result']['ydata'],index),
+                            legend='data',
+                            linewidth=1)
+
+                mtplt.addDataToPlot( x,
+                            numpy.take(fitresult['result']['yfit'],index),
+                            legend='fit',
+                            linewidth=1.5)
+                if not self.peaksSpectrumButton.isChecked():
+                    mtplt.addDataToPlot( x,
+                                numpy.take(fitresult['result']['continuum'],index),
+                                legend='bck', linewidth=1.5)
+                if self.top.sumbox.isChecked():
+                    mtplt.addDataToPlot( x,
+                            numpy.take(fitresult['result']['pileup']+\
+                                         fitresult['result']['continuum'],index),
+                                         legend="pile up",
+                                         linewidth=1.5)
+                if 'ymatrix' in fitresult['result'].keys():
+                    mtplt.addDataToPlot( x,
+                            numpy.take(fitresult['result']['ymatrix'],index),
+                            legend='matrix',
+                            linewidth=1.5)
+                if self._xrfmcMatrixSpectra is not None:
+                    if len(self._xrfmcMatrixSpectra):
+                        if self._energyAxis:
+                            mcxdata = self._xrfmcMatrixSpectra[1]
+                        else:
+                            mcxdata = self._xrfmcMatrixSpectra[0]
+                        mcindex = numpy.nonzero((xmin <= mcxdata) & (mcxdata <= xmax))[0]
+                        mcxdatax = numpy.take(mcxdata, mcindex)
+                        mcydata0 = numpy.take(self._xrfmcMatrixSpectra[2], mcindex)
+                        mcydatan = numpy.take(self._xrfmcMatrixSpectra[-1], mcindex)
+                        mtplt.addDataToPlot(mcxdatax,
+                                            mcydata0,
+                                            legend='MC Matrix 1',
+                                            linewidth=1.5)
+                        mtplt.addDataToPlot(mcxdatax,
+                                            mcydatan,
+                                            legend='MC Matrix %d' % (len(self._xrfmcMatrixSpectra) - 2),
+                                            linewidth=1.5)
+                if self.peaksSpectrumButton.isChecked():
+                    for group in fitresult['result']['groups']:
+                        label = 'y'+group
+                        if label in fitresult['result'].keys():
+                            mtplt.addDataToPlot( x,
+                                numpy.take(fitresult['result'][label],index),
+                                            legend=group,
+                                            linewidth=1.5)
+                if self._energyAxis:
+                    mtplt.setXLabel('Energy (keV)')
+                else:
+                    mtplt.setXLabel('Channel')
+                mtplt.setYLabel('Counts')
+                mtplt.plotLegends()
+                if self.matplotlibDialog is not None:
+                    ret = self.matplotlibDialog.exec_()
+                    if ret == qt.QDialog.Accepted:
                         mtplt.saveFile(specFile)
-                    return
+                else:
+                    mtplt.saveFile(specFile)
+                return
         except:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
@@ -2382,7 +2357,9 @@ class McaAdvancedFit(qt.QWidget):
         except IOError:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
-            msg.setText("Input Output Error: %s" % (sys.exc_info()[1]))
+            msg.setInformativeText("Input Output Error: %s" % \
+                                   (sys.exc_info()[1]))
+            msg.setDetailedText(traceback.format_exc())
             msg.exec_()
             return
         try:
