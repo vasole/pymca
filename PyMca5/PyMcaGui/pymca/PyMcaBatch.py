@@ -682,29 +682,12 @@ class McaBatchGUI(qt.QWidget):
         if not os.path.exists(self.outputDir):
             self.outputDir =  os.getcwd()
         wdir = self.outputDir
-        if QTVERSION < '4.0.0':
-            outfile = qt.QFileDialog(self,"Output Directory Selection",1)
-            outfile.setMode(outfile.DirectoryOnly)
-            outfile.setDir(wdir)
-            ret = outfile.exec_loop()
-        else:
-            outfile = qt.QFileDialog(self)
-            outfile.setWindowTitle("Output Directory Selection")
-            outfile.setModal(1)
-            outfile.setDirectory(wdir)
-            outfile.setFileMode(outfile.DirectoryOnly)
-            ret = outfile.exec_()
-        if ret:
-            if QTVERSION < '4.0.0':
-                outdir=qt.safe_str(outfile.selectedFile())
-            else:
-                outdir=qt.safe_str(outfile.selectedFiles()[0])
-            outfile.close()
-            del outfile
+        outdir =PyMcaFileDialogs.getExistingDirectory(self,
+                                    message="Output Directory Selection",
+                                    mode="SAVE",
+                                    currentdir=wdir)
+        if len(outdir):
             self.setOutputDir(outdir)
-        else:
-            outfile.close()
-            del outfile
         if QTVERSION < '4.0.0':
             self.raiseW()
         else:
