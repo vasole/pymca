@@ -32,17 +32,20 @@ from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5 import PyMcaDirs
 QTVERSION = qt.qVersion()
 
-def getExistingDirectory(parent=None, message=None, mode=None):
+def getExistingDirectory(parent=None, message=None, mode=None, currentdir=None):
     if message is None:
         message = "Please select a directory"
     if mode is None:
         mode = "OPEN"
     else:
         mode = mode.upper()
-    if mode == "OPEN":
-        wdir = PyMcaDirs.inputDir
+    if currentdir is None:
+        if mode == "OPEN":
+            wdir = PyMcaDirs.inputDir
+        else:
+            wdir = PyMcaDirs.outputDir
     else:
-        wdir = PyMcaDirs.outputDir
+        wdir = currentdir
     if PyMcaDirs.nativeFileDialogs:
         outdir = qt.safe_str(qt.QFileDialog.getExistingDirectory(parent,
                             message,
