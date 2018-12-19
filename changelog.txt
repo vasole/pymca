@@ -1,3 +1,14 @@
+VERSION 5.4.2
+-------------
+
+- More robust reading of positioners from NeXus files
+
+- Respect the nativefiledialogs flag in McaAdvancedFit
+
+- Deal with underscore when sorting NeXus files by entry name
+
+- RGBCorrelator: Correct attribute error reading .dat files under Python 3
+
 VERSION 5.4.1
 -------------
 
