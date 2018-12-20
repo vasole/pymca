@@ -347,11 +347,11 @@ def build_Object3DCTools(ext_modules):
     elif sys.platform == "darwin":
         libraries = []
     else:
-        libraries = ['GL']
-    # if sys.platform == 'windows':
-    #     WindowsSDK = os.getenv('WindowsSdkDir')
-    #     if WindowsSDK is not None:
-    #         includes.append(WindowsSDK)
+        libraries = []
+        # it does not seem to be necessary to link to the library
+        # since it is dynamically provided. Uncomment next line if
+        # needed
+        # libraries = ['GL']
 
     module = Extension(name='PyMca5.Object3D.Object3DCTools',
                        sources=glob.glob('PyMca5/Object3D/Object3DCTools/*.c'),
