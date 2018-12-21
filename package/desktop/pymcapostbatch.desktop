@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=PyMca Postbatch
+Comment=PyMca batch result analysis application
+GenericName=Batch result analyzor
+Exec=pymcapostbatch %F
+Icon=PyMca
+Terminal=false
+Type=Application
+Categories=Education;Science;DataVisualization;Physics;
+MimeType=image/tiff;application/x-pymca-specfile;image/x-pymca-edf;
