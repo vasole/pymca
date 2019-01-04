@@ -86,12 +86,12 @@ if BINDING is None: # Try the different bindings
             BINDING = "PyQt4"
         except ImportError:
             try:
-                import PySide2
-                BINDING = "PySide2"
+                import PySide
+                BINDING = "PySide"
             except ImportError:
                 try:
-                    import PySide
-                    BINDING = "PySide"
+                    import PySide2
+                    BINDING = "PySide2"
                 except ImportError:
                     raise ImportError(
                         'No Qt wrapper found. Install PyQt5, PyQt4, PySide or PySide2.')
