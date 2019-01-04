@@ -472,14 +472,8 @@ class ScanWindow(BaseScanWindow):
                         if not self.infoDockWidget.isHidden():
                             activeLegend = self.getActiveCurve(just_legend=True)
                             if activeLegend == newLegend:
-                                self.scanWindowInfoWidget.updateFromDataObject \
-                                    (dataObject)
-                            else:
-                                # TODO: better to implement scanWindowInfoWidget.clear
-                                dummyDataObject = DataObject.DataObject()
-                                dummyDataObject.y = [numpy.array([])]
-                                dummyDataObject.x = [numpy.array([])]
-                                self.scanWindowInfoWidget.updateFromDataObject(dummyDataObject)
+                                self.scanWindowInfoWidget.updateFromXYInfo( \
+                                            xdata, ydata, dataObject.info)
             else:
                 # we have to loop for all y values
                 ycounter = -1
