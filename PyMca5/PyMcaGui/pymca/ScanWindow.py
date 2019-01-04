@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -78,6 +78,35 @@ if userPluginsDirectory is not None:
 _logger = logging.getLogger(__name__)
 # _logger.setLevel(logging.DEBUG)
 
+class ScanWindowPrintPreviewButton(SingletonPrintPreviewToolButton):
+    """This class allows to add title and comment if the plot has the methods
+    getPrintPreviewTitle and getPrintPreviewCommentAndPosition."""
+    def _safeGetPlot(self):
+        if hasattr(self, "getPlot"):
+            plot = self.getPlot()
+        elif hasattr(self, "plot"):
+            plot = self.plot()
+        elif hasattr(self, "_plot"):
+            plot = self._plot
+        else:
+            plot = None
+        return plot
+
+    def getTitle(self):
+        title = None
+        plot = self._safeGetPlot()
+        if plot is not None:
+            if hasattr(plot, "getPrintPreviewTitle"):
+                title = plot.getPrintPreviewTitle()
+        return title
+
+    def getCommentAndPosition(self):
+        comment, position = None, None
+        plot = self._safeGetPlot()
+        if plot is not None:
+            if hasattr(self._plot, "getPrintPreviewCommentAndPosition"):
+                comment, position = plot.getPrintPreviewCommentAndPosition()
+        return comment, position
 
 class BaseScanWindow(PlotWindow):
     """:class:`PlotWindow` augmented with plugins, fitting actions,
@@ -171,8 +200,8 @@ class BaseScanWindow(PlotWindow):
         self._printPreviewToolBar.setFloatable(False)
         self.addToolBar(self._printPreviewToolBar)
         self._printPreviewToolBar.addWidget(qt.HorizontalSpacer(self._printPreviewToolBar))
-        self.printPreview = SingletonPrintPreviewToolButton(parent=self._printPreviewToolBar,
-                                                            plot=self)
+        self.printPreview = ScanWindowPrintPreviewButton(parent=self._printPreviewToolBar,
+                                                         plot=self)
         self.printPreviewAction = self._printPreviewToolBar.addWidget(self.printPreview)
 
         self.scanWindowInfoWidget = None
@@ -290,6 +319,12 @@ class BaseScanWindow(PlotWindow):
             mtplt.saveFile(filename)
         return
 
+    def getPrintPreviewTitle(self):
+        return None
+
+    def getPrintPreviewCommentAndPosition(self):
+        return None, None
+
     def printHtml(self, text):
         printer = qt.QPrinter()
         printDialog = qt.QPrintDialog(printer, self)
@@ -393,7 +428,7 @@ class ScanWindow(BaseScanWindow):
                 continue
             else:
                 if numpy.isscalar(dataObject.x[0]):
-                    dataObject.x[0] = numpy.array([dataObject.x[0]])    
+                    dataObject.x[0] = numpy.array([dataObject.x[0]])
                 xdata = dataObject.x[0]
 
             if sel.get('SourceType') == "SPS":
@@ -712,6 +747,57 @@ class ScanWindow(BaseScanWindow):
         else:
             self._addSelection(sel_list, resetzoom=resetzoom)
 
+    def getPrintPreviewTitle(self):
+        title = None
+        try:
+            if len(self.getGraphTitle()):
+                # there is already a title
+                # no need to add a second one
+                return title
+        except:
+            logger.warning('Problem accessing ScanWindow plot title')
+        if self.scanWindowInfoWidget is not None:
+            if not self.infoDockWidget.isHidden():
+                info = self.scanWindowInfoWidget.getInfo()
+                title = info['scan'].get('source', None)
+        return title
+
+    def getPrintPreviewCommentAndPosition(self):
+        comment = None
+        position = None
+        if self.scanWindowInfoWidget is not None:
+            if not self.infoDockWidget.isHidden():
+                info = self.scanWindowInfoWidget.getInfo()
+                title = info['scan'].get('source', None)
+                comment = info['scan'].get('scan', None)+"\n"
+                h, k, l = info['scan'].get('hkl')
+                if h != "----":
+                    comment += "H = %s  K = %s  L = %s\n" % (h, k, l)
+                peak   = info['graph']['peak']
+                peakAt = info['graph']['peakat']
+                fwhm   = info['graph']['fwhm']
+                fwhmAt = info['graph']['fwhmat']
+                com    = info['graph']['com']
+                mean   = info['graph']['mean']
+                std    = info['graph']['std']
+                minimum = info['graph']['min']
+                maximum = info['graph']['max']
+                delta   = info['graph']['delta']
+                xLabel = self.getGraphXLabel()
+                comment += "Peak %s at %s = %s\n" % (peak, xLabel, peakAt)
+                comment += "FWHM %s at %s = %s\n" % (fwhm, xLabel, fwhmAt)
+                comment += "COM = %s  Mean = %s  STD = %s\n" % (com, mean, std)
+                comment += "Min = %s  Max = %s  Delta = %s\n" % (minimum,
+                                                                maximum,
+                                                                delta)
+        if hasattr(self, "scanFit"):
+            if self.scanFit is not None:
+                if not self.scanFit.isHidden():
+                    if comment is None:
+                        comment = ""
+                    comment += "\n"
+                    comment += self.scanFit.getText()
+        return comment, "LEFT"
 
 def test():
     import numpy
