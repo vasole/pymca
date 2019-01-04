@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -56,34 +56,42 @@ elif hasattr(sys, 'argv') and ('PySide' in sys.argv):
     # argv might not be defined for embedded python (e.g., in Qt designer)
     BINDING = 'PySide'
 
-else: # Try the different bindings
+elif sys.version_info < (3,):
+    # give priority to PyQt4 because of all the issues with
+    # old PyQt5 versions at ESRF
+    try:
+        try:
+            import sip
+            sip.setapi('QString', 2)
+            sip.setapi('QVariant', 2)
+            sip.setapi('QDate', 2)
+            sip.setapi('QDateTime', 2)
+            sip.setapi('QTextStream', 2)
+            sip.setapi('QTime', 2)
+            sip.setapi('QUrl', 2)
+        except:
+            print("Cannot set sip API") # Console widget not available
+        import PyQt4
+        BINDING = "PyQt4"
+    except:
+        pass
+
+if BINDING is None: # Try the different bindings
     try:
         import PyQt5
         BINDING = "PyQt5"
     except ImportError:
         try:
-            if sys.version_info < (3,):
-                try:
-                    import sip
-                    sip.setapi('QString', 2)
-                    sip.setapi('QVariant', 2)
-                    sip.setapi('QDate', 2)
-                    sip.setapi('QDateTime', 2)
-                    sip.setapi('QTextStream', 2)
-                    sip.setapi('QTime', 2)
-                    sip.setapi('QUrl', 2)
-                except:
-                    print("Cannot set sip API") # Console widget not available
             import PyQt4
             BINDING = "PyQt4"
         except ImportError:
             try:
-                import PySide
-                BINDING = "PySide"
+                import PySide2
+                BINDING = "PySide2"
             except ImportError:
                 try:
-                    import PySide2
-                    BINDING = "PySide2"
+                    import PySide
+                    BINDING = "PySide"
                 except ImportError:
                     raise ImportError(
                         'No Qt wrapper found. Install PyQt5, PyQt4, PySide or PySide2.')
@@ -110,7 +118,7 @@ if BINDING == "PySide":
         pass
 
 elif BINDING == "PyQt4":
-    if sys.version_info < (3,):
+    if sys.version_info < (3,) and ('sip' not in sys.modules):
         try:
             import sip
             sip.setapi('QString', 2)
