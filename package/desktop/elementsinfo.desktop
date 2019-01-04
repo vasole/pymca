@@ -1,9 +1,8 @@
 [Desktop Entry]
 Version=1.0
 Name=Elementsinfo
-Name[en_GB]=Elementsinfo
-GenericName=Display X-ray information on elements
-GenericName[en_GB]=Display X-ray information on elements
+Comment=Display X-ray fluorescence related atomic properties
+GenericName=Atomic Properties
 Type=Application
 Exec=elementsinfo
 Icon=PyMca

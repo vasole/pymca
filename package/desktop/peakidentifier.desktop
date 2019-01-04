@@ -1,9 +1,8 @@
 [Desktop Entry]
 Version=1.0
 Name=Peakidentifier
-Name[en_GB]=Peakidentifier
-GenericName=Find the energy of X-ray spectral lines
-GenericName[en_GB]=Find the energy of X-ray spectral lines
+Comment=Find the energy of X-ray spectral lines
+GenericName=Peak identifier
 Type=Application
 Exec=peakidentifier
 Icon=PyMca
