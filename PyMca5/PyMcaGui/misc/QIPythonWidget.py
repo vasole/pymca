@@ -35,6 +35,9 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 # Set the QT API
 import os
 import sys
+
+from PyMca5.PyMcaGui.PyMcaQt import QApplication, QWidget, \
+                                        QPushButton, QVBoxLayout, QMessageBox
 if "PySide" in sys.modules:
     PYSIDE = True
 else:
@@ -42,44 +45,20 @@ else:
 
 if PYSIDE:
     os.environ['QT_API'] = 'pyside'
-    from PySide.QtGui import QApplication, QWidget, \
-                     QPushButton, QVBoxLayout, QMessageBox
 else:
     os.environ['QT_API'] = 'pyqt'
-    try:
-        import sip
-        sip.setapi("QString", 2)
-        sip.setapi("QVariant", 2)
-    except:
-        pass
-    if "PyQt4" in sys.modules:
-        from PyQt4.QtGui import QApplication, QWidget, \
-                                        QPushButton, QVBoxLayout, QMessageBox
-    elif "PyQt5" in sys.modules:
-        from PyQt5.QtWidgets import QApplication, QWidget, \
-                                        QPushButton, QVBoxLayout, QMessageBox
-    else:
-        try:
-            from PyQt4.QtGui import QApplication, QWidget, \
-                                        QPushButton, QVBoxLayout, QMessageBox
-        except:
-            try:
-                from PyQt5.QtWidgets import QApplication, QWidget, \
-                                           QPushButton, QVBoxLayout, QMessageBox
-            except:
-                from PySide.QtGui import QApplication, QWidget, \
-                                        QPushButton, QVBoxLayout, QMessageBox
-                os.environ['QT_API'] = 'pyside'
 
-import IPython
-if IPython.__version__.startswith("2"):
-    QTCONSOLE = False
+QTCONSOLE = True
+if sys.version_info < (3,):
+    import IPython
+    if IPython.__version__.startswith("2"):
+        QTCONSOLE = False
 else:
     try:
         import qtconsole
-        QTCONSOLE = True
     except ImportError:
         QTCONSOLE = False
+        import IPython
 
 if QTCONSOLE:
     try:
