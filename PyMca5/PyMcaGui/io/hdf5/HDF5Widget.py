@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2018 V.A. Sole, ESRF - D. Dale CHESS
+# Copyright (C) 2004-2019 V.A. Sole, ESRF - D. Dale CHESS
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -105,7 +105,7 @@ def h5py_sorting(object_list):
 
     try:
         if sorting_key != 'name':
-            sorting_list = [(o[1][sorting_key].value, o)
+            sorting_list = [(o[1][sorting_key][()], o)
                            for o in object_list]
             sorted_list = sorted(sorting_list, key=itemgetter(0))
             return [x[1] for x in sorted_list]
@@ -429,10 +429,10 @@ class FileModel(qt.QAbstractItemModel):
                                 if len(children[idx].getNode().shape):
                                     #stored as an array of strings!!!
                                     #return just the first item
-                                    return MyQVariant("%s" % children[idx].getNode().value[0])
+                                    return MyQVariant("%s" % children[idx].getNode()[()][0])
                                 else:
                                     #stored as a string
-                                    return MyQVariant("%s" % children[idx].getNode().value)
+                                    return MyQVariant("%s" % children[idx].getNode()[()])
                 return MyQVariant(item.type)
             if column == 2:
                 return MyQVariant(item.shape)
