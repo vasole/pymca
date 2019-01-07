@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -77,7 +77,7 @@ def h5py_sorting(object_list):
 
     try:
         if sorting_key != 'name':
-            sorting_list = [(o[sorting_key].value, o)
+            sorting_list = [(o[sorting_key][()], o)
                            for o in object_list]
             sorted_list = sorted(sorting_list, key=itemgetter(0))
             return [x[1] for x in sorted_list]
@@ -323,13 +323,13 @@ class NexusDataSource(object):
                     mcaDatasetObjectPath = mcaObjectPaths[key]
                     dataset = None
                     if mcaDatasetObjectPath in h5File:
-                        dataset = h5File[mcaDatasetObjectPath].value
+                        dataset = h5File[mcaDatasetObjectPath][()]
                     elif "::" in mcaDatasetObjectPath:
                         fileName, path = mcaDatasetObjectPath.split()
                         if os.path.exists(fileName):
                             with h5py.File(fileName, "r") as h5:
                                 if path in h5:
-                                    dataset = h5[path].value
+                                    dataset = h5[path][()]
                     if dataset is None:
                         _logger.debug("Broken link? Ignoring key %s = %s",
                                       key, mcaDatasetObjectPath)
@@ -368,7 +368,7 @@ class NexusDataSource(object):
                         if selection['mcaselectiontype'].lower() != "sum":
                             mcaData /= divider
                     else:
-                        mcaData = mcaData.value
+                        mcaData = mcaData[()]
                         divider = 1.0
                     if "McaLiveTime" in output.info:
                         if numpy.isscalar(output.info["McaLiveTime"]):
@@ -415,7 +415,7 @@ class NexusDataSource(object):
                             _logger.info("Skipping object key %s" % key)
                             continue
                         output.info['MotorNames'].append(key)
-                        value = positioners[key].value
+                        value = positioners[key][()]
                         if hasattr(value, "size"):
                             if value.size > 1:
                                 if hasattr(value, "flat"):
@@ -436,7 +436,7 @@ class NexusDataSource(object):
                 totalElements *= dim
             if totalElements < 2.0E7:
                 try:
-                    data = phynxFile[path].value
+                    data = phynxFile[path][()]
                 except MemoryError:
                     data = phynxFile[path]
                     pass
@@ -481,7 +481,7 @@ class NexusDataSource(object):
                 if len(selection[cnt]) > 1:
                     for xidx in range(1, len(selection[cnt])):
                         path =  entry + selection['cntlist'][selection[cnt][xidx]]
-                        data = phynxFile[path].value
+                        data = phynxFile[path][()]
                         output.x.append(data)
             elif cnt == 'm':
                 #only one monitor

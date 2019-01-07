@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -390,19 +390,19 @@ def getInfo(hdf5File, node):
             if hasattr(data, 'shape'):
                 shape = data.shape
                 if not len(shape):
-                    ddict['general']['Value'] = "%s" % data.value
+                    ddict['general']['Value'] = "%s" % data[()]
                 elif shape[0] == 1:
-                    ddict['general']['Value'] = "%s" % data.value[0]
+                    ddict['general']['Value'] = "%s" % data[0]
                 else:
                     print("Warning: Node %s not fully understood" % node)
-                    ddict['general']['Value'] = "%s" % data.value
+                    ddict['general']['Value'] = "%s" % data[()]
         elif hasattr(data, 'shape'):
             shape = data.shape
             if len(shape) == 1:
                 if shape[0] == 1:
-                    ddict['general']['Value'] = "%s" % data.value[0]
+                    ddict['general']['Value'] = "%s" % data[0]
             elif len(shape) == 0:
-                ddict['general']['Value'] = "%s" % data.value
+                ddict['general']['Value'] = "%s" % data[()]
     if hasattr(data, "keys"):
         ddict['general']['members'] = list(data.keys())
     elif hasattr(data, "listnames"):
@@ -425,27 +425,28 @@ def getInfo(hdf5File, node):
                    ("%s" % dtype).startswith("|O"):
                     if not len(shape):
                         ddict['general'][member]['Shape'] = ""
-                        ddict['general'][member]['Value'] = "%s" % memberObject.value
+                        ddict['general'][member]['Value'] = "%s" % memberObject[()]
                     else:
                         ddict['general'][member]['Shape'] = shape[0]
-                        ddict['general'][member]['Value'] = "%s" % memberObject.value[0]
+                        if shape[0] > 0:
+                            ddict['general'][member]['Value'] = "%s" % memberObject[0]
                     continue
                 if not len(shape):
                     ddict['general'][member]['Shape'] = ""
-                    ddict['general'][member]['Value'] = "%s" % memberObject.value
+                    ddict['general'][member]['Value'] = "%s" % memberObject[()]
                     continue
                 ddict['general'][member]['Shape'] = "%d" % shape[0]
                 for i in range(1, len(shape)):
                     ddict['general'][member]['Shape'] += " x %d" % shape[i]
                 if len(shape) == 1:
                     if shape[0] == 1:
-                        ddict['general'][member]['Value'] = "%s" % memberObject.value[0]
-                    else:
-                        ddict['general'][member]['Value'] = "%s, ..., %s" % (memberObject.value[0],
-                                                                             memberObject.value[-1])
+                        ddict['general'][member]['Value'] = "%s" % memberObject[0]
+                    elif shape[0] > 1:
+                        ddict['general'][member]['Value'] = "%s, ..., %s" % (memberObject[0],
+                                                                             memberObject[-1])
                 elif len(shape) == 2:
-                    ddict['general'][member]['Value'] = "%s, ..., %s" % (memberObject.value[0],
-                                                                         memberObject.value[-1])
+                    ddict['general'][member]['Value'] = "%s, ..., %s" % (memberObject[0],
+                                                                         memberObject[-1])
                 else:
                     pass
         else:

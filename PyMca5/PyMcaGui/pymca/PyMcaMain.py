@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -135,7 +135,13 @@ if sys.platform == 'darwin':
             if hasattr(qt, 'QOpenGLWidget'):
                 print("Warning: OpenGL backend not fully supported")
 try:
-    # try to import silx prior to import matplotlib
+    if (sys.version_info < (3,)) and ("PyQt4.QtCore" in sys.modules):
+        # PyQt4 is the most reliable binding at the ESRF for python 2
+        import silx
+        silxLogger = logging.getLogger("silx.DEPRECATION")
+        silxLogger.setLevel(logging.CRITICAL)
+    # try to import silx prior to importing matplotlib to prevent
+    # unnecessary warning
     import silx.gui.plot
 except:
     pass

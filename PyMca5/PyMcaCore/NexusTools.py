@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2018 European Synchrotron Radiation Facility
+# Copyright (c) 2018-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -78,7 +78,7 @@ def h5py_sorting(object_list):
 
     try:
         if sorting_key != 'name':
-            sorting_list = [(o[1][sorting_key].value, o)
+            sorting_list = [(o[1][sorting_key][()], o)
                            for o in object_list]
             sorted_list = sorted(sorting_list, key=itemgetter(0))
             return [x[1] for x in sorted_list]
@@ -500,7 +500,7 @@ def getScannedPositioners(h5file, path):
         if not len(scanned):
             entry = h5file[entry_name]
             if "title" in entry:
-                title = entry["title"].value
+                title = entry["title"][()]
                 if hasattr(title, "dtype"):
                     _logger.warning("entry title should be a string not an array")
                     if hasattr(title, "__len__"):
@@ -537,7 +537,7 @@ if __name__ == "__main__":
     for entry in entries:
         print("Entry name = %s" % entry.name)
         if "title" in entry:
-            print("Entry title = %s" % entry["title"].value)
+            print("Entry title = %s" % entry["title"][()])
         measurement = getMeasurementGroup(h5, entry.name)
         if measurement is None:
             print("No measurement")
