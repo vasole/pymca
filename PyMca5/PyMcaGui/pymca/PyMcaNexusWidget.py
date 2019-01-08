@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -175,7 +175,7 @@ class PyMcaNexusWidget(QNexusWidget.QNexusWidget):
                     if axis in group.keys():
                         axesList.append(posixpath.join(groupName, axis))
                 if len(axesList):
-                    xData = phynxFile[axesList[index]].value
+                    xData = phynxFile[axesList[index]][()]
         except:
             # I cannot afford this Nexus specific things
             # to break the generic HDF5 functionality
@@ -188,7 +188,7 @@ class PyMcaNexusWidget(QNexusWidget.QNexusWidget):
         #actually read the values
         nDim = len(stack.shape)
         if (load) or (nDim != 3):
-            stack = stack.value
+            stack = stack[()]
             shape = stack.shape
             if index == 0:
                 #Stack of images
