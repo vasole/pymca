@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -51,7 +51,7 @@ _logger = logging.getLogger(__name__)
 
 
 # Probe OpenGL availability and widget
-isGlAvailable = False
+isGLAvailable = False
 try:
     import OpenGL
 except ImportError:
@@ -67,9 +67,9 @@ else:
                       silx_qt.QApplication.instance() and not silx_qt.QGLFormat.hasOpenGL())
 
     else:
-        isGlAvailable = True
+        isGLAvailable = True
 
-_logger.debug("Gl availability: %s", isGlAvailable)
+_logger.debug("GL availability: %s", isGLAvailable)
 
 
 class AxesPositionersSelector(qt.QWidget):
@@ -258,8 +258,8 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
                                           None]}
         self.__methodKeys = ['Show (mpl)']
         self._createdBackends = []
-        if isGlAvailable:
-            self.methodDict['Show (gl)'] = [self._showWidgetGl,
+        if isGLAvailable:
+            self.methodDict['Show (gl)'] = [self._showWidgetGL,
                                             tooltip + " (OpenGL backend)",
                                             None]
             self.__methodKeys.append('Show (gl)')
@@ -284,7 +284,7 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
     def _showWidgetMpl(self):
         self._showWidget(backend="mpl")
 
-    def _showWidgetGl(self):
+    def _showWidgetGL(self):
         self._showWidget(backend="gl")
 
     def _showWidget(self, backend):
