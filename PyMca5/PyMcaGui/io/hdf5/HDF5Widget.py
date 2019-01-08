@@ -874,7 +874,7 @@ def getDatasetValueDialog(filename=None, message=None):
 
     with h5open(filename) as hdf5File:
         hdf5Item = hdf5File[selectedHdf5Uri.split("::")[-1]]
-        data = hdf5Item.value
+        data = hdf5Item[()]
 
     return data
 
