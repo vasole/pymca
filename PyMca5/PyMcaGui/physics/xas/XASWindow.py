@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -159,8 +159,9 @@ class XASMdiArea(qt.QMdiArea):
                               colormap=False, yInverted=False,
                               roi=False, mask=False, fit=False,
                               backend=backend)
-            plot.zoomModeAction.setVisible(False)
-            plot.panModeAction.setVisible(False)
+            toolbar = plot.getInteractiveModeToolBar()
+            toolbar.getZoomModeAction().setVisible(False)
+            toolbar.getPanModeAction().setVisible(False)
             pluginsToolButton = PluginsToolButton(plot=plot)
             plot.toolBar().addWidget(pluginsToolButton)
             plot.setWindowTitle(title)

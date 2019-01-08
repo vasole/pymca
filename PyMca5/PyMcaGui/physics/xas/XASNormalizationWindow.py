@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -280,8 +280,12 @@ class XASNormalizationWindow(qt.QWidget):
                                 aspectRatio=False, colormap=False,
                                 yInverted=False, roi=False, mask=False,
                                 fit=False)
-        self.graph.zoomModeAction.setVisible(False)
-        self.graph.panModeAction.setVisible(False)
+        # next two lines deprecated with silx 0.8.0
+        # self.graph.zoomModeAction.setVisible(False)
+        # self.graph.panModeAction.setVisible(False)
+        toolbar = self.graph.getInteractiveModeToolBar()
+        toolbar.getZoomModeAction().setVisible(False)
+        toolbar.getPanModeAction().setVisible(False)
         self.__lastDict = {}
         self.graph.sigPlotSignal.connect(self._handleGraphSignal)
         self.graph.addCurve(self.energy,
