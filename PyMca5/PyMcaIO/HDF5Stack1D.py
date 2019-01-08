@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -336,7 +336,7 @@ class HDF5Stack1D(DataObject.DataObject):
                     mDataset = numpy.asarray(tmpHdf[mpath], dtype=mdtype)
                     self.monitor = [mDataset]
                 if xSelection is not None:
-                    xDataset = tmpHdf[xpath].value
+                    xDataset = tmpHdf[xpath][()]
                     self.x = [xDataset]
                 if h5py.version.version < '2.0':
                     #prevent automatic closing keeping a reference
@@ -361,12 +361,12 @@ class HDF5Stack1D(DataObject.DataObject):
                     if DONE:
                         # hopefully it will fit into memory
                         if mcaObjectPaths["live_time"] in tmpHdf:
-                            _time = tmpHdf[mcaObjectPaths["live_time"]].value
+                            _time = tmpHdf[mcaObjectPaths["live_time"]][()]
                         elif "::" in mcaObjectPaths["live_time"]:
                             tmpFileName, tmpDatasetPath = \
                                         mcaObjectPaths["live_time"].split("::") 
                             with h5py.File(tmpFileName, "r") as tmpH5:
-                                _time = tmpH5[tmpDatasetPath].value
+                                _time = tmpH5[tmpDatasetPath][()]
                         else:
                             del mcaObjectPaths["live_time"]
                     else:
@@ -379,12 +379,12 @@ class HDF5Stack1D(DataObject.DataObject):
                         # hopefully it will fit into memory
                         if mcaObjectPaths["elapsed_time"] in tmpHdf:
                             _time = \
-                                tmpHdf[mcaObjectPaths["elapsed_time"]].value
+                                tmpHdf[mcaObjectPaths["elapsed_time"]][()]
                         elif "::" in mcaObjectPaths["elapsed_time"]:
                             tmpFileName, tmpDatasetPath = \
                                     mcaObjectPaths["elapsed_time"].split("::") 
                             with h5py.File(tmpFileName, "r") as tmpH5:
-                                _time = tmpH5[tmpDatasetPath].value
+                                _time = tmpH5[tmpDatasetPath][()]
                         else:
                             del mcaObjectPaths["elapsed_time"]
                     else:
@@ -394,23 +394,23 @@ class HDF5Stack1D(DataObject.DataObject):
                 if "calibration" in mcaObjectPaths:
                     if mcaObjectPaths["calibration"] in tmpHdf:
                         _calibration = \
-                                tmpHdf[mcaObjectPaths["calibration"]].value
+                                tmpHdf[mcaObjectPaths["calibration"]][()]
                     elif "::" in mcaObjectPaths["calibration"]:
                         tmpFileName, tmpDatasetPath = \
                                     mcaObjectPaths["calibration"].split("::") 
                         with h5py.File(tmpFileName, "r") as tmpH5:
-                            _calibration = tmpH5[tmpDatasetPath].value
+                            _calibration = tmpH5[tmpDatasetPath][()]
                     else:
                         del mcaObjectPaths["calibration"]
                 if "channels" in mcaObjectPaths:
                     if mcaObjectPaths["channels"] in tmpHdf:
                         _channels = \
-                                tmpHdf[mcaObjectPaths["channels"]].value
+                                tmpHdf[mcaObjectPaths["channels"]][()]
                     elif "::" in mcaObjectPaths["channels"]:
                         tmpFileName, tmpDatasetPath = \
                                     mcaObjectPaths["channels"].split("::") 
                         with h5py.File(tmpFileName, "r") as tmpH5:
-                            _channels = tmpH5[tmpDatasetPath].value
+                            _channels = tmpH5[tmpDatasetPath][()]
                     else:
                         del mcaObjectPaths["channels"]
             else:
@@ -452,7 +452,7 @@ class HDF5Stack1D(DataObject.DataObject):
                                 mDataset = numpy.asarray(hdf[mpath], dtype=mdtype)
                             if xSelection is not None:
                                 xpath = entryName + xSelection
-                                xDataset = hdf[xpath].value
+                                xDataset = hdf[xpath][()]
                         else:
                             path = scan + ySelection
                             if mSelection is not None:
@@ -463,7 +463,7 @@ class HDF5Stack1D(DataObject.DataObject):
                                 mDataset = numpy.asarray(hdf[mpath], dtype=mdtype)
                             if xSelection is not None:
                                 xpath = scan + xSelection
-                                xDataset = hdf[xpath].value
+                                xDataset = hdf[xpath][()]
                         try:
                             yDataset = hdf[path]
                             tmpShape = yDataset.shape
@@ -475,7 +475,7 @@ class HDF5Stack1D(DataObject.DataObject):
                                 IN_MEMORY = False
                             else:
                                 #read the data into memory
-                                yDataset = hdf[path].value
+                                yDataset = hdf[path][()]
                                 IN_MEMORY = True
                         except (MemoryError, ValueError):
                             yDataset = hdf[path]
@@ -493,11 +493,11 @@ class HDF5Stack1D(DataObject.DataObject):
                                 timePath = NexusTools.getMcaObjectPaths(hdf,
                                                                         path)["elapsed_time"]
                             if timePath in hdf:
-                                timeData = hdf[timePath].value
+                                timeData = hdf[timePath][()]
                             elif "::" in timePath:
                                 externalFile, externalPath = timePath.split("::")
                                 with h5py.File(externalFile, "r") as timeHdf:
-                                    timeData = timeHdf[externalPath].value
+                                    timeData = timeHdf[externalPath][()]
                         if mcaIndex != 0:
                             if IN_MEMORY:
                                 yDataset.shape = -1, mcaDim
@@ -658,7 +658,7 @@ class HDF5Stack1D(DataObject.DataObject):
                                 mDataset.shape
                             if xSelection is not None:
                                 xpath = entryName + xSelection
-                                xDataset = hdf[xpath].value
+                                xDataset = hdf[xpath][()]
                         else:
                             path = scan + ySelection
                             if mSelection is not None:
@@ -669,7 +669,7 @@ class HDF5Stack1D(DataObject.DataObject):
                                 mDataset = numpy.asarray(hdf[mpath], dtype=mdtype)
                             if xSelection is not None:
                                 xpath = scan + xSelection
-                                xDataset = hdf[xpath].value
+                                xDataset = hdf[xpath][()]
                         if mSelection is not None:
                             nMonitorData = mDataset.size
                             case = -1
@@ -687,7 +687,7 @@ class HDF5Stack1D(DataObject.DataObject):
                                     "I do not know how to handle this monitor data")
                             if case == 0:
                                 for i in range(yDatasetShape[0]):
-                                    self.data[i] += yDataset[i].value / mDataset[i]
+                                    self.data[i] += yDataset[i][()] / mDataset[i]
                             elif case == 1:
                                 for i in range(yDataset.shape[0]):
                                     self.data[i] += yDataset[i] / mDataset
