@@ -1191,9 +1191,9 @@ class McaWindow(ScanWindow.ScanWindow):
 
     def saveOperation(self, outputFile, outputFilter):
         filterused = outputFilter.split()
-        filetype =filterused[0]
+        filetype =filterused[1]
         extension = filterused[-1]
-        if filetype.upper().startswith("WIDGET"):
+        if filterused[0].upper().startswith("WIDGET"):
             return super(McaWindow, self).saveOperation(outputFile,
                                                         outputFilter)
         elif outputFile[-3:].upper() in ['EPS', 'PNG', 'SVG']:
