@@ -38,6 +38,8 @@ from silx.gui.plot import PlotWindow
 from silx.gui.plot.PrintPreviewToolButton import SingletonPrintPreviewToolButton
 
 import PyMca5
+from PyMca5 import PyMcaDirs
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from PyMca5.PyMcaGui.pymca import ScanWindowInfoWidget
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui.PluginsToolButton import PluginsToolButton
@@ -46,7 +48,7 @@ from PyMca5.PyMcaGui.pymca import ScanFit
 from PyMca5.PyMcaGui.pymca.ScanFitToolButton import ScanFitToolButton
 from PyMca5.PyMcaCore import DataObject
 from PyMca5.PyMcaGui.pymca import QPyMcaMatplotlibSave1D
-from PyMca5.PyMcaGui.plotting.PyMca_Icons import change_icons
+from PyMca5.PyMcaGui.plotting.PyMca_Icons import IconDict, change_icons
 
 if hasattr(qt, 'QString'):
     QString = qt.QString
@@ -351,19 +353,33 @@ class BaseScanWindow(PlotWindow):
             tmpstr += "\n"
         return tmpstr
 
+
 class ScanWindow(BaseScanWindow):
     """ScanWindow, adding dataObject management to BaseScanWindow
     """
 
     def __init__(self, parent=None, name="Scan Window", fit=True, backend=None,
                  plugins=True, control=True, position=True, roi=True,
-                 specfit=None, info=False, save=True):
+                 specfit=None, info=False, save=None):
+        if save is None:
+            _logger.info("__init__ save option unset using custom save")
+            save = False
         BaseScanWindow.__init__(self,
                                 parent, name, fit, backend,
                                 plugins, control, position, roi,
                                 specfit, info, save)
 
         self.dataObjectsDict = {}
+        self.outputDir = None
+        self.outputFilter = None
+
+        # custom save
+        self.customSaveIcon = qt.QIcon(qt.QPixmap(IconDict["filesave"]))
+        self.customSaveButton = qt.QToolButton(self)
+        self.customSaveButton.setIcon(self.customSaveIcon)
+        self.customSaveButton.setToolTip('Save as')
+        self.customSaveButton.clicked.connect(self._saveIconSignal)
+        self.getOutputToolBar().addWidget(self.customSaveButton)
 
         self.sigContentChanged.connect(self._handleContentChanged)
 
@@ -809,6 +825,206 @@ class ScanWindow(BaseScanWindow):
                     comment += "\n"
                     comment += self.scanFit.getText()
         return comment, "LEFT"
+
+    def _saveIconSignal(self):
+        legend = self.getActiveCurve(just_legend=True)
+        if legend is None:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Please Select an active curve")
+            msg.setWindowTitle('%s window' % self._plotType)
+            msg.exec_()
+            return
+        output = self._getOutputFileNameAndFilter()
+        if output is None:
+            return
+        outputFile, outputFilter = output
+        try:
+            self.saveOperation(outputFile, outputFilter)
+        except:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setWindowTitle("Save error")
+            msg.setInformativeText("Saving Error: %s" %
+                                   (sys.exc_info()[1]))
+            msg.setDetailedText(traceback.format_exc())
+            msg.exec_()
+
+    def saveOperation(self, outputFile, outputFilter):
+        filterused = outputFilter.split()
+        filetype = filterused[1]
+        extension = filterused[-1]
+        specFile = outputFile
+        if os.path.exists(specFile):
+            os.remove(specFile)
+
+        # WIDGET format
+        fformat = specFile[-3:].upper()
+        if filterused[0].upper().startswith("WIDGET"):
+            if hasattr(qt.QPixmap, "grabWidget"):
+                pixmap = qt.QPixmap.grabWidget(self.getWidgetHandle())
+            else:
+                pixmap = self.getWidgetHandle().grab()
+            if not pixmap.save(specFile, fformat):
+                qt.QMessageBox.critical(
+                        self,
+                        "Save Error",
+                        "%s" % "I could not save the file\nwith the desired format")
+            return
+
+        # GRAPHICS format
+        if fformat in ['EPS', 'PNG', 'SVG']:
+            try:
+                self._graphicsSave(plot=self, filename=specFile)
+            except:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setWindowTitle("Save error")
+                msg.setInformativeText("Graphics Saving Error: %s" %
+                                       (sys.exc_info()[1]))
+                msg.setDetailedText(traceback.format_exc())
+                msg.exec_()
+            return
+
+        # TEXT based formats
+
+        # This was giving problems on legends with a leading b
+        # legend = legend.strip('<b>')
+        # legend = legend.strip('<\b>')
+        x, y, legend, info = self.getActiveCurve()
+        xlabel = info.get("xlabel", "X")
+        ylabel = info.get("ylabel", "Y")
+
+        try:
+            systemline = os.linesep
+            os.linesep = '\n'
+            if sys.version < "3.0":
+                ffile = open(specFile, 'wb')
+            else:
+                ffile = open(specFile, 'w', newline='')
+            if filetype in ['Scan', 'MultiScan']:
+                ffile.write("#F %s\n" % specFile)
+                savingDate = "#D %s\n"%(time.ctime(time.time()))
+                ffile.write(savingDate)
+                ffile.write("\n")
+                ffile.write("#S 1 %s\n" % legend)
+                ffile.write(savingDate)
+                ffile.write("#N 2\n")
+                ffile.write("#L %s  %s\n" % (xlabel, ylabel) )
+                for i in range(len(y)):
+                    ffile.write("%.7g  %.7g\n" % (x[i], y[i]))
+                ffile.write("\n")
+                if filetype == 'MultiScan':
+                    scan_n  = 1
+                    curveList = self.getAllCurves()
+                    for x, y, key, info in curveList:
+                        if key == legend:
+                            continue
+                        xlabel = info.get("xlabel", "X")
+                        ylabel = info.get("ylabel", "Y")
+                        scan_n += 1
+                        ffile.write("#S %d %s\n" % (scan_n, key))
+                        ffile.write(savingDate)
+                        ffile.write("#N 2\n")
+                        ffile.write("#L %s  %s\n" % (xlabel, ylabel) )
+                        for i in range(len(y)):
+                            ffile.write("%.7g  %.7g\n" % (x[i], y[i]))
+                        ffile.write("\n")
+            elif filetype == 'ASCII':
+                for i in range(len(y)):
+                    ffile.write("%.7g  %.7g\n" % (x[i], y[i]))
+            elif filetype == 'CSV':
+                if "," in filterused[0]:
+                    csvseparator = ","
+                elif ";" in filterused[0]:
+                    csvseparator = ";"
+                elif "OMNIC" in filterused[0]:
+                    csvseparator = ","
+                else:
+                    csvseparator = "\t"
+                if "OMNIC" not in filterused[0]:
+                    ffile.write('"%s"%s"%s"\n' % (xlabel,csvseparator,ylabel))
+                for i in range(len(y)):
+                    ffile.write("%.7E%s%.7E\n" % (x[i], csvseparator,y[i]))
+            else:
+                ffile.write("#F %s\n" % filename)
+                ffile.write("#D %s\n"%(time.ctime(time.time())))
+                ffile.write("\n")
+                ffile.write("#S 1 %s\n" % legend)
+                ffile.write("#D %s\n"%(time.ctime(time.time())))
+                ffile.write("#@MCA %16C\n")
+                ffile.write("#@CHANN %d %d %d 1\n" %  (len(y), x[0], x[-1]))
+                ffile.write("#@CALIB %.7g %.7g %.7g\n" % (0, 1, 0))
+                ffile.write(self.array2SpecMca(y))
+                ffile.write("\n")
+            ffile.close()
+            os.linesep = systemline
+        except:
+            os.linesep = systemline
+            raise
+        return
+
+    def _getOutputFileNameAndFilter(self, format_list=None):
+        """
+        returns outputfile, file type and filter used
+        """
+        # get outputfile
+        self.outputDir = PyMcaDirs.outputDir
+        if self.outputDir is None:
+            self.outputDir = os.getcwd()
+            wdir = os.getcwd()
+        elif os.path.exists(self.outputDir):
+            wdir = self.outputDir
+        else:
+            self.outputDir = os.getcwd()
+            wdir = self.outputDir
+        if format_list is None:
+            format_list = ['Specfile MCA  *.mca',
+                           'Specfile Scan *.dat']
+            if self._plotType != "MCA":
+                format_list += ['Specfile MultiScan *.dat']
+            format_list += ['Raw ASCII *.txt',
+                            '","-separated CSV *.csv',
+                            '";"-separated CSV *.csv',
+                            '"tab"-separated CSV *.csv',
+                            'OMNIC CSV *.csv',
+                            'Widget PNG *.png',
+                            'Widget JPG *.jpg',
+                            'Graphics PNG *.png',
+                            'Graphics EPS *.eps',
+                            'Graphics SVG *.svg']
+        if self.outputFilter is None:
+            self.outputFilter = format_list[0]
+        fileList, fileFilter = PyMcaFileDialogs.getFileList(
+                                     self,
+                                     filetypelist=format_list,
+                                     message="Output File Selection",
+                                     currentdir=wdir,
+                                     single=True,
+                                     mode="SAVE",
+                                     getfilter=True,
+                                     currentfilter=self.outputFilter)
+        if not len(fileList):
+            return
+        self.outputFilter = fileFilter
+        filterused = self.outputFilter.split()
+        filetype = filterused[1]
+        extension = filterused[2]
+        outdir = qt.safe_str(fileList[0])
+        try:
+            self.outputDir = os.path.dirname(outdir)
+            PyMcaDirs.outputDir = os.path.dirname(outdir)
+        except:
+            self.outputDir = "."
+        try:
+            outputFile = os.path.basename(outdir)
+        except:
+            outputFile = outdir
+        if len(outputFile) < 5:
+            outputFile = outputFile + extension[-4:]
+        elif outputFile[-4:] != extension[-4:]:
+            outputFile = outputFile + extension[-4:]
+        return os.path.join(self.outputDir, outputFile), fileFilter
 
 def test():
     import numpy
