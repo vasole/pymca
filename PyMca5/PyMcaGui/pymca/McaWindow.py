@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -45,7 +45,6 @@ if __name__ == "__main__":
 
 import copy
 
-from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from . import ScanWindow
 from . import McaCalibrationControlGUI
 from PyMca5.PyMcaIO import ConfigDict
@@ -54,11 +53,8 @@ from PyMca5.PyMcaGui.physics.xrf import McaCalWidget
 from PyMca5.PyMcaCore import DataObject
 from . import McaSimpleFit
 from PyMca5.PyMcaMath.fitting import Specfit
-from PyMca5 import PyMcaDirs
 from PyMca5.PyMcaGui.pymca.McaLegendselector import McaLegendsDockWidget
-
-import silx.gui.icons
-
+from PyMca5.PyMcaGui.plotting.PyMca_Icons import IconDict
 
 MATPLOTLIB = True
 
@@ -88,8 +84,8 @@ class McaWindow(ScanWindow.ScanWindow):
                                        control=control,
                                        position=position,
                                        roi=roi,
+                                       save=False,  # we redefine this
                                        fit=False,   # we redefine this
-                                       save=False,   # we redefine this
                                        info=info)
         self._plotType = "MCA"     # needed by legacy plugins
 
@@ -122,16 +118,10 @@ class McaWindow(ScanWindow.ScanWindow):
         self.connections()
         self.setGraphYLabel('Counts')
 
-        # custom save
-        self.mcaSaveButton = qt.QToolButton(self)
-        self.mcaSaveButton.setIcon(silx.gui.icons.getQIcon('document-save'))
-        self.mcaSaveButton.setToolTip('Save as')
-        self.mcaSaveButton.clicked.connect(self._saveIconSignal)
-        self.getOutputToolBar().addWidget(self.mcaSaveButton)
-
         # Fit icon
+        self.fitIcon = qt.QIcon(qt.QPixmap(IconDict["fit"]))
         self.fitToolButton = qt.QToolButton(self)
-        self.fitToolButton.setIcon(silx.gui.icons.getQIcon('math-fit'))
+        self.fitToolButton.setIcon(self.fitIcon)
         self.fitToolButton.setToolTip("Fit of Active Curve")
         self.fitToolButton.clicked.connect(self._fitButtonClicked)
 
@@ -1199,69 +1189,19 @@ class McaWindow(ScanWindow.ScanWindow):
         self.setGraphXLabel(xlabel)
         self.setGraphYLabel(ylabel)
 
-    def _saveIconSignal(self):
-        legend = self.getActiveCurve(just_legend=True)
-        if legend is None:
-            msg = qt.QMessageBox(self)
-            msg.setIcon(qt.QMessageBox.Critical)
-            msg.setText("Please Select an active curve")
-            msg.setWindowTitle('MCA window')
-            msg.exec_()
-            return
-        # get outputfile
-        self.outputDir = PyMcaDirs.outputDir
-        if self.outputDir is None:
-            self.outputDir = os.getcwd()
-            wdir = os.getcwd()
-        elif os.path.exists(self.outputDir):
-            wdir = self.outputDir
-        else:
-            self.outputDir = os.getcwd()
-            wdir = self.outputDir
-
-        format_list = ['Specfile MCA  *.mca',
-                       'Specfile Scan *.dat',
-                       'Raw ASCII  *.txt',
-                       '";"-separated CSV *.csv',
-                       '","-separated CSV *.csv',
-                       '"tab"-separated CSV *.csv',
-                       'OMNIC CSV *.csv',
-                       'Widget PNG *.png',
-                       'Widget JPG *.jpg',
-                       'Graphics PNG *.png',
-                       'Graphics EPS *.eps',
-                       'Graphics SVG *.svg']
-
-        if self.outputFilter is None:
-            self.outputFilter = format_list[0]
-        fileList, fileFilter = PyMcaFileDialogs.getFileList(
-                                     self,
-                                     filetypelist=format_list,
-                                     message="Output File Selection",
-                                     currentdir=wdir,
-                                     single=True,
-                                     mode="SAVE",
-                                     getfilter=True,
-                                     currentfilter=self.outputFilter)
-        if not len(fileList):
-            return
-        self.outputFilter = fileFilter
-        filterused = self.outputFilter.split()
-        filetype = filterused[1]
-        extension = filterused[2]
-        outdir = qt.safe_str(fileList[0])
-        try:
-            self.outputDir = os.path.dirname(outdir)
-            PyMcaDirs.outputDir = os.path.dirname(outdir)
-        except:
-            self.outputDir = "."
-        try:
-            outputFile = os.path.basename(outdir)
-        except:
-            outputFile = outdir
-
+    def saveOperation(self, outputFile, outputFilter):
+        filterused = outputFilter.split()
+        filetype =filterused[0]
+        extension = filterused[-1]
+        if filetype.upper().startswith("WIDGET"):
+            return super(McaWindow, self).saveOperation(outputFile,
+                                                        outputFilter)
+        elif outputFile[-3:].upper() in ['EPS', 'PNG', 'SVG']:
+            return super(McaWindow, self).saveOperation(outputFile,
+                                                        outputFilter)
+        # we need to recover characteristc MCA information
         # get active curve
-        x, y, legend, info, params = self.getActiveCurve()
+        x, y, legend, info = self.getActiveCurve()[:4]
         if info is None:
             return
 
@@ -1316,64 +1256,19 @@ class McaWindow(ScanWindow.ScanWindow):
                 else:
                     ndict[legend] = {'order': 1, 'A': 0.0, 'B': 1.0, 'C': 1.0}
 
-        # always overwrite for the time being
-        if not outputFile.endswith(extension[1:]):
-            outputFile += extension[1:]
-        specFile = os.path.join(self.outputDir, outputFile)
+        specFile = outputFile
+        if os.path.exists(specFile):
+            os.remove(specFile)
         try:
-            if os.path.exists(specFile):
-                os.remove(specFile)
-        except:
-            msg = qt.QMessageBox(self)
-            msg.setIcon(qt.QMessageBox.Critical)
-            msg.setText("Input Output Error: %s" % (sys.exc_info()[1]))
-            msg.exec_()
-            return
-        systemline = os.linesep
-        os.linesep = '\n'
-        if filterused[0].upper() == "WIDGET":
-            fformat = specFile[-3:].upper()
-            if hasattr(qt.QPixmap, "grabWidget"):
-                pixmap = qt.QPixmap.grabWidget(self.getWidgetHandle())
-            else:
-                pixmap = self.getWidgetHandle().grab()
-            if not pixmap.save(specFile, fformat):
-                qt.QMessageBox.critical(
-                        self,
-                        "Save Error",
-                        "%s" % "I could not save the file\nwith the desired format")
-            return
-
-        if MATPLOTLIB:
-            try:
-                if specFile[-3:].upper() in ['EPS', 'PNG', 'SVG']:
-                    self._graphicsSave(plot=self, filename=specFile)
-                    return
-            except:
-                msg = qt.QMessageBox(self)
-                msg.setIcon(qt.QMessageBox.Critical)
-                msg.setWindowTitle("Save error")
-                msg.setInformativeText("Graphics Saving Error: %s" %
-                                       (sys.exc_info()[1]))
-                msg.setDetailedText(traceback.format_exc())
-                msg.exec_()
-                return
-
-        try:
+            systemline = os.linesep
+            os.linesep = '\n'
             if sys.version < "3.0":
                 ffile = open(specFile, 'wb')
             else:
                 ffile = open(specFile, 'w', newline='')
-        except IOError:
-            msg = qt.QMessageBox(self)
-            msg.setIcon(qt.QMessageBox.Critical)
-            msg.setText("Input Output Error: %s" % (sys.exc_info()[1]))
-            msg.exec_()
-            return
-        # This was giving problems on legends with a leading b
-        # legend = legend.strip('<b>')
-        # legend = legend.strip('<\b>')
-        try:
+            # This was giving problems on legends with a leading b
+            # legend = legend.strip('<b>')
+            # legend = legend.strip('<\b>')
             if filetype == 'Scan':
                 ffile.write("#F %s\n" % specFile)
                 ffile.write("#D %s\n" % (time.ctime(time.time())))
