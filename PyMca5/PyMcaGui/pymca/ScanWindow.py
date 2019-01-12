@@ -33,6 +33,8 @@ import copy
 import logging
 import numpy
 import sys
+import time
+import traceback
 
 from silx.gui.plot import PlotWindow
 from silx.gui.plot.PrintPreviewToolButton import SingletonPrintPreviewToolButton
@@ -891,7 +893,7 @@ class ScanWindow(BaseScanWindow):
         # This was giving problems on legends with a leading b
         # legend = legend.strip('<b>')
         # legend = legend.strip('<\b>')
-        x, y, legend, info = self.getActiveCurve()
+        x, y, legend, info = self.getActiveCurve()[:4]
         xlabel = info.get("xlabel", "X")
         ylabel = info.get("ylabel", "Y")
 
@@ -917,7 +919,8 @@ class ScanWindow(BaseScanWindow):
                 if filetype == 'MultiScan':
                     scan_n  = 1
                     curveList = self.getAllCurves()
-                    for x, y, key, info in curveList:
+                    for curve in curveList:
+                        x, y, key, info = curve[:4]
                         if key == legend:
                             continue
                         xlabel = info.get("xlabel", "X")
@@ -947,7 +950,7 @@ class ScanWindow(BaseScanWindow):
                 for i in range(len(y)):
                     ffile.write("%.7E%s%.7E\n" % (x[i], csvseparator,y[i]))
             else:
-                ffile.write("#F %s\n" % filename)
+                ffile.write("#F %s\n" % specFile)
                 ffile.write("#D %s\n"%(time.ctime(time.time())))
                 ffile.write("\n")
                 ffile.write("#S 1 %s\n" % legend)
