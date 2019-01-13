@@ -1522,22 +1522,27 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 self.trainingActions.append(action)
                 self.trainingDataMenu.addAction(action)
         try:
+            source = None
             selectedAction = self.trainingDataMenu.exec_(qt.QCursor.pos())
-            key = qt.safe_str(selectedAction.text())
-            source = self.trainingSources[key]
-            self.sourceWidget.sourceSelector.openSource(source)
-            # only in case of the steel sample we set the input dir to simplify accessing the supplied cfg file
-            if key in ["Tertiary Excitation"]:
-                # we do not change the input dir currently used by the source selector
-                #self.sourceWidget.sourceSelector.lastInputDir = os.path.dirname(source)
-                # but we change the input dir to allow easy loading of the config file from the
-                # fit configuration window
-                PyMcaDirs.inputDir = os.path.dirname(source)
+            if selectedAction is not None:
+                key = qt.safe_str(selectedAction.text())
+                source = self.trainingSources[key]
+                self.sourceWidget.sourceSelector.openSource(source)
+                # only in case of the steel sample we set the input dir to simplify accessing the supplied cfg file
+                if key in ["Tertiary Excitation"]:
+                    # we do not change the input dir currently used by the source selector
+                    #self.sourceWidget.sourceSelector.lastInputDir = os.path.dirname(source)
+                    # but we change the input dir to allow easy loading of the config file from the
+                    # fit configuration window
+                    PyMcaDirs.inputDir = os.path.dirname(source)
         except:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setWindowTitle("Error opening data source")
-            msg.setText("Cannot open data source %s" % source)
+            if source:
+                msg.setText("Cannot open data source %s" % source)
+            else:
+                msg.setText("Cannot open data source")
             msg.setInformativeText(str(sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
             msg.exec_()
