@@ -822,13 +822,12 @@ def save(result, outputDir, outputRoot=None, fileEntry=None,
         filename = os.path.join(outputDir, outputRoot+'.h5')
         with NexusUtils.nxroot(filename, mode='a') as root:
             entry = NexusUtils.nxentry(root, fileEntry)
-            if fileEntry in entry:
-                # Overwrite silently like ArraySave does for the other formats?
-                del entry[fileEntry]
+            if fileProcess in entry:
+                # Overwrite silently like ArraySave does for the other formats
+                del entry[fileProcess]
             process = NexusUtils.nxprocess(entry, fileProcess,
                                            configdict=result['configuration'])
-            results = process['results']
-            data = NexusUtils.nxdata(results, None)
+            data = NexusUtils.nxdata(process['results'], None)
             signals = zip(imageLabels,imageList)
             NexusUtils.nxdata_add_signals(data, signals)
             NexusUtils.mark_default(data)
