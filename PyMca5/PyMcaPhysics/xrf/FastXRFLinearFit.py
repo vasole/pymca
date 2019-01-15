@@ -42,6 +42,7 @@ from PyMca5.PyMcaMath.fitting import Gefit
 from . import ConcentrationsTool
 from PyMca5.PyMcaMath.fitting import SpecfitFuns
 from PyMca5.PyMcaIO import ConfigDict
+from PyMca5.PyMcaIO import NexusUtils
 import time
 
 _logger = logging.getLogger(__name__)
@@ -69,7 +70,7 @@ class FastXRFLinearFit(object):
     def fitMultipleSpectra(self, x=None, y=None, xmin=None, xmax=None,
                            configuration=None, concentrations=False,
                            ysum=None, weight=None, refit=True,
-                           livetime=None):
+                           livetime=None, yresiduals=False, yfit=False):
         """
         This method performs the actual fit. The y keyword is the only mandatory input argument.
 
@@ -77,8 +78,11 @@ class FastXRFLinearFit(object):
         :param y: 3D array containing the spectra as [nrows, ncolumns, nchannels]
         :param xmin: lower limit of the fitting region
         :param xmax: upper limit of the fitting region
+        :param ysum: sum spectrum
         :param weight: 0 Means no weight, 1 Use an average weight, 2 Individual weights (slow)
-        :param concentrations: 0 Means no calculation, 1 Calculate them
+        :param concentrations: 0 Means no calculation, 1 Calculate elemental concentrations
+        :param yresiduals: 0 Means no calculation, 1 Calculate fit residuals
+        :param yfit: 0 Means no calculation, 1 Calculate fitted spectra
         :param refit: if False, no check for negative results. Default is True.
         :livetime: It will be used if not different from None and concentrations
                    are to be calculated by using fundamental parameters with
@@ -181,21 +185,21 @@ class FastXRFLinearFit(object):
             # use average weight from the sum spectrum
             weightPolicy = 1
             if not config['fit']['fitweight']:
-                 config['fit']['fitweight'] = 1
-                 toReconfigure = True
+                config['fit']['fitweight'] = 1
+                toReconfigure = True
         elif weight == 2:
            # individual pixel weights (slow)
             weightPolicy = 2
             if not config['fit']['fitweight']:
-                 config['fit']['fitweight'] = 1
-                 toReconfigure = True
+                config['fit']['fitweight'] = 1
+                toReconfigure = True
             weight = 1
         else:
             # No weight
             weightPolicy = 0
             if config['fit']['fitweight']:
-                 config['fit']['fitweight'] = 0
-                 toReconfigure = True
+                config['fit']['fitweight'] = 0
+                toReconfigure = True
             weight = 0
 
         if not config['fit']['linearfitflag']:
@@ -271,23 +275,22 @@ class FastXRFLinearFit(object):
             txt += "No peaks inside fitting region?"
             raise ValueError(txt)
 
-        #build the matrix of derivatives
+        # build the matrix of derivatives
         derivatives = None
         idx = 0
         for i, param in enumerate(self._mcaTheory.PARAMETERS):
             if self._mcaTheory.codes[0][i] == ClassMcaTheory.Gefit.CFIXED:
                 continue
-            deriv= self._mcaTheory.linearMcaTheoryDerivative(self._mcaTheory.parameters,
-                                                             i,
-                                                             self._mcaTheory.xdata)
+            deriv = self._mcaTheory.linearMcaTheoryDerivative(self._mcaTheory.parameters,
+                                                              i,
+                                                              self._mcaTheory.xdata)
             deriv.shape = -1
             if derivatives is None:
                 derivatives = numpy.zeros((deriv.shape[0], nFree), numpy.float)
             derivatives[:, idx] = deriv
             idx += 1
 
-
-        #loop for anchors
+        # loop for anchors
         xdata = self._mcaTheory.xdata
 
         if config['fit']['stripflag']:
@@ -333,7 +336,14 @@ class FastXRFLinearFit(object):
         results = numpy.zeros((nFree, nRows, nColumns), numpy.float32)
         uncertainties = numpy.zeros((nFree, nRows, nColumns), numpy.float32)
 
-        #perform the initial fit
+        if yfit or yresiduals:
+            fitdata = numpy.zeros_like(data, dtype=numpy.float32)
+            fitdata[...,0:iXMin] = numpy.nan
+            fitdata[...,iXMax+1:] = numpy.nan
+        else:
+            fitdata = None
+
+        # perform the initial fit
         _logger.debug("Configuration elapsed = %f", time.time() - t0)
         t0 = time.time()
         totalSpectra = data.shape[0] * data.shape[1]
@@ -363,7 +373,7 @@ class FastXRFLinearFit(object):
                 if config['fit']['stripflag']:
                     for k in range(jStep):
                         # obtain the smoothed spectrum
-                        background=SpecfitFuns.SavitskyGolay(chunk[:, k],
+                        background = SpecfitFuns.SavitskyGolay(chunk[:, k],
                                                 config['fit']['stripfilterwidth'])
                         lastAnchor = 0
                         for anchor in anchorslist:
@@ -379,12 +389,14 @@ class FastXRFLinearFit(object):
                                                        config['fit']['snipwidth'],
                                                        0)
                         chunk[:, k] -= background
+                        if fitdata is not None:
+                            fitdata[i, jStart+k, iXMin:iXMax+1] = background
 
                 # perform the multiple fit to all the spectra in the chunk
                 #print("SHAPES")
                 #print(derivatives.shape)
                 #print(chunk[:,:(jEnd - jStart)].shape)
-                ddict=lstsq(derivatives, chunk[:,:(jEnd - jStart)],
+                ddict = lstsq(derivatives, chunk[:,:(jEnd - jStart)],
                             sigma_b=sigma_b,
                             weight=weight,
                             digested_output=True,
@@ -394,6 +406,8 @@ class FastXRFLinearFit(object):
                 parameters = ddict['parameters']
                 results[:, i, jStart:jEnd] = parameters
                 uncertainties[:, i, jStart:jEnd] = ddict['uncertainties']
+                if fitdata is not None:
+                    fitdata[i, jStart:jEnd ,iXMin:iXMax+1] += numpy.dot(derivatives,parameters).T
                 jStart = jEnd
         t = time.time() - t0
         _logger.debug("First fit elapsed = %f", t)
@@ -453,15 +467,18 @@ class FastXRFLinearFit(object):
                             if t.sum() > 0:
                                 badParameters.append(item[1])
                                 badMask = t
-            if badMask.sum() < (0.0025 * nPixels):
+            if fitdata is not None:
+                fitdata[badMask, iXMin:iXMax+1] = 0
+            nBadPixels = badMask.sum()
+            if nBadPixels < (0.0025 * nPixels):
                 # fit not worth
                 for i in badParameters:
                     results[i][badMask] = 0.0
                     uncertainties[i][badMask] = 0.0
                     _logger.debug("WARNING: %d pixels of parameter %s set to zero",
-                                  badMask.sum(), freeNames[i])
+                                  nBadPixels, freeNames[i])
             else:
-                _logger.debug("Number of secondary fits = %d", nFits + 1)
+                _logger.debug("Number of secondary fits = %d (%d spectra)", nFits + 1, nBadPixels)
                 nFits += 1
                 A = derivatives[:, [i for i in range(nFree) if i not in badParameters]]
                 #assume we'll not have too many spectra
@@ -469,21 +486,21 @@ class FastXRFLinearFit(object):
                     if data.itemsize < 5:
                         data_dtype = numpy.float32
                     else:
-                        data_dtype = numpy.floa64
+                        data_dtype = numpy.float64
                 else:
                     data_dtype = data.dtype
                 try:
                     if data.dtype != data_dtype:
-                        spectra = numpy.zeros((int(badMask.sum()), 1 + iXMax - iXMin),
+                        spectra = numpy.zeros((int(nBadPixels), 1 + iXMax - iXMin),
                                           data_dtype)
                         spectra[:] = data[badMask, iXMin:iXMax+1]
                     else:
                         spectra = data[badMask, iXMin:iXMax+1]
-                    spectra.shape = badMask.sum(), -1
+                    spectra.shape = nBadPixels, -1
                 except TypeError:
                     # in case of dynamic arrays, two dimensional indices are not
                     # supported by h5py
-                    spectra = numpy.zeros((int(badMask.sum()), 1 + iXMax - iXMin),
+                    spectra = numpy.zeros((int(nBadPixels), 1 + iXMax - iXMin),
                                           data_dtype)
                     selectedIndices = numpy.nonzero(badMask > 0)
                     tmpData = numpy.zeros((1, 1 + iXMax - iXMin), data_dtype)
@@ -498,6 +515,8 @@ class FastXRFLinearFit(object):
                 spectra = spectra.T
                 #
                 if config['fit']['stripflag']:
+                    if fitdata is not None:
+                        idx0bad,idx1bad = numpy.where(badMask)
                     for k in range(spectra.shape[1]):
                         # obtain the smoothed spectrum
                         background=SpecfitFuns.SavitskyGolay(spectra[:, k],
@@ -516,6 +535,9 @@ class FastXRFLinearFit(object):
                                                        config['fit']['snipwidth'],
                                                        0)
                         spectra[:, k] -= background
+                        if fitdata is not None:
+                            fitdata[idx0bad[k], idx1bad[k], iXMin:iXMax+1] = background
+
                 ddict = lstsq(A, spectra,
                               sigma_b=sigma_b,
                               weight=weight,
@@ -530,14 +552,22 @@ class FastXRFLinearFit(object):
                         results[i][badMask] = ddict['parameters'][idx]
                         uncertainties[i][badMask] = ddict['uncertainties'][idx]
                         idx += 1
+                if fitdata is not None:
+                    fitdata[badMask, iXMin:iXMax+1] = numpy.dot(A, ddict['parameters']).T
 
         if refit:
             t = time.time() - t0
             _logger.debug("Fit of negative peaks elapsed = %f", t)
             t0 = time.time()
 
-        outputDict = {'parameters':results, 'uncertainties':uncertainties, 'names':freeNames}
-
+        outputDict = {'configuration': config,
+                      'parameters': results,
+                      'uncertainties': uncertainties,
+                      'names': freeNames}
+        if yfit:
+            outputDict['yfit'] = fitdata
+        if yresiduals:
+            outputDict['yresiduals'] = data - fitdata
         if concentrations:
             # check if an internal reference is used and if it is set to auto
             ####################################################
@@ -708,19 +738,142 @@ def getFileListFromPattern(pattern, begin, end, increment=None):
         raise ValueError("Cannot handle more than three indices.")
     return fileList
 
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    _logger.setLevel(logging.DEBUG)
-    import glob
+def save(result, outputDir, outputRoot=None, fileEntry=None,
+         fileProcess=None, tif=False, edf=False, csv=False, h5=True):
+    """
+    Save result of Fast XRF fitting
+
+    :param dict result:
+    :param str outputDir: directory on local file system
+    :param str outputRoot: output dir or HDF5 filename without extension (default: 'IMAGES')
+    :param str fileEntry: output radix or NXentry (default: 'images')
+    :param str fileProcess: output NXprocess (default: fileEntry)
+    :param tif: save as tif
+    :param edf: save as edf
+    :param csv: save as csv
+    :param h5: save as h5
+    """
+    if not (tif or edf or csv or h5):
+        print('WARNING: fit result not saved (no output format specified)')
+        return
+    _logger.debug('Saving results ...')
+
+    # For .edf: outputDir/outputRoot/fileEntry.edf
+    # For .h5 : outputDir/outputRoot.h5::/fileEntry/fileProcess
+    if not outputRoot:
+        outputRoot = "IMAGES"
+    if not fileEntry:
+        fileEntry = "images"
+    if not fileProcess:
+        fileProcess = fileEntry
+    
+    # List of images and labels
+    imageList = []
+    imageLabels = []
+    for i,name in enumerate(result['names']):
+        newname = name.replace(" ","-")
+        if newname.startswith("C("):
+            # Elemental concentration
+            img = result['concentrations'][i]
+            imageList.append(img)
+            imageLabels.append(newname)
+        else:
+            # Fitted parameters
+            img = result['parameters'][i]
+            imageList.append(img)
+            imageLabels.append(newname)
+            newname = "s(%s)" % newname
+            img = result['uncertainties'][i]
+            imageList.append(img)
+            imageLabels.append(newname)
+
+    if tif or edf or csv:
+        from PyMca5.PyMca import ArraySave
+
+        if not os.path.exists(outputDir):
+            os.mkdir(outputDir)
+        imagesDir = os.path.join(outputDir, outputRoot)
+        if not os.path.exists(imagesDir):
+            os.mkdir(imagesDir)
+
+        if edf:
+            fileName = os.path.join(imagesDir, fileEntry+".edf")
+            ArraySave.save2DArrayListAsEDF(imageList, fileName,
+                                            labels=imageLabels)
+        if csv:
+            fileName = os.path.join(imagesDir, fileEntry+".csv")
+            ArraySave.save2DArrayListAsASCII(imageList, fileName, csv=True,
+                                                labels=imageLabels)
+        if tif:
+            for label,image in zip(imageLabels,imageList):
+                if label.startswith("s("):
+                    suffix = "_s" + label[2:-1]
+                elif label.startswith("C("):
+                    suffix = "_w" + label[2:-1]
+                else:
+                    suffix  = "_" + label
+                fileName = os.path.join(imagesDir,
+                                        fileEntry + suffix + ".tif")
+                ArraySave.save2DArrayListAsMonochromaticTiff([image],
+                                        fileName,
+                                        labels=[label],
+                                        dtype=numpy.float32)
+    if h5:
+        filename = os.path.join(outputDir, outputRoot+'.h5')
+        with NexusUtils.nxroot(filename, mode='a') as root:
+            entry = NexusUtils.nxentry(root, fileEntry)
+            if fileEntry in entry:
+                # Overwrite silently like other formats?
+                del entry[fileEntry]
+            process = NexusUtils.nxprocess(entry, fileProcess,
+                                           configdict=result['configuration'])
+            results = process['results']
+
+
+def prepareDataStack(fileList):
+    if (not os.path.exists(fileList[0])) and \
+        os.path.exists(fileList[0].split("::")[0]):
+        # odo convention to get a dataset form an HDF5
+        fname, dataPath = fileList[0].split("::")
+        # compared to the ROI imaging tool, this way of reading puts data
+        # into memory while with the ROI imaging tool, there is a check.
+        if 0:
+            import h5py
+            h5 = h5py.File(fname, "r")
+            dataStack = h5[dataPath][:]
+            h5.close()
+        else:
+            from PyMca5.PyMcaIO import HDF5Stack1D
+            # this way reads information associated to the dataset (if present)
+            if dataPath.startswith("/"):
+                pathItems = dataPath[1:].split("/")
+            else:
+                pathItems = dataPath.split("/")
+            if len(pathItems) > 1:
+                scanlist = ["/" + pathItems[0]]
+                selection = {"y":"/" + "/".join(pathItems[1:])}
+            else:
+                selection = {"y":dataPath}
+                scanlist = None
+            print(selection)
+            print("scanlist = ", scanlist)
+            dataStack = HDF5Stack1D.HDF5Stack1D([fname],
+                                                selection,
+                                                scanlist=scanlist)
+    else:
+        from PyMca5.PyMca import EDFStack
+        dataStack = EDFStack.EDFStack(fileList, dtype=numpy.float32)
+    return dataStack
+
+
+def main():
     import sys
-    from PyMca5.PyMca import EDFStack
-    from PyMca5.PyMca import ArraySave
     import getopt
     options     = ''
     longoptions = ['cfg=', 'outdir=', 'concentrations=', 'weight=', 'refit=',
-                   'tif=', #'listfile=',
+                   'tif=', 'edf=', 'csv=', 'h5=', #'listfile=',
                    'filepattern=', 'begin=', 'end=', 'increment=',
-                   "outfileroot="]
+                   'outfileroot=', 'yfit=', 'yresiduals=']
     try:
         opts, args = getopt.getopt(
                      sys.argv[1:],
@@ -732,48 +885,63 @@ if __name__ == "__main__":
     fileRoot = ""
     outputDir = None
     refit = None
-    fileindex = 0
     filepattern=None
     begin = None
     end = None
-    increment=None
-    backend=None
-    weight=0
-    tif=0
-    concentrations=0
+    increment = None
+    backend = None
+    weight = 0
+    tif = 0
+    edf = 0
+    csv = 0
+    h5 = 1
+    concentrations = 0
+    yfit = 0
+    yresiduals = 0
     for opt, arg in opts:
-        if opt in ('--cfg'):
+        if opt == '--cfg':
             configurationFile = arg
-        elif opt in '--begin':
+        elif opt == '--begin':
             if "," in arg:
                 begin = [int(x) for x in arg.split(",")]
             else:
                 begin = [int(arg)]
-        elif opt in '--end':
+        elif opt == '--end':
             if "," in arg:
                 end = [int(x) for x in arg.split(",")]
             else:
                 end = int(arg)
-        elif opt in '--increment':
+        elif opt == '--increment':
             if "," in arg:
                 increment = [int(x) for x in arg.split(",")]
             else:
                 increment = int(arg)
-        elif opt in '--filepattern':
+        elif opt == '--filepattern':
             filepattern = arg.replace('"', '')
             filepattern = filepattern.replace("'", "")
-        elif opt in '--outdir':
+        elif opt == '--outdir':
             outputDir = arg
-        elif opt in '--weight':
+        elif opt == '--weight':
             weight = int(arg)
-        elif opt in '--refit':
+        elif opt == '--refit':
             refit = int(arg)
-        elif opt in '--concentrations':
+        elif opt == '--concentrations':
             concentrations = int(arg)
-        elif opt in '--outfileroot':
+        elif opt == '--yfit':
+            yfit = int(arg)
+        elif opt == '--yresiduals':
+            yresiduals = int(arg)
+        elif opt == '--outfileroot':
             fileRoot = arg
-        elif opt in ['--tif', '--tiff']:
+        elif opt in ('--tif', '--tiff'):
             tif = int(arg)
+        elif opt == '--edf':
+            edf = int(arg)
+        elif opt == '--csv':
+            csv = int(arg)
+        elif opt == '--h5':
+            h5 = int(arg)
+
     if filepattern is not None:
         if (begin is None) or (end is None):
             raise ValueError(\
@@ -786,100 +954,34 @@ if __name__ == "__main__":
         refit = 0
         print("WARNING: --refit=%d taken as default" % refit)
     if len(fileList):
-        if (not os.path.exists(fileList[0])) and \
-           os.path.exists(fileList[0].split("::")[0]):
-            # odo convention to get a dataset form an HDF5
-            fname, dataPath = fileList[0].split("::")
-            # compared to the ROI imaging tool, this way of reading puts data
-            # into memory while with the ROI imaging tool, there is a check.
-            if 0:
-                import h5py
-                h5 = h5py.File(fname, "r")
-                dataStack = h5[dataPath][:]
-                h5.close()
-            else:
-                from PyMca5.PyMcaIO import HDF5Stack1D
-                # this way reads information associated to the dataset (if present)
-                if dataPath.startswith("/"):
-                    pathItems = dataPath[1:].split("/")
-                else:
-                    pathItems = dataPath.split("/")
-                if len(pathItems) > 1:
-                    scanlist = ["/" + pathItems[0]]
-                    selection = {"y":"/" + "/".join(pathItems[1:])}
-                else:
-                    selection = {"y":dataPath}
-                    scanlist = None
-                print(selection)
-                print("scanlist = ", scanlist)
-                dataStack = HDF5Stack1D.HDF5Stack1D([fname],
-                                                    selection,
-                                                    scanlist=scanlist)
-        else:
-            dataStack = EDFStack.EDFStack(fileList, dtype=numpy.float32)
+        dataStack = prepareDataStack(fileList)
     else:
         print("OPTIONS:", longoptions)
         sys.exit(0)
     if outputDir is None:
         print("RESULTS WILL NOT BE SAVED: No output directory specified")
+
     t0 = time.time()
     fastFit = FastXRFLinearFit()
     fastFit.setFitConfigurationFile(configurationFile)
     print("Main configuring Elapsed = % s " % (time.time() - t0))
+    if not h5:
+        yfit = False
+        yresiduals = False
     result = fastFit.fitMultipleSpectra(y=dataStack,
-                                         weight=weight,
-                                         refit=refit,
-                                         concentrations=concentrations)
+                                        weight=weight,
+                                        refit=refit,
+                                        concentrations=concentrations,
+                                        yfit=yfit,
+                                        yresiduals=yresiduals)
     print("Total Elapsed = % s " % (time.time() - t0))
-    if outputDir is not None:
-        if 'concentrations' in result:
-            imageNames = result['names']
-            images = numpy.concatenate((result['parameters'],
-                                        result['concentrations']), axis=0)
-        else:
-            images = result['parameters']
-            imageNames = result['names']
-        nImages = images.shape[0]
 
-        if fileRoot in [None, ""]:
-            fileRoot = "images"
-        if not os.path.exists(outputDir):
-            os.mkdir(outputDir)
-        imagesDir = os.path.join(outputDir, "IMAGES")
-        if not os.path.exists(imagesDir):
-            os.mkdir(imagesDir)
-        imageList = [None] * (nImages + len(result['uncertainties']))
-        fileImageNames = [None] * (nImages + len(result['uncertainties']))
-        j = 0
-        for i in range(nImages):
-            name = imageNames[i].replace(" ","-")
-            fileImageNames[j] = name
-            imageList[j] = images[i]
-            j += 1
-            if not imageNames[i].startswith("C("):
-                # fitted parameter
-                fileImageNames[j] = "s(%s)" % name
-                imageList[j] = result['uncertainties'][i]
-                j += 1
-        fileName = os.path.join(imagesDir, fileRoot+".edf")
-        ArraySave.save2DArrayListAsEDF(imageList, fileName,
-                                       labels=fileImageNames)
-        fileName = os.path.join(imagesDir, fileRoot+".csv")
-        ArraySave.save2DArrayListAsASCII(imageList, fileName, csv=True,
-                                         labels=fileImageNames)
-        if tif:
-            i = 0
-            for i in range(len(fileImageNames)):
-                label = fileImageNames[i]
-                if label.startswith("s("):
-                    continue
-                elif label.startswith("C("):
-                    mass_fraction = "_" + label[2:-1] + "_mass_fraction"
-                else:
-                    mass_fraction  = "_" + label
-                fileName = os.path.join(imagesDir,
-                                        fileRoot + mass_fraction + ".tif")
-                ArraySave.save2DArrayListAsMonochromaticTiff([imageList[i]],
-                                        fileName,
-                                        labels=[label],
-                                        dtype=numpy.float32)
+    if outputDir is not None:
+        save(result, outputDir, fileEntry=fileRoot,
+             tif=tif, edf=edf, csv=csv, h5=h5)
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    _logger.setLevel(logging.DEBUG)
+    main()
