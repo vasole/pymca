@@ -69,7 +69,6 @@ from PyMca5.PyMcaGui import CalculationThread
 from PyMca5.PyMcaGui import StackPluginResultsWindow
 from PyMca5.PyMcaGui import PyMca_Icons as PyMca_Icons
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.PyMcaIO import ArraySave
 
 _logger = logging.getLogger(__name__)
 
@@ -226,6 +225,8 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
                     # somehow this exception is not caught
                     raise Exception(result[1], result[2])#, result[3])
                     return
+
+        # Show results
         if 'concentrations' in result:
             imageNames = result['names']
             images = numpy.concatenate((result['parameters'],
@@ -244,59 +245,26 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
                                           image_names=imageNames)
         self._showWidget()
 
-        # save to output directory
+        # Save results
         parameters = self.configurationWidget.getParameters()
         outputDir = parameters["output_dir"]
-        if outputDir in [None, ""]:
+        if not outputDir:
             _logger.debug("Nothing to be saved")
             if _logger.getEffectiveLevel() == logging.DEBUG:
                 return
-        if parameters["file_root"] is None:
-            fileRoot = ""
-        else:
-            fileRoot = parameters["file_root"].replace(" ","")
-        if fileRoot in [None, ""]:
-            fileRoot = "images"
-        if not os.path.exists(outputDir):
-            os.mkdir(outputDir)
-        imagesDir = os.path.join(outputDir, "IMAGES")
-        if not os.path.exists(imagesDir):
-            os.mkdir(imagesDir)
-        imageList = [None] * (nImages + len(result['uncertainties']))
-        fileImageNames = [None] * (nImages + len(result['uncertainties']))
-        j = 0
-        for i in range(nImages):
-            name = imageNames[i].replace(" ","-")
-            fileImageNames[j] = name
-            imageList[j] = images[i]
-            j += 1
-            if not imageNames[i].startswith("C("):
-                # fitted parameter
-                fileImageNames[j] = "s(%s)" % name
-                imageList[j] = result['uncertainties'][i]
-                j += 1
-        fileName = os.path.join(imagesDir, fileRoot+".edf")
-        ArraySave.save2DArrayListAsEDF(imageList, fileName,
-                                       labels=fileImageNames)
-        fileName = os.path.join(imagesDir, fileRoot+".csv")
-        ArraySave.save2DArrayListAsASCII(imageList, fileName, csv=True,
-                                         labels=fileImageNames)
-        if parameters["tiff"]:
-            i = 0
-            for i in range(len(fileImageNames)):
-                label = fileImageNames[i]
-                if label.startswith("s("):
-                    continue
-                elif label.startswith("C("):
-                    mass_fraction = "_" + label[2:-1] + "_mass_fraction"
-                else:
-                    mass_fraction  = "_" + label
-                fileName = os.path.join(imagesDir,
-                                        fileRoot + mass_fraction + ".tif")
-                ArraySave.save2DArrayListAsMonochromaticTiff([imageList[i]],
-                                        fileName,
-                                        labels=[label],
-                                        dtype=numpy.float32)
+        outputRoot = parameters["output_root"]
+        fileEntry = parameters["file_entry"]
+        fileProcess = parameters["file_name"]
+        if outputRoot:
+            outputRoot = outputRoot.replace(" ", "")
+        if fileEntry:
+            fileEntry = fileEntry.replace(" ", "")
+        if fileProcess:
+            fileProcess = fileProcess.replace(" ", "")
+        FastXRFLinearFit.save(result, outputDir, outputRoot=outputRoot,
+                        fileEntry=fileEntry, fileProcess=fileProcess,
+                        tif=parameters["tiff"], edf=parameters["edf"],
+                        csv=parameters["csv"], h5=parameters["h5"])
 
     def _showWidget(self):
         if self._widget is None:
