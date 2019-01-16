@@ -738,6 +738,7 @@ def getFileListFromPattern(pattern, begin, end, increment=None):
         raise ValueError("Cannot handle more than three indices.")
     return fileList
 
+
 def save(result, outputDir, outputRoot=None, fileEntry=None,
          fileProcess=None, tif=False, edf=False, csv=False, h5=True):
     """
@@ -821,22 +822,35 @@ def save(result, outputDir, outputRoot=None, fileEntry=None,
     if h5:
         filename = os.path.join(outputDir, outputRoot+'.h5')
         with NexusUtils.nxroot(filename, mode='a') as root:
+            # Create fileEntry/fileProcess
             entry = NexusUtils.nxentry(root, fileEntry)
             if fileProcess in entry:
-                # Overwrite silently like ArraySave does for the other formats
+                # Overwrite like ArraySave does for the other formats
+                print('WARNING: overwriting {}'.format(entry[fileProcess].name))
                 del entry[fileProcess]
             process = NexusUtils.nxprocess(entry, fileProcess,
                                            configdict=result['configuration'])
-            data = NexusUtils.nxdata(process['results'], None)
+
+            # Fitted parameters
+            imageList = [{'data':img, 'chunks':True} for img in imageList]
             imageAttrs = [{'interpretation':'image'}]*len(imageLabels)
-            signals = zip(imageLabels,imageList,imageAttrs)
+            data = NexusUtils.nxdata(process['results'], 'parameters')
+            signals = [signal for signal in zip(imageLabels,imageList,imageAttrs) if not signal[0].startswith("s(")]
             NexusUtils.nxdata_add_signals(data, signals)
             NexusUtils.mark_default(data)
+
+            # Estimated parameter errors
+            data = NexusUtils.nxdata(process['results'], 'uncertainties')
+            signals = [signal for signal in zip(imageLabels,imageList,imageAttrs) if signal[0].startswith("s(")]
+            NexusUtils.nxdata_add_signals(data, signals)
+
+            # Fitted model and residuals
             signals = []
             attr = {'interpretation':'spectrum'}
             for name,key in zip(['residuals','model'],['saveresiduals','savefit']):
                 if key in result:
-                    signals.append((name,result[key],attr))
+                    value = {'data':result[key], 'chunks':True}
+                    signals.append((name,value,attr))
             if signals:
                 data = NexusUtils.nxdata(process['results'], 'fit')
                 NexusUtils.nxdata_add_signals(data, signals)
