@@ -54,9 +54,10 @@ except:
     # but at the same time do not disturb other people
     pass
 
-if os.path.exists(os.path.join(\
-    os.path.dirname(os.path.dirname(__file__)), 'py2app_setup.py')):
-    raise ImportError('PyMca cannot be imported from source directory')
+# WDN: not sure why this is enforced
+#if os.path.exists(os.path.join(\
+#    os.path.dirname(os.path.dirname(__file__)), 'py2app_setup.py')):
+#    raise ImportError('PyMca cannot be imported from source directory')
 
 def version():
     return __version__
