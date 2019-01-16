@@ -139,12 +139,13 @@ class testNexusUtils(unittest.TestCase):
             entry = NexusUtils.nxentry(h5group, 'entry0001')
             process = NexusUtils.nxprocess(entry, 'process0001')
             data = NexusUtils.nxdata(process['results'], 'data')
-            s = (4, 3)
+            s = (4, 3, 2)
             axes = [('y', numpy.arange(s[0]), {'units': 'um'}),
-                    ('x', numpy.arange(s[1]), None)]
-            signals = [('Fe K', numpy.zeros(s)),
-                       ('Ca K', numpy.zeros(s)),
-                       ('S K', numpy.zeros(s))]
+                    ('x', numpy.arange(s[1]), {}),
+                    ('z', numpy.arange(s[2]), None)]
+            signals = [('Fe K', numpy.zeros(s), {'interpretation': 'image'}),
+                       ('Ca K', numpy.zeros(s), {}),
+                       ('S K', numpy.zeros(s), None)]
             NexusUtils.nxdata_add_axes(data, axes)
             NexusUtils.nxdata_add_signals(data, signals)
 
@@ -157,7 +158,8 @@ class testNexusUtils(unittest.TestCase):
             signals = NexusUtils.nxdata_get_signals(data)
             self.assertEqual(signals, ['Ca K', 'Fe K', 'S K'])
             self.assertEqual(data['y'].attrs['units'], 'um')
-            
+            self.assertEqual(data['Fe K'].attrs['interpretation'], 'image')
+
 
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()
