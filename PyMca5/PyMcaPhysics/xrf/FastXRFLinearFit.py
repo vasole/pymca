@@ -70,7 +70,7 @@ class FastXRFLinearFit(object):
     def fitMultipleSpectra(self, x=None, y=None, xmin=None, xmax=None,
                            configuration=None, concentrations=False,
                            ysum=None, weight=None, refit=True,
-                           livetime=None, yresiduals=False, yfit=False):
+                           livetime=None, saveresiduals=False, savefit=False):
         """
         This method performs the actual fit. The y keyword is the only mandatory input argument.
 
@@ -81,8 +81,8 @@ class FastXRFLinearFit(object):
         :param ysum: sum spectrum
         :param weight: 0 Means no weight, 1 Use an average weight, 2 Individual weights (slow)
         :param concentrations: 0 Means no calculation, 1 Calculate elemental concentrations
-        :param yresiduals: 0 Means no calculation, 1 Calculate fit residuals
-        :param yfit: 0 Means no calculation, 1 Calculate fitted spectra
+        :param saveresiduals: 0 Means no calculation, 1 Calculate fit residuals
+        :param savefit: 0 Means no calculation, 1 Calculate fitted spectra
         :param refit: if False, no check for negative results. Default is True.
         :livetime: It will be used if not different from None and concentrations
                    are to be calculated by using fundamental parameters with
@@ -336,7 +336,7 @@ class FastXRFLinearFit(object):
         results = numpy.zeros((nFree, nRows, nColumns), numpy.float32)
         uncertainties = numpy.zeros((nFree, nRows, nColumns), numpy.float32)
 
-        if yfit or yresiduals:
+        if savefit or saveresiduals:
             fitdata = numpy.zeros_like(data, dtype=numpy.float32)
             fitdata[...,0:iXMin] = numpy.nan
             fitdata[...,iXMax+1:] = numpy.nan
@@ -564,10 +564,10 @@ class FastXRFLinearFit(object):
                       'parameters': results,
                       'uncertainties': uncertainties,
                       'names': freeNames}
-        if yfit:
-            outputDict['yfit'] = fitdata
-        if yresiduals:
-            outputDict['yresiduals'] = data - fitdata
+        if savefit:
+            outputDict['savefit'] = fitdata
+        if saveresiduals:
+            outputDict['saveresiduals'] = data - fitdata
         if concentrations:
             # check if an internal reference is used and if it is set to auto
             ####################################################
@@ -828,9 +828,18 @@ def save(result, outputDir, outputRoot=None, fileEntry=None,
             process = NexusUtils.nxprocess(entry, fileProcess,
                                            configdict=result['configuration'])
             data = NexusUtils.nxdata(process['results'], None)
-            signals = zip(imageLabels,imageList)
+            imageAttrs = [{'interpretation':'image'}]*len(imageLabels)
+            signals = zip(imageLabels,imageList,imageAttrs)
             NexusUtils.nxdata_add_signals(data, signals)
             NexusUtils.mark_default(data)
+            signals = []
+            attr = {'interpretation':'spectrum'}
+            for name,key in zip(['residuals','model'],['saveresiduals','savefit']):
+                if key in result:
+                    signals.append((name,result[key],attr))
+            if signals:
+                data = NexusUtils.nxdata(process['results'], 'fit')
+                NexusUtils.nxdata_add_signals(data, signals)
 
 
 def prepareDataStack(fileList):
@@ -874,9 +883,10 @@ def main():
     import getopt
     options     = ''
     longoptions = ['cfg=', 'outdir=', 'concentrations=', 'weight=', 'refit=',
-                   'tif=', 'edf=', 'csv=', 'h5=', #'listfile=',
+                   'tif=', 'edf=', 'csv=', 'h5=',
                    'filepattern=', 'begin=', 'end=', 'increment=',
-                   'outfileroot=', 'yfit=', 'yresiduals=']
+                   'outroot=', 'outentry=', 'outprocess=',
+                   'savefit=', 'saveresiduals=']
     try:
         opts, args = getopt.getopt(
                      sys.argv[1:],
@@ -885,10 +895,12 @@ def main():
     except:
         print(sys.exc_info()[1])
         sys.exit(1)
-    fileRoot = ""
     outputDir = None
+    outputRoot = ""
+    fileEntry = ""
+    fileProcess = ""
     refit = None
-    filepattern=None
+    filepattern = None
     begin = None
     end = None
     increment = None
@@ -899,8 +911,8 @@ def main():
     csv = 0
     h5 = 1
     concentrations = 0
-    yfit = 0
-    yresiduals = 0
+    savefit = 0
+    saveresiduals = 0
     for opt, arg in opts:
         if opt == '--cfg':
             configurationFile = arg
@@ -930,12 +942,16 @@ def main():
             refit = int(arg)
         elif opt == '--concentrations':
             concentrations = int(arg)
-        elif opt == '--yfit':
-            yfit = int(arg)
-        elif opt == '--yresiduals':
-            yresiduals = int(arg)
-        elif opt == '--outfileroot':
-            fileRoot = arg
+        elif opt == '--savefit':
+            savefit = int(arg)
+        elif opt == '--saveresiduals':
+            saveresiduals = int(arg)
+        elif opt == '--outroot':
+            outputRoot = arg
+        elif opt == '--outentry':
+            fileEntry = arg
+        elif opt == '--outprocess':
+            fileProcess = arg
         elif opt in ('--tif', '--tiff'):
             tif = int(arg)
         elif opt == '--edf':
@@ -969,20 +985,20 @@ def main():
     fastFit.setFitConfigurationFile(configurationFile)
     print("Main configuring Elapsed = % s " % (time.time() - t0))
     if not h5:
-        yfit = False
-        yresiduals = False
+        savefit = False
+        saveresiduals = False
     result = fastFit.fitMultipleSpectra(y=dataStack,
                                         weight=weight,
                                         refit=refit,
                                         concentrations=concentrations,
-                                        yfit=yfit,
-                                        yresiduals=yresiduals)
+                                        savefit=savefit,
+                                        saveresiduals=saveresiduals)
     print("Total Elapsed = % s " % (time.time() - t0))
 
     if outputDir is not None:
-        save(result, outputDir, fileEntry=fileRoot,
+        save(result, outputDir, outputRoot=outputRoot,
+            fileEntry=fileEntry, fileProcess=fileProcess,
              tif=tif, edf=edf, csv=csv, h5=h5)
-
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
