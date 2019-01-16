@@ -35,7 +35,7 @@ import tempfile
 import shutil
 import os
 import numpy
-from contextlib import contextmanager 
+from contextlib import contextmanager
 try:
     from PyMca5.PyMcaIO import NexusUtils
 except ImportError:
@@ -53,7 +53,7 @@ class testNexusUtils(unittest.TestCase):
 
     def tearDown(self):
         shutil.rmtree(self.path)
-    
+
     @contextmanager
     def h5open(self, name):
         filename = os.path.join(self.path, name+'.h5')

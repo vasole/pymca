@@ -89,25 +89,169 @@ class FastXRFLinearFit(object):
                    automatic time. The default is None.
         :return: A dictionnary with the parameters, uncertainties, concentrations and names as keys.
         """
+        # Parse data
+        x, data, mcaIndex, livetime = self._fit_parse_data(x=x, y=y,
+                                                           livetime=livetime)
+
+        # Check data dimensions
+        nSpectra = data.size // data.shape[mcaIndex]
+        if data.ndim != 3:
+            txt = "For the time being only three dimensional arrays supported"
+            raise IndexError(txt)
+        elif mcaIndex not in [-1, 2]:
+            txt = "For the time being only mca arrays supported"
+            raise IndexError(txt)
+
+        t0 = time.time()
+
+        # Configure fit
+        config, weight, weightPolicy, \
+        autotime, liveTimeFactor = self._fit_configure(
+                                            configuration=configuration,
+                                            concentrations=concentrations,
+                                            livetime=livetime,
+                                            weight=weight,
+                                            nSpectra=nSpectra)
+        # weightPolicy:
+        #  0: None
+        #  1: Average weight from sum spectrum
+        #  2: Individual spectrum weights
+        # weight:
+        #  0: None
+        #  1: Use provided or Poisson
+        # autotime:
+        #  0: None
+        #  1: Correct concentrations with liveTimeFactor
+
+        # Sum spectrum
+        if ysum is None:
+            if weightPolicy == 1:
+                # we need to calculate the sum spectrum
+                # to derive the uncertainties
+                sumover = 'all'
+            elif not concentrations:
+                # one spectrum is enough
+                sumover = 'first pixel'
+            else:
+                sumover = 'first row'
+            ysum = self._fit_mcasum_3d(data=data, mcaIndex=mcaIndex, sumover=sumover)
+
+        # Get the basis of the linear models (i.e. derivative to peak areas)
+        if xmin is None:
+            xmin = config['fit']['xmin']
+        if xmax is None:
+            xmax = config['fit']['xmax']
+        self._mcaTheory.setData(x=x, y=ysum, xmin=xmin, xmax=xmax)
+        derivatives, freeNames, nFree, nFreeBkg = self._fit_model()
+
+        # Background anchor points (if any)
+        anchorslist = self._fit_bkg_anchorlist(config=config)
+
+        # MCA trimming: [iXMin:iXMax]
+        iXMin, iXMax = self._fit_mcatrim_info(x=x)
+        idxChan = slice(iXMin, iXMax)
+        nChan = iXMax-iXMin
+
+        # Least-squares parameters
+        if weightPolicy == 2:
+            SVD = False
+            sigma_b = None
+        elif weightPolicy == 1:
+            # the +1 is to prevent misbehavior due to weights less than 1.0
+            sigma_b = 1 + numpy.sqrt(ysum[idxChan])/nSpectra
+            sigma_b = sigma_b.reshape(-1, 1)
+            SVD = True
+        else:
+            SVD = True
+            sigma_b = None
+        lstsq_kwargs = {'svd': SVD, 'sigma_b': sigma_b, 'weight': weight}
+
+        # Allocate the output buffer
+        nRows = data.shape[0]
+        nColumns = data.shape[1]
+        results = numpy.zeros((nFree, nRows, nColumns), numpy.float32)
+        uncertainties = numpy.zeros((nFree, nRows, nColumns), numpy.float32)
+        if savefit or saveresiduals:
+            fitmodel = numpy.zeros_like(data, dtype=numpy.float32)
+            fitmodel[..., 0:iXMin] = numpy.nan
+            fitmodel[..., iXMax:] = numpy.nan
+        else:
+            fitmodel = None
+
+        _logger.debug("Configuration elapsed = %f", time.time() - t0)
+        t0 = time.time()
+
+        # Fit all spectra
+        self._fit_lstsq_all(data=data, nChan=nChan, idxChan=idxChan,
+                        derivatives=derivatives, fitmodel=fitmodel,
+                        results=results, uncertainties=uncertainties,
+                        config=config, anchorslist=anchorslist,
+                        lstsq_kwargs=lstsq_kwargs)
+        lstsq_kwargs['last_svd'] = None
+
+        t = time.time() - t0
+        _logger.debug("First fit elapsed = %f", t)
+        if t > 0.:
+            _logger.debug("Spectra per second = %f",
+                          data.shape[0]*data.shape[1]/float(t))
+        t0 = time.time()
+
+        # Refit pixels with negative peak areas
+        if refit:
+            self._fit_lstsq_negpeaks(data=data, nChan=nChan, idxChan=idxChan,
+                        freeNames=freeNames, nFreeBkg=nFreeBkg,
+                        derivatives=derivatives, fitmodel=fitmodel,
+                        results=results, uncertainties=uncertainties,
+                        config=config, anchorslist=anchorslist,
+                        lstsq_kwargs=lstsq_kwargs)
+            t = time.time() - t0
+            _logger.debug("Fit of negative peaks elapsed = %f", t)
+            t0 = time.time()
+
+        # Return results as a dictionary
+        outputDict = {'configuration': config,
+                      'parameters': results,
+                      'uncertainties': uncertainties,
+                      'names': freeNames}
+        if savefit:
+            outputDict['model'] = fitmodel
+        if saveresiduals:
+            outputDict['residuals'] = data - fitmodel
+        if concentrations:
+            self._fit_concentration(config=config,
+                                    outputDict=outputDict,
+                                    results=results,
+                                    autotime=autotime,
+                                    liveTimeFactor=liveTimeFactor)
+            t = time.time() - t0
+            _logger.debug("Calculation of concentrations elapsed = %f", t)
+
+        return outputDict
+
+    def _fit_parse_data(self, x=None, y=None, livetime=None):
+        """Parse the input data (MCA and livetime)
+        """
         if y is None:
             raise RuntimeError("y keyword argument is mandatory!")
-
         if hasattr(y, "info") and hasattr(y, "data"):
             data = y.data
             mcaIndex = y.info.get("McaIndex", -1)
         else:
             data = y
             mcaIndex = -1
-
         if x is None:
             if hasattr(y, "info") and hasattr(y, "x"):
                 x = y.x[0]
-
         if livetime is None:
             if hasattr(y, "info"):
                 if "McaLiveTime" in y.info:
                     livetime = y.info["McaLiveTime"]
-        t0 = time.time()
+        return x, data, mcaIndex, livetime
+
+    def _fit_configure(self, configuration=None, concentrations=False,
+                       livetime=None, weight=None, nSpectra=None):
+        """Prepare configuration for fitting
+        """
         if configuration is not None:
             self._mcaTheory.setConfiguration(configuration)
         elif self._config is None:
@@ -118,10 +262,6 @@ class FastXRFLinearFit(object):
         # read the current configuration
         # it is a copy, we can modify it at will
         config = self._mcaTheory.getConfiguration()
-        if xmin is None:
-            xmin = config['fit']['xmin']
-        if xmax is None:
-            xmax = config['fit']['xmax']
         toReconfigure = False
 
         # if concentrations and use times, it needs to be reconfigured
@@ -143,7 +283,6 @@ class FastXRFLinearFit(object):
         else:
             # we are calculating concentrations from fundamental parameters
             autotime = config['concentrations'].get("useautotime", 0)
-            nSpectra = data.size // data.shape[mcaIndex]
             if autotime:
                 if livetime is None:
                     txt = "Automatic time requested but no time information provided"
@@ -155,7 +294,7 @@ class FastXRFLinearFit(object):
                     liveTimeFactor = \
                         float(config['concentrations']["time"]) / livetime
                 else:
-                    raise RuntimeError( \
+                    raise RuntimeError(
                         "Number of live times not equal number of spectra")
                 config['concentrations']["useautotime"] = 0
                 toReconfigure = True
@@ -188,7 +327,7 @@ class FastXRFLinearFit(object):
                 config['fit']['fitweight'] = 1
                 toReconfigure = True
         elif weight == 2:
-           # individual pixel weights (slow)
+            # individual pixel weights (slow)
             weightPolicy = 2
             if not config['fit']['fitweight']:
                 config['fit']['fitweight'] = 1
@@ -203,7 +342,7 @@ class FastXRFLinearFit(object):
             weight = 0
 
         if not config['fit']['linearfitflag']:
-            #make sure we force a linear fit
+            # make sure we force a linear fit
             config['fit']['linearfitflag'] = 1
             toReconfigure = True
 
@@ -211,49 +350,36 @@ class FastXRFLinearFit(object):
             # we must configure again the fit
             self._mcaTheory.setConfiguration(config)
 
-        if len(data.shape) != 3:
-            txt = "For the time being only three dimensional arrays supported"
-            raise IndexError(txt)
-        elif mcaIndex not in [-1, 2]:
-            txt = "For the time being only mca arrays supported"
-            raise IndexError(txt)
-        else:
-            # if the cumulated spectrum is present it should be better
-            nRows = data.shape[0]
-            nColumns = data.shape[1]
-            nPixels =  nRows * nColumns
-            if ysum is not None:
-                firstSpectrum = ysum
-            elif weightPolicy == 1:
-                # we need to calculate the sum spectrum to derive the uncertainties
-                totalSpectra = data.shape[0] * data.shape[1]
-                jStep = min(5000, data.shape[1])
-                ysum = numpy.zeros((data.shape[mcaIndex],), numpy.float)
-                for i in range(0, data.shape[0]):
-                    if i == 0:
-                        chunk = numpy.zeros((data.shape[0], jStep), numpy.float)
-                    jStart = 0
-                    while jStart < data.shape[1]:
-                        jEnd = min(jStart + jStep, data.shape[1])
-                        ysum += data[i, jStart:jEnd, :].sum(axis=0, dtype=numpy.float)
-                        jStart = jEnd
-                firstSpectrum = ysum
-            elif not concentrations:
-                # just one spectrum is enough for the setup
-                firstSpectrum = data[0, 0, :]
-            else:
-                firstSpectrum = data[0, :, :].sum(axis=0, dtype=numpy.float)
-
         # make sure we calculate the matrix of the contributions
         self._mcaTheory.enableOptimizedLinearFit()
 
-        # initialize the fit
-        # print("xmin = ", xmin)
-        # print("xmax = ", xmax)
-        # print("firstShape = ", firstSpectrum.shape)
-        self._mcaTheory.setData(x=x, y=firstSpectrum, xmin=xmin, xmax=xmax)
+        return config, weight, weightPolicy, autotime, liveTimeFactor
 
-        # and initialize the derivatives
+    def _fit_mcasum_3d(self, data=None, mcaIndex=None, sumover='all'):
+        """Get sum spectrum
+        """
+        if sumover == 'all':
+            # Sum in chunks of maximal 5000 or nColumns spectra
+            jStep = min(5000, data.shape[1])
+            ysum = numpy.zeros((data.shape[mcaIndex],), numpy.float)
+            for iRow in range(0, data.shape[0]):
+                jStart = 0
+                while jStart < data.shape[1]:
+                    jEnd = min(jStart + jStep, data.shape[1])
+                    ysum += data[iRow, jStart:jEnd, :].sum(axis=0, dtype=numpy.float)
+                    jStart = jEnd
+        elif sumover == 'first row':
+            # Sum spectrum of the first row
+            ysum = data[0, :, :].sum(axis=0, dtype=numpy.float)
+        else:
+            # First spectrum
+            ysum = data[0, 0, :]
+        return ysum
+
+    def _fit_model(self):
+        """Get linear model for fitting
+        """
+        # Initialize the derivatives
         self._mcaTheory.estimate()
 
         # now we can get the derivatives respect to the free parameters
@@ -263,13 +389,13 @@ class FastXRFLinearFit(object):
         # but we are still missing the derivatives from the background
         nFree = 0
         freeNames = []
-        nFreeBackgroundParameters = 0
-        for i, param in enumerate(self._mcaTheory.PARAMETERS):
-            if self._mcaTheory.codes[0][i] != ClassMcaTheory.Gefit.CFIXED:
+        nFreeBkg = 0
+        for iParam, param in enumerate(self._mcaTheory.PARAMETERS):
+            if self._mcaTheory.codes[0][iParam] != ClassMcaTheory.Gefit.CFIXED:
                 nFree += 1
                 freeNames.append(param)
-                if i < self._mcaTheory.NGLOBAL:
-                    nFreeBackgroundParameters += 1
+                if iParam < self._mcaTheory.NGLOBAL:
+                    nFreeBkg += 1
         if nFree == 0:
             txt = "No free parameters to be fitted!\n"
             txt += "No peaks inside fitting region?"
@@ -278,11 +404,11 @@ class FastXRFLinearFit(object):
         # build the matrix of derivatives
         derivatives = None
         idx = 0
-        for i, param in enumerate(self._mcaTheory.PARAMETERS):
-            if self._mcaTheory.codes[0][i] == ClassMcaTheory.Gefit.CFIXED:
+        for iParam, param in enumerate(self._mcaTheory.PARAMETERS):
+            if self._mcaTheory.codes[0][iParam] == ClassMcaTheory.Gefit.CFIXED:
                 continue
             deriv = self._mcaTheory.linearMcaTheoryDerivative(self._mcaTheory.parameters,
-                                                              i,
+                                                              iParam,
                                                               self._mcaTheory.xdata)
             deriv.shape = -1
             if derivatives is None:
@@ -290,24 +416,36 @@ class FastXRFLinearFit(object):
             derivatives[:, idx] = deriv
             idx += 1
 
-        # loop for anchors
-        xdata = self._mcaTheory.xdata
+        return derivatives, freeNames, nFree, nFreeBkg
 
+    def _fit_bkg_anchorlist(self, config=None):
+        """Get anchors for background subtraction
+        """
+        xdata = self._mcaTheory.xdata
         if config['fit']['stripflag']:
             anchorslist = []
             if config['fit']['stripanchorsflag']:
                 if config['fit']['stripanchorslist'] is not None:
                     ravelled = numpy.ravel(xdata)
                     for channel in config['fit']['stripanchorslist']:
-                        if channel <= ravelled[0]:continue
+                        if channel <= ravelled[0]:
+                            continue
                         index = numpy.nonzero(ravelled >= channel)[0]
                         if len(index):
                             index = min(index)
                             if index > 0:
                                 anchorslist.append(index)
             if len(anchorslist) == 0:
-                anchorlist = [0, self._mcaTheory.ydata.size - 1]
+                anchorslist = [0, self._mcaTheory.ydata.size - 1]
             anchorslist.sort()
+        else:
+            anchorslist = None
+        return anchorslist
+
+    def _fit_mcatrim_info(self, x=None):
+        """Start and end channels for MCA trimming
+        """
+        xdata = self._mcaTheory.xdata
 
         # find the indices to be used for selecting the appropriate data
         # if the original x data were not ordered we have a problem
@@ -328,382 +466,347 @@ class FastXRFLinearFit(object):
         if hasattr(iXMax, "shape"):
             if len(iXMax.shape):
                 iXMax = iXMax[0]
+        return iXMin, iXMax+1
 
-        dummySpectrum = firstSpectrum[iXMin:iXMax+1].reshape(-1, 1)
-        # print("dummy = ", dummySpectrum.shape)
-
-        # allocate the output buffer
-        results = numpy.zeros((nFree, nRows, nColumns), numpy.float32)
-        uncertainties = numpy.zeros((nFree, nRows, nColumns), numpy.float32)
-
-        if savefit or saveresiduals:
-            fitdata = numpy.zeros_like(data, dtype=numpy.float32)
-            fitdata[...,0:iXMin] = numpy.nan
-            fitdata[...,iXMax+1:] = numpy.nan
-        else:
-            fitdata = None
-
-        # perform the initial fit
-        _logger.debug("Configuration elapsed = %f", time.time() - t0)
-        t0 = time.time()
-        totalSpectra = data.shape[0] * data.shape[1]
+    def _fit_lstsq_all(self, data=None, nChan=None, idxChan=None, derivatives=None,
+                   fitmodel=None, results=None, uncertainties=None,
+                   config=None, anchorslist=None, lstsq_kwargs=None):
+        """Fit all spectra
+        """
+        # Fit in chunks of maximal 100 or nColumns spectra
         jStep = min(100, data.shape[1])
-        if weightPolicy == 2:
-            SVD = False
-            sigma_b = None
-        elif weightPolicy == 1:
-            # the +1 is to prevent misbehavior due to weights less than 1.0
-            sigma_b = 1 + numpy.sqrt(dummySpectrum)/nPixels
-            SVD = True
-        else:
-            SVD = True
-            sigma_b = None
-        last_svd = None
-        for i in range(0, data.shape[0]):
-            #print(i)
-            #chunks of nColumns spectra
-            if i == 0:
-                chunk = numpy.zeros((dummySpectrum.shape[0],
-                                     jStep),
-                                     numpy.float)
+        chunkshape = (nChan, jStep)
+        chunkbuffer = numpy.zeros(chunkshape, numpy.float)
+        chunkmodel = None
+        for iRow in range(0, data.shape[0]):
             jStart = 0
             while jStart < data.shape[1]:
                 jEnd = min(jStart + jStep, data.shape[1])
-                chunk[:,:(jEnd - jStart)] = data[i, jStart:jEnd, iXMin:iXMax+1].T
+                chunk = chunkbuffer[:, :(jEnd - jStart)]
+                chunk[()] = data[iRow, jStart:jEnd, idxChan].T
+                if fitmodel is not None:
+                    chunkmodel = fitmodel[iRow, jStart:jEnd, idxChan].T
+
+                # Subtract background
                 if config['fit']['stripflag']:
-                    for k in range(jStep):
-                        # obtain the smoothed spectrum
-                        background = SpecfitFuns.SavitskyGolay(chunk[:, k],
-                                                config['fit']['stripfilterwidth'])
-                        lastAnchor = 0
-                        for anchor in anchorslist:
-                            if (anchor > lastAnchor) and (anchor < background.size):
-                                background[lastAnchor:anchor] =\
-                                        SpecfitFuns.snip1d(background[lastAnchor:anchor],
-                                                           config['fit']['snipwidth'],
-                                                           0)
-                                lastAnchor = anchor
-                        if lastAnchor < background.size:
-                            background[lastAnchor:] =\
-                                    SpecfitFuns.snip1d(background[lastAnchor:],
-                                                       config['fit']['snipwidth'],
-                                                       0)
-                        chunk[:, k] -= background
-                        if fitdata is not None:
-                            fitdata[i, jStart+k, iXMin:iXMax+1] = background
+                    self._fit_bkg_subtract(chunk, config=config,
+                                           anchorslist=anchorslist,
+                                           fitmodel=chunkmodel)
 
-                # perform the multiple fit to all the spectra in the chunk
-                #print("SHAPES")
-                #print(derivatives.shape)
-                #print(chunk[:,:(jEnd - jStart)].shape)
-                ddict = lstsq(derivatives, chunk[:,:(jEnd - jStart)],
-                            sigma_b=sigma_b,
-                            weight=weight,
-                            digested_output=True,
-                            svd=SVD,
-                            last_svd=last_svd)
-                last_svd = ddict.get('svd', None)
+                # Solve linear system of equations
+                ddict = lstsq(derivatives, chunk,
+                              digested_output=True, **lstsq_kwargs)
+
+                # Save results
+                lstsq_kwargs['last_svd'] = ddict.get('svd', None)
                 parameters = ddict['parameters']
-                results[:, i, jStart:jEnd] = parameters
-                uncertainties[:, i, jStart:jEnd] = ddict['uncertainties']
-                if fitdata is not None:
-                    fitdata[i, jStart:jEnd ,iXMin:iXMax+1] += numpy.dot(derivatives,parameters).T
+                results[:, iRow, jStart:jEnd] = parameters
+                uncertainties[:, iRow, jStart:jEnd] = ddict['uncertainties']
+                if chunkmodel is not None:
+                    chunkmodel += numpy.dot(derivatives, parameters)
                 jStart = jEnd
-        t = time.time() - t0
-        _logger.debug("First fit elapsed = %f", t)
-        if t > 0.:
-            _logger.debug("Spectra per second = %f",
-                          data.shape[0]*data.shape[1]/float(t))
-        t0 = time.time()
 
-        # cleanup zeros
-        # start with the parameter with the largest amount of negative values
-        if refit:
-            negativePresent = True
+    def _fit_lstsq_reduced(self, data=None, mask=None, skipParams= None,
+                    skipNames=None, nmin=None, nChan=None, idxChan=None,
+                    derivatives=None, fitmodel=None, results=None, uncertainties=None,
+                    config=None, anchorslist=None, lstsq_kwargs=None):
+        """
+        Fit reduced number of spectra (mask) with a reduced model (skipped parameters are fixed at zero)
+        """
+        npixels = mask.sum()
+        nFree = results.shape[0]
+        if npixels < nmin:
+            _logger.debug("Skipping #%d pixels", npixels)
+            # fit not worth
+            for iFree, name in zip(skipParams, skipNames):
+                results[iFree][mask] = 0.0
+                uncertainties[iFree][mask] = 0.0
+                _logger.debug("%d pixels of parameter %s set to zero",
+                                npixels, name)
         else:
-            negativePresent = False
-        nFits = 0
-        while negativePresent:
-            zeroList = []
-            #totalNegative = 0
-            for i in range(nFree):
-                #we have to skip the background parameters
-                if i >= nFreeBackgroundParameters:
-                    t = results[i] < 0
-                    tsum = t.sum()
-                    if tsum > 0:
-                        zeroList.append((tsum, i, t))
-                    #totalNegative += tsum
-            #print("totalNegative = ", totalNegative)
+            _logger.debug("Refitting #%d pixels", npixels)
+            # Fit all bad spectra in one chunk
+            if data.dtype not in [numpy.float32, numpy.float64]:
+                if data.itemsize < 5:
+                    data_dtype = numpy.float32
+                else:
+                    data_dtype = numpy.float64
+            else:
+                data_dtype = data.dtype
+            try:
+                if data.dtype != data_dtype:
+                    chunk = numpy.zeros((int(npixels), nChan),
+                                        data_dtype)
+                    chunk[:] = data[mask, idxChan]
+                else:
+                    chunk = data[mask, idxChan]
+                chunk.shape = npixels, -1
+            except TypeError:
+                # in case of dynamic arrays, two dimensional indices are not
+                # supported by h5py
+                chunkshape = (int(npixels), nChan)
+                chunk = numpy.zeros(chunkshape, data_dtype)
+                selectedIndices = numpy.nonzero(mask > 0)
+                tmpData = numpy.zeros((1, nChan), data_dtype)
+                oldDataRow = -1
+                j = 0
+                for i in range(len(selectedIndices[0])):
+                    j = selectedIndices[0][i]
+                    if j != oldDataRow:
+                        tmpData = data[j]
+                        olddataRow = j
+                    chunk[i] = tmpData[selectedIndices[1][i], idxChan]
+            chunk = chunk.T
+            if fitmodel is None:
+                chunkmodel = None
+            else:
+                chunkmodel = fitmodel[mask, idxChan].T
 
-            if len(zeroList) == 0:
+            # Subtract background
+            if config['fit']['stripflag']:
+                self._fit_bkg_subtract(chunk, config=config,
+                                        anchorslist=anchorslist,
+                                        fitmodel=chunkmodel)
+
+            # Solve linear system of equations
+            A = derivatives[:, [i for i in range(nFree) if i not in skipParams]]
+            ddict = lstsq(A, chunk, digested_output=True,
+                          **lstsq_kwargs)
+
+            # Save results
+            idx = 0
+            for iFree in range(nFree):
+                if iFree in skipParams:
+                    results[iFree][mask] = 0.0
+                    uncertainties[iFree][mask] = 0.0
+                else:
+                    results[iFree][mask] = ddict['parameters'][idx]
+                    uncertainties[iFree][mask] = ddict['uncertainties'][idx]
+                    idx += 1
+            if chunkmodel is not None:
+                chunkmodel += numpy.dot(A, ddict['parameters'])
+
+    @staticmethod
+    def _fit_bkg_subtract(spectra, config=None, anchorslist=None, fitmodel=None):
+        """Subtract brackground from data and add it to fit model
+        """
+        for k in range(spectra.shape[1]):
+            # obtain the smoothed spectrum
+            background = SpecfitFuns.SavitskyGolay(spectra[:, k],
+                                    config['fit']['stripfilterwidth'])
+            lastAnchor = 0
+            for anchor in anchorslist:
+                if (anchor > lastAnchor) and (anchor < background.size):
+                    background[lastAnchor:anchor] =\
+                            SpecfitFuns.snip1d(background[lastAnchor:anchor],
+                                               config['fit']['snipwidth'],
+                                               0)
+                    lastAnchor = anchor
+            if lastAnchor < background.size:
+                background[lastAnchor:] =\
+                        SpecfitFuns.snip1d(background[lastAnchor:],
+                                           config['fit']['snipwidth'],
+                                           0)
+            spectra[:, k] -= background
+            if fitmodel is not None:
+                fitmodel[:, k] = background
+
+    def _fit_lstsq_negpeaks(self, data=None, freeNames=None, nFreeBkg=None,
+                            results=None, **kwargs):
+        """Refit pixels with negative peak areas (remove the parameters from the model)
+        """
+        nFree = len(freeNames)
+        iIter = 1
+        nIter = 2 * (nFree - nFreeBkg) + iIter
+        negativePresent = True
+        while negativePresent:
+            # Pixels with negative peak areas
+            negList = []
+            for iFree in range(nFreeBkg, nFree):
+                negMask = results[iFree] < 0
+                nNeg = negMask.sum()
+                if nNeg > 0:
+                    negList.append((nNeg, iFree, negMask))
+
+            # No refit needed when no negative peak areas
+            if not negList:
                 negativePresent = False
                 continue
 
-            if nFits > (2 * (nFree - nFreeBackgroundParameters)):
-                # we are probably in an endless loop
-                # force negative pixels
-                for item in zeroList:
-                    i = item[1]
-                    badMask = item[2]
-                    results[i][badMask] = 0.0
-                    _logger.warning("WARNING: %d pixels of parameter %s forced to zero",
-                                    item[0], freeNames[i])
+            # Set negative peak areas to zero when
+            # the maximal iterations is reached
+            if iIter > nIter:
+                for nNeg, iFree, negMask in negList:
+                    results[iFree][negMask] = 0.0
+                    _logger.warning("%d pixels of parameter %s forced to zero",
+                                    nNeg, freeNames[iFree])
                 continue
-            zeroList.sort()
-            zeroList.reverse()
 
+            # Bad pixels: use peak area with the most negative values
+            negList.sort()
+            negList.reverse()
             badParameters = []
-            badParameters.append(zeroList[0][1])
-            badMask = zeroList[0][2]
-            if 1:
-                # prevent and endless loop if two or more parameters have common pixels where they are
-                # negative and one of them remains negative when forcing other one to zero
-                for i, item in enumerate(zeroList):
-                    if item[1] not in badParameters:
-                        if item[0] > 0:
-                            #check if they have common negative pixels
-                            t = badMask * item[-1]
-                            if t.sum() > 0:
-                                badParameters.append(item[1])
-                                badMask = t
-            if fitdata is not None:
-                fitdata[badMask, iXMin:iXMax+1] = 0
-            nBadPixels = badMask.sum()
-            if nBadPixels < (0.0025 * nPixels):
-                # fit not worth
-                for i in badParameters:
-                    results[i][badMask] = 0.0
-                    uncertainties[i][badMask] = 0.0
-                    _logger.debug("WARNING: %d pixels of parameter %s set to zero",
-                                  nBadPixels, freeNames[i])
-            else:
-                _logger.debug("Number of secondary fits = %d (%d spectra)", nFits + 1, nBadPixels)
-                nFits += 1
-                A = derivatives[:, [i for i in range(nFree) if i not in badParameters]]
-                #assume we'll not have too many spectra
-                if data.dtype not in [numpy.float32, numpy.float64]:
-                    if data.itemsize < 5:
-                        data_dtype = numpy.float32
-                    else:
-                        data_dtype = numpy.float64
-                else:
-                    data_dtype = data.dtype
-                try:
-                    if data.dtype != data_dtype:
-                        spectra = numpy.zeros((int(nBadPixels), 1 + iXMax - iXMin),
-                                          data_dtype)
-                        spectra[:] = data[badMask, iXMin:iXMax+1]
-                    else:
-                        spectra = data[badMask, iXMin:iXMax+1]
-                    spectra.shape = nBadPixels, -1
-                except TypeError:
-                    # in case of dynamic arrays, two dimensional indices are not
-                    # supported by h5py
-                    spectra = numpy.zeros((int(nBadPixels), 1 + iXMax - iXMin),
-                                          data_dtype)
-                    selectedIndices = numpy.nonzero(badMask > 0)
-                    tmpData = numpy.zeros((1, 1 + iXMax - iXMin), data_dtype)
-                    oldDataRow = -1
-                    j = 0
-                    for i in range(len(selectedIndices[0])):
-                        j = selectedIndices[0][i]
-                        if j != oldDataRow:
-                            tmpData = data[j]
-                            olddataRow = j
-                        spectra[i] = tmpData[selectedIndices[1][i], iXMin:iXMax+1]
-                spectra = spectra.T
-                #
-                if config['fit']['stripflag']:
-                    if fitdata is not None:
-                        idx0bad,idx1bad = numpy.where(badMask)
-                    for k in range(spectra.shape[1]):
-                        # obtain the smoothed spectrum
-                        background=SpecfitFuns.SavitskyGolay(spectra[:, k],
-                                                config['fit']['stripfilterwidth'])
-                        lastAnchor = 0
-                        for anchor in anchorslist:
-                            if (anchor > lastAnchor) and (anchor < background.size):
-                                background[lastAnchor:anchor] =\
-                                        SpecfitFuns.snip1d(background[lastAnchor:anchor],
-                                                           config['fit']['snipwidth'],
-                                                           0)
-                                lastAnchor = anchor
-                        if lastAnchor < background.size:
-                            background[lastAnchor:] =\
-                                    SpecfitFuns.snip1d(background[lastAnchor:],
-                                                       config['fit']['snipwidth'],
-                                                       0)
-                        spectra[:, k] -= background
-                        if fitdata is not None:
-                            fitdata[idx0bad[k], idx1bad[k], iXMin:iXMax+1] = background
+            badParameters.append(negList[0][1])
+            badMask = negList[0][2]
 
-                ddict = lstsq(A, spectra,
-                              sigma_b=sigma_b,
-                              weight=weight,
-                              digested_output=True,
-                              svd=SVD)
-                idx = 0
-                for i in range(nFree):
-                    if i in badParameters:
-                        results[i][badMask] = 0.0
-                        uncertainties[i][badMask] = 0.0
-                    else:
-                        results[i][badMask] = ddict['parameters'][idx]
-                        uncertainties[i][badMask] = ddict['uncertainties'][idx]
-                        idx += 1
-                if fitdata is not None:
-                    fitdata[badMask, iXMin:iXMax+1] = numpy.dot(A, ddict['parameters']).T
+            # Combine with masks of all other peak areas
+            # (unless none of them has negative pixels)
+            # This is done to prevent endless loops:
+            # if two or more parameters have common negative pixels
+            # and one of them remains negative when forcing other one to zero
+            for iFree, (nNeg, iFree, negMask) in enumerate(negList):
+                if iFree not in badParameters and nNeg:
+                    combMask = badMask & negMask
+                    if combMask.sum():
+                        badParameters.append(iFree)
+                        badMask = combMask
 
-        if refit:
-            t = time.time() - t0
-            _logger.debug("Fit of negative peaks elapsed = %f", t)
-            t0 = time.time()
+            # Fit with a reduced model (skipped parameters are fixed at zero)
+            badNames = [freeNames[iFree] for iFree in badParameters]
+            nmin = 0.0025 * badMask.size
+            _logger.debug("Refit iteration #{}. Fixed to zero: {}"
+                          .format(iIter, badNames))
+            self._fit_lstsq_reduced(data=data, mask=badMask,
+                                    skipParams=badParameters,
+                                    skipNames=badNames,
+                                    results=results,
+                                    nmin=nmin, **kwargs)
+            iIter += 1
 
-        outputDict = {'configuration': config,
-                      'parameters': results,
-                      'uncertainties': uncertainties,
-                      'names': freeNames}
-        if savefit:
-            outputDict['savefit'] = fitdata
-        if saveresiduals:
-            outputDict['saveresiduals'] = data - fitdata
-        if concentrations:
-            # check if an internal reference is used and if it is set to auto
-            ####################################################
-            # CONCENTRATIONS
-            cTool = ConcentrationsTool.ConcentrationsTool()
-            cToolConf = cTool.configure()
-            cToolConf.update(config['concentrations'])
+    def _fit_concentration(self, config=None, outputDict=None, results=None,
+                           autotime=None, liveTimeFactor=None):
+        """Calculate concentrations from peak areas
+        """
+        # check if an internal reference is used and if it is set to auto
+        cTool = ConcentrationsTool.ConcentrationsTool()
+        cToolConf = cTool.configure()
+        cToolConf.update(config['concentrations'])
 
-            fitFirstSpectrum = False
-            if config['concentrations']['usematrix']:
-                _logger.debug("USING MATRIX")
-                if config['concentrations']['reference'].upper() == "AUTO":
-                    fitFirstSpectrum = True
-            elif autotime:
-                # we have to calculate with the time in the configuration
-                # and correct later on
-                cToolConf["autotime"] = 0
+        fitysum = False
+        if config['concentrations']['usematrix']:
+            _logger.debug("USING MATRIX")
+            if config['concentrations']['reference'].upper() == "AUTO":
+                fitysum = True
+        elif autotime:
+            # we have to calculate with the time in the configuration
+            # and correct later on
+            cToolConf["autotime"] = 0
 
-            fitresult = {}
-            if fitFirstSpectrum:
-                # we have to fit the "reference" spectrum just to get the reference element
-                mcafitresult = self._mcaTheory.startfit(digest=0, linear=True)
-                # if one of the elements has zero area this cannot be made directly
-                fitresult['result'] = self._mcaTheory.imagingDigestResult()
-                fitresult['result']['config'] = config
-                concentrationsResult, addInfo = cTool.processFitResult(config=cToolConf,
-                                                    fitresult=fitresult,
-                                                    elementsfrommatrix=False,
-                                                    fluorates=self._mcaTheory._fluoRates,
-                                                    addinfo=True)
-                # and we have to make sure that all the areas are positive
-                for group in fitresult['result']['groups']:
-                    if fitresult['result'][group]['fitarea'] <= 0.0:
-                        # give a tiny area
-                        fitresult['result'][group]['fitarea'] = 1.0e-6
-                config['concentrations']['reference'] = addInfo['ReferenceElement']
-            else:
-                fitresult['result'] = {}
-                fitresult['result']['config'] = config
-                fitresult['result']['groups'] = []
-                idx = 0
-                for i, param in enumerate(self._mcaTheory.PARAMETERS):
-                    if self._mcaTheory.codes[0][i] == Gefit.CFIXED:
-                        continue
-                    if i < self._mcaTheory.NGLOBAL:
-                        # background
-                        pass
-                    else:
-                        fitresult['result']['groups'].append(param)
-                        fitresult['result'][param] = {}
-                        # we are just interested on the factor to be applied to the area to get the
-                        # concentrations
-                        fitresult['result'][param]['fitarea'] = 1.0
-                        fitresult['result'][param]['sigmaarea'] = 1.0
-                    idx += 1
+        fitresult = {}
+        if fitysum:
+            # we have to fit the "reference" spectrum just to get the reference element
+            mcafitresult = self._mcaTheory.startfit(digest=0, linear=True)
+            # if one of the elements has zero area this cannot be made directly
+            fitresult['result'] = self._mcaTheory.imagingDigestResult()
+            fitresult['result']['config'] = config
             concentrationsResult, addInfo = cTool.processFitResult(config=cToolConf,
-                                                    fitresult=fitresult,
-                                                    elementsfrommatrix=False,
-                                                    fluorates=self._mcaTheory._fluoRates,
-                                                    addinfo=True)
-            nValues = 1
-            if len(concentrationsResult['layerlist']) > 1:
-                nValues += len(concentrationsResult['layerlist'])
-            nElements = len(list(concentrationsResult['mass fraction'].keys()))
-            massFractions = numpy.zeros((nValues * nElements, nRows, nColumns),
-                                        numpy.float32)
+                                                fitresult=fitresult,
+                                                elementsfrommatrix=False,
+                                                fluorates=self._mcaTheory._fluoRates,
+                                                addinfo=True)
+            # and we have to make sure that all the areas are positive
+            for group in fitresult['result']['groups']:
+                if fitresult['result'][group]['fitarea'] <= 0.0:
+                    # give a tiny area
+                    fitresult['result'][group]['fitarea'] = 1.0e-6
+            config['concentrations']['reference'] = addInfo['ReferenceElement']
+        else:
+            fitresult['result'] = {}
+            fitresult['result']['config'] = config
+            fitresult['result']['groups'] = []
+            idx = 0
+            for iParam, param in enumerate(self._mcaTheory.PARAMETERS):
+                if self._mcaTheory.codes[0][iParam] == Gefit.CFIXED:
+                    continue
+                if iParam < self._mcaTheory.NGLOBAL:
+                    # background
+                    pass
+                else:
+                    fitresult['result']['groups'].append(param)
+                    fitresult['result'][param] = {}
+                    # we are just interested on the factor to be applied to the area to get the
+                    # concentrations
+                    fitresult['result'][param]['fitarea'] = 1.0
+                    fitresult['result'][param]['sigmaarea'] = 1.0
+                idx += 1
+        concentrationsResult, addInfo = cTool.processFitResult(config=cToolConf,
+                                                fitresult=fitresult,
+                                                elementsfrommatrix=False,
+                                                fluorates=self._mcaTheory._fluoRates,
+                                                addinfo=True)
+        nValues = 1
+        if len(concentrationsResult['layerlist']) > 1:
+            nValues += len(concentrationsResult['layerlist'])
+        nElements = len(list(concentrationsResult['mass fraction'].keys()))
+        nFree, nRows, nColumns = results.shape
+        massFractions = numpy.zeros((nValues * nElements, nRows, nColumns),
+                                    numpy.float32)
 
+        referenceElement = addInfo['ReferenceElement']
+        referenceTransitions = addInfo['ReferenceTransitions']
+        _logger.debug("Reference <%s>  transition <%s>",
+                      referenceElement, referenceTransitions)
+        if referenceElement in ["", None, "None"]:
+            _logger.debug("No reference")
+            counter = 0
+            for i, group in enumerate(fitresult['result']['groups']):
+                if group.lower().startswith("scatter"):
+                    _logger.debug("skept %s", group)
+                    continue
+                outputDict['names'].append("C(%s)" % group)
+                if counter == 0:
+                    if hasattr(liveTimeFactor, "shape"):
+                        liveTimeFactor.shape = results[nFreeBkg+i].shape
+                massFractions[counter] = liveTimeFactor * \
+                    results[nFreeBkg+i] * \
+                    (concentrationsResult['mass fraction'][group] / \
+                        fitresult['result'][group]['fitarea'])
+                counter += 1
+                if len(concentrationsResult['layerlist']) > 1:
+                    for layer in concentrationsResult['layerlist']:
+                        outputDict['names'].append("C(%s)-%s" % (group, layer))
+                        massFractions[counter] = liveTimeFactor * \
+                                results[nFreeBkg+i] * \
+                                (concentrationsResult[layer]['mass fraction'][group] / \
+                                    fitresult['result'][group]['fitarea'])
+                        counter += 1
+        else:
+            _logger.debug("With reference")
+            idx = None
+            testGroup = referenceElement+ " " + referenceTransitions.split()[0]
+            for i, group in enumerate(fitresult['result']['groups']):
+                if group == testGroup:
+                    idx = i
+            if idx is None:
+                raise ValueError("Invalid reference:  <%s> <%s>" %\
+                                    (referenceElement, referenceTransitions))
 
-            referenceElement = addInfo['ReferenceElement']
-            referenceTransitions = addInfo['ReferenceTransitions']
-            _logger.debug("Reference <%s>  transition <%s>",
-                          referenceElement, referenceTransitions)
-            if referenceElement in ["", None, "None"]:
-                _logger.debug("No reference")
-                counter = 0
-                for i, group in enumerate(fitresult['result']['groups']):
-                    if group.lower().startswith("scatter"):
-                        _logger.debug("skept %s", group)
-                        continue
-                    outputDict['names'].append("C(%s)" % group)
-                    if counter == 0:
-                        if hasattr(liveTimeFactor, "shape"):
-                            liveTimeFactor.shape = results[nFreeBackgroundParameters+i].shape
-                    massFractions[counter] = liveTimeFactor * \
-                        results[nFreeBackgroundParameters+i] * \
-                        (concentrationsResult['mass fraction'][group] / \
-                         fitresult['result'][group]['fitarea'])
-                    counter += 1
-                    if len(concentrationsResult['layerlist']) > 1:
-                        for layer in concentrationsResult['layerlist']:
-                            outputDict['names'].append("C(%s)-%s" % (group, layer))
-                            massFractions[counter] = liveTimeFactor * \
-                                    results[nFreeBackgroundParameters+i] * \
-                                    (concentrationsResult[layer]['mass fraction'][group] / \
-                                     fitresult['result'][group]['fitarea'])
-                            counter += 1
-            else:
-                _logger.debug("With reference")
-                idx = None
-                testGroup = referenceElement+ " " + referenceTransitions.split()[0]
-                for i, group in enumerate(fitresult['result']['groups']):
-                    if group == testGroup:
-                        idx = i
-                if idx is None:
-                    raise ValueError("Invalid reference:  <%s> <%s>" %\
-                                     (referenceElement, referenceTransitions))
+            group = fitresult['result']['groups'][idx]
+            referenceArea = fitresult['result'][group]['fitarea']
+            referenceConcentrations = concentrationsResult['mass fraction'][group]
+            goodIdx = results[nFreeBkg+idx] > 0
+            massFractions[idx] = referenceConcentrations
+            counter = 0
+            for i, group in enumerate(fitresult['result']['groups']):
+                if group.lower().startswith("scatter"):
+                    _logger.debug("skept %s", group)
+                    continue
+                outputDict['names'].append("C(%s)" % group)
+                goodI = results[nFreeBkg+i] > 0
+                tmp = results[nFreeBkg+idx][goodI]
+                massFractions[counter][goodI] = (results[nFreeBkg+i][goodI]/(tmp + (tmp == 0))) *\
+                            ((referenceArea/fitresult['result'][group]['fitarea']) *\
+                            (concentrationsResult['mass fraction'][group]))
+                counter += 1
+                if len(concentrationsResult['layerlist']) > 1:
+                    for layer in concentrationsResult['layerlist']:
+                        outputDict['names'].append("C(%s)-%s" % (group, layer))
+                        massFractions[counter][goodI] = (results[nFreeBkg+i][goodI]/(tmp + (tmp == 0))) *\
+                            ((referenceArea/fitresult['result'][group]['fitarea']) *\
+                            (concentrationsResult[layer]['mass fraction'][group]))
+                        counter += 1
+        outputDict['concentrations'] = massFractions
 
-                group = fitresult['result']['groups'][idx]
-                referenceArea = fitresult['result'][group]['fitarea']
-                referenceConcentrations = concentrationsResult['mass fraction'][group]
-                goodIdx = results[nFreeBackgroundParameters+idx] > 0
-                massFractions[idx] = referenceConcentrations
-                counter = 0
-                for i, group in enumerate(fitresult['result']['groups']):
-                    if group.lower().startswith("scatter"):
-                        _logger.debug("skept %s", group)
-                        continue
-                    outputDict['names'].append("C(%s)" % group)
-                    goodI = results[nFreeBackgroundParameters+i] > 0
-                    tmp = results[nFreeBackgroundParameters+idx][goodI]
-                    massFractions[counter][goodI] = (results[nFreeBackgroundParameters+i][goodI]/(tmp + (tmp == 0))) *\
-                                ((referenceArea/fitresult['result'][group]['fitarea']) *\
-                                (concentrationsResult['mass fraction'][group]))
-                    counter += 1
-                    if len(concentrationsResult['layerlist']) > 1:
-                        for layer in concentrationsResult['layerlist']:
-                            outputDict['names'].append("C(%s)-%s" % (group, layer))
-                            massFractions[counter][goodI] = (results[nFreeBackgroundParameters+i][goodI]/(tmp + (tmp == 0))) *\
-                                ((referenceArea/fitresult['result'][group]['fitarea']) *\
-                                (concentrationsResult[layer]['mass fraction'][group]))
-                            counter += 1
-            outputDict['concentrations'] = massFractions
-            t = time.time() - t0
-            _logger.debug("Calculation of concentrations elapsed = %f", t)
-            ####################################################
-        return outputDict
 
 def getFileListFromPattern(pattern, begin, end, increment=None):
     if type(begin) == type(1):
@@ -718,7 +821,7 @@ def getFileListFromPattern(pattern, begin, end, increment=None):
     elif type(increment) == type(1):
         increment = [increment]
     if len(increment) != len(begin):
-        raise ValueError(\
+        raise ValueError(
             "Increment list and begin list do not have same length")
     fileList = []
     if len(begin) == 1:
@@ -755,7 +858,7 @@ def save(result, outputDir, outputRoot=None, fileEntry=None,
     :param h5: save as h5
     """
     if not (tif or edf or csv or h5):
-        print('WARNING: fit result not saved (no output format specified)')
+        _logger.warning('fit result not saved (no output format specified)')
         return
     _logger.debug('Saving results ...')
 
@@ -767,11 +870,11 @@ def save(result, outputDir, outputRoot=None, fileEntry=None,
         fileEntry = "images"
     if not fileProcess:
         fileProcess = fileEntry
-    
+
     # List of images and labels
     imageList = []
     imageLabels = []
-    for i,name in enumerate(result['names']):
+    for i, name in enumerate(result['names']):
         newname = name.replace(" ","-")
         if newname.startswith("C("):
             # Elemental concentration
@@ -826,7 +929,7 @@ def save(result, outputDir, outputRoot=None, fileEntry=None,
             entry = NexusUtils.nxentry(root, fileEntry)
             if fileProcess in entry:
                 # Overwrite like ArraySave does for the other formats
-                print('WARNING: overwriting {}'.format(entry[fileProcess].name))
+                _logger.warning('overwriting {}'.format(entry[fileProcess].name))
                 del entry[fileProcess]
             process = NexusUtils.nxprocess(entry, fileProcess,
                                            configdict=result['configuration'])
@@ -847,9 +950,9 @@ def save(result, outputDir, outputRoot=None, fileEntry=None,
             # Fitted model and residuals
             signals = []
             attr = {'interpretation':'spectrum'}
-            for name,key in zip(['residuals','model'],['saveresiduals','savefit']):
-                if key in result:
-                    value = {'data':result[key], 'chunks':True}
+            for name in ['residuals', 'model']:
+                if name in result:
+                    value = {'data':result[name], 'chunks':True}
                     signals.append((name,value,attr))
             if signals:
                 data = NexusUtils.nxdata(process['results'], 'fit')
@@ -985,7 +1088,7 @@ def main():
         fileList = args
     if refit is None:
         refit = 0
-        print("WARNING: --refit=%d taken as default" % refit)
+        _logger.warning("--refit=%d taken as default" % refit)
     if len(fileList):
         dataStack = prepareDataStack(fileList)
     else:
