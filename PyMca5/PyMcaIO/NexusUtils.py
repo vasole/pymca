@@ -417,7 +417,7 @@ def nxdata_add_axes(data, axes, append=True):
     Add axes to NXdata instance
 
     :param h5py.Group data:
-    :param list(3-tuple) axes: name(str),value(h5py.Dataset,numpy.ndarray),attrs(dict)
+    :param list(3-tuple) axes: name(str), value(None,h5py.Dataset,numpy.ndarray), attrs(dict)
     :param bool append:
     """
     raise_isnot_nx_class(data, 'NXdata')
@@ -426,15 +426,19 @@ def nxdata_add_axes(data, axes, append=True):
     else:
         newaxes = []
     for name, value, attrs in axes:
-        if isinstance(value, h5py.Dataset):
-            data[name] = h5py.SoftLink(value)
+        if value is None:
+            pass  # is or will be created elsewhere
+        elif isinstance(value, h5py.Dataset):
+            if value.parent != data:
+                data[name] = h5py.SoftLink(value.name)
         else:
             data[name] = value
         if attrs:
             data[name].attrs.update(attrs)
         newaxes.append(name)
-    data.attrs['axes'] = vlen_string(newaxes)
-    updated(data)
+    if newaxes:
+        data.attrs['axes'] = vlen_string(newaxes)
+        updated(data)
 
 
 def nxdata_get_signals(data):
@@ -464,10 +468,13 @@ def nxdata_set_signals(data, signals):
     """
     if signals:
         data.attrs['signal'] = vlen_string(signals[0])
-        data.attrs['auxiliary_signals'] = vlen_string(signals[1:])
+        if len(signals)>1:
+            data.attrs['auxiliary_signals'] = vlen_string(signals[1:])
+        else:
+            data.attrs.pop('auxiliary_signals', None)
     else:
-        data.attrs['signal'] = vlen_string('')
-        data.attrs['auxiliary_signals'] = vlen_string([''])
+        data.attrs.pop('signal', None)
+        data.attrs.pop('auxiliary_signals', None)
     updated(data)
 
 
@@ -476,7 +483,7 @@ def nxdata_add_signals(data, signals, append=True):
     Add signals to NXdata instance
 
     :param h5py.Group data:
-    :param list(2-tuple) signals: name(str),value(h5py.Dataset,numpy.ndarray)
+    :param list(2-tuple) signals: name(str), value(None,h5py.Dataset,numpy.ndarray), attrs(dict)
     :param bool append:
     """
     raise_isnot_nx_class(data, 'NXdata')
@@ -484,17 +491,19 @@ def nxdata_add_signals(data, signals, append=True):
         newsignals = nxdata_get_signals(data)
     else:
         newsignals = []
-    for name, value in signals:
-        if isinstance(value, h5py.Dataset):
-            try:
-                dest = value.name
-            except AttributeError:
-                dest = value
-            data[name] = h5py.SoftLink(dest)
+    for name, value, attrs in signals:
+        if value is None:
+            pass  # is or will be created elsewhere
+        elif isinstance(value, h5py.Dataset):
+            if value.parent != data:
+                data[name] = h5py.SoftLink(value.name)
         else:
             data[name] = value
+        if attrs:
+            data[name].attrs.update(attrs)
         newsignals.append(name)
-    nxdata_set_signals(data, newsignals)
+    if newsignals:
+        nxdata_set_signals(data, newsignals)
 
 
 def mark_default(h5group):
@@ -513,8 +522,8 @@ def mark_default(h5group):
             signal = h5name(path)
             if signal in signals:
                 signals.pop(signals.index(signal))
-                nxdata_set_signals(parent, [signal]+signals)
-                updated(parent)
+            nxdata_set_signals(parent, [signal]+signals)
+            updated(parent)
         elif nxclass == 'NXentry':
             parent.attrs['default'] = h5name(path)
             updated(parent)
