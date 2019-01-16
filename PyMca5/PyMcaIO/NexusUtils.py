@@ -431,6 +431,8 @@ def nxdata_add_axes(data, axes, append=True):
         elif isinstance(value, h5py.Dataset):
             if value.parent != data:
                 data[name] = h5py.SoftLink(value.name)
+        elif isinstance(value, dict):
+            data.create_dataset(name, **value)
         else:
             data[name] = value
         if attrs:
@@ -483,7 +485,7 @@ def nxdata_add_signals(data, signals, append=True):
     Add signals to NXdata instance
 
     :param h5py.Group data:
-    :param list(2-tuple) signals: name(str), value(None,h5py.Dataset,numpy.ndarray), attrs(dict)
+    :param list(2-tuple) signals: name(str), value(None,h5py.Dataset,numpy.ndarray,dict), attrs(dict)
     :param bool append:
     """
     raise_isnot_nx_class(data, 'NXdata')
@@ -497,6 +499,8 @@ def nxdata_add_signals(data, signals, append=True):
         elif isinstance(value, h5py.Dataset):
             if value.parent != data:
                 data[name] = h5py.SoftLink(value.name)
+        elif isinstance(value, dict):
+            data.create_dataset(name, **value)
         else:
             data[name] = value
         if attrs:

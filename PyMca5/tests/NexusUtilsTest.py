@@ -142,10 +142,10 @@ class testNexusUtils(unittest.TestCase):
             s = (4, 3, 2)
             axes = [('y', numpy.arange(s[0]), {'units': 'um'}),
                     ('x', numpy.arange(s[1]), {}),
-                    ('z', numpy.arange(s[2]), None)]
+                    ('z', {'shape': (s[2],), 'dtype': int}, None)]
             signals = [('Fe K', numpy.zeros(s), {'interpretation': 'image'}),
-                       ('Ca K', numpy.zeros(s), {}),
-                       ('S K', numpy.zeros(s), None)]
+                       ('Ca K', {'data': numpy.zeros(s)}, {}),
+                       ('S K', {'shape': s, 'dtype': int}, None)]
             NexusUtils.nxdata_add_axes(data, axes)
             NexusUtils.nxdata_add_signals(data, signals)
 
@@ -159,7 +159,10 @@ class testNexusUtils(unittest.TestCase):
             self.assertEqual(signals, ['Ca K', 'Fe K', 'S K'])
             self.assertEqual(data['y'].attrs['units'], 'um')
             self.assertEqual(data['Fe K'].attrs['interpretation'], 'image')
-
+            for name in signals:
+                self.assertEqual(data[name].shape, s)
+            for n,name in zip(s,list(zip(*axes)[0])):
+                self.assertEqual(data[name].shape, (n,))
 
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()
