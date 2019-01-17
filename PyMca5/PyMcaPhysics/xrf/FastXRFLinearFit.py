@@ -69,8 +69,8 @@ class FastXRFLinearFit(object):
 
     def fitMultipleSpectra(self, x=None, y=None, xmin=None, xmax=None,
                            configuration=None, concentrations=False,
-                           ysum=None, weight=None, refit=True,
-                           livetime=None, saveresiduals=False, savefit=False):
+                           ysum=None, weight=None, refit=True, livetime=None,
+                           saveresiduals=False, savefit=False, savedata=False):
         """
         This method performs the actual fit. The y keyword is the only mandatory input argument.
 
@@ -83,6 +83,7 @@ class FastXRFLinearFit(object):
         :param concentrations: 0 Means no calculation, 1 Calculate elemental concentrations
         :param saveresiduals: 0 Means no calculation, 1 Calculate fit residuals
         :param savefit: 0 Means no calculation, 1 Calculate fitted spectra
+        :param savedata: 0 Mean not| 1 Mean yes
         :param refit: if False, no check for negative results. Default is True.
         :livetime: It will be used if not different from None and concentrations
                    are to be calculated by using fundamental parameters with
@@ -105,23 +106,13 @@ class FastXRFLinearFit(object):
         t0 = time.time()
 
         # Configure fit
-        config, weight, weightPolicy, \
+        configorg, config, weight, weightPolicy, \
         autotime, liveTimeFactor = self._fit_configure(
                                             configuration=configuration,
                                             concentrations=concentrations,
                                             livetime=livetime,
                                             weight=weight,
                                             nSpectra=nSpectra)
-        # weightPolicy:
-        #  0: None
-        #  1: Average weight from sum spectrum
-        #  2: Individual spectrum weights
-        # weight:
-        #  0: None
-        #  1: Use provided or Poisson
-        # autotime:
-        #  0: None
-        #  1: Correct concentrations with liveTimeFactor
 
         # Sum spectrum
         if ysum is None:
@@ -154,19 +145,22 @@ class FastXRFLinearFit(object):
 
         # Least-squares parameters
         if weightPolicy == 2:
+            # Individual spectrum weights (assumed Poisson)
             SVD = False
             sigma_b = None
         elif weightPolicy == 1:
+            # Average weight from sum spectrum (assume Poisson)
             # the +1 is to prevent misbehavior due to weights less than 1.0
             sigma_b = 1 + numpy.sqrt(ysum[idxChan])/nSpectra
             sigma_b = sigma_b.reshape(-1, 1)
             SVD = True
         else:
+            # No weights
             SVD = True
             sigma_b = None
         lstsq_kwargs = {'svd': SVD, 'sigma_b': sigma_b, 'weight': weight}
 
-        # Allocate the output buffer
+        # Allocate output buffers
         nRows = data.shape[0]
         nColumns = data.shape[1]
         results = numpy.zeros((nFree, nRows, nColumns), numpy.float32)
@@ -187,7 +181,6 @@ class FastXRFLinearFit(object):
                         results=results, uncertainties=uncertainties,
                         config=config, anchorslist=anchorslist,
                         lstsq_kwargs=lstsq_kwargs)
-        lstsq_kwargs['last_svd'] = None
 
         t = time.time() - t0
         _logger.debug("First fit elapsed = %f", t)
@@ -196,7 +189,7 @@ class FastXRFLinearFit(object):
                           data.shape[0]*data.shape[1]/float(t))
         t0 = time.time()
 
-        # Refit pixels with negative peak areas
+        # Refit spectra with negative peak areas
         if refit:
             self._fit_lstsq_negpeaks(data=data, nChan=nChan, idxChan=idxChan,
                         freeNames=freeNames, nFreeBkg=nFreeBkg,
@@ -209,7 +202,7 @@ class FastXRFLinearFit(object):
             t0 = time.time()
 
         # Return results as a dictionary
-        outputDict = {'configuration': config,
+        outputDict = {'configuration': configorg,
                       'parameters': results,
                       'uncertainties': uncertainties,
                       'names': freeNames}
@@ -217,7 +210,20 @@ class FastXRFLinearFit(object):
             outputDict['model'] = fitmodel
         if saveresiduals:
             outputDict['residuals'] = data - fitmodel
+        if savedata:
+            outputDict['data'] = data
+        if savefit or saveresiduals or savedata:
+            outputDict['axes_used'] = ('row', 'column', 'energy')
+            xdata = self._mcaTheory.xdata0.flatten()
+            zero, gain = self._mcaTheory.parameters[:2]
+            xenergy = zero + gain*xdata
+            outputDict['axes'] = \
+                    (('row', numpy.arange(data.shape[0]), {}),
+                    ('column', numpy.arange(data.shape[1]), {}),
+                    ('channels', xdata, {}),
+                    ('energy', xenergy, {'units': 'keV'}))
         if concentrations:
+            t0 = time.time()
             self._fit_concentration(config=config,
                                     outputDict=outputDict,
                                     results=results,
@@ -225,7 +231,6 @@ class FastXRFLinearFit(object):
                                     liveTimeFactor=liveTimeFactor)
             t = time.time() - t0
             _logger.debug("Calculation of concentrations elapsed = %f", t)
-
         return outputDict
 
     def _fit_parse_data(self, x=None, y=None, livetime=None):
@@ -261,6 +266,7 @@ class FastXRFLinearFit(object):
             self._mcaTheory.setConfiguration(self._config)
         # read the current configuration
         # it is a copy, we can modify it at will
+        configorg = self._mcaTheory.getConfiguration()
         config = self._mcaTheory.getConfiguration()
         toReconfigure = False
 
@@ -353,7 +359,7 @@ class FastXRFLinearFit(object):
         # make sure we calculate the matrix of the contributions
         self._mcaTheory.enableOptimizedLinearFit()
 
-        return config, weight, weightPolicy, autotime, liveTimeFactor
+        return configorg, config, weight, weightPolicy, autotime, liveTimeFactor
 
     def _fit_mcasum_3d(self, data=None, mcaIndex=None, sumover='all'):
         """Get sum spectrum
@@ -478,17 +484,21 @@ class FastXRFLinearFit(object):
         chunkshape = (nChan, jStep)
         chunkbuffer = numpy.zeros(chunkshape, numpy.float)
         chunkmodel = None
+        bkgsub = config['fit']['stripflag']
         for iRow in range(0, data.shape[0]):
             jStart = 0
             while jStart < data.shape[1]:
                 jEnd = min(jStart + jStep, data.shape[1])
                 chunk = chunkbuffer[:, :(jEnd - jStart)]
-                chunk[()] = data[iRow, jStart:jEnd, idxChan].T
+                if bkgsub:
+                    chunk[()] = data[iRow, jStart:jEnd, idxChan].T.copy()
+                else:
+                    chunk[()] = data[iRow, jStart:jEnd, idxChan].T
                 if fitmodel is not None:
                     chunkmodel = fitmodel[iRow, jStart:jEnd, idxChan].T
 
                 # Subtract background
-                if config['fit']['stripflag']:
+                if bkgsub:
                     self._fit_bkg_subtract(chunk, config=config,
                                            anchorslist=anchorslist,
                                            fitmodel=chunkmodel)
@@ -516,8 +526,7 @@ class FastXRFLinearFit(object):
         npixels = mask.sum()
         nFree = results.shape[0]
         if npixels < nmin:
-            _logger.debug("Skipping #%d pixels", npixels)
-            # fit not worth
+            _logger.debug("Not worth refitting #%d pixels", npixels)
             for iFree, name in zip(skipParams, skipNames):
                 results[iFree][mask] = 0.0
                 uncertainties[iFree][mask] = 0.0
@@ -525,37 +534,12 @@ class FastXRFLinearFit(object):
                                 npixels, name)
         else:
             _logger.debug("Refitting #%d pixels", npixels)
-            # Fit all bad spectra in one chunk
-            if data.dtype not in [numpy.float32, numpy.float64]:
-                if data.itemsize < 5:
-                    data_dtype = numpy.float32
-                else:
-                    data_dtype = numpy.float64
-            else:
-                data_dtype = data.dtype
-            try:
-                if data.dtype != data_dtype:
-                    chunk = numpy.zeros((int(npixels), nChan),
-                                        data_dtype)
-                    chunk[:] = data[mask, idxChan]
-                else:
-                    chunk = data[mask, idxChan]
-                chunk.shape = npixels, -1
-            except TypeError:
-                # in case of dynamic arrays, two dimensional indices are not
-                # supported by h5py
-                chunkshape = (int(npixels), nChan)
-                chunk = numpy.zeros(chunkshape, data_dtype)
-                selectedIndices = numpy.nonzero(mask > 0)
-                tmpData = numpy.zeros((1, nChan), data_dtype)
-                oldDataRow = -1
-                j = 0
-                for i in range(len(selectedIndices[0])):
-                    j = selectedIndices[0][i]
-                    if j != oldDataRow:
-                        tmpData = data[j]
-                        olddataRow = j
-                    chunk[i] = tmpData[selectedIndices[1][i], idxChan]
+
+            # Fit all selected spectra in one chunk
+            bkgsub = config['fit']['stripflag']
+            chunk = self._fit_reduce_mca(data=data, mask=mask,
+                                         npixels=npixels, nChan=nChan,
+                                         idxChan=idxChan, copy=bkgsub)
             chunk = chunk.T
             if fitmodel is None:
                 chunkmodel = None
@@ -563,13 +547,14 @@ class FastXRFLinearFit(object):
                 chunkmodel = fitmodel[mask, idxChan].T
 
             # Subtract background
-            if config['fit']['stripflag']:
+            if bkgsub:
                 self._fit_bkg_subtract(chunk, config=config,
                                         anchorslist=anchorslist,
                                         fitmodel=chunkmodel)
 
             # Solve linear system of equations
             A = derivatives[:, [i for i in range(nFree) if i not in skipParams]]
+            lstsq_kwargs['last_svd'] = None
             ddict = lstsq(A, chunk, digested_output=True,
                           **lstsq_kwargs)
 
@@ -585,6 +570,43 @@ class FastXRFLinearFit(object):
                     idx += 1
             if chunkmodel is not None:
                 chunkmodel += numpy.dot(A, ddict['parameters'])
+
+    @staticmethod
+    def _fit_reduce_mca(data=None, mask=None, npixels=None, copy=None,
+                        nChan=None, idxChan=None):
+        if data.dtype not in [numpy.float32, numpy.float64]:
+            if data.itemsize < 5:
+                data_dtype = numpy.float32
+            else:
+                data_dtype = numpy.float64
+        else:
+            data_dtype = data.dtype
+        try:
+            if data.dtype != data_dtype:
+                chunk = numpy.zeros((int(npixels), nChan),
+                                    data_dtype)
+                chunk[:] = data[mask, idxChan]
+            else:
+                chunk = data[mask, idxChan]
+                if copy:
+                    chunk = chunk.copy()
+            chunk.shape = npixels, -1
+        except TypeError:
+            # in case of dynamic arrays, two dimensional indices are not
+            # supported by h5py
+            chunkshape = (int(npixels), nChan)
+            chunk = numpy.zeros(chunkshape, data_dtype)
+            selectedIndices = numpy.nonzero(mask > 0)
+            tmpData = numpy.zeros((1, nChan), data_dtype)
+            oldDataRow = -1
+            j = 0
+            for i in range(len(selectedIndices[0])):
+                j = selectedIndices[0][i]
+                if j != oldDataRow:
+                    tmpData = data[j]
+                    olddataRow = j
+                chunk[i] = tmpData[selectedIndices[1][i], idxChan]
+        return chunk
 
     @staticmethod
     def _fit_bkg_subtract(spectra, config=None, anchorslist=None, fitmodel=None):
@@ -860,6 +882,7 @@ def save(result, outputDir, outputRoot=None, fileEntry=None,
     if not (tif or edf or csv or h5):
         _logger.warning('fit result not saved (no output format specified)')
         return
+    t0 = time.time()
     _logger.debug('Saving results ...')
 
     # For .edf: outputDir/outputRoot/fileEntry.edf
@@ -922,6 +945,8 @@ def save(result, outputDir, outputRoot=None, fileEntry=None,
                                         fileName,
                                         labels=[label],
                                         dtype=numpy.float32)
+        result['configuration'].write(os.path.join(imagesDir, fileEntry+".cfg"))
+
     if h5:
         filename = os.path.join(outputDir, outputRoot+'.h5')
         with NexusUtils.nxroot(filename, mode='a') as root:
@@ -950,14 +975,21 @@ def save(result, outputDir, outputRoot=None, fileEntry=None,
             # Fitted model and residuals
             signals = []
             attr = {'interpretation':'spectrum'}
-            for name in ['residuals', 'model']:
+            for name in ['data', 'model', 'residuals']:
                 if name in result:
                     value = {'data':result[name], 'chunks':True}
                     signals.append((name,value,attr))
             if signals:
                 data = NexusUtils.nxdata(process['results'], 'fit')
                 NexusUtils.nxdata_add_signals(data, signals)
+                if 'axes' in result:
+                    NexusUtils.nxdata_add_axes(data, result['axes'])
+                if 'axes_used' in result:
+                    axes = [(ax, None, None) for ax in result['axes_used']]
+                    NexusUtils.nxdata_add_axes(data, axes, append=False)
 
+    t = time.time() - t0
+    _logger.debug("Saving results elapsed = %f", t)
 
 def prepareDataStack(fileList):
     if (not os.path.exists(fileList[0])) and \
@@ -1003,7 +1035,7 @@ def main():
                    'tif=', 'edf=', 'csv=', 'h5=',
                    'filepattern=', 'begin=', 'end=', 'increment=',
                    'outroot=', 'outentry=', 'outprocess=',
-                   'savefit=', 'saveresiduals=']
+                   'savefit=', 'saveresiduals=', 'savedata=']
     try:
         opts, args = getopt.getopt(
                      sys.argv[1:],
@@ -1030,6 +1062,7 @@ def main():
     concentrations = 0
     savefit = 0
     saveresiduals = 0
+    savedata = 0
     for opt, arg in opts:
         if opt == '--cfg':
             configurationFile = arg
@@ -1063,6 +1096,8 @@ def main():
             savefit = int(arg)
         elif opt == '--saveresiduals':
             saveresiduals = int(arg)
+        elif opt == '--savedata':
+            savedata = int(arg)
         elif opt == '--outroot':
             outputRoot = arg
         elif opt == '--outentry':
@@ -1108,6 +1143,7 @@ def main():
                                         weight=weight,
                                         refit=refit,
                                         concentrations=concentrations,
+                                        savedata=savedata,
                                         savefit=savefit,
                                         saveresiduals=saveresiduals)
     print("Total Elapsed = % s " % (time.time() - t0))

@@ -2796,8 +2796,6 @@ class McaTheory(object):
         fittedpar=fitresult[0]
         return fittedpar,numpy.zeros((3,len(fittedpar)),numpy.float)
 
-
-
     def estimateexppol(self,x,y,z,xscaling=1.0,yscaling=1.0):
         #initial fit on zz
         i1=numpy.nonzero(numpy.ravel(z)>0.0)[0]
@@ -2824,6 +2822,7 @@ class McaTheory(object):
         fittedpar=fitresult[0]
         fittedpar[0] = numpy.exp(fittedpar[0])
         return fittedpar,numpy.zeros((3,len(fittedpar)),numpy.float)
+
 
 class ClassMcaTheory(McaTheory):
     pass
