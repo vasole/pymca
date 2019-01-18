@@ -226,6 +226,7 @@ class FastXRFLinearFit(object):
             t0 = time.time()
             self._fit_concentration(config=config,
                                     outputDict=outputDict,
+                                    nFreeBkg=nFreeBkg,
                                     results=results,
                                     autotime=autotime,
                                     liveTimeFactor=liveTimeFactor)
@@ -696,7 +697,7 @@ class FastXRFLinearFit(object):
             iIter += 1
 
     def _fit_concentration(self, config=None, outputDict=None, results=None,
-                           autotime=None, liveTimeFactor=None):
+                           nFreeBkg=None, autotime=None, liveTimeFactor=None):
         """Calculate concentrations from peak areas
         """
         # check if an internal reference is used and if it is set to auto
