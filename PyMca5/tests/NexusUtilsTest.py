@@ -100,7 +100,7 @@ class testNexusUtils(unittest.TestCase):
     def validate_nxdata(self, h5group, axes, signals):
         attrs = ['NX_class', 'axes', 'signal', 'auxiliary_signals']
         self.assertEqual(set(h5group.attrs.keys()), set(attrs))
-        files = list(zip(*axes)[0]) + list(zip(*signals)[0])
+        files = list(next(iter(zip(*axes)))) + list(next(iter(zip(*signals))))
         self.assertEqual(set(h5group.keys()), set(files))
         self.assertEqual(h5group.attrs['NX_class'], 'NXdata')
 
@@ -161,7 +161,7 @@ class testNexusUtils(unittest.TestCase):
             self.assertEqual(data['Fe K'].attrs['interpretation'], 'image')
             for name in signals:
                 self.assertEqual(data[name].shape, s)
-            for n,name in zip(s,list(zip(*axes)[0])):
+            for n, name in zip(s, list(next(iter(zip(*axes))))):
                 self.assertEqual(data[name].shape, (n,))
 
 def getSuite(auto=True):
