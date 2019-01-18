@@ -31,12 +31,12 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
-# WDN: not sure why this is enforced
-#if os.path.exists('PyMca5'):
-#    if os.path.exists('setup.py'):
-#        if os.path.exists('py2app_setup.py'):
-#            txt ='Tests cannnot be imported from top source directory'
-#            raise ImportError(txt)
+
+if os.path.exists('PyMca5'):
+    if os.path.exists('setup.py'):
+        if os.path.exists('py2app_setup.py'):
+            txt = 'Tests cannot be imported from top source directory'
+            raise ImportError(txt)
 
 from PyMca5.tests.TestAll import main as testAll
 from PyMca5.tests.ConfigDictTest import test as testConfigDict
