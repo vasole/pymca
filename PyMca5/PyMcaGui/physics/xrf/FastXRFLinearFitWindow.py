@@ -220,36 +220,27 @@ class FastXRFLinearFitWindow(qt.QWidget):
 
     def getParameters(self):
         ddict = {}
-        ddict['configuration'] = qt.safe_str(self._configLine.text())
-        ddict['output_dir'] = qt.safe_str(self._outdirLine.text())
-        ddict['output_root'] = qt.safe_str(self._outrootLine.text())
-        ddict['file_entry'] = qt.safe_str(self._outentryLine.text())
-        ddict['file_name'] = qt.safe_str(self._outnameLine.text())
-        if self._concentrationsBox.isChecked():
-            ddict['concentrations'] = 1
-        else:
-            ddict['concentrations'] = 0
-        ddict['weight_policy'] = self._weightButtonGroup.checkedId()
-        if self._fitAgainBox.isChecked():
-            ddict['refit'] = 1
-        else:
-            ddict['refit'] = 0
-        if self._tiffBox.isChecked():
-            ddict['tiff'] = 1
-        else:
-            ddict['tiff'] = 0
-        if self._csvBox.isChecked():
-            ddict['csv'] = 1
-        else:
-            ddict['csv'] = 0
-        if self._edfBox.isChecked():
-            ddict['edf'] = 1
-        else:
-            ddict['edf'] = 0
-        if self._h5Box.isChecked():
-            ddict['h5'] = 1
-        else:
-            ddict['h5'] = 0
+        fit = {}
+        ddict['fit'] = fit
+        fit['configuration'] = qt.safe_str(self._configLine.text())
+        fit['weight'] = self._weightButtonGroup.checkedId()
+        fit['concentrations'] = self._concentrationsBox.isChecked()
+        fit['refit'] = self._fitAgainBox.isChecked()
+        output = {}
+        ddict['output'] = output
+        output['outputDir'] = qt.safe_str(self._outdirLine.text()).replace(" ", "")
+        output['outputRoot'] = qt.safe_str(self._outrootLine.text()).replace(" ", "")
+        output['fileEntry'] = qt.safe_str(self._outentryLine.text()).replace(" ", "")
+        output['fileProcess'] = qt.safe_str(self._outnameLine.text()).replace(" ", "")
+        output['tif'] = self._tiffBox.isChecked()
+        output['csv'] = self._csvBox.isChecked()
+        output['edf'] = self._edfBox.isChecked()
+        output['h5'] = self._h5Box.isChecked()
+        # Currently not exposed by GUI:
+        output['overwrite'] = True
+        output['save_data'] = False
+        output['save_fit'] = False
+        output['save_residuals'] = False
         return ddict
 
 class FastXRFLinearFitDialog(qt.QDialog):

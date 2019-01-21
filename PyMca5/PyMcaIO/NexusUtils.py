@@ -302,7 +302,7 @@ def nxentry_init(parent, name):
         updated(h5group)
 
 
-def nxnote_init(parent, name, data, type):
+def nxnote_init(parent, name, data=None, type=None):
     """
     Initialize NXnote instance
 
@@ -315,10 +315,39 @@ def nxnote_init(parent, name, data, type):
     raise_is_nx_class(parent, None)
     if nx_class_needsinit(parent, name, 'NXnote'):
         h5group = parent[name]
-        update_h5dataset(h5group, 'data', vlen_string(data))
-        update_h5dataset(h5group, 'type', vlen_string(type))
         h5group.attrs['NX_class'] = 'NXnote'
+        update = True
+    else:
+        h5group = parent[name]
+        update = False
+    if data is not None:
+        update_h5dataset(h5group, 'data', vlen_string(data))
+        update = True
+    if type is not None:
+        update_h5dataset(h5group, 'type', vlen_string(type))
+        update = True
+    if update:
         updated(h5group)
+
+
+def nxprocess_configuration_init(parent, configdict=None):
+    """
+    Initialize NXnote instance
+
+    :param h5py.Group parent:
+    :param ConfigDict configdict:
+    :raises RuntimeError: parent not NXprocess
+    """
+    raise_isnot_nx_class(parent, 'NXprocess')
+    if configdict is not None:
+        data = configdict.tostring()
+        type = 'ini'
+    else:
+        data = None
+        type = None
+    name = 'configuration'
+    nxnote_init(parent, name, data=data, type=type)
+    updated(parent[name])
 
 
 def nxprocess_init(parent, name, configdict=None):
@@ -327,6 +356,7 @@ def nxprocess_init(parent, name, configdict=None):
 
     :param h5py.Group parent:
     :param str name:
+    :param ConfigDict configdict:
     :raises RuntimeError: wrong Nexus class or parent not NXentry
     """
     raise_isnot_nx_class(parent, 'NXentry')
@@ -338,9 +368,7 @@ def nxprocess_init(parent, name, configdict=None):
         updated(h5group)
     else:
         h5group = parent[name]
-    if configdict is not None:
-        data = configdict.tostring()
-        nxnote_init(h5group, 'configuration', data, 'ini')
+    nxprocess_configuration_init(h5group, configdict=configdict)
     nxclass_init(h5group, 'results', 'NXcollection')
 
 

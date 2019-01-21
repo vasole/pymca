@@ -36,14 +36,19 @@ Module to perform a fast linear fit on a stack of fluorescence spectra.
 import os
 import numpy
 import logging
-from PyMca5.PyMcaMath.linalg import lstsq
+import time
+import h5py
+import collections
+from contextlib import contextmanager
 from . import ClassMcaTheory
-from PyMca5.PyMcaMath.fitting import Gefit
 from . import ConcentrationsTool
+from PyMca5.PyMcaMath.linalg import lstsq
+from PyMca5.PyMcaMath.fitting import Gefit
 from PyMca5.PyMcaMath.fitting import SpecfitFuns
 from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaIO import NexusUtils
-import time
+from PyMca5.PyMcaMisc import PhysicalMemory
+
 
 _logger = logging.getLogger(__name__)
 
@@ -70,7 +75,7 @@ class FastXRFLinearFit(object):
     def fitMultipleSpectra(self, x=None, y=None, xmin=None, xmax=None,
                            configuration=None, concentrations=False,
                            ysum=None, weight=None, refit=True, livetime=None,
-                           saveresiduals=False, savefit=False, savedata=False):
+                           outbuffer=None):
         """
         This method performs the actual fit. The y keyword is the only mandatory input argument.
 
@@ -81,21 +86,18 @@ class FastXRFLinearFit(object):
         :param ysum: sum spectrum
         :param weight: 0 Means no weight, 1 Use an average weight, 2 Individual weights (slow)
         :param concentrations: 0 Means no calculation, 1 Calculate elemental concentrations
-        :param saveresiduals: 0 Means no calculation, 1 Calculate fit residuals
-        :param savefit: 0 Means no calculation, 1 Calculate fitted spectra
-        :param savedata: 0 Mean not| 1 Mean yes
         :param refit: if False, no check for negative results. Default is True.
         :livetime: It will be used if not different from None and concentrations
                    are to be calculated by using fundamental parameters with
                    automatic time. The default is None.
-        :return: A dictionnary with the parameters, uncertainties, concentrations and names as keys.
+        :outbuffer dict: 
+        :return dict: outbuffer
         """
         # Parse data
         x, data, mcaIndex, livetime = self._fit_parse_data(x=x, y=y,
                                                            livetime=livetime)
 
         # Check data dimensions
-        nSpectra = data.size // data.shape[mcaIndex]
         if data.ndim != 3:
             txt = "For the time being only three dimensional arrays supported"
             raise IndexError(txt)
@@ -103,138 +105,165 @@ class FastXRFLinearFit(object):
             txt = "For the time being only mca arrays supported"
             raise IndexError(txt)
 
-        t0 = time.time()
+        if outbuffer is None:
+            outbuffer = FastFitOutputBuffer()
 
-        # Configure fit
-        configorg, config, weight, weightPolicy, \
-        autotime, liveTimeFactor = self._fit_configure(
-                                            configuration=configuration,
-                                            concentrations=concentrations,
-                                            livetime=livetime,
-                                            weight=weight,
-                                            nSpectra=nSpectra)
+        with outbuffer._buffer_context(update=False):
+            t0 = time.time()
 
-        # Sum spectrum
-        if ysum is None:
-            if weightPolicy == 1:
-                # we need to calculate the sum spectrum
-                # to derive the uncertainties
-                sumover = 'all'
-            elif not concentrations:
-                # one spectrum is enough
-                sumover = 'first pixel'
+            # Configure fit
+            nSpectra = data.size // data.shape[mcaIndex]
+            configorg, config, weight, weightPolicy, \
+            autotime, liveTimeFactor = self._fit_configure(
+                                                configuration=configuration,
+                                                concentrations=concentrations,
+                                                livetime=livetime,
+                                                weight=weight,
+                                                nSpectra=nSpectra)
+            outbuffer['configuration'] = configorg
+
+            # Sum spectrum
+            if ysum is None:
+                if weightPolicy == 1:
+                    # we need to calculate the sum spectrum
+                    # to derive the uncertainties
+                    sumover = 'all'
+                elif not concentrations:
+                    # one spectrum is enough
+                    sumover = 'first pixel'
+                else:
+                    sumover = 'first row'
+                yref = self._fit_reference_spectrum(data=data, sumover=sumover)
             else:
-                sumover = 'first row'
-            ysum = self._fit_mcasum_3d(data=data, mcaIndex=mcaIndex, sumover=sumover)
+                yref = ysum
 
-        # Get the basis of the linear models (i.e. derivative to peak areas)
-        if xmin is None:
-            xmin = config['fit']['xmin']
-        if xmax is None:
-            xmax = config['fit']['xmax']
-        self._mcaTheory.setData(x=x, y=ysum, xmin=xmin, xmax=xmax)
-        derivatives, freeNames, nFree, nFreeBkg = self._fit_model()
+            # Get the basis of the linear models (i.e. derivative to peak areas)
+            if xmin is None:
+                xmin = config['fit']['xmin']
+            if xmax is None:
+                xmax = config['fit']['xmax']
+            dtype = self._fit_dtype(data)
+            self._mcaTheory.setData(x=x, y=yref, xmin=xmin, xmax=xmax)
+            derivatives, freeNames, nFree, nFreeBkg = self._fit_model(dtype=dtype)
+            outbuffer['parameter_names'] = freeNames
 
-        # Background anchor points (if any)
-        anchorslist = self._fit_bkg_anchorlist(config=config)
+            # Background anchor points (if any)
+            anchorslist = self._fit_bkg_anchorlist(config=config)
 
-        # MCA trimming: [iXMin:iXMax]
-        iXMin, iXMax = self._fit_mcatrim_info(x=x)
-        idxChan = slice(iXMin, iXMax)
-        nChan = iXMax-iXMin
+            # MCA trimming: [iXMin:iXMax]
+            iXMin, iXMax = self._fit_mcatrim_info(x=x)
+            sliceChan = slice(iXMin, iXMax)
+            nObs = iXMax-iXMin
 
-        # Least-squares parameters
-        if weightPolicy == 2:
-            # Individual spectrum weights (assumed Poisson)
-            SVD = False
-            sigma_b = None
-        elif weightPolicy == 1:
-            # Average weight from sum spectrum (assume Poisson)
-            # the +1 is to prevent misbehavior due to weights less than 1.0
-            sigma_b = 1 + numpy.sqrt(ysum[idxChan])/nSpectra
-            sigma_b = sigma_b.reshape(-1, 1)
-            SVD = True
-        else:
-            # No weights
-            SVD = True
-            sigma_b = None
-        lstsq_kwargs = {'svd': SVD, 'sigma_b': sigma_b, 'weight': weight}
+            # Least-squares parameters
+            if weightPolicy == 2:
+                # Individual spectrum weights (assumed Poisson)
+                SVD = False
+                sigma_b = None
+            elif weightPolicy == 1:
+                # Average weight from sum spectrum (assume Poisson)
+                # the +1 is to prevent misbehavior due to weights less than 1.0
+                sigma_b = 1 + numpy.sqrt(yref[sliceChan])/nSpectra
+                sigma_b = sigma_b.reshape(-1, 1)
+                SVD = True
+            else:
+                # No weights
+                SVD = True
+                sigma_b = None
+            lstsq_kwargs = {'svd': SVD, 'sigma_b': sigma_b, 'weight': weight}
 
-        # Allocate output buffers
-        nRows = data.shape[0]
-        nColumns = data.shape[1]
-        results = numpy.zeros((nFree, nRows, nColumns), numpy.float32)
-        uncertainties = numpy.zeros((nFree, nRows, nColumns), numpy.float32)
-        if savefit or saveresiduals:
-            fitmodel = numpy.zeros_like(data, dtype=numpy.float32)
-            fitmodel[..., 0:iXMin] = numpy.nan
-            fitmodel[..., iXMax:] = numpy.nan
-        else:
-            fitmodel = None
+            # Allocate output buffers
+            nRows, nColumns, nChan = data.shape
+            param_shape = nFree, nRows, nColumns
+            image_shape = nRows, nColumns
+            results = outbuffer.allocate_memory('parameters',
+                                                shape=param_shape,
+                                                dtype=dtype)
+            uncertainties = outbuffer.allocate_memory('uncertainties',
+                                                      shape=param_shape,
+                                                      dtype=dtype)
+            if outbuffer.save_diagnostics:
+                nFreeParameters = outbuffer.allocate_memory('nFreeParameters',
+                                                 shape=image_shape,
+                                                 fill_value=nFree)
+                _ = outbuffer.allocate_memory('nObservations',
+                                                 shape=image_shape,
+                                                 fill_value=nObs)
+                fitmodel = outbuffer.allocate_h5('model',
+                                                 nxdata='fit',
+                                                 shape=data.shape,
+                                                 dtype=dtype,
+                                                 chunks=True,
+                                                 fill_value=0)
+                fitmodel[..., 0:iXMin] = numpy.nan
+                fitmodel[..., iXMax:] = numpy.nan
+            else:
+                fitmodel = None
+                nFreeParameters = None
 
-        _logger.debug("Configuration elapsed = %f", time.time() - t0)
-        t0 = time.time()
-
-        # Fit all spectra
-        self._fit_lstsq_all(data=data, nChan=nChan, idxChan=idxChan,
-                        derivatives=derivatives, fitmodel=fitmodel,
-                        results=results, uncertainties=uncertainties,
-                        config=config, anchorslist=anchorslist,
-                        lstsq_kwargs=lstsq_kwargs)
-
-        t = time.time() - t0
-        _logger.debug("First fit elapsed = %f", t)
-        if t > 0.:
-            _logger.debug("Spectra per second = %f",
-                          data.shape[0]*data.shape[1]/float(t))
-        t0 = time.time()
-
-        # Refit spectra with negative peak areas
-        if refit:
-            self._fit_lstsq_negpeaks(data=data, nChan=nChan, idxChan=idxChan,
-                        freeNames=freeNames, nFreeBkg=nFreeBkg,
-                        derivatives=derivatives, fitmodel=fitmodel,
-                        results=results, uncertainties=uncertainties,
-                        config=config, anchorslist=anchorslist,
-                        lstsq_kwargs=lstsq_kwargs)
-            t = time.time() - t0
-            _logger.debug("Fit of negative peaks elapsed = %f", t)
+            _logger.debug("Configuration elapsed = %f", time.time() - t0)
             t0 = time.time()
 
-        # Return results as a dictionary
-        outputDict = {'configuration': configorg,
-                      'parameters': results,
-                      'uncertainties': uncertainties,
-                      'names': freeNames}
-        if savefit:
-            outputDict['model'] = fitmodel
-        if saveresiduals:
-            outputDict['residuals'] = data - fitmodel
-        if savedata:
-            outputDict['data'] = data
-        if savefit or saveresiduals or savedata:
-            outputDict['axes_used'] = ('row', 'column', 'energy')
-            xdata = self._mcaTheory.xdata0.flatten()
-            zero, gain = self._mcaTheory.parameters[:2]
-            xenergy = zero + gain*xdata
-            outputDict['axes'] = \
-                    (('row', numpy.arange(data.shape[0]), {}),
-                    ('column', numpy.arange(data.shape[1]), {}),
-                    ('channels', xdata, {}),
-                    ('energy', xenergy, {'units': 'keV'}))
-        if concentrations:
-            t0 = time.time()
-            self._fit_concentration(config=config,
-                                    outputDict=outputDict,
-                                    nFreeBkg=nFreeBkg,
-                                    results=results,
-                                    autotime=autotime,
-                                    liveTimeFactor=liveTimeFactor)
-            t = time.time() - t0
-            _logger.debug("Calculation of concentrations elapsed = %f", t)
-        return outputDict
+            # Fit all spectra
+            self._fit_lstsq_all(data=data, sliceChan=sliceChan,
+                            derivatives=derivatives, fitmodel=fitmodel,
+                            results=results, uncertainties=uncertainties,
+                            config=config, anchorslist=anchorslist,
+                            lstsq_kwargs=lstsq_kwargs)
 
-    def _fit_parse_data(self, x=None, y=None, livetime=None):
+            t = time.time() - t0
+            _logger.debug("First fit elapsed = %f", t)
+            if t > 0.:
+                _logger.debug("Spectra per second = %f",
+                            data.shape[0]*data.shape[1]/float(t))
+            t0 = time.time()
+
+            # Refit spectra with negative peak areas
+            if refit:
+                self._fit_lstsq_negpeaks(data=data, sliceChan=sliceChan,
+                            freeNames=freeNames, nFreeBkg=nFreeBkg,
+                            derivatives=derivatives, fitmodel=fitmodel,
+                            results=results, uncertainties=uncertainties,
+                            nFreeParameters=nFreeParameters,
+                            config=config, anchorslist=anchorslist,
+                            lstsq_kwargs=lstsq_kwargs)
+                t = time.time() - t0
+                _logger.debug("Fit of negative peaks elapsed = %f", t)
+                t0 = time.time()
+
+            # Return results as a dictionary
+            outaxes = False
+            if outbuffer.save_data:
+                outaxes = True
+                outbuffer.allocate_h5('data', nxdata='fit', data=data, chunks=True)
+            if outbuffer.save_residuals:
+                outaxes = True
+                residuals = outbuffer.allocate_h5('residuals', nxdata='fit', data=data, chunks=True)
+                residuals[()] -= fitmodel
+            if outaxes:
+                outbuffer['data_axes_used'] = ('row', 'column', 'energy')
+                xdata = self._mcaTheory.xdata0.flatten()
+                zero, gain = self._mcaTheory.parameters[:2]
+                xenergy = zero + gain*xdata
+                outbuffer['data_axes'] = \
+                        (('row', numpy.arange(data.shape[0]), {}),
+                        ('column', numpy.arange(data.shape[1]), {}),
+                        ('channels', xdata, {}),
+                        ('energy', xenergy, {'units': 'keV'}))
+            if concentrations:
+                t0 = time.time()
+                self._fit_concentration(config=config,
+                                        outputDict=outbuffer,
+                                        nFreeBkg=nFreeBkg,
+                                        results=results,
+                                        autotime=autotime,
+                                        liveTimeFactor=liveTimeFactor)
+                t = time.time() - t0
+                _logger.debug("Calculation of concentrations elapsed = %f", t)
+            return outbuffer
+
+    @staticmethod
+    def _fit_parse_data(x=None, y=None, livetime=None):
         """Parse the input data (MCA and livetime)
         """
         if y is None:
@@ -360,30 +389,29 @@ class FastXRFLinearFit(object):
         # make sure we calculate the matrix of the contributions
         self._mcaTheory.enableOptimizedLinearFit()
 
-        return configorg, config, weight, weightPolicy, autotime, liveTimeFactor
+        return configorg, config, weight, weightPolicy, \
+               autotime, liveTimeFactor
 
-    def _fit_mcasum_3d(self, data=None, mcaIndex=None, sumover='all'):
+    def _fit_reference_spectrum(self, data=None, sumover='all'):
         """Get sum spectrum
         """
+        dtype = self._fit_dtype(data)
         if sumover == 'all':
-            # Sum in chunks of maximal 5000 or nColumns spectra
-            jStep = min(5000, data.shape[1])
-            ysum = numpy.zeros((data.shape[mcaIndex],), numpy.float)
-            for iRow in range(0, data.shape[0]):
-                jStart = 0
-                while jStart < data.shape[1]:
-                    jEnd = min(jStart + jStep, data.shape[1])
-                    ysum += data[iRow, jStart:jEnd, :].sum(axis=0, dtype=numpy.float)
-                    jStart = jEnd
+            #nspectra = PhysicalMemory.chunks_in_memory(data.shape, data.dtype,
+            #                                   axis=-1, maximal=5000)
+            datastack = ChunkedMcaStack(data, nmca=5000)
+            yref = numpy.zeros((data.shape[-1],), dtype)
+            for _, chunk in datastack.items():
+                yref += chunk.sum(axis=0, dtype=dtype)
         elif sumover == 'first row':
             # Sum spectrum of the first row
-            ysum = data[0, :, :].sum(axis=0, dtype=numpy.float)
+            yref = data[0, :, :].sum(axis=0, dtype=dtype)
         else:
             # First spectrum
-            ysum = data[0, 0, :]
-        return ysum
+            yref = data[0, 0, :].astype(dtype)
+        return yref
 
-    def _fit_model(self):
+    def _fit_model(self, dtype=None):
         """Get linear model for fitting
         """
         # Initialize the derivatives
@@ -419,7 +447,7 @@ class FastXRFLinearFit(object):
                                                               self._mcaTheory.xdata)
             deriv.shape = -1
             if derivatives is None:
-                derivatives = numpy.zeros((deriv.shape[0], nFree), numpy.float)
+                derivatives = numpy.zeros((deriv.shape[0], nFree), dtype=dtype)
             derivatives[:, idx] = deriv
             idx += 1
 
@@ -428,7 +456,7 @@ class FastXRFLinearFit(object):
     def _fit_bkg_anchorlist(self, config=None):
         """Get anchors for background subtraction
         """
-        xdata = self._mcaTheory.xdata
+        xdata = self._mcaTheory.xdata  # trimmed
         if config['fit']['stripflag']:
             anchorslist = []
             if config['fit']['stripanchorsflag']:
@@ -475,28 +503,95 @@ class FastXRFLinearFit(object):
                 iXMax = iXMax[0]
         return iXMin, iXMax+1
 
-    def _fit_lstsq_all(self, data=None, nChan=None, idxChan=None, derivatives=None,
+    def _data_iter(self, slicecls, data=None, fitmodel=None, copy=True, **kwargs):
+        dtype = self._fit_dtype(data)
+        datastack = slicecls(data, dtype=dtype, modify=False, **kwargs)
+        chunkiter = datastack.items(copy=copy)
+        if fitmodel is not None:
+            modelstack = slicecls(fitmodel, dtype=dtype, modify=True, **kwargs)
+            modeliter = modelstack.items(copy=False)
+            chunkiter = izip_clean(chunkiter, modeliter)
+        return chunkiter
+
+    def _fit_lstsq_all(self, data=None, sliceChan=None, derivatives=None,
                    fitmodel=None, results=None, uncertainties=None,
                    config=None, anchorslist=None, lstsq_kwargs=None):
-        """Fit all spectra
         """
-        # Fit in chunks of maximal 100 or nColumns spectra
-        jStep = min(100, data.shape[1])
-        chunkshape = (nChan, jStep)
-        chunkbuffer = numpy.zeros(chunkshape, numpy.float)
-        chunkmodel = None
-        bkgsub = config['fit']['stripflag']
-        for iRow in range(0, data.shape[0]):
-            jStart = 0
-            while jStart < data.shape[1]:
-                jEnd = min(jStart + jStep, data.shape[1])
-                chunk = chunkbuffer[:, :(jEnd - jStart)]
+        Fit all spectra
+        """
+        bkgsub = bool(config['fit']['stripflag'])
+        #nspectra = PhysicalMemory.chunks_in_memory(data.shape, data.dtype,
+        #                                   axis=-1, maximal=100)
+        chunkiter = self._data_iter(ChunkedMcaStack, data=data, fitmodel=fitmodel,
+                                    mcaslice=sliceChan, copy=bkgsub, nmca=100)
+        for chunk in chunkiter:
+            if fitmodel is None:
+                idx, chunk = chunk
+                chunkmodel = None
+            else:
+                (idx, chunk), (idxmodel, chunkmodel) = chunk
+                chunkmodel = chunkmodel.T
+            chunk = chunk.T
+
+            # Subtract background
+            if bkgsub:
+                self._fit_bkg_subtract(chunk, config=config,
+                                       anchorslist=anchorslist,
+                                       fitmodel=chunkmodel)
+
+            # Solve linear system of equations
+            ddict = lstsq(derivatives, chunk, digested_output=True,
+                          **lstsq_kwargs)
+            lstsq_kwargs['last_svd'] = ddict.get('svd', None)
+
+            # Save results
+            idx = slice(None), idx[0], idx[1]
+            results[idx] = ddict['parameters']
+            uncertainties[idx] = ddict['uncertainties']
+            if chunkmodel is not None:
                 if bkgsub:
-                    chunk[()] = data[iRow, jStart:jEnd, idxChan].T.copy()
+                    chunkmodel += numpy.dot(derivatives, ddict['parameters'])
                 else:
-                    chunk[()] = data[iRow, jStart:jEnd, idxChan].T
-                if fitmodel is not None:
-                    chunkmodel = fitmodel[iRow, jStart:jEnd, idxChan].T
+                    chunkmodel[()] = numpy.dot(derivatives, ddict['parameters'])
+
+    def _fit_lstsq_reduced(self, data=None, mask=None, skipParams= None,
+                    skipNames=None, nmin=None, sliceChan=None,
+                    derivatives=None, fitmodel=None, results=None,
+                    uncertainties=None, nFreeParameters=None,
+                    config=None, anchorslist=None, lstsq_kwargs=None):
+        """
+        Fit reduced number of spectra (mask) with a reduced model (skipped parameters will be set to zero)
+        """
+        npixels = int(mask.sum())
+        if npixels < nmin:
+            _logger.debug("Not worth refitting #%d pixels", npixels)
+            for iFree, name in zip(skipParams, skipNames):
+                results[iFree][mask] = 0.0
+                uncertainties[iFree][mask] = 0.0
+                _logger.debug("%d pixels of parameter %s set to zero",
+                              npixels, name)
+            if nFreeParameters is not None:
+                nFreeParameters[mask] = 0
+        else:
+            _logger.debug("Refitting #%d pixels", npixels)
+            nFreeOrg = results.shape[0]
+            idxSel = [i for i in range(nFreeOrg) if i not in skipParams]
+            nFree = len(idxSel)
+            A = derivatives[:, idxSel]
+            lstsq_kwargs['last_svd'] = None
+
+            # Fit all selected spectra in one chunk
+            bkgsub = bool(config['fit']['stripflag'])
+            chunkiter = self._data_iter(MaskedMcaStack, data=data, fitmodel=fitmodel,
+                                        mcaslice=sliceChan, copy=bkgsub, mask=mask)
+            for chunk in chunkiter:
+                if fitmodel is None:
+                    idx, chunk = chunk
+                    chunkmodel = None
+                else:
+                    (idx, chunk), (idxmodel, chunkmodel) = chunk
+                    chunkmodel = chunkmodel.T
+                chunk = chunk.T
 
                 # Subtract background
                 if bkgsub:
@@ -505,109 +600,39 @@ class FastXRFLinearFit(object):
                                            fitmodel=chunkmodel)
 
                 # Solve linear system of equations
-                ddict = lstsq(derivatives, chunk,
-                              digested_output=True, **lstsq_kwargs)
+                ddict = lstsq(A, chunk, digested_output=True,
+                              **lstsq_kwargs)
+                lstsq_kwargs['last_svd'] = ddict.get('svd', None)
 
                 # Save results
-                lstsq_kwargs['last_svd'] = ddict.get('svd', None)
-                parameters = ddict['parameters']
-                results[:, iRow, jStart:jEnd] = parameters
-                uncertainties[:, iRow, jStart:jEnd] = ddict['uncertainties']
+                iParam = 0
+                idx = mask  # for now MaskedMcaStack only has one chunk
+                for iFree in range(nFreeOrg):
+                    if iFree in skipParams:
+                        results[iFree][idx] = 0.0
+                        uncertainties[iFree][idx] = 0.0
+                    else:
+                        results[iFree][idx] = ddict['parameters'][iParam]
+                        uncertainties[iFree][idx] = ddict['uncertainties'][iParam]
+                        iParam += 1
                 if chunkmodel is not None:
-                    chunkmodel += numpy.dot(derivatives, parameters)
-                jStart = jEnd
+                    if bkgsub:
+                        chunkmodel += numpy.dot(A, ddict['parameters'])
+                    else:
+                        chunkmodel[()] = numpy.dot(A, ddict['parameters'])
 
-    def _fit_lstsq_reduced(self, data=None, mask=None, skipParams= None,
-                    skipNames=None, nmin=None, nChan=None, idxChan=None,
-                    derivatives=None, fitmodel=None, results=None, uncertainties=None,
-                    config=None, anchorslist=None, lstsq_kwargs=None):
-        """
-        Fit reduced number of spectra (mask) with a reduced model (skipped parameters are fixed at zero)
-        """
-        npixels = mask.sum()
-        nFree = results.shape[0]
-        if npixels < nmin:
-            _logger.debug("Not worth refitting #%d pixels", npixels)
-            for iFree, name in zip(skipParams, skipNames):
-                results[iFree][mask] = 0.0
-                uncertainties[iFree][mask] = 0.0
-                _logger.debug("%d pixels of parameter %s set to zero",
-                                npixels, name)
-        else:
-            _logger.debug("Refitting #%d pixels", npixels)
-
-            # Fit all selected spectra in one chunk
-            bkgsub = config['fit']['stripflag']
-            chunk = self._fit_reduce_mca(data=data, mask=mask,
-                                         npixels=npixels, nChan=nChan,
-                                         idxChan=idxChan, copy=bkgsub)
-            chunk = chunk.T
-            if fitmodel is None:
-                chunkmodel = None
-            else:
-                chunkmodel = fitmodel[mask, idxChan].T
-
-            # Subtract background
-            if bkgsub:
-                self._fit_bkg_subtract(chunk, config=config,
-                                        anchorslist=anchorslist,
-                                        fitmodel=chunkmodel)
-
-            # Solve linear system of equations
-            A = derivatives[:, [i for i in range(nFree) if i not in skipParams]]
-            lstsq_kwargs['last_svd'] = None
-            ddict = lstsq(A, chunk, digested_output=True,
-                          **lstsq_kwargs)
-
-            # Save results
-            idx = 0
-            for iFree in range(nFree):
-                if iFree in skipParams:
-                    results[iFree][mask] = 0.0
-                    uncertainties[iFree][mask] = 0.0
-                else:
-                    results[iFree][mask] = ddict['parameters'][idx]
-                    uncertainties[iFree][mask] = ddict['uncertainties'][idx]
-                    idx += 1
-            if chunkmodel is not None:
-                chunkmodel += numpy.dot(A, ddict['parameters'])
+            if nFreeParameters is not None:
+                nFreeParameters[mask] = nFree
 
     @staticmethod
-    def _fit_reduce_mca(data=None, mask=None, npixels=None, copy=None,
-                        nChan=None, idxChan=None):
+    def _fit_dtype(data):
         if data.dtype not in [numpy.float32, numpy.float64]:
             if data.itemsize < 5:
-                data_dtype = numpy.float32
+                return numpy.float32
             else:
-                data_dtype = numpy.float64
+                return numpy.float64
         else:
-            data_dtype = data.dtype
-        try:
-            if data.dtype != data_dtype:
-                chunk = numpy.zeros((int(npixels), nChan),
-                                    data_dtype)
-                chunk[:] = data[mask, idxChan]
-            else:
-                chunk = data[mask, idxChan]
-                if copy:
-                    chunk = chunk.copy()
-            chunk.shape = npixels, -1
-        except TypeError:
-            # in case of dynamic arrays, two dimensional indices are not
-            # supported by h5py
-            chunkshape = (int(npixels), nChan)
-            chunk = numpy.zeros(chunkshape, data_dtype)
-            selectedIndices = numpy.nonzero(mask > 0)
-            tmpData = numpy.zeros((1, nChan), data_dtype)
-            oldDataRow = -1
-            j = 0
-            for i in range(len(selectedIndices[0])):
-                j = selectedIndices[0][i]
-                if j != oldDataRow:
-                    tmpData = data[j]
-                    olddataRow = j
-                chunk[i] = tmpData[selectedIndices[1][i], idxChan]
-        return chunk
+            return data.dtype
 
     @staticmethod
     def _fit_bkg_subtract(spectra, config=None, anchorslist=None, fitmodel=None):
@@ -705,18 +730,18 @@ class FastXRFLinearFit(object):
         cToolConf = cTool.configure()
         cToolConf.update(config['concentrations'])
 
-        fitysum = False
+        fitreference = False
         if config['concentrations']['usematrix']:
             _logger.debug("USING MATRIX")
             if config['concentrations']['reference'].upper() == "AUTO":
-                fitysum = True
+                fitreference = True
         elif autotime:
             # we have to calculate with the time in the configuration
             # and correct later on
             cToolConf["autotime"] = 0
 
         fitresult = {}
-        if fitysum:
+        if fitreference:
             # we have to fit the "reference" spectrum just to get the reference element
             mcafitresult = self._mcaTheory.startfit(digest=0, linear=True)
             # if one of the elements has zero area this cannot be made directly
@@ -763,12 +788,13 @@ class FastXRFLinearFit(object):
         nElements = len(list(concentrationsResult['mass fraction'].keys()))
         nFree, nRows, nColumns = results.shape
         massFractions = numpy.zeros((nValues * nElements, nRows, nColumns),
-                                    numpy.float32)
+                                    dtype=results.dtype)
 
         referenceElement = addInfo['ReferenceElement']
         referenceTransitions = addInfo['ReferenceTransitions']
         _logger.debug("Reference <%s>  transition <%s>",
                       referenceElement, referenceTransitions)
+        outputDict['concentration_names'] = []
         if referenceElement in ["", None, "None"]:
             _logger.debug("No reference")
             counter = 0
@@ -776,7 +802,7 @@ class FastXRFLinearFit(object):
                 if group.lower().startswith("scatter"):
                     _logger.debug("skept %s", group)
                     continue
-                outputDict['names'].append("C(%s)" % group)
+                outputDict['concentration_names'].append(group)
                 if counter == 0:
                     if hasattr(liveTimeFactor, "shape"):
                         liveTimeFactor.shape = results[nFreeBkg+i].shape
@@ -787,7 +813,7 @@ class FastXRFLinearFit(object):
                 counter += 1
                 if len(concentrationsResult['layerlist']) > 1:
                     for layer in concentrationsResult['layerlist']:
-                        outputDict['names'].append("C(%s)-%s" % (group, layer))
+                        outputDict['concentration_names'].append("%s-%s" % (group, layer))
                         massFractions[counter] = liveTimeFactor * \
                                 results[nFreeBkg+i] * \
                                 (concentrationsResult[layer]['mass fraction'][group] / \
@@ -814,7 +840,7 @@ class FastXRFLinearFit(object):
                 if group.lower().startswith("scatter"):
                     _logger.debug("skept %s", group)
                     continue
-                outputDict['names'].append("C(%s)" % group)
+                outputDict['concentration_names'].append(group)
                 goodI = results[nFreeBkg+i] > 0
                 tmp = results[nFreeBkg+idx][goodI]
                 massFractions[counter][goodI] = (results[nFreeBkg+i][goodI]/(tmp + (tmp == 0))) *\
@@ -823,7 +849,7 @@ class FastXRFLinearFit(object):
                 counter += 1
                 if len(concentrationsResult['layerlist']) > 1:
                     for layer in concentrationsResult['layerlist']:
-                        outputDict['names'].append("C(%s)-%s" % (group, layer))
+                        outputDict['concentration_names'].append("%s-%s" % (group, layer))
                         massFractions[counter][goodI] = (results[nFreeBkg+i][goodI]/(tmp + (tmp == 0))) *\
                             ((referenceArea/fitresult['result'][group]['fitarea']) *\
                             (concentrationsResult[layer]['mass fraction'][group]))
@@ -865,132 +891,693 @@ def getFileListFromPattern(pattern, begin, end, increment=None):
     return fileList
 
 
-def save(result, outputDir, outputRoot=None, fileEntry=None,
-         fileProcess=None, tif=False, edf=False, csv=False, h5=True):
+def slice_len(slc, n):
+    start, stop, step = slc.indices(n)
+    if step < 0:
+        one = -1
+    else:
+        one = 1
+    return max(0, (stop - start + step - one) // step)
+
+
+def chunk_indices(start, stop=None, step=None):
     """
-    Save result of Fast XRF fitting
-
-    :param dict result:
-    :param str outputDir: directory on local file system
-    :param str outputRoot: output dir or HDF5 filename without extension (default: 'IMAGES')
-    :param str fileEntry: output radix or NXentry (default: 'images')
-    :param str fileProcess: output NXprocess (default: fileEntry)
-    :param tif: save as tif
-    :param edf: save as edf
-    :param csv: save as csv
-    :param h5: save as h5
+    :param start:
+    :param stop:
+    :param step:
+    :returns list: list of (slice,n)
     """
-    if not (tif or edf or csv or h5):
-        _logger.warning('fit result not saved (no output format specified)')
-        return
-    t0 = time.time()
-    _logger.debug('Saving results ...')
+    if stop is None:
+        start, stop, step = 0, start, 1
+    elif step is None:
+        step = 1
+    if step < 0:
+        func = max
+        one = -1
+    else:
+        func = min
+        one = 1
+    for a in range(start, stop, step):
+        b = func(a+step, stop)
+        yield slice(a, b), abs(b-a)
 
-    # For .edf: outputDir/outputRoot/fileEntry.edf
-    # For .h5 : outputDir/outputRoot.h5::/fileEntry/fileProcess
-    if not outputRoot:
-        outputRoot = "IMAGES"
-    if not fileEntry:
-        fileEntry = "images"
-    if not fileProcess:
-        fileProcess = fileEntry
 
-    # List of images and labels
-    imageList = []
-    imageLabels = []
-    for i, name in enumerate(result['names']):
-        newname = name.replace(" ","-")
-        if newname.startswith("C("):
-            # Elemental concentration
-            img = result['concentrations'][i]
-            imageList.append(img)
-            imageLabels.append(newname)
+# TODO: nonlocal in python 2 and 3
+#def izip_clean(*iters):
+#    """
+#    Like Python 3's zip but making sure next is called
+#    on all items when StopIteration occurs
+#    """
+#    bloop = True
+#    def _next(it):
+#        nonlocal bloop
+#        try:
+#            return next(it)
+#        except StopIteration:
+#            bloop = False
+#            return None
+#    while bloop:
+#        ret = tuple(_next(it) for it in iters)
+#        if bloop:
+#            yield ret
+def izip_clean(*iters):
+    """
+    Like Python 3's zip but making sure next is called
+    on all items when StopIteration occurs
+    """
+    bloop = {'b': True}  # because of python 2
+    def _next(it):
+        try:
+            return next(it)
+        except StopIteration:
+            bloop['b'] = False
+            return None
+    while bloop['b']:
+        ret = tuple(_next(it) for it in iters)
+        if bloop['b']:
+            yield ret
+
+
+class SlicedMcaStack(object):
+
+    def __init__(self, data, nbuffer=None, mcaslice=None, dtype=None, modify=False):
+        """
+        :param array data: 3D array (n0, n1, n2)
+        :param num nbuffer: number of elements from (n0, n1) in buffer
+        :param slice mcaslice: slice MCA axis=2
+        :param dtype:
+        :param bool modify: modify original on access
+        """
+        # Buffer shape
+        n2 = data.shape[-1]
+        if mcaslice:
+            nChan = slice_len(mcaslice, n2)
         else:
-            # Fitted parameters
-            img = result['parameters'][i]
-            imageList.append(img)
-            imageLabels.append(newname)
-            newname = "s(%s)" % newname
-            img = result['uncertainties'][i]
-            imageList.append(img)
-            imageLabels.append(newname)
+            nChan = n2
+            mcaslice = slice(None)
+        self._mcaslice = mcaslice
+        self._buffershape = nbuffer, nChan
+        self._buffer = None
 
-    if tif or edf or csv:
+        # Buffer dtype
+        if dtype is None:
+            dtype = data.dtype
+        self._dtype = dtype
+        self._change_type = data.dtype != dtype
+
+        # Data
+        self._data = data
+        self._modify = modify
+        self._isndarray = isinstance(data, numpy.ndarray)
+
+    def _prepare_access(self, copy=True):
+        _logger.debug('Iterate MCA stack in chunks of {} spectra'
+                      .format(self._buffershape[0]))
+        needs_copy = copy or self._change_type
+        yields_copy = needs_copy or not self._isndarray
+        post_copy = yields_copy and self._modify
+        if yields_copy and self._buffer is None:
+            self._buffer = numpy.empty(self._buffershape, self._dtype)
+        return needs_copy, yields_copy, post_copy
+
+    def items(self, copy=True):
+        raise NotImplementedError
+
+
+class MaskedMcaStack(SlicedMcaStack):
+
+    def __init__(self, data, mask=None, **kwargs):
+        """
+        3D stack (n0, n1, n2) with mask (n0, n1) and slice n2
+
+        :param array data: numpy array or h5py dataset
+        :param array mask: shape = (n0, n1)
+        :param \**kwargs: see SlicedMcaStack
+        """
+        if mask is None:
+            self._indices = None
+            self._mask = Ellipsis
+            nbuffer = data.shape[0]*data.shape[1]
+        else:
+            if isinstance(data, numpy.ndarray):
+                # Support multiple advanced indexes
+                self._indices = None
+                self._mask = mask
+                nbuffer = int(mask.sum())
+            else:
+                # Does not support multiple advanced indexes
+                self._indices = numpy.where(mask)
+                self._mask = None
+                nbuffer = len(self._indices[0])
+        super(MaskedMcaStack, self).__init__(data, nbuffer=nbuffer, **kwargs)
+
+    def items(self, copy=True):
+        needs_copy, _, post_copy = self._prepare_access(copy=copy)
+        if self._indices is None:
+            ret = self._get_with_mask(copy=needs_copy)
+        else:
+            ret = self._get_with_indices()
+        yield ret
+        if post_copy:
+            if self._indices is None:
+                self._set_with_mask(*ret)
+            else:
+                self._set_with_indices(*ret)
+
+    def _get_with_mask(self, copy=True):
+        idx = self._mask, self._mcaslice
+        if copy:
+            chunk = self._buffer
+            chunk[()] = self._data[idx]
+        else:
+            chunk = self._data[idx]
+        return idx, chunk
+
+    def _set_with_mask(self, idx, chunk):
+        self._data[idx] = chunk
+
+    def _get_with_indices(self):
+        chunk = self._buffer
+        mcaslice = self._mcaslice
+        idx = self._indices + (mcaslice,)
+        j0keep = -1
+        for i, (j0, j1) in enumerate(zip(*self._indices)):
+            if j0 != j0keep:
+                tmpData = self._data[j0]
+                j0keep = j0
+            chunk[i] = tmpData[j1, mcaslice]
+        return idx, chunk
+
+    def _set_with_indices(self, idx, chunk):
+        lst0, lst1, mcaslice = idx
+        for v, j0, j1 in zip(chunk, lst0, lst1):
+            self._data[j0, j1, mcaslice] = v
+
+
+class ChunkedMcaStack(SlicedMcaStack):
+
+    def __init__(self, data, nmca=None, **kwargs):
+        """
+        3D stack (n0, n1, n2) to be iterated over in nmca spectra
+
+        :param array data: numpy array or h5py dataset
+        :param num nmca: number of spectra in one chunk
+        :param \**kwargs: see SlicedMcaStack
+        """
+        # Outer loop (non-chunked dimension)
+        n0, n1, n2 = data.shape
+        if nmca is None:
+            nmca = min(n0, n1)
+        if abs(n0-nmca) < abs(n1-nmca):
+            self._loopout = list(range(n1))
+            self._axes = 1,0
+            n = n0
+        else:
+            self._loopout = list(range(n0))
+            self._axes = 0,1
+            n = n1
+        
+        # Inner loop (chunked dimension)
+        nbuffer = min(nmca, n)
+        nchunks = n//nbuffer + int(bool(n % nbuffer))
+        nbuffer = n//nchunks + int(bool(n % nchunks))
+        self._loopin = list(chunk_indices(0, n, nbuffer))
+
+        super(ChunkedMcaStack, self).__init__(data, nbuffer=nbuffer, **kwargs)
+
+    def items(self, copy=True):
+        _, yields_copy, post_copy = self._prepare_access(copy=copy)
+        idx_data = [slice(None), slice(None), self._mcaslice]
+        i,j = self._axes
+        buffer = self._buffer
+        for idxout in self._loopout:
+            idx_data[i] = idxout
+            for idxin, n in self._loopin:
+                idx_data[j] = idxin
+                idx = tuple(idx_data)
+                if yields_copy:
+                    chunk = buffer[:n, :]
+                    chunk[()] = self._data[idx]
+                else:
+                    chunk = self._data[idx]
+                yield idx, chunk
+                if post_copy:
+                    self._data[idx] = chunk
+
+
+class FastFitOutputBuffer(object):
+
+    def __init__(self, outputDir=None, outputRoot=None, fileEntry=None,
+                 fileProcess=None, tif=False, edf=False, csv=False, h5=True,
+                 overwrite=False, save_residuals=False, save_fit=False, save_data=False):
+        """
+        Fast fitting output buffer, to be saved as:
+         .h5 : outputDir/outputRoot.h5::/fileEntry/fileProcess
+         .edf/.csv/.tif: outputDir/outputRoot/fileEntry.ext
+
+        Usage with context:
+            outbuffer = FastFitOutputBuffer(...)
+            with outbuffer.save_context():
+                ...
+
+        Usage without context:
+            outbuffer = FastFitOutputBuffer(...)
+            ...
+            outbuffer.save()
+
+        :param str outputDir:
+        :param str outputRoot:
+        :param str fileEntry:
+        :param str fileProcess:
+        :param save_residuals:
+-       :param save_fit:
+-       :param save_data:
+        :param bool tif:
+        :param bool edf:
+        :param bool csv:
+        :param bool h5:
+        :param bool overwrite:
+        """
+        self._init_buffer = False
+        self._output = {}
+        self._nxprocess = None
+
+        self.outputDir = outputDir
+        self.outputRoot = outputRoot
+        self.fileEntry = fileEntry
+        self.fileProcess = fileProcess
+        self.tif = tif
+        self.edf = edf
+        self.csv = csv
+        self.h5 = h5
+        self.save_residuals = save_residuals
+        self.save_fit = save_fit
+        self.save_data = save_data
+        self.overwrite = overwrite
+
+    @property
+    def outputRoot(self):
+        return self._outputRoot
+    
+    @outputRoot.setter
+    def outputRoot(self, value):
+        self._check_buffer_context()
+        if value:
+            self._outputRoot = value
+        else:
+            self._outputRoot = 'IMAGES'
+
+    @property
+    def fileEntry(self):
+        return self._fileEntry
+    
+    @fileEntry.setter
+    def fileEntry(self, value):
+        self._check_buffer_context()
+        if value:
+            self._fileEntry = value
+        else:
+            self._fileEntry = 'images'
+
+    @property
+    def fileProcess(self):
+        return self._fileProcess
+    
+    @fileProcess.setter
+    def fileProcess(self, value):
+        self._check_buffer_context()
+        if value:
+            self._fileProcess = value
+        else:
+            self._fileProcess = self.fileEntry
+
+    @property
+    def edf(self):
+        return self._edf
+    
+    @edf.setter
+    def edf(self, value):
+        self._check_buffer_context()
+        self._edf = value
+
+    @property
+    def tif(self):
+        return self._tif
+    
+    @tif.setter
+    def tif(self, value):
+        self._check_buffer_context()
+        self._tif = value
+
+    @property
+    def csv(self):
+        return self._csv
+    
+    @csv.setter
+    def csv(self, value):
+        self._check_buffer_context()
+        self._csv = value
+
+    @property
+    def cfg(self):
+        return self.csv or self.edf or self.tif
+
+    @property
+    def save_data(self):
+        return self._save_data and self.h5
+    
+    @save_data.setter
+    def save_data(self, value):
+        self._check_buffer_context()
+        self._save_data = value
+
+    @property
+    def save_fit(self):
+        return self._save_fit and self.h5
+    
+    @save_fit.setter
+    def save_fit(self, value):
+        self._check_buffer_context()
+        self._save_fit= value
+
+    @property
+    def save_residuals(self):
+        return self._save_residuals and self.h5
+    
+    @save_residuals.setter
+    def save_residuals(self, value):
+        self._check_buffer_context()
+        self._save_residuals = value
+
+    @property
+    def save_diagnostics(self):
+        return self.save_residuals or self.save_fit
+
+    @property
+    def overwrite(self):
+        return self._overwrite
+    
+    @overwrite.setter
+    def overwrite(self, value):
+        self._check_buffer_context()
+        self._overwrite = value
+
+    def _check_buffer_context(self):
+        if self._init_buffer:
+            raise RuntimeError('Buffer is locked')
+
+    @property
+    def outroot_localfs(self):
+        return os.path.join(self.outputDir, self.outputRoot)
+
+    def filename(self, ext, suffix=None):
+        if not suffix:
+            suffix = ""
+        if ext == '.h5':
+            return os.path.join(self.outputDir, self.outputRoot+suffix+ext)
+        else:
+            return os.path.join(self.outroot_localfs, self.fileEntry+suffix+ext)
+
+    def __getitem__(self, key):
+        return self._output[key]
+
+    def __setitem__(self, key, value):
+        self._output[key] = value
+
+    def __contains__(self, key):
+        return key in self._output
+
+    def get(self, key, default=None):
+        return self._output.get(key, default)
+
+    def allocate_memory(self, name, fill_value=None, shape=None, dtype=None):
+        """
+        :param str name:
+        :param num fill_value:
+        :param tuple shape:
+        :param dtype:
+        """
+        if fill_value is None:
+            buffer = numpy.empty(shape, dtype=dtype)
+        elif fill_value == 0:
+            buffer = numpy.zeros(shape, dtype=dtype)
+        else:
+            buffer = numpy.full(shape, fill_value, dtype=dtype)
+        self._output[name] = buffer
+        return buffer
+
+    def allocate_h5(self, name, nxdata=None, fill_value=None, **kwargs):
+        """
+        :param str name:
+        :param str nxdata:
+        :param num fill_value:
+        :param \**kwargs: see h5py.Group.create_dataset
+        """
+        parent = self._nxprocess['results']
+        if nxdata:
+            parent = NexusUtils.nxdata(parent, nxdata)
+        buffer = parent.create_dataset(name, **kwargs)
+        if fill_value is not None:
+            buffer[()] = fill_value
+        self.flush()
+        self._output[name] = buffer
+        return buffer
+
+    @contextmanager
+    def _buffer_context(self, update=True):
+        """
+        Prepare output buffers (HDF5: create file, NXentry and NXprocess)
+
+        :param bool update: True: update existing NXprocess,  False: overwrite or raise an exception
+        :raises RuntimeError: NXprocess exists and overwrite==False
+        """
+        if self._init_buffer:
+            yield
+        else:
+            self._init_buffer = True
+            _logger.debug('Output buffer hold ...')
+            try:
+                if self.h5:
+                    if self._nxprocess is None and self.outputDir:
+                        cleanup_funcs = []
+                        try:
+                            with self._h5_context(cleanup_funcs, update=update):
+                                yield
+                        except:
+                            # clean-up and re-raise
+                            for func in cleanup_funcs:
+                                func()
+                            raise
+                    else:
+                        yield
+                else:
+                    yield
+            finally:
+                self._init_buffer = False
+                _logger.debug('Output buffer released')
+
+    @contextmanager
+    def _h5_context(self, cleanup_funcs, update=True):
+        fileName = self.filename('.h5')
+        existed = [False]*3
+        existed[0] = os.path.exists(fileName)
+        with NexusUtils.nxroot(fileName, mode='a') as f:
+            entryname = self.fileEntry
+            existed[1] = entryname in f
+            entry = NexusUtils.nxentry(f, entryname)
+            procname = self.fileProcess
+            if procname in entry:
+                existed[2] = True
+                path = entry[procname].name
+                if update:
+                    pass
+                elif self.overwrite:
+                    _logger.warning('overwriting {}'.format(path))
+                    del entry[procname]
+                    existed[2] = False
+                else:
+                    raise RuntimeError('{} already exists'.format(path))
+            self._nxprocess = NexusUtils.nxprocess(entry, procname)
+            try:
+                yield
+            except:
+                # clean-up and re-raise
+                if not existed[0]:
+                    cleanup_funcs.append(lambda: os.remove(fileName))
+                elif not existed[1]:
+                    del f[entryname]
+                elif not existed[2]:
+                    del entry[procname]
+                raise
+            finally:
+                self._nxprocess = None
+
+    @contextmanager
+    def save_context(self):
+        with self._buffer_context(update=False):
+            try:
+                yield
+            except:
+                raise
+            else:
+                self.save()
+
+    def flush(self):
+        if self._nxprocess is not None :
+            self._nxprocess.file.flush()
+
+    def save(self):
+        """
+        Save result of Fast XRF fitting. Preferrable use save_context instead.
+        HDF5 NXprocess will be updated, not overwritten.
+        """
+        if not (self.tif or self.edf or self.csv or self.h5):
+            _logger.warning('fit result not saved (no output format specified)')
+            return
+        t0 = time.time()
+        _logger.debug('Saving results ...')
+
+        with self._buffer_context(update=True):
+            if self.tif or self.edf or self.csv:
+                self._save_single()
+            if self.h5:
+                self._save_h5()
+
+        t = time.time() - t0
+        _logger.debug("Saving results elapsed = %f", t)
+
+    @property
+    def parameter_names(self):
+        return self._get_names('parameter_names', '{}')
+
+    @property
+    def uncertainties_names(self):
+        return self._get_names('parameter_names', 's({})')
+
+    @property
+    def concentration_names(self):
+        return self._get_names('concentration_names', 'C({}){}')
+
+    def _get_names(self, names, fmt):
+        labels = self.get(names, None)
+        if not labels:
+            return []
+        out = []
+        for label in labels:
+            label = label.split('-')
+            name = label[0].replace(" ", "-")
+            if len(label)>1:
+                layer = '-'.join(label[1:])
+            else:
+                layer = ''
+            label = fmt.format(name, layer)
+            out.append(label)
+        return out
+
+    def _save_single(self):
         from PyMca5.PyMca import ArraySave
 
-        if not os.path.exists(outputDir):
-            os.mkdir(outputDir)
-        imagesDir = os.path.join(outputDir, outputRoot)
-        if not os.path.exists(imagesDir):
-            os.mkdir(imagesDir)
-
-        if edf:
-            fileName = os.path.join(imagesDir, fileEntry+".edf")
+        imageNames = []
+        imageList = []
+        lst = [('parameter_names', 'parameters', '{}'),
+               ('parameter_names', 'uncertainties', 's({})'),
+               ('concentration_names', 'concentrations', 'C({}){}')]
+        for names, key, fmt in lst:
+            images = self.get(key, None)
+            if images is not None:
+                for img in images:
+                    imageList.append(img)
+                imageNames += self._get_names(names, fmt)
+        NexusUtils.mkdir(self.outroot_localfs)
+        if self.edf:
+            fileName = self.filename('.edf')
+            self._check_overwrite(fileName)
             ArraySave.save2DArrayListAsEDF(imageList, fileName,
-                                            labels=imageLabels)
-        if csv:
-            fileName = os.path.join(imagesDir, fileEntry+".csv")
+                                           labels=imageNames)
+        if self.csv:
+            fileName = self.filename('.csv')
+            self._check_overwrite(fileName)
             ArraySave.save2DArrayListAsASCII(imageList, fileName, csv=True,
-                                                labels=imageLabels)
-        if tif:
-            for label,image in zip(imageLabels,imageList):
+                                             labels=imageNames)
+        if self.tif:
+            for label,image in zip(imageNames, imageList):
                 if label.startswith("s("):
                     suffix = "_s" + label[2:-1]
                 elif label.startswith("C("):
                     suffix = "_w" + label[2:-1]
                 else:
                     suffix  = "_" + label
-                fileName = os.path.join(imagesDir,
-                                        fileEntry + suffix + ".tif")
+                fileName = self.filename('.tif', suffix=suffix)
+                self._check_overwrite(fileName)
                 ArraySave.save2DArrayListAsMonochromaticTiff([image],
-                                        fileName,
-                                        labels=[label],
-                                        dtype=numpy.float32)
-        result['configuration'].write(os.path.join(imagesDir, fileEntry+".cfg"))
+                                                             fileName,
+                                                             labels=[label],
+                                                             dtype=numpy.float32)
+        if self.cfg and 'configuration' in self:
+            fileName = self.filename('.cfg')
+            self._check_overwrite(fileName)
+            self['configuration'].write(fileName)
 
-    if h5:
-        filename = os.path.join(outputDir, outputRoot+'.h5')
-        with NexusUtils.nxroot(filename, mode='a') as root:
-            # Create fileEntry/fileProcess
-            entry = NexusUtils.nxentry(root, fileEntry)
-            if fileProcess in entry:
-                # Overwrite like ArraySave does for the other formats
-                _logger.warning('overwriting {}'.format(entry[fileProcess].name))
-                del entry[fileProcess]
-            process = NexusUtils.nxprocess(entry, fileProcess,
-                                           configdict=result['configuration'])
+    def _check_overwrite(self, fileName):
+        if os.path.exists(fileName):
+            if self.overwrite:
+                _logger.warning('overwriting {}'.format(fileName))
+            else:
+                raise RuntimeError('{} already exists'.format(fileName))
 
-            # Fitted parameters
-            imageList = [{'data':img, 'chunks':True} for img in imageList]
-            imageAttrs = [{'interpretation':'image'}]*len(imageLabels)
-            data = NexusUtils.nxdata(process['results'], 'parameters')
-            signals = [signal for signal in zip(imageLabels,imageList,imageAttrs) if not signal[0].startswith("s(")]
-            NexusUtils.nxdata_add_signals(data, signals)
-            NexusUtils.mark_default(data)
+    def _save_h5(self):
+        # Save fit configuration
+        nxprocess = self._nxprocess
+        nxresults = nxprocess['results']
+        configdict = self.get('configuration', None)
+        NexusUtils.nxprocess_configuration_init(nxprocess, configdict=configdict)
 
-            # Estimated parameter errors
-            data = NexusUtils.nxdata(process['results'], 'uncertainties')
-            signals = [signal for signal in zip(imageLabels,imageList,imageAttrs) if signal[0].startswith("s(")]
-            NexusUtils.nxdata_add_signals(data, signals)
-
-            # Fitted model and residuals
-            signals = []
-            attr = {'interpretation':'spectrum'}
-            for name in ['data', 'model', 'residuals']:
-                if name in result:
-                    value = {'data':result[name], 'chunks':True}
-                    signals.append((name,value,attr))
-            if signals:
-                data = NexusUtils.nxdata(process['results'], 'fit')
+        # Save fitted parameters, uncertainties and elemental concentrations
+        mill = numpy.float32(1e6)
+        lst = [('parameter_names', 'uncertainties', lambda x:x, None),
+               ('parameter_names', 'parameters', lambda x:x, None),
+               ('concentration_names', 'concentrations', lambda x:x*mill, 'ug/g')]
+        for names, key, proc, units in lst:
+            images = self.get(key, None)
+            if images is not None:
+                attrs = {'interpretation':'image'}
+                if units:
+                    attrs = {'units': units}
+                signals = [(label, {'data':proc(img), 'chunks':True}, attrs)
+                           for label,img in zip(self[names], images)]
+                data = NexusUtils.nxdata(nxresults, key)
                 NexusUtils.nxdata_add_signals(data, signals)
-                if 'axes' in result:
-                    NexusUtils.nxdata_add_axes(data, result['axes'])
-                if 'axes_used' in result:
-                    axes = [(ax, None, None) for ax in result['axes_used']]
-                    NexusUtils.nxdata_add_axes(data, axes, append=False)
+                NexusUtils.mark_default(data)
 
-    t = time.time() - t0
-    _logger.debug("Saving results elapsed = %f", t)
+        # Save fitted model and residuals
+        signals = []
+        attrs = {'interpretation':'spectrum'}
+        for name in ['data', 'model', 'residuals']:
+            dset = self.get(name, None)
+            if dset is not None:
+                signals.append((name,None,attrs))
+        if signals:
+            nxdata = NexusUtils.nxdata(nxresults, 'fit')
+            NexusUtils.nxdata_add_signals(nxdata, signals)
+            axes = self.get('data_axes', None)
+            axes_used = self.get('data_axes_used', None)
+            if axes:
+                NexusUtils.nxdata_add_axes(nxdata, axes)
+            if axes_used:
+                axes = [(ax, None, None) for ax in axes_used]
+                NexusUtils.nxdata_add_axes(nxdata, axes, append=False)
+
+        # Save diagnostics
+        signals = []
+        attrs = {'interpretation':'image'}
+        for name in ['nObservations', 'nFreeParameters']:
+            img = self.get(name, None)
+            if img is not None:
+                signals.append((name,img,attrs))
+        if signals:
+            nxdata = NexusUtils.nxdata(nxresults, 'diagnostics')
+            NexusUtils.nxdata_add_signals(nxdata, signals)
+
 
 def prepareDataStack(fileList):
     if (not os.path.exists(fileList[0])) and \
@@ -1036,7 +1623,7 @@ def main():
                    'tif=', 'edf=', 'csv=', 'h5=',
                    'filepattern=', 'begin=', 'end=', 'increment=',
                    'outroot=', 'outentry=', 'outprocess=',
-                   'savefit=', 'saveresiduals=', 'savedata=']
+                   'diagnostics=', 'debug=']
     try:
         opts, args = getopt.getopt(
                      sys.argv[1:],
@@ -1061,9 +1648,11 @@ def main():
     csv = 0
     h5 = 1
     concentrations = 0
-    savefit = 0
-    saveresiduals = 0
-    savedata = 0
+    save_fit = 0
+    save_residuals = 0
+    save_data = 0
+    debug = 0
+    overwrite = 1
     for opt, arg in opts:
         if opt == '--cfg':
             configurationFile = arg
@@ -1093,12 +1682,10 @@ def main():
             refit = int(arg)
         elif opt == '--concentrations':
             concentrations = int(arg)
-        elif opt == '--savefit':
-            savefit = int(arg)
-        elif opt == '--saveresiduals':
-            saveresiduals = int(arg)
-        elif opt == '--savedata':
-            savedata = int(arg)
+        elif opt == '--diagnostics':
+            save_fit = int(arg)
+            save_residuals = save_fit
+            save_data = save_fit
         elif opt == '--outroot':
             outputRoot = arg
         elif opt == '--outentry':
@@ -1113,7 +1700,15 @@ def main():
             csv = int(arg)
         elif opt == '--h5':
             h5 = int(arg)
+        elif opt == '--debug':
+            debug = int(arg)
+        elif opt == '--overwrite':
+            overwrite = int(arg)
 
+    if debug:
+        _logger.setLevel(logging.DEBUG)
+    else:
+        _logger.setLevel(logging.INFO)
     if filepattern is not None:
         if (begin is None) or (end is None):
             raise ValueError(\
@@ -1137,24 +1732,24 @@ def main():
     fastFit = FastXRFLinearFit()
     fastFit.setFitConfigurationFile(configurationFile)
     print("Main configuring Elapsed = % s " % (time.time() - t0))
-    if not h5:
-        savefit = False
-        saveresiduals = False
-    result = fastFit.fitMultipleSpectra(y=dataStack,
-                                        weight=weight,
-                                        refit=refit,
-                                        concentrations=concentrations,
-                                        savedata=savedata,
-                                        savefit=savefit,
-                                        saveresiduals=saveresiduals)
-    print("Total Elapsed = % s " % (time.time() - t0))
 
-    if outputDir is not None:
-        save(result, outputDir, outputRoot=outputRoot,
-            fileEntry=fileEntry, fileProcess=fileProcess,
-             tif=tif, edf=edf, csv=csv, h5=h5)
+    outbuffer = FastFitOutputBuffer(outputDir=outputDir,
+                        outputRoot=outputRoot, fileEntry=fileEntry,
+                        fileProcess=fileProcess, save_data=save_data,
+                        save_fit=save_fit, save_residuals=save_residuals,
+                        tif=tif, edf=edf, csv=csv, h5=h5, overwrite=overwrite)
+
+    from PyMca5.PyMcaMisc import ProfilingUtils
+    with ProfilingUtils.profile(memory=debug, time=debug):
+        with outbuffer.save_context():
+            outbuffer = fastFit.fitMultipleSpectra(y=dataStack,
+                                                weight=weight,
+                                                refit=refit,
+                                                concentrations=concentrations,
+                                                outbuffer=outbuffer)
+            print("Total Elapsed = % s " % (time.time() - t0))
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    _logger.setLevel(logging.DEBUG)
     main()

@@ -184,26 +184,29 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
             # for the time being only in the global image
             # spatial_mask = numpy.isfinite(image_data)
             spatial_mask = numpy.isfinite(self.getStackOriginalImage())
+            # WDN: any effect?
         stack = self.getStackDataObject()
-        fitConfigurationFile = self._parameters['configuration']
-        concentrations = self._parameters['concentrations']
+
+        fitparams = self._parameters['fit'].copy()
+        fitConfigurationFile = fitparams.pop('configuration')
         self.fitInstance.setFitConfigurationFile(fitConfigurationFile)
-        weightPolicy = self._parameters['weight_policy']
-        refit = self._parameters['refit']
-        if weightPolicy:
+        if fitparams['weight']:
             # force calculation of the unnormalized sum spectrum
             spectrum = None
         if stack.x in [None, []]:
             x = None
         else:
             x = stack.x[0]
-        result = self.fitInstance.fitMultipleSpectra(x=x,
-                                                     y=stack,
-                                                     weight=weightPolicy,
-                                                     concentrations=concentrations,
-                                                     ysum=spectrum,
-                                                     refit=refit)
-        return result
+
+        outparams = self._parameters['output']
+        outbuffer = FastXRFLinearFit.FastFitOutputBuffer(**outparams)
+
+        outbuffer = self.fitInstance.fitMultipleSpectra(x=x,
+                                                        y=stack,
+                                                        ysum=spectrum,
+                                                        outbuffer=outbuffer,
+                                                        **fitparams)
+        return outbuffer
 
     def threadFinished(self):
         try:
@@ -228,12 +231,12 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
 
         # Show results
         if 'concentrations' in result:
-            imageNames = result['names']
+            imageNames = result.parameter_names + result.concentration_names
             images = numpy.concatenate((result['parameters'],
                                         result['concentrations']), axis=0)
         else:
+            imageNames = result.parameter_names
             images = result['parameters']
-            imageNames = result['names']
         nImages = images.shape[0]
         self._widget = StackPluginResultsWindow.StackPluginResultsWindow(\
                                         usetab=False)
@@ -246,25 +249,7 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
         self._showWidget()
 
         # Save results
-        parameters = self.configurationWidget.getParameters()
-        outputDir = parameters["output_dir"]
-        if not outputDir:
-            _logger.debug("Nothing to be saved")
-            if _logger.getEffectiveLevel() == logging.DEBUG:
-                return
-        outputRoot = parameters["output_root"]
-        fileEntry = parameters["file_entry"]
-        fileProcess = parameters["file_name"]
-        if outputRoot:
-            outputRoot = outputRoot.replace(" ", "")
-        if fileEntry:
-            fileEntry = fileEntry.replace(" ", "")
-        if fileProcess:
-            fileProcess = fileProcess.replace(" ", "")
-        FastXRFLinearFit.save(result, outputDir, outputRoot=outputRoot,
-                        fileEntry=fileEntry, fileProcess=fileProcess,
-                        tif=parameters["tiff"], edf=parameters["edf"],
-                        csv=parameters["csv"], h5=parameters["h5"])
+        result.save()
 
     def _showWidget(self):
         if self._widget is None:
