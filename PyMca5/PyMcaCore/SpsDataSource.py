@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -218,7 +218,7 @@ class SpsDataSource(object):
         info["envdict"] = envdict
         scantest = (info['flag'] & sps.TAG_SCAN) == sps.TAG_SCAN
         metadata = None
-        if array in ["SCAN_D"]:
+        if (array in ["SCAN_D"]) or scantest:
             # try to get new style SCAN_D metadata
             metadata = sps.getmetadata(self.name, array)
             if metadata is not None:
@@ -246,11 +246,15 @@ class SpsDataSource(object):
                         info['hkl'] = [float(x) \
                                 for x in metadata["hkl"].split(";")]
                 # current SCAN
-                info["scanno"] = int(metadata["scanno"])
-                # current SPEC file
-                info["datafile"] = metadata["datafile"]
+                if 'scanno' in metadata:
+                    envdict["scanno"] = int(metadata["scanno"])
+                # current SPEC file and title
+                for key in ["datafile", "title"]:
+                    if key in metadata:
+                        envdict[key] = metadata[key]
                 # put any missing information
-                info["selectedcounters"] = [x \
+                if "selectedcounters" in metadata:
+                    info["selectedcounters"] = [x \
                                 for x in metadata["selectedcounters"].split()]
                 # do not confuse with unhandled keys ...
                 #for key in metadata:
