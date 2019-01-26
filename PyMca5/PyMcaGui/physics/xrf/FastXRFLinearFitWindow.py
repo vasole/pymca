@@ -84,8 +84,8 @@ class FastXRFLinearFitWindow(qt.QWidget):
         # output process
         outnameLabel = qt.QLabel(self)
         outnameLabel.setText("Output name:")
+        self._outnameLabel = outnameLabel
         self._outnameLine = qt.QLineEdit(self)
-        self._outnameLine.setReadOnly(False)
         self._outnameLine.setText("")
 
         # fit options
@@ -144,6 +144,8 @@ class FastXRFLinearFitWindow(qt.QWidget):
         self._h5Box.setText("HDF5")
         self._h5Box.setChecked(True)
         self._h5Box.setEnabled(True)
+        self.toggleH5(True)
+        self._h5Box.stateChanged.connect(self.toggleH5)
 
         self._boxContainerLayout1.addWidget(self._concentrationsBox)
         self._boxContainerLayout1.addWidget(self._fitAgainBox)
@@ -218,6 +220,12 @@ class FastXRFLinearFitWindow(qt.QWidget):
         if len(f):
             self._outdirLine.setText(f)
 
+    def toggleH5(self, state):
+        readonly = not state
+        self._outnameLine.setReadOnly(readonly)
+        self._outnameLine.setEnabled(not readonly)
+        self._outnameLabel.setEnabled(not readonly)
+
     def getParameters(self):
         ddict = {}
         fit = {}
@@ -232,15 +240,15 @@ class FastXRFLinearFitWindow(qt.QWidget):
         output['outputRoot'] = qt.safe_str(self._outrootLine.text()).replace(" ", "")
         output['fileEntry'] = qt.safe_str(self._outentryLine.text()).replace(" ", "")
         output['fileProcess'] = qt.safe_str(self._outnameLine.text()).replace(" ", "")
-        output['tif'] = self._tiffBox.isChecked()
-        output['csv'] = self._csvBox.isChecked()
-        output['edf'] = self._edfBox.isChecked()
-        output['h5'] = self._h5Box.isChecked()
+        output['tif'] = int(self._tiffBox.isChecked())
+        output['csv'] = int(self._csvBox.isChecked())
+        output['edf'] = int(self._edfBox.isChecked())
+        output['h5'] = int(self._h5Box.isChecked())
         # Currently not exposed by GUI:
-        output['overwrite'] = True
-        output['save_data'] = False
-        output['save_fit'] = False
-        output['save_residuals'] = False
+        output['overwrite'] = 1
+        output['save_data'] = 0
+        output['save_fit'] = 0
+        output['save_residuals'] = 0
         return ddict
 
 class FastXRFLinearFitDialog(qt.QDialog):

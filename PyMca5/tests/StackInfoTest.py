@@ -242,8 +242,8 @@ class testStackInfo(unittest.TestCase):
                                                 refit=0)
 
             parameter_names = outputDict.parameter_names
-            parameters = outputDict["parameters"]
-            uncertainties = outputDict["uncertainties"]
+            parameters = outputDict["parameters"].astype(numpy.float32)
+            uncertainties = outputDict["uncertainties"].astype(numpy.float32)
             for i, (name, values, uvalues) in enumerate(zip(parameter_names, parameters, uncertainties)):
                 if DEBUG:
                     print(name, values[0, 0])

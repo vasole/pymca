@@ -39,16 +39,15 @@ import logging
 import time
 import h5py
 import collections
-from contextlib import contextmanager
 from . import ClassMcaTheory
 from . import ConcentrationsTool
 from PyMca5.PyMcaMath.linalg import lstsq
 from PyMca5.PyMcaMath.fitting import Gefit
 from PyMca5.PyMcaMath.fitting import SpecfitFuns
 from PyMca5.PyMcaIO import ConfigDict
-from PyMca5.PyMcaIO import NexusUtils
 from PyMca5.PyMcaMisc import PhysicalMemory
-
+from .FastXRFLinearFitOutput import OutputBuffer
+from . import McaStackView
 
 _logger = logging.getLogger(__name__)
 
@@ -106,7 +105,7 @@ class FastXRFLinearFit(object):
             raise IndexError(txt)
 
         if outbuffer is None:
-            outbuffer = FastFitOutputBuffer()
+            outbuffer = OutputBuffer()
 
         with outbuffer._buffer_context(update=False):
             t0 = time.time()
@@ -399,9 +398,9 @@ class FastXRFLinearFit(object):
         if sumover == 'all':
             #nspectra = PhysicalMemory.chunks_in_memory(data.shape, data.dtype,
             #                                   axis=-1, maximal=5000)
-            datastack = ChunkedMcaStack(data, nmca=5000)
+            datastack = McaStackView.McaStackChunkView(data, nmca=5000)
             yref = numpy.zeros((data.shape[-1],), dtype)
-            for _, chunk in datastack.items():
+            for _, chunk in datastack.chunks():
                 yref += chunk.sum(axis=0, dtype=dtype)
         elif sumover == 'first row':
             # Sum spectrum of the first row
@@ -506,11 +505,11 @@ class FastXRFLinearFit(object):
     def _data_iter(self, slicecls, data=None, fitmodel=None, copy=True, **kwargs):
         dtype = self._fit_dtype(data)
         datastack = slicecls(data, dtype=dtype, modify=False, **kwargs)
-        chunkiter = datastack.items(copy=copy)
+        chunkiter = datastack.chunks(copy=copy)
         if fitmodel is not None:
             modelstack = slicecls(fitmodel, dtype=dtype, modify=True, **kwargs)
-            modeliter = modelstack.items(copy=False)
-            chunkiter = izip_clean(chunkiter, modeliter)
+            modeliter = modelstack.chunks(copy=False)
+            chunkiter = McaStackView.izipChunkIter(chunkiter, modeliter)
         return chunkiter
 
     def _fit_lstsq_all(self, data=None, sliceChan=None, derivatives=None,
@@ -522,7 +521,7 @@ class FastXRFLinearFit(object):
         bkgsub = bool(config['fit']['stripflag'])
         #nspectra = PhysicalMemory.chunks_in_memory(data.shape, data.dtype,
         #                                   axis=-1, maximal=100)
-        chunkiter = self._data_iter(ChunkedMcaStack, data=data, fitmodel=fitmodel,
+        chunkiter = self._data_iter(McaStackView.McaStackChunkView, data=data, fitmodel=fitmodel,
                                     mcaslice=sliceChan, copy=bkgsub, nmca=100)
         for chunk in chunkiter:
             if fitmodel is None:
@@ -582,7 +581,7 @@ class FastXRFLinearFit(object):
 
             # Fit all selected spectra in one chunk
             bkgsub = bool(config['fit']['stripflag'])
-            chunkiter = self._data_iter(MaskedMcaStack, data=data, fitmodel=fitmodel,
+            chunkiter = self._data_iter(McaStackView.McaStackMaskView, data=data, fitmodel=fitmodel,
                                         mcaslice=sliceChan, copy=bkgsub, mask=mask)
             for chunk in chunkiter:
                 if fitmodel is None:
@@ -606,7 +605,7 @@ class FastXRFLinearFit(object):
 
                 # Save results
                 iParam = 0
-                idx = mask  # for now MaskedMcaStack only has one chunk
+                idx = mask  # for now McaStackMaskView only has one chunk
                 for iFree in range(nFreeOrg):
                     if iFree in skipParams:
                         results[iFree][idx] = 0.0
@@ -891,694 +890,6 @@ def getFileListFromPattern(pattern, begin, end, increment=None):
     return fileList
 
 
-def slice_len(slc, n):
-    start, stop, step = slc.indices(n)
-    if step < 0:
-        one = -1
-    else:
-        one = 1
-    return max(0, (stop - start + step - one) // step)
-
-
-def chunk_indices(start, stop=None, step=None):
-    """
-    :param start:
-    :param stop:
-    :param step:
-    :returns list: list of (slice,n)
-    """
-    if stop is None:
-        start, stop, step = 0, start, 1
-    elif step is None:
-        step = 1
-    if step < 0:
-        func = max
-        one = -1
-    else:
-        func = min
-        one = 1
-    for a in range(start, stop, step):
-        b = func(a+step, stop)
-        yield slice(a, b), abs(b-a)
-
-
-# TODO: nonlocal in python 2 and 3
-#def izip_clean(*iters):
-#    """
-#    Like Python 3's zip but making sure next is called
-#    on all items when StopIteration occurs
-#    """
-#    bloop = True
-#    def _next(it):
-#        nonlocal bloop
-#        try:
-#            return next(it)
-#        except StopIteration:
-#            bloop = False
-#            return None
-#    while bloop:
-#        ret = tuple(_next(it) for it in iters)
-#        if bloop:
-#            yield ret
-def izip_clean(*iters):
-    """
-    Like Python 3's zip but making sure next is called
-    on all items when StopIteration occurs
-    """
-    bloop = {'b': True}  # because of python 2
-    def _next(it):
-        try:
-            return next(it)
-        except StopIteration:
-            bloop['b'] = False
-            return None
-    while bloop['b']:
-        ret = tuple(_next(it) for it in iters)
-        if bloop['b']:
-            yield ret
-
-
-class SlicedMcaStack(object):
-
-    def __init__(self, data, nbuffer=None, mcaslice=None, dtype=None, modify=False):
-        """
-        :param array data: 3D array (n0, n1, n2)
-        :param num nbuffer: number of elements from (n0, n1) in buffer
-        :param slice mcaslice: slice MCA axis=2
-        :param dtype:
-        :param bool modify: modify original on access
-        """
-        # Buffer shape
-        n2 = data.shape[-1]
-        if mcaslice:
-            nChan = slice_len(mcaslice, n2)
-        else:
-            nChan = n2
-            mcaslice = slice(None)
-        self._mcaslice = mcaslice
-        self._buffershape = nbuffer, nChan
-        self._buffer = None
-
-        # Buffer dtype
-        if dtype is None:
-            dtype = data.dtype
-        self._dtype = dtype
-        self._change_type = data.dtype != dtype
-
-        # Data
-        self._data = data
-        self._modify = modify
-        self._isndarray = isinstance(data, numpy.ndarray)
-
-    def _prepare_access(self, copy=True):
-        _logger.debug('Iterate MCA stack in chunks of {} spectra'
-                      .format(self._buffershape[0]))
-        needs_copy = copy or self._change_type
-        yields_copy = needs_copy or not self._isndarray
-        post_copy = yields_copy and self._modify
-        if yields_copy and self._buffer is None:
-            self._buffer = numpy.empty(self._buffershape, self._dtype)
-        return needs_copy, yields_copy, post_copy
-
-    def items(self, copy=True):
-        raise NotImplementedError
-
-
-class MaskedMcaStack(SlicedMcaStack):
-
-    def __init__(self, data, mask=None, **kwargs):
-        """
-        3D stack (n0, n1, n2) with mask (n0, n1) and slice n2
-
-        :param array data: numpy array or h5py dataset
-        :param array mask: shape = (n0, n1)
-        :param \**kwargs: see SlicedMcaStack
-        """
-        if mask is None:
-            self._indices = None
-            self._mask = Ellipsis
-            nbuffer = data.shape[0]*data.shape[1]
-        else:
-            if isinstance(data, numpy.ndarray):
-                # Support multiple advanced indexes
-                self._indices = None
-                self._mask = mask
-                nbuffer = int(mask.sum())
-            else:
-                # Does not support multiple advanced indexes
-                self._indices = numpy.where(mask)
-                self._mask = None
-                nbuffer = len(self._indices[0])
-        super(MaskedMcaStack, self).__init__(data, nbuffer=nbuffer, **kwargs)
-
-    def items(self, copy=True):
-        needs_copy, _, post_copy = self._prepare_access(copy=copy)
-        if self._indices is None:
-            ret = self._get_with_mask(copy=needs_copy)
-        else:
-            ret = self._get_with_indices()
-        yield ret
-        if post_copy:
-            if self._indices is None:
-                self._set_with_mask(*ret)
-            else:
-                self._set_with_indices(*ret)
-
-    def _get_with_mask(self, copy=True):
-        idx = self._mask, self._mcaslice
-        if copy:
-            chunk = self._buffer
-            chunk[()] = self._data[idx]
-        else:
-            chunk = self._data[idx]
-        return idx, chunk
-
-    def _set_with_mask(self, idx, chunk):
-        self._data[idx] = chunk
-
-    def _get_with_indices(self):
-        chunk = self._buffer
-        mcaslice = self._mcaslice
-        idx = self._indices + (mcaslice,)
-        j0keep = -1
-        for i, (j0, j1) in enumerate(zip(*self._indices)):
-            if j0 != j0keep:
-                tmpData = self._data[j0]
-                j0keep = j0
-            chunk[i] = tmpData[j1, mcaslice]
-        return idx, chunk
-
-    def _set_with_indices(self, idx, chunk):
-        lst0, lst1, mcaslice = idx
-        for v, j0, j1 in zip(chunk, lst0, lst1):
-            self._data[j0, j1, mcaslice] = v
-
-
-class ChunkedMcaStack(SlicedMcaStack):
-
-    def __init__(self, data, nmca=None, **kwargs):
-        """
-        3D stack (n0, n1, n2) to be iterated over in nmca spectra
-
-        :param array data: numpy array or h5py dataset
-        :param num nmca: number of spectra in one chunk
-        :param \**kwargs: see SlicedMcaStack
-        """
-        # Outer loop (non-chunked dimension)
-        n0, n1, n2 = data.shape
-        if nmca is None:
-            nmca = min(n0, n1)
-        if abs(n0-nmca) < abs(n1-nmca):
-            self._loopout = list(range(n1))
-            self._axes = 1,0
-            n = n0
-        else:
-            self._loopout = list(range(n0))
-            self._axes = 0,1
-            n = n1
-        
-        # Inner loop (chunked dimension)
-        nbuffer = min(nmca, n)
-        nchunks = n//nbuffer + int(bool(n % nbuffer))
-        nbuffer = n//nchunks + int(bool(n % nchunks))
-        self._loopin = list(chunk_indices(0, n, nbuffer))
-
-        super(ChunkedMcaStack, self).__init__(data, nbuffer=nbuffer, **kwargs)
-
-    def items(self, copy=True):
-        _, yields_copy, post_copy = self._prepare_access(copy=copy)
-        idx_data = [slice(None), slice(None), self._mcaslice]
-        i,j = self._axes
-        buffer = self._buffer
-        for idxout in self._loopout:
-            idx_data[i] = idxout
-            for idxin, n in self._loopin:
-                idx_data[j] = idxin
-                idx = tuple(idx_data)
-                if yields_copy:
-                    chunk = buffer[:n, :]
-                    chunk[()] = self._data[idx]
-                else:
-                    chunk = self._data[idx]
-                yield idx, chunk
-                if post_copy:
-                    self._data[idx] = chunk
-
-
-class FastFitOutputBuffer(object):
-
-    def __init__(self, outputDir=None, outputRoot=None, fileEntry=None,
-                 fileProcess=None, tif=False, edf=False, csv=False, h5=True,
-                 overwrite=False, save_residuals=False, save_fit=False, save_data=False):
-        """
-        Fast fitting output buffer, to be saved as:
-         .h5 : outputDir/outputRoot.h5::/fileEntry/fileProcess
-         .edf/.csv/.tif: outputDir/outputRoot/fileEntry.ext
-
-        Usage with context:
-            outbuffer = FastFitOutputBuffer(...)
-            with outbuffer.save_context():
-                ...
-
-        Usage without context:
-            outbuffer = FastFitOutputBuffer(...)
-            ...
-            outbuffer.save()
-
-        :param str outputDir:
-        :param str outputRoot:
-        :param str fileEntry:
-        :param str fileProcess:
-        :param save_residuals:
--       :param save_fit:
--       :param save_data:
-        :param bool tif:
-        :param bool edf:
-        :param bool csv:
-        :param bool h5:
-        :param bool overwrite:
-        """
-        self._init_buffer = False
-        self._output = {}
-        self._nxprocess = None
-
-        self.outputDir = outputDir
-        self.outputRoot = outputRoot
-        self.fileEntry = fileEntry
-        self.fileProcess = fileProcess
-        self.tif = tif
-        self.edf = edf
-        self.csv = csv
-        self.h5 = h5
-        self.save_residuals = save_residuals
-        self.save_fit = save_fit
-        self.save_data = save_data
-        self.overwrite = overwrite
-
-    @property
-    def outputRoot(self):
-        return self._outputRoot
-    
-    @outputRoot.setter
-    def outputRoot(self, value):
-        self._check_buffer_context()
-        if value:
-            self._outputRoot = value
-        else:
-            self._outputRoot = 'IMAGES'
-
-    @property
-    def fileEntry(self):
-        return self._fileEntry
-    
-    @fileEntry.setter
-    def fileEntry(self, value):
-        self._check_buffer_context()
-        if value:
-            self._fileEntry = value
-        else:
-            self._fileEntry = 'images'
-
-    @property
-    def fileProcess(self):
-        return self._fileProcess
-    
-    @fileProcess.setter
-    def fileProcess(self, value):
-        self._check_buffer_context()
-        if value:
-            self._fileProcess = value
-        else:
-            self._fileProcess = self.fileEntry
-
-    @property
-    def edf(self):
-        return self._edf
-    
-    @edf.setter
-    def edf(self, value):
-        self._check_buffer_context()
-        self._edf = value
-
-    @property
-    def tif(self):
-        return self._tif
-    
-    @tif.setter
-    def tif(self, value):
-        self._check_buffer_context()
-        self._tif = value
-
-    @property
-    def csv(self):
-        return self._csv
-    
-    @csv.setter
-    def csv(self, value):
-        self._check_buffer_context()
-        self._csv = value
-
-    @property
-    def cfg(self):
-        return self.csv or self.edf or self.tif
-
-    @property
-    def save_data(self):
-        return self._save_data and self.h5
-    
-    @save_data.setter
-    def save_data(self, value):
-        self._check_buffer_context()
-        self._save_data = value
-
-    @property
-    def save_fit(self):
-        return self._save_fit and self.h5
-    
-    @save_fit.setter
-    def save_fit(self, value):
-        self._check_buffer_context()
-        self._save_fit= value
-
-    @property
-    def save_residuals(self):
-        return self._save_residuals and self.h5
-    
-    @save_residuals.setter
-    def save_residuals(self, value):
-        self._check_buffer_context()
-        self._save_residuals = value
-
-    @property
-    def save_diagnostics(self):
-        return self.save_residuals or self.save_fit
-
-    @property
-    def overwrite(self):
-        return self._overwrite
-    
-    @overwrite.setter
-    def overwrite(self, value):
-        self._check_buffer_context()
-        self._overwrite = value
-
-    def _check_buffer_context(self):
-        if self._init_buffer:
-            raise RuntimeError('Buffer is locked')
-
-    @property
-    def outroot_localfs(self):
-        return os.path.join(self.outputDir, self.outputRoot)
-
-    def filename(self, ext, suffix=None):
-        if not suffix:
-            suffix = ""
-        if ext == '.h5':
-            return os.path.join(self.outputDir, self.outputRoot+suffix+ext)
-        else:
-            return os.path.join(self.outroot_localfs, self.fileEntry+suffix+ext)
-
-    def __getitem__(self, key):
-        return self._output[key]
-
-    def __setitem__(self, key, value):
-        self._output[key] = value
-
-    def __contains__(self, key):
-        return key in self._output
-
-    def get(self, key, default=None):
-        return self._output.get(key, default)
-
-    def allocate_memory(self, name, fill_value=None, shape=None, dtype=None):
-        """
-        :param str name:
-        :param num fill_value:
-        :param tuple shape:
-        :param dtype:
-        """
-        if fill_value is None:
-            buffer = numpy.empty(shape, dtype=dtype)
-        elif fill_value == 0:
-            buffer = numpy.zeros(shape, dtype=dtype)
-        else:
-            buffer = numpy.full(shape, fill_value, dtype=dtype)
-        self._output[name] = buffer
-        return buffer
-
-    def allocate_h5(self, name, nxdata=None, fill_value=None, **kwargs):
-        """
-        :param str name:
-        :param str nxdata:
-        :param num fill_value:
-        :param \**kwargs: see h5py.Group.create_dataset
-        """
-        parent = self._nxprocess['results']
-        if nxdata:
-            parent = NexusUtils.nxdata(parent, nxdata)
-        buffer = parent.create_dataset(name, **kwargs)
-        if fill_value is not None:
-            buffer[()] = fill_value
-        self.flush()
-        self._output[name] = buffer
-        return buffer
-
-    @contextmanager
-    def _buffer_context(self, update=True):
-        """
-        Prepare output buffers (HDF5: create file, NXentry and NXprocess)
-
-        :param bool update: True: update existing NXprocess,  False: overwrite or raise an exception
-        :raises RuntimeError: NXprocess exists and overwrite==False
-        """
-        if self._init_buffer:
-            yield
-        else:
-            self._init_buffer = True
-            _logger.debug('Output buffer hold ...')
-            try:
-                if self.h5:
-                    if self._nxprocess is None and self.outputDir:
-                        cleanup_funcs = []
-                        try:
-                            with self._h5_context(cleanup_funcs, update=update):
-                                yield
-                        except:
-                            # clean-up and re-raise
-                            for func in cleanup_funcs:
-                                func()
-                            raise
-                    else:
-                        yield
-                else:
-                    yield
-            finally:
-                self._init_buffer = False
-                _logger.debug('Output buffer released')
-
-    @contextmanager
-    def _h5_context(self, cleanup_funcs, update=True):
-        fileName = self.filename('.h5')
-        existed = [False]*3
-        existed[0] = os.path.exists(fileName)
-        with NexusUtils.nxroot(fileName, mode='a') as f:
-            entryname = self.fileEntry
-            existed[1] = entryname in f
-            entry = NexusUtils.nxentry(f, entryname)
-            procname = self.fileProcess
-            if procname in entry:
-                existed[2] = True
-                path = entry[procname].name
-                if update:
-                    pass
-                elif self.overwrite:
-                    _logger.warning('overwriting {}'.format(path))
-                    del entry[procname]
-                    existed[2] = False
-                else:
-                    raise RuntimeError('{} already exists'.format(path))
-            self._nxprocess = NexusUtils.nxprocess(entry, procname)
-            try:
-                yield
-            except:
-                # clean-up and re-raise
-                if not existed[0]:
-                    cleanup_funcs.append(lambda: os.remove(fileName))
-                elif not existed[1]:
-                    del f[entryname]
-                elif not existed[2]:
-                    del entry[procname]
-                raise
-            finally:
-                self._nxprocess = None
-
-    @contextmanager
-    def save_context(self):
-        with self._buffer_context(update=False):
-            try:
-                yield
-            except:
-                raise
-            else:
-                self.save()
-
-    def flush(self):
-        if self._nxprocess is not None :
-            self._nxprocess.file.flush()
-
-    def save(self):
-        """
-        Save result of Fast XRF fitting. Preferrable use save_context instead.
-        HDF5 NXprocess will be updated, not overwritten.
-        """
-        if not (self.tif or self.edf or self.csv or self.h5):
-            _logger.warning('fit result not saved (no output format specified)')
-            return
-        t0 = time.time()
-        _logger.debug('Saving results ...')
-
-        with self._buffer_context(update=True):
-            if self.tif or self.edf or self.csv:
-                self._save_single()
-            if self.h5:
-                self._save_h5()
-
-        t = time.time() - t0
-        _logger.debug("Saving results elapsed = %f", t)
-
-    @property
-    def parameter_names(self):
-        return self._get_names('parameter_names', '{}')
-
-    @property
-    def uncertainties_names(self):
-        return self._get_names('parameter_names', 's({})')
-
-    @property
-    def concentration_names(self):
-        return self._get_names('concentration_names', 'C({}){}')
-
-    def _get_names(self, names, fmt):
-        labels = self.get(names, None)
-        if not labels:
-            return []
-        out = []
-        for label in labels:
-            label = label.split('-')
-            name = label[0].replace(" ", "-")
-            if len(label)>1:
-                layer = '-'.join(label[1:])
-            else:
-                layer = ''
-            label = fmt.format(name, layer)
-            out.append(label)
-        return out
-
-    def _save_single(self):
-        from PyMca5.PyMca import ArraySave
-
-        imageNames = []
-        imageList = []
-        lst = [('parameter_names', 'parameters', '{}'),
-               ('parameter_names', 'uncertainties', 's({})'),
-               ('concentration_names', 'concentrations', 'C({}){}')]
-        for names, key, fmt in lst:
-            images = self.get(key, None)
-            if images is not None:
-                for img in images:
-                    imageList.append(img)
-                imageNames += self._get_names(names, fmt)
-        NexusUtils.mkdir(self.outroot_localfs)
-        if self.edf:
-            fileName = self.filename('.edf')
-            self._check_overwrite(fileName)
-            ArraySave.save2DArrayListAsEDF(imageList, fileName,
-                                           labels=imageNames)
-        if self.csv:
-            fileName = self.filename('.csv')
-            self._check_overwrite(fileName)
-            ArraySave.save2DArrayListAsASCII(imageList, fileName, csv=True,
-                                             labels=imageNames)
-        if self.tif:
-            for label,image in zip(imageNames, imageList):
-                if label.startswith("s("):
-                    suffix = "_s" + label[2:-1]
-                elif label.startswith("C("):
-                    suffix = "_w" + label[2:-1]
-                else:
-                    suffix  = "_" + label
-                fileName = self.filename('.tif', suffix=suffix)
-                self._check_overwrite(fileName)
-                ArraySave.save2DArrayListAsMonochromaticTiff([image],
-                                                             fileName,
-                                                             labels=[label],
-                                                             dtype=numpy.float32)
-        if self.cfg and 'configuration' in self:
-            fileName = self.filename('.cfg')
-            self._check_overwrite(fileName)
-            self['configuration'].write(fileName)
-
-    def _check_overwrite(self, fileName):
-        if os.path.exists(fileName):
-            if self.overwrite:
-                _logger.warning('overwriting {}'.format(fileName))
-            else:
-                raise RuntimeError('{} already exists'.format(fileName))
-
-    def _save_h5(self):
-        # Save fit configuration
-        nxprocess = self._nxprocess
-        nxresults = nxprocess['results']
-        configdict = self.get('configuration', None)
-        NexusUtils.nxprocess_configuration_init(nxprocess, configdict=configdict)
-
-        # Save fitted parameters, uncertainties and elemental concentrations
-        mill = numpy.float32(1e6)
-        lst = [('parameter_names', 'uncertainties', lambda x:x, None),
-               ('parameter_names', 'parameters', lambda x:x, None),
-               ('concentration_names', 'concentrations', lambda x:x*mill, 'ug/g')]
-        for names, key, proc, units in lst:
-            images = self.get(key, None)
-            if images is not None:
-                attrs = {'interpretation':'image'}
-                if units:
-                    attrs = {'units': units}
-                signals = [(label, {'data':proc(img), 'chunks':True}, attrs)
-                           for label,img in zip(self[names], images)]
-                data = NexusUtils.nxdata(nxresults, key)
-                NexusUtils.nxdata_add_signals(data, signals)
-                NexusUtils.mark_default(data)
-
-        # Save fitted model and residuals
-        signals = []
-        attrs = {'interpretation':'spectrum'}
-        for name in ['data', 'model', 'residuals']:
-            dset = self.get(name, None)
-            if dset is not None:
-                signals.append((name,None,attrs))
-        if signals:
-            nxdata = NexusUtils.nxdata(nxresults, 'fit')
-            NexusUtils.nxdata_add_signals(nxdata, signals)
-            axes = self.get('data_axes', None)
-            axes_used = self.get('data_axes_used', None)
-            if axes:
-                NexusUtils.nxdata_add_axes(nxdata, axes)
-            if axes_used:
-                axes = [(ax, None, None) for ax in axes_used]
-                NexusUtils.nxdata_add_axes(nxdata, axes, append=False)
-
-        # Save diagnostics
-        signals = []
-        attrs = {'interpretation':'image'}
-        for name in ['nObservations', 'nFreeParameters']:
-            img = self.get(name, None)
-            if img is not None:
-                signals.append((name,img,attrs))
-        if signals:
-            nxdata = NexusUtils.nxdata(nxresults, 'diagnostics')
-            NexusUtils.nxdata_add_signals(nxdata, signals)
-
-
 def prepareDataStack(fileList):
     if (not os.path.exists(fileList[0])) and \
         os.path.exists(fileList[0].split("::")[0]):
@@ -1733,7 +1044,7 @@ def main():
     fastFit.setFitConfigurationFile(configurationFile)
     print("Main configuring Elapsed = % s " % (time.time() - t0))
 
-    outbuffer = FastFitOutputBuffer(outputDir=outputDir,
+    outbuffer = OutputBuffer(outputDir=outputDir,
                         outputRoot=outputRoot, fileEntry=fileEntry,
                         fileProcess=fileProcess, save_data=save_data,
                         save_fit=save_fit, save_residuals=save_residuals,

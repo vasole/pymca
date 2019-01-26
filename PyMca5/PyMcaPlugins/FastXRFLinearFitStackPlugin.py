@@ -64,6 +64,7 @@ import logging
 import traceback
 from PyMca5 import StackPluginBase
 from PyMca5.PyMcaPhysics import FastXRFLinearFit
+from PyMca5.PyMcaPhysics import FastXRFLinearFitOutput
 from PyMca5.PyMcaGui import FastXRFLinearFitWindow
 from PyMca5.PyMcaGui import CalculationThread
 from PyMca5.PyMcaGui import StackPluginResultsWindow
@@ -199,7 +200,7 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
             x = stack.x[0]
 
         outparams = self._parameters['output']
-        outbuffer = FastXRFLinearFit.FastFitOutputBuffer(**outparams)
+        outbuffer = FastXRFLinearFitOutput.OutputBuffer(**outparams)
 
         outbuffer = self.fitInstance.fitMultipleSpectra(x=x,
                                                         y=stack,
