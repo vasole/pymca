@@ -110,6 +110,12 @@ class FastXRFLinearFitWindow(qt.QWidget):
         self._concentrationsBox.setChecked(False)
         self._concentrationsBox.setEnabled(True)
 
+        # diagnostics
+        self._diagnosticsBox = qt.QCheckBox(self._boxContainer1)
+        self._diagnosticsBox.setText("calculate diagnostics")
+        self._diagnosticsBox.setChecked(False)
+        self._diagnosticsBox.setEnabled(True)
+
         # repeat fit on negative contributions
         self._fitAgainBox = qt.QCheckBox(self._boxContainer1)
         self._fitAgainBox.setText("Repeat fit on negative contributions")
@@ -147,12 +153,20 @@ class FastXRFLinearFitWindow(qt.QWidget):
         self.toggleH5(True)
         self._h5Box.stateChanged.connect(self.toggleH5)
 
+        # overwrite output
+        self._overwriteBox = qt.QCheckBox(self._boxContainer2)
+        self._overwriteBox.setText("Overwrite")
+        self._overwriteBox.setChecked(True)
+        self._overwriteBox.setEnabled(True)
+        
         self._boxContainerLayout1.addWidget(self._concentrationsBox)
         self._boxContainerLayout1.addWidget(self._fitAgainBox)
+        self._boxContainerLayout1.addWidget(self._diagnosticsBox)
         self._boxContainerLayout2.addWidget(self._h5Box)
         self._boxContainerLayout2.addWidget(self._edfBox)
         self._boxContainerLayout2.addWidget(self._csvBox)
         self._boxContainerLayout2.addWidget(self._tiffBox)
+        self._boxContainerLayout2.addWidget(self._overwriteBox)
         
         # weight method
         self._weightWidget = qt.QWidget(self)
@@ -225,6 +239,10 @@ class FastXRFLinearFitWindow(qt.QWidget):
         self._outnameLine.setReadOnly(readonly)
         self._outnameLine.setEnabled(not readonly)
         self._outnameLabel.setEnabled(not readonly)
+        if readonly:
+            self._outnameLine.setStyleSheet("color: gray; background-color: darkGray")
+        else:
+            self._outnameLine.setStyleSheet("")
 
     def getParameters(self):
         ddict = {}
@@ -244,11 +262,11 @@ class FastXRFLinearFitWindow(qt.QWidget):
         output['csv'] = int(self._csvBox.isChecked())
         output['edf'] = int(self._edfBox.isChecked())
         output['h5'] = int(self._h5Box.isChecked())
-        # Currently not exposed by GUI:
-        output['overwrite'] = 1
-        output['save_data'] = 0
-        output['save_fit'] = 0
-        output['save_residuals'] = 0
+        output['overwrite'] = int(self._overwriteBox.isChecked())
+        diagnostics = int(self._diagnosticsBox.isChecked())
+        output['save_data'] = diagnostics
+        output['save_fit'] = diagnostics
+        output['save_residuals'] = diagnostics
         return ddict
 
 class FastXRFLinearFitDialog(qt.QDialog):

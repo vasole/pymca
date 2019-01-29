@@ -93,8 +93,8 @@ class FastXRFLinearFit(object):
         :return dict: outbuffer
         """
         # Parse data
-        x, data, mcaIndex, livetime = self._fit_parse_data(x=x, y=y,
-                                                           livetime=livetime)
+        x, data, mcaIndex, livetime = self._fitParseData(x=x, y=y,
+                                                         livetime=livetime)
 
         # Check data dimensions
         if data.ndim != 3:
@@ -113,7 +113,7 @@ class FastXRFLinearFit(object):
             # Configure fit
             nSpectra = data.size // data.shape[mcaIndex]
             configorg, config, weight, weightPolicy, \
-            autotime, liveTimeFactor = self._fit_configure(
+            autotime, liveTimeFactor = self._fitConfigure(
                                                 configuration=configuration,
                                                 concentrations=concentrations,
                                                 livetime=livetime,
@@ -132,8 +132,8 @@ class FastXRFLinearFit(object):
                     sumover = 'first pixel'
                 else:
                     sumover = 'first row'
-                yref = self._fit_reference_spectrum(data=data, mcaIndex=mcaIndex,
-                                                    sumover=sumover)
+                yref = self._fitReferenceSpectrum(data=data, mcaIndex=mcaIndex,
+                                                  sumover=sumover)
             else:
                 yref = ysum
 
@@ -142,16 +142,16 @@ class FastXRFLinearFit(object):
                 xmin = config['fit']['xmin']
             if xmax is None:
                 xmax = config['fit']['xmax']
-            dtype = self._fit_dtype(data)
+            dtype = self._fitDtypeResults(data)
             self._mcaTheory.setData(x=x, y=yref, xmin=xmin, xmax=xmax)
-            derivatives, freeNames, nFree, nFreeBkg = self._fit_model(dtype=dtype)
+            derivatives, freeNames, nFree, nFreeBkg = self._fitCreateModel(dtype=dtype)
             outbuffer['parameter_names'] = freeNames
 
             # Background anchor points (if any)
-            anchorslist = self._fit_bkg_anchorlist(config=config)
+            anchorslist = self._fitBkgAnchorList(config=config)
 
             # MCA trimming: [iXMin:iXMax]
-            iXMin, iXMax = self._fit_mcatrim_info(x=x)
+            iXMin, iXMax = self._fitMcaTrimInfo(x=x)
             sliceChan = slice(iXMin, iXMax)
             nObs = iXMax-iXMin
 
@@ -186,7 +186,7 @@ class FastXRFLinearFit(object):
                 nFreeParameters = outbuffer.allocate_memory('nFreeParameters',
                                                  shape=image_shape,
                                                  fill_value=nFree)
-                _ = outbuffer.allocate_memory('nObservations',
+                nObservations = outbuffer.allocate_memory('nObservations',
                                                  shape=image_shape,
                                                  fill_value=nObs)
                 fitmodel = outbuffer.allocate_h5('model',
@@ -205,7 +205,7 @@ class FastXRFLinearFit(object):
             t0 = time.time()
 
             # Fit all spectra
-            self._fit_lstsq_all(data=data, sliceChan=sliceChan, mcaIndex=mcaIndex,
+            self._fitLstSqAll(data=data, sliceChan=sliceChan, mcaIndex=mcaIndex,
                             derivatives=derivatives, fitmodel=fitmodel,
                             results=results, uncertainties=uncertainties,
                             config=config, anchorslist=anchorslist,
@@ -220,7 +220,7 @@ class FastXRFLinearFit(object):
 
             # Refit spectra with negative peak areas
             if refit:
-                self._fit_lstsq_negpeaks(data=data, sliceChan=sliceChan,
+                self._fitLstSqNegative(data=data, sliceChan=sliceChan,
                             freeNames=freeNames, nFreeBkg=nFreeBkg,
                             derivatives=derivatives, fitmodel=fitmodel,
                             results=results, uncertainties=uncertainties,
@@ -252,7 +252,7 @@ class FastXRFLinearFit(object):
                         ('energy', xenergy, {'units': 'keV'}))
             if concentrations:
                 t0 = time.time()
-                self._fit_concentration(config=config,
+                self._fitDeriveMassFractions(config=config,
                                         outputDict=outbuffer,
                                         nFreeBkg=nFreeBkg,
                                         results=results,
@@ -263,7 +263,7 @@ class FastXRFLinearFit(object):
             return outbuffer
 
     @staticmethod
-    def _fit_parse_data(x=None, y=None, livetime=None):
+    def _fitParseData(x=None, y=None, livetime=None):
         """Parse the input data (MCA and livetime)
         """
         if y is None:
@@ -283,7 +283,7 @@ class FastXRFLinearFit(object):
                     livetime = y.info["McaLiveTime"]
         return x, data, mcaIndex, livetime
 
-    def _fit_configure(self, configuration=None, concentrations=False,
+    def _fitConfigure(self, configuration=None, concentrations=False,
                        livetime=None, weight=None, nSpectra=None):
         """Prepare configuration for fitting
         """
@@ -392,10 +392,10 @@ class FastXRFLinearFit(object):
         return configorg, config, weight, weightPolicy, \
                autotime, liveTimeFactor
 
-    def _fit_reference_spectrum(self, data=None, mcaIndex=None, sumover='all'):
+    def _fitReferenceSpectrum(self, data=None, mcaIndex=None, sumover='all'):
         """Get sum spectrum
         """
-        dtype = self._fit_dtype(data)
+        dtype = self._fitDtypeResults(data)
         if sumover == 'all':
             nMca = self._numberOfSpectra(20, 'MiB', data=data, mcaIndex=mcaIndex)
             _logger.debug('Add spectra in chunks of {}'.format(nMca))
@@ -411,7 +411,7 @@ class FastXRFLinearFit(object):
             yref = data[0, 0, :].astype(dtype)
         return yref
 
-    def _fit_model(self, dtype=None):
+    def _fitCreateModel(self, dtype=None):
         """Get linear model for fitting
         """
         # Initialize the derivatives
@@ -453,7 +453,7 @@ class FastXRFLinearFit(object):
 
         return derivatives, freeNames, nFree, nFreeBkg
 
-    def _fit_bkg_anchorlist(self, config=None):
+    def _fitBkgAnchorList(self, config=None):
         """Get anchors for background subtraction
         """
         xdata = self._mcaTheory.xdata  # trimmed
@@ -477,7 +477,7 @@ class FastXRFLinearFit(object):
             anchorslist = None
         return anchorslist
 
-    def _fit_mcatrim_info(self, x=None):
+    def _fitMcaTrimInfo(self, x=None):
         """Start and end channels for MCA trimming
         """
         xdata = self._mcaTheory.xdata
@@ -503,8 +503,8 @@ class FastXRFLinearFit(object):
                 iXMax = iXMax[0]
         return iXMin, iXMax+1
 
-    def _data_iter(self, slicecls, data=None, fitmodel=None, **kwargs):
-        dtype = self._fit_dtype(data)
+    def _dataChunkIter(self, slicecls, data=None, fitmodel=None, **kwargs):
+        dtype = self._fitDtypeResults(data)
         datastack = slicecls(data, dtype=dtype, readonly=True, **kwargs)
         chunkItems = datastack.items(keyType='select')
         if fitmodel is not None:
@@ -513,7 +513,7 @@ class FastXRFLinearFit(object):
             chunkItems = McaStackView.izipChunkItems(chunkItems, modeliter)
         return chunkItems
 
-    def _fit_lstsq_all(self, data=None, sliceChan=None, mcaIndex=None,
+    def _fitLstSqAll(self, data=None, sliceChan=None, mcaIndex=None,
                        derivatives=None, results=None, uncertainties=None,
                        fitmodel=None, config=None, anchorslist=None,
                        lstsq_kwargs=None):
@@ -526,7 +526,7 @@ class FastXRFLinearFit(object):
         nMca = self._numberOfSpectra(400, 'KiB', data=data, mcaIndex=mcaIndex,
                                      sliceChan=sliceChan)
         _logger.debug('Fit spectra in chunks of {}'.format(nMca))
-        chunkItems = self._data_iter(McaStackView.FullView, data=data, fitmodel=fitmodel,
+        chunkItems = self._dataChunkIter(McaStackView.FullView, data=data, fitmodel=fitmodel,
                                      mcaSlice=sliceChan, mcaAxis=mcaIndex, nMca=nMca)
         for chunk in chunkItems:
             if fitmodel is None:
@@ -539,7 +539,7 @@ class FastXRFLinearFit(object):
 
             # Subtract background
             if bkgsub:
-                self._fit_bkg_subtract(chunk, config=config,
+                self._fitBkgSubtract(chunk, config=config,
                                        anchorslist=anchorslist,
                                        fitmodel=chunkModel)
 
@@ -559,7 +559,7 @@ class FastXRFLinearFit(object):
                 else:
                     chunkModel[()] = numpy.dot(derivatives, ddict['parameters'])
 
-    def _fit_lstsq_reduced(self, data=None, mask=None, skipParams=None,
+    def _fitLstSqReduced(self, data=None, mask=None, skipParams=None,
                            skipNames=None, nmin=None, sliceChan=None,
                            derivatives=None, fitmodel=None, results=None,
                            uncertainties=None, nFreeParameters=None,
@@ -587,8 +587,9 @@ class FastXRFLinearFit(object):
 
             # Fit all selected spectra in one chunk
             bkgsub = bool(config['fit']['stripflag'])
-            chunkItems = self._data_iter(McaStackView.MaskedView, data=data, fitmodel=fitmodel,
-                                         mcaSlice=sliceChan, mask=mask)
+            chunkItems = self._dataChunkIter(McaStackView.MaskedView, data=data,
+                                             fitmodel=fitmodel, mcaSlice=sliceChan,
+                                             mask=mask)
             for chunk in chunkItems:
                 if fitmodel is None:
                     idx, chunk = chunk
@@ -600,9 +601,9 @@ class FastXRFLinearFit(object):
 
                 # Subtract background
                 if bkgsub:
-                    self._fit_bkg_subtract(chunk, config=config,
-                                           anchorslist=anchorslist,
-                                           fitmodel=chunkModel)
+                    self._fitBkgSubtract(chunk, config=config,
+                                         anchorslist=anchorslist,
+                                         fitmodel=chunkModel)
 
                 # Solve linear system of equations
                 ddict = lstsq(A, chunk, digested_output=True,
@@ -629,7 +630,7 @@ class FastXRFLinearFit(object):
                 nFreeParameters[mask] = nFree
 
     @staticmethod
-    def _fit_dtype(data):
+    def _fitDtypeResults(data):
         if data.dtype not in [numpy.float32, numpy.float64]:
             if data.itemsize < 5:
                 return numpy.float32
@@ -640,7 +641,7 @@ class FastXRFLinearFit(object):
 
     def _numberOfSpectra(self, n, unit, data=None, mcaIndex=None, sliceChan=None):
         p = ['b', 'kib', 'mib', 'gib'].index(unit.lower())
-        dtype = self._fit_dtype(data)
+        dtype = self._fitDtypeResults(data)
         nChan = data.shape[mcaIndex]
         if sliceChan is not None:
             nChan = McaStackView.sliceLen(sliceChan, nChan)
@@ -648,7 +649,7 @@ class FastXRFLinearFit(object):
         return max((n*1024**p)//nByteMca, 1)
 
     @staticmethod
-    def _fit_bkg_subtract(spectra, config=None, anchorslist=None, fitmodel=None):
+    def _fitBkgSubtract(spectra, config=None, anchorslist=None, fitmodel=None):
         """Subtract brackground from data and add it to fit model
         """
         for k in range(spectra.shape[1]):
@@ -672,7 +673,7 @@ class FastXRFLinearFit(object):
             if fitmodel is not None:
                 fitmodel[:, k] = background
 
-    def _fit_lstsq_negpeaks(self, data=None, freeNames=None, nFreeBkg=None,
+    def _fitLstSqNegative(self, data=None, freeNames=None, nFreeBkg=None,
                             results=None, **kwargs):
         """Refit pixels with negative peak areas (remove the parameters from the model)
         """
@@ -727,14 +728,14 @@ class FastXRFLinearFit(object):
             nmin = 0.0025 * badMask.size
             _logger.debug("Refit iteration #{}. Fixed to zero: {}"
                           .format(iIter, badNames))
-            self._fit_lstsq_reduced(data=data, mask=badMask,
+            self._fitLstSqReduced(data=data, mask=badMask,
                                     skipParams=badParameters,
                                     skipNames=badNames,
                                     results=results,
                                     nmin=nmin, **kwargs)
             iIter += 1
 
-    def _fit_concentration(self, config=None, outputDict=None, results=None,
+    def _fitDeriveMassFractions(self, config=None, outputDict=None, results=None,
                            nFreeBkg=None, autotime=None, liveTimeFactor=None):
         """Calculate concentrations from peak areas
         """
@@ -807,7 +808,7 @@ class FastXRFLinearFit(object):
         referenceTransitions = addInfo['ReferenceTransitions']
         _logger.debug("Reference <%s>  transition <%s>",
                       referenceElement, referenceTransitions)
-        outputDict['concentration_names'] = []
+        outputDict['massfraction_names'] = []
         if referenceElement in ["", None, "None"]:
             _logger.debug("No reference")
             counter = 0
@@ -815,7 +816,7 @@ class FastXRFLinearFit(object):
                 if group.lower().startswith("scatter"):
                     _logger.debug("skept %s", group)
                     continue
-                outputDict['concentration_names'].append(group)
+                outputDict['massfraction_names'].append(group)
                 if counter == 0:
                     if hasattr(liveTimeFactor, "shape"):
                         liveTimeFactor.shape = results[nFreeBkg+i].shape
@@ -826,7 +827,7 @@ class FastXRFLinearFit(object):
                 counter += 1
                 if len(concentrationsResult['layerlist']) > 1:
                     for layer in concentrationsResult['layerlist']:
-                        outputDict['concentration_names'].append("%s-%s" % (group, layer))
+                        outputDict['massfraction_names'].append("%s-%s" % (group, layer))
                         massFractions[counter] = liveTimeFactor * \
                                 results[nFreeBkg+i] * \
                                 (concentrationsResult[layer]['mass fraction'][group] / \
@@ -853,7 +854,7 @@ class FastXRFLinearFit(object):
                 if group.lower().startswith("scatter"):
                     _logger.debug("skept %s", group)
                     continue
-                outputDict['concentration_names'].append(group)
+                outputDict['massfraction_names'].append(group)
                 goodI = results[nFreeBkg+i] > 0
                 tmp = results[nFreeBkg+idx][goodI]
                 massFractions[counter][goodI] = (results[nFreeBkg+i][goodI]/(tmp + (tmp == 0))) *\
@@ -862,12 +863,12 @@ class FastXRFLinearFit(object):
                 counter += 1
                 if len(concentrationsResult['layerlist']) > 1:
                     for layer in concentrationsResult['layerlist']:
-                        outputDict['concentration_names'].append("%s-%s" % (group, layer))
+                        outputDict['massfraction_names'].append("%s-%s" % (group, layer))
                         massFractions[counter][goodI] = (results[nFreeBkg+i][goodI]/(tmp + (tmp == 0))) *\
                             ((referenceArea/fitresult['result'][group]['fitarea']) *\
                             (concentrationsResult[layer]['mass fraction'][group]))
                         counter += 1
-        outputDict['concentrations'] = massFractions
+        outputDict['massfractions'] = massFractions
 
 
 def getFileListFromPattern(pattern, begin, end, increment=None):

@@ -339,7 +339,7 @@ class OutputBuffer(object):
                 self.save()
 
     def flush(self):
-        if self._nxprocess is not None :
+        if self._nxprocess is not None:
             self._nxprocess.file.flush()
 
     def save(self):
@@ -349,6 +349,9 @@ class OutputBuffer(object):
         """
         if not (self.tif or self.edf or self.csv or self.h5):
             _logger.warning('fit result not saved (no output format specified)')
+            return
+        if not self.outputDir:
+            _logger.warning('fit result not saved (no output directory specified)')
             return
         t0 = time.time()
         _logger.debug('Saving results ...')
@@ -371,8 +374,8 @@ class OutputBuffer(object):
         return self._get_names('parameter_names', 's({})')
 
     @property
-    def concentration_names(self):
-        return self._get_names('concentration_names', 'C({}){}')
+    def massfraction_names(self):
+        return self._get_names('massfraction_names', 'w({}){}')
 
     def _get_names(self, names, fmt):
         labels = self.get(names, None)
@@ -397,7 +400,7 @@ class OutputBuffer(object):
         imageList = []
         lst = [('parameter_names', 'parameters', '{}'),
                ('parameter_names', 'uncertainties', 's({})'),
-               ('concentration_names', 'concentrations', 'C({}){}')]
+               ('massfraction_names', 'massfractions', 'w({}){}')]
         for names, key, fmt in lst:
             images = self.get(key, None)
             if images is not None:
@@ -419,7 +422,7 @@ class OutputBuffer(object):
             for label,image in zip(imageNames, imageList):
                 if label.startswith("s("):
                     suffix = "_s" + label[2:-1]
-                elif label.startswith("C("):
+                elif label.startswith("w("):
                     suffix = "_w" + label[2:-1]
                 else:
                     suffix  = "_" + label
@@ -444,26 +447,28 @@ class OutputBuffer(object):
     def _save_h5(self):
         # Save fit configuration
         nxprocess = self._nxprocess
+        if nxprocess is None:
+            return
         nxresults = nxprocess['results']
         configdict = self.get('configuration', None)
         NexusUtils.nxprocess_configuration_init(nxprocess, configdict=configdict)
 
-        # Save fitted parameters, uncertainties and elemental concentrations
+        # Save fitted parameters, uncertainties and elemental massfractions
         mill = numpy.float32(1e6)
-        lst = [('parameter_names', 'uncertainties', lambda x:x, None),
-               ('parameter_names', 'parameters', lambda x:x, None),
-               ('concentration_names', 'concentrations', lambda x:x*mill, 'ug/g')]
-        for names, key, proc, units in lst:
+        lst = [('parameter_names', 'uncertainties'),
+               ('parameter_names', 'parameters'),
+               ('massfraction_names', 'massfractions')]
+        for names, key in lst:
             images = self.get(key, None)
             if images is not None:
-                attrs = {'interpretation':'image'}
-                if units:
-                    attrs = {'units': units}
-                signals = [(label, {'data':proc(img), 'chunks':True}, attrs)
-                           for label,img in zip(self[names], images)]
+                attrs = {'interpretation': 'image'}
+                signals = [(label, {'data': img, 'chunks': True}, attrs)
+                           for label, img in zip(self[names], images)]
                 data = NexusUtils.nxdata(nxresults, key)
                 NexusUtils.nxdata_add_signals(data, signals)
                 NexusUtils.mark_default(data)
+        if 'parameters' in nxresults and 'uncertainties' in nxresults:
+            NexusUtils.nxdata_add_errors(nxresults['parameters'], nxresults['uncertainties'])
 
         # Save fitted model and residuals
         signals = []
@@ -471,7 +476,7 @@ class OutputBuffer(object):
         for name in ['data', 'model', 'residuals']:
             dset = self.get(name, None)
             if dset is not None:
-                signals.append((name,None,attrs))
+                signals.append((name, None, attrs))
         if signals:
             nxdata = NexusUtils.nxdata(nxresults, 'fit')
             NexusUtils.nxdata_add_signals(nxdata, signals)

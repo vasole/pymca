@@ -262,10 +262,10 @@ class testStackInfo(unittest.TestCase):
                     "Different sigma value for parameter %s delta %f" % \
                                 (name, delta.min()))
 
-            concentration_names = outputDict.concentration_names
-            concentrations = outputDict["concentrations"]
-            for i, (name, values) in enumerate(zip(concentration_names, concentrations)):
-                # verify that concentrations took into account the time
+            massfraction_names = outputDict.massfraction_names
+            massfractions = outputDict["massfractions"]
+            for i, (name, values) in enumerate(zip(massfraction_names, massfractions)):
+                # verify that massfractions took into account the time
                 reference = values[0, 0]
                 cTime = configuration['concentrations']['time']
                 values = values[:]

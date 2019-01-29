@@ -150,7 +150,8 @@ def possitive_index(i, n):
         return i
 
 
-def fullChunkIndex(shape, nChunksMax, chunkAxes=None, axesOrder=None, chunkAxesSlice=None, defaultOrder='C'):
+def fullChunkIndex(shape, nChunksMax, chunkAxes=None, axesOrder=None,
+                   chunkAxesSlice=None, defaultOrder='C'):
     """
     Returns a number of lists (as many as there are dimensions)
     which cartesian product represents all chunk indices
@@ -160,8 +161,12 @@ def fullChunkIndex(shape, nChunksMax, chunkAxes=None, axesOrder=None, chunkAxesS
     :param tuple(int) chunkAxes: dimensions that define the chunk
     :param tuple(int) axesOrder: order of other dimensions to be sliced
     :param tuple(slice) chunkAxesSlice: slice chunk dimensions
-    :param str defaultOrder: 'C' (last index varies the fastest) or 'F' (first index varies the fastest)
-    :returns tuple: chunkIndex(list(list(slice,int))), chunkAxes, axesOrder, nBuffer(may be smaller than nChunksMax)
+    :param str defaultOrder: 'C' (last index varies the fastest, default)
+                             'F' (first index varies the fastest)
+    :returns tuple: chunkIndex(list(list(slice,int))),
+                    chunkAxes(tuple),
+                    axesOrder(tuple),
+                    nBuffer(may different from nChunksMax)
     """
     # Check whether dimensions are compatible
     ndim = len(shape)
@@ -460,14 +465,16 @@ class FullView(ChunkedView):
             mcaAxis = -1
         if mcaSlice is None:
             mcaSlice = slice(None)
-        chunkIndex, chunkAxes, axesOrder, nMca = fullChunkIndex(data.shape, nMca,
-                                                                chunkAxes=(mcaAxis,),
-                                                                chunkAxesSlice=(mcaSlice,),
-                                                                axesOrder=axesOrder)
+        result = fullChunkIndex(data.shape, nMca,
+                                chunkAxes=(mcaAxis,),
+                                chunkAxesSlice=(mcaSlice,),
+                                axesOrder=axesOrder)
+        chunkIndex, chunkAxes, axesOrder, nMca = result
         self._chunkIndex = chunkIndex
         self._chunkAxes = chunkAxes
         self._axesOrder = axesOrder
-        super(FullView, self).__init__(data, nMca=nMca, mcaAxis=mcaAxis, mcaSlice=mcaSlice, **kwargs)
+        super(FullView, self).__init__(data, nMca=nMca, mcaAxis=mcaAxis,
+                                       mcaSlice=mcaSlice, **kwargs)
 
     def items(self, keyType='all'):
         """Yields (index(tuple), shape(tuple)), chunk(array)

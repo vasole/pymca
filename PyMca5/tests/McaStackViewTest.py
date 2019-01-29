@@ -128,7 +128,7 @@ class testMcaStackView(unittest.TestCase):
             data = numpy.random.uniform(size=shape)
             with self.h5Open('testFullView') as f:
                 name = 'data{}'.format(ndim)
-                f[name] = data
+                f.create_dataset(name, data=data, chunks=(1,)*ndim)
                 self._assertFullView(f[name])
 
     def _assertFullView(self, data):
