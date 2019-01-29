@@ -33,11 +33,36 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 import numpy
 import logging
+from abc import ABCMeta, abstractmethod, abstractproperty
+from six import with_metaclass
+import numbers
+import itertools
 
 _logger = logging.getLogger(__name__)
 
 
+def sliceNormalize(slc, n):
+    """
+    Slice with positive integers
+
+    :param slice slc:
+    :param int n:
+    :returns slice:
+    """
+    start, stop, step = slc.indices(n)
+    if slc.stop is None and step < 0:
+        stop = None
+    return slice(start, stop, step)
+
+
 def sliceLen(slc, n):
+    """
+    Length after slicing range(n)
+
+    :param slice slc:
+    :param int n:
+    :returns int:
+    """
     start, stop, step = slc.indices(n)
     if step < 0:
         one = -1
@@ -46,17 +71,60 @@ def sliceLen(slc, n):
     return max(0, (stop - start + step - one) // step)
 
 
-def chunkIndices(start, stop=None, step=None):
+def sliceReverse(slc, n):
     """
+    Returns slice that yields same items in reversed order
+
+    :param slice slc:
+    :param int n:
+    :returns slice:
+    """
+    start, stop, step = slc.indices(n)
+    if step < 0:
+        one = 1
+    else:
+        one = -1
+    stop = (stop-start+one)//step*step+start
+    start += one
+    if start == -1:
+        start = None
+    return slice(stop, start, -step)
+
+
+def sliceComplement(slc, n):
+    """
+    Returns indices not in slice
+
+    :param slice slc:
+    :param int n:
+    :returns list(int):
+    """
+    lst1 = list(range(n))
+    lst2 = lst1[slc]
+    return [i for i in lst1 if i not in lst2]
+
+
+def chunkIndexGen(start, stop, step):
+    """
+    Index equivalent to list(range(start, stop, sign(step))) but given
+    in chunks of "step" items (last chunk may have less items)
+
     :param start:
     :param stop:
     :param step:
-    :returns list: list of (slice,n)
+    :returns generator(tuple): generates (index(slice), nElements(int))
     """
-    if stop is None:
-        start, stop, step = 0, start, 1
-    elif step is None:
+    if step is None:
         step = 1
+    if not isinstance(start, numbers.Integral):
+        raise TypeError('{} object cannot be interpreted as an integer'
+                        .format(type(start)))
+    if not isinstance(stop, numbers.Integral):
+        raise TypeError('{} object cannot be interpreted as an integer'
+                        .format(type(stop)))
+    if not isinstance(step, numbers.Integral):
+        raise TypeError('{} object cannot be interpreted as an integer'
+                        .format(type(step)))
     if step < 0:
         func = max
         one = -1
@@ -65,12 +133,121 @@ def chunkIndices(start, stop=None, step=None):
         one = 1
     for a in range(start, stop, step):
         b = func(a+step, stop)
-        yield slice(a, b), abs(b-a)
+        n = abs(b-a)
+        if b == -1:
+            b = None
+        yield slice(a, b, one), n
 
 
-def izipChunkIter(*iters):
+def possitive_index(i, n):
     """
-    Like Python 3's zip but making sure next is called
+    :param int i:
+    :param int n:
+    """
+    if i < 0:
+        return i + max((-i)//n, 1)*n
+    else:
+        return i
+
+
+def fullChunkIndex(shape, nChunksMax, chunkAxes=None, axesOrder=None, chunkAxesSlice=None, defaultOrder='C'):
+    """
+    Returns a number of lists (as many as there are dimensions)
+    which cartesian product represents all chunk indices
+
+    :param tuple shape: array shape to be sliced
+    :param int nChunksMax: maximal number of chunks
+    :param tuple(int) chunkAxes: dimensions that define the chunk
+    :param tuple(int) axesOrder: order of other dimensions to be sliced
+    :param tuple(slice) chunkAxesSlice: slice chunk dimensions
+    :param str defaultOrder: 'C' (last index varies the fastest) or 'F' (first index varies the fastest)
+    :returns tuple: chunkIndex(list(list(slice,int))), chunkAxes, axesOrder, nBuffer(may be smaller than nChunksMax)
+    """
+    # Check whether dimensions are compatible
+    ndim = len(shape)
+    if chunkAxes is None:
+        chunkAxes = tuple()
+    chunkAxes = tuple(possitive_index(i, ndim) for i in chunkAxes)
+    if chunkAxesSlice is None:
+        chunkAxesSlice = (slice(None),)*len(chunkAxes)
+    else:
+        if len(chunkAxes) != len(chunkAxesSlice):
+            raise ValueError('Chunk slicing does not correspond with chunk dimensions')
+    aAxesOrder = range(ndim)
+    if defaultOrder == 'C':
+        aAxesOrder = aAxesOrder[::-1]
+    aAxesOrder = tuple(i for i in aAxesOrder if i not in chunkAxes)
+    if axesOrder is None:
+        axesOrder = aAxesOrder
+    else:
+        axesOrder = tuple(possitive_index(i, ndim) for i in axesOrder)
+        if set(axesOrder) != set(aAxesOrder):
+            raise ValueError('axesOrder and chunkAxes do not correspond')
+    nChunksMax = max(nChunksMax, 1)
+
+    # A number of lists (as many as there are dimensions)
+    # which cartesian product represents all chunk indices
+    chunkIndex1 = []
+    for axis, idx in zip(chunkAxes, chunkAxesSlice):
+        nAxis = shape[axis]
+        idxAxis = [(idx, sliceLen(idx, nAxis))]
+        chunkIndex1.append(idxAxis)
+    nItems = 1
+    nBuffer = 1
+    chunkIndex2 = []
+    for axis in axesOrder:
+        nAxis = shape[axis]
+        nItemsNew = nItems*nAxis
+        if nItemsNew <= nChunksMax:
+            idxAxis = [(slice(None), nAxis)]
+            nBuffer *= nAxis
+            #print('Axis {} (size={}): {}x{} chunks'.format(axis, nAxis, 1, nAxis))
+        elif nItems > nChunksMax:
+            idxAxis = list(chunkIndexGen(0, nAxis, 1))
+            #print('Axis {} (size={}): {}x{} chunks'.format(axis, nAxis, len(idxAxis), 1))
+        else:
+            # Axis will be split in pieces with length "step"
+            step = nChunksMax//nItems
+            # We have "n" such pieces (last piece can have smaller length)
+            n = (nAxis//step) + int(bool(nAxis % step))
+            # Maximize the length of the last piece
+            # example: nAxis=51 and step=40 -> step = 26
+            step = (nAxis//n) + int(bool(nAxis % n))
+            nBuffer *= step
+            idxAxis = list(chunkIndexGen(0, nAxis, step))
+            #print('Axis {} (size={}): {}x{} chunks'.format(axis, nAxis, len(idxAxis), step))
+        nItems = nItemsNew
+        chunkIndex2.append(idxAxis)
+    chunkIndex = chunkIndex1 + chunkIndex2[::-1]
+    return chunkIndex, chunkAxes, axesOrder, nBuffer
+
+
+def iterChunkIndex(chunkIndex, chunkAxes, axesOrder):
+    """
+    Iterator over the cartesian product of chunkIndex (yields index and shape)
+
+    :param list(list(slice,int)) chunkIndex:
+    :param tuple chunkAxes:
+    :param tuple axesOrder:
+    :returns generator: index(tuple), shape(tuple), nChunks(int)
+    """
+    axes = chunkAxes+axesOrder[::-1]
+    ndim = len(axes)
+    idxData = [None]*ndim
+    chunkShape = [None]*ndim
+    for idxChunk in itertools.product(*chunkIndex):
+        nChunks = 1
+        for axis, (idx, n) in zip(axes, idxChunk):
+            idxData[axis] = idx
+            chunkShape[axis] = n
+            if axis in axesOrder:
+                nChunks *= n
+        yield tuple(idxData), tuple(chunkShape), nChunks
+
+
+def izipChunkItems(*iterables):
+    """
+    Zip iterators but making sure next is called
     on all items when StopIteration occurs
     """
     bloop = [True]  # because of python 2
@@ -84,104 +261,167 @@ def izipChunkIter(*iters):
             #bloop = False
             return None
     while bloop[0]:
-        ret = tuple(_next(it) for it in iters)
+        ret = tuple(_next(it) for it in iterables)
         if bloop[0]:
             yield ret
 
 
-class McaStackView(object):
+def chunks_in_memory(shape, dtype, axis=-1, margin=0.01, maximal=None):
+    """
+    Number of chunks that fit into memory (with a margin)
 
-    def __init__(self, data, nbuffer=None, mcaslice=None, dtype=None, modify=False):
+    :param tuple shape: nD array
+    :param dtype:
+    :param axis: axes contibuting to one chunk
+    :param margin:
+    :param maximal:
+    :returns: number of slices that fit in memory
+    """
+    try:
+        from psutil import virtual_memory
+    except ImportError:
+        try:
+            from PyMca5.PyMcaMisc.PhysicalMemory import getAvailablePhysicalMemoryOrNone as getMem
+        except ImportError:
+            from PyMca5.PyMcaMisc.PhysicalMemory import getPhysicalMemoryOrNone as getMem
+        nbytes_mem = getMem()
+    else:
+        nbytes_mem = virtual_memory().available
+    if nbytes_mem is None:
+        return maximal
+    shape_slice = list(shape)
+    if isinstance(axis, (tuple, list)):
+        for ax in axis:
+            shape_slice.pop(ax)
+    else:
+        shape_slice.pop(axis)
+    if not shape_slice:
+        raise ValueError('Required: len(axis)<len(shape)')
+    n_items = numpy.prod(shape_slice)
+    itemsize = numpy.array(0, dtype=dtype).itemsize
+    nbytes_chunk = n_items*itemsize
+    n_chunks = int((nbytes_mem*margin)/nbytes_chunk)
+    if maximal:
+        return max(n_chunks, maximal)
+    else:
+        return n_chunks
+
+
+class ChunkedView(with_metaclass(ABCMeta, object)):
+
+    def __init__(self, data, nMca=None, mcaAxis=None, mcaSlice=None,
+                 dtype=None, readonly=True):
         """
-        :param array data: 3D array (n0, n1, n2)
-        :param num nbuffer: number of elements from (n0, n1) in buffer
-        :param slice mcaslice: slice MCA axis=2
+        :param array data: nD array (numpy.ndarray or h5py.Dataset)
+        :param num nMca: maximal number of MCA spectra to be buffered
+        :param int mcaAxis:
+        :param slice mcaSlice: slice along the MCA axis
         :param dtype:
-        :param bool modify: modify original on access
+        :param bool readonly:
         """
         # Buffer shape
-        n2 = data.shape[-1]
-        if mcaslice:
-            nChan = sliceLen(mcaslice, n2)
+        if mcaAxis is None:
+            mcaAxis = -1
+        n2 = data.shape[mcaAxis]
+        if mcaSlice:
+            nChan = sliceLen(mcaSlice, n2)
         else:
             nChan = n2
-            mcaslice = slice(None)
-        self._mcaslice = mcaslice
-        self._buffershape = nbuffer, nChan
+            mcaSlice = slice(None)
+        self._mcaSlice = mcaSlice
+        self._mcaAxis = mcaAxis
+        self._bufferShape = nMca, nChan
         self._buffer = None
 
         # Buffer dtype
         if dtype is None:
             dtype = data.dtype
         self._dtype = dtype
-        self._change_type = data.dtype != dtype
+        self._differentType = data.dtype != dtype
 
         # Data
         self._data = data
-        self._modify = modify
-        self._isndarray = isinstance(data, numpy.ndarray)
+        self.readonly = readonly
+        self._isNdarray = isinstance(data, numpy.ndarray)
 
-    def _prepareAccess(self, copy=True):
+    @property
+    def nChanOrg(self):
+        return self._data.shape[self._mcaAxis]
+
+    @property
+    def nChan(self):
+        return self._bufferShape[1]
+
+    @property
+    def idxFull(self):
+        idx = [slice(None)] * self._data.ndim
+        idx[self._mcaAxis] = self._mcaSlice
+        return tuple(idx)
+
+    @property
+    def idxFullComplement(self):
+        idx = [slice(None)] * self._data.ndim
+        idx[self._mcaAxis] = sliceComplement(self._mcaSlice, self.nChanOrg)
+        return tuple(idx)
+
+    def _prepareAccess(self):
         _logger.debug('Iterate MCA stack in chunks of {} spectra'
-                      .format(self._buffershape[0]))
-        needs_copy = copy or self._change_type
-        yields_copy = needs_copy or not self._isndarray
-        post_copy = yields_copy and self._modify
-        if yields_copy and self._buffer is None:
-            self._buffer = numpy.empty(self._buffershape, self._dtype)
-        return needs_copy, yields_copy, post_copy
+                      .format(self._bufferShape[0]))
+        post_copy = not self.readonly
+        if self._buffer is None:
+            self._buffer = numpy.empty(self._bufferShape, self._dtype)
+        return post_copy
 
-    def chunks(self, copy=True):
-        raise NotImplementedError
+    @abstractmethod
+    def items(self):
+        pass
 
 
-class McaStackMaskView(McaStackView):
+class MaskedView(ChunkedView):
 
-    def __init__(self, data, mask=None, **kwargs):
+    def __init__(self, data, mask=None, nMca=None, **kwargs):
         """
-        3D stack (n0, n1, n2) with mask (n0, n1) and slice n2
-
-        :param array data: numpy array or h5py dataset
-        :param array mask: shape = (n0, n1)
-        :param \**kwargs: see McaStackView
+        :param array data: nD array (numpy.ndarray or h5py.Dataset)
+        :param array mask: shape of data without the MCA dimension
+        :param num nMca: number of spectra per chunk
+        :param \**kwargs: see ChunkedView
         """
         if mask is None:
             self._indices = None
             self._mask = Ellipsis
-            nbuffer = data.shape[0]*data.shape[1]
+            nMca = data.shape[0]*data.shape[1]
         else:
             if isinstance(data, numpy.ndarray):
                 # Support multiple advanced indexes
                 self._indices = None
                 self._mask = mask
-                nbuffer = int(mask.sum())
+                nMca = int(mask.sum())
             else:
                 # Does not support multiple advanced indexes
                 self._indices = numpy.where(mask)
                 self._mask = None
-                nbuffer = len(self._indices[0])
-        super(McaStackMaskView, self).__init__(data, nbuffer=nbuffer, **kwargs)
+                nMca = len(self._indices[0])
+        super(MaskedView, self).__init__(data, nMca=nMca, **kwargs)
 
-    def chunks(self, copy=True):
-        needs_copy, _, post_copy = self._prepareAccess(copy=copy)
+    def items(self, keyType='all'):
+        post_copy = self._prepareAccess()
         if self._indices is None:
-            ret = self._get_with_mask(copy=needs_copy)
+            k, v = self._get_with_mask()
         else:
-            ret = self._get_with_indices()
-        yield ret
+            k, v = self._get_with_indices()
+        if keyType == 'select':
+            k = self._mask
+        yield k, v
         if post_copy:
             if self._indices is None:
-                self._set_with_mask(*ret)
+                self._set_with_mask(k, v)
             else:
-                self._set_with_indices(*ret)
+                self._set_with_indices(k, v)
 
-    def _get_with_mask(self, copy=True):
-        idx = self._mask, self._mcaslice
-        if copy:
-            chunk = self._buffer
-            chunk[()] = self._data[idx]
-        else:
-            chunk = self._data[idx]
+    def _get_with_mask(self):
+        idx = self._mask, self._mcaSlice
+        chunk = self._buffer
+        chunk[()] = self._data[idx]
         return idx, chunk
 
     def _set_with_mask(self, idx, chunk):
@@ -189,68 +429,72 @@ class McaStackMaskView(McaStackView):
 
     def _get_with_indices(self):
         chunk = self._buffer
-        mcaslice = self._mcaslice
-        idx = self._indices + (mcaslice,)
+        mcaSlice = self._mcaSlice
+        idx = self._indices + (mcaSlice,)
         j0keep = -1
         for i, (j0, j1) in enumerate(zip(*self._indices)):
             if j0 != j0keep:
                 tmpData = self._data[j0]
                 j0keep = j0
-            chunk[i] = tmpData[j1, mcaslice]
+            chunk[i] = tmpData[j1, mcaSlice]
         return idx, chunk
 
     def _set_with_indices(self, idx, chunk):
-        lst0, lst1, mcaslice = idx
+        lst0, lst1, mcaSlice = idx
         for v, j0, j1 in zip(chunk, lst0, lst1):
-            self._data[j0, j1, mcaslice] = v
+            self._data[j0, j1, mcaSlice] = v
 
 
-class McaStackChunkView(McaStackView):
+class FullView(ChunkedView):
 
-    def __init__(self, data, nmca=None, **kwargs):
+    def __init__(self, data, nMca=None, mcaAxis=None, mcaSlice=None,
+                 axesOrder=None, **kwargs):
         """
-        3D stack (n0, n1, n2) to be iterated over in nmca spectra
-
-        :param array data: numpy array or h5py dataset
-        :param num nmca: number of spectra in one chunk
-        :param \**kwargs: see McaStackView
+        :param array data: nD array (numpy.ndarray or h5py.Dataset)
+        :param num nMca: number of spectra per chunk
+        :param int mcaAxis: MCA channel dimension
+        :param tuple axesOrder: order of other dimensions to be sliced (C order by default)
+        :param \**kwargs: see ChunkedView
         """
-        # Outer loop (non-chunked dimension)
-        n0, n1, n2 = data.shape
-        if nmca is None:
-            nmca = min(n0, n1)
-        if abs(n0-nmca) < abs(n1-nmca):
-            self._loopout = list(range(n1))
-            self._axes = 1,0
-            n = n0
-        else:
-            self._loopout = list(range(n0))
-            self._axes = 0,1
-            n = n1
-        
-        # Inner loop (chunked dimension)
-        nbuffer = min(nmca, n)
-        nchunks = n//nbuffer + int(bool(n % nbuffer))
-        nbuffer = n//nchunks + int(bool(n % nchunks))
-        self._loopin = list(chunkIndices(0, n, nbuffer))
+        if mcaAxis is None:
+            mcaAxis = -1
+        if mcaSlice is None:
+            mcaSlice = slice(None)
+        chunkIndex, chunkAxes, axesOrder, nMca = fullChunkIndex(data.shape, nMca,
+                                                                chunkAxes=(mcaAxis,),
+                                                                chunkAxesSlice=(mcaSlice,),
+                                                                axesOrder=axesOrder)
+        self._chunkIndex = chunkIndex
+        self._chunkAxes = chunkAxes
+        self._axesOrder = axesOrder
+        super(FullView, self).__init__(data, nMca=nMca, mcaAxis=mcaAxis, mcaSlice=mcaSlice, **kwargs)
 
-        super(McaStackChunkView, self).__init__(data, nbuffer=nbuffer, **kwargs)
+    def items(self, keyType='all'):
+        """Yields (index(tuple), shape(tuple)), chunk(array)
+        """
+        nChan = self.nChan
+        data = self._data
+        chunkIndex = self._chunkIndex
+        chunkAxes = self._chunkAxes
+        axesOrder = self._axesOrder
+        it = iterChunkIndex(chunkIndex, chunkAxes, axesOrder)
+        axesOrder = tuple(sorted(axesOrder))
+        transposeAxes = axesOrder + chunkAxes
+        itransposeAxes = tuple(numpy.argsort(transposeAxes).tolist())
 
-    def chunks(self, copy=True):
-        _, yields_copy, post_copy = self._prepareAccess(copy=copy)
-        idx_data = [slice(None), slice(None), self._mcaslice]
-        i,j = self._axes
+        post_copy = self._prepareAccess()
         buffer = self._buffer
-        for idxout in self._loopout:
-            idx_data[i] = idxout
-            for idxin, n in self._loopin:
-                idx_data[j] = idxin
-                idx = tuple(idx_data)
-                if yields_copy:
-                    chunk = buffer[:n, :]
-                    chunk[()] = self._data[idx]
-                else:
-                    chunk = self._data[idx]
-                yield idx, chunk
-                if post_copy:
-                    self._data[idx] = chunk
+        for idxChunk, idxShape, nMca in it:
+            value = buffer[:nMca, :]
+            value[()] = numpy.transpose(data[idxChunk], transposeAxes)\
+                             .reshape(nMca, nChan)
+            if keyType == 'select':
+                key = tuple(idxChunk[i] for i in axesOrder),\
+                      tuple(idxShape[i] for i in axesOrder)
+            else:
+                key = idxChunk, idxShape
+            yield key, value
+            if post_copy:
+                idxShape = tuple(idxShape[i] for i in transposeAxes)
+                data[idxChunk] = numpy.transpose(value.reshape(idxShape),
+                                                 itransposeAxes)

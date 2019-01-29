@@ -132,7 +132,8 @@ class FastXRFLinearFit(object):
                     sumover = 'first pixel'
                 else:
                     sumover = 'first row'
-                yref = self._fit_reference_spectrum(data=data, sumover=sumover)
+                yref = self._fit_reference_spectrum(data=data, mcaIndex=mcaIndex,
+                                                    sumover=sumover)
             else:
                 yref = ysum
 
@@ -204,7 +205,7 @@ class FastXRFLinearFit(object):
             t0 = time.time()
 
             # Fit all spectra
-            self._fit_lstsq_all(data=data, sliceChan=sliceChan,
+            self._fit_lstsq_all(data=data, sliceChan=sliceChan, mcaIndex=mcaIndex,
                             derivatives=derivatives, fitmodel=fitmodel,
                             results=results, uncertainties=uncertainties,
                             config=config, anchorslist=anchorslist,
@@ -391,20 +392,20 @@ class FastXRFLinearFit(object):
         return configorg, config, weight, weightPolicy, \
                autotime, liveTimeFactor
 
-    def _fit_reference_spectrum(self, data=None, sumover='all'):
+    def _fit_reference_spectrum(self, data=None, mcaIndex=None, sumover='all'):
         """Get sum spectrum
         """
         dtype = self._fit_dtype(data)
         if sumover == 'all':
-            #nspectra = PhysicalMemory.chunks_in_memory(data.shape, data.dtype,
-            #                                   axis=-1, maximal=5000)
-            datastack = McaStackView.McaStackChunkView(data, nmca=5000)
+            nMca = self._numberOfSpectra(20, 'MiB', data=data, mcaIndex=mcaIndex)
+            _logger.debug('Add spectra in chunks of {}'.format(nMca))
+            datastack = McaStackView.FullView(data, mcaAxis=mcaIndex, nMca=nMca)
             yref = numpy.zeros((data.shape[-1],), dtype)
-            for _, chunk in datastack.chunks():
+            for key, chunk in datastack.items():
                 yref += chunk.sum(axis=0, dtype=dtype)
         elif sumover == 'first row':
             # Sum spectrum of the first row
-            yref = data[0, :, :].sum(axis=0, dtype=dtype)
+            yref = data[0, ...].sum(axis=0, dtype=dtype)
         else:
             # First spectrum
             yref = data[0, 0, :].astype(dtype)
@@ -502,41 +503,45 @@ class FastXRFLinearFit(object):
                 iXMax = iXMax[0]
         return iXMin, iXMax+1
 
-    def _data_iter(self, slicecls, data=None, fitmodel=None, copy=True, **kwargs):
+    def _data_iter(self, slicecls, data=None, fitmodel=None, **kwargs):
         dtype = self._fit_dtype(data)
-        datastack = slicecls(data, dtype=dtype, modify=False, **kwargs)
-        chunkiter = datastack.chunks(copy=copy)
+        datastack = slicecls(data, dtype=dtype, readonly=True, **kwargs)
+        chunkItems = datastack.items(keyType='select')
         if fitmodel is not None:
-            modelstack = slicecls(fitmodel, dtype=dtype, modify=True, **kwargs)
-            modeliter = modelstack.chunks(copy=False)
-            chunkiter = McaStackView.izipChunkIter(chunkiter, modeliter)
-        return chunkiter
+            modelstack = slicecls(fitmodel, dtype=dtype, readonly=False, **kwargs)
+            modeliter = modelstack.items()
+            chunkItems = McaStackView.izipChunkItems(chunkItems, modeliter)
+        return chunkItems
 
-    def _fit_lstsq_all(self, data=None, sliceChan=None, derivatives=None,
-                   fitmodel=None, results=None, uncertainties=None,
-                   config=None, anchorslist=None, lstsq_kwargs=None):
+    def _fit_lstsq_all(self, data=None, sliceChan=None, mcaIndex=None,
+                       derivatives=None, results=None, uncertainties=None,
+                       fitmodel=None, config=None, anchorslist=None,
+                       lstsq_kwargs=None):
         """
         Fit all spectra
         """
+        nChan, nFree = derivatives.shape
         bkgsub = bool(config['fit']['stripflag'])
-        #nspectra = PhysicalMemory.chunks_in_memory(data.shape, data.dtype,
-        #                                   axis=-1, maximal=100)
-        chunkiter = self._data_iter(McaStackView.McaStackChunkView, data=data, fitmodel=fitmodel,
-                                    mcaslice=sliceChan, copy=bkgsub, nmca=100)
-        for chunk in chunkiter:
+
+        nMca = self._numberOfSpectra(400, 'KiB', data=data, mcaIndex=mcaIndex,
+                                     sliceChan=sliceChan)
+        _logger.debug('Fit spectra in chunks of {}'.format(nMca))
+        chunkItems = self._data_iter(McaStackView.FullView, data=data, fitmodel=fitmodel,
+                                     mcaSlice=sliceChan, mcaAxis=mcaIndex, nMca=nMca)
+        for chunk in chunkItems:
             if fitmodel is None:
-                idx, chunk = chunk
-                chunkmodel = None
+                (idx, idxShape), chunk = chunk
+                chunkModel = None
             else:
-                (idx, chunk), (idxmodel, chunkmodel) = chunk
-                chunkmodel = chunkmodel.T
+                ((idx, idxShape), chunk), (_, chunkModel) = chunk
+                chunkModel = chunkModel.T
             chunk = chunk.T
 
             # Subtract background
             if bkgsub:
                 self._fit_bkg_subtract(chunk, config=config,
                                        anchorslist=anchorslist,
-                                       fitmodel=chunkmodel)
+                                       fitmodel=chunkModel)
 
             # Solve linear system of equations
             ddict = lstsq(derivatives, chunk, digested_output=True,
@@ -544,20 +549,21 @@ class FastXRFLinearFit(object):
             lstsq_kwargs['last_svd'] = ddict.get('svd', None)
 
             # Save results
-            idx = slice(None), idx[0], idx[1]
-            results[idx] = ddict['parameters']
-            uncertainties[idx] = ddict['uncertainties']
-            if chunkmodel is not None:
+            idx = (slice(None),) + idx
+            idxShape = (nFree,) + idxShape
+            results[idx] = ddict['parameters'].reshape(idxShape)
+            uncertainties[idx] = ddict['uncertainties'].reshape(idxShape)
+            if chunkModel is not None:
                 if bkgsub:
-                    chunkmodel += numpy.dot(derivatives, ddict['parameters'])
+                    chunkModel += numpy.dot(derivatives, ddict['parameters'])
                 else:
-                    chunkmodel[()] = numpy.dot(derivatives, ddict['parameters'])
+                    chunkModel[()] = numpy.dot(derivatives, ddict['parameters'])
 
-    def _fit_lstsq_reduced(self, data=None, mask=None, skipParams= None,
-                    skipNames=None, nmin=None, sliceChan=None,
-                    derivatives=None, fitmodel=None, results=None,
-                    uncertainties=None, nFreeParameters=None,
-                    config=None, anchorslist=None, lstsq_kwargs=None):
+    def _fit_lstsq_reduced(self, data=None, mask=None, skipParams=None,
+                           skipNames=None, nmin=None, sliceChan=None,
+                           derivatives=None, fitmodel=None, results=None,
+                           uncertainties=None, nFreeParameters=None,
+                           config=None, anchorslist=None, lstsq_kwargs=None):
         """
         Fit reduced number of spectra (mask) with a reduced model (skipped parameters will be set to zero)
         """
@@ -573,7 +579,7 @@ class FastXRFLinearFit(object):
                 nFreeParameters[mask] = 0
         else:
             _logger.debug("Refitting #%d pixels", npixels)
-            nFreeOrg = results.shape[0]
+            nChan, nFreeOrg = derivatives.shape
             idxSel = [i for i in range(nFreeOrg) if i not in skipParams]
             nFree = len(idxSel)
             A = derivatives[:, idxSel]
@@ -581,22 +587,22 @@ class FastXRFLinearFit(object):
 
             # Fit all selected spectra in one chunk
             bkgsub = bool(config['fit']['stripflag'])
-            chunkiter = self._data_iter(McaStackView.McaStackMaskView, data=data, fitmodel=fitmodel,
-                                        mcaslice=sliceChan, copy=bkgsub, mask=mask)
-            for chunk in chunkiter:
+            chunkItems = self._data_iter(McaStackView.MaskedView, data=data, fitmodel=fitmodel,
+                                         mcaSlice=sliceChan, mask=mask)
+            for chunk in chunkItems:
                 if fitmodel is None:
                     idx, chunk = chunk
-                    chunkmodel = None
+                    chunkModel = None
                 else:
-                    (idx, chunk), (idxmodel, chunkmodel) = chunk
-                    chunkmodel = chunkmodel.T
+                    (idx, chunk), (_, chunkModel) = chunk
+                    chunkModel = chunkModel.T
                 chunk = chunk.T
 
                 # Subtract background
                 if bkgsub:
                     self._fit_bkg_subtract(chunk, config=config,
                                            anchorslist=anchorslist,
-                                           fitmodel=chunkmodel)
+                                           fitmodel=chunkModel)
 
                 # Solve linear system of equations
                 ddict = lstsq(A, chunk, digested_output=True,
@@ -605,7 +611,6 @@ class FastXRFLinearFit(object):
 
                 # Save results
                 iParam = 0
-                idx = mask  # for now McaStackMaskView only has one chunk
                 for iFree in range(nFreeOrg):
                     if iFree in skipParams:
                         results[iFree][idx] = 0.0
@@ -614,11 +619,11 @@ class FastXRFLinearFit(object):
                         results[iFree][idx] = ddict['parameters'][iParam]
                         uncertainties[iFree][idx] = ddict['uncertainties'][iParam]
                         iParam += 1
-                if chunkmodel is not None:
+                if chunkModel is not None:
                     if bkgsub:
-                        chunkmodel += numpy.dot(A, ddict['parameters'])
+                        chunkModel += numpy.dot(A, ddict['parameters'])
                     else:
-                        chunkmodel[()] = numpy.dot(A, ddict['parameters'])
+                        chunkModel[()] = numpy.dot(A, ddict['parameters'])
 
             if nFreeParameters is not None:
                 nFreeParameters[mask] = nFree
@@ -632,6 +637,15 @@ class FastXRFLinearFit(object):
                 return numpy.float64
         else:
             return data.dtype
+
+    def _numberOfSpectra(self, n, unit, data=None, mcaIndex=None, sliceChan=None):
+        p = ['b', 'kib', 'mib', 'gib'].index(unit.lower())
+        dtype = self._fit_dtype(data)
+        nChan = data.shape[mcaIndex]
+        if sliceChan is not None:
+            nChan = McaStackView.sliceLen(sliceChan, nChan)
+        nByteMca = numpy.array([0], dtype).itemsize*nChan
+        return max((n*1024**p)//nByteMca, 1)
 
     @staticmethod
     def _fit_bkg_subtract(spectra, config=None, anchorslist=None, fitmodel=None):
@@ -1016,6 +1030,7 @@ def main():
         elif opt == '--overwrite':
             overwrite = int(arg)
 
+    logging.basicConfig()
     if debug:
         _logger.setLevel(logging.DEBUG)
     else:

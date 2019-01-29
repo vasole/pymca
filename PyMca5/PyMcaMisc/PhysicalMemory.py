@@ -35,7 +35,7 @@ import os
 import ctypes
 import traceback
 import logging
-import numpy
+
 
 _logger = logging.getLogger(__name__)
 
@@ -146,47 +146,6 @@ def getPhysicalMemoryOrNone():
             return value
     except:
         return None
-
-
-def chunks_in_memory(shape, dtype, axis=-1, margin=0.01, maximal=None):
-    """
-    Number of chunks that fit into memory (with a margin)
-
-    :param tuple shape: nD array
-    :param dtype:
-    :param axis: axes contibuting to one chunk
-    :param margin:
-    :param maximal:
-    :returns: number of slices that fit in memory
-    """
-    try:
-        from psutil import virtual_memory
-    except ImportError:
-        try:
-            nbytes_mem = getAvailablePhysicalMemoryOrNone()
-        except NameError:
-            nbytes_mem = getPhysicalMemoryOrNone()
-    else:
-        nbytes_mem = virtual_memory().available
-    if nbytes_mem is None:
-        return maximal
-    shape_slice = list(shape)
-    if isinstance(axis, (tuple, list)):
-        for ax in axis:
-            shape_slice.pop(ax)
-    else:
-        shape_slice.pop(axis)
-    if not shape_slice:
-        raise ValueError('Required: len(axis)<len(shape)')
-    n_items = numpy.prod(shape_slice)
-    itemsize = numpy.array(0,dtype=dtype).dtype.itemsize
-    nbytes_chunk = n_items*itemsize
-    n_chunks = int((nbytes_mem*margin)/nbytes_chunk)
-    if maximal:
-        return max(n_chunks, maximal)
-    else:
-        return n_chunks
-
 
 if __name__ == "__main__":
     print("Physical memory = %d" % getPhysicalMemory())
