@@ -264,12 +264,11 @@ class testStackInfo(unittest.TestCase):
 
             massfraction_names = outputDict.massfraction_names
             massfractions = outputDict["massfractions"]
-            for i, (name, values) in enumerate(zip(massfraction_names, massfractions)):
+            for i, (name, fractions) in enumerate(zip(massfraction_names, massfractions)):
                 # verify that massfractions took into account the time
-                reference = values[0, 0]
+                reference = fractions[0, 0]
                 cTime = configuration['concentrations']['time']
-                values = values[:]
-                values.shape = -1
+                values = fractions.flatten()
                 for point in range(live_time.size):
                     current = values[point]
                     if DEBUG:
