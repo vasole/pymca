@@ -480,8 +480,8 @@ class OutputBuffer(object):
         if signals:
             nxdata = NexusUtils.nxdata(nxresults, 'fit')
             NexusUtils.nxdata_add_signals(nxdata, signals)
-            axes = self.get('data_axes', None)
-            axes_used = self.get('data_axes_used', None)
+            axes = self.get('dataAxes', None)
+            axes_used = self.get('dataAxesUsed', None)
             if axes:
                 NexusUtils.nxdata_add_axes(nxdata, axes)
             if axes_used:

@@ -79,7 +79,7 @@ class FastXRFLinearFit(object):
         This method performs the actual fit. The y keyword is the only mandatory input argument.
 
         :param x: 1D array containing the x axis (usually the channels) of the spectra.
-        :param y: 3D array containing the spectra as [nrows, ncolumns, nchannels]
+        :param y: nD array containing the spectra
         :param xmin: lower limit of the fitting region
         :param xmax: upper limit of the fitting region
         :param ysum: sum spectrum
@@ -142,9 +142,9 @@ class FastXRFLinearFit(object):
                 xmin = config['fit']['xmin']
             if xmax is None:
                 xmax = config['fit']['xmax']
-            dtype = self._fitDtypeResults(data)
+            dtypeCalculcation = self._fitDtypeCalculation(data)
             self._mcaTheory.setData(x=x, y=yref, xmin=xmin, xmax=xmax)
-            derivatives, freeNames, nFree, nFreeBkg = self._fitCreateModel(dtype=dtype)
+            derivatives, freeNames, nFree, nFreeBkg = self._fitCreateModel(dtype=dtypeCalculcation)
             outbuffer['parameter_names'] = freeNames
 
             # Background anchor points (if any)
@@ -173,30 +173,38 @@ class FastXRFLinearFit(object):
             lstsq_kwargs = {'svd': SVD, 'sigma_b': sigma_b, 'weight': weight}
 
             # Allocate output buffers
-            nRows, nColumns, nChan = data.shape
-            param_shape = nFree, nRows, nColumns
-            image_shape = nRows, nColumns
+            stackShape = data.shape
+            imageShape = list(stackShape)
+            imageShape.pop(mcaIndex)
+            imageShape = tuple(imageShape)
+            paramShape = (nFree,) + imageShape
+            dtypeResult = self._fitDtypeResult(data)
             results = outbuffer.allocate_memory('parameters',
-                                                shape=param_shape,
-                                                dtype=dtype)
+                                                shape=paramShape,
+                                                dtype=dtypeResult)
             uncertainties = outbuffer.allocate_memory('uncertainties',
-                                                      shape=param_shape,
-                                                      dtype=dtype)
+                                                shape=paramShape,
+                                                dtype=dtypeResult)
             if outbuffer.save_diagnostics:
                 nFreeParameters = outbuffer.allocate_memory('nFreeParameters',
-                                                 shape=image_shape,
-                                                 fill_value=nFree)
+                                                shape=imageShape,
+                                                fill_value=nFree,
+                                                dtype=numpy.int32)
                 nObservations = outbuffer.allocate_memory('nObservations',
-                                                 shape=image_shape,
-                                                 fill_value=nObs)
+                                                shape=imageShape,
+                                                fill_value=nObs,
+                                                dtype=numpy.int32)
                 fitmodel = outbuffer.allocate_h5('model',
-                                                 nxdata='fit',
-                                                 shape=data.shape,
-                                                 dtype=dtype,
-                                                 chunks=True,
-                                                 fill_value=0)
-                fitmodel[..., 0:iXMin] = numpy.nan
-                fitmodel[..., iXMax:] = numpy.nan
+                                                nxdata='fit',
+                                                shape=stackShape,
+                                                dtype=dtypeResult,
+                                                chunks=True,
+                                                fill_value=0)
+                idx = [slice(None)]*fitmodel.ndim
+                idx[mcaIndex] = slice(0, iXMin)
+                fitmodel[tuple(idx)] = numpy.nan
+                idx[mcaIndex] = slice(iXMax, None)
+                fitmodel[tuple(idx)] = numpy.nan
             else:
                 fitmodel = None
                 nFreeParameters = None
@@ -215,18 +223,17 @@ class FastXRFLinearFit(object):
             _logger.debug("First fit elapsed = %f", t)
             if t > 0.:
                 _logger.debug("Spectra per second = %f",
-                            data.shape[0]*data.shape[1]/float(t))
+                              numpy.prod(imageShape)/float(t))
             t0 = time.time()
 
             # Refit spectra with negative peak areas
             if refit:
-                self._fitLstSqNegative(data=data, sliceChan=sliceChan,
-                            freeNames=freeNames, nFreeBkg=nFreeBkg,
+                self._fitLstSqNegative(data=data, sliceChan=sliceChan, mcaIndex=mcaIndex,
                             derivatives=derivatives, fitmodel=fitmodel,
                             results=results, uncertainties=uncertainties,
-                            nFreeParameters=nFreeParameters,
                             config=config, anchorslist=anchorslist,
-                            lstsq_kwargs=lstsq_kwargs)
+                            lstsq_kwargs=lstsq_kwargs, freeNames=freeNames,
+                            nFreeBkg=nFreeBkg, nFreeParameters=nFreeParameters)
                 t = time.time() - t0
                 _logger.debug("Fit of negative peaks elapsed = %f", t)
                 t0 = time.time()
@@ -241,23 +248,27 @@ class FastXRFLinearFit(object):
                 residuals = outbuffer.allocate_h5('residuals', nxdata='fit', data=data, chunks=True)
                 residuals[()] -= fitmodel
             if outaxes:
-                outbuffer['data_axes_used'] = ('row', 'column', 'energy')
+                # Generic axes
+                stackAxesNames = ['dim{}'.format(i) for i in range(data.ndim)]
+                dataAxes = [(name, numpy.arange(n, dtype=dtypeResult), {})
+                            for name, n in zip(stackAxesNames, stackShape)]
+                # MCA axis: use energy and add channels as extra (unused) axis
                 xdata = self._mcaTheory.xdata0.flatten()
                 zero, gain = self._mcaTheory.parameters[:2]
                 xenergy = zero + gain*xdata
-                outbuffer['data_axes'] = \
-                        (('row', numpy.arange(data.shape[0]), {}),
-                        ('column', numpy.arange(data.shape[1]), {}),
-                        ('channels', xdata, {}),
-                        ('energy', xenergy, {'units': 'keV'}))
+                stackAxesNames[mcaIndex] = 'energy'
+                dataAxes[mcaIndex] = 'energy', xenergy.astype(dtypeResult), {'units': 'keV'}
+                dataAxes.append(('channels', xdata.astype(numpy.int32), {}))
+                outbuffer['dataAxesUsed'] = tuple(stackAxesNames)
+                outbuffer['dataAxes'] = tuple(dataAxes)
             if concentrations:
                 t0 = time.time()
                 self._fitDeriveMassFractions(config=config,
-                                        outputDict=outbuffer,
-                                        nFreeBkg=nFreeBkg,
-                                        results=results,
-                                        autotime=autotime,
-                                        liveTimeFactor=liveTimeFactor)
+                                             outputDict=outbuffer,
+                                             nFreeBkg=nFreeBkg,
+                                             results=results,
+                                             autotime=autotime,
+                                             liveTimeFactor=liveTimeFactor)
                 t = time.time() - t0
                 _logger.debug("Calculation of concentrations elapsed = %f", t)
             return outbuffer
@@ -266,6 +277,7 @@ class FastXRFLinearFit(object):
     def _fitParseData(x=None, y=None, livetime=None):
         """Parse the input data (MCA and livetime)
         """
+        # Extract counts
         if y is None:
             raise RuntimeError("y keyword argument is mandatory!")
         if hasattr(y, "info") and hasattr(y, "data"):
@@ -274,6 +286,8 @@ class FastXRFLinearFit(object):
         else:
             data = y
             mcaIndex = -1
+
+        # Extract channels
         if x is None:
             if hasattr(y, "info") and hasattr(y, "x"):
                 x = y.x[0]
@@ -281,6 +295,20 @@ class FastXRFLinearFit(object):
             if hasattr(y, "info"):
                 if "McaLiveTime" in y.info:
                     livetime = y.info["McaLiveTime"]
+
+        # At least 2D
+        ndim = data.ndim
+        if ndim == 0:
+            shape = (1, 1)
+        elif ndim == 1:
+            shape = (1, data.size)
+        else:
+            shape = None
+        if shape is not None:
+            data = data[()].reshape(shape)
+            if livetime is not None:
+                livetime = livetime[()].reshape(shape)
+
         return x, data, mcaIndex, livetime
 
     def _fitConfigure(self, configuration=None, concentrations=False,
@@ -395,7 +423,7 @@ class FastXRFLinearFit(object):
     def _fitReferenceSpectrum(self, data=None, mcaIndex=None, sumover='all'):
         """Get sum spectrum
         """
-        dtype = self._fitDtypeResults(data)
+        dtype = self._fitDtypeCalculation(data)
         if sumover == 'all':
             nMca = self._numberOfSpectra(20, 'MiB', data=data, mcaIndex=mcaIndex)
             _logger.debug('Add spectra in chunks of {}'.format(nMca))
@@ -504,30 +532,36 @@ class FastXRFLinearFit(object):
         return iXMin, iXMax+1
 
     def _dataChunkIter(self, slicecls, data=None, fitmodel=None, **kwargs):
-        dtype = self._fitDtypeResults(data)
-        datastack = slicecls(data, dtype=dtype, readonly=True, **kwargs)
+        dtype = self._fitDtypeResult(data)
+        datastack = slicecls(data, dtype=dtype,
+                             readonly=True, **kwargs)
         chunkItems = datastack.items(keyType='select')
         if fitmodel is not None:
-            modelstack = slicecls(fitmodel, dtype=dtype, readonly=False, **kwargs)
+            modelstack = slicecls(fitmodel, dtype=dtype,
+                                  readonly=False, **kwargs)
             modeliter = modelstack.items()
             chunkItems = McaStackView.izipChunkItems(chunkItems, modeliter)
         return chunkItems
 
     def _fitLstSqAll(self, data=None, sliceChan=None, mcaIndex=None,
-                       derivatives=None, results=None, uncertainties=None,
-                       fitmodel=None, config=None, anchorslist=None,
-                       lstsq_kwargs=None):
+                     derivatives=None, results=None, uncertainties=None,
+                     fitmodel=None, config=None, anchorslist=None,
+                     lstsq_kwargs=None):
         """
         Fit all spectra
         """
         nChan, nFree = derivatives.shape
         bkgsub = bool(config['fit']['stripflag'])
 
-        nMca = self._numberOfSpectra(400, 'KiB', data=data, mcaIndex=mcaIndex,
+        nMca = self._numberOfSpectra(1, 'MiB', data=data, mcaIndex=mcaIndex,
                                      sliceChan=sliceChan)
         _logger.debug('Fit spectra in chunks of {}'.format(nMca))
-        chunkItems = self._dataChunkIter(McaStackView.FullView, data=data, fitmodel=fitmodel,
-                                     mcaSlice=sliceChan, mcaAxis=mcaIndex, nMca=nMca)
+        chunkItems = self._dataChunkIter(McaStackView.FullView,
+                                         data=data,
+                                         fitmodel=fitmodel,
+                                         mcaSlice=sliceChan,
+                                         mcaAxis=mcaIndex,
+                                         nMca=nMca)
         for chunk in chunkItems:
             if fitmodel is None:
                 (idx, idxShape), chunk = chunk
@@ -540,8 +574,8 @@ class FastXRFLinearFit(object):
             # Subtract background
             if bkgsub:
                 self._fitBkgSubtract(chunk, config=config,
-                                       anchorslist=anchorslist,
-                                       fitmodel=chunkModel)
+                                     anchorslist=anchorslist,
+                                     fitmodel=chunkModel)
 
             # Solve linear system of equations
             ddict = lstsq(derivatives, chunk, digested_output=True,
@@ -559,15 +593,18 @@ class FastXRFLinearFit(object):
                 else:
                     chunkModel[()] = numpy.dot(derivatives, ddict['parameters'])
 
-    def _fitLstSqReduced(self, data=None, mask=None, skipParams=None,
-                           skipNames=None, nmin=None, sliceChan=None,
-                           derivatives=None, fitmodel=None, results=None,
-                           uncertainties=None, nFreeParameters=None,
-                           config=None, anchorslist=None, lstsq_kwargs=None):
+    def _fitLstSqReduced(self, data=None, sliceChan=None, mcaIndex=None,
+                         derivatives=None, results=None, uncertainties=None,
+                         fitmodel=None, config=None, anchorslist=None,
+                         lstsq_kwargs=None, mask=None,
+                         skipNames=None, skipParams=None,
+                         nFreeParameters=None, nmin=None):
         """
         Fit reduced number of spectra (mask) with a reduced model (skipped parameters will be set to zero)
         """
         npixels = int(mask.sum())
+        nMca = self._numberOfSpectra(1, 'MiB', data=data, mcaIndex=mcaIndex,
+                                     sliceChan=sliceChan)
         if npixels < nmin:
             _logger.debug("Not worth refitting #%d pixels", npixels)
             for iFree, name in zip(skipParams, skipNames):
@@ -578,24 +615,28 @@ class FastXRFLinearFit(object):
             if nFreeParameters is not None:
                 nFreeParameters[mask] = 0
         else:
-            _logger.debug("Refitting #%d pixels", npixels)
+            _logger.debug("Refitting #{} spectra in chunks of {}".format(npixels, nMca))
             nChan, nFreeOrg = derivatives.shape
-            idxSel = [i for i in range(nFreeOrg) if i not in skipParams]
-            nFree = len(idxSel)
-            A = derivatives[:, idxSel]
+            idxFree = [i for i in range(nFreeOrg) if i not in skipParams]
+            nFree = len(idxFree)
+            A = derivatives[:, idxFree]
             lstsq_kwargs['last_svd'] = None
 
             # Fit all selected spectra in one chunk
             bkgsub = bool(config['fit']['stripflag'])
-            chunkItems = self._dataChunkIter(McaStackView.MaskedView, data=data,
-                                             fitmodel=fitmodel, mcaSlice=sliceChan,
-                                             mask=mask)
+            chunkItems = self._dataChunkIter(McaStackView.MaskedView,
+                                             data=data,
+                                             fitmodel=fitmodel,
+                                             mask=mask,
+                                             mcaSlice=sliceChan,
+                                             mcaAxis=mcaIndex,
+                                             nMca=nMca)
             for chunk in chunkItems:
                 if fitmodel is None:
-                    idx, chunk = chunk
+                    (idx, idxShape), chunk = chunk
                     chunkModel = None
                 else:
-                    (idx, chunk), (_, chunkModel) = chunk
+                    ((idx, idxShape), chunk), (_, chunkModel) = chunk
                     chunkModel = chunkModel.T
                 chunk = chunk.T
 
@@ -617,20 +658,21 @@ class FastXRFLinearFit(object):
                         results[iFree][idx] = 0.0
                         uncertainties[iFree][idx] = 0.0
                     else:
-                        results[iFree][idx] = ddict['parameters'][iParam]
-                        uncertainties[iFree][idx] = ddict['uncertainties'][iParam]
+                        results[iFree][idx] = ddict['parameters'][iParam]\
+                                                .reshape(idxShape)
+                        uncertainties[iFree][idx] = ddict['uncertainties'][iParam]\
+                                                .reshape(idxShape)
                         iParam += 1
                 if chunkModel is not None:
                     if bkgsub:
                         chunkModel += numpy.dot(A, ddict['parameters'])
                     else:
                         chunkModel[()] = numpy.dot(A, ddict['parameters'])
-
-            if nFreeParameters is not None:
-                nFreeParameters[mask] = nFree
+                if nFreeParameters is not None:
+                    nFreeParameters[idx] = nFree
 
     @staticmethod
-    def _fitDtypeResults(data):
+    def _fitDtypeResult(data):
         if data.dtype not in [numpy.float32, numpy.float64]:
             if data.itemsize < 5:
                 return numpy.float32
@@ -639,9 +681,14 @@ class FastXRFLinearFit(object):
         else:
             return data.dtype
 
+    @staticmethod
+    def _fitDtypeCalculation(data):
+        # TODO: always 64bit?
+        return numpy.float
+
     def _numberOfSpectra(self, n, unit, data=None, mcaIndex=None, sliceChan=None):
         p = ['b', 'kib', 'mib', 'gib'].index(unit.lower())
-        dtype = self._fitDtypeResults(data)
+        dtype = self._fitDtypeCalculation(data)
         nChan = data.shape[mcaIndex]
         if sliceChan is not None:
             nChan = McaStackView.sliceLen(sliceChan, nChan)
@@ -674,7 +721,7 @@ class FastXRFLinearFit(object):
                 fitmodel[:, k] = background
 
     def _fitLstSqNegative(self, data=None, freeNames=None, nFreeBkg=None,
-                            results=None, **kwargs):
+                          results=None, **kwargs):
         """Refit pixels with negative peak areas (remove the parameters from the model)
         """
         nFree = len(freeNames)
@@ -729,10 +776,10 @@ class FastXRFLinearFit(object):
             _logger.debug("Refit iteration #{}. Fixed to zero: {}"
                           .format(iIter, badNames))
             self._fitLstSqReduced(data=data, mask=badMask,
-                                    skipParams=badParameters,
-                                    skipNames=badNames,
-                                    results=results,
-                                    nmin=nmin, **kwargs)
+                                  skipParams=badParameters,
+                                  skipNames=badNames,
+                                  results=results,
+                                  nmin=nmin, **kwargs)
             iIter += 1
 
     def _fitDeriveMassFractions(self, config=None, outputDict=None, results=None,
