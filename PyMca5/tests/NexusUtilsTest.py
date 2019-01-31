@@ -57,17 +57,17 @@ class testNexusUtils(unittest.TestCase):
     @contextmanager
     def h5open(self, name):
         filename = os.path.join(self.path, name+'.h5')
-        with NexusUtils.nxroot(filename, mode='a') as h5group:
+        with NexusUtils.nxRoot(filename, mode='a') as h5group:
             yield h5group
 
-    def validate_nxroot(self, h5group):
+    def validateNxRoot(self, h5group):
         attrs = ['NX_class', 'creator', 'HDF5_Version', 'file_name',
                  'file_time', 'file_update_time', 'h5py_version']
         self.assertEqual(set(h5group.attrs.keys()), set(attrs))
         self.assertEqual(h5group.attrs['NX_class'], 'NXroot')
         self.assertEqual(h5group.name, '/')
 
-    def validate_nxentry(self, h5group):
+    def validateNxEntry(self, h5group):
         attrs = ['NX_class']
         self.assertEqual(set(h5group.attrs.keys()), set(attrs))
         files = ['start_time', 'end_time']
@@ -75,29 +75,29 @@ class testNexusUtils(unittest.TestCase):
         self.assertEqual(h5group.attrs['NX_class'], 'NXentry')
         self.assertEqual(h5group.parent.name, '/')
 
-    def validate_nxprocess(self, h5group):
+    def validateNxProcess(self, h5group):
         attrs = ['NX_class']
         self.assertEqual(set(h5group.attrs.keys()), set(attrs))
         files = ['program', 'version', 'configuration', 'date', 'results']
         self.assertEqual(set(h5group.keys()), set(files))
         self.assertEqual(h5group.attrs['NX_class'], 'NXprocess')
         self.assertEqual(h5group.parent.attrs['NX_class'], 'NXentry')
-        self.validate_nxnote(h5group['configuration'])
-        self.validate_nxcollection(h5group['results'])
+        self.validateNxNote(h5group['configuration'])
+        self.validateNxCollection(h5group['results'])
 
-    def validate_nxnote(self, h5group):
+    def validateNxNote(self, h5group):
         attrs = ['NX_class']
         self.assertEqual(set(h5group.attrs.keys()), set(attrs))
         files = ['date', 'data', 'type']
         self.assertEqual(set(h5group.keys()), set(files))
         self.assertEqual(h5group.attrs['NX_class'], 'NXnote')
 
-    def validate_nxcollection(self, h5group):
+    def validateNxCollection(self, h5group):
         attrs = ['NX_class']
         self.assertEqual(set(h5group.attrs.keys()), set(attrs))
         self.assertEqual(h5group.attrs['NX_class'], 'NXcollection')
 
-    def validate_nxdata(self, h5group, axes, signals):
+    def validateNxData(self, h5group, axes, signals):
         attrs = ['NX_class', 'axes', 'signal', 'auxiliary_signals']
         self.assertEqual(set(h5group.attrs.keys()), set(attrs))
         files = list(next(iter(zip(*axes)))) + list(next(iter(zip(*signals))))
@@ -106,39 +106,39 @@ class testNexusUtils(unittest.TestCase):
 
     @unittest.skipIf(NexusUtils is None,
                      'PyMca5.PyMcaIO.NexusUtils cannot be imported')
-    def testNXroot(self):
-        with self.h5open('testNXroot') as h5group:
-            self.validate_nxroot(h5group)
+    def testNxRoot(self):
+        with self.h5open('testNxRoot') as h5group:
+            self.validateNxRoot(h5group)
     
     @unittest.skipIf(NexusUtils is None,
                      'PyMca5.PyMcaIO.NexusUtils cannot be imported')
-    def testNXentry(self):
-        with self.h5open('testNXentry') as h5group:
-            entry = NexusUtils.nxentry(h5group, 'entry0001')
-            self.assertRaises(RuntimeError, NexusUtils.nxentry,
+    def testNxEntry(self):
+        with self.h5open('testNxEntry') as h5group:
+            entry = NexusUtils.nxEntry(h5group, 'entry0001')
+            self.assertRaises(RuntimeError, NexusUtils.nxEntry,
                               entry, 'entry0002')
-            self.validate_nxentry(entry)
+            self.validateNxEntry(entry)
 
     @unittest.skipIf(NexusUtils is None,
                      'PyMca5.PyMcaIO.NexusUtils cannot be imported')
     @unittest.skipIf(ConfigDict is None,
                      'PyMca5.PyMcaIO.ConfigDict cannot be imported')
-    def testNXprocess(self):
-        with self.h5open('testNXprocess') as h5group:
-            entry = NexusUtils.nxentry(h5group, 'entry0001')
+    def testNxProcess(self):
+        with self.h5open('testNxProcess') as h5group:
+            entry = NexusUtils.nxEntry(h5group, 'entry0001')
             configdict = ConfigDict.ConfigDict(initdict={'a': 1, 'b': 2})
-            process = NexusUtils.nxprocess(entry, 'process0001', configdict=configdict)
-            self.assertRaises(RuntimeError, NexusUtils.nxprocess,
+            process = NexusUtils.nxProcess(entry, 'process0001', configdict=configdict)
+            self.assertRaises(RuntimeError, NexusUtils.nxProcess,
                               h5group, 'process0002', configdict=configdict)
-            self.validate_nxprocess(process)
+            self.validateNxProcess(process)
 
     @unittest.skipIf(NexusUtils is None,
                      'PyMca5.PyMcaIO.NexusUtils cannot be imported')
-    def testNXdata(self):
-        with self.h5open('testNXentry') as h5group:
-            entry = NexusUtils.nxentry(h5group, 'entry0001')
-            process = NexusUtils.nxprocess(entry, 'process0001')
-            data = NexusUtils.nxdata(process['results'], 'data')
+    def testNxData(self):
+        with self.h5open('testNxEntry') as h5group:
+            entry = NexusUtils.nxEntry(h5group, 'entry0001')
+            process = NexusUtils.nxProcess(entry, 'process0001')
+            data = NexusUtils.nxData(process['results'], 'data')
             s = (4, 3, 2)
             axes = [('y', numpy.arange(s[0]), {'units': 'um'}),
                     ('x', numpy.arange(s[1]), {}),
@@ -146,16 +146,16 @@ class testNexusUtils(unittest.TestCase):
             signals = [('Fe K', numpy.zeros(s), {'interpretation': 'image'}),
                        ('Ca K', {'data': numpy.zeros(s)}, {}),
                        ('S K', {'shape': s, 'dtype': int}, None)]
-            NexusUtils.nxdata_add_axes(data, axes)
-            NexusUtils.nxdata_add_signals(data, signals)
+            NexusUtils.nxDataAddAxes(data, axes)
+            NexusUtils.nxDataAddSignals(data, signals)
 
-            self.validate_nxdata(data, axes, signals)
-            signals = NexusUtils.nxdata_get_signals(data)
+            self.validateNxData(data, axes, signals)
+            signals = NexusUtils.nxDataGetSignals(data)
             self.assertEqual(signals, ['Fe K', 'Ca K', 'S K'])
 
-            NexusUtils.mark_default(data['Ca K'])
+            NexusUtils.markDefault(data['Ca K'])
             data = entry[NexusUtils.DEFAULT_PLOT_NAME]
-            signals = NexusUtils.nxdata_get_signals(data)
+            signals = NexusUtils.nxDataGetSignals(data)
             self.assertEqual(signals, ['Ca K', 'Fe K', 'S K'])
             self.assertEqual(data['y'].attrs['units'], 'um')
             self.assertEqual(data['Fe K'].attrs['interpretation'], 'image')
@@ -164,6 +164,7 @@ class testNexusUtils(unittest.TestCase):
             for n, name in zip(s, list(next(iter(zip(*axes))))):
                 self.assertEqual(data[name].shape, (n,))
 
+
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()
     if auto:
@@ -171,10 +172,10 @@ def getSuite(auto=True):
             unittest.TestLoader().loadTestsFromTestCase(testNexusUtils))
     else:
         # use a predefined order
-        testSuite.addTest(testNexusUtils('testNXroot'))
-        testSuite.addTest(testNexusUtils('testNXentry'))
-        testSuite.addTest(testNexusUtils('testNXprocess'))
-        testSuite.addTest(testNexusUtils('testNXdata'))
+        testSuite.addTest(testNexusUtils('testNxRoot'))
+        testSuite.addTest(testNexusUtils('testNxEntry'))
+        testSuite.addTest(testNexusUtils('testNxProcess'))
+        testSuite.addTest(testNexusUtils('testNxData'))
     return testSuite
 
 

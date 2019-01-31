@@ -88,16 +88,19 @@ class testMcaStackView(unittest.TestCase):
                      'PyMca5.PyMcaPhysics.xrf.McaStackView cannot be imported')
     def testfullChunkIndex(self):
         for ndim in [2, 3, 4]:
-            shape = tuple(range(4, 4+ndim))
+            shape = tuple(range(3, 3+ndim))
             data = numpy.zeros(shape, dtype=int)
-            ndim = len(shape)
-            for nChunksMax in range(numpy.prod(shape[1:])+2):
-                for chunkAxis in range(ndim):
+            for chunkAxes, axesOrder, nChunksTot in self._chunkIndexAxes(shape, ndim):
+                for nChunksMax in range(nChunksTot+2):
                     data[()] = 0
-                    chunkIndex, chunkAxis, axesOrder, nChunksMax2 =\
-                    McaStackView.fullChunkIndex(shape, nChunksMax, chunkAxes=(chunkAxis,))
+                    result = McaStackView.fullChunkIndex(shape, nChunksMax,
+                                                         chunkAxes=chunkAxes,
+                                                         axesOrder=axesOrder)
+                    chunkIndex, chunkAxes, axesOrder, nChunksMax2 = result
                     self.assertTrue(nChunksMax2 <= max(nChunksMax, 1))
-                    it = McaStackView.chunkIndexProduct(chunkIndex, chunkAxis, axesOrder)
+                    it = McaStackView.chunkIndexProduct(chunkIndex,
+                                                        chunkAxes,
+                                                        axesOrder)
                     for i, (idxChunk, idxShape, nChunks) in enumerate(it, 1):
                         data[idxChunk] += i
                         self.assertEqual(data[idxChunk].shape, idxShape)
@@ -105,33 +108,63 @@ class testMcaStackView(unittest.TestCase):
                     # Verify data coverage:
                     self.assertFalse((data == 0).any())
                     # Verify single element access and chunk access order:
-                    arr = data.transpose(axesOrder[::-1]+chunkAxis).flatten()
+                    arr = data.transpose(axesOrder[::-1]+chunkAxes).flatten()
                     lst1 = [k for k, g in itertools.groupby(arr)]
                     lst2 = list(range(1, i+1))
                     self.assertEqual(lst1, lst2)
 
+    def _chunkIndexAxes(self, shape, ndim):
+        axes = set(range(ndim))
+        for ndimChunk in range(ndim+1):
+            nOther = ndim-ndimChunk
+            for chunkAxes in itertools.permutations(axes, ndimChunk):
+                nChunksTot = numpy.prod([shape[i] for i in axes])
+                yield chunkAxes, None, nChunksTot
+                other = axes-set(chunkAxes)
+                if other:
+                    nChunksTot = numpy.prod([shape[i] for i in other])
+                else:
+                    nChunksTot = 1
+                for axesOrder in itertools.permutations(other, nOther):
+                    yield chunkAxes, axesOrder, nChunksTot
+
     @unittest.skipIf(McaStackView is None,
                      'PyMca5.PyMcaPhysics.xrf.McaStackView cannot be imported')
-    def testmaskedChunkIndex(self):
+    def testMaskedChunkIndex(self):
         for ndim in [2, 3, 4]:
-            shape = tuple(range(4, 4+ndim))
+            shape = tuple(range(3, 3+ndim))
             data = numpy.zeros(shape, dtype=int)
-            ndim = len(shape)
-            for chunkAxis in range(ndim):
+            for chunkAxes, axesOrder, nChunksTot in self._chunkIndexAxes(shape, ndim):
                 # Create Mask
-                mask, indices, nmask = self._randomMask(data, chunkAxis)
+                mask, indices, nmask = self._randomMask(shape, chunkAxes, axesOrder)
                 # Mask entire array
-                indicesFull = list(indices)
-                indicesFull.insert(chunkAxis, slice(None))
-                indicesFull = tuple(indicesFull)
                 maskFull = numpy.zeros(shape, dtype=bool)
-                maskFull[indicesFull] = True
+                if mask is None:
+                    maskFull[()] = False
+                    nmask = 0
+                else:
+                    indicesFull = [slice(None)]*ndim
+                    if axesOrder:
+                        for i, ind in zip(axesOrder, indices):
+                            indicesFull[i] = ind
+                    elif chunkAxes:
+                        tmp = tuple(i for i in range(ndim)
+                                    if i not in chunkAxes)
+                        for i, ind in zip(tmp, indices):
+                            indicesFull[i] = ind
+                    else:
+                        indicesFull = indices
+                    indicesFull = tuple(indicesFull)
+                    maskFull[indicesFull] = True
                 for nChunksMax in [2, nmask//3, nmask-1, nmask+1]:
                     for usedmask in [mask, None]:
                         data[()] = 0
                         self.assertFalse((data != 0).any())
-                        chunkIndex, chunkAxis2, axesOrder, nChunksMax2 =\
-                        McaStackView.maskedChunkIndex(shape, nChunksMax, mask=usedmask, chunkAxes=(chunkAxis,))
+                        chunkIndex, chunkAxes2, axesOrder, nChunksMax2 =\
+                        McaStackView.maskedChunkIndex(shape, nChunksMax,
+                                                      mask=usedmask,
+                                                      chunkAxes=chunkAxes,
+                                                      axesOrder=axesOrder)
                         for i, (idxChunk, idxShape, nChunks) in enumerate(chunkIndex, 1):
                             data[idxChunk] += i
                             self.assertEqual(data[idxChunk].shape, idxShape)
@@ -147,15 +180,26 @@ class testMcaStackView(unittest.TestCase):
                         lst2 = list(range(int(usedmask is None), i+1))
                         self.assertEqual(lst1, lst2)
 
-    def _randomMask(self, data, chunkAxis):
-        mshape = tuple(s for i, s in enumerate(data.shape) if i != chunkAxis)
-        mask = numpy.zeros(mshape, dtype=bool)
-        indices = numpy.arange(mask.size)
-        numpy.random.shuffle(indices)
-        indices = indices[:mask.size//2]
-        nmask = indices.size
-        indices = numpy.unravel_index(indices, mshape)
-        mask[indices] = True
+    def _randomMask(self, shape, chunkAxes, axesOrder):
+        if axesOrder:
+            mshape = tuple(shape[i] for i in axesOrder)
+        elif chunkAxes:
+            mshape = tuple(shape[i] for i in range(len(shape))
+                                    if i not in chunkAxes)
+        else:
+            mshape = shape
+        if mshape:
+            mask = numpy.zeros(mshape, dtype=bool)
+            indices = numpy.arange(mask.size)
+            numpy.random.shuffle(indices)
+            indices = indices[:mask.size//2]
+            nmask = indices.size
+            indices = numpy.unravel_index(indices, mshape)
+            mask[indices] = True
+        else:
+            mask = None
+            indices = None
+            nmask = 0
         return mask, indices, nmask
 
     @unittest.skipIf(McaStackView is None,
@@ -237,8 +281,8 @@ class testMcaStackView(unittest.TestCase):
         mcaSlice = slice(2, -1)
         isH5py = isinstance(data, h5py.Dataset)
         for mcaAxis in range(data.ndim):
-            mask, indices, nmask = self._randomMask(data, mcaAxis)
-            it = itertools.product([2, nmask//3, nmask-1, nmask+1], [mask, ])
+            mask, indices, nmask = self._randomMask(data.shape, (mcaAxis,), None)
+            it = itertools.product([2, nmask//3, nmask-1, nmask+1], [mask, None])
             for nMca, usedmask in it:
                 dataView = McaStackView.MaskedView(data,
                                                 mask=usedmask,
@@ -293,7 +337,7 @@ def getSuite(auto=True):
         testSuite.addTest(testMcaStackView('testfullChunkIndex'))
         testSuite.addTest(testMcaStackView('testFullViewNumpy'))
         testSuite.addTest(testMcaStackView('testFullViewH5py'))
-        testSuite.addTest(testMcaStackView('testmaskedChunkIndex'))
+        testSuite.addTest(testMcaStackView('testMaskedChunkIndex'))
         testSuite.addTest(testMcaStackView('testMaskedViewNumpy'))
         testSuite.addTest(testMcaStackView('testMaskedViewH5py'))
     return testSuite

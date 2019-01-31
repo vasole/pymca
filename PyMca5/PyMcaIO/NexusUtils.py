@@ -101,7 +101,7 @@ def mkdir(path):
             raise e
 
 
-def split_uri(uri):
+def splitUri(uri):
     """
     Split Uniform Resource Identifier (URI)
 
@@ -131,7 +131,7 @@ def iterup(h5group, includeself=True):
         yield h5group
 
 
-def is_link(parent, name):
+def isLink(parent, name):
     """
     Check whether node is h5py.SoftLink or h5py.ExternalLink
 
@@ -147,7 +147,7 @@ def is_link(parent, name):
         return isinstance(lnk, (h5py.SoftLink, h5py.ExternalLink))
 
 
-def h5name(h5group):
+def h5Name(h5group):
     """
     HDF5 Dataset of Group name
 
@@ -157,7 +157,7 @@ def h5name(h5group):
     return h5group.name.split('/')[-1]
 
 
-def nx_class(h5group):
+def nxClass(h5group):
     """
     Nexus class of existing h5py.Group (None when no Nexus instance)
 
@@ -167,7 +167,7 @@ def nx_class(h5group):
     return h5group.attrs.get('NX_class', None)
 
 
-def is_nx_class(h5group, *classes):
+def isNxClass(h5group, *classes):
     """
     Nexus class of existing h5py.Group (None when no Nexus instance)
 
@@ -175,30 +175,30 @@ def is_nx_class(h5group, *classes):
     :param \*classes: list(str) of Nexus classes
     :returns bool:
     """
-    return nx_class(h5group) in classes
+    return nxClass(h5group) in classes
 
 
-def raise_is_nx_class(h5group, *classes):
+def raiseIsNxClass(h5group, *classes):
     """
     :param h5py.Group h5group:
     :param \*classes: list(str) of Nexus classes
     :raises RuntimeError:
     """
-    if is_nx_class(h5group, *classes):
+    if isNxClass(h5group, *classes):
         raise RuntimeError('Nexus class not in {}'.format(classes))
 
 
-def raise_isnot_nx_class(h5group, *classes):
+def raiseIsNotNxClass(h5group, *classes):
     """
     :param h5py.Group h5group:
     :param \*classes: list(str) of Nexus classes
     :raises RuntimeError:
     """
-    if not is_nx_class(h5group, *classes):
+    if not isNxClass(h5group, *classes):
         raise RuntimeError('Nexus class not in {}'.format(classes))
 
 
-def nx_class_needsinit(parent, name, nxclass):
+def nxClassNeedsInit(parent, name, nxclass):
     """
     Check whether parent[name] needs Nexus initialization
 
@@ -209,9 +209,9 @@ def nx_class_needsinit(parent, name, nxclass):
     :raises RuntimeError: wrong Nexus class
     """
     if name is None:
-        return nxclass != nx_class(parent)
+        return nxclass != nxClass(parent)
     if name in parent:
-        _nxclass = nx_class(parent[name])
+        _nxclass = nxClass(parent[name])
         if _nxclass != nxclass:
             raise RuntimeError('{} is an instance of {} instead of {}'
                                .format(parent[name].name, nxclass, _nxclass))
@@ -229,18 +229,18 @@ def updated(h5group):
     """
     tm = timestamp()
     for group in iterup(h5group):
-        nxclass = nx_class(group)
+        nxclass = nxClass(group)
         if nxclass is None:
             continue
         elif nxclass in [u'NXentry', u'NXsubentry']:
-            update_h5dataset(group, 'end_time', tm)
+            updateDataset(group, 'end_time', tm)
         elif nxclass in [u'NXprocess', u'NXnote']:
-            update_h5dataset(group, 'date', tm)
+            updateDataset(group, 'date', tm)
         elif nxclass == u'NXroot':
             group.attrs['file_update_time'] = tm
 
 
-def update_h5dataset(parent, name, data):
+def updateDataset(parent, name, data):
     """
     :param h5py.Group parent:
     :param str name:
@@ -252,7 +252,7 @@ def update_h5dataset(parent, name, data):
         parent[name][()] = data
 
 
-def nxclass_init(parent, name, nxclass):
+def nxClassInit(parent, name, nxclass):
     """
     Initialize Nexus class instance without default attributes and datasets
 
@@ -260,14 +260,14 @@ def nxclass_init(parent, name, nxclass):
     :param str name:
     :raises RuntimeError: wrong Nexus class or parent not an Nexus class instance
     """
-    raise_is_nx_class(parent, None)
-    if nx_class_needsinit(parent, name, nxclass):
+    raiseIsNxClass(parent, None)
+    if nxClassNeedsInit(parent, name, nxclass):
         h5group = parent[name]
         h5group.attrs['NX_class'] = nxclass
         updated(h5group)
 
 
-def nxroot_init(h5group):
+def nxRootInit(h5group):
     """
     Initialize NXroot instance
 
@@ -277,32 +277,32 @@ def nxroot_init(h5group):
     """
     if h5group.name != '/':
         raise ValueError('Group should be the root')
-    if nx_class_needsinit(h5group, None, u'NXroot'):
+    if nxClassNeedsInit(h5group, None, u'NXroot'):
         h5group.attrs['file_time'] = timestamp()
         h5group.attrs['file_name'] = vlen_string(h5group.file.filename)
         h5group.attrs['HDF5_Version'] = vlen_string(h5py.version.hdf5_version)
         h5group.attrs['h5py_version'] = vlen_string(h5py.version.version)
         h5group.attrs['creator'] = PROGRAM_NAME
-        h5group.attrs['NX_class'] = 'NXroot'
+        h5group.attrs['NX_class'] = u'NXroot'
         updated(h5group)
 
 
-def nxentry_init(parent, name):
+def nxEntryInit(parent, name):
     """
     Initialize NXentry instance
 
     :param h5py.Group parent:
     :raises RuntimeError: wrong Nexus class or parent not NXroot
     """
-    raise_isnot_nx_class(parent, u'NXroot')
-    if nx_class_needsinit(parent, name, u'NXentry'):
+    raiseIsNotNxClass(parent, u'NXroot')
+    if nxClassNeedsInit(parent, name, u'NXentry'):
         h5group = parent[name]
-        update_h5dataset(h5group, 'start_time', timestamp())
-        h5group.attrs['NX_class'] = 'NXentry'
+        updateDataset(h5group, 'start_time', timestamp())
+        h5group.attrs['NX_class'] = u'NXentry'
         updated(h5group)
 
 
-def nxnote_init(parent, name, data=None, type=None):
+def nxNoteInit(parent, name, data=None, type=None):
     """
     Initialize NXnote instance
 
@@ -312,25 +312,25 @@ def nxnote_init(parent, name, data=None, type=None):
     :param str type:
     :raises RuntimeError: wrong Nexus class or parent not an Nexus class instance
     """
-    raise_is_nx_class(parent, None)
-    if nx_class_needsinit(parent, name, u'NXnote'):
+    raiseIsNxClass(parent, None)
+    if nxClassNeedsInit(parent, name, u'NXnote'):
         h5group = parent[name]
-        h5group.attrs['NX_class'] = 'NXnote'
+        h5group.attrs['NX_class'] = u'NXnote'
         update = True
     else:
         h5group = parent[name]
         update = False
     if data is not None:
-        update_h5dataset(h5group, 'data', vlen_string(data))
+        updateDataset(h5group, 'data', vlen_string(data))
         update = True
     if type is not None:
-        update_h5dataset(h5group, 'type', vlen_string(type))
+        updateDataset(h5group, 'type', vlen_string(type))
         update = True
     if update:
         updated(h5group)
 
 
-def nxprocess_configuration_init(parent, configdict=None):
+def nxProcessConfigurationInit(parent, configdict=None):
     """
     Initialize NXnote instance
 
@@ -338,7 +338,7 @@ def nxprocess_configuration_init(parent, configdict=None):
     :param ConfigDict configdict:
     :raises RuntimeError: parent not NXprocess
     """
-    raise_isnot_nx_class(parent, u'NXprocess')
+    raiseIsNotNxClass(parent, u'NXprocess')
     if configdict is not None:
         data = configdict.tostring()
         type = 'ini'
@@ -346,11 +346,11 @@ def nxprocess_configuration_init(parent, configdict=None):
         data = None
         type = None
     name = 'configuration'
-    nxnote_init(parent, name, data=data, type=type)
+    nxNoteInit(parent, name, data=data, type=type)
     updated(parent[name])
 
 
-def nxprocess_init(parent, name, configdict=None):
+def nxProcessInit(parent, name, configdict=None):
     """
     Initialize NXprocess instance
 
@@ -359,21 +359,21 @@ def nxprocess_init(parent, name, configdict=None):
     :param ConfigDict configdict:
     :raises RuntimeError: wrong Nexus class or parent not NXentry
     """
-    raise_isnot_nx_class(parent, 'NXentry')
-    if nx_class_needsinit(parent, name, u'NXprocess'):
+    raiseIsNotNxClass(parent, u'NXentry')
+    if nxClassNeedsInit(parent, name, u'NXprocess'):
         h5group = parent[name]
-        update_h5dataset(h5group, 'program', PROGRAM_NAME)
-        update_h5dataset(h5group, 'version', PROGRAM_VERSION)
-        h5group.attrs['NX_class'] = 'NXprocess'
+        updateDataset(h5group, 'program', PROGRAM_NAME)
+        updateDataset(h5group, 'version', PROGRAM_VERSION)
+        h5group.attrs['NX_class'] = u'NXprocess'
         updated(h5group)
     else:
         h5group = parent[name]
-    nxprocess_configuration_init(h5group, configdict=configdict)
-    nxclass_init(h5group, 'results', 'NXcollection')
+    nxProcessConfigurationInit(h5group, configdict=configdict)
+    nxClassInit(h5group, 'results', u'NXcollection')
 
 
 @contextmanager
-def nxroot(path, mode='r', **kwargs):
+def nxRoot(path, mode='r', **kwargs):
     """
     h5py.File context with NXroot initialization
 
@@ -385,11 +385,11 @@ def nxroot(path, mode='r', **kwargs):
     if mode != 'r':
         mkdir(os.path.dirname(path))
     with h5py.File(path, mode=mode, **kwargs) as h5file:
-        nxroot_init(h5file)
+        nxRootInit(h5file)
         yield h5file
 
 
-def nxentry(root, name):
+def nxEntry(root, name):
     """
     Get NXentry instance (initialize when missing)
 
@@ -397,24 +397,24 @@ def nxentry(root, name):
     :param str name:
     :returns h5py.Group:
     """
-    nxentry_init(root, name)
+    nxEntryInit(root, name)
     return root[name]
 
 
-def nxprocess(entry, name, **kwargs):
+def nxProcess(entry, name, **kwargs):
     """
     Get NXprocess instance (initialize when missing)
 
     :param h5py.Group entry:
     :param str name:
-    :param \**kwargs: see nxprocess_init
+    :param \**kwargs: see nxProcessInit
     :returns h5py.Group:
     """
-    nxprocess_init(entry, name, **kwargs)
+    nxProcessInit(entry, name, **kwargs)
     return entry[name]
 
 
-def nxcollection(parent, name):
+def nxCollection(parent, name):
     """
     Get NXcollection instance (initialize when missing)
 
@@ -422,11 +422,11 @@ def nxcollection(parent, name):
     :param str name:
     :returns h5py.Group:
     """
-    nxclass_init(parent, name, 'NXcollection')
+    nxClassInit(parent, name, u'NXcollection')
     return parent[name]
 
 
-def nxdata(parent, name):
+def nxData(parent, name):
     """
     Get NXcollection instance (initialize when missing)
 
@@ -436,11 +436,11 @@ def nxdata(parent, name):
     """
     if name is None:
         name = DEFAULT_PLOT_NAME
-    nxclass_init(parent, name, 'NXdata')
+    nxClassInit(parent, name, u'NXdata')
     return parent[name]
 
 
-def nxdata_add_axes(data, axes, append=True):
+def nxDataAddAxes(data, axes, append=True):
     """
     Add axes to NXdata instance
 
@@ -448,7 +448,7 @@ def nxdata_add_axes(data, axes, append=True):
     :param list(3-tuple) axes: name(str), value(None,h5py.Dataset,numpy.ndarray), attrs(dict)
     :param bool append:
     """
-    raise_isnot_nx_class(data, u'NXdata')
+    raiseIsNotNxClass(data, u'NXdata')
     if append:
         newaxes = data.attrs.get('axes', [])
     else:
@@ -471,7 +471,7 @@ def nxdata_add_axes(data, axes, append=True):
         updated(data)
 
 
-def nxdata_get_signals(data):
+def nxDataGetSignals(data):
     """
     Get NXdata signals (default signal first)
 
@@ -489,7 +489,7 @@ def nxdata_get_signals(data):
         return [signal] + auxsignals.tolist()
 
 
-def nxdata_set_signals(data, signals):
+def nxDataSetSignals(data, signals):
     """
     Set NXdata signals (default signal first)
 
@@ -508,7 +508,7 @@ def nxdata_set_signals(data, signals):
     updated(data)
 
 
-def nxdata_add_signals(data, signals, append=True):
+def nxDataAddSignals(data, signals, append=True):
     """
     Add signals to NXdata instance
 
@@ -516,16 +516,18 @@ def nxdata_add_signals(data, signals, append=True):
     :param list(2-tuple) signals: name(str), value(None,h5py.Dataset,numpy.ndarray,dict), attrs(dict)
     :param bool append:
     """
-    raise_isnot_nx_class(data, u'NXdata')
+    raiseIsNotNxClass(data, u'NXdata')
     if append:
-        newsignals = nxdata_get_signals(data)
+        newsignals = nxDataGetSignals(data)
     else:
         newsignals = []
     for name, value, attrs in signals:
         if value is None:
             pass  # is or will be created elsewhere
         elif isinstance(value, h5py.Dataset):
-            if value.parent != data:
+            if value.file.filename != data.file.filename:
+                data[name] = h5py.ExternalLink(value.file.filename, value.name)
+            elif value.parent != data:
                 data[name] = h5py.SoftLink(value.name)
         elif isinstance(value, dict):
             data.create_dataset(name, **value)
@@ -535,10 +537,10 @@ def nxdata_add_signals(data, signals, append=True):
             data[name].attrs.update(attrs)
         newsignals.append(name)
     if newsignals:
-        nxdata_set_signals(data, newsignals)
+        nxDataSetSignals(data, newsignals)
 
 
-def nxdata_add_errors(data, errors):
+def nxDataAddErrors(data, errors):
     """
     For each dataset in "data", link to the corresponding dataset in "errors".
 
@@ -551,33 +553,33 @@ def nxdata_add_errors(data, errors):
             data[name+'_errors'] = h5py.SoftLink(dest.name)
 
 
-def mark_default(h5group):
+def markDefault(h5group):
     """
     Mark HDF5 Dataset or Group as default (parents get notified as well)
 
     :param h5py.Group h5group:
     """
     path = h5group
-    nxclass = nx_class(path)
+    nxclass = nxClass(path)
     nxdata = None
     for parent in iterup(path.parent):
-        parentnxclass = nx_class(parent)
+        parentnxclass = nxClass(parent)
         if parentnxclass == u'NXdata':
-            signals = nxdata_get_signals(parent)
-            signal = h5name(path)
+            signals = nxDataGetSignals(parent)
+            signal = h5Name(path)
             if signal in signals:
                 signals.pop(signals.index(signal))
-            nxdata_set_signals(parent, [signal]+signals)
+            nxDataSetSignals(parent, [signal]+signals)
             updated(parent)
         elif nxclass == u'NXentry':
-            parent.attrs['default'] = h5name(path)
+            parent.attrs['default'] = h5Name(path)
             updated(parent)
         elif parentnxclass is not None:
             if nxclass == u'NXdata':
                 nxdata = path
             if nxdata:
                 if parentnxclass == u'NXentry':
-                    if is_link(parent, DEFAULT_PLOT_NAME):
+                    if isLink(parent, DEFAULT_PLOT_NAME):
                         del parent[DEFAULT_PLOT_NAME]
                     parent[DEFAULT_PLOT_NAME] = h5py.SoftLink(nxdata.name)
                     parent.attrs['default'] = DEFAULT_PLOT_NAME

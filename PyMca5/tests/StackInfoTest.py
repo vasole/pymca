@@ -192,48 +192,45 @@ class testStackInfo(unittest.TestCase):
         self.assertTrue(sf[0].nbmca() == 1,
                         "Spe file should contain MCA data")
 
-        y = counts = sf[0].mca(1)
-        x = channels = numpy.arange(y.size).astype(numpy.float)
+        counts = sf[0].mca(1)
+        channels = numpy.arange(counts.size)
         sf = None
         configuration = ConfigDict.ConfigDict()
         configuration.read(cfg)
         calibration = configuration["detector"]["zero"], \
                       configuration["detector"]["gain"], 0.0
         initialTime = configuration["concentrations"]["time"]
-        # create the data
-        nRows = 5
-        nColumns = 10
-        nTimes = 3
-        data = numpy.zeros((nRows, nColumns, counts.size), dtype = numpy.float)
-        live_time = numpy.zeros((nRows * nColumns), dtype=numpy.float)
-        mcaIndex = 0
-        for i in range(nRows):
-            for j in range(nColumns):
-                data[i, j] = counts
-                live_time[i * nColumns + j] = initialTime * \
-                                              (1 + mcaIndex % nTimes)
-                mcaIndex += 1
 
-        # create the stack data object
-        stack = DataObject.DataObject()
-        stack.data = data
-        stack.info = {}
-        stack.info["McaCalib"] = calibration
-        stack.info["McaLiveTime"] = live_time
-        stack.x = [channels]
+        # Fit MCA data with different dimensions: vector, image, stack
+        for ndim in [1, 2, 3]:
+            # create the data
+            imgShape = tuple(range(3, 3+ndim))
+            data = numpy.tile(counts, imgShape+(1,))
+            nTimes = 3
+            live_time = numpy.arange(numpy.prod(imgShape), dtype=int)
+            live_time = initialTime + (live_time % nTimes)*initialTime
 
-        # Test the fast XRF
-        # we need to make sure we use fundamental parameters and
-        # the time read from the file
-        configuration["concentrations"]["usematrix"] = 0
-        configuration["concentrations"]["useautotime"] = 1
-        # make sure we use the SNIP background
-        configuration['fit']['stripalgorithm'] = 1
-        self._assert_fastfit(stack, configuration, live_time, nTimes)
+            # create the stack data object
+            stack = DataObject.DataObject()
+            stack.data = data
+            stack.info = {}
+            stack.info["McaCalib"] = calibration
+            stack.info["McaLiveTime"] = live_time
+            stack.x = [channels]
+
+            # Test the fast XRF
+            # we need to make sure we use fundamental parameters and
+            # the time read from the file
+            configuration["concentrations"]["usematrix"] = 0
+            configuration["concentrations"]["useautotime"] = 1
+            # make sure we use the SNIP background
+            configuration['fit']['stripalgorithm'] = 1
+            self._assert_fastfit(stack, configuration, live_time, nTimes)
 
     def _assert_fastfit(self, stack, configuration, live_time, nTimes):
         from PyMca5.PyMcaPhysics.xrf import FastXRFLinearFit
         ffit = FastXRFLinearFit.FastXRFLinearFit()
+        firstIndex = tuple([0]*(stack.data.ndim-1))
         for refit in [0, 1]:
             outputDict = ffit.fitMultipleSpectra(y=stack,
                                                 weight=0,
@@ -246,15 +243,15 @@ class testStackInfo(unittest.TestCase):
             uncertainties = outputDict["uncertainties"].astype(numpy.float32)
             for i, (name, values, uvalues) in enumerate(zip(parameter_names, parameters, uncertainties)):
                 if DEBUG:
-                    print(name, values[0, 0])
-                delta = (values - values[0, 0])
+                    print(name, values[firstIndex])
+                delta = (values - values[firstIndex])
                 self.assertTrue(delta.max() == 0,
                     "Different fit value for parameter %s delta %f" % \
                                 (name, delta.max()))
                 self.assertTrue(delta.min() == 0,
                     "Different fit value for parameter %s delta %f" % \
                                 (name, delta.min()))
-                delta = (uvalues - uvalues[0, 0])
+                delta = (uvalues - uvalues[firstIndex])
                 self.assertTrue(delta.max() == 0,
                     "Different sigma value for parameter %s delta %f" % \
                                 (name, delta.max()))
@@ -266,7 +263,7 @@ class testStackInfo(unittest.TestCase):
             massfractions = outputDict["massfractions"]
             for i, (name, fractions) in enumerate(zip(massfraction_names, massfractions)):
                 # verify that massfractions took into account the time
-                reference = fractions[0, 0]
+                reference = fractions[firstIndex]
                 cTime = configuration['concentrations']['time']
                 values = fractions.flatten()
                 for point in range(live_time.size):
@@ -522,7 +519,7 @@ class testStackInfo(unittest.TestCase):
 
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()
-    if auto:
+    if True:
         testSuite.addTest(unittest.TestLoader().loadTestsFromTestCase(testStackInfo))
     else:
         # use a predefined order

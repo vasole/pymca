@@ -96,18 +96,10 @@ class FastXRFLinearFit(object):
         x, data, mcaIndex, livetime = self._fitParseData(x=x, y=y,
                                                          livetime=livetime)
 
-        # Check data dimensions
-        if data.ndim != 3:
-            txt = "For the time being only three dimensional arrays supported"
-            raise IndexError(txt)
-        elif mcaIndex not in [-1, 2]:
-            txt = "For the time being only mca arrays supported"
-            raise IndexError(txt)
-
+        # Calculation needs buffer for memory allocation (memory or H5)
         if outbuffer is None:
             outbuffer = OutputBuffer()
-
-        with outbuffer._buffer_context(update=False):
+        with outbuffer._bufferContext(update=False):
             t0 = time.time()
 
             # Configure fit
@@ -131,7 +123,7 @@ class FastXRFLinearFit(object):
                     # one spectrum is enough
                     sumover = 'first pixel'
                 else:
-                    sumover = 'first row'
+                    sumover = 'first vector'
                 yref = self._fitReferenceSpectrum(data=data, mcaIndex=mcaIndex,
                                                   sumover=sumover)
             else:
@@ -179,22 +171,22 @@ class FastXRFLinearFit(object):
             imageShape = tuple(imageShape)
             paramShape = (nFree,) + imageShape
             dtypeResult = self._fitDtypeResult(data)
-            results = outbuffer.allocate_memory('parameters',
+            results = outbuffer.allocateMemory('parameters',
                                                 shape=paramShape,
                                                 dtype=dtypeResult)
-            uncertainties = outbuffer.allocate_memory('uncertainties',
+            uncertainties = outbuffer.allocateMemory('uncertainties',
                                                 shape=paramShape,
                                                 dtype=dtypeResult)
             if outbuffer.save_diagnostics:
-                nFreeParameters = outbuffer.allocate_memory('nFreeParameters',
+                nFreeParameters = outbuffer.allocateMemory('nFreeParameters',
                                                 shape=imageShape,
                                                 fill_value=nFree,
                                                 dtype=numpy.int32)
-                nObservations = outbuffer.allocate_memory('nObservations',
+                nObservations = outbuffer.allocateMemory('nObservations',
                                                 shape=imageShape,
                                                 fill_value=nObs,
                                                 dtype=numpy.int32)
-                fitmodel = outbuffer.allocate_h5('model',
+                fitmodel = outbuffer.allocateH5('model',
                                                 nxdata='fit',
                                                 shape=stackShape,
                                                 dtype=dtypeResult,
@@ -240,12 +232,20 @@ class FastXRFLinearFit(object):
 
             # Return results as a dictionary
             outaxes = False
-            if outbuffer.save_data:
+            if outbuffer.saveData:
                 outaxes = True
-                outbuffer.allocate_h5('data', nxdata='fit', data=data, chunks=True)
-            if outbuffer.save_residuals:
+                outbuffer.allocateH5('data',
+                                     nxdata='fit',
+                                     data=data,
+                                     dtype=dtypeResult,
+                                     chunks=True)
+            if outbuffer.saveResiduals:
                 outaxes = True
-                residuals = outbuffer.allocate_h5('residuals', nxdata='fit', data=data, chunks=True)
+                residuals = outbuffer.allocateH5('residuals',
+                                                 nxdata='fit', 
+                                                 data=data,
+                                                 dtype=dtypeResult,
+                                                 chunks=True)
                 residuals[()] -= fitmodel
             if outaxes:
                 # Generic axes
@@ -305,9 +305,9 @@ class FastXRFLinearFit(object):
         else:
             shape = None
         if shape is not None:
-            data = data[()].reshape(shape)
+            data = data.reshape(shape)
             if livetime is not None:
-                livetime = livetime[()].reshape(shape)
+                livetime = livetime.reshape(shape)
 
         return x, data, mcaIndex, livetime
 
@@ -428,15 +428,27 @@ class FastXRFLinearFit(object):
             nMca = self._numberOfSpectra(20, 'MiB', data=data, mcaIndex=mcaIndex)
             _logger.debug('Add spectra in chunks of {}'.format(nMca))
             datastack = McaStackView.FullView(data, mcaAxis=mcaIndex, nMca=nMca)
-            yref = numpy.zeros((data.shape[-1],), dtype)
+            yref = numpy.zeros((data.shape[mcaIndex],), dtype)
             for key, chunk in datastack.items():
                 yref += chunk.sum(axis=0, dtype=dtype)
-        elif sumover == 'first row':
+        elif sumover == 'first vector':
             # Sum spectrum of the first row
-            yref = data[0, ...].sum(axis=0, dtype=dtype)
+            ndim = data.ndim
+            idx = [0]*ndim
+            while mcaIndex < 0:
+                mcaIndex += ndim
+            idx[mcaIndex] = slice(None)
+            for axis in range(data.ndim-1, -1, -1):
+                if idx[axis] != slice(None):
+                    idx[axis] = slice(None)
+                    break
+            axis = int(axis > mcaIndex)
+            yref = data[tuple(idx)].sum(axis=axis, dtype=dtype)
         else:
             # First spectrum
-            yref = data[0, 0, :].astype(dtype)
+            idx = [0]*data.ndim
+            idx[mcaIndex] = slice(None)
+            yref = data[idx].astype(dtype)
         return yref
 
     def _fitCreateModel(self, dtype=None):
@@ -847,9 +859,9 @@ class FastXRFLinearFit(object):
         if len(concentrationsResult['layerlist']) > 1:
             nValues += len(concentrationsResult['layerlist'])
         nElements = len(list(concentrationsResult['mass fraction'].keys()))
-        nFree, nRows, nColumns = results.shape
-        massFractions = numpy.zeros((nValues * nElements, nRows, nColumns),
-                                    dtype=results.dtype)
+        massShape = list(results.shape)
+        massShape[0] = nValues * nElements
+        massFractions = numpy.zeros(massShape, dtype=results.dtype)
 
         referenceElement = addInfo['ReferenceElement']
         referenceTransitions = addInfo['ReferenceTransitions']
@@ -996,7 +1008,7 @@ def main():
                    'tif=', 'edf=', 'csv=', 'h5=',
                    'filepattern=', 'begin=', 'end=', 'increment=',
                    'outroot=', 'outentry=', 'outprocess=',
-                   'diagnostics=', 'debug=']
+                   'diagnostics=', 'debug=', 'overwrite=']
     try:
         opts, args = getopt.getopt(
                      sys.argv[1:],
@@ -1021,9 +1033,9 @@ def main():
     csv = 0
     h5 = 1
     concentrations = 0
-    save_fit = 0
-    save_residuals = 0
-    save_data = 0
+    saveFit = 0
+    saveResiduals = 0
+    saveData = 0
     debug = 0
     overwrite = 1
     for opt, arg in opts:
@@ -1056,9 +1068,9 @@ def main():
         elif opt == '--concentrations':
             concentrations = int(arg)
         elif opt == '--diagnostics':
-            save_fit = int(arg)
-            save_residuals = save_fit
-            save_data = save_fit
+            saveFit = int(arg)
+            saveResiduals = saveFit
+            saveData = saveFit
         elif opt == '--outroot':
             outputRoot = arg
         elif opt == '--outentry':
@@ -1109,19 +1121,20 @@ def main():
 
     outbuffer = OutputBuffer(outputDir=outputDir,
                         outputRoot=outputRoot, fileEntry=fileEntry,
-                        fileProcess=fileProcess, save_data=save_data,
-                        save_fit=save_fit, save_residuals=save_residuals,
+                        fileProcess=fileProcess, saveData=saveData,
+                        saveFit=saveFit, saveResiduals=saveResiduals,
                         tif=tif, edf=edf, csv=csv, h5=h5, overwrite=overwrite)
 
     from PyMca5.PyMcaMisc import ProfilingUtils
     with ProfilingUtils.profile(memory=debug, time=debug):
-        with outbuffer.save_context():
+        with outbuffer.saveContext():
             outbuffer = fastFit.fitMultipleSpectra(y=dataStack,
                                                 weight=weight,
                                                 refit=refit,
                                                 concentrations=concentrations,
                                                 outbuffer=outbuffer)
-            print("Total Elapsed = % s " % (time.time() - t0))
+        # Without saveContext you need to execute: outbuffer.save()
+        print("Total Elapsed = % s " % (time.time() - t0))
 
 
 if __name__ == "__main__":

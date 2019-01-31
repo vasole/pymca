@@ -201,7 +201,6 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
 
         outparams = self._parameters['output']
         outbuffer = FastXRFLinearFitOutput.OutputBuffer(**outparams)
-
         outbuffer = self.fitInstance.fitMultipleSpectra(x=x,
                                                         y=stack,
                                                         ysum=spectrum,

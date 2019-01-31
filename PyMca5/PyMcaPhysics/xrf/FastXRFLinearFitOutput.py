@@ -35,6 +35,7 @@ import os
 import numpy
 import logging
 import time
+from six import string_types
 from contextlib import contextmanager
 from PyMca5.PyMcaIO import NexusUtils
 
@@ -45,7 +46,7 @@ class OutputBuffer(object):
 
     def __init__(self, outputDir=None, outputRoot=None, fileEntry=None,
                  fileProcess=None, tif=False, edf=False, csv=False, h5=True,
-                 overwrite=False, save_residuals=False, save_fit=False, save_data=False):
+                 overwrite=False, saveResiduals=False, saveFit=False, saveData=False):
         """
         Fast fitting output buffer, to be saved as:
          .h5 : outputDir/outputRoot.h5::/fileEntry/fileProcess
@@ -53,7 +54,7 @@ class OutputBuffer(object):
 
         Usage with context:
             outbuffer = OutputBuffer(...)
-            with outbuffer.save_context():
+            with outbuffer.saveContext():
                 ...
 
         Usage without context:
@@ -65,9 +66,9 @@ class OutputBuffer(object):
         :param str outputRoot:
         :param str fileEntry:
         :param str fileProcess:
-        :param save_residuals:
--       :param save_fit:
--       :param save_data:
+        :param saveResiduals:
+-       :param saveFit:
+-       :param saveData:
         :param bool tif:
         :param bool edf:
         :param bool csv:
@@ -86,9 +87,9 @@ class OutputBuffer(object):
         self.edf = edf
         self.csv = csv
         self.h5 = h5
-        self.save_residuals = save_residuals
-        self.save_fit = save_fit
-        self.save_data = save_data
+        self.saveResiduals = saveResiduals
+        self.saveFit = saveFit
+        self.saveData = saveData
         self.overwrite = overwrite
 
     @property
@@ -97,7 +98,7 @@ class OutputBuffer(object):
     
     @outputRoot.setter
     def outputRoot(self, value):
-        self._check_buffer_context()
+        self._check_bufferContext()
         if value:
             self._outputRoot = value
         else:
@@ -109,7 +110,7 @@ class OutputBuffer(object):
     
     @fileEntry.setter
     def fileEntry(self, value):
-        self._check_buffer_context()
+        self._check_bufferContext()
         if value:
             self._fileEntry = value
         else:
@@ -121,7 +122,7 @@ class OutputBuffer(object):
     
     @fileProcess.setter
     def fileProcess(self, value):
-        self._check_buffer_context()
+        self._check_bufferContext()
         if value:
             self._fileProcess = value
         else:
@@ -133,7 +134,7 @@ class OutputBuffer(object):
     
     @edf.setter
     def edf(self, value):
-        self._check_buffer_context()
+        self._check_bufferContext()
         self._edf = value
 
     @property
@@ -142,7 +143,7 @@ class OutputBuffer(object):
     
     @tif.setter
     def tif(self, value):
-        self._check_buffer_context()
+        self._check_bufferContext()
         self._tif = value
 
     @property
@@ -151,7 +152,7 @@ class OutputBuffer(object):
     
     @csv.setter
     def csv(self, value):
-        self._check_buffer_context()
+        self._check_bufferContext()
         self._csv = value
 
     @property
@@ -159,35 +160,35 @@ class OutputBuffer(object):
         return self.csv or self.edf or self.tif
 
     @property
-    def save_data(self):
-        return self._save_data and self.h5
+    def saveData(self):
+        return self._saveData and self.h5
     
-    @save_data.setter
-    def save_data(self, value):
-        self._check_buffer_context()
-        self._save_data = value
+    @saveData.setter
+    def saveData(self, value):
+        self._check_bufferContext()
+        self._saveData = value
 
     @property
-    def save_fit(self):
-        return self._save_fit and self.h5
+    def saveFit(self):
+        return self._saveFit and self.h5
     
-    @save_fit.setter
-    def save_fit(self, value):
-        self._check_buffer_context()
-        self._save_fit= value
+    @saveFit.setter
+    def saveFit(self, value):
+        self._check_bufferContext()
+        self._saveFit= value
 
     @property
-    def save_residuals(self):
-        return self._save_residuals and self.h5
+    def saveResiduals(self):
+        return self._saveResiduals and self.h5
     
-    @save_residuals.setter
-    def save_residuals(self, value):
-        self._check_buffer_context()
-        self._save_residuals = value
+    @saveResiduals.setter
+    def saveResiduals(self, value):
+        self._check_bufferContext()
+        self._saveResiduals = value
 
     @property
     def save_diagnostics(self):
-        return self.save_residuals or self.save_fit
+        return self.saveResiduals or self.saveFit
 
     @property
     def overwrite(self):
@@ -195,10 +196,10 @@ class OutputBuffer(object):
     
     @overwrite.setter
     def overwrite(self, value):
-        self._check_buffer_context()
+        self._check_bufferContext()
         self._overwrite = value
 
-    def _check_buffer_context(self):
+    def _check_bufferContext(self):
         if self._init_buffer:
             raise RuntimeError('Buffer is locked')
 
@@ -226,7 +227,7 @@ class OutputBuffer(object):
     def get(self, key, default=None):
         return self._output.get(key, default)
 
-    def allocate_memory(self, name, fill_value=None, shape=None, dtype=None):
+    def allocateMemory(self, name, fill_value=None, shape=None, dtype=None):
         """
         :param str name:
         :param num fill_value:
@@ -242,7 +243,7 @@ class OutputBuffer(object):
         self._output[name] = buffer
         return buffer
 
-    def allocate_h5(self, name, nxdata=None, fill_value=None, **kwargs):
+    def allocateH5(self, name, nxdata=None, fill_value=None, **kwargs):
         """
         :param str name:
         :param str nxdata:
@@ -251,7 +252,7 @@ class OutputBuffer(object):
         """
         parent = self._nxprocess['results']
         if nxdata:
-            parent = NexusUtils.nxdata(parent, nxdata)
+            parent = NexusUtils.nxData(parent, nxdata)
         buffer = parent.create_dataset(name, **kwargs)
         if fill_value is not None:
             buffer[()] = fill_value
@@ -260,7 +261,7 @@ class OutputBuffer(object):
         return buffer
 
     @contextmanager
-    def _buffer_context(self, update=True):
+    def _bufferContext(self, update=True):
         """
         Prepare output buffers (HDF5: create file, NXentry and NXprocess)
 
@@ -277,7 +278,7 @@ class OutputBuffer(object):
                     if self._nxprocess is None and self.outputDir:
                         cleanup_funcs = []
                         try:
-                            with self._h5_context(cleanup_funcs, update=update):
+                            with self._h5Context(cleanup_funcs, update=update):
                                 yield
                         except:
                             # clean-up and re-raise
@@ -293,29 +294,34 @@ class OutputBuffer(object):
                 _logger.debug('Output buffer released')
 
     @contextmanager
-    def _h5_context(self, cleanup_funcs, update=True):
+    def _h5Context(self, cleanup_funcs, update=True):
+        """
+        Initialize NXprocess on enter and close/cleanup on exit
+        """
         fileName = self.filename('.h5')
         existed = [False]*3
         existed[0] = os.path.exists(fileName)
-        with NexusUtils.nxroot(fileName, mode='a') as f:
+        with NexusUtils.nxRoot(fileName, mode='a') as f:
+            # Open/overwrite NXprocess: root/entry/process
             entryname = self.fileEntry
             existed[1] = entryname in f
-            entry = NexusUtils.nxentry(f, entryname)
+            entry = NexusUtils.nxEntry(f, entryname)
             procname = self.fileProcess
             if procname in entry:
                 existed[2] = True
                 path = entry[procname].name
                 if update:
-                    pass
+                    _logger.debug('edit {}'.format(path))
                 elif self.overwrite:
                     _logger.warning('overwriting {}'.format(path))
                     del entry[procname]
                     existed[2] = False
                 else:
                     raise RuntimeError('{} already exists'.format(path))
-            self._nxprocess = NexusUtils.nxprocess(entry, procname)
+            self._nxprocess = NexusUtils.nxProcess(entry, procname)
             try:
-                yield
+                with self._h5DatasetContext(f):
+                    yield
             except:
                 # clean-up and re-raise
                 if not existed[0]:
@@ -329,8 +335,27 @@ class OutputBuffer(object):
                 self._nxprocess = None
 
     @contextmanager
-    def save_context(self):
-        with self._buffer_context(update=False):
+    def _h5DatasetContext(self, f):
+        """
+        Swap strings for dataset objects on enter and back on exit
+        """
+        update = {}
+        for k, v in self._output.items():
+            if isinstance(v, string_types):
+                update[k] = f[v]
+        self._output.update(update)
+        try:
+            yield
+        finally:
+            update = {}
+            for k, v in self._output.items():
+                if isinstance(v, NexusUtils.h5py.Dataset):
+                    update[k] = v.name
+            self._output.update(update)
+
+    @contextmanager
+    def saveContext(self):
+        with self._bufferContext(update=False):
             try:
                 yield
             except:
@@ -344,7 +369,7 @@ class OutputBuffer(object):
 
     def save(self):
         """
-        Save result of Fast XRF fitting. Preferrable use save_context instead.
+        Save result of Fast XRF fitting. Preferrable use saveContext instead.
         HDF5 NXprocess will be updated, not overwritten.
         """
         if not (self.tif or self.edf or self.csv or self.h5):
@@ -356,28 +381,28 @@ class OutputBuffer(object):
         t0 = time.time()
         _logger.debug('Saving results ...')
 
-        with self._buffer_context(update=True):
+        with self._bufferContext(update=True):
             if self.tif or self.edf or self.csv:
-                self._save_single()
+                self._saveSingle()
             if self.h5:
-                self._save_h5()
+                self._saveH5()
 
         t = time.time() - t0
         _logger.debug("Saving results elapsed = %f", t)
 
     @property
     def parameter_names(self):
-        return self._get_names('parameter_names', '{}')
+        return self._getNames('parameter_names', '{}')
 
     @property
     def uncertainties_names(self):
-        return self._get_names('parameter_names', 's({})')
+        return self._getNames('parameter_names', 's({})')
 
     @property
     def massfraction_names(self):
-        return self._get_names('massfraction_names', 'w({}){}')
+        return self._getNames('massfraction_names', 'w({}){}')
 
-    def _get_names(self, names, fmt):
+    def _getNames(self, names, fmt):
         labels = self.get(names, None)
         if not labels:
             return []
@@ -393,7 +418,7 @@ class OutputBuffer(object):
             out.append(label)
         return out
 
-    def _save_single(self):
+    def _saveSingle(self):
         from PyMca5.PyMca import ArraySave
 
         imageNames = []
@@ -406,16 +431,16 @@ class OutputBuffer(object):
             if images is not None:
                 for img in images:
                     imageList.append(img)
-                imageNames += self._get_names(names, fmt)
+                imageNames += self._getNames(names, fmt)
         NexusUtils.mkdir(self.outroot_localfs)
         if self.edf:
             fileName = self.filename('.edf')
-            self._check_overwrite(fileName)
+            self._checkOverwrite(fileName)
             ArraySave.save2DArrayListAsEDF(imageList, fileName,
                                            labels=imageNames)
         if self.csv:
             fileName = self.filename('.csv')
-            self._check_overwrite(fileName)
+            self._checkOverwrite(fileName)
             ArraySave.save2DArrayListAsASCII(imageList, fileName, csv=True,
                                              labels=imageNames)
         if self.tif:
@@ -427,31 +452,31 @@ class OutputBuffer(object):
                 else:
                     suffix  = "_" + label
                 fileName = self.filename('.tif', suffix=suffix)
-                self._check_overwrite(fileName)
+                self._checkOverwrite(fileName)
                 ArraySave.save2DArrayListAsMonochromaticTiff([image],
                                                              fileName,
                                                              labels=[label],
                                                              dtype=numpy.float32)
         if self.cfg and 'configuration' in self:
             fileName = self.filename('.cfg')
-            self._check_overwrite(fileName)
+            self._checkOverwrite(fileName)
             self['configuration'].write(fileName)
 
-    def _check_overwrite(self, fileName):
+    def _checkOverwrite(self, fileName):
         if os.path.exists(fileName):
             if self.overwrite:
                 _logger.warning('overwriting {}'.format(fileName))
             else:
                 raise RuntimeError('{} already exists'.format(fileName))
 
-    def _save_h5(self):
+    def _saveH5(self):
         # Save fit configuration
         nxprocess = self._nxprocess
         if nxprocess is None:
             return
         nxresults = nxprocess['results']
         configdict = self.get('configuration', None)
-        NexusUtils.nxprocess_configuration_init(nxprocess, configdict=configdict)
+        NexusUtils.nxProcessConfigurationInit(nxprocess, configdict=configdict)
 
         # Save fitted parameters, uncertainties and elemental massfractions
         mill = numpy.float32(1e6)
@@ -464,29 +489,28 @@ class OutputBuffer(object):
                 attrs = {'interpretation': 'image'}
                 signals = [(label, {'data': img, 'chunks': True}, attrs)
                            for label, img in zip(self[names], images)]
-                data = NexusUtils.nxdata(nxresults, key)
-                NexusUtils.nxdata_add_signals(data, signals)
-                NexusUtils.mark_default(data)
+                data = NexusUtils.nxData(nxresults, key)
+                NexusUtils.nxDataAddSignals(data, signals)
+                NexusUtils.markDefault(data)
         if 'parameters' in nxresults and 'uncertainties' in nxresults:
-            NexusUtils.nxdata_add_errors(nxresults['parameters'], nxresults['uncertainties'])
+            NexusUtils.nxDataAddErrors(nxresults['parameters'], nxresults['uncertainties'])
 
         # Save fitted model and residuals
         signals = []
-        attrs = {'interpretation':'spectrum'}
+        attrs = {'interpretation': 'spectrum'}
         for name in ['data', 'model', 'residuals']:
-            dset = self.get(name, None)
-            if dset is not None:
-                signals.append((name, None, attrs))
+            if name in self:
+                signals.append((name, self[name], attrs))
         if signals:
-            nxdata = NexusUtils.nxdata(nxresults, 'fit')
-            NexusUtils.nxdata_add_signals(nxdata, signals)
+            nxdata = NexusUtils.nxData(nxresults, 'fit')
+            NexusUtils.nxDataAddSignals(nxdata, signals)
             axes = self.get('dataAxes', None)
             axes_used = self.get('dataAxesUsed', None)
             if axes:
-                NexusUtils.nxdata_add_axes(nxdata, axes)
+                NexusUtils.nxDataAddAxes(nxdata, axes)
             if axes_used:
                 axes = [(ax, None, None) for ax in axes_used]
-                NexusUtils.nxdata_add_axes(nxdata, axes, append=False)
+                NexusUtils.nxDataAddAxes(nxdata, axes, append=False)
 
         # Save diagnostics
         signals = []
@@ -494,7 +518,7 @@ class OutputBuffer(object):
         for name in ['nObservations', 'nFreeParameters']:
             img = self.get(name, None)
             if img is not None:
-                signals.append((name,img,attrs))
+                signals.append((name, img, attrs))
         if signals:
-            nxdata = NexusUtils.nxdata(nxresults, 'diagnostics')
-            NexusUtils.nxdata_add_signals(nxdata, signals)
+            nxdata = NexusUtils.nxData(nxresults, 'diagnostics')
+            NexusUtils.nxDataAddSignals(nxdata, signals)
