@@ -230,10 +230,10 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
                     return
 
         # Show results
-        if 'concentrations' in result:
-            imageNames = result.parameter_names + result.concentration_names
+        if 'massfractions' in result:
+            imageNames = result.parameter_names + result.massfraction_names
             images = numpy.concatenate((result['parameters'],
-                                        result['concentrations']), axis=0)
+                                        result['massfractions']), axis=0)
         else:
             imageNames = result.parameter_names
             images = result['parameters']
