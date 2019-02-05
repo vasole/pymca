@@ -57,39 +57,67 @@ class FastXRFLinearFitWindow(qt.QWidget):
         self._configButton.clicked.connect(self.browseConfigurationFile)
 
         # output directory
-        outLabel   = qt.QLabel(self)
-        outLabel.setText("Output dir:")
-        self._outLine = qt.QLineEdit(self)
-        self._outLine.setReadOnly(True)
+        outdirLabel = qt.QLabel(self)
+        outdirLabel.setText("Output dir:")
+        self._outdirLine = qt.QLineEdit(self)
+        self._outdirLine.setReadOnly(True)
 
-        self._outButton = qt.QPushButton(self)
-        self._outButton.setText('Browse')
-        self._outButton.setAutoDefault(False)
-        self._outButton.clicked.connect(self.browseOutputDir)
+        self._outdirButton = qt.QPushButton(self)
+        self._outdirButton.setText('Browse')
+        self._outdirButton.setAutoDefault(False)
+        self._outdirButton.clicked.connect(self.browseOutputDir)
 
-        # output file name
-        fileLabel   = qt.QLabel(self)
-        fileLabel.setText("Output file root:")
-        self._fileLine = qt.QLineEdit(self)
-        self._fileLine.setReadOnly(False)
-        self._fileLine.setText("images")
+        # output root
+        outrootLabel = qt.QLabel(self)
+        outrootLabel.setText("Output root:")
+        self._outrootLine = qt.QLineEdit(self)
+        self._outrootLine.setReadOnly(False)
+        self._outrootLine.setText("IMAGES")
 
+        # output entry
+        outentryLabel = qt.QLabel(self)
+        outentryLabel.setText("Output entry:")
+        self._outentryLine = qt.QLineEdit(self)
+        self._outentryLine.setReadOnly(False)
+        self._outentryLine.setText("images")
 
-        boxLabel   = qt.QLabel(self)
-        boxLabel.setText("Misc. flags:")
+        # output process
+        outnameLabel = qt.QLabel(self)
+        outnameLabel.setText("Output name:")
+        self._outnameLabel = outnameLabel
+        self._outnameLine = qt.QLineEdit(self)
+        self._outnameLine.setText("")
 
-        self._boxContainer = qt.QWidget(self) 
-        self._boxContainerLayout = qt.QHBoxLayout(self._boxContainer)
-        self._boxContainerLayout.setContentsMargins(0, 0, 0, 0)
-        self._boxContainerLayout.setSpacing(0)
+        # fit options
+        boxLabel1 = qt.QLabel(self)
+        boxLabel1.setText("Fit options:")
+        self._boxContainer1 = qt.QWidget(self) 
+        self._boxContainerLayout1 = qt.QHBoxLayout(self._boxContainer1)
+        self._boxContainerLayout1.setContentsMargins(0, 0, 0, 0)
+        self._boxContainerLayout1.setSpacing(0)
+        
+        # save options
+        boxLabel2 = qt.QLabel(self)
+        boxLabel2.setText("Save options:")
+        self._boxContainer2 = qt.QWidget(self) 
+        self._boxContainerLayout2 = qt.QHBoxLayout(self._boxContainer2)
+        self._boxContainerLayout2.setContentsMargins(0, 0, 0, 0)
+        self._boxContainerLayout2.setSpacing(0)
+        
         # concentrations
-        self._concentrationsBox = qt.QCheckBox(self._boxContainer)
+        self._concentrationsBox = qt.QCheckBox(self._boxContainer1)
         self._concentrationsBox.setText("calculate concentrations")
         self._concentrationsBox.setChecked(False)
         self._concentrationsBox.setEnabled(True)
 
+        # diagnostics
+        self._diagnosticsBox = qt.QCheckBox(self._boxContainer1)
+        self._diagnosticsBox.setText("calculate diagnostics")
+        self._diagnosticsBox.setChecked(False)
+        self._diagnosticsBox.setEnabled(True)
+
         # repeat fit on negative contributions
-        self._fitAgainBox = qt.QCheckBox(self._boxContainer)
+        self._fitAgainBox = qt.QCheckBox(self._boxContainer1)
         self._fitAgainBox.setText("Repeat fit on negative contributions")
         self._fitAgainBox.setChecked(True)
         self._fitAgainBox.setEnabled(True)
@@ -100,14 +128,45 @@ class FastXRFLinearFitWindow(qt.QWidget):
         self._fitAgainBox.setToolTip(text)
 
         # generate tiff files
-        self._tiffBox = qt.QCheckBox(self._boxContainer)
-        self._tiffBox.setText("generate TIFF files")
+        self._tiffBox = qt.QCheckBox(self._boxContainer2)
+        self._tiffBox.setText("TIFF")
         self._tiffBox.setChecked(False)
         self._tiffBox.setEnabled(True)
+        
+        # generate csv file
+        self._csvBox = qt.QCheckBox(self._boxContainer2)
+        self._csvBox.setText("CSV")
+        self._csvBox.setChecked(False)
+        self._csvBox.setEnabled(True)
+        
+        # generate edf file
+        self._edfBox = qt.QCheckBox(self._boxContainer2)
+        self._edfBox.setText("EDF")
+        self._edfBox.setChecked(False)
+        self._edfBox.setEnabled(True)
+        
+        # generate hdf5 file
+        self._h5Box = qt.QCheckBox(self._boxContainer2)
+        self._h5Box.setText("HDF5")
+        self._h5Box.setChecked(True)
+        self._h5Box.setEnabled(True)
+        self.toggleH5(True)
+        self._h5Box.stateChanged.connect(self.toggleH5)
 
-        self._boxContainerLayout.addWidget(self._concentrationsBox)
-        self._boxContainerLayout.addWidget(self._fitAgainBox)
-        self._boxContainerLayout.addWidget(self._tiffBox)
+        # overwrite output
+        self._overwriteBox = qt.QCheckBox(self._boxContainer2)
+        self._overwriteBox.setText("Overwrite")
+        self._overwriteBox.setChecked(True)
+        self._overwriteBox.setEnabled(True)
+        
+        self._boxContainerLayout1.addWidget(self._concentrationsBox)
+        self._boxContainerLayout1.addWidget(self._fitAgainBox)
+        self._boxContainerLayout1.addWidget(self._diagnosticsBox)
+        self._boxContainerLayout2.addWidget(self._h5Box)
+        self._boxContainerLayout2.addWidget(self._edfBox)
+        self._boxContainerLayout2.addWidget(self._csvBox)
+        self._boxContainerLayout2.addWidget(self._tiffBox)
+        self._boxContainerLayout2.addWidget(self._overwriteBox)
         
         # weight method
         self._weightWidget = qt.QWidget(self)
@@ -128,19 +187,33 @@ class FastXRFLinearFitWindow(qt.QWidget):
         self._weightButtonGroup.buttons()[0].setChecked(True)
         #self._weightWidget.mainLayout.addWidget(qt.HorizontalSpacer(self._weightWidget))
 
-        self.mainLayout.addWidget(configLabel, 0, 0)
-        self.mainLayout.addWidget(self._configLine, 0, 1)
-        self.mainLayout.addWidget(self._configButton, 0, 2)
-        self.mainLayout.addWidget(outLabel, 1, 0)
-        self.mainLayout.addWidget(self._outLine, 1, 1)
-        self.mainLayout.addWidget(self._outButton, 1, 2)
-        self.mainLayout.addWidget(fileLabel, 2, 0)
-        self.mainLayout.addWidget(self._fileLine, 2, 1)
-        self.mainLayout.addWidget(weightLabel, 3, 0)
-        self.mainLayout.addWidget(self._weightWidget, 3, 1, 1, 1)
-        self.mainLayout.addWidget(boxLabel, 4, 0)
-        self.mainLayout.addWidget(self._boxContainer, 4, 1, 1, 1)
-
+        i = 0
+        self.mainLayout.addWidget(configLabel, i, 0)
+        self.mainLayout.addWidget(self._configLine, i, 1)
+        self.mainLayout.addWidget(self._configButton, i, 2)
+        i += 1
+        self.mainLayout.addWidget(outdirLabel, i, 0)
+        self.mainLayout.addWidget(self._outdirLine, i, 1)
+        self.mainLayout.addWidget(self._outdirButton, i, 2)
+        i += 1
+        self.mainLayout.addWidget(outrootLabel, i, 0)
+        self.mainLayout.addWidget(self._outrootLine, i, 1)
+        i += 1
+        self.mainLayout.addWidget(outentryLabel, i, 0)
+        self.mainLayout.addWidget(self._outentryLine, i, 1)
+        i += 1
+        self.mainLayout.addWidget(outnameLabel, i, 0)
+        self.mainLayout.addWidget(self._outnameLine, i, 1)
+        i += 1
+        self.mainLayout.addWidget(weightLabel, i, 0)
+        self.mainLayout.addWidget(self._weightWidget, i, 1, 1, 1)
+        i += 1
+        self.mainLayout.addWidget(boxLabel1, i, 0)
+        self.mainLayout.addWidget(self._boxContainer1, i, 1, 1, 1)
+        i += 1
+        self.mainLayout.addWidget(boxLabel2, i, 0)
+        self.mainLayout.addWidget(self._boxContainer2, i, 1, 1, 1)
+        
     def sizeHint(self):
         return qt.QSize(int(1.8 * qt.QWidget.sizeHint(self).width()),
                         qt.QWidget.sizeHint(self).height())
@@ -159,26 +232,41 @@ class FastXRFLinearFitWindow(qt.QWidget):
                                      message="Please select output directory",
                                      mode="OPEN")
         if len(f):
-            self._outLine.setText(f)
+            self._outdirLine.setText(f)
+
+    def toggleH5(self, state):
+        readonly = not state
+        self._outnameLine.setReadOnly(readonly)
+        self._outnameLine.setEnabled(not readonly)
+        self._outnameLabel.setEnabled(not readonly)
+        if readonly:
+            self._outnameLine.setStyleSheet("color: gray; background-color: darkGray")
+        else:
+            self._outnameLine.setStyleSheet("")
 
     def getParameters(self):
         ddict = {}
-        ddict['configuration'] = qt.safe_str(self._configLine.text())
-        ddict['output_dir'] = qt.safe_str(self._outLine.text())
-        ddict['file_root'] = qt.safe_str(self._fileLine.text())
-        if self._concentrationsBox.isChecked():
-            ddict['concentrations'] = 1
-        else:
-            ddict['concentrations'] = 0
-        ddict['weight_policy'] = self._weightButtonGroup.checkedId()
-        if self._fitAgainBox.isChecked():
-            ddict['refit'] = 1
-        else:
-            ddict['refit'] = 0
-        if self._tiffBox.isChecked():
-            ddict['tiff'] = 1
-        else:
-            ddict['tiff'] = 0
+        fit = {}
+        ddict['fit'] = fit
+        fit['configuration'] = qt.safe_str(self._configLine.text())
+        fit['weight'] = self._weightButtonGroup.checkedId()
+        fit['concentrations'] = self._concentrationsBox.isChecked()
+        fit['refit'] = self._fitAgainBox.isChecked()
+        output = {}
+        ddict['output'] = output
+        output['outputDir'] = qt.safe_str(self._outdirLine.text()).replace(" ", "")
+        output['outputRoot'] = qt.safe_str(self._outrootLine.text()).replace(" ", "")
+        output['fileEntry'] = qt.safe_str(self._outentryLine.text()).replace(" ", "")
+        output['fileProcess'] = qt.safe_str(self._outnameLine.text()).replace(" ", "")
+        output['tif'] = int(self._tiffBox.isChecked())
+        output['csv'] = int(self._csvBox.isChecked())
+        output['edf'] = int(self._edfBox.isChecked())
+        output['h5'] = int(self._h5Box.isChecked())
+        output['overwrite'] = int(self._overwriteBox.isChecked())
+        diagnostics = int(self._diagnosticsBox.isChecked())
+        output['saveData'] = diagnostics
+        output['saveFit'] = diagnostics
+        output['saveResiduals'] = diagnostics
         return ddict
 
 class FastXRFLinearFitDialog(qt.QDialog):

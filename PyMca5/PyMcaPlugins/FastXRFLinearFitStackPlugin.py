@@ -64,12 +64,12 @@ import logging
 import traceback
 from PyMca5 import StackPluginBase
 from PyMca5.PyMcaPhysics import FastXRFLinearFit
+from PyMca5.PyMcaPhysics import FastXRFLinearFitOutput
 from PyMca5.PyMcaGui import FastXRFLinearFitWindow
 from PyMca5.PyMcaGui import CalculationThread
 from PyMca5.PyMcaGui import StackPluginResultsWindow
 from PyMca5.PyMcaGui import PyMca_Icons as PyMca_Icons
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.PyMcaIO import ArraySave
 
 _logger = logging.getLogger(__name__)
 
@@ -185,26 +185,28 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
             # for the time being only in the global image
             # spatial_mask = numpy.isfinite(image_data)
             spatial_mask = numpy.isfinite(self.getStackOriginalImage())
+            # WDN: any effect?
         stack = self.getStackDataObject()
-        fitConfigurationFile = self._parameters['configuration']
-        concentrations = self._parameters['concentrations']
+
+        fitparams = self._parameters['fit'].copy()
+        fitConfigurationFile = fitparams.pop('configuration')
         self.fitInstance.setFitConfigurationFile(fitConfigurationFile)
-        weightPolicy = self._parameters['weight_policy']
-        refit = self._parameters['refit']
-        if weightPolicy:
+        if fitparams['weight']:
             # force calculation of the unnormalized sum spectrum
             spectrum = None
         if stack.x in [None, []]:
             x = None
         else:
             x = stack.x[0]
-        result = self.fitInstance.fitMultipleSpectra(x=x,
-                                                     y=stack,
-                                                     weight=weightPolicy,
-                                                     concentrations=concentrations,
-                                                     ysum=spectrum,
-                                                     refit=refit)
-        return result
+
+        outparams = self._parameters['output']
+        outbuffer = FastXRFLinearFitOutput.OutputBuffer(**outparams)
+        outbuffer = self.fitInstance.fitMultipleSpectra(x=x,
+                                                        y=stack,
+                                                        ysum=spectrum,
+                                                        outbuffer=outbuffer,
+                                                        **fitparams)
+        return outbuffer
 
     def threadFinished(self):
         try:
@@ -226,13 +228,15 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
                     # somehow this exception is not caught
                     raise Exception(result[1], result[2])#, result[3])
                     return
-        if 'concentrations' in result:
-            imageNames = result['names']
+
+        # Show results
+        if 'massfractions' in result:
+            imageNames = result.parameter_names + result.massfraction_names
             images = numpy.concatenate((result['parameters'],
-                                        result['concentrations']), axis=0)
+                                        result['massfractions']), axis=0)
         else:
+            imageNames = result.parameter_names
             images = result['parameters']
-            imageNames = result['names']
         nImages = images.shape[0]
         self._widget = StackPluginResultsWindow.StackPluginResultsWindow(\
                                         usetab=False)
@@ -244,59 +248,8 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
                                           image_names=imageNames)
         self._showWidget()
 
-        # save to output directory
-        parameters = self.configurationWidget.getParameters()
-        outputDir = parameters["output_dir"]
-        if outputDir in [None, ""]:
-            _logger.debug("Nothing to be saved")
-            if _logger.getEffectiveLevel() == logging.DEBUG:
-                return
-        if parameters["file_root"] is None:
-            fileRoot = ""
-        else:
-            fileRoot = parameters["file_root"].replace(" ","")
-        if fileRoot in [None, ""]:
-            fileRoot = "images"
-        if not os.path.exists(outputDir):
-            os.mkdir(outputDir)
-        imagesDir = os.path.join(outputDir, "IMAGES")
-        if not os.path.exists(imagesDir):
-            os.mkdir(imagesDir)
-        imageList = [None] * (nImages + len(result['uncertainties']))
-        fileImageNames = [None] * (nImages + len(result['uncertainties']))
-        j = 0
-        for i in range(nImages):
-            name = imageNames[i].replace(" ","-")
-            fileImageNames[j] = name
-            imageList[j] = images[i]
-            j += 1
-            if not imageNames[i].startswith("C("):
-                # fitted parameter
-                fileImageNames[j] = "s(%s)" % name
-                imageList[j] = result['uncertainties'][i]
-                j += 1
-        fileName = os.path.join(imagesDir, fileRoot+".edf")
-        ArraySave.save2DArrayListAsEDF(imageList, fileName,
-                                       labels=fileImageNames)
-        fileName = os.path.join(imagesDir, fileRoot+".csv")
-        ArraySave.save2DArrayListAsASCII(imageList, fileName, csv=True,
-                                         labels=fileImageNames)
-        if parameters["tiff"]:
-            i = 0
-            for i in range(len(fileImageNames)):
-                label = fileImageNames[i]
-                if label.startswith("s("):
-                    continue
-                elif label.startswith("C("):
-                    mass_fraction = "_" + label[2:-1] + "_mass_fraction"
-                else:
-                    mass_fraction  = "_" + label
-                fileName = os.path.join(imagesDir,
-                                        fileRoot + mass_fraction + ".tif")
-                ArraySave.save2DArrayListAsMonochromaticTiff([imageList[i]],
-                                        fileName,
-                                        labels=[label],
-                                        dtype=numpy.float32)
+        # Save results
+        result.save()
 
     def _showWidget(self):
         if self._widget is None:

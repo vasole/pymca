@@ -31,10 +31,11 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
+
 if os.path.exists('PyMca5'):
     if os.path.exists('setup.py'):
         if os.path.exists('py2app_setup.py'):
-            txt ='Tests cannnot be imported from top source directory'
+            txt = 'Tests cannot be imported from top source directory'
             raise ImportError(txt)
 
 from PyMca5.tests.TestAll import main as testAll
@@ -46,4 +47,6 @@ from PyMca5.tests.PCAToolsTest import test as testPCATools
 from PyMca5.tests.SpecfileTest import test as testSpecfile
 from PyMca5.tests.specfilewrapperTest import test as testSpecfilewrapper
 from PyMca5.tests.XrfTest import test as testXrf
+from PyMca5.tests.McaStackViewTest import test as testMcaStackView
+from PyMca5.tests.NexusUtilsTest import test as testNexusUtils
 from PyMca5.tests.StackInfoTest import test as testStackInfo

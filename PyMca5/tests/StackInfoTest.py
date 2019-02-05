@@ -185,7 +185,6 @@ class testStackInfo(unittest.TestCase):
         from PyMca5.PyMcaIO import specfilewrapper as specfile
         from PyMca5.PyMcaIO import ConfigDict
         from PyMca5.PyMcaCore import DataObject
-        from PyMca5.PyMcaPhysics.xrf import FastXRFLinearFit
         spe = os.path.join(self.dataDir, "Steel.spe")
         cfg = os.path.join(self.dataDir, "Steel.cfg")
         sf = specfile.Specfile(spe)
@@ -193,90 +192,66 @@ class testStackInfo(unittest.TestCase):
         self.assertTrue(sf[0].nbmca() == 1,
                         "Spe file should contain MCA data")
 
-        y = counts = sf[0].mca(1)
-        x = channels = numpy.arange(y.size).astype(numpy.float)
+        counts = sf[0].mca(1)
+        channels = numpy.arange(counts.size)
         sf = None
         configuration = ConfigDict.ConfigDict()
         configuration.read(cfg)
         calibration = configuration["detector"]["zero"], \
                       configuration["detector"]["gain"], 0.0
         initialTime = configuration["concentrations"]["time"]
-        # create the data
-        nRows = 5
-        nColumns = 10
-        nTimes = 3
-        data = numpy.zeros((nRows, nColumns, counts.size), dtype = numpy.float)
-        live_time = numpy.zeros((nRows * nColumns), dtype=numpy.float)
-        mcaIndex = 0
-        for i in range(nRows):
-            for j in range(nColumns):
-                data[i, j] = counts
-                live_time[i * nColumns + j] = initialTime * \
-                                              (1 + mcaIndex % nTimes)
-                mcaIndex += 1
 
-        # create the stack data object
-        stack = DataObject.DataObject()
-        stack.data = data
-        stack.info = {}
-        stack.info["McaCalib"] = calibration
-        stack.info["McaLiveTime"] = live_time
-        stack.x = [channels]
+        # Fit MCA data with different dimensions: vector, image, stack
+        for ndim in [1, 2, 3]:
+            # create the data
+            imgShape = tuple(range(3, 3+ndim))
+            data = numpy.tile(counts, imgShape+(1,))
+            nTimes = 3
+            live_time = numpy.arange(numpy.prod(imgShape), dtype=int)
+            live_time = initialTime + (live_time % nTimes)*initialTime
 
-        # Test the fast XRF
-        # we need to make sure we use fundamental parameters and
-        # the time read from the file
+            # create the stack data object
+            stack = DataObject.DataObject()
+            stack.data = data
+            stack.info = {}
+            stack.info["McaCalib"] = calibration
+            stack.info["McaLiveTime"] = live_time
+            stack.x = [channels]
+
+            # Test the fast XRF
+            # we need to make sure we use fundamental parameters and
+            # the time read from the file
+            configuration["concentrations"]["usematrix"] = 0
+            configuration["concentrations"]["useautotime"] = 1
+            # make sure we use the SNIP background
+            configuration['fit']['stripalgorithm'] = 1
+            self._assert_fastfit(stack, configuration, live_time, nTimes)
+
+    def _assert_fastfit(self, stack, configuration, live_time, nTimes):
+        from PyMca5.PyMcaPhysics.xrf import FastXRFLinearFit
         ffit = FastXRFLinearFit.FastXRFLinearFit()
-        configuration["concentrations"]["usematrix"] = 0
-        configuration["concentrations"]["useautotime"] = 1
-        # make sure we use the SNIP background
-        configuration['fit']['stripalgorithm'] = 1
-        outputDict = ffit.fitMultipleSpectra(y=stack,
-                                             weight=0,
-                                             configuration=configuration,
-                                             concentrations=True,
-                                             refit=0)
-        names = outputDict["names"]
-        parameters = outputDict["parameters"]
-        uncertainties = outputDict["uncertainties"]
-        concentrations = outputDict["concentrations"]
-        cCounter = 0
-        for i in range(len(names)):
-            name = names[i]
-            if name.startswith("C(") and name.endswith(")"):
-                # it is a concentrations parameter
-                # verify that concentrations took into account the time
-                reference = concentrations[cCounter][0, 0]
-                cTime = configuration['concentrations']['time']
-                values = concentrations[cCounter][:]
-                values.shape = -1
-                for point in range(live_time.size):
-                    current = values[point]
-                    if DEBUG:
-                        print(name, point, reference, current, point % nTimes)
-                    if (point % nTimes) and (abs(reference) > 1.0e-10):
-                        self.assertTrue(reference != current,
-                            "Incorrect concentration for point %d" % point)
-                    corrected = current * live_time[point] / cTime
-                    if abs(reference) > 1.0e-10:
-                        delta = 100 * abs((reference - corrected) / reference)
-                        self.assertTrue(delta < 0.01,
-                             "Incorrect concentration(t) for point %d" % point)
-                    else:
-                        self.assertTrue(abs(reference - corrected) < 1.0e-5,
-                             "Incorrect concentration(t) for point %d" % point)
-                cCounter += 1
-            else:
+        firstIndex = tuple([0]*(stack.data.ndim-1))
+        for refit in [0, 1]:
+            outputDict = ffit.fitMultipleSpectra(y=stack,
+                                                weight=0,
+                                                configuration=configuration,
+                                                concentrations=True,
+                                                refit=0)
+
+            parameter_names = outputDict.parameter_names
+            parameters = outputDict["parameters"].astype(numpy.float32)
+            uncertainties = outputDict["uncertainties"].astype(numpy.float32)
+            for i, (name, values, uvalues) in enumerate(zip(parameter_names, parameters, uncertainties)):
                 if DEBUG:
-                    print(name, parameters[i][0, 0])
-                delta = (parameters[i] - parameters[i][0, 0])
+                    print(name, values[firstIndex])
+                delta = (values - values[firstIndex])
                 self.assertTrue(delta.max() == 0,
                     "Different fit value for parameter %s delta %f" % \
                                 (name, delta.max()))
                 self.assertTrue(delta.min() == 0,
                     "Different fit value for parameter %s delta %f" % \
                                 (name, delta.min()))
-                delta = (uncertainties[i] - uncertainties[i][0, 0])
+                delta = (uvalues - uvalues[firstIndex])
                 self.assertTrue(delta.max() == 0,
                     "Different sigma value for parameter %s delta %f" % \
                                 (name, delta.max()))
@@ -284,26 +259,13 @@ class testStackInfo(unittest.TestCase):
                     "Different sigma value for parameter %s delta %f" % \
                                 (name, delta.min()))
 
-        # again with fitting again the negative values
-        outputDict = ffit.fitMultipleSpectra(y=stack,
-                                             weight=0,
-                                             configuration=configuration,
-                                             concentrations=True,
-                                             refit=1)
-        names = outputDict["names"]
-        parameters = outputDict["parameters"]
-        uncertainties = outputDict["uncertainties"]
-        concentrations = outputDict["concentrations"]
-        cCounter = 0
-        for i in range(len(names)):
-            name = names[i]
-            if name.startswith("C(") and name.endswith(")"):
-                # it is a concentrations parameter
-                # verify that concentrations took into account the time
-                reference = concentrations[cCounter][0, 0]
+            massfraction_names = outputDict.massfraction_names
+            massfractions = outputDict["massfractions"]
+            for i, (name, fractions) in enumerate(zip(massfraction_names, massfractions)):
+                # verify that massfractions took into account the time
+                reference = fractions[firstIndex]
                 cTime = configuration['concentrations']['time']
-                values = concentrations[cCounter][:]
-                values.shape = -1
+                values = fractions.flatten()
                 for point in range(live_time.size):
                     current = values[point]
                     if DEBUG:
@@ -315,28 +277,10 @@ class testStackInfo(unittest.TestCase):
                     if abs(reference) > 1.0e-10:
                         delta = 100 * abs((reference - corrected) / reference)
                         self.assertTrue(delta < 0.01,
-                             "Incorrect concentration(t) for point %d" % point)
+                            "Incorrect concentration(t) for point %d" % point)
                     else:
                         self.assertTrue(abs(reference - corrected) < 1.0e-5,
-                             "Incorrect concentration(t) for point %d" % point)
-                cCounter += 1
-            else:
-                if DEBUG:
-                    print(name, parameters[i][0, 0])
-                delta = (parameters[i] - parameters[i][0, 0])
-                self.assertTrue(delta.max() == 0,
-                    "Different fit value for parameter %s delta %f" % \
-                                (name, delta.max()))
-                self.assertTrue(delta.min() == 0,
-                    "Different fit value for parameter %s delta %f" % \
-                                (name, delta.min()))
-                delta = (uncertainties[i] - uncertainties[i][0, 0])
-                self.assertTrue(delta.max() == 0,
-                    "Different sigma value for parameter %s delta %f" % \
-                                (name, delta.max()))
-                self.assertTrue(delta.min() == 0,
-                    "Different sigma value for parameter %s delta %f" % \
-                                (name, delta.min()))
+                            "Incorrect concentration(t) for point %d" % point)
 
     @unittest.skipIf(not HAS_H5PY, "skipped h5py missing")
     def testFitHdf5Stack(self):
@@ -567,127 +511,23 @@ class testStackInfo(unittest.TestCase):
 
         # Batch fitting went well
         # Test the fast XRF
-        from PyMca5.PyMcaPhysics.xrf import FastXRFLinearFit
-        ffit = FastXRFLinearFit.FastXRFLinearFit()
         configuration["concentrations"]["usematrix"] = 0
         configuration["concentrations"]["useautotime"] = 1
         configuration['fit']['stripalgorithm'] = 1
-        outputDict = ffit.fitMultipleSpectra(y=stack,
-                                             weight=0,
-                                             configuration=configuration,
-                                             concentrations=True,
-                                             refit=0)
-        names = outputDict["names"]
-        parameters = outputDict["parameters"]
-        uncertainties = outputDict["uncertainties"]
-        concentrations = outputDict["concentrations"]
-        cCounter = 0
-        for i in range(len(names)):
-            name = names[i]
-            if name.startswith("C(") and name.endswith(")"):
-                # it is a concentrations parameter
-                # verify that concentrations took into account the time
-                reference = concentrations[cCounter][0, 0]
-                cTime = configuration['concentrations']['time']
-                values = concentrations[cCounter][:]
-                values.shape = -1
-                for point in range(live_time.size):
-                    current = values[point]
-                    if DEBUG:
-                        print(name, point, reference, current, point % nTimes)
-                    if (point % nTimes) and (abs(reference) > 1.0e-10):
-                        self.assertTrue(reference != current,
-                            "Incorrect concentration for point %d" % point)
-                    corrected = current * live_time[point] / cTime
-                    if abs(reference) > 1.0e-10:
-                        delta = 100 * abs((reference - corrected) / reference)
-                        self.assertTrue(delta < 0.01,
-                             "Incorrect concentration(t) for point %d" % point)
-                    else:
-                        self.assertTrue(abs(reference - corrected) < 1.0e-5,
-                             "Incorrect concentration(t) for point %d" % point)
-                cCounter += 1
-            else:
-                if DEBUG:
-                    print(name, parameters[i][0, 0])
-                delta = (parameters[i] - parameters[i][0, 0])
-                self.assertTrue(delta.max() == 0,
-                    "Different fit value for parameter %s delta %f" % \
-                                (name, delta.max()))
-                self.assertTrue(delta.min() == 0,
-                    "Different fit value for parameter %s delta %f" % \
-                                (name, delta.min()))
-                delta = (uncertainties[i] - uncertainties[i][0, 0])
-                self.assertTrue(delta.max() == 0,
-                    "Different sigma value for parameter %s delta %f" % \
-                                (name, delta.max()))
-                self.assertTrue(delta.min() == 0,
-                    "Different sigma value for parameter %s delta %f" % \
-                                (name, delta.min()))
-        outputDict = ffit.fitMultipleSpectra(y=stack,
-                                             weight=0,
-                                             configuration=configuration,
-                                             concentrations=True,
-                                             refit=1)
-        names = outputDict["names"]
-        parameters = outputDict["parameters"]
-        uncertainties = outputDict["uncertainties"]
-        concentrations = outputDict["concentrations"]
-        cCounter = 0
-        for i in range(len(names)):
-            name = names[i]
-            if name.startswith("C(") and name.endswith(")"):
-                # it is a concentrations parameter
-                # verify that concentrations took into account the time
-                reference = concentrations[cCounter][0, 0]
-                cTime = configuration['concentrations']['time']
-                values = concentrations[cCounter][:]
-                values.shape = -1
-                for point in range(live_time.size):
-                    current = values[point]
-                    if DEBUG:
-                        print(name, point, reference, current, point % nTimes)
-                    if (point % nTimes) and (abs(reference) > 1.0e-10):
-                        self.assertTrue(reference != current,
-                            "Incorrect concentration for point %d" % point)
-                    corrected = current * live_time[point] / cTime
-                    if abs(reference) > 1.0e-10:
-                        delta = 100 * abs((reference - corrected) / reference)
-                        self.assertTrue(delta < 0.01,
-                             "Incorrect concentration(t) for point %d" % point)
-                    else:
-                        self.assertTrue(abs(reference - corrected) < 1.0e-5,
-                             "Incorrect concentration(t) for point %d" % point)
-                cCounter += 1
-            else:
-                if DEBUG:
-                    print(name, parameters[i][0, 0])
-                delta = (parameters[i] - parameters[i][0, 0])
-                self.assertTrue(delta.max() == 0,
-                    "Different fit value for parameter %s delta %f" % \
-                                (name, delta.max()))
-                self.assertTrue(delta.min() == 0,
-                    "Different fit value for parameter %s delta %f" % \
-                                (name, delta.min()))
-                delta = (uncertainties[i] - uncertainties[i][0, 0])
-                self.assertTrue(delta.max() == 0,
-                    "Different sigma value for parameter %s delta %f" % \
-                                (name, delta.max()))
-                self.assertTrue(delta.min() == 0,
-                    "Different sigma value for parameter %s delta %f" % \
-                                (name, delta.min()))
+        self._assert_fastfit(stack, configuration, live_time, nTimes)
+
 
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()
-    if auto:
+    if True:
         testSuite.addTest(unittest.TestLoader().loadTestsFromTestCase(testStackInfo))
     else:
         # use a predefined order
         testSuite.addTest(testStackInfo("testDataDirectoryPresence"))
         testSuite.addTest(testStackInfo("testStackBaseAverageAndSum"))
         testSuite.addTest(testStackInfo("testDataFilePresence"))
-        testSuite.addTest(testStackInfo("testFastFitStack"))
-        testSuite.addTest(testStackInfo("testBatchFitHdf5Stack"))
+        testSuite.addTest(testStackInfo("testStackFastFit"))
+        testSuite.addTest(testStackInfo("testFitHdf5Stack"))
     return testSuite
 
 def test(auto=False):
