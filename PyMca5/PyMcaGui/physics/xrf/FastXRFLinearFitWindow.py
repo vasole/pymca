@@ -35,6 +35,11 @@ from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import PyMca_Icons
 IconDict = PyMca_Icons.IconDict
 from PyMca5.PyMcaGui import PyMcaFileDialogs
+try:
+    import h5py
+    hasH5py = True
+except ImportError:
+    hasH5py = False
 
 
 class FastXRFLinearFitWindow(qt.QWidget):
@@ -114,7 +119,7 @@ class FastXRFLinearFitWindow(qt.QWidget):
         self._diagnosticsBox = qt.QCheckBox(self._boxContainer1)
         self._diagnosticsBox.setText("calculate diagnostics")
         self._diagnosticsBox.setChecked(False)
-        self._diagnosticsBox.setEnabled(True)
+        self._diagnosticsBox.setEnabled(hasH5py)
 
         # repeat fit on negative contributions
         self._fitAgainBox = qt.QCheckBox(self._boxContainer1)
@@ -142,16 +147,16 @@ class FastXRFLinearFitWindow(qt.QWidget):
         # generate edf file
         self._edfBox = qt.QCheckBox(self._boxContainer2)
         self._edfBox.setText("EDF")
-        self._edfBox.setChecked(False)
+        self._edfBox.setChecked(not hasH5py)
         self._edfBox.setEnabled(True)
         
         # generate hdf5 file
         self._h5Box = qt.QCheckBox(self._boxContainer2)
         self._h5Box.setText("HDF5")
-        self._h5Box.setChecked(True)
-        self._h5Box.setEnabled(True)
-        self.toggleH5(True)
+        self._h5Box.setChecked(hasH5py)
+        self._h5Box.setEnabled(hasH5py)
         self._h5Box.stateChanged.connect(self.toggleH5)
+        self.toggleH5(hasH5py)
 
         # overwrite output
         self._overwriteBox = qt.QCheckBox(self._boxContainer2)
