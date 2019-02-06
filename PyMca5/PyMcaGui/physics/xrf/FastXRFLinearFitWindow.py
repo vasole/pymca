@@ -240,14 +240,15 @@ class FastXRFLinearFitWindow(qt.QWidget):
             self._outdirLine.setText(f)
 
     def toggleH5(self, state):
-        readonly = not state
-        self._outnameLine.setReadOnly(readonly)
-        self._outnameLine.setEnabled(not readonly)
-        self._outnameLabel.setEnabled(not readonly)
-        if readonly:
-            self._outnameLine.setStyleSheet("color: gray; background-color: darkGray")
-        else:
+        h5Out = bool(state)
+        self._outnameLine.setReadOnly(not h5Out)
+        self._outnameLine.setEnabled(h5Out)
+        self._outnameLabel.setEnabled(h5Out)
+        self._diagnosticsBox.setEnabled(h5Out)
+        if h5Out:
             self._outnameLine.setStyleSheet("")
+        else:
+            self._outnameLine.setStyleSheet("color: gray; background-color: darkGray")
 
     def getParameters(self):
         ddict = {}
