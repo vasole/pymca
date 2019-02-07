@@ -126,7 +126,7 @@ class OutputBuffer(object):
         if value:
             self._fileProcess = value
         else:
-            self._fileProcess = self.fileEntry
+            self._fileProcess = 'fast_xrf_fit'
 
     @property
     def edf(self):

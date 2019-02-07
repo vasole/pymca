@@ -91,7 +91,7 @@ class FastXRFLinearFitWindow(qt.QWidget):
         outnameLabel.setText("Output name:")
         self._outnameLabel = outnameLabel
         self._outnameLine = qt.QLineEdit(self)
-        self._outnameLine.setText("")
+        self._outnameLine.setText("fast_xrf_fit")
 
         # fit options
         boxLabel1 = qt.QLabel(self)
@@ -147,7 +147,7 @@ class FastXRFLinearFitWindow(qt.QWidget):
         # generate edf file
         self._edfBox = qt.QCheckBox(self._boxContainer2)
         self._edfBox.setText("EDF")
-        self._edfBox.setChecked(not hasH5py)
+        self._edfBox.setChecked(True)
         self._edfBox.setEnabled(True)
         
         # generate hdf5 file
