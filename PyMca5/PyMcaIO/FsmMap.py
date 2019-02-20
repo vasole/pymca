@@ -78,5 +78,14 @@ class FsmMap(DataObject.DataObject):
         self.info["Size"] = data.shape[0] * data.shape[1]
         self.info["FileIndex"] = 0
         self.info["Channel0"] = 0.0
-        self.info["McaCalib"] = [0.0, 1.0, 0.0]
+        # scales
+        self.info["McaCalib"] = [info.get("zStart", 0.0),
+                                 info.get("zDelta", 1.0),
+                                 0.0] 
+        self.info["xScale"] = [info.get("xStart", 0.0),
+                               info.get("xDelta", 1.0),
+                               0.0]
+        self.info["yScale"] = [info.get("yStart", 0.0),
+                               info.get("yDelta", 1.0),
+                               0.0]
         self.info['OmnicInfo'] = info
