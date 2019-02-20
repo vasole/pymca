@@ -126,7 +126,7 @@ class StackSelector(object):
             elif filefilter.upper().startswith("RENISHAW"):
                 stack = RenishawMap.RenishawMap(filelist[0])
                 omnicfile = True
-            elif filefilter.upper().startswith("FSM"):
+            elif filefilter.upper().startswith("PerkinElmer-FSM"):
                 stack = FsmMap.FsmMap(filelist[0])
                 omnicfile = True
             elif filefilter == "" and\
@@ -378,6 +378,7 @@ class StackSelector(object):
                         "RTX Files (*.rtx *.RTX)",
                         "Lispix-RPL Files (*.rpl)",
                         "Renishaw-ASCII Files (*.txt *.TXT)",
+                        "PerkinElmer-FSM Files (*.fsm *.FSM)",
                         "AIFIRA Files (*DAT)",
                         "SupaVisio Files (*pige *pixe *rbs)",
                         "MRC files (*.mrc *.st)",
