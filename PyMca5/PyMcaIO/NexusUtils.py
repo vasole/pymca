@@ -31,7 +31,6 @@ __contact__ = "wout.de_nolf@esrf.eu"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
-import sys
 import h5py
 import time
 import datetime
@@ -41,23 +40,66 @@ import errno
 from contextlib import contextmanager
 from .. import version
 
-if sys.version_info < (3,):
-    text_dtype = h5py.special_dtype(vlen=unicode)
-else:
-    text_dtype = h5py.special_dtype(vlen=str)
+try:
+    unicode
+except NameError:
+    unicode = str
 
 
-def vlen_string(s):
+nxcharUnicode = h5py.special_dtype(vlen=unicode)
+nxcharBytes = h5py.special_dtype(vlen=bytes)
+
+
+def asNxChar(s):
     """
-    Variable-length UTF-8 string (array or scalar)
+    Convert to Variable-length string. Uses UTF-8 when possible,
+    uses bytes otherwise.
 
-    :param array(str) or str s:
-    :returns numpy.ndarray:
+    :param s: string or sequence of strings
+              string types: unicode, bytes, fixed-length numpy
+    :returns np.ndarray(nxcharUnicode):
     """
-    return numpy.array(s, dtype=text_dtype)
+    try:
+        arr = numpy.array(s, dtype=unicode)
+    except UnicodeDecodeError:
+        return numpy.array(s, dtype=nxcharBytes)
+    else:
+        return arr.astype(nxcharUnicode)
 
-PROGRAM_NAME = vlen_string('pymca')
-PROGRAM_VERSION = vlen_string(version())
+
+def asNxCharScalar(s):
+    """
+    Convert to Variable-length UTF-8 string.
+
+    :param (unicode or bytes) s: no fixed-length numpy string
+    :returns unicode:
+    """
+    if isinstance(s, bytes):
+        try:
+            return s.decode('utf-8')
+        except UnicodeDecodeError:
+            return s.decode('latin-1')
+    else:
+        return s
+
+
+def asNxCharArray(seq):
+    """
+    Convert to Variable-length UTF-8 string array.
+
+    :param sequence(str) seq:
+    :returns numpy.ndarray(nxcharUnicode):
+    """
+    if isinstance(seq, numpy.ndarray):
+        if seq.ndim == 0:
+            return numpy.array(asNxCharScalar(seq.item()), dtype=nxcharUnicode)
+        # Convert fixed-length numpy strings to native bytes/unicode
+        seq = seq.tolist()
+    return numpy.array([asNxCharScalar(x) for x in seq], dtype=nxcharUnicode)
+
+
+PROGRAM_NAME = asNxCharScalar('pymca')
+PROGRAM_VERSION = asNxCharScalar(version())
 DEFAULT_PLOT_NAME = 'plotselect'
 
 
@@ -78,11 +120,12 @@ class LocalTZinfo(datetime.tzinfo):
     def tzname(self, dt):
         return self.__class__._name
 
+
 localtz = LocalTZinfo()
 
 
 def timestamp():
-    return vlen_string(datetime.datetime.now(tz=localtz).isoformat())
+    return asNxCharScalar(datetime.datetime.now(tz=localtz).isoformat())
 
 
 def mkdir(path):
@@ -279,9 +322,9 @@ def nxRootInit(h5group):
         raise ValueError('Group should be the root')
     if nxClassNeedsInit(h5group, None, u'NXroot'):
         h5group.attrs['file_time'] = timestamp()
-        h5group.attrs['file_name'] = vlen_string(h5group.file.filename)
-        h5group.attrs['HDF5_Version'] = vlen_string(h5py.version.hdf5_version)
-        h5group.attrs['h5py_version'] = vlen_string(h5py.version.version)
+        h5group.attrs['file_name'] = asNxCharScalar(h5group.file.filename)
+        h5group.attrs['HDF5_Version'] = asNxCharScalar(h5py.version.hdf5_version)
+        h5group.attrs['h5py_version'] = asNxCharScalar(h5py.version.version)
         h5group.attrs['creator'] = PROGRAM_NAME
         h5group.attrs['NX_class'] = u'NXroot'
         updated(h5group)
@@ -321,10 +364,10 @@ def nxNoteInit(parent, name, data=None, type=None):
         h5group = parent[name]
         update = False
     if data is not None:
-        updateDataset(h5group, 'data', vlen_string(data))
+        updateDataset(h5group, 'data', asNxCharScalar(data))
         update = True
     if type is not None:
-        updateDataset(h5group, 'type', vlen_string(type))
+        updateDataset(h5group, 'type', asNxCharScalar(type))
         update = True
     if update:
         updated(h5group)
@@ -467,7 +510,7 @@ def nxDataAddAxes(data, axes, append=True):
             data[name].attrs.update(attrs)
         newaxes.append(name)
     if newaxes:
-        data.attrs['axes'] = vlen_string(newaxes)
+        data.attrs['axes'] = asNxCharArray(newaxes)
         updated(data)
 
 
@@ -497,9 +540,9 @@ def nxDataSetSignals(data, signals):
     :param list(str) signals:
     """
     if signals:
-        data.attrs['signal'] = vlen_string(signals[0])
-        if len(signals)>1:
-            data.attrs['auxiliary_signals'] = vlen_string(signals[1:])
+        data.attrs['signal'] = asNxCharScalar(signals[0])
+        if len(signals) > 1:
+            data.attrs['auxiliary_signals'] = asNxCharArray(signals[1:])
         else:
             data.attrs.pop('auxiliary_signals', None)
     else:
