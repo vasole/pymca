@@ -40,6 +40,8 @@ try:
     import h5py
 except:
     h5py = None
+else:
+    import h5py.h5t
 try:
     from PyMca5.PyMcaIO import NexusUtils
 except ImportError:
@@ -48,6 +50,10 @@ try:
     from PyMca5.PyMcaIO import ConfigDict
 except ImportError:
     ConfigDict = None
+try:
+    unicode
+except NameError:
+    unicode = str
 
 
 class testNexusUtils(unittest.TestCase):
@@ -171,77 +177,88 @@ class testNexusUtils(unittest.TestCase):
     @unittest.skipIf(NexusUtils is None,
                      'PyMca5.PyMcaIO.NexusUtils cannot be imported')
     def testNxStringAttribute(self):
-        self._checkStringTypes(attribute=True, asarray=False)
+        self._checkStringTypes(attribute=True)
 
     @unittest.skipIf(NexusUtils is None,
                      'PyMca5.PyMcaIO.NexusUtils cannot be imported')
     def testNxStringDataset(self):
-        self._checkStringTypes(attribute=False, asarray=False)
+        self._checkStringTypes(attribute=False)
 
-    @unittest.skipIf(NexusUtils is None,
-                     'PyMca5.PyMcaIO.NexusUtils cannot be imported')
-    def testNxOldStringAttribute(self):
-        self._checkStringTypes(attribute=True, asarray=True)
-
-    @unittest.skipIf(NexusUtils is None,
-                     'PyMca5.PyMcaIO.NexusUtils cannot be imported')
-    def testNxOldStringDataset(self):
-        self._checkStringTypes(attribute=False, asarray=True)
-
-    def _checkStringTypes(self, attribute=True, asarray=False):
-        try:
-            ustring = unicode
-        except NameError:
-            ustring = str
+    def _checkStringTypes(self, attribute=True):
+        # Test following string literals
+        sAsciiBytes = b'abc'
+        sAsciiUnicode = u'abc'
+        sLatinBytes = b'\xe423'
+        sLatinUnicode = u'\xe423'  # not used
+        sUTF8Unicode = u'\u0101bc'
+        sUTF8Bytes = b'\xc4\x81bc'
+        # Expected conversion after HDF5 write/read
+        strmap = {}
+        strmap['ascii(scalar)'] = sAsciiBytes,\
+                                  sAsciiUnicode
+        strmap['ext(scalar)'] = sLatinBytes,\
+                                sLatinBytes
+        strmap['unicode(scalar)'] = sUTF8Unicode,\
+                                    sUTF8Unicode
+        strmap['ascii(list)'] = [sAsciiBytes, sAsciiBytes],\
+                                [sAsciiUnicode, sAsciiUnicode]
+        strmap['ext(list)'] = [sLatinBytes, sLatinBytes],\
+                              [sLatinBytes, sLatinBytes]
+        strmap['unicode(list)'] = [sUTF8Unicode, sUTF8Unicode],\
+                                  [sUTF8Unicode, sUTF8Unicode]
+        strmap['mixed(list)'] = [sUTF8Unicode, sAsciiBytes, sLatinBytes],\
+                                [sUTF8Bytes, sAsciiBytes, sLatinBytes]
+        strmap['ascii(0d-array)'] = numpy.array(sAsciiBytes),\
+                                    sAsciiUnicode
+        strmap['ext(0d-array)'] = numpy.array(sLatinBytes),\
+                                  sLatinBytes
+        strmap['unicode(0d-array)'] = numpy.array(sUTF8Unicode),\
+                                      sUTF8Unicode
+        strmap['ascii(1d-array)'] = numpy.array([sAsciiBytes, sAsciiBytes]),\
+                                    [sAsciiUnicode, sAsciiUnicode]
+        strmap['ext(1d-array)'] = numpy.array([sLatinBytes, sLatinBytes]),\
+                                  [sLatinBytes, sLatinBytes]
+        strmap['unicode(1d-array)'] = numpy.array([sUTF8Unicode, sUTF8Unicode]),\
+                                      [sUTF8Unicode, sUTF8Unicode]
+        strmap['mixed(1d-array)'] = numpy.array([sUTF8Unicode, sAsciiBytes]),\
+                                    [sUTF8Unicode, sAsciiUnicode]
+            
         with self.h5open('testNxString{:d}'.format(attribute)) as h5group:
             h5group = h5group.create_group('test')
             if attribute:
-                outdict = h5group.attrs
+                out = h5group.attrs
             else:
-                outdict = h5group
-            self._writeStringTypes(outdict, asarray=asarray)
-            for k, v in outdict.items():
-                if asarray:
-                    if 'ext' in k or k == 'mixed(list)':
-                        expectedType = bytes
-                    else:
-                        expectedType = ustring
+                out = h5group
+            for name, (value, expectedValue) in strmap.items():
+                # Write/read
+                out[name] = NexusUtils.asNxChar(value)
+                if attribute:
+                    value = out[name]
                 else:
-                    expectedType = ustring
+                    value = out[name][()]
+                # Expected type and value?
+                if 'list' in name or '1d-array' in name:
+                    self.assertTrue(isinstance(value, numpy.ndarray))
+                    value = value.tolist()
+                    self.assertEqual(list(map(type, value)),
+                                     list(map(type, expectedValue)), msg=name)
+                    firstValue = value[0]
+                else:
+                    firstValue = value
+                msg = '{} {} instead of {}'.format(name, type(value), type(expectedValue))
+                self.assertEqual(type(value), type(expectedValue), msg=msg)
+                self.assertEqual(value, expectedValue, msg=name)
+                # Expected character set?
                 if not attribute:
-                    v = v[()]
-                if isinstance(v, numpy.ndarray):
-                    self.assertTrue('list' in k or '1d-array' in k, msg=k)
-                    stype = h5py.check_dtype(vlen=v.dtype)
-                else:
-                    self.assertTrue('scalar' in k or '0d-array' in k, msg=k)
-                    stype = type(v)
-                msg = '{} type {} instead of {}'.format(k, stype, expectedType)
-                self.assertEqual(stype, expectedType, msg=msg)
-
-    def _writeStringTypes(self, outdict, asarray=False):
-        abc_ascii = b'abc'
-        abc_ext = b'\xe423'
-        abc_unicode = u'\u0101bc'
-        if asarray:
-            scalarFunc = sequenceFunc = NexusUtils.asNxChar
-        else:
-            scalarFunc = NexusUtils.asNxCharScalar
-            sequenceFunc = NexusUtils.asNxCharArray
-        outdict['ascii(scalar)'] = scalarFunc(abc_ascii)
-        outdict['ext(scalar)'] = scalarFunc(abc_ext)
-        outdict['unicode(scalar)'] = scalarFunc(abc_unicode)
-        outdict['ascii(list)'] = sequenceFunc([abc_ascii, abc_ascii])
-        outdict['ext(list)'] = sequenceFunc([abc_ext, abc_ext])
-        outdict['unicode(list)'] = sequenceFunc([abc_unicode, abc_unicode])
-        outdict['mixed(list)'] = sequenceFunc([abc_unicode, abc_ascii, abc_ext])
-        outdict['ascii(0d-array)'] = sequenceFunc(numpy.array(abc_ascii))
-        outdict['ext(0d-array)'] = sequenceFunc(numpy.array(abc_ext))
-        outdict['unicode(0d-array)'] = sequenceFunc(numpy.array(abc_unicode))
-        outdict['ascii(1d-array)'] = sequenceFunc(numpy.array([abc_ascii, abc_ascii]))
-        outdict['ext(1d-array)'] = sequenceFunc(numpy.array([abc_ext, abc_ext]))
-        outdict['unicode(1d-array)'] = sequenceFunc(numpy.array([abc_unicode, abc_unicode]))
-        outdict['mixed(1d-array)'] = sequenceFunc(numpy.array([abc_unicode, abc_ascii]))
+                    charSet = out[name].id.get_type().get_cset()
+                    if isinstance(firstValue, bytes):
+                        # This is the tricky part, CSET_ASCII is supposed to be only 0-127
+                        # while we actually allow
+                        expectedCharSet = h5py.h5t.CSET_ASCII
+                    else:
+                        expectedCharSet = h5py.h5t.CSET_UTF8
+                    msg = '{} type {} instead of {}'.format(name, charSet, expectedCharSet)
+                    self.assertEqual(charSet, expectedCharSet, msg=msg)
 
 
 def getSuite(auto=True):
@@ -253,8 +270,6 @@ def getSuite(auto=True):
         # use a predefined order
         testSuite.addTest(testNexusUtils('testNxStringAttribute'))
         testSuite.addTest(testNexusUtils('testNxStringDataset'))
-        testSuite.addTest(testNexusUtils('testNxOldStringAttribute'))
-        testSuite.addTest(testNexusUtils('testNxOldStringDataset'))
         testSuite.addTest(testNexusUtils('testNxRoot'))
         testSuite.addTest(testNexusUtils('testNxEntry'))
         testSuite.addTest(testNexusUtils('testNxProcess'))
