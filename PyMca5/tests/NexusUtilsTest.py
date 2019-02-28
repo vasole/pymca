@@ -177,14 +177,24 @@ class testNexusUtils(unittest.TestCase):
     @unittest.skipIf(NexusUtils is None,
                      'PyMca5.PyMcaIO.NexusUtils cannot be imported')
     def testNxStringAttribute(self):
-        self._checkStringTypes(attribute=True)
+        self._checkStringTypes(attribute=True, raiseExtended=True)
 
     @unittest.skipIf(NexusUtils is None,
                      'PyMca5.PyMcaIO.NexusUtils cannot be imported')
     def testNxStringDataset(self):
-        self._checkStringTypes(attribute=False)
+        self._checkStringTypes(attribute=False, raiseExtended=True)
 
-    def _checkStringTypes(self, attribute=True):
+    @unittest.skipIf(NexusUtils is None,
+                     'PyMca5.PyMcaIO.NexusUtils cannot be imported')
+    def testNxExtStringAttribute(self):
+        self._checkStringTypes(attribute=True, raiseExtended=False)
+
+    @unittest.skipIf(NexusUtils is None,
+                     'PyMca5.PyMcaIO.NexusUtils cannot be imported')
+    def testNxExtStringDataset(self):
+        self._checkStringTypes(attribute=False, raiseExtended=False)
+
+    def _checkStringTypes(self, attribute=True, raiseExtended=True):
         # Test following string literals
         sAsciiBytes = b'abc'
         sAsciiUnicode = u'abc'
@@ -230,8 +240,17 @@ class testNexusUtils(unittest.TestCase):
             else:
                 out = h5group
             for name, (value, expectedValue) in strmap.items():
+                decodingError = 'ext' in name or name == 'mixed(list)'
+                if raiseExtended and decodingError:
+                    with self.assertRaises(UnicodeDecodeError):
+                        ovalue = NexusUtils.asNxChar(value,
+                            raiseExtended=raiseExtended)
+                    continue
+                else:
+                    ovalue = NexusUtils.asNxChar(value,
+                        raiseExtended=raiseExtended)
                 # Write/read
-                out[name] = NexusUtils.asNxChar(value)
+                out[name] = ovalue
                 if attribute:
                     value = out[name]
                 else:
@@ -270,6 +289,8 @@ def getSuite(auto=True):
         # use a predefined order
         testSuite.addTest(testNexusUtils('testNxStringAttribute'))
         testSuite.addTest(testNexusUtils('testNxStringDataset'))
+        testSuite.addTest(testNexusUtils('testNxExtStringAttribute'))
+        testSuite.addTest(testNexusUtils('testNxExtStringDataset'))
         testSuite.addTest(testNexusUtils('testNxRoot'))
         testSuite.addTest(testNexusUtils('testNxEntry'))
         testSuite.addTest(testNexusUtils('testNxProcess'))

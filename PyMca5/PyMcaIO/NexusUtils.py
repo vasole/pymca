@@ -50,25 +50,32 @@ nxcharUnicode = h5py.special_dtype(vlen=unicode)
 nxcharBytes = h5py.special_dtype(vlen=bytes)
 
 
-def asNxChar(s):
+def asNxChar(s, raiseExtended=True):
     """
-    Convert to Variable-length string. Uses UTF-8 encoding when
-    possible, otherwise byte-strings are used.
+    Convert to Variable-length string (array or scalar).
+    Uses UTF-8 encoding when possible, otherwise byte-strings
+    are used (unless raiseExtended is set).
 
     :param s: string or sequence of strings
-              string types: unicode, bytes (extended ascii), fixed-length numpy
+              string types: unicode, bytes, fixed-length numpy
+    :param bool raiseExtended: raise UnicodeDecodeError for bytes
+                               with extended ASCII encoding
     :returns np.ndarray(nxcharUnicode or nxcharBytes):
+    :raises UnicodeDecodeError: extended ASCII encoding
     """
     try:
-        # Do this first to check for encoding issues.
-        # Using nxcharUnicode will not check encoding.
+        # dtype=nxcharUnicode will not attempt decoding bytes
+        # so readers will get UnicodeDecodeError when bytes
+        # are extended ASCII encoded. So do this instead:
         arr = numpy.array(s, dtype=unicode)
     except UnicodeDecodeError:
         # Reason: byte-string with extended ASCII encoding (e.g. Latin-1)
-        # Solution: save as byte-string
+        # Solution: save as byte-string or raise exception
         # Remark: Clients will read back the data exactly as it is written.
         #         However the HDF5 character set is h5py.h5t.CSET_ASCII
         #         which is strictly speaking not correct.
+        if raiseExtended:
+            raise
         return numpy.array(s, dtype=nxcharBytes)
     else:
         return arr.astype(nxcharUnicode)
