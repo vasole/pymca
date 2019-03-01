@@ -67,7 +67,7 @@ def asNxChar(s, raiseExtended=True):
         # dtype=nxcharUnicode will not attempt decoding bytes
         # so readers will get UnicodeDecodeError when bytes
         # are extended ASCII encoded. So do this instead:
-        arr = numpy.array(s, dtype=unicode)
+        numpy.array(s, dtype=unicode)
     except UnicodeDecodeError:
         # Reason: byte-string with extended ASCII encoding (e.g. Latin-1)
         # Solution: save as byte-string or raise exception
@@ -78,7 +78,7 @@ def asNxChar(s, raiseExtended=True):
             raise
         return numpy.array(s, dtype=nxcharBytes)
     else:
-        return arr.astype(nxcharUnicode)
+        return numpy.array(s, dtype=nxcharUnicode)
 
 
 PROGRAM_NAME = asNxChar('pymca')
