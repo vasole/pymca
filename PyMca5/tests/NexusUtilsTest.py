@@ -50,10 +50,6 @@ try:
     from PyMca5.PyMcaIO import ConfigDict
 except ImportError:
     ConfigDict = None
-try:
-    unicode
-except NameError:
-    unicode = str
 
 
 class testNexusUtils(unittest.TestCase):
