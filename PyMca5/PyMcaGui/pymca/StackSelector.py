@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -50,6 +50,7 @@ from PyMca5.PyMcaIO import LispixMap
 from PyMca5.PyMcaIO import RenishawMap
 from PyMca5.PyMcaIO import OmdaqLmf
 from PyMca5.PyMcaIO import JcampOpusStack
+from PyMca5.PyMcaIO import FsmMap
 from .QStack import QStack, QSpecFileStack
 try:
     from PyMca5.PyMcaGui.pymca import QHDF5Stack1D
@@ -125,6 +126,9 @@ class StackSelector(object):
             elif filefilter.upper().startswith("RENISHAW"):
                 stack = RenishawMap.RenishawMap(filelist[0])
                 omnicfile = True
+            elif filefilter.upper().startswith("PerkinElmer-FSM"):
+                stack = FsmMap.FsmMap(filelist[0])
+                omnicfile = True
             elif filefilter == "" and\
                  (filelist[0].upper().endswith("TIF") or\
                   filelist[0].upper().endswith("TIFF")):
@@ -189,6 +193,9 @@ class StackSelector(object):
                 omnicfile = True
             elif OmdaqLmf.isOmdaqLmf(filelist[0]):
                 stack = OmdaqLmf.OmdaqLmf(filelist[0])
+                omnicfile = True
+            elif FsmMap.isFsmFile(filelist[0]):
+                stack = FsmMap.FsmMap(filelist[0])
                 omnicfile = True
             elif JcampOpusStack.isJcampOpusStackFile(filelist[0]):
                 stack = JcampOpusStack.JcampOpusStack(filelist[0])
@@ -371,6 +378,7 @@ class StackSelector(object):
                         "RTX Files (*.rtx *.RTX)",
                         "Lispix-RPL Files (*.rpl)",
                         "Renishaw-ASCII Files (*.txt *.TXT)",
+                        "PerkinElmer-FSM Files (*.fsm *.FSM)",
                         "AIFIRA Files (*DAT)",
                         "SupaVisio Files (*pige *pixe *rbs)",
                         "MRC files (*.mrc *.st)",
