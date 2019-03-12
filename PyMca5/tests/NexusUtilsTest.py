@@ -37,6 +37,12 @@ import os
 import numpy
 from contextlib import contextmanager
 try:
+    import h5py
+except:
+    h5py = None
+else:
+    import h5py.h5t
+try:
     from PyMca5.PyMcaIO import NexusUtils
 except ImportError:
     NexusUtils = None
@@ -164,6 +170,123 @@ class testNexusUtils(unittest.TestCase):
             for n, name in zip(s, list(next(iter(zip(*axes))))):
                 self.assertEqual(data[name].shape, (n,))
 
+    @unittest.skipIf(NexusUtils is None,
+                     'PyMca5.PyMcaIO.NexusUtils cannot be imported')
+    def testNxStringAttribute(self):
+        self._checkStringTypes(attribute=True, raiseExtended=True)
+
+    @unittest.skipIf(NexusUtils is None,
+                     'PyMca5.PyMcaIO.NexusUtils cannot be imported')
+    def testNxStringDataset(self):
+        self._checkStringTypes(attribute=False, raiseExtended=True)
+
+    @unittest.skipIf(NexusUtils is None,
+                     'PyMca5.PyMcaIO.NexusUtils cannot be imported')
+    def testNxExtStringAttribute(self):
+        self._checkStringTypes(attribute=True, raiseExtended=False)
+
+    @unittest.skipIf(NexusUtils is None,
+                     'PyMca5.PyMcaIO.NexusUtils cannot be imported')
+    def testNxExtStringDataset(self):
+        self._checkStringTypes(attribute=False, raiseExtended=False)
+
+    def _checkStringTypes(self, attribute=True, raiseExtended=True):
+        # Test following string literals
+        sAsciiBytes = b'abc'
+        sAsciiUnicode = u'abc'
+        sLatinBytes = b'\xe423'
+        sLatinUnicode = u'\xe423'  # not used
+        sUTF8Unicode = u'\u0101bc'
+        sUTF8Bytes = b'\xc4\x81bc'
+        sUTF8AsciiUnicode = u'abc'
+        sUTF8AsciiBytes = b'abc'
+        # Expected conversion after HDF5 write/read
+        strmap = {}
+        strmap['ascii(scalar)'] = sAsciiBytes,\
+                                  sAsciiUnicode
+        strmap['ext(scalar)'] = sLatinBytes,\
+                                sLatinBytes
+        strmap['unicode(scalar)'] = sUTF8Unicode,\
+                                    sUTF8Unicode
+        strmap['unicode2(scalar)'] = sUTF8AsciiUnicode,\
+                                     sUTF8AsciiUnicode
+        strmap['ascii(list)'] = [sAsciiBytes, sAsciiBytes],\
+                                [sAsciiUnicode, sAsciiUnicode]
+        strmap['ext(list)'] = [sLatinBytes, sLatinBytes],\
+                              [sLatinBytes, sLatinBytes]
+        strmap['unicode(list)'] = [sUTF8Unicode, sUTF8Unicode],\
+                                  [sUTF8Unicode, sUTF8Unicode]
+        strmap['unicode2(list)'] = [sUTF8AsciiUnicode, sUTF8AsciiUnicode],\
+                                   [sUTF8AsciiUnicode, sUTF8AsciiUnicode]
+        strmap['mixed(list)'] = [sUTF8Unicode, sUTF8AsciiUnicode, sAsciiBytes, sLatinBytes],\
+                                [sUTF8Bytes, sUTF8AsciiBytes, sAsciiBytes, sLatinBytes]
+        strmap['ascii(0d-array)'] = numpy.array(sAsciiBytes),\
+                                    sAsciiUnicode
+        strmap['ext(0d-array)'] = numpy.array(sLatinBytes),\
+                                  sLatinBytes
+        strmap['unicode(0d-array)'] = numpy.array(sUTF8Unicode),\
+                                      sUTF8Unicode
+        strmap['unicode2(0d-array)'] = numpy.array(sUTF8AsciiUnicode),\
+                                       sUTF8AsciiUnicode
+        strmap['ascii(1d-array)'] = numpy.array([sAsciiBytes, sAsciiBytes]),\
+                                    [sAsciiUnicode, sAsciiUnicode]
+        strmap['ext(1d-array)'] = numpy.array([sLatinBytes, sLatinBytes]),\
+                                  [sLatinBytes, sLatinBytes]
+        strmap['unicode(1d-array)'] = numpy.array([sUTF8Unicode, sUTF8Unicode]),\
+                                      [sUTF8Unicode, sUTF8Unicode]
+        strmap['unicode2(1d-array)'] = numpy.array([sUTF8AsciiUnicode, sUTF8AsciiUnicode]),\
+                                       [sUTF8AsciiUnicode, sUTF8AsciiUnicode]
+        strmap['mixed(1d-array)'] = numpy.array([sUTF8Unicode, sUTF8AsciiUnicode, sAsciiBytes]),\
+                                    [sUTF8Unicode, sUTF8AsciiUnicode, sAsciiUnicode]
+        strmap['mixed2(1d-array)'] = numpy.array([sUTF8AsciiUnicode, sAsciiBytes]),\
+                                    [sUTF8AsciiUnicode, sAsciiUnicode]
+            
+        with self.h5open('testNxString{:d}'.format(attribute)) as h5group:
+            h5group = h5group.create_group('test')
+            if attribute:
+                out = h5group.attrs
+            else:
+                out = h5group
+            for name, (value, expectedValue) in strmap.items():
+                decodingError = 'ext' in name or name == 'mixed(list)'
+                if raiseExtended and decodingError:
+                    with self.assertRaises(UnicodeDecodeError):
+                        ovalue = NexusUtils.asNxChar(value,
+                            raiseExtended=raiseExtended)
+                    continue
+                else:
+                    ovalue = NexusUtils.asNxChar(value,
+                        raiseExtended=raiseExtended)
+                # Write/read
+                out[name] = ovalue
+                if attribute:
+                    value = out[name]
+                else:
+                    value = out[name][()]
+                # Expected type and value?
+                if 'list' in name or '1d-array' in name:
+                    self.assertTrue(isinstance(value, numpy.ndarray))
+                    value = value.tolist()
+                    self.assertEqual(list(map(type, value)),
+                                     list(map(type, expectedValue)), msg=name)
+                    firstValue = value[0]
+                else:
+                    firstValue = value
+                msg = '{} {} instead of {}'.format(name, type(value), type(expectedValue))
+                self.assertEqual(type(value), type(expectedValue), msg=msg)
+                self.assertEqual(value, expectedValue, msg=name)
+                # Expected character set?
+                if not attribute:
+                    charSet = out[name].id.get_type().get_cset()
+                    if isinstance(firstValue, bytes):
+                        # This is the tricky part, CSET_ASCII is supposed to be only 0-127
+                        # while we actually allow
+                        expectedCharSet = h5py.h5t.CSET_ASCII
+                    else:
+                        expectedCharSet = h5py.h5t.CSET_UTF8
+                    msg = '{} type {} instead of {}'.format(name, charSet, expectedCharSet)
+                    self.assertEqual(charSet, expectedCharSet, msg=msg)
+
 
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()
@@ -172,6 +295,10 @@ def getSuite(auto=True):
             unittest.TestLoader().loadTestsFromTestCase(testNexusUtils))
     else:
         # use a predefined order
+        testSuite.addTest(testNexusUtils('testNxStringAttribute'))
+        testSuite.addTest(testNexusUtils('testNxStringDataset'))
+        testSuite.addTest(testNexusUtils('testNxExtStringAttribute'))
+        testSuite.addTest(testNexusUtils('testNxExtStringDataset'))
         testSuite.addTest(testNexusUtils('testNxRoot'))
         testSuite.addTest(testNexusUtils('testNxEntry'))
         testSuite.addTest(testNexusUtils('testNxProcess'))
