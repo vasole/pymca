@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -915,7 +915,10 @@ class QNexusWidget(qt.QWidget):
                 sel['SourceType'] = "HDF5"
                 fileIndex = self.data.sourceName.index(filename)
                 phynxFile  = self.data._sourceObjectList[fileIndex]
-                entryIndex = list(phynxFile["/"].keys()).index(entry[1:])
+                if entry == "/":
+                    entryIndex = 1
+                else:
+                    entryIndex = list(phynxFile["/"].keys()).index(entry[1:])
                 sel['Key']        = "%d.%d" % (fileIndex+1, entryIndex+1)
                 sel['legend']     = os.path.basename(sel['SourceName'][0])+\
                                     " " + posixpath.basename(entry) #it was sel['Key']
