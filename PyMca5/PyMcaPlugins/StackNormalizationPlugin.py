@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -30,6 +30,8 @@ active curve (I0):
 
  - I/I0 Normalization: divide all spectra by the active curve
  - -log(I/I0) Normalization
+ - -log10(I) Particular case not needing an active curve, for FTIR for instance
+ - -log10(I/100) Same as above for data expressed in percentage.
 
 Three methods are provided to normalize the stack images based on
 an external image (I0) read from a file:
@@ -92,6 +94,22 @@ class StackNormalizationPlugin(StackPluginBase.StackPluginBase):
                                                       info,
                                                       icon]
 
+        text  = "-log10(Stack) Convert from transmission to absorption\n"
+        function = self.logNormalizeByOne
+        info = text
+        icon = None
+        self.methodDict["-log10(I) Normalization"] =[function,
+                                                      info,
+                                                      icon]
+
+        text  = "-log10(Stack) Convert from percentual transmission to absorption\n"
+        function = self.logNormalizeByHundred
+        info = text
+        icon = None
+        self.methodDict["-log10(I/100) Normalization"] =[function,
+                                                      info,
+                                                      icon]
+
         text  = "External Image I/I0 Normalization where\n"
         text += "I0 is an image read from file\n"
         function = self.divideByExternalImage
@@ -120,6 +138,8 @@ class StackNormalizationPlugin(StackPluginBase.StackPluginBase):
                                                 icon]
         self.__methodKeys = ["I/I0 Normalization",
                              "-log(I/I0) Normalization",
+                             "-log10(I) Normalization",
+                             "-log10(I/100) Normalization",
                              "Image I/I0 Normalization",
                              "Image I * (max(I0)/I0) Scaling",
                              "Image -log(I/I0) Normalization"]
@@ -284,29 +304,44 @@ class StackNormalizationPlugin(StackPluginBase.StackPluginBase):
             raise ValueError("Invalid 1D index %d" % mcaIndex)
         self.setStack(stack)
 
-    def logNormalizeByCurve(self):
+    def logNormalizeByOne(self):
+        return self.logNormalizeByCurve(divider=1.0)
+
+    def logNormalizeByHundred(self):
+        return self.logNormalizeByCurve(divider=100.)
+
+    def logNormalizeByCurve(self, divider=None):
         stack = self.getStackDataObject()
         if not isinstance(stack.data, numpy.ndarray):
             text = "This method does not work with dynamically loaded stacks"
             raise TypeError(text)
-        curve = self.getActiveCurve()
-        if curve is None:
-            text = "Please make sure to have an active curve"
-            raise TypeError(text)
-        x, y, legend, info = self.getActiveCurve()
-        yWork = y[y>0].astype(numpy.float)
-        mcaIndex = stack.info.get('McaIndex', -1)
-        if mcaIndex in [-1, 2]:
-            for i, value in enumerate(yWork):
-                stack.data[:, :, i] = -numpy.log(stack.data[:,:,i]/value)
-        elif mcaIndex == 0:
-            for i, value in enumerate(yWork):
-                stack.data[i, :, :] = -numpy.log(stack.data[i,:,:]/value)
-        elif mcaIndex == 1:
-            for i, value in enumerate(yWork):
-                stack.data[:, i, :] = -numpy.log(stack.data[:,i,:]/value)
+        if divider is None:
+            curve = self.getActiveCurve()
+            if curve is None:
+                text = "Please make sure to have an active curve"
+                raise TypeError(text)
+            x, y, legend, info = self.getActiveCurve()
+            if divider is None:
+                yWork = y[y>0].astype(numpy.float)
+            mcaIndex = stack.info.get('McaIndex', -1)
+            if mcaIndex in [-1, 2]:
+                for i, value in enumerate(yWork):
+                    stack.data[:, :, i] = -numpy.log(stack.data[:,:,i] / value)
+            elif mcaIndex == 0:
+                for i, value in enumerate(yWork):
+                    stack.data[i, :, :] = -numpy.log(stack.data[i,:,:] / value)
+            elif mcaIndex == 1:
+                for i, value in enumerate(yWork):
+                    stack.data[:, i, :] = -numpy.log(stack.data[:,i,:] / value)
+            else:
+                raise ValueError("Invalid 1D index %d" % mcaIndex)
         else:
-            raise ValueError("Invalid 1D index %d" % mcaIndex)
+            # this loop is to try to avoid avoid huge temporary arrays
+            if stack.data.shape[0] > 1:
+                for i in range(stack.data.shape[0]):
+                    stack.data[i] = -numpy.log10(stack.data[i] / divider)
+            else:
+                stack.data[:] = -numpy.log10(stack.data[:] / divider)
         self.setStack(stack)
 
 MENU_TEXT = "Stack Normalization"
