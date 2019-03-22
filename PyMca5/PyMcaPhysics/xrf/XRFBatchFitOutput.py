@@ -229,7 +229,7 @@ class OutputBuffer(object):
     def get(self, key, default=None):
         return self._output.get(key, default)
 
-    def allocateMemory(self, name, fill_value=None, shape=None, dtype=None, **kwargs):
+    def allocateMemory(self, name, fill_value=None, shape=None, dtype=None, attrs=None):
         """
         :param str name:
         :param num fill_value:
@@ -243,10 +243,10 @@ class OutputBuffer(object):
         else:
             buffer = numpy.full(shape, fill_value, dtype=dtype)
         self._output[name] = buffer
-        self._attrs[name] = kwargs
+        self._attrs[name] = attrs
         return buffer
 
-    def allocateH5(self, name, nxdata=None, fill_value=None, **kwargs):
+    def allocateH5(self, name, nxdata=None, fill_value=None, attrs=None, **kwargs):
         """
         :param str name:
         :param str nxdata:
@@ -257,6 +257,8 @@ class OutputBuffer(object):
         if nxdata:
             parent = NexusUtils.nxData(parent, nxdata)
         buffer = parent.create_dataset(name, **kwargs)
+        if attrs:
+            buffer.attrs.update(attrs)
         if fill_value is not None:
             buffer[()] = fill_value
         self.flush()

@@ -172,6 +172,7 @@ class McaAdvancedFitBatch(object):
         self.counter = 0
         self.__row = self.fileBeginOffset - 1
         self.__stack = None
+        self.listfile = None
 
         with self.outbuffer._bufferContext(update=False):
             start = 0+self.fileBeginOffset
@@ -208,7 +209,7 @@ class McaAdvancedFitBatch(object):
 
             if self.counter:
                 if not self.roiFit:
-                    if self.fitFiles:
+                    if self.fitFiles and self.listfile is not None:
                         self.listfile.write(']\n')
                         self.listfile.close()
                 if (self.__ncols is not None) and (not self._nosave):
@@ -497,12 +498,45 @@ class McaAdvancedFitBatch(object):
                                                     info=infoDict)
                             #print "remaining = ",(time.time()-e0) * (info['NbMca'] - i)
 
-    def __getFitFile(self, filename, key):
-        fitdir = self.os_path_join(self._outputdir,"FIT")
-        fitdir = self.os_path_join(fitdir,filename+"_FITDIR")
-        outfile = filename +"_"+key+".fit"
-        outfile = self.os_path_join(fitdir,  outfile)
-        return outfile
+    def __getFitFile(self, filename, key, createdirs=False):
+        fitdir = self.os_path_join(self._outputdir, "FIT")
+        if createdirs:
+            if not os.path.exists(fitdir):
+                try:
+                    os.mkdir(fitdir)
+                except:
+                    print("I could not create directory %s" % fitdir)
+                    return
+        fitdir = self.os_path_join(fitdir, filename+"_FITDIR")
+        if createdirs:
+            if not os.path.exists(fitdir):
+                try:
+                    os.mkdir(fitdir)
+                except:
+                    print("I could not create directory %s" % fitdir)
+                    return
+            if not os.path.isdir(fitdir):
+                print("%s does not seem to be a valid directory" % fitdir)
+                return
+        fitfilename = filename + "_" + key + ".fit"
+        fitfilename = self.os_path_join(fitdir, fitfilename)
+        return fitfilename
+
+    def __getFitConcFile(self):
+        if self.chunk is not None:
+            con_extension = "_%06d_partial_concentrations.txt" % self.chunk
+        else:
+            con_extension = "_concentrations.txt"
+        cfitfilename = self.os_path_join(self._outputdir,
+                                self._rootname + con_extension)
+        if self.counter == 0:
+            if os.path.exists(cfitfilename):
+                try:
+                    os.remove(cfitfilename)
+                except:
+                    print("I could not delete existing concentrations file %s" %\
+                        cfitfilename)
+        return cfitfilename
 
     def os_path_join(self, a, b):
         try:
@@ -526,414 +560,475 @@ class McaAdvancedFitBatch(object):
         return outfile
 
     def __processOneMca(self,x,y,filename,key,info=None):
-        if not self.roiFit:
-            result = None
-            concentrationsdone = 0
-            concentrations = None
-            outfile=self.os_path_join(self._outputdir, filename)
-            fitfile = self.__getFitFile(filename,key)
-            if self.fitConcFile:
-                if self.chunk is not None:
-                    con_extension = "_%06d_partial_concentrations.txt" % self.chunk
-                else:
-                    con_extension = "_concentrations.txt"
-                concentrationsFile = self.os_path_join(self._outputdir,
-                                        self._rootname+ con_extension)
-                if self.counter == 0:
-                    if os.path.exists(concentrationsFile):
-                        try:
-                            os.remove(concentrationsFile)
-                        except:
-                            print("I could not delete existing concentrations file %s" %\
-                                concentrationsFile)
-            if self.useExistingFiles and os.path.exists(fitfile):
-                useExistingResult = 1
-                try:
-                    dict = ConfigDict.ConfigDict()
-                    dict.read(fitfile)
-                    result = dict['result']
-                    if 'concentrations' in dict:
-                        concentrationsdone = 1
-                except:
-                    print("Error trying to use result file %s" % fitfile)
-                    print("Please, consider deleting it.")
-                    print(sys.exc_info())
-                    return
-            else:
-                useExistingResult = 0
-                try:
-                    #I make sure I take the fit limits configuration
-                    self.mcafit.config['fit']['use_limit'] = 1
-                    self.mcafit.setData(x,y, time=info.get("McaLiveTime", None))
-                except:
-                    print("Error entering data of file with output = %s\n%s" %\
-                          (filename, sys.exc_info()[1]))
-                    # make sure the configuration is restored
-                    if self.mcafit.config['fit'].get("strategyflag", False):
-                        config = self.__configList[self.__currentConfig]
-                        print("Restoring fitconfiguration")
-                        self.mcafit = ClassMcaTheory.McaTheory(config)
-                        self.mcafit.enableOptimizedLinearFit()
-                    return
-                try:
-                    self.mcafit.estimate()
-                    if self.fitFiles:
-                        fitresult, result = self.mcafit.startfit(digest=1)
-                    elif self._concentrations and (self.mcafit._fluoRates is None):
-                        fitresult, result = self.mcafit.startfit(digest=1)
-                    elif self._concentrations:
-                        fitresult = self.mcafit.startfit(digest=0)
-                        try:
-                            fitresult0 = {}
-                            fitresult0['fitresult'] = fitresult
-                            fitresult0['result'] = self.mcafit.imagingDigestResult()
-                            fitresult0['result']['config'] = self.mcafit.config
-                            conf = self.mcafit.configure()
-                            tconf = self._tool.configure()
-                            if 'concentrations' in conf:
-                                tconf.update(conf['concentrations'])
-                            else:
-                                #what to do?
-                                pass
-                            concentrations = self._tool.processFitResult(config=tconf,
-                                            fitresult=fitresult0,
-                                            elementsfrommatrix=False,
-                                            fluorates = self.mcafit._fluoRates)
-                        except:
-                            print("error in concentrations")
-                            print(sys.exc_info()[0:-1])
-                        concentrationsdone = True
-                    else:
-                        #just images
-                        fitresult = self.mcafit.startfit(digest=0)
-                except:
-                    print("Error fitting file with output = %s: %s)" %\
-                          (filename, sys.exc_info()[1]))
-                    if self.mcafit.config['fit'].get("strategyflag", False):
-                        config = self.__configList[self.__currentConfig]
-                        print("Restoring fitconfiguration")
-                        self.mcafit = ClassMcaTheory.McaTheory(config)
-                        self.mcafit.enableOptimizedLinearFit()
-                    return
-            if self._concentrations:
-                if concentrationsdone == 0:
-                    if not ('concentrations' in result):
-                        if useExistingResult:
-                            fitresult0={}
-                            fitresult0['result'] = result
-                            conf = result['config']
-                        else:
-                            fitresult0={}
-                            if result is None:
-                                result = self.mcafit.digestresult()
-                            fitresult0['result']    = result
-                            fitresult0['fitresult'] = fitresult
-                            conf = self.mcafit.configure()
+        if self.roiFit:
+            result = self.__roiOneMca(x,y)
+            self.old_output_roi(result, filename)
+            self.allocate_output_roi(result)
+            self.fill_output_roi(result)
+        else:
+            result, concentrations = self.__fitOneMca(x,y,filename,key,info=info)
+            self.old_output_fit(result, concentrations, filename)
+            self.allocate_output_fit(result, concentrations)
+            self.fill_output_fit(result, concentrations)
+        #update MCA counter
+        self.counter += 1
+
+    def __fitOneMca(self,x,y,filename,key,info=None):
+        result = None
+        concentrationsdone = False
+        concentrations = None
+    
+        # Fit MCA
+        fitfile = self.__getFitFile(filename,key,createdirs=False)
+        if self.useExistingFiles and os.path.exists(fitfile):
+            # Load result from FIT file
+            useExistingResult = 1
+            try:
+                fitdict = ConfigDict.ConfigDict()
+                fitdict.read(fitfile)
+                if 'concentrations' in fitdict:
+                    concentrationsdone = True
+                result = fitdict['result']
+            except:
+                print("Error trying to use result file %s" % fitfile)
+                print("Please, consider deleting it.")
+                print(sys.exc_info())
+                return
+        else:
+            # Fit MCA when FIT file does not exist
+            useExistingResult = 0
+            try:
+                #I make sure I take the fit limits configuration
+                self.mcafit.config['fit']['use_limit'] = 1
+                self.mcafit.setData(x,y, time=info.get("McaLiveTime", None))
+            except:
+                print("Error entering data of file with output = %s\n%s" %\
+                        (filename, sys.exc_info()[1]))
+                # make sure the configuration is restored
+                if self.mcafit.config['fit'].get("strategyflag", False):
+                    config = self.__configList[self.__currentConfig]
+                    print("Restoring fitconfiguration")
+                    self.mcafit = ClassMcaTheory.McaTheory(config)
+                    self.mcafit.enableOptimizedLinearFit()
+                return
+            try:
+                self.mcafit.estimate()
+                if self.fitFiles:
+                    fitresult, result = self.mcafit.startfit(digest=1)
+                elif self._concentrations and (self.mcafit._fluoRates is None):
+                    fitresult, result = self.mcafit.startfit(digest=1)
+                elif self._concentrations:
+                    fitresult = self.mcafit.startfit(digest=0)
+                    try:
+                        fitresult0 = {}
+                        fitresult0['fitresult'] = fitresult
+                        fitresult0['result'] = self.mcafit.imagingDigestResult()
+                        fitresult0['result']['config'] = self.mcafit.config
+                        conf = self.mcafit.configure()
                         tconf = self._tool.configure()
                         if 'concentrations' in conf:
                             tconf.update(conf['concentrations'])
                         else:
+                            #what to do?
                             pass
-                            #print "Concentrations not calculated"
-                            #print "Is your fit configuration file correct?"
-                            #return
-                        try:
-                            concentrations = self._tool.processFitResult(config=tconf,
-                                            fitresult=fitresult0,
-                                            elementsfrommatrix=False)
-                        except:
-                            print("error in concentrations")
-                            print(sys.exc_info()[0:-1])
-                            #return
-                if self.fitConcFile:
-                    concentrationsAsAscii = self._toolConversion.getConcentrationsAsAscii(concentrations)
-                    if len(concentrationsAsAscii) > 1:
-                        text  = ""
-                        text += "SOURCE: "+ filename +"\n"
-                        text += "KEY: "+key+"\n"
-                        text += concentrationsAsAscii + "\n"
-                        f = open(concentrationsFile,"a")
-                        f.write(text)
-                    f.close()
-
-            #output options
-            # .FIT files
-            if self.fitFiles:
-                fitdir = self.os_path_join(self._outputdir,"FIT")
-                if not os.path.exists(fitdir):
-                    try:
-                        os.mkdir(fitdir)
+                        concentrations = self._tool.processFitResult(config=tconf,
+                                        fitresult=fitresult0,
+                                        elementsfrommatrix=False,
+                                        fluorates = self.mcafit._fluoRates)
                     except:
-                        print("I could not create directory %s" % fitdir)
-                        return
-                fitdir = self.os_path_join(fitdir,filename+"_FITDIR")
-                if not os.path.exists(fitdir):
-                    try:
-                        os.mkdir(fitdir)
-                    except:
-                        print("I could not create directory %s" % fitdir)
-                        return
-                if not os.path.isdir(fitdir):
-                    print("%s does not seem to be a valid directory" % fitdir)
+                        print("error in concentrations")
+                        print(sys.exc_info()[0:-1])
+                    concentrationsdone = True
                 else:
-                    outfile = filename +"_"+key+".fit"
-                    outfile = self.os_path_join(fitdir,  outfile)
-                if not useExistingResult:
-                    result = self.mcafit.digestresult(outfile=outfile,
-                                                      info=info)
-                if concentrations is not None:
-                    try:
-                        f=ConfigDict.ConfigDict()
-                        f.read(outfile)
-                        f['concentrations'] = concentrations
-                        try:
-                            os.remove(outfile)
-                        except:
-                            print("error deleting fit file")
-                        f.write(outfile)
-                    except:
-                        print("Error writing concentrations to fit file")
-                        print(sys.exc_info())
+                    #just images
+                    fitresult = self.mcafit.startfit(digest=0)
+            except:
+                print("Error fitting file with output = %s: %s)" %\
+                        (filename, sys.exc_info()[1]))
+                if self.mcafit.config['fit'].get("strategyflag", False):
+                    config = self.__configList[self.__currentConfig]
+                    print("Restoring fitconfiguration")
+                    self.mcafit = ClassMcaTheory.McaTheory(config)
+                    self.mcafit.enableOptimizedLinearFit()
+                return
 
-                #python like output list
-                if not self.counter:
-                    name = os.path.splitext(self._rootname)[0]+"_fitfilelist.py"
-                    name = self.os_path_join(self._outputdir,name)
-                    try:
-                        os.remove(name)
-                    except:
-                        pass
-                    self.listfile=open(name,"w+")
-                    self.listfile.write("fitfilelist = [")
-                    self.listfile.write('\n'+outfile)
+        # Calculate/save concentrations
+        concentrations = self._get_concentrations(result, fitresult, concentrations, useExistingResult, concentrationsdone)
+        self._update_cfitfile(concentrations, filename, key)
+
+        # Fit result
+        if self.fitFiles:
+            # Create or update existing FIT file
+            fitfile = self.__getFitFile(filename, key, createdirs=True)
+            if not useExistingResult:
+                result = self.mcafit.digestresult(outfile=fitfile,
+                                                  info=info)
+            if fitfile:
+                self._update_fitfile(result, concentrations, fitfile)
+        else:
+            # Digest
+            if not useExistingResult:
+                if 0:
+                    #this is very slow and not needed just for imaging
+                    if result is None:
+                        result = self.mcafit.digestresult()
                 else:
-                    self.listfile.write(',\n'+outfile)
+                    if result is None:
+                        result = self.mcafit.imagingDigestResult()
+
+        return result, concentrations
+
+    def _get_concentrations(self, result, fitresult, concentrations, useExistingResult, concentrationsdone):
+        if not self._concentrations or concentrationsdone or 'concentrations' in result:
+            return concentrations
+        if useExistingResult:
+            fitresult0 = {}
+            fitresult0['result'] = result
+            conf = result['config']
+        else:
+            fitresult0 = {}
+            if result is None:
+                result = self.mcafit.digestresult()
+            fitresult0['result'] = result
+            fitresult0['fitresult'] = fitresult
+            conf = self.mcafit.configure()
+        tconf = self._tool.configure()
+        if 'concentrations' in conf:
+            tconf.update(conf['concentrations'])
+        else:
+            pass
+            #print "Concentrations not calculated"
+            #print "Is your fit configuration file correct?"
+        try:
+            concentrations = self._tool.processFitResult(config=tconf,
+                            fitresult=fitresult0,
+                            elementsfrommatrix=False)
+        except:
+            print("error in concentrations")
+            print(sys.exc_info()[0:-1])
+        return concentrations
+
+    def _update_fitfile(self, result, concentrations, outfile):
+        # Update concentrations (why is this needed?)
+        if concentrations is not None:
+            try:
+                f = ConfigDict.ConfigDict()
+                f.read(outfile)
+                f['concentrations'] = concentrations
+                try:
+                    os.remove(outfile)
+                except:
+                    print("error deleting fit file")
+                f.write(outfile)
+            except:
+                print("Error writing concentrations to fit file")
+                print(sys.exc_info())
+
+        #Update list of FIT files
+        if not self.counter:
+            name = os.path.splitext(self._rootname)[0]+"_fitfilelist.py"
+            name = self.os_path_join(self._outputdir,name)
+            try:
+                os.remove(name)
+            except:
+                pass
+            self.listfile=open(name,"w+")
+            self.listfile.write("fitfilelist = [")
+            self.listfile.write('\n'+outfile)
+        else:
+            self.listfile.write(',\n'+outfile)
+
+    def _update_cfitfile(self, concentrations, filename, key):
+        if not self.fitConcFile or concentrations is None:
+            return
+        concentrationsAsAscii = self._toolConversion.getConcentrationsAsAscii(concentrations)
+        if len(concentrationsAsAscii) > 1:
+            text  = ""
+            text += "SOURCE: "+ filename +"\n"
+            text += "KEY: "+key+"\n"
+            text += concentrationsAsAscii + "\n"
+            f = open(self.__getFitConcFile(),"a")
+            f.write(text)
+        f.close()
+
+    def __roiOneMca(self,x,y):
+        return self.mcafit.roifit(x,y,width=self.roiWidth)
+
+    def allocate_output_fit(self, result, concentrations):
+        outbuffer = self.outbuffer
+        if outbuffer is None or self.__ncols is None or self.counter:
+            return  # no output or not the first fit
+
+        nFree = len(result['groups'])
+        imageShape = self.__nrows, self.__ncols
+        paramShape = nFree, self.__nrows, self.__ncols
+        dtypeResult = numpy.float32
+        outbuffer['parameter_names'] = result['groups']
+        outbuffer.allocateMemory('parameters',
+                                    shape=paramShape,
+                                    dtype=dtypeResult,
+                                    attrs={'units':'counts'})
+        outbuffer.allocateMemory('uncertainties',
+                                    shape=paramShape,
+                                    dtype=dtypeResult,
+                                    attrs={'units':'counts'})
+
+        if self._concentrations:
+            if 'mmolar' in concentrations:
+                concentration_key = 'molarconcentrations'
+                concentration_names = 'molarconcentration_names'
+                concentration_attrs = {'units': 'mM'}
             else:
-                if not useExistingResult:
-                    if 0:
-                        #this is very slow and not needed just for imaging
-                        if result is None:
-                            result = self.mcafit.digestresult()
-                    else:
-                        if result is None:
-                            result = self.mcafit.imagingDigestResult()
+                concentration_key = 'massfractions'
+                concentration_names = 'massfraction_names'
+                concentration_attrs = {}
+            self._concentration_key = concentration_key
+            self._concentration_names = concentration_names
+            outbuffer[concentration_names] = concentrations['groups']
+            layerlist = concentrations['layerlist']
+            if len(layerlist) > 1:
+                outbuffer[concentration_names] += ["%s-%s" % (group, layer)
+                                                    for group in concentrations['groups']
+                                                    for layer in layerlist]
+            nConcFree = len(concentrations['groups'])
+            paramShape = nConcFree, self.__nrows, self.__ncols
+            outbuffer.allocateMemory(concentration_key,
+                                     shape=paramShape,
+                                     dtype=dtypeResult,
+                                     attrs=concentration_attrs)
 
-            #IMAGES
-            if self.outbuffer:
-                #this only works with EDF
-                if self.__ncols is not None:
-                    if not self.counter:
-                        if not self._nosave:
-                            imgdir = self.os_path_join(self._outputdir,"IMAGES")
-                            if not os.path.exists(imgdir):
-                                try:
-                                    os.mkdir(imgdir)
-                                except:
-                                    print("I could not create directory %s" %\
-                                          imgdir)
-                                    return
-                            elif not os.path.isdir(imgdir):
-                                print("%s does not seem to be a valid directory" %\
-                                      imgdir)
-                            self.imgDir = imgdir
+        if outbuffer.save_diagnostics:
+            xdata0 = self.mcafit.xdata0.flatten().astype(numpy.int32)  # channels
+            xdata = self.mcafit.xdata.flatten().astype(numpy.int32)  # channels after limits
+            stackShape = self.__nrows, self.__ncols, len(xdata0)
+            mcaIndex = 2
+            iXMin, iXMax = xdata[0], xdata[-1]+1
+            nObs = iXMax-iXMin
+            outbuffer.allocateMemory('nFreeParameters',
+                                        shape=imageShape,
+                                        fill_value=nFree,
+                                        dtype=numpy.int32)
+            outbuffer.allocateMemory('nObservations',
+                                        shape=imageShape,
+                                        fill_value=nObs,
+                                        dtype=numpy.int32)
+            outbuffer.allocateMemory('Chisq',
+                                        shape=imageShape,
+                                        fill_value=-1,
+                                        dtype=dtypeResult)
+            outaxes = False
+            fitmodel = outbuffer.allocateH5('model',
+                                            nxdata='fit',
+                                            shape=stackShape,
+                                            dtype=dtypeResult,
+                                            chunks=True,
+                                            fill_value=0,
+                                            attrs={'units':'counts'})
+            idx = [slice(None)]*fitmodel.ndim
+            idx[mcaIndex] = slice(0, iXMin)
+            fitmodel[tuple(idx)] = numpy.nan
+            idx[mcaIndex] = slice(iXMax, None)
+            fitmodel[tuple(idx)] = numpy.nan
+            if outbuffer.saveData:
+                outaxes = True
+                outbuffer.allocateH5('data',
+                                        nxdata='fit',
+                                        shape=stackShape,
+                                        dtype=dtypeResult,
+                                        chunks=True,
+                                        attrs={'units':'counts'})
+            if outbuffer.saveResiduals:
+                outaxes = True
+                outbuffer.allocateH5('residuals',
+                                        nxdata='fit',
+                                        shape=stackShape,
+                                        dtype=dtypeResult,
+                                        chunks=True,
+                                        attrs={'units':'counts'})
+            if outaxes:
+                # Generic axes
+                stackAxesNames = ['dim{}'.format(i) for i in range(len(stackShape))]
+                dataAxes = [(name, numpy.arange(n, dtype=dtypeResult), {})
+                            for name, n in zip(stackAxesNames, stackShape)]
+                # MCA axis: use energy and add channels as extra (unused) axis
+                zero, gain = self.mcafit.parameters[:2]
+                xenergy = zero + gain*xdata0
+                stackAxesNames[mcaIndex] = 'energy'
+                dataAxes[mcaIndex] = 'energy', xenergy.astype(dtypeResult), {'units': 'keV'}
+                dataAxes.append(('channels', xdata0.astype(numpy.int32), {}))
+                outbuffer['dataAxesUsed'] = tuple(stackAxesNames)
+                outbuffer['dataAxes'] = tuple(dataAxes)
 
-                        self.__peaks  = []
-                        self.__images = {}
-                        self.__sigmas = {}
-                        if not self.__stack:
-                            self.__nrows   = len(range(0, len(self._filelist), self.fileStep))
-                        for group in result['groups']:
-                            self.__peaks.append(group)
-                            self.__images[group]= numpy.zeros((self.__nrows,
-                                                               self.__ncols),
-                                                               numpy.float)
-                            self.__sigmas[group]= numpy.zeros((self.__nrows,
-                                                               self.__ncols),
-                                                               numpy.float)
-                        self.__images['chisq']  = numpy.zeros((self.__nrows,
-                                                               self.__ncols),
-                                                               numpy.float) - 1.
+    def fill_output_fit(self, result, concentrations):
+        outbuffer = self.outbuffer
+        if outbuffer is None:
+            return
+        output = outbuffer['parameters']
+        outputs = outbuffer['uncertainties']
+        for i, group in enumerate(outbuffer['parameter_names']):
+            output[i, self.__row, self.__col] = result[group]['fitarea']
+            outputs[i, self.__row, self.__col] = result[group]['sigmaarea']
+        if self._concentrations:
+            output = outbuffer[self._concentration_key]
+            for i, name in enumerate(outbuffer[self._concentration_names]):
+                tmp = name.split('-')
+                if len(tmp) == 2:
+                    group, layer = tmp
+                    output[i, self.__row, self.__col] = concentrations[layer][self.__conKey][group]
+                else:
+                    output[i, self.__row, self.__col] = concentrations[self.__conKey][tmp[0]]
+        if outbuffer.save_diagnostics:
+            outbuffer['Chisq'][self.__row, self.__col] = result['chisq']
 
-                        if self._concentrations:
-                            layerlist = concentrations['layerlist']
-                            if 'mmolar' in concentrations:
-                                self.__conLabel = " mM"
-                                self.__conKey   = "mmolar"
-                            else:
-                                self.__conLabel = " mass fraction"
-                                self.__conKey   = "mass fraction"
-                            for group in concentrations['groups']:
-                                key = group+self.__conLabel
-                                self.__concentrationsKeys.append(key)
-                                self.__images[key] = numpy.zeros((self.__nrows,
-                                                                  self.__ncols),
-                                                                  numpy.float)
-                                if len(layerlist) > 1:
-                                    for layer in layerlist:
-                                        key = group+" "+layer
-                                        self.__concentrationsKeys.append(key)
-                                        self.__images[key] = numpy.zeros((self.__nrows,
-                                                                    self.__ncols),
-                                                                    numpy.float)
+    def old_output_fit(self, result, concentrations, filename):
+        if self.outbuffer is None:
+            return
+        if self.__ncols is not None:
+            if not self.counter:
+                if not self._nosave:
+                    imgdir = self.os_path_join(self._outputdir,"IMAGES")
+                    if not os.path.exists(imgdir):
+                        try:
+                            os.mkdir(imgdir)
+                        except:
+                            print("I could not create directory %s" %\
+                                    imgdir)
+                            return
+                    elif not os.path.isdir(imgdir):
+                        print("%s does not seem to be a valid directory" %\
+                                imgdir)
+                    self.imgDir = imgdir
 
-                for peak in self.__peaks:
-                    try:
-                        self.__images[peak][self.__row, self.__col] = result[peak]['fitarea']
-                        self.__sigmas[peak][self.__row, self.__col] = result[peak]['sigmaarea']
-                    except:
-                        pass
+                self.__peaks  = []
+                self.__images = {}
+                self.__sigmas = {}
+                if not self.__stack:
+                    self.__nrows   = len(range(0, len(self._filelist), self.fileStep))
+                for group in result['groups']:
+                    self.__peaks.append(group)
+                    self.__images[group]= numpy.zeros((self.__nrows,
+                                                        self.__ncols),
+                                                        numpy.float)
+                    self.__sigmas[group]= numpy.zeros((self.__nrows,
+                                                        self.__ncols),
+                                                        numpy.float)
+                self.__images['chisq']  = numpy.zeros((self.__nrows,
+                                                        self.__ncols),
+                                                        numpy.float) - 1.
+
                 if self._concentrations:
                     layerlist = concentrations['layerlist']
+                    if 'mmolar' in concentrations:
+                        self.__conLabel = " mM"
+                        self.__conKey   = "mmolar"
+                    else:
+                        self.__conLabel = " mass fraction"
+                        self.__conKey   = "mass fraction"
                     for group in concentrations['groups']:
-                        self.__images[group+self.__conLabel][self.__row, self.__col] = \
-                                              concentrations[self.__conKey][group]
+                        key = group+self.__conLabel
+                        self.__concentrationsKeys.append(key)
+                        self.__images[key] = numpy.zeros((self.__nrows,
+                                                            self.__ncols),
+                                                            numpy.float)
                         if len(layerlist) > 1:
                             for layer in layerlist:
-                                self.__images[group+" "+layer] [self.__row, self.__col] = \
-                                              concentrations[layer][self.__conKey][group]
-                try:
-                    self.__images['chisq'][self.__row, self.__col] = result['chisq']
-                except:
-                    print("Error on chisq row %d col %d" %\
-                          (self.__row, self.__col))
-                    print("File = %s\n" % filename)
-                    pass
+                                key = group+" "+layer
+                                self.__concentrationsKeys.append(key)
+                                self.__images[key] = numpy.zeros((self.__nrows,
+                                                            self.__ncols),
+                                                            numpy.float)
 
-                outbuffer = self.outbuffer
-                if 'mmolar' in concentrations:
-                    concentration_key = 'molarconcentrations'
-                    concentration_names = 'molarconcentration_names'
-                    concentration_attrs = {'units': 'mM'}
-                else:
-                    concentration_key = 'massfractions'
-                    concentration_names = 'massfraction_names'
-                    concentration_attrs = {}
-                if self.__ncols is not None:
-                    if not self.counter:
-                        nFree = len(result['groups'])
-                        imageShape = self.__nrows, self.__ncols
-                        paramShape = nFree, self.__nrows, self.__ncols
-                        dtypeResult = numpy.float32
-                        outbuffer['parameter_names'] = result['groups']
-                        outbuffer.allocateMemory('parameters',
-                                                 shape=paramShape,
-                                                 dtype=dtypeResult,
-                                                 units='counts')
-                        outbuffer.allocateMemory('uncertainties',
-                                                 shape=paramShape,
-                                                 dtype=dtypeResult,
-                                                 units='counts')
-                        if outbuffer.save_diagnostics:
-                            xdata = self.mcafit.xdata
-                            nObs = xdata[-1] - xdata[0] + 1
-                            outbuffer.allocateMemory('nFreeParameters',
-                                                     shape=imageShape,
-                                                     fill_value=nFree,
-                                                     dtype=numpy.int32)
-                            outbuffer.allocateMemory('nObservations',
-                                                     shape=imageShape,
-                                                     fill_value=nObs,
-                                                     dtype=numpy.int32)
-                            outbuffer.allocateMemory('Chisq',
-                                                     shape=imageShape,
-                                                     fill_value=-1,
-                                                     dtype=dtypeResult)
-                        if self._concentrations:
-                            outbuffer[concentration_names] = concentrations['groups']
-                            layerlist = concentrations['layerlist']
-                            if len(layerlist) > 1:
-                                outbuffer[concentration_names] += ["%s-%s" % (group, layer)
-                                                                    for group in concentrations['groups']
-                                                                    for layer in layerlist]
-                            nConcFree = len(concentrations['groups'])
-                            paramShape = nConcFree, self.__nrows, self.__ncols
-                            outbuffer.allocateMemory(concentration_key,
-                                                     shape=paramShape,
-                                                     dtype=dtypeResult,
-                                                     **concentration_attrs)
+        for peak in self.__peaks:
+            try:
+                self.__images[peak][self.__row, self.__col] = result[peak]['fitarea']
+                self.__sigmas[peak][self.__row, self.__col] = result[peak]['sigmaarea']
+            except:
+                pass
+        if self._concentrations:
+            layerlist = concentrations['layerlist']
+            for group in concentrations['groups']:
+                self.__images[group+self.__conLabel][self.__row, self.__col] = \
+                                        concentrations[self.__conKey][group]
+                if len(layerlist) > 1:
+                    for layer in layerlist:
+                        self.__images[group+" "+layer] [self.__row, self.__col] = \
+                                        concentrations[layer][self.__conKey][group]
+        try:
+            self.__images['chisq'][self.__row, self.__col] = result['chisq']
+        except:
+            print("Error on chisq row %d col %d" %\
+                    (self.__row, self.__col))
+            print("File = %s\n" % filename)
+            pass
 
-                output = outbuffer['parameters']
-                outputs = outbuffer['uncertainties']
-                for i, group in enumerate(outbuffer['parameter_names']):
-                    output[i, self.__row, self.__col] = result[group]['fitarea']
-                    outputs[i, self.__row, self.__col] = result[group]['sigmaarea']
-                if self._concentrations:
-                    output = outbuffer[concentration_key]
-                    for i, name in enumerate(outbuffer[concentration_names]):
-                        tmp = name.split('-')
-                        if len(tmp) == 2:
-                            group, layer = tmp
-                            output[i, self.__row, self.__col] = concentrations[layer][self.__conKey][group]
-                        else:
-                            output[i, self.__row, self.__col] = concentrations[self.__conKey][tmp[0]]
-                if outbuffer.save_diagnostics:
-                    outbuffer['Chisq'][self.__row, self.__col] = result['chisq']
-        else:
-                dict=self.mcafit.roifit(x,y,width=self.roiWidth)
-                #this only works with EDF
-                if self.__ncols is not None:
-                    self.imgDir=None
-                    if not self.counter:
-                        if not self._nosave:
-                            imgdir = self.os_path_join(self._outputdir,"IMAGES")
-                            if not os.path.exists(imgdir):
-                                try:
-                                    os.mkdir(imgdir)
-                                except:
-                                    print("I could not create directory %s" %\
-                                          imgdir)
-                                    return
-                            elif not os.path.isdir(imgdir):
-                                print("%s does not seem to be a valid directory" %\
-                                      imgdir)
-                            self.imgDir = imgdir
-                        self.__ROIpeaks  = []
-                        self._ROIimages = {}
-                        if not self.__stack:
-                            self.__nrows   = len(self._filelist)
-                        for group in dict.keys():
-                            self.__ROIpeaks.append(group)
-                            self._ROIimages[group]={}
-                            for roi in dict[group].keys():
-                                self._ROIimages[group][roi]=numpy.zeros((self.__nrows,
-                                                                   self.__ncols),
-                                                                   numpy.float)
+    def allocate_output_roi(self, result):
+        outbuffer = self.outbuffer
+        if outbuffer is None or self.__ncols is None or self.counter:
+            return  # no output or not the first fit
+        parameter_names = ["%s-%s" % (group, roi)
+                                           for group in result.keys()
+                                           for roi in result[group].keys()]
+        nFree = len(parameter_names)
+        imageShape = self.__nrows, self.__ncols
+        paramShape = nFree, self.__nrows, self.__ncols
+        dtypeResult = numpy.float32
+        outbuffer['parameter_names'] = parameter_names
+        outbuffer.allocateMemory('parameters',
+                                    shape=paramShape,
+                                    dtype=dtypeResult,
+                                    attrs={'units':'counts'})
 
-                if not hasattr(self, "_ROIimages"):
-                    print("ROI fitting only supported on EDF")
-                for group in self.__ROIpeaks:
-                    for roi in self._ROIimages[group].keys():
+    def fill_output_roi(self, result):
+        outbuffer = self.outbuffer
+        if outbuffer is None:
+            return
+        output = outbuffer['parameters']
+        for i, name in enumerate(outbuffer.parameter_names):
+            group, roi = name.split('-')
+            output[i, self.__row, self.__col] = result[group][roi]
+
+    def old_output_roi(self, result, filename):
+        if self.outbuffer is None:
+            return
+        if self.__ncols is not None:
+            self.imgDir=None
+            if not self.counter:
+                if not self._nosave:
+                    imgdir = self.os_path_join(self._outputdir,"IMAGES")
+                    if not os.path.exists(imgdir):
                         try:
-                            self._ROIimages[group][roi][self.__row, self.__col] = dict[group][roi]
+                            os.mkdir(imgdir)
                         except:
-                            print("error on (row,col) = %d,%d" %\
-                                  (self.__row, self.__col))
-                            print("File = %s" % filename)
-                            pass
+                            print("I could not create directory %s" %\
+                                    imgdir)
+                            return
+                    elif not os.path.isdir(imgdir):
+                        print("%s does not seem to be a valid directory" %\
+                                imgdir)
+                    self.imgDir = imgdir
+                self.__ROIpeaks  = []
+                self._ROIimages = {}
+                if not self.__stack:
+                    self.__nrows   = len(self._filelist)
+                for group in result.keys():
+                    self.__ROIpeaks.append(group)
+                    self._ROIimages[group]={}
+                    for roi in result[group].keys():
+                        self._ROIimages[group][roi]=numpy.zeros((self.__nrows,
+                                                            self.__ncols),
+                                                            numpy.float)
 
-                if self.__ncols is not None:
-                    if not self.counter:
-                        parameter_names = ["%s-%s" % (group, roi)
-                                           for group in dict.keys()
-                                           for roi in dict[group].keys()]
-                        nFree = len(parameter_names)
-                        imageShape = self.__nrows, self.__ncols
-                        paramShape = nFree, self.__nrows, self.__ncols
-                        dtypeResult = numpy.float32
-                        outbuffer['parameter_names'] = parameter_names
-                        outbuffer.allocateMemory('parameters',
-                                                 shape=paramShape,
-                                                 dtype=dtypeResult,
-                                                 units='counts')
-
-                output = outbuffer['parameters']
-                for i, name in enumerate(outbuffer.parameter_names):
-                    group, roi = name.split('-')
-                    output[i, self.__row, self.__col] = dict[group][roi]
-
-        #update counter
-        self.counter += 1
-
+        if not hasattr(self, "_ROIimages"):
+            print("ROI fitting only supported on EDF")
+        for group in self.__ROIpeaks:
+            for roi in self._ROIimages[group].keys():
+                try:
+                    self._ROIimages[group][roi][self.__row, self.__col] = result[group][roi]
+                except:
+                    print("error on (row,col) = %d,%d" %\
+                            (self.__row, self.__col))
+                    print("File = %s" % filename)
+                    pass
 
     def saveImage(self,ffile=None):
         self.savedImages=[]
@@ -1132,7 +1227,7 @@ if __name__ == "__main__":
     with ProfilingUtils.profile(memory=debug, time=debug):
         with outbuffer.saveContext():
             b = McaAdvancedFitBatch(cfg,filelist=filelist,
-                            fitfiles=0, fitconcfile=0,
+                            fitfiles=1, fitconcfile=1,
                             outputdir=outputDir,
                             roifit=roifit,
                             roiwidth=roiwidth,
