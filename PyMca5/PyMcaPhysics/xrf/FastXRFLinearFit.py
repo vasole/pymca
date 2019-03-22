@@ -46,7 +46,7 @@ from PyMca5.PyMcaMath.fitting import Gefit
 from PyMca5.PyMcaMath.fitting import SpecfitFuns
 from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaMisc import PhysicalMemory
-from .FastXRFLinearFitOutput import OutputBuffer
+from .XRFBatchFitOutput import OutputBuffer
 from . import McaStackView
 
 _logger = logging.getLogger(__name__)
