@@ -173,10 +173,12 @@ class FastXRFLinearFit(object):
             dtypeResult = self._fitDtypeResult(data)
             results = outbuffer.allocateMemory('parameters',
                                                 shape=paramShape,
-                                                dtype=dtypeResult)
+                                                dtype=dtypeResult,
+                                                units='counts')
             uncertainties = outbuffer.allocateMemory('uncertainties',
                                                 shape=paramShape,
-                                                dtype=dtypeResult)
+                                                dtype=dtypeResult,
+                                                units='counts')
             if outbuffer.save_diagnostics:
                 nFreeParameters = outbuffer.allocateMemory('nFreeParameters',
                                                 shape=imageShape,
@@ -191,7 +193,8 @@ class FastXRFLinearFit(object):
                                                 shape=stackShape,
                                                 dtype=dtypeResult,
                                                 chunks=True,
-                                                fill_value=0)
+                                                fill_value=0,
+                                                units='counts')
                 idx = [slice(None)]*fitmodel.ndim
                 idx[mcaIndex] = slice(0, iXMin)
                 fitmodel[tuple(idx)] = numpy.nan
@@ -238,14 +241,16 @@ class FastXRFLinearFit(object):
                                      nxdata='fit',
                                      data=data,
                                      dtype=dtypeResult,
-                                     chunks=True)
+                                     chunks=True,
+                                     units='counts')
             if outbuffer.saveResiduals:
                 outaxes = True
                 residuals = outbuffer.allocateH5('residuals',
                                                  nxdata='fit',
                                                  data=data,
                                                  dtype=dtypeResult,
-                                                 chunks=True)
+                                                 chunks=True,
+                                                 units='counts')
                 residuals[()] -= fitmodel
             if outaxes:
                 # Generic axes

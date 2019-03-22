@@ -68,8 +68,8 @@ class McaAdvancedFitBatch(object):
         #that is not necessary, but it will be correctly implemented in
         #future releases
         self._lock = lock
-        if outbuffer is None:
-            outbuffer = OutputBuffer()
+        if outbuffer is None and fitimages:
+            outbuffer = OutputBuffer(outputDir=outputdir, overwrite=overwrite)
         self.outbuffer = outbuffer
         if nosave:
             self._nosave = True
@@ -93,14 +93,9 @@ class McaAdvancedFitBatch(object):
             self._toolConversion = ConcentrationsTool.ConcentrationsConversion()
         self.setFileList(filelist)
         self.setOutputDir(outputdir)
-        if fitimages:
-            self.fitImages=  1
-            self.__ncols  =  None
-        else:
-            self.fitImages = False
-            self.__ncols = None
+        self.__ncols = None
         self.fileStep = filestep
-        self.mcaStep  = mcastep
+        self.mcaStep = mcastep
         self.useExistingFiles = not overwrite
         self.savedImages=[]
         if roifit is None:
@@ -108,7 +103,7 @@ class McaAdvancedFitBatch(object):
         if roiwidth is None:
             roiwidth = 100.
         self.pleaseBreak = 0
-        self.roiFit   = roifit
+        self.roiFit = roifit
         self.roiWidth = roiwidth
         self.fileBeginOffset = filebeginoffset
         self.fileEndOffset = fileendoffset
@@ -428,7 +423,9 @@ class McaAdvancedFitBatch(object):
                                                     info=infoDict)
                 else:
                     if info['NbMca'] > 0:
-                        self.fitImages = True
+                        if self.outbuffer is None:
+                            self.outbuffer = OutputBuffer(outputDir=self._outputdir,
+                                                          overwrite=self.useExistingFiles)
                         numberofmca = info['NbMca'] * 1
                         self.__ncols = len(range(0+self.mcaOffset,
                                              numberofmca,self.mcaStep))
@@ -722,7 +719,7 @@ class McaAdvancedFitBatch(object):
                             result = self.mcafit.imagingDigestResult()
 
             #IMAGES
-            if self.fitImages:
+            if self.outbuffer:
                 #this only works with EDF
                 if self.__ncols is not None:
                     if not self.counter:
@@ -803,6 +800,14 @@ class McaAdvancedFitBatch(object):
                     pass
 
                 outbuffer = self.outbuffer
+                if 'mmolar' in concentrations:
+                    concentration_key = 'molarconcentrations'
+                    concentration_names = 'molarconcentration_names'
+                    concentration_attrs = {'units': 'mM'}
+                else:
+                    concentration_key = 'massfractions'
+                    concentration_names = 'massfraction_names'
+                    concentration_attrs = {}
                 if self.__ncols is not None:
                     if not self.counter:
                         nFree = len(result['groups'])
@@ -812,10 +817,12 @@ class McaAdvancedFitBatch(object):
                         outbuffer['parameter_names'] = result['groups']
                         outbuffer.allocateMemory('parameters',
                                                  shape=paramShape,
-                                                 dtype=dtypeResult)
+                                                 dtype=dtypeResult,
+                                                 units='counts')
                         outbuffer.allocateMemory('uncertainties',
                                                  shape=paramShape,
-                                                 dtype=dtypeResult)
+                                                 dtype=dtypeResult,
+                                                 units='counts')
                         if outbuffer.save_diagnostics:
                             xdata = self.mcafit.xdata
                             nObs = xdata[-1] - xdata[0] + 1
@@ -832,17 +839,18 @@ class McaAdvancedFitBatch(object):
                                                      fill_value=-1,
                                                      dtype=dtypeResult)
                         if self._concentrations:
-                            outbuffer['massfraction_names'] = concentrations['groups']
+                            outbuffer[concentration_names] = concentrations['groups']
                             layerlist = concentrations['layerlist']
                             if len(layerlist) > 1:
-                                outbuffer['massfraction_names'] += ["%s-%s" % (group, layer)
+                                outbuffer[concentration_names] += ["%s-%s" % (group, layer)
                                                                     for group in concentrations['groups']
                                                                     for layer in layerlist]
                             nConcFree = len(concentrations['groups'])
                             paramShape = nConcFree, self.__nrows, self.__ncols
-                            outbuffer.allocateMemory('massfractions',
+                            outbuffer.allocateMemory(concentration_key,
                                                      shape=paramShape,
-                                                     dtype=dtypeResult)
+                                                     dtype=dtypeResult,
+                                                     **concentration_attrs)
 
                 output = outbuffer['parameters']
                 outputs = outbuffer['uncertainties']
@@ -850,8 +858,8 @@ class McaAdvancedFitBatch(object):
                     output[i, self.__row, self.__col] = result[group]['fitarea']
                     outputs[i, self.__row, self.__col] = result[group]['sigmaarea']
                 if self._concentrations:
-                    output = outbuffer['massfractions']
-                    for i, name in enumerate(outbuffer['massfraction_names']):
+                    output = outbuffer[concentration_key]
+                    for i, name in enumerate(outbuffer[concentration_names]):
                         tmp = name.split('-')
                         if len(tmp) == 2:
                             group, layer = tmp
@@ -908,7 +916,6 @@ class McaAdvancedFitBatch(object):
                         parameter_names = ["%s-%s" % (group, roi)
                                            for group in dict.keys()
                                            for roi in dict[group].keys()]
-                                
                         nFree = len(parameter_names)
                         imageShape = self.__nrows, self.__ncols
                         paramShape = nFree, self.__nrows, self.__ncols
@@ -916,7 +923,8 @@ class McaAdvancedFitBatch(object):
                         outbuffer['parameter_names'] = parameter_names
                         outbuffer.allocateMemory('parameters',
                                                  shape=paramShape,
-                                                 dtype=dtypeResult)
+                                                 dtype=dtypeResult,
+                                                 units='counts')
 
                 output = outbuffer['parameters']
                 for i, name in enumerate(outbuffer.parameter_names):

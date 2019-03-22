@@ -78,6 +78,7 @@ class OutputBuffer(object):
         """
         self._init_buffer = False
         self._output = {}
+        self._attrs = {}
         self._nxprocess = None
 
         self.outputDir = outputDir
@@ -228,7 +229,7 @@ class OutputBuffer(object):
     def get(self, key, default=None):
         return self._output.get(key, default)
 
-    def allocateMemory(self, name, fill_value=None, shape=None, dtype=None):
+    def allocateMemory(self, name, fill_value=None, shape=None, dtype=None, **kwargs):
         """
         :param str name:
         :param num fill_value:
@@ -242,6 +243,7 @@ class OutputBuffer(object):
         else:
             buffer = numpy.full(shape, fill_value, dtype=dtype)
         self._output[name] = buffer
+        self._attrs[name] = kwargs
         return buffer
 
     def allocateH5(self, name, nxdata=None, fill_value=None, **kwargs):
@@ -403,6 +405,10 @@ class OutputBuffer(object):
     def massfraction_names(self):
         return self._getNames('massfraction_names', 'w({}){}')
 
+    @property
+    def molarconcentration_names(self):
+        return self._getNames('molarconcentration_names', 'mM({}){}')
+
     def _getNames(self, names, fmt):
         labels = self.get(names, None)
         if not labels:
@@ -426,7 +432,8 @@ class OutputBuffer(object):
         imageList = []
         lst = [('parameter_names', 'parameters', '{}'),
                ('parameter_names', 'uncertainties', 's({})'),
-               ('massfraction_names', 'massfractions', 'w({}){}')]
+               ('massfraction_names', 'massfractions', 'w({}){}'),
+               ('molarconcentration_names', 'molarconcentrations', 'mM({}){}')]
         for names, key, fmt in lst:
             images = self.get(key, None)
             if images is not None:
@@ -479,14 +486,16 @@ class OutputBuffer(object):
         configdict = self.get('configuration', None)
         NexusUtils.nxProcessConfigurationInit(nxprocess, configdict=configdict)
 
-        # Save fitted parameters, uncertainties and elemental massfractions
+        # Save fitted parameters, uncertainties and elemental concentrations
         lst = [('parameter_names', 'uncertainties'),
                ('parameter_names', 'parameters'),
-               ('massfraction_names', 'massfractions')]
+               ('massfraction_names', 'massfractions'),
+               ('molarconcentration_names', 'molarconcentrations')]
         for names, key in lst:
             images = self.get(key, None)
             if images is not None:
-                attrs = {'interpretation': 'image'}
+                attrs = self._attrs.get(key, {})
+                attrs['interpretation'] = 'image'
                 signals = [(label, {'data': img, 'chunks': True}, attrs)
                            for label, img in zip(self[names], images)]
                 data = NexusUtils.nxData(nxresults, key)
