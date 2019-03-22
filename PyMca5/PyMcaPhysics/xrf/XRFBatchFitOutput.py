@@ -479,7 +479,6 @@ class OutputBuffer(object):
         NexusUtils.nxProcessConfigurationInit(nxprocess, configdict=configdict)
 
         # Save fitted parameters, uncertainties and elemental massfractions
-        mill = numpy.float32(1e6)
         lst = [('parameter_names', 'uncertainties'),
                ('parameter_names', 'parameters'),
                ('massfraction_names', 'massfractions')]
