@@ -35,6 +35,7 @@ import os
 import numpy
 import logging
 import time
+import re
 from six import string_types
 from contextlib import contextmanager
 from PyMca5.PyMcaIO import NexusUtils
@@ -48,7 +49,7 @@ class OutputBuffer(object):
                  fileProcess=None, tif=False, edf=False, csv=False, h5=True,
                  overwrite=False, saveResiduals=False, saveFit=False, saveData=False):
         """
-        Fast fitting output buffer, to be saved as:
+        XRf batch fitting output buffer, to be saved as:
          .h5 : outputDir/outputRoot.h5::/fileEntry/fileProcess
          .edf/.csv/.tif: outputDir/outputRoot/fileEntry.ext
 
@@ -126,7 +127,7 @@ class OutputBuffer(object):
         if value:
             self._fileProcess = value
         else:
-            self._fileProcess = 'fast_xrf_fit'
+            self._fileProcess = 'xrf_fit'
 
     @property
     def edf(self):
@@ -175,7 +176,7 @@ class OutputBuffer(object):
     @saveFit.setter
     def saveFit(self, value):
         self._check_bufferContext()
-        self._saveFit= value
+        self._saveFit = value
 
     @property
     def saveResiduals(self):
@@ -369,7 +370,7 @@ class OutputBuffer(object):
 
     def save(self):
         """
-        Save result of Fast XRF fitting. Preferrable use saveContext instead.
+        Save result of XRF batch fitting. Preferrable use saveContext instead.
         HDF5 NXprocess will be updated, not overwritten.
         """
         if not (self.tif or self.edf or self.csv or self.h5):
@@ -410,7 +411,7 @@ class OutputBuffer(object):
         for label in labels:
             label = label.split('-')
             name = label[0].replace(" ", "-")
-            if len(label)>1:
+            if len(label) > 1:
                 layer = '-'.join(label[1:])
             else:
                 layer = ''
@@ -444,13 +445,13 @@ class OutputBuffer(object):
             ArraySave.save2DArrayListAsASCII(imageList, fileName, csv=True,
                                              labels=imageNames)
         if self.tif:
-            for label,image in zip(imageNames, imageList):
+            for label, image in zip(imageNames, imageList):
                 if label.startswith("s("):
                     suffix = "_s" + label[2:-1]
                 elif label.startswith("w("):
                     suffix = "_w" + label[2:-1]
                 else:
-                    suffix  = "_" + label
+                    suffix = "_" + label
                 fileName = self.filename('.tif', suffix=suffix)
                 self._checkOverwrite(fileName)
                 ArraySave.save2DArrayListAsMonochromaticTiff([image],
@@ -513,8 +514,8 @@ class OutputBuffer(object):
 
         # Save diagnostics
         signals = []
-        attrs = {'interpretation':'image'}
-        for name in ['nObservations', 'nFreeParameters']:
+        attrs = {'interpretation': 'image'}
+        for name in ['nObservations', 'nFreeParameters', 'Chisq']:
             img = self.get(name, None)
             if img is not None:
                 signals.append((name, img, attrs))

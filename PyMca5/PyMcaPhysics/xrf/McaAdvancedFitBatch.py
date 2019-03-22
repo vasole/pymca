@@ -55,13 +55,13 @@ from .XRFBatchFitOutput import OutputBuffer
 
 
 class McaAdvancedFitBatch(object):
-    def __init__(self,initdict,filelist=None,outputdir=None,
-                    roifit=None,roiwidth=None,
+    def __init__(self, initdict, filelist=None, outputdir=None,
+                    roifit=None, roiwidth=None,
                     overwrite=1, filestep=1, mcastep=1,
                     fitfiles=1, fitimages=1,
                     concentrations=0, fitconcfile=1,
                     filebeginoffset = 0, fileendoffset=0,
-                    mcaoffset=0, chunk = None,
+                    mcaoffset=0, chunk=None,
                     selection=None, lock=None, nosave=None,
                     quiet=False, outbuffer=None):
         #for the time being the concentrations are bound to the .fit files
@@ -103,15 +103,17 @@ class McaAdvancedFitBatch(object):
         self.mcaStep  = mcastep
         self.useExistingFiles = not overwrite
         self.savedImages=[]
-        if roifit   is None:roifit   = False
-        if roiwidth is None:roiwidth = 100.
+        if roifit is None:
+            roifit = False
+        if roiwidth is None:
+            roiwidth = 100.
         self.pleaseBreak = 0
         self.roiFit   = roifit
         self.roiWidth = roiwidth
         self.fileBeginOffset = filebeginoffset
-        self.fileEndOffset   = fileendoffset
+        self.fileEndOffset = fileendoffset
         self.mcaOffset = mcaoffset
-        self.chunk     = chunk
+        self.chunk = chunk
         self.selection = selection
         self.quiet = quiet
 
@@ -176,7 +178,7 @@ class McaAdvancedFitBatch(object):
         self.__row = self.fileBeginOffset - 1
         self.__stack = None
 
-        with outbuffer._bufferContext(update=False):
+        with self.outbuffer._bufferContext(update=False):
             start = 0+self.fileBeginOffset
             stop = len(self._filelist)-start
             for i in range(start, stop, self.fileStep):
@@ -754,6 +756,7 @@ class McaAdvancedFitBatch(object):
                         self.__images['chisq']  = numpy.zeros((self.__nrows,
                                                                self.__ncols),
                                                                numpy.float) - 1.
+
                         if self._concentrations:
                             layerlist = concentrations['layerlist']
                             if 'mmolar' in concentrations:
@@ -775,6 +778,7 @@ class McaAdvancedFitBatch(object):
                                         self.__images[key] = numpy.zeros((self.__nrows,
                                                                     self.__ncols),
                                                                     numpy.float)
+
                 for peak in self.__peaks:
                     try:
                         self.__images[peak][self.__row, self.__col] = result[peak]['fitarea']
@@ -798,6 +802,64 @@ class McaAdvancedFitBatch(object):
                     print("File = %s\n" % filename)
                     pass
 
+                outbuffer = self.outbuffer
+                if self.__ncols is not None:
+                    if not self.counter:
+                        nFree = len(result['groups'])
+                        imageShape = self.__nrows, self.__ncols
+                        paramShape = nFree, self.__nrows, self.__ncols
+                        dtypeResult = numpy.float32
+                        outbuffer['parameter_names'] = result['groups']
+                        outbuffer.allocateMemory('parameters',
+                                                 shape=paramShape,
+                                                 dtype=dtypeResult)
+                        outbuffer.allocateMemory('uncertainties',
+                                                 shape=paramShape,
+                                                 dtype=dtypeResult)
+                        if outbuffer.save_diagnostics:
+                            xdata = self.mcafit.xdata
+                            nObs = xdata[-1] - xdata[0] + 1
+                            outbuffer.allocateMemory('nFreeParameters',
+                                                     shape=imageShape,
+                                                     fill_value=nFree,
+                                                     dtype=numpy.int32)
+                            outbuffer.allocateMemory('nObservations',
+                                                     shape=imageShape,
+                                                     fill_value=nObs,
+                                                     dtype=numpy.int32)
+                            outbuffer.allocateMemory('Chisq',
+                                                     shape=imageShape,
+                                                     fill_value=-1,
+                                                     dtype=dtypeResult)
+                        if self._concentrations:
+                            outbuffer['massfraction_names'] = concentrations['groups']
+                            layerlist = concentrations['layerlist']
+                            if len(layerlist) > 1:
+                                outbuffer['massfraction_names'] += ["%s-%s" % (group, layer)
+                                                                    for group in concentrations['groups']
+                                                                    for layer in layerlist]
+                            nConcFree = len(concentrations['groups'])
+                            paramShape = nConcFree, self.__nrows, self.__ncols
+                            outbuffer.allocateMemory('massfractions',
+                                                     shape=paramShape,
+                                                     dtype=dtypeResult)
+
+                output = outbuffer['parameters']
+                outputs = outbuffer['uncertainties']
+                for i, group in enumerate(outbuffer['parameter_names']):
+                    output[i, self.__row, self.__col] = result[group]['fitarea']
+                    outputs[i, self.__row, self.__col] = result[group]['sigmaarea']
+                if self._concentrations:
+                    output = outbuffer['massfractions']
+                    for i, name in enumerate(outbuffer['massfraction_names']):
+                        tmp = name.split('-')
+                        if len(tmp) == 2:
+                            group, layer = tmp
+                            output[i, self.__row, self.__col] = concentrations[layer][self.__conKey][group]
+                        else:
+                            output[i, self.__row, self.__col] = concentrations[self.__conKey][tmp[0]]
+                if outbuffer.save_diagnostics:
+                    outbuffer['Chisq'][self.__row, self.__col] = result['chisq']
         else:
                 dict=self.mcafit.roifit(x,y,width=self.roiWidth)
                 #this only works with EDF
@@ -840,6 +902,26 @@ class McaAdvancedFitBatch(object):
                                   (self.__row, self.__col))
                             print("File = %s" % filename)
                             pass
+
+                if self.__ncols is not None:
+                    if not self.counter:
+                        parameter_names = ["%s-%s" % (group, roi)
+                                           for group in dict.keys()
+                                           for roi in dict[group].keys()]
+                                
+                        nFree = len(parameter_names)
+                        imageShape = self.__nrows, self.__ncols
+                        paramShape = nFree, self.__nrows, self.__ncols
+                        dtypeResult = numpy.float32
+                        outbuffer['parameter_names'] = parameter_names
+                        outbuffer.allocateMemory('parameters',
+                                                 shape=paramShape,
+                                                 dtype=dtypeResult)
+
+                output = outbuffer['parameters']
+                for i, name in enumerate(outbuffer.parameter_names):
+                    group, roi = name.split('-')
+                    output[i, self.__row, self.__col] = dict[group][roi]
 
         #update counter
         self.counter += 1

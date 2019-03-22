@@ -242,7 +242,7 @@ class FastXRFLinearFit(object):
             if outbuffer.saveResiduals:
                 outaxes = True
                 residuals = outbuffer.allocateH5('residuals',
-                                                 nxdata='fit', 
+                                                 nxdata='fit',
                                                  data=data,
                                                  dtype=dtypeResult,
                                                  chunks=True)
@@ -794,8 +794,9 @@ class FastXRFLinearFit(object):
                                   nmin=nmin, **kwargs)
             iIter += 1
 
-    def _fitDeriveMassFractions(self, config=None, outputDict=None, results=None,
-                           nFreeBkg=None, autotime=None, liveTimeFactor=None):
+    def _fitDeriveMassFractions(self, config=None, outputDict=None,
+                                results=None, nFreeBkg=None, autotime=None,
+                                liveTimeFactor=None):
         """Calculate concentrations from peak areas
         """
         # check if an internal reference is used and if it is set to auto
