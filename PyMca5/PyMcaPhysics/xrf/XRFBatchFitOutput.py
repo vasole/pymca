@@ -47,11 +47,12 @@ class OutputBuffer(object):
 
     def __init__(self, outputDir=None, outputRoot=None, fileEntry=None,
                  fileProcess=None, tif=False, edf=False, csv=False, h5=True,
-                 overwrite=False, saveResiduals=False, saveFit=False, saveData=False):
+                 saveResiduals=False, saveFit=False, saveData=False,
+                 overwrite=False, suffix=None):
         """
         XRf batch fitting output buffer, to be saved as:
-         .h5 : outputDir/outputRoot.h5::/fileEntry/fileProcess
-         .edf/.csv/.tif: outputDir/outputRoot/fileEntry.ext
+         .h5 : outputDir/outputRoot+suffix.h5::/fileEntry/fileProcess
+         .edf/.csv/.tif: outputDir/outputRoot/fileEntry+suffix.ext
 
         Usage with context:
             outbuffer = OutputBuffer(...)
@@ -93,6 +94,7 @@ class OutputBuffer(object):
         self.saveFit = saveFit
         self.saveData = saveData
         self.overwrite = overwrite
+        self.suffix = suffix
 
     @property
     def outputRoot(self):
@@ -212,6 +214,8 @@ class OutputBuffer(object):
     def filename(self, ext, suffix=None):
         if not suffix:
             suffix = ""
+        if self.suffix:
+            suffix += self.suffix
         if ext == '.h5':
             return os.path.join(self.outputDir, self.outputRoot+suffix+ext)
         else:

@@ -55,53 +55,26 @@ from .XRFBatchFitOutput import OutputBuffer
 
 
 class McaAdvancedFitBatch(object):
+
     def __init__(self, initdict, filelist=None, outputdir=None,
-                    roifit=None, roiwidth=None,
-                    overwrite=1, filestep=1, mcastep=1,
-                    fitfiles=1, fitimages=1,
-                    concentrations=0, fitconcfile=1,
-                    filebeginoffset = 0, fileendoffset=0,
-                    mcaoffset=0, chunk=None,
-                    selection=None, lock=None, nosave=None,
-                    quiet=False, outbuffer=None):
+                 roifit=False, roiwidth=100,
+                 overwrite=1, filestep=1, mcastep=1,
+                 fitfiles=1, fitimages=1,
+                 concentrations=0, fitconcfile=1,
+                 filebeginoffset=0, fileendoffset=0,
+                 mcaoffset=0, chunk=None,
+                 selection=None, lock=None, nosave=None,
+                 quiet=False, outbuffer=None):
         #for the time being the concentrations are bound to the .fit files
         #that is not necessary, but it will be correctly implemented in
         #future releases
         self._lock = lock
-        if outbuffer is None and fitimages:
-            outbuffer = OutputBuffer(outputDir=outputdir, overwrite=overwrite)
-        self.outbuffer = outbuffer
-        if nosave:
-            self._nosave = True
-        else:
-            self._nosave = False
-        self.fitFiles = fitfiles
-        self.fitConcFile = fitconcfile
-        self._concentrations = concentrations
-        if type(initdict) == type([]):
-            self.mcafit = ClassMcaTheory.McaTheory(initdict[mcaoffset])
-            self.__configList = initdict
-            self.__currentConfig = mcaoffset
-        else:
-            self.__configList = [initdict]
-            self.__currentConfig = 0
-            self.mcafit = ClassMcaTheory.McaTheory(initdict)
-        self.outbuffer['configuration'] = self.mcafit.getConfiguration()
-        self.__concentrationsKeys = []
-        if self._concentrations:
-            self._tool = ConcentrationsTool.ConcentrationsTool()
-            self._toolConversion = ConcentrationsTool.ConcentrationsConversion()
+
         self.setFileList(filelist)
-        self.setOutputDir(outputdir)
         self.__ncols = None
         self.fileStep = filestep
         self.mcaStep = mcastep
-        self.useExistingFiles = not overwrite
         self.savedImages = []
-        if roifit is None:
-            roifit = False
-        if roiwidth is None:
-            roiwidth = 100.
         self.pleaseBreak = 0
         self.roiFit = roifit
         self.roiWidth = roiwidth
@@ -111,6 +84,46 @@ class McaAdvancedFitBatch(object):
         self.chunk = chunk
         self.selection = selection
         self.quiet = quiet
+        self.fitFiles = fitfiles
+        self.fitConcFile = fitconcfile
+        self._concentrations = concentrations
+
+        if isinstance(initdict, list):
+            self.mcafit = ClassMcaTheory.McaTheory(initdict[mcaoffset])
+            self.__configList = initdict
+            self.__currentConfig = mcaoffset
+        else:
+            self.__configList = [initdict]
+            self.__currentConfig = 0
+            self.mcafit = ClassMcaTheory.McaTheory(initdict)
+        self.__concentrationsKeys = []
+        if self._concentrations:
+            self._tool = ConcentrationsTool.ConcentrationsTool()
+            self._toolConversion = ConcentrationsTool.ConcentrationsConversion()
+
+        self.overwrite = overwrite
+        if outbuffer is None and fitimages:
+            outbuffer = OutputBuffer(outputDir=outputdir, overwrite=overwrite)
+        self.outbuffer = outbuffer
+        self.outbuffer['configuration'] = self.mcafit.getConfiguration()
+        
+        # TODO: to be removed
+        self.setOutputDir(outputdir)
+        if nosave:
+            self._nosave = True
+        else:
+            self._nosave = False
+
+    def _nameSuffix(self):
+        suffix = ""
+        if self.roiFit:
+            suffix = "_%04deVROI" % self.roiWidth 
+        if (self.fileStep > 1) or (self.mcaStep > 1):
+            suffix += "_filestep_%02d_mcastep_%02d" %\
+                        (self.fileStep, self.mcaStep)
+        if self.chunk is not None:
+            suffix += "_%06d_partial" % self.chunk
+        return suffix
 
     def setFileList(self,filelist=None):
         self._rootname = ""
@@ -432,7 +445,7 @@ class McaAdvancedFitBatch(object):
                     if info['NbMca'] > 0:
                         if self.outbuffer is None:
                             self.outbuffer = OutputBuffer(outputDir=self._outputdir,
-                                                          overwrite=self.useExistingFiles)
+                                                          overwrite=self.overwrite)
                         numberofmca = info['NbMca'] * 1
                         self.__ncols = len(range(0+self.mcaOffset,
                                              numberofmca,self.mcaStep))
@@ -584,11 +597,11 @@ class McaAdvancedFitBatch(object):
         fitresult = None
         result = None
         concentrations = None
-        concentrationsinfitfile = False
+        concentrationsInFitFile = False
 
         # Fit MCA
         fitfile = self.__getFitFile(filename,key,createdirs=False)
-        if self.useExistingFiles and os.path.exists(fitfile):
+        if os.path.exists(fitfile) and not self.overwrite:
             # Load MCA data when needed
             if outbuffer.save_diagnostics:
                 if not self._attemptMcaLoad(x, y, filename, info=info):
@@ -597,9 +610,8 @@ class McaAdvancedFitBatch(object):
             try:
                 fitdict = ConfigDict.ConfigDict()
                 fitdict.read(fitfile)
-                concentrationsinfitfile = 'concentrations' in fitdict
-                if concentrationsinfitfile:
-                    concentrations = fitdict['concentrations']
+                concentrations = fitdict.get('concentrations', None)
+                concentrationsInFitFile = bool(concentrations)
                 result = fitdict['result']
             except:
                 print("Error trying to use result file %s" % fitfile)
@@ -612,12 +624,12 @@ class McaAdvancedFitBatch(object):
                 return
             # Fit XRF spectrum
             fitresult, result, concentrations = self._fitMca(filename)
-            concentrationsinfitfile = False
 
-        # Extract/save concentrations
+        # Extract/calculate + save concentrations
         if self._concentrations and 'concentrations' not in result:
+            # TODO: 'concentrations' not in result, when does this happend and should we pop it????
             result, concentrations = self._concentrationsFromResult(fitresult, result)
-        if self.fitConcFile and concentrations is not None and not concentrationsinfitfile:
+        if self.fitConcFile and concentrations is not None and not concentrationsInFitFile:
             self._updateConcFile(concentrations, filename, key)
 
         # Digest fit result when not already digested
@@ -628,7 +640,7 @@ class McaAdvancedFitBatch(object):
                 result = self.mcafit.digestresult(outfile=fitfile,
                                                   info=info)
             if fitfile:
-                if concentrations and not concentrationsinfitfile:
+                if concentrations and not concentrationsInFitFile:
                     self._updateFitFile(concentrations, fitfile)
                 self._updateFitFileList(fitfile)
         else:
@@ -695,13 +707,7 @@ class McaAdvancedFitBatch(object):
                 #just images
                 fitresult = self.mcafit.startfit(digest=0)
         except:
-            print("Error fitting file with output = %s: %s)" %\
-                    (filename, sys.exc_info()[1]))
-            if self.mcafit.config['fit'].get("strategyflag", False):
-                config = self.__configList[self.__currentConfig]
-                print("Restoring fitconfiguration")
-                self.mcafit = ClassMcaTheory.McaTheory(config)
-                self.mcafit.enableOptimizedLinearFit()
+            self._restoreFitConfig(filename)
         return fitresult, result, concentrations
 
     def _concentrationsFromResult(self, fitresult, result):
@@ -782,20 +788,23 @@ class McaAdvancedFitBatch(object):
 
     def _allocateMemoryFit(self, result, concentrations):
         outbuffer = self.outbuffer
+
+        # Fit parameters and their uncertainties
         nFree = len(result['groups'])
         imageShape = self.__nrows, self.__ncols
         paramShape = nFree, self.__nrows, self.__ncols
         dtypeResult = numpy.float32
         outbuffer['parameter_names'] = result['groups']
         outbuffer.allocateMemory('parameters',
-                                    shape=paramShape,
-                                    dtype=dtypeResult,
-                                    attrs={'units':'counts'})
+                                 shape=paramShape,
+                                 dtype=dtypeResult,
+                                 attrs={'units':'counts'})
         outbuffer.allocateMemory('uncertainties',
-                                    shape=paramShape,
-                                    dtype=dtypeResult,
-                                    attrs={'units':'counts'})
+                                 shape=paramShape,
+                                 dtype=dtypeResult,
+                                 attrs={'units':'counts'})
 
+        # Concentrations
         if self._concentrations:
             if 'mmolar' in concentrations:
                 concentration_key = 'molarconcentrations'
@@ -820,6 +829,7 @@ class McaAdvancedFitBatch(object):
                                      dtype=dtypeResult,
                                      attrs=concentration_attrs)
 
+        # Model ,residuals, chisq ,...
         if outbuffer.save_diagnostics:
             xdata0 = self.mcafit.xdata0.flatten().astype(numpy.int32)  # channels
             xdata = self.mcafit.xdata.flatten().astype(numpy.int32)  # channels after limits
@@ -840,18 +850,20 @@ class McaAdvancedFitBatch(object):
                                      fill_value=-1,
                                      dtype=dtypeResult)
             outaxes = False
-            fitmodel = outbuffer.allocateH5('model',
-                                            nxdata='fit',
-                                            shape=stackShape,
-                                            dtype=dtypeResult,
-                                            chunks=True,
-                                            fill_value=0,
-                                            attrs={'units':'counts'})
-            idx = [slice(None)]*fitmodel.ndim
-            idx[mcaIndex] = slice(0, iXMin)
-            fitmodel[tuple(idx)] = numpy.nan
-            idx[mcaIndex] = slice(iXMax, None)
-            fitmodel[tuple(idx)] = numpy.nan
+            if outbuffer.saveFit:
+                fitmodel = outbuffer.allocateH5('model',
+                                                nxdata='fit',
+                                                shape=stackShape,
+                                                dtype=dtypeResult,
+                                                chunks=True,
+                                                fill_value=0,
+                                                attrs={'units':'counts'})
+                idx = [slice(None)]*fitmodel.ndim
+                idx[mcaIndex] = slice(0, iXMin)
+                fitmodel[tuple(idx)] = numpy.nan
+                idx[mcaIndex] = slice(iXMax, None)
+                fitmodel[tuple(idx)] = numpy.nan
+                self._mcaIdx = slice(iXMin, iXMax)
             if outbuffer.saveData:
                 outaxes = True
                 outbuffer.allocateH5('data',
@@ -873,14 +885,15 @@ class McaAdvancedFitBatch(object):
                 stackAxesNames = ['dim{}'.format(i) for i in range(len(stackShape))]
                 dataAxes = [(name, numpy.arange(n, dtype=dtypeResult), {})
                             for name, n in zip(stackAxesNames, stackShape)]
-                # MCA axis: use energy and add channels as extra (unused) axis
-                # result['energy']: only fitted range
-                zero = result['fittedpar'][result['parameters'].index('Zero')]
-                gain = result['fittedpar'][result['parameters'].index('Gain')]
-                xenergy = zero + gain*xdata0
-                stackAxesNames[mcaIndex] = 'energy'
-                dataAxes[mcaIndex] = 'energy', xenergy.astype(dtypeResult), {'units': 'keV'}
-                dataAxes.append(('channels', xdata0.astype(numpy.int32), {}))
+                mcacfg = result['config']['detector']
+                linear = result['config']["fit"]["linearfitflag"]
+                if linear or (mcacfg['fixedzero'] and mcacfg['fixedgain']):
+                    zero = result['fittedpar'][result['parameters'].index('Zero')]
+                    gain = result['fittedpar'][result['parameters'].index('Gain')]
+                    xenergy = zero + gain*xdata0
+                    stackAxesNames[mcaIndex] = 'energy'
+                    dataAxes[mcaIndex] = 'energy', xenergy.astype(dtypeResult), {'units': 'keV'}
+                    dataAxes.append(('channels', xdata0.astype(numpy.int32), {}))
                 outbuffer['dataAxesUsed'] = tuple(stackAxesNames)
                 outbuffer['dataAxes'] = tuple(dataAxes)
 
@@ -888,11 +901,13 @@ class McaAdvancedFitBatch(object):
         outbuffer = self.outbuffer
         if outbuffer is None:
             return
+        # Fit parameters and their uncertainties
         output = outbuffer['parameters']
         outputs = outbuffer['uncertainties']
         for i, group in enumerate(outbuffer['parameter_names']):
             output[i, self.__row, self.__col] = result[group]['fitarea']
             outputs[i, self.__row, self.__col] = result[group]['sigmaarea']
+        # Concentrations
         if self._concentrations:
             output = outbuffer[self._concentration_key]
             for i, name in enumerate(outbuffer[self._concentration_names]):
@@ -902,8 +917,19 @@ class McaAdvancedFitBatch(object):
                     output[i, self.__row, self.__col] = concentrations[layer][self.__conKey][group]
                 else:
                     output[i, self.__row, self.__col] = concentrations[self.__conKey][tmp[0]]
+        # Diagnostics: model, residuals, chisq ,...
         if outbuffer.save_diagnostics:
             outbuffer['Chisq'][self.__row, self.__col] = result['chisq']
+            idx = self.__row, self.__col, self._mcaIdx
+            if outbuffer.saveFit:
+                output = outbuffer['model']
+                output[idx] = result['yfit']
+            if outbuffer.saveData:
+                output = outbuffer['data']
+                output[idx] = result['ydata']
+            if outbuffer.saveResiduals:
+                output = outbuffer['residuals']
+                output[idx] = result['yfit'] - result['ydata']
 
     def _obsoleteOutputFit(self, result, concentrations, filename):
         if self.outbuffer is None:
@@ -1057,19 +1083,10 @@ class McaAdvancedFitBatch(object):
         if ffile is None:
             ffile = os.path.splitext(self._rootname)[0]
             ffile = self.os_path_join(self.imgDir,ffile)
+        suffix = self._nameSuffix()
         if not self.roiFit:
-            if (self.fileStep > 1) or (self.mcaStep > 1):
-                trailing = "_filestep_%02d_mcastep_%02d" % ( self.fileStep,
-                                                             self.mcaStep )
-            else:
-                trailing = ""
             #speclabel = "#L row  column"
             speclabel = "row  column"
-            if self.chunk is None:
-                suffix = ".edf"
-            else:
-                suffix = "_%06d_partial.edf" % self.chunk
-
             iterationList = self.__peaks * 1
             iterationList += ['chisq']
             if self._concentrations:
@@ -1079,13 +1096,13 @@ class McaAdvancedFitBatch(object):
                     a,b = peak.split()
                     speclabel +="  %s" % (a+"-"+b)
                     speclabel +="  s(%s)" % (a+"-"+b)
-                    edfname = ffile +"_"+a+"_"+b+trailing+suffix
+                    edfname = ffile +"_"+a+"_"+b+suffix+".edf"
                 elif peak in self.__concentrationsKeys:
                     speclabel +="  %s" % peak.replace(" ","-")
-                    edfname = ffile +"_"+peak.replace(" ","_")+trailing+suffix
+                    edfname = ffile +"_"+peak.replace(" ","_")+suffix+".edf"
                 elif peak == 'chisq':
                     speclabel +="  %s" % (peak)
-                    edfname = ffile +"_"+peak+trailing+suffix
+                    edfname = ffile +"_"+peak+suffix+".edf"
                 else:
                     print("Unhandled peak name: %s. Not saved." % peak)
                     continue
@@ -1108,10 +1125,7 @@ class McaAdvancedFitBatch(object):
                 edfout = None
                 self.savedImages.append(edfname)
             #save specfile format
-            if self.chunk is None:
-                specname = ffile+trailing+".dat"
-            else:
-                specname = ffile+trailing+"_%06d_partial.dat" % self.chunk
+            specname = ffile+suffix+".dat"
             if os.path.exists(specname):
                 try:
                     os.remove(specname)
@@ -1119,7 +1133,7 @@ class McaAdvancedFitBatch(object):
                     pass
             specfile=open(specname,'w+')
             #specfile.write('\n')
-            #specfile.write('#S 1  %s\n' % (file+trailing))
+            #specfile.write('#S 1  %s\n' % (file+suffix))
             #specfile.write('#N %d\n' % (len(self.__peaks)+2))
             specfile.write('%s\n' % speclabel)
             specline=""
@@ -1150,11 +1164,7 @@ class McaAdvancedFitBatch(object):
                 grouptext = group.replace(" ","_")
                 for roi in self._ROIimages[group].keys():
                     #roitext = roi.replace(" ","-")
-                    if (self.fileStep > 1) or (self.mcaStep > 1):
-                        edfname = ffile+"_"+grouptext+("_%04deVROI_filestep_%02d_mcastep_%02d.edf" % (self.roiWidth,
-                                                                    self.fileStep, self.mcaStep ))
-                    else:
-                        edfname = ffile+"_"+grouptext+("_%04deVROI.edf" % self.roiWidth)
+                    edfname = ffile+"_"+grouptext+suffix+'.edf'
                     dirname = os.path.dirname(edfname)
                     if not os.path.exists(dirname):
                         try:
