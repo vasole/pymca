@@ -304,10 +304,10 @@ class OutputBuffer(object):
         Initialize NXprocess on enter and close/cleanup on exit
         """
         fileName = self.filename('.h5')
-        existed = [False]*3
+        existed = [False]*3  # h5file, nxentry, nxprocess
         existed[0] = os.path.exists(fileName)
         with NexusUtils.nxRoot(fileName, mode='a') as f:
-            # Open/overwrite NXprocess: root/entry/process
+            # Open/overwrite NXprocess: h5file::/entry/process
             entryname = self.fileEntry
             existed[1] = entryname in f
             entry = NexusUtils.nxEntry(f, entryname)
@@ -318,11 +318,11 @@ class OutputBuffer(object):
                 if update:
                     _logger.debug('edit {}'.format(path))
                 elif self.overwrite:
-                    _logger.warning('overwriting {}'.format(path))
+                    _logger.warning('overwriting {}::{}'.format(fileName, path))
                     del entry[procname]
                     existed[2] = False
                 else:
-                    raise RuntimeError('{} already exists'.format(path))
+                    raise RuntimeError('{}::{} already exists'.format(fileName, path))
             self._nxprocess = NexusUtils.nxProcess(entry, procname)
             try:
                 with self._h5DatasetContext(f):
