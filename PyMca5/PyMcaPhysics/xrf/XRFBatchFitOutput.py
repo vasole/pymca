@@ -64,10 +64,10 @@ class OutputBuffer(object):
             ...
             outbuffer.save()
 
-        :param str outputDir:
-        :param str outputRoot:
-        :param str fileEntry:
-        :param str fileProcess:
+        :param str outputDir: default: current working directory
+        :param str outputRoot: default: "IMAGES"
+        :param str fileEntry: default: "images"
+        :param str fileProcess: default: "xrf_fit"
         :param saveResiduals:
 -       :param saveFit:
 -       :param saveData:

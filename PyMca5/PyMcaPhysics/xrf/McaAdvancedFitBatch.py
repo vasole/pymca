@@ -115,7 +115,10 @@ class McaAdvancedFitBatch(object):
     def _initOutputBuffer(self):
         if self.outbuffer is None:
             self.outbuffer = OutputBuffer(outputDir=self.outputdir,
+                                          outputRoot=self._rootname,
+                                          fileEntry=self._rootname,
                                           overwrite=self.overwrite,
+                                          h5=True, edf=True, dat=True,
                                           suffix=self._outputSuffix())
         self.outbuffer['configuration'] = self.mcafit.getConfiguration()
 
@@ -130,25 +133,27 @@ class McaAdvancedFitBatch(object):
             suffix += "_%06d_partial" % self.chunk
         return suffix
 
-    def setFileList(self,filelist=None):
+    def setFileList(self, filelist=None):
         self._rootname = ""
         if filelist is None:
             filelist = []
         if type(filelist) not in [type([]), type((2,))]:
             filelist = [filelist]
-        self._filelist=filelist
+        self._filelist = filelist
         if len(filelist):
             if type(filelist[0]) is not numpy.ndarray:
                 self._rootname = self.getRootName(filelist)
 
-    def getRootName(self,filelist=None):
-        if filelist is None:filelist = self._filelist
+    def getRootName(self, filelist=None):
+        if filelist is None:
+            filelist = self._filelist
         first = os.path.basename(filelist[ 0])
-        last  = os.path.basename(filelist[-1])
-        if first == last:return os.path.splitext(first)[0]
-        name1,ext1 = os.path.splitext(first)
-        name2,ext2 = os.path.splitext(last )
-        i0=0
+        last = os.path.basename(filelist[-1])
+        if first == last:
+            return os.path.splitext(first)[0]
+        name1, ext1 = os.path.splitext(first)
+        name2, ext2 = os.path.splitext(last)
+        i0 = 0
         for i in range(len(name1)):
             if i >= len(name2):
                 break
@@ -157,7 +162,7 @@ class McaAdvancedFitBatch(object):
             else:
                 break
         i0 = i
-        for i in range(i0,len(name1)):
+        for i in range(i0, len(name1)):
             if i >= len(name2):
                 break
             elif name1[i] != name2[i]:
@@ -166,19 +171,20 @@ class McaAdvancedFitBatch(object):
                 break
         i1 = i
         if i1 > 0:
-            delta=1
+            delta = 1
             while (i1-delta):
-                if (last[(i1-delta)] in ['0', '1', '2',
+                if (last[i1-delta] in ['0', '1', '2',
                                         '3', '4', '5',
                                         '6', '7', '8',
                                         '9']):
                     delta = delta + 1
                 else:
-                    if delta > 1: delta = delta -1
+                    if delta > 1:
+                        delta = delta - 1
                     break
-            rootname = name1[0:]+"_to_"+last[(i1-delta):]
+            rootname = name1[0:]+"_to_"+name2[(i1-delta):]
         else:
-            rootname = name1[0:]+"_to_"+last[0:]
+            rootname = name1[0:]+"_to_"+name2[0:]
         return rootname
 
     @property
@@ -214,8 +220,7 @@ class McaAdvancedFitBatch(object):
         self.__row = self.fileBeginOffset - 1
         self.__stack = None
         self.listfile = None
-
-        with self.outbuffer._bufferContext(update=False):
+        with self.outbuffer.saveContext():
             start = 0+self.fileBeginOffset
             stop = len(self._filelist)-start
             for i in range(start, stop, self.fileStep):
@@ -651,8 +656,12 @@ class McaAdvancedFitBatch(object):
             fitresult, result, concentrations = self._fitMca(filename)
 
         # Extract/calculate + save concentrations
-        if self._concentrations and 'concentrations' not in result:
-            # TODO: 'concentrations' not in result, when does this happend and should we pop it????
+        if result:
+            # TODO: concentrationsInResult, when does this happend and should we pop it????
+            concentrationsInResult = 'concentrations' not in result
+        else:
+            concentrationsInResult = False
+        if self._concentrations and concentrationsInResult:
             result, concentrations = self._concentrationsFromResult(fitresult, result)
         if self.fitConcFile and concentrations is not None and not concentrationsInFitFile:
             self._updateConcFile(concentrations, filename, key)
@@ -785,7 +794,7 @@ class McaAdvancedFitBatch(object):
         if self.counter:
             self.listfile.write(',\n'+outfile)
         else:
-            name = os.path.splitext(self._rootname)[0]+"_fitfilelist.py"
+            name = self._rootname +"_fitfilelist.py"
             name = self.os_path_join(self.outputdir,name)
             try:
                 os.remove(name)
@@ -1077,8 +1086,7 @@ class McaAdvancedFitBatch(object):
     def _obsoleteSaveImage(self,ffile=None):
         self.savedImages=[]
         if ffile is None:
-            ffile = os.path.splitext(self._rootname)[0]
-            ffile = self.os_path_join(self.imgDir,ffile)
+            ffile = self.os_path_join(self.imgDir, self._rootname)
         suffix = self._outputSuffix()
         if not self.roiFit:
             #speclabel = "#L row  column"
