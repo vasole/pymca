@@ -144,6 +144,7 @@ def parseFile(filename):
     return info, data
 
 def isFsmFile(filename):
+    isSupported = False
     try:
         if not hasattr(filename, "seek"):
             fid = open(filename, mode='rb')
