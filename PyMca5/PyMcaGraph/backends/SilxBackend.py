@@ -41,6 +41,7 @@ class SilxBackend(PlotWidget):
     def __init__(self, *var, **kw):
         PlotWidget.__init__(self, *var, **kw)
         # No context menu by default, execute zoomBack on right click
+        print("CALLED!!!!!!!!!")
         plotArea = self.getWidgetHandle()
         plotArea.setContextMenuPolicy(qt.Qt.CustomContextMenu)
         plotArea.customContextMenuRequested.connect(self._zoomBack)
