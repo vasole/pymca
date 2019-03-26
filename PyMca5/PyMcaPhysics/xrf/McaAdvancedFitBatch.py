@@ -105,6 +105,11 @@ class McaAdvancedFitBatch(object):
         if outbuffer is None and fitimages:
             outbuffer = OutputBuffer(outputDir=outputdir, overwrite=overwrite)
         self.outbuffer = outbuffer
+
+    @property
+    def useExistingFiles(self):
+        return not self.overwrite
+
         self.outbuffer['configuration'] = self.mcafit.getConfiguration()
         
         # TODO: to be removed
@@ -175,6 +180,17 @@ class McaAdvancedFitBatch(object):
         else:
             rootname = name1[0:]+"_to_"+last[0:]
         return rootname
+
+    @property
+    def outputdir(self):
+        return self._outputdir
+    
+    @outputdir.setter
+    def outputdir(self, value):
+        if value is None:
+            value = os.getcwd()
+        self._outputdir = value
+        self._obsoleteUpdateImgDir()
 
     def setOutputDir(self,outputdir=None):
         if outputdir is None:

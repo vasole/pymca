@@ -34,6 +34,7 @@ import time
 import subprocess
 import logging
 
+
 from PyMca5.PyMcaGui import PyMcaQt as qt
 
 QTVERSION = qt.qVersion()
@@ -60,6 +61,23 @@ from PyMca5.PyMcaCore import PyMcaBatchBuildOutput
 
 ROIWIDTH = 100.
 _logger = logging.getLogger(__name__)
+
+
+def moduleRunCmd(modulePath):
+    modulePath = os.path.abspath(modulePath)
+    if not os.path.exists(modulePath):
+        return None
+    sysExecutable = sys.executable
+    bootstrap = os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', '..', 'bootstrap.py')
+    bootstrap = os.path.abspath(bootstrap)
+    if (os.path.isfile(bootstrap)):
+        modulePath, ext = os.path.splitext(modulePath)
+        parts = [p for p in modulePath.split(os.path.sep) if p][::-1]
+        parts = parts[:parts.index('PyMca5')+1][::-1]
+        module = '.'.join(parts)
+        return '{} "{}" -m {}'.format(sysExecutable, bootstrap, module)
+    else:
+        return '{} "{}"'.format(sysExecutable, modulePath)
 
 
 class McaBatchGUI(qt.QWidget):
@@ -875,17 +893,9 @@ class McaBatchGUI(qt.QWidget):
                 if not os.path.exists(rgb):
                     rgb = None
             else:
-                myself = os.path.join(dirname, "PyMcaBatch.py")
-                viewer = os.path.join(dirname, "EdfFileSimpleViewer.py")
-                rgb    = os.path.join(dirname, "PyMcaPostBatch.py")
-                if not os.path.exists(viewer):
-                    viewer = None
-                else:
-                    viewer = '%s "%s"' % (sys.executable, viewer)
-                if not os.path.exists(rgb):
-                    rgb    = None
-                else:
-                    rgb = '%s "%s"' % (sys.executable, rgb)
+                myself = moduleRunCmd(os.path.join(dirname, "PyMcaBatch.py"))
+                viewer = moduleRunCmd(os.path.join(dirname, "EdfFileSimpleViewer.py"))
+                rgb    = moduleRunCmd(os.path.join(dirname, "PyMcaPostBatch.py"))
             self._rgb = rgb
             if type(self.configFile) == type([]):
                 cfglistfile = os.path.join(self.outputDir, "tmpfile.cfg")
@@ -901,8 +911,8 @@ class McaBatchGUI(qt.QWidget):
                                                                     listfile,concentrations,
                                                                     table, fitfiles, selectionFlag)
                 else:
-                    cmd = '%s "%s" --cfglistfile="%s" --outdir="%s" --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile="%s" --concentrations=%d --table=%d --fitfiles=%d --selection=%d' %\
-                                                                  (sys.executable,myself,
+                    cmd = '%s --cfglistfile="%s" --outdir="%s" --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile="%s" --concentrations=%d --table=%d --fitfiles=%d --selection=%d' %\
+                                                                  (myself,
                                                                     cfglistfile,
                                                                     self.outputDir, overwrite,
                                                                     filestep, mcastep,
@@ -911,8 +921,8 @@ class McaBatchGUI(qt.QWidget):
                                                                     table, fitfiles, selectionFlag)
             else:
                 if not frozen:
-                    cmd = '%s "%s" --cfg="%s" --outdir="%s" --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile="%s" --concentrations=%d --table=%d --fitfiles=%d --selection=%d' % \
-                                                                  (sys.executable, myself,
+                    cmd = '%s --cfg="%s" --outdir="%s" --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile="%s" --concentrations=%d --table=%d --fitfiles=%d --selection=%d' % \
+                                                                  (myself,
                                                                     self.configFile,
                                                                     self.outputDir, overwrite,
                                                                     filestep, mcastep,
@@ -1020,25 +1030,16 @@ class McaBatchGUI(qt.QWidget):
                 if not os.path.exists(rgb):
                     rgb = None
             else:
-                myself = os.path.join(dirname, "PyMcaBatch.py")
-                if not os.path.exists(os.path.join(dirname, myself)):
+                if not os.path.exists(os.path.join(dirname, "PyMcaBatch.py")):
                     dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
-                    if not os.path.exists(os.path.join(dirname, myself)):
+                    if not os.path.exists(os.path.join(dirname, "PyMcaBatch.py")):
                         text  = 'Cannot locate PyMcaBatch.py file.\n'
                         qt.QMessageBox.critical(self, "ERROR",text)
                         self.raise_()
                         return
-                myself  = sys.executable+" "+ os.path.join(dirname, myself)
-                viewer = os.path.join(dirname, "EdfFileSimpleViewer.py")
-                rgb    = os.path.join(dirname, "PyMcaPostBatch.py")
-                if not os.path.exists(viewer):
-                    viewer = None
-                else:
-                    viewer = '%s "%s"' % (sys.executable, viewer)
-                if not os.path.exists(rgb):
-                    rgb    = None
-                else:
-                    rgb = '%s "%s"' % (sys.executable, rgb)
+                myself  = moduleRunCmd(os.path.join(dirname, "PyMcaBatch.py"))
+                viewer = moduleRunCmd(os.path.join(dirname, "EdfFileSimpleViewer.py"))
+                rgb    = moduleRunCmd(os.path.join(dirname, "PyMcaPostBatch.py"))
 
             self._rgb = rgb
             if type(self.configFile) == type([]):
@@ -1228,7 +1229,7 @@ class McaBatch(McaAdvancedFitBatch.McaAdvancedFitBatch, qt.QThread):
                  'filename':filename,
                  'key':key,
                  'info':info,
-                 'outputdir':self._outputdir,
+                 'outputdir':self.outputdir,
                  'useExistingFiles':self.useExistingFiles,
                  'roifit':self.roiFit,
                  'event':'onMca'}
@@ -1630,7 +1631,7 @@ class McaBatchWindow(qt.QWidget):
                 # directory level with exe files
                 myself   = os.path.join(dirname, "EdfFileSimpleViewer")
             else:
-                myself  = sys.executable+" "+os.path.join(dirname, "EdfFileSimpleViewer.py")
+                myself  = moduleRunCmd(os.path.join(dirname, "EdfFileSimpleViewer.py"))
             cmd = "%s %s &" % (myself, filelist)
             _logger.debug("cmd = %s", cmd)
             os.system(cmd)
