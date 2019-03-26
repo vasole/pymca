@@ -46,8 +46,8 @@ _logger = logging.getLogger(__name__)
 class OutputBuffer(object):
 
     def __init__(self, outputDir=None, outputRoot=None, fileEntry=None,
-                 fileProcess=None, tif=False, edf=False, csv=False, h5=True,
-                 saveResiduals=False, saveFit=False, saveData=False,
+                 fileProcess=None, saveResiduals=False, saveFit=False, saveData=False,
+                 tif=False, edf=False, csv=False, dat=False, h5=True,
                  overwrite=False, suffix=None):
         """
         XRf batch fitting output buffer, to be saved as:
@@ -74,6 +74,7 @@ class OutputBuffer(object):
         :param bool tif:
         :param bool edf:
         :param bool csv:
+        :param bool dat:
         :param bool h5:
         :param bool overwrite:
         """
@@ -89,6 +90,7 @@ class OutputBuffer(object):
         self.tif = tif
         self.edf = edf
         self.csv = csv
+        self.dat = dat
         self.h5 = h5
         self.saveResiduals = saveResiduals
         self.saveFit = saveFit
@@ -160,8 +162,17 @@ class OutputBuffer(object):
         self._csv = value
 
     @property
+    def dat(self):
+        return self._dat
+    
+    @dat.setter
+    def dat(self, value):
+        self._check_bufferContext()
+        self._dat = value
+
+    @property
     def cfg(self):
-        return self.csv or self.edf or self.tif
+        return self.csv or self.dat or self.edf or self.tif
 
     @property
     def saveData(self):
@@ -381,7 +392,7 @@ class OutputBuffer(object):
         Save result of XRF batch fitting. Preferrable use saveContext instead.
         HDF5 NXprocess will be updated, not overwritten.
         """
-        if not (self.tif or self.edf or self.csv or self.h5):
+        if not (self.tif or self.edf or self.csv or self.dat or self.h5):
             _logger.warning('fit result not saved (no output format specified)')
             return
         if not self.outputDir:
@@ -391,7 +402,7 @@ class OutputBuffer(object):
         _logger.debug('Saving results ...')
 
         with self._bufferContext(update=True):
-            if self.tif or self.edf or self.csv:
+            if self.tif or self.edf or self.csv or self.dat:
                 self._saveSingle()
             if self.h5:
                 self._saveH5()
@@ -457,6 +468,11 @@ class OutputBuffer(object):
             fileName = self.filename('.csv')
             self._checkOverwrite(fileName)
             ArraySave.save2DArrayListAsASCII(imageList, fileName, csv=True,
+                                             labels=imageNames)
+        if self.dat:
+            fileName = self.filename('.dat')
+            self._checkOverwrite(fileName)
+            ArraySave.save2DArrayListAsASCII(imageList, fileName, csv=False,
                                              labels=imageNames)
         if self.tif:
             for label, image in zip(imageNames, imageList):
