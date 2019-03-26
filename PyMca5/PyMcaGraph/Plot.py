@@ -142,9 +142,8 @@ class Plot(PlotBase.PlotBase):
                 from .backends.GLUTOpenGLBackend import GLUTOpenGLBackend as be
             elif lowerCaseString in ["osmesa", "mesa"]:
                 from .backends.OSMesaGLBackend import OSMesaGLBackend as be
-            elif lowerCaseString in ["silx-gl", "silxgl"]:
-                from .backends.SilxBackend import SilxBackend as be
-            elif lowerCaseString in ["silx"]:
+            elif lowerCaseString in ["silx", "silx-mpl", "silxmpl",
+                                     "silx-gl", "silxgl"]:
                 from .backends.SilxBackend import SilxBackend as be
             else:
                 raise ValueError("Backend not understood %s" % backend)
