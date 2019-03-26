@@ -177,8 +177,11 @@ class HtmlIndex(object):
         for file in filelist:
             text +="<a href=""%s"">%s</a><BR>" % (file, file.split(".html")[0])
         text += self.getFooter()
-        file=open(index,'wb')
-        file.write(text)
+        file = open(index,'wb')
+        try:
+            file.write(text)
+        except TypeError:
+            file.write(text.encode('utf-8'))
         file.close()
 
     def buildRecursiveIndex(self, directory = None):
@@ -200,8 +203,11 @@ class HtmlIndex(object):
             link     = "./"+file+"/index.html"
             text +="<a href=""%s"">%s</a><BR>" % (link, fileroot)
         text += self.getFooter()
-        file=open(index,'wb')
-        file.write(text)
+        file = open(index,'wb')
+        try:
+            file.write(text)
+        except TypeError:
+            file.write(text.encode('utf-8'))
         file.close()
 
 
@@ -212,5 +218,3 @@ if __name__ == "__main__":
         print("Trying /tmp/HTML as input directory")
         a = HtmlIndex('/tmp/HTML')
     a.buildRecursiveIndex()
-
-
