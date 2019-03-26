@@ -102,24 +102,24 @@ class McaAdvancedFitBatch(object):
             self._toolConversion = ConcentrationsTool.ConcentrationsConversion()
 
         self.overwrite = overwrite
-        if outbuffer is None and fitimages:
-            outbuffer = OutputBuffer(outputDir=outputdir, overwrite=overwrite)
+        self._nosave = bool(nosave)  # TODO: to be removed
+        self.outputdir = outputdir
         self.outbuffer = outbuffer
+        if fitimages:
+            self._initOutputBuffer()
 
     @property
     def useExistingFiles(self):
         return not self.overwrite
 
+    def _initOutputBuffer(self):
+        if self.outbuffer is None:
+            self.outbuffer = OutputBuffer(outputDir=self.outputdir,
+                                          overwrite=self.overwrite,
+                                          suffix=self._outputSuffix())
         self.outbuffer['configuration'] = self.mcafit.getConfiguration()
-        
-        # TODO: to be removed
-        self.setOutputDir(outputdir)
-        if nosave:
-            self._nosave = True
-        else:
-            self._nosave = False
 
-    def _nameSuffix(self):
+    def _outputSuffix(self):
         suffix = ""
         if self.roiFit:
             suffix = "_%04deVROI" % self.roiWidth 
@@ -192,10 +192,22 @@ class McaAdvancedFitBatch(object):
         self._outputdir = value
         self._obsoleteUpdateImgDir()
 
-    def setOutputDir(self,outputdir=None):
-        if outputdir is None:
-            outputdir = os.getcwd()
-        self._outputdir = outputdir
+    def _obsoleteUpdateImgDir(self):
+        if self._nosave:
+            self.imgDir = None
+        else:
+            imgdir = self.os_path_join(self.outputdir, "IMAGES")
+            if not os.path.exists(imgdir):
+                try:
+                    os.mkdir(imgdir)
+                except:
+                    print("I could not create directory %s" %\
+                          imgdir)
+                    return
+            elif not os.path.isdir(imgdir):
+                print("%s does not seem to be a valid directory" %\
+                      imgdir)
+            self.imgDir = imgdir
 
     def processList(self):
         self.counter = 0
@@ -244,7 +256,7 @@ class McaAdvancedFitBatch(object):
                         self.listfile.close()
                 # Save results as .edf and .dat
                 if self.__ncols and (not self._nosave):
-                        self._obsoleteSaveImage()  # TODO: remove
+                    self._obsoleteSaveImage()  # TODO: remove
         self.onEnd()
 
     def getFileHandle(self,inputfile):
@@ -297,7 +309,6 @@ class McaAdvancedFitBatch(object):
 
     def onMca(self,mca,nmca, filename=None, key=None, info=None):
         pass
-
 
     def onEnd(self):
         pass
@@ -459,9 +470,7 @@ class McaAdvancedFitBatch(object):
                                                     info=infoDict)
                 else:
                     if info['NbMca'] > 0:
-                        if self.outbuffer is None:
-                            self.outbuffer = OutputBuffer(outputDir=self._outputdir,
-                                                          overwrite=self.overwrite)
+                        self._initOutputBuffer()
                         numberofmca = info['NbMca'] * 1
                         self.__ncols = len(range(0+self.mcaOffset,
                                              numberofmca,self.mcaStep))
@@ -534,7 +543,7 @@ class McaAdvancedFitBatch(object):
                             #print "remaining = ",(time.time()-e0) * (info['NbMca'] - i)
 
     def __getFitFile(self, filename, key, createdirs=False):
-        fitdir = self.os_path_join(self._outputdir, "FIT")
+        fitdir = self.os_path_join(self.outputdir, "FIT")
         if createdirs:
             if not os.path.exists(fitdir):
                 try:
@@ -562,7 +571,7 @@ class McaAdvancedFitBatch(object):
             con_extension = "_%06d_partial_concentrations.txt" % self.chunk
         else:
             con_extension = "_concentrations.txt"
-        cfitfilename = self.os_path_join(self._outputdir,
+        cfitfilename = self.os_path_join(self.outputdir,
                                 self._rootname + con_extension)
         if self.counter == 0:
             if os.path.exists(cfitfilename):
@@ -619,7 +628,7 @@ class McaAdvancedFitBatch(object):
         fitfile = self.__getFitFile(filename,key,createdirs=False)
         if os.path.exists(fitfile) and not self.overwrite:
             # Load MCA data when needed
-            if outbuffer.save_diagnostics:
+            if outbuffer.saveDiagnostics:
                 if not self._attemptMcaLoad(x, y, filename, info=info):
                     return
             # Load result from FIT file
@@ -777,7 +786,7 @@ class McaAdvancedFitBatch(object):
             self.listfile.write(',\n'+outfile)
         else:
             name = os.path.splitext(self._rootname)[0]+"_fitfilelist.py"
-            name = self.os_path_join(self._outputdir,name)
+            name = self.os_path_join(self.outputdir,name)
             try:
                 os.remove(name)
             except:
@@ -835,7 +844,7 @@ class McaAdvancedFitBatch(object):
             outbuffer[concentration_names] = concentrations['groups']
             layerlist = concentrations['layerlist']
             if len(layerlist) > 1:
-                outbuffer[concentration_names] += ["%s-%s" % (group, layer)
+                outbuffer[concentration_names] += [(group, layer)
                                                     for group in concentrations['groups']
                                                     for layer in layerlist]
             nConcFree = len(concentrations['groups'])
@@ -846,7 +855,7 @@ class McaAdvancedFitBatch(object):
                                      attrs=concentration_attrs)
 
         # Model ,residuals, chisq ,...
-        if outbuffer.save_diagnostics:
+        if outbuffer.saveDiagnostics:
             xdata0 = self.mcafit.xdata0.flatten().astype(numpy.int32)  # channels
             xdata = self.mcafit.xdata.flatten().astype(numpy.int32)  # channels after limits
             stackShape = self.__nrows, self.__ncols, len(xdata0)
@@ -927,14 +936,13 @@ class McaAdvancedFitBatch(object):
         if self._concentrations:
             output = outbuffer[self._concentration_key]
             for i, name in enumerate(outbuffer[self._concentration_names]):
-                tmp = name.split('-')
-                if len(tmp) == 2:
-                    group, layer = tmp
+                if isinstance(name, tuple):
+                    group, layer = name
                     output[i, self.__row, self.__col] = concentrations[layer][self.__conKey][group]
                 else:
-                    output[i, self.__row, self.__col] = concentrations[self.__conKey][tmp[0]]
+                    output[i, self.__row, self.__col] = concentrations[self.__conKey][name]
         # Diagnostics: model, residuals, chisq ,...
-        if outbuffer.save_diagnostics:
+        if outbuffer.saveDiagnostics:
             outbuffer['Chisq'][self.__row, self.__col] = result['chisq']
             idx = self.__row, self.__col, self._mcaIdx
             if outbuffer.saveFit:
@@ -952,20 +960,6 @@ class McaAdvancedFitBatch(object):
             return
         if self.__ncols is not None:
             if not self.counter:
-                if not self._nosave:
-                    imgdir = self.os_path_join(self._outputdir,"IMAGES")
-                    if not os.path.exists(imgdir):
-                        try:
-                            os.mkdir(imgdir)
-                        except:
-                            print("I could not create directory %s" %\
-                                    imgdir)
-                            return
-                    elif not os.path.isdir(imgdir):
-                        print("%s does not seem to be a valid directory" %\
-                                imgdir)
-                    self.imgDir = imgdir
-
                 self.__peaks  = []
                 self.__images = {}
                 self.__sigmas = {}
@@ -1030,9 +1024,9 @@ class McaAdvancedFitBatch(object):
 
     def _allocateMemoryRoiFit(self, result):
         outbuffer = self.outbuffer
-        parameter_names = ["%s-%s" % (group, roi)
-                                           for group in result.keys()
-                                           for roi in result[group].keys()]
+        parameter_names = [(group, roi)
+                           for group, rois in result.items()
+                           for roi in rois]
         nFree = len(parameter_names)
         paramShape = nFree, self.__nrows, self.__ncols
         dtypeResult = numpy.float32
@@ -1047,33 +1041,19 @@ class McaAdvancedFitBatch(object):
         if outbuffer is None:
             return
         output = outbuffer['parameters']
-        for i, name in enumerate(outbuffer.parameter_names):
-            group, roi = name.split('-')
+        for i, name in enumerate(outbuffer['parameter_names']):
+            group, roi = name
             output[i, self.__row, self.__col] = result[group][roi]
 
     def _obsoleteOutputRoiFit(self, result, filename):
         if self.outbuffer is None:
             return
         if self.__ncols is not None:
-            self.imgDir=None
             if not self.counter:
-                if not self._nosave:
-                    imgdir = self.os_path_join(self._outputdir,"IMAGES")
-                    if not os.path.exists(imgdir):
-                        try:
-                            os.mkdir(imgdir)
-                        except:
-                            print("I could not create directory %s" %\
-                                    imgdir)
-                            return
-                    elif not os.path.isdir(imgdir):
-                        print("%s does not seem to be a valid directory" %\
-                                imgdir)
-                    self.imgDir = imgdir
-                self.__ROIpeaks  = []
+                self.__ROIpeaks = []
                 self._ROIimages = {}
                 if not self.__stack:
-                    self.__nrows   = len(self._filelist)
+                    self.__nrows = len(self._filelist)
                 for group in result.keys():
                     self.__ROIpeaks.append(group)
                     self._ROIimages[group]={}
@@ -1099,7 +1079,7 @@ class McaAdvancedFitBatch(object):
         if ffile is None:
             ffile = os.path.splitext(self._rootname)[0]
             ffile = self.os_path_join(self.imgDir,ffile)
-        suffix = self._nameSuffix()
+        suffix = self._outputSuffix()
         if not self.roiFit:
             #speclabel = "#L row  column"
             speclabel = "row  column"

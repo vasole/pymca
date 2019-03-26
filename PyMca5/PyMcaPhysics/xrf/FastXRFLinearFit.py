@@ -179,7 +179,7 @@ class FastXRFLinearFit(object):
                                                 shape=paramShape,
                                                 dtype=dtypeResult,
                                                 attrs={'units':'counts'})
-            if outbuffer.save_diagnostics:
+            if outbuffer.saveDiagnostics:
                 nFreeParameters = outbuffer.allocateMemory('nFreeParameters',
                                                 shape=imageShape,
                                                 fill_value=nFree,
@@ -892,7 +892,7 @@ class FastXRFLinearFit(object):
                 counter += 1
                 if len(concentrationsResult['layerlist']) > 1:
                     for layer in concentrationsResult['layerlist']:
-                        outputDict['massfraction_names'].append("%s-%s" % (group, layer))
+                        outputDict['massfraction_names'].append((group, layer))
                         massFractions[counter] = liveTimeFactor * \
                                 results[nFreeBkg+i] * \
                                 (concentrationsResult[layer]['mass fraction'][group] / \
@@ -928,7 +928,7 @@ class FastXRFLinearFit(object):
                 counter += 1
                 if len(concentrationsResult['layerlist']) > 1:
                     for layer in concentrationsResult['layerlist']:
-                        outputDict['massfraction_names'].append("%s-%s" % (group, layer))
+                        outputDict['massfraction_names'].append((group, layer))
                         massFractions[counter][goodI] = (results[nFreeBkg+i][goodI]/(tmp + (tmp == 0))) *\
                             ((referenceArea/fitresult['result'][group]['fitarea']) *\
                             (concentrationsResult[layer]['mass fraction'][group]))

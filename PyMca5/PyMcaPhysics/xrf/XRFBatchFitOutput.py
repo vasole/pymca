@@ -191,7 +191,7 @@ class OutputBuffer(object):
         self._saveResiduals = value
 
     @property
-    def save_diagnostics(self):
+    def saveDiagnostics(self):
         return self.saveResiduals or self.saveFit
 
     @property
@@ -404,31 +404,32 @@ class OutputBuffer(object):
         return self._getNames('parameter_names', '{}')
 
     @property
-    def uncertainties_names(self):
+    def uncertainty_names(self):
         return self._getNames('parameter_names', 's({})')
 
     @property
     def massfraction_names(self):
-        return self._getNames('massfraction_names', 'w({}){}')
+        return self._getNames('massfraction_names', 'w({}){}', n=2)
 
     @property
     def molarconcentration_names(self):
-        return self._getNames('molarconcentration_names', 'mM({}){}')
+        return self._getNames('molarconcentration_names', 'mM({}){}', n=2)
 
-    def _getNames(self, names, fmt):
+    def _getNames(self, names, fmt, n=1):
         labels = self.get(names, None)
         if not labels:
             return []
         out = []
-        for label in labels:
-            label = label.split('-')
-            name = label[0].replace(" ", "-")
-            if len(label) > 1:
-                layer = '-'.join(label[1:])
-            else:
-                layer = ''
-            label = fmt.format(name, layer)
-            out.append(label)
+        for args in labels:
+            if not isinstance(args, tuple):
+                args = (args,)
+            nempty = n-len(args)
+            if nempty > 0:
+                args = args + ('',)*nempty
+            elif nempty < 0:
+                raise RuntimeError('{} cannot be represented as {}'
+                                   .format(args, repr(fmt)))
+            out.append(fmt.format(*args))
         return out
 
     def _saveSingle(self):
@@ -436,16 +437,16 @@ class OutputBuffer(object):
 
         imageNames = []
         imageList = []
-        lst = [('parameter_names', 'parameters', '{}'),
-               ('parameter_names', 'uncertainties', 's({})'),
-               ('massfraction_names', 'massfractions', 'w({}){}'),
-               ('molarconcentration_names', 'molarconcentrations', 'mM({}){}')]
-        for names, key, fmt in lst:
+        lst = [('parameter_names', 'parameters'),
+               ('uncertainty_names', 'uncertainties'),
+               ('massfraction_names', 'massfractions'),
+               ('molarconcentration_names', 'molarconcentrations')]
+        for names, key in lst:
             images = self.get(key, None)
             if images is not None:
                 for img in images:
                     imageList.append(img)
-                imageNames += self._getNames(names, fmt)
+                imageNames += getattr(self, names)
         NexusUtils.mkdir(self.outroot_localfs)
         if self.edf:
             fileName = self.filename('.edf')
@@ -459,13 +460,10 @@ class OutputBuffer(object):
                                              labels=imageNames)
         if self.tif:
             for label, image in zip(imageNames, imageList):
-                if label.startswith("s("):
-                    suffix = "_s" + label[2:-1]
-                elif label.startswith("w("):
-                    suffix = "_w" + label[2:-1]
-                else:
-                    suffix = "_" + label
-                fileName = self.filename('.tif', suffix=suffix)
+                label = label.replace('(', '')
+                label = label.replace(')', '')
+                label = label.replace(' ', '_')
+                fileName = self.filename('.tif', suffix="_" + label)
                 self._checkOverwrite(fileName)
                 ArraySave.save2DArrayListAsMonochromaticTiff([image],
                                                              fileName,
@@ -502,8 +500,11 @@ class OutputBuffer(object):
             if images is not None:
                 attrs = self._attrs.get(key, {})
                 attrs['interpretation'] = 'image'
-                signals = [(label, {'data': img, 'chunks': True}, attrs)
-                           for label, img in zip(self[names], images)]
+                signals = []
+                for label, img in zip(self[names], images):
+                    if isinstance(label, tuple):
+                        label = ' '.join(label)
+                    signals.append((label, {'data': img, 'chunks': True}, attrs))
                 data = NexusUtils.nxData(nxresults, key)
                 NexusUtils.nxDataAddSignals(data, signals)
                 NexusUtils.markDefault(data)
