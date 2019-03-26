@@ -160,6 +160,9 @@ class SilxBackend(PlotWidget):
         elif self.getInteractiveMode()['mode'] == 'zoom':
             self.setInteractiveMode('select')
 
+    def setActiveCurveColor(self, *var, **kw):
+        return PlotWidget.setActiveCurveStyle(self, *var, **kw)
+
 if __name__ == "__main__":
     def callback(ddict):
         print("RECEIVED = ", ddict)
