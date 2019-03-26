@@ -1130,7 +1130,6 @@ class McaBatchGUI(qt.QWidget):
 
     def _pollProcessList(self):
         processList = self._processList
-        rgb         = self._rgb
         if QTVERSION < '4.0.0':rgb = None
         n = 0
         for process in processList:
@@ -1143,33 +1142,36 @@ class McaBatchGUI(qt.QWidget):
             self.raiseW()
         else:
             self.raise_()
+        self._mergeProcessResults()
 
+    def _mergeProcessResults():
         work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(os.path.join(self.outputDir, "IMAGES"))
-        if _logger.getEffectiveLevel() == logging.DEBUG:
-            a, b, c = work.buildOutput(delete=False)
-        else:
-            a, b, c = work.buildOutput(delete=True)
-        if len(a):
+        delete = _logger.getEffectiveLevel() != logging.DEBUG
+        edfoutlist, datoutlist = work.buildOutput(delete=delete)
+
+        # Load in EDF viewer
+        if edfoutlist:
             if self._edfSimpleViewer is None:
                 self._edfSimpleViewer = EdfFileSimpleViewer.EdfFileSimpleViewer()
-            self._edfSimpleViewer.setFileList(a)
+            self._edfSimpleViewer.setFileList(edfoutlist)
             self._edfSimpleViewer.show()
+
+        # Load in RGB correlator
+        rgb = self._rgb
         if rgb is not None:
-            if len(b):
+            if datoutlist:
                 if sys.platform == "win32":
                     try:
-                        subprocess.Popen('%s "%s"' % (rgb, b[0]),
+                        subprocess.Popen('%s "%s"' % (rgb, datoutlist[0]),
                                          cwd = os.getcwd())
                     except UnicodeEncodeError:
-                        subprocess.Popen(('%s "%s"' % (rgb, b[0])).encode(sys.getfilesystemencoding()),
+                        subprocess.Popen(('%s "%s"' % (rgb, datoutlist[0])).encode(sys.getfilesystemencoding()),
                                          cwd = os.getcwd())
                 else:
-                    os.system("%s %s &" % (rgb, b[0]))
+                    os.system("%s %s &" % (rgb, datoutlist[0]))
+                    
         work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(self.outputDir)
-        if _logger.getEffectiveLevel() == logging.DEBUG:
-            work.buildOutput(delete=False)
-        else:
-            work.buildOutput(delete=True)
+        work.buildOutput(delete=delete)
 
 class McaBatch(McaAdvancedFitBatch.McaAdvancedFitBatch, qt.QThread):
     def __init__(self, parent, configfile, filelist=None, outputdir = None,

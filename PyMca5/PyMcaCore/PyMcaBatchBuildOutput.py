@@ -40,14 +40,18 @@ _logger = logging.getLogger(__name__)
 
 class PyMcaBatchBuildOutput(object):
     def __init__(self, inputdir=None, outputdir=None):
-        self.inputDir  = inputdir
+        self.inputDir = inputdir
         self.outputDir = outputdir
 
     def buildOutput(self, inputdir=None, outputdir=None, delete=None):
-        if inputdir is None:inputdir = self.inputDir
-        if inputdir is None:inputdir = os.getcwd()
-        if outputdir is None: outputdir = self.outputDir
-        if outputdir is None: outputdir = inputdir
+        if inputdir is None:
+            inputdir = self.inputDir
+        if inputdir is None:
+            inputdir = os.getcwd()
+        if outputdir is None:
+            outputdir = self.outputDir
+        if outputdir is None:
+            outputdir = inputdir
         if delete is None:
             if outputdir == inputdir:
                 delete = True
@@ -56,22 +60,47 @@ class PyMcaBatchBuildOutput(object):
         partialedflist = []
         partialdatlist = []
         partialconlist = []
+        partialh5list = []
         for filename in allfiles:
-            if filename.endswith('000000_partial.edf'):partialedflist.append(filename)
-            elif filename.endswith('000000_partial.dat'):partialdatlist.append(filename)
-            elif filename.endswith('000000_partial_concentrations.txt'):partialconlist.append(filename)
+            if filename.endswith('000000_partial.edf'):
+                partialedflist.append(filename)
+            elif filename.endswith('000000_partial.dat'):
+                partialdatlist.append(filename)
+            elif filename.endswith('000000_partial_concentrations.txt'):
+                partialconlist.append(filename)
+            elif filename.endswith('000000_partial.h5'):
+                partialh5list.append(filename)
+        edfoutlist = self._mergePartialEdf(inputdir, outputdir, delete, partialedflist)
+        datoutlist = self._mergePartialDat(inputdir, outputdir, delete, partialdatlist)
+        conoutlist = self._mergePartialCon(inputdir, outputdir, delete, partialconlist)
+        h5outlist = self._mergePartialH5(inputdir, outputdir, delete, partialh5list)
+        return edfoutlist, datoutlist
 
-        #IMAGES
+    def _mergePartialH5(self, inputdir, outputdir, delete, partialedflist):
+        h5outlist = []
+        for filename in partialedflist:
+            _logger.debug("Dealing with filename %s", filename)
+            h5list = self.getIndexedFileList(os.path.join(inputdir, filename))
+            # TODO: the actual merging
+            if delete:
+                for filename in h5list:
+                    try:
+                        os.remove(filename)
+                    except:
+                        _logger.warning("Cannot delete file %s" % filename)
+        return h5outlist
+
+    def _mergePartialEdf(self, inputdir, outputdir, delete, partialedflist):
         edfoutlist = []
         for filename in partialedflist:
             _logger.debug("Dealing with filename %s", filename)
             edflist = self.getIndexedFileList(os.path.join(inputdir, filename))
             i = 0
             for edfname in edflist:
-                edf    = EdfFile.EdfFile(edfname, access='rb', fastedf = 0)
+                edf = EdfFile.EdfFile(edfname, access='rb', fastedf = 0)
                 nImages = edf.GetNumImages()
                 #get always the last image
-                data0   = edf.GetData(nImages-1)
+                data0 = edf.GetData(nImages-1)
                 data0[data0<0] = 0
                 if i == 0:
                     header = edf.GetHeader(0)
@@ -80,14 +109,14 @@ class PyMcaBatchBuildOutput(object):
                     data += data0
                 del edf
                 i += 1
-            edfname  = filename.replace('_000000_partial.edf',".edf")
+            edfname = filename.replace('_000000_partial.edf', ".edf")
             edfoutname = os.path.join(outputdir, edfname)
             _logger.debug("Dealing with output filename %s", edfoutname)
             if os.path.exists(edfoutname):
                 _logger.debug("Output file already exists, trying to delete it")
                 os.remove(edfoutname)
-            edfout   = EdfFile.EdfFile(edfoutname, access="wb")
-            edfout.WriteImage (header , data, Append=0)
+            edfout = EdfFile.EdfFile(edfoutname, access="wb")
+            edfout.WriteImage(header , data, Append=0)
             del edfout
             edfoutlist.append(edfoutname)
             if delete:
@@ -96,8 +125,9 @@ class PyMcaBatchBuildOutput(object):
                         os.remove(filename)
                     except:
                         _logger.warning("Cannot delete file %s" % filename)
+        return edfoutlist
 
-        #DAT IMAGES
+    def _mergePartialDat(self, inputdir, outputdir, delete, partialdatlist):
         datoutlist = []
         for filename in partialdatlist:
             edflist = self.getIndexedFileList(os.path.join(inputdir, filename))
@@ -144,15 +174,15 @@ class PyMcaBatchBuildOutput(object):
             if delete:
                 for filename in edflist:
                     os.remove(filename)
+        return datoutlist
 
-
-        #CONCENTRATIONS
-        outconlist = []
+    def _mergePartialCon(self, inputdir, outputdir, delete, partialconlist):
+        conoutlist = []
         for filename in partialconlist:
             edflist = self.getIndexedFileList(os.path.join(inputdir, filename))
             i = 0
             for edfname in edflist:
-                edf    = open(edfname, 'rb')
+                edf = open(edfname, 'rb')
                 if i == 0:
                     outfilename = os.path.join(outputdir, filename.replace("_000000_partial",""))
                     if os.path.exists(outfilename):
@@ -164,11 +194,11 @@ class PyMcaBatchBuildOutput(object):
                 edf.close()
                 i += 1
             outfile.close()
-            outconlist.append(outfilename)
+            conoutlist.append(outfilename)
             if delete:
                 for filename in edflist:
                     os.remove(filename)
-        return edfoutlist, datoutlist, outconlist
+        return conoutlist
 
     def getIndexedFileList(self, filename, begin=None,end=None, skip = None, fileindex=0):
         name = os.path.basename(filename)
