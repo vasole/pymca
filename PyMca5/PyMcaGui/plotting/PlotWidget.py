@@ -106,7 +106,7 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
                          legends=False, callback=None, **kw):
         self._panWithArrowKeys = False
         QtGui.QMainWindow.__init__(self, parent)
-        Plot.Plot.__init__(self, parent, backend=backend)
+        Plot.Plot.__init__(self, parent=self, backend=backend)
         if parent is not None:
             # behave as a widget
             self.setWindowFlags(QtCore.Qt.Widget)
