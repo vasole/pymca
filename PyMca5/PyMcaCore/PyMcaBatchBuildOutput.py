@@ -34,6 +34,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
 import numpy
 import logging
+import shutil
 from PyMca5.PyMcaIO import EdfFile
 
 _logger = logging.getLogger(__name__)
@@ -57,148 +58,124 @@ class PyMcaBatchBuildOutput(object):
                 delete = True
         _logger.debug("delete option = %s", delete)
         allfiles = os.listdir(inputdir)
-        partialedflist = []
-        partialdatlist = []
-        partialconlist = []
-        partialh5list = []
+        partialList = {'edf': {'ext': '.edf', 'list': []},
+                       'dat': {'ext': '.dat', 'list': []},
+                       'h5': {'ext': '.h5', 'list': []},
+                       'cfg': {'ext': '.cfg', 'list': []},
+                       'conc': {'ext': '_concentrations.txt', 'list': []}
+                       }
         for filename in allfiles:
-            if filename.endswith('000000_partial.edf'):
-                partialedflist.append(filename)
-            elif filename.endswith('000000_partial.dat'):
-                partialdatlist.append(filename)
-            elif filename.endswith('000000_partial_concentrations.txt'):
-                partialconlist.append(filename)
-            elif filename.endswith('000000_partial.h5'):
-                partialh5list.append(filename)
-        edfoutlist = self._mergePartialEdf(inputdir, outputdir, delete, partialedflist)
-        datoutlist = self._mergePartialDat(inputdir, outputdir, delete, partialdatlist)
-        conoutlist = self._mergePartialCon(inputdir, outputdir, delete, partialconlist)
-        h5outlist = self._mergePartialH5(inputdir, outputdir, delete, partialh5list)
-        return edfoutlist, datoutlist, h5outlist
+            for key, value in partialList.items():
+                if filename.endswith('000000_partial' + value['ext']):
+                    value['list'].append(filename)
+        print(allfiles)
+        outListH5 = self._merge(inputdir, outputdir, delete,
+                                partialList['h5']['list'], self._mergeH5)
+        outListEdf = self._merge(inputdir, outputdir, delete,
+                                 partialList['edf']['list'], self._mergeEdf)
+        outListDat = self._merge(inputdir, outputdir, delete,
+                                 partialList['dat']['list'], self._mergeDat)
+        self._merge(inputdir, outputdir, delete,
+                    partialList['conc']['list'], self._mergeConcTxt)
+        self._merge(inputdir, outputdir, delete,
+                    partialList['cfg']['list'], self._mergeCfg)
+        return outListEdf, outListDat, outListH5
 
-    def _mergePartialH5(self, inputdir, outputdir, delete, partialedflist):
-        h5outlist = []
-        for filename in partialedflist:
-            _logger.debug("Dealing with filename %s", filename)
-            h5list = self.getIndexedFileList(os.path.join(inputdir, filename))
-            # TODO: the actual merging
+    def _merge(self, inputdir, outputdir, delete, partialList, func):
+        outList = []
+        for filename in partialList:
+            parts = self.getIndexedFileList(os.path.join(inputdir, filename))
+            outfilename = parts[0].replace("_000000_partial", "")
+            _logger.debug("Merging %s (%d parts)", filename, len(parts))
+            outfilename = os.path.join(outputdir, outfilename)
+            func(parts, outfilename)
+            outList.append(outfilename)
             if delete:
-                for filename in h5list:
+                for filename in parts:
                     try:
                         os.remove(filename)
                     except:
                         _logger.warning("Cannot delete file %s" % filename)
-        return h5outlist
+        return outList
 
-    def _mergePartialEdf(self, inputdir, outputdir, delete, partialedflist):
-        edfoutlist = []
-        for filename in partialedflist:
-            _logger.debug("Dealing with filename %s", filename)
-            edflist = self.getIndexedFileList(os.path.join(inputdir, filename))
-            i = 0
-            for edfname in edflist:
-                edf = EdfFile.EdfFile(edfname, access='rb', fastedf = 0)
-                nImages = edf.GetNumImages()
-                #get always the last image
-                data0 = edf.GetData(nImages-1)
-                data0[data0<0] = 0
-                if i == 0:
-                    header = edf.GetHeader(0)
-                    data = data0.copy()
+    def _mergeH5(self, parts, outfilename):
+        pass
+
+    def _mergeCfg(self, parts, outfilename):
+        # They should be all the same so pick the first one
+        shutil.copy(parts[0], outfilename)
+        return outfilename
+
+    def _mergeEdf(self, parts, outfilename):
+        for i, edfname in enumerate(parts):
+            edf = EdfFile.EdfFile(edfname, access='rb', fastedf=0)
+            nImages = edf.GetNumImages()
+            if i == 0:
+                images = [edf.GetData(j).copy() for j in range(nImages)]
+                headers = [edf.GetHeader(j) for j in range(nImages)]
+            else:
+                for j, img in enumerate(images):
+                    img += edf.GetData(j)
+            del edf
+        if os.path.exists(outfilename):
+            _logger.debug("Output file already exists, trying to delete it")
+            os.remove(outfilename)
+        edfout = EdfFile.EdfFile(outfilename, access="ab")
+        for i, (img, header) in enumerate(zip(images, headers)):
+            edfout.WriteImage(header, img, Append=i > 0)
+        del edfout
+
+    def _mergeDat(self, parts, outfilename):
+        first = True
+        for specname in parts:
+            f = open(specname)
+            lines = f.readlines()
+            f.close()
+            j = 1
+            while not len(lines[-j].replace("\n", "")):
+                j += 1
+            if first:
+                first = False
+                labels = lines[0].replace("\n", "").split("  ")
+                nlabels = len(labels)
+                nrows = len(lines) - j
+                data = numpy.zeros((nrows, nlabels), numpy.double)
+                inputdata = numpy.zeros((nrows, nlabels), numpy.double)
+            for i in range(nrows):
+                inputdata[i, :] = [float(x) for x in lines[i+1].split()]
+            data += inputdata
+        if os.path.exists(outfilename):
+            os.remove(outfilename)
+        outfile = open(outfilename, 'w+')
+        outfile.write('%s' % lines[0])
+        line = ""
+        for row in range(nrows):
+            #line = "%d" % inputdata[row, 0]
+            for col in range(nlabels):
+                if col == 0:
+                    line += "%d" % inputdata[row, col]
+                elif col == 1:
+                    line += "  %d" % inputdata[row, col]
                 else:
-                    data += data0
-                del edf
-                i += 1
-            edfname = filename.replace('_000000_partial.edf', ".edf")
-            edfoutname = os.path.join(outputdir, edfname)
-            _logger.debug("Dealing with output filename %s", edfoutname)
-            if os.path.exists(edfoutname):
-                _logger.debug("Output file already exists, trying to delete it")
-                os.remove(edfoutname)
-            edfout = EdfFile.EdfFile(edfoutname, access="wb")
-            edfout.WriteImage(header , data, Append=0)
-            del edfout
-            edfoutlist.append(edfoutname)
-            if delete:
-                for filename in edflist:
-                    try:
-                        os.remove(filename)
-                    except:
-                        _logger.warning("Cannot delete file %s" % filename)
-        return edfoutlist
+                    line += "  %g" % data[row, col]
+            line += "\n"
+            outfile.write("%s" % line)
+            line = ""
+        outfile.write("\n")
+        outfile.close()
 
-    def _mergePartialDat(self, inputdir, outputdir, delete, partialdatlist):
-        datoutlist = []
-        for filename in partialdatlist:
-            edflist = self.getIndexedFileList(os.path.join(inputdir, filename))
-            first = True
-            for edfname in edflist:
-                f = open(edfname)
-                lines = f.readlines()
-                f.close()
-                j = 1
-                while (not len( lines[-j].replace("\n",""))):
-                       j += 1
-                if first:
-                    first = False
-                    labels = lines[0].replace("\n","").split("  ")
-                    nlabels = len(labels)
-                    nrows = len(lines) - j
-
-                    data      = numpy.zeros((nrows, nlabels), numpy.double)
-                    inputdata = numpy.zeros((nrows, nlabels), numpy.double)
-                chisqIndex = labels.index('chisq')
-                for i in range(nrows):
-                    inputdata[i, :] = [float(x) for x in lines[i+1].split()]
-                    if inputdata[i, chisqIndex] < 0.0:
-                        inputdata[i, chisqIndex] = 0.0
-                data += inputdata
-            outfilename = os.path.join(outputdir, filename.replace("_000000_partial",""))
-            if os.path.exists(outfilename):
-                os.remove(outfilename)
-            outfile=open(outfilename,'w+')
-            outfile.write('%s' % lines[0])
-            line=""
-            for row in range(nrows):
-                #line = "%d" % inputdata[row, 0]
-                for col in range(nlabels):
-                    if   col == 0 : line += "%d" % inputdata[row, col]
-                    elif   col == 1 : line += "  %d" % inputdata[row, col]
-                    else: line += "  %g" % data[row, col]
-                line += "\n"
-                outfile.write("%s" % line)
-                line =""
-            outfile.write("\n")
-            outfile.close()
-            datoutlist.append(outfilename)
-            if delete:
-                for filename in edflist:
-                    os.remove(filename)
-        return datoutlist
-
-    def _mergePartialCon(self, inputdir, outputdir, delete, partialconlist):
-        conoutlist = []
-        for filename in partialconlist:
-            edflist = self.getIndexedFileList(os.path.join(inputdir, filename))
-            i = 0
-            for edfname in edflist:
-                edf = open(edfname, 'rb')
-                if i == 0:
-                    outfilename = os.path.join(outputdir, filename.replace("_000000_partial",""))
-                    if os.path.exists(outfilename):
-                        os.remove(outfilename)
-                    outfile = open(outfilename,'wb')
-                lines = edf.readlines()
-                for line in lines:
-                    outfile.write(line)
-                edf.close()
-                i += 1
-            outfile.close()
-            conoutlist.append(outfilename)
-            if delete:
-                for filename in edflist:
-                    os.remove(filename)
-        return conoutlist
+    def _mergeConcTxt(self, parts, outfilename):
+        for i, infilename in enumerate(parts):
+            ffile = open(infilename, 'rb')
+            if i == 0:
+                if os.path.exists(outfilename):
+                    os.remove(outfilename)
+                outfile = open(outfilename, 'wb')
+            lines = ffile.readlines()
+            for line in lines:
+                outfile.write(line)
+            ffile.close()
+        outfile.close()
 
     def getIndexedFileList(self, filename, begin=None,end=None, skip = None, fileindex=0):
         name = os.path.basename(filename)

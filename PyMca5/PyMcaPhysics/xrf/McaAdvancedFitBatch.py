@@ -628,14 +628,16 @@ class McaAdvancedFitBatch(object):
                 self._obsoleteOutputRoiFit(result, filename)
             if self.outbuffer and self.__ncols and not self.counter:
                 self._allocateMemoryRoiFit(result)
-            self._saveRoiFitResult(result)
+            if self.__nrows:
+                self._saveRoiFitResult(result)
         else:
             result, concentrations = self.__fitOneMca(x,y,filename,key,info=info)
             if self._obsolete:
                 self._obsoleteOutputFit(result, concentrations, filename)
             if self.outbuffer and self.__ncols and not self.counter:
                 self._allocateMemoryFit(result, concentrations)
-            self._saveFitResult(result, concentrations)
+            if self.__nrows:
+                self._saveFitResult(result, concentrations)
         self.counter += 1
 
     def __fitOneMca(self,x,y,filename,key,info=None):
@@ -843,6 +845,8 @@ class McaAdvancedFitBatch(object):
     def _allocateMemoryFit(self, result, concentrations):
         if not self.__stack:
             self.__nrows = len(range(0, len(self._filelist), self.fileStep))
+        if not self.__nrows:
+            return
         if self._concentrations:
             layerlist = concentrations['layerlist']
             if 'mmolar' in concentrations:
@@ -1068,8 +1072,9 @@ class McaAdvancedFitBatch(object):
 
     def _allocateMemoryRoiFit(self, result):
         if self.__ncols is not None and not self.__stack:
-                self.__nrows = len(self._filelist)
-
+            self.__nrows = len(self._filelist)
+        if not self.__nrows:
+            return
         outbuffer = self.outbuffer
 
         # Fit parameters (ROIs)

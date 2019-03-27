@@ -797,6 +797,7 @@ class McaBatchGUI(qt.QWidget):
             selectionFlag = False
         else:
             selectionFlag = True
+        debugFlag = int(_logger.getEffectiveLevel() == logging.DEBUG)
 
         if self._edfSimpleViewer is not None:
             self._edfSimpleViewer.close()
@@ -902,42 +903,42 @@ class McaBatchGUI(qt.QWidget):
                 self.genListFile(cfglistfile, config=True)
                 dirname  = os.path.dirname(dirname)
                 if frozen:
-                    cmd = '"%s" --cfglistfile="%s" --outdir="%s" --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile="%s" --concentrations=%d --table=%d --fitfiles=%d --selection=%d' %\
+                    cmd = '"%s" --cfglistfile="%s" --outdir="%s" --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile="%s" --concentrations=%d --table=%d --fitfiles=%d --selection=%d --debug=%d' %\
                                                                   (myself,
                                                                     cfglistfile,
                                                                     self.outputDir, overwrite,
                                                                     filestep, mcastep,
                                                                     html,htmlindex,
                                                                     listfile,concentrations,
-                                                                    table, fitfiles, selectionFlag)
+                                                                    table, fitfiles, selectionFlag, debugFlag)
                 else:
-                    cmd = '%s --cfglistfile="%s" --outdir="%s" --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile="%s" --concentrations=%d --table=%d --fitfiles=%d --selection=%d' %\
+                    cmd = '%s --cfglistfile="%s" --outdir="%s" --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile="%s" --concentrations=%d --table=%d --fitfiles=%d --selection=%d --debug=%d' %\
                                                                   (myself,
                                                                     cfglistfile,
                                                                     self.outputDir, overwrite,
                                                                     filestep, mcastep,
                                                                     html,htmlindex,
                                                                     listfile,concentrations,
-                                                                    table, fitfiles, selectionFlag)
+                                                                    table, fitfiles, selectionFlag, debugFlag)
             else:
                 if not frozen:
-                    cmd = '%s --cfg="%s" --outdir="%s" --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile="%s" --concentrations=%d --table=%d --fitfiles=%d --selection=%d' % \
+                    cmd = '%s --cfg="%s" --outdir="%s" --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile="%s" --concentrations=%d --table=%d --fitfiles=%d --selection=%d --debug=%d' % \
                                                                   (myself,
                                                                     self.configFile,
                                                                     self.outputDir, overwrite,
                                                                     filestep, mcastep,
                                                                     html,htmlindex,
                                                                     listfile,concentrations,
-                                                                    table, fitfiles, selectionFlag)
+                                                                    table, fitfiles, selectionFlag, debugFlag)
                 else:
-                    cmd = '"%s" --cfg="%s" --outdir="%s" --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile="%s" --concentrations=%d --table=%d --fitfiles=%d --selection=%d' % \
+                    cmd = '"%s" --cfg="%s" --outdir="%s" --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile="%s" --concentrations=%d --table=%d --fitfiles=%d --selection=%d --debug=%d' % \
                                                                   (myself,
                                                                     self.configFile,
                                                                     self.outputDir, overwrite,
                                                                     filestep, mcastep,
                                                                     html,htmlindex,
                                                                     listfile,concentrations,
-                                                                    table, fitfiles, selectionFlag)
+                                                                    table, fitfiles, selectionFlag, debugFlag)
             self.hide()
             qApp = qt.QApplication.instance()
             qApp.processEvents()
@@ -1045,18 +1046,18 @@ class McaBatchGUI(qt.QWidget):
             if type(self.configFile) == type([]):
                 cfglistfile = os.path.join(self.outputDir, "tmpfile.cfg")
                 self.genListFile(cfglistfile, config=True)
-                cmd = "%s --cfglistfile=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s  --concentrations=%d --table=%d --fitfiles=%d --selection=%d &" % \
+                cmd = "%s --cfglistfile=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s  --concentrations=%d --table=%d --fitfiles=%d --selection=%d --debug=%d &" % \
                                                     (myself,
                                                     cfglistfile,
                                                     self.outputDir, overwrite,
                                                     filestep, mcastep, html, htmlindex, listfile,
-                                                    concentrations, table, fitfiles, selectionFlag)
+                                                    concentrations, table, fitfiles, selectionFlag, debugFlag)
             else:
-                cmd = "%s --cfg=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s  --concentrations=%d --table=%d --fitfiles=%d  --selection=%d &" % \
+                cmd = "%s --cfg=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s  --concentrations=%d --table=%d --fitfiles=%d  --selection=%d --debug=%d &" % \
                                                    (myself, self.configFile,
                                                     self.outputDir, overwrite,
                                                     filestep, mcastep, html, htmlindex,
-                                                    listfile, concentrations, table, fitfiles, selectionFlag)
+                                                    listfile, concentrations, table, fitfiles, selectionFlag, debugFlag)
             _logger.debug("cmd = %s", cmd)
             if self.__splitBox.isChecked():
                 qApp = qt.QApplication.instance()
@@ -1067,7 +1068,8 @@ class McaBatchGUI(qt.QWidget):
                 for i in range(nbatches):
                     beginoffset = filechunk * i
                     endoffset   = len(self.fileList) - filechunk * (i+1)
-                    if (i+1) == nbatches:endoffset = 0
+                    if (i+1) == nbatches:
+                        endoffset = 0
                     cmd1 = cmd.replace("&", "") + \
                            " --filebeginoffset=%d --fileendoffset=%d --chunk=%d" % \
                             (beginoffset, endoffset, i)
@@ -1130,35 +1132,36 @@ class McaBatchGUI(qt.QWidget):
 
     def _pollProcessList(self):
         processList = self._processList
-        if QTVERSION < '4.0.0':rgb = None
         n = 0
         for process in processList:
             if process.poll() is None:
                 n += 1
-        if n > 0: return
+        if n > 0:
+            return
         self._timer.stop()
         self.show()
         if QTVERSION < '4.0.0':
             self.raiseW()
         else:
             self.raise_()
-        args = self._mergeProcessResults()
-        self._showProcessResults(*args)
+        #args = self._mergeProcessResults()
+        #self._showProcessResults(*args)
 
-    def _mergeProcessResults():
-        work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(self.outputDir)
-        delete = _logger.getEffectiveLevel() != logging.DEBUG
+    def _mergeProcessResults(self):
+        work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(inputdir=self.outputDir)
+        #delete = _logger.getEffectiveLevel() != logging.DEBUG
+        delete = False
         edfoutlist, datoutlist, h5outlist = work.buildOutput(delete=delete)
         for h5filename in h5outlist:
             # outputDir/filename.h5 -> look in outputDir/filename for .edf, .dat, ...
             subdir = os.path.splitext(os.path.basename(h5filename))[0]
-            outputdir = os.path.join(self.outputDir, subdir)
-            edfoutlist2, datoutlist2, h5outlist2 = work.buildOutput(outputdir=outputdir, delete=delete)
+            inputdir = os.path.join(self.outputDir, subdir)
+            edfoutlist2, datoutlist2, h5outlist2 = work.buildOutput(inputdir=inputdir, delete=delete)
             edfoutlist += edfoutlist2
             datoutlist += datoutlist2
         return edfoutlist, datoutlist
 
-    def _showProcessResults(edfoutlist, datoutlist):
+    def _showProcessResults(self, edfoutlist, datoutlist):
         # Load in EDF viewer
         if edfoutlist:
             if self._edfSimpleViewer is None:
@@ -1167,7 +1170,10 @@ class McaBatchGUI(qt.QWidget):
             self._edfSimpleViewer.show()
 
         # Load in RGB correlator
-        rgb = self._rgb
+        if QTVERSION < '4.0.0':
+            rgb = None
+        else:
+            rgb = self._rgb
         if datoutlist and rgb is not None:
             if sys.platform == "win32":
                 try:
@@ -1251,12 +1257,17 @@ class McaBatch(McaAdvancedFitBatch.McaAdvancedFitBatch, qt.QThread):
 
     def onEnd(self):
         _logger.debug("onEnd")
+        savedimages = []
+        if self.outbuffer is not None:
+            imageFile = self.outbuffer.filename('.edf')
+            if os.path.isfile(imageFile):
+                savedimages = [imageFile]
 
         ddict = {'event':'onEnd',
                  'filestep':self.fileStep,
                  'mcastep':self.mcaStep,
                  'chunk':self.chunk,
-                 'savedimages':self.savedImages}
+                 'savedimages':savedimages}
 
         if QTVERSION < '4.0.0':
             self.postEvent(self.parent, McaCustomEvent.McaCustomEvent(ddict))
@@ -1578,8 +1589,9 @@ class McaBatchWindow(qt.QWidget):
             self.pauseButton.hide()
             self.abortButton.setText("OK")
         if self.chunk is None:
-            if 'savedimages' in dict:
-                self.plotImages(dict['savedimages'])
+            savedimages = dict.get('savedimages', None)
+            if savedimages:
+                self.plotImages(savedimages)
         if self.html:
             if not self.__writingReport:
                 directory = os.path.join(self.outputdir,"HTML")
@@ -1607,7 +1619,6 @@ class McaBatchWindow(qt.QWidget):
 
     def onResume(self):
         pass
-
 
     def plotImages(self,imagelist):
         if (sys.platform == 'win32') or (sys.platform == 'darwin'):
@@ -1731,7 +1742,9 @@ def main():
         elif opt in ('--exitonend'):
             exitonend = int(arg)
 
-    logging.basicConfig(level=getLoggingLevel(opts))
+    level = getLoggingLevel(opts)
+    logging.basicConfig(level=level)
+    _logger.setLevel(level)
 
     if listfile is None:
         filelist=[]

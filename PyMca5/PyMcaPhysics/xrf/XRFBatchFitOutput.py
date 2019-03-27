@@ -484,6 +484,14 @@ class OutputBuffer(object):
                 for img in images:
                     imageList.append(img)
                 imageNames += getattr(self, names)
+        for name in ['Chisq']:
+            img = self.get(name, None)
+            if img is not None:
+                imageList.append(img)
+                imageNames.append(name)
+        if not imageNames:
+            return
+
         NexusUtils.mkdir(self.outroot_localfs)
         if self.edf:
             fileName = self.filename('.edf')
@@ -547,9 +555,10 @@ class OutputBuffer(object):
                     if isinstance(label, tuple):
                         label = ' '.join(label)
                     signals.append((label, {'data': img, 'chunks': True}, attrs))
-                data = NexusUtils.nxData(nxresults, key)
-                NexusUtils.nxDataAddSignals(data, signals)
-                NexusUtils.markDefault(data)
+                if signals:
+                    data = NexusUtils.nxData(nxresults, key)
+                    NexusUtils.nxDataAddSignals(data, signals)
+                    NexusUtils.markDefault(data)
         if 'parameters' in nxresults and 'uncertainties' in nxresults:
             NexusUtils.nxDataAddErrors(nxresults['parameters'], nxresults['uncertainties'])
 
