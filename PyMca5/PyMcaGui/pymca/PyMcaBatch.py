@@ -1142,13 +1142,23 @@ class McaBatchGUI(qt.QWidget):
             self.raiseW()
         else:
             self.raise_()
-        self._mergeProcessResults()
+        args = self._mergeProcessResults()
+        self._showProcessResults(*args)
 
     def _mergeProcessResults():
-        work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(os.path.join(self.outputDir, "IMAGES"))
+        work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(self.outputDir)
         delete = _logger.getEffectiveLevel() != logging.DEBUG
-        edfoutlist, datoutlist = work.buildOutput(delete=delete)
+        edfoutlist, datoutlist, h5outlist = work.buildOutput(delete=delete)
+        for h5filename in h5outlist:
+            # outputDir/filename.h5 -> look in outputDir/filename for .edf, .dat, ...
+            subdir = os.path.splitext(os.path.basename(h5filename))[0]
+            outputdir = os.path.join(self.outputDir, subdir)
+            edfoutlist2, datoutlist2, h5outlist2 = work.buildOutput(outputdir=outputdir, delete=delete)
+            edfoutlist += edfoutlist2
+            datoutlist += datoutlist2
+        return edfoutlist, datoutlist
 
+    def _showProcessResults(edfoutlist, datoutlist):
         # Load in EDF viewer
         if edfoutlist:
             if self._edfSimpleViewer is None:
@@ -1158,20 +1168,16 @@ class McaBatchGUI(qt.QWidget):
 
         # Load in RGB correlator
         rgb = self._rgb
-        if rgb is not None:
-            if datoutlist:
-                if sys.platform == "win32":
-                    try:
-                        subprocess.Popen('%s "%s"' % (rgb, datoutlist[0]),
-                                         cwd = os.getcwd())
-                    except UnicodeEncodeError:
-                        subprocess.Popen(('%s "%s"' % (rgb, datoutlist[0])).encode(sys.getfilesystemencoding()),
-                                         cwd = os.getcwd())
-                else:
-                    os.system("%s %s &" % (rgb, datoutlist[0]))
-                    
-        work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(self.outputDir)
-        work.buildOutput(delete=delete)
+        if datoutlist and rgb is not None:
+            if sys.platform == "win32":
+                try:
+                    subprocess.Popen('%s "%s"' % (rgb, datoutlist[0]),
+                                        cwd = os.getcwd())
+                except UnicodeEncodeError:
+                    subprocess.Popen(('%s "%s"' % (rgb, datoutlist[0])).encode(sys.getfilesystemencoding()),
+                                        cwd = os.getcwd())
+            else:
+                os.system("%s %s &" % (rgb, datoutlist[0]))
 
 class McaBatch(McaAdvancedFitBatch.McaAdvancedFitBatch, qt.QThread):
     def __init__(self, parent, configfile, filelist=None, outputdir = None,

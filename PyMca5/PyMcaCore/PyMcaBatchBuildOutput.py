@@ -74,7 +74,7 @@ class PyMcaBatchBuildOutput(object):
         datoutlist = self._mergePartialDat(inputdir, outputdir, delete, partialdatlist)
         conoutlist = self._mergePartialCon(inputdir, outputdir, delete, partialconlist)
         h5outlist = self._mergePartialH5(inputdir, outputdir, delete, partialh5list)
-        return edfoutlist, datoutlist
+        return edfoutlist, datoutlist, h5outlist
 
     def _mergePartialH5(self, inputdir, outputdir, delete, partialedflist):
         h5outlist = []

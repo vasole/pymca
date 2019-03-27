@@ -45,8 +45,9 @@ _logger = logging.getLogger(__name__)
 
 class OutputBuffer(object):
 
-    def __init__(self, outputDir=None, outputRoot=None, fileEntry=None,
-                 fileProcess=None, saveResiduals=False, saveFit=False, saveData=False,
+    def __init__(self, outputDir=None, 
+                 outputRoot=None, fileEntry=None, fileProcess=None, 
+                 saveResiduals=False, saveFit=False, saveData=False,
                  tif=False, edf=False, csv=False, dat=False, h5=True,
                  overwrite=False, suffix=None):
         """
@@ -133,6 +134,31 @@ class OutputBuffer(object):
             self._fileProcess = value
         else:
             self._fileProcess = 'xrf_fit'
+
+    @property
+    def extensions(self):
+        lst = []
+        if self.h5:
+            lst.append('.h5')
+        if self.dat:
+            lst.append('.dat')
+        if self.csv:
+            lst.append('.csv')
+        if self.tif:
+            lst.append('.tif')
+        if self.edf:
+            lst.append('.edf')
+        return lst
+
+    @extensions.setter
+    def extensions(self, lst):
+        for ext in lst:
+            if ext.startswith('.'):
+                attr = ext[1:]
+            else:
+                attr = ext
+            if hasattr(self, attr):
+                setattr(self, attr, True)
 
     @property
     def edf(self):

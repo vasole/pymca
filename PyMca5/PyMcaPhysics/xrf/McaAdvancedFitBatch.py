@@ -33,6 +33,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
 import time
+import logging
 import numpy
 from . import ClassMcaTheory
 from PyMca5.PyMcaCore import SpecFileLayer
@@ -54,12 +55,15 @@ from . import ConcentrationsTool
 from .XRFBatchFitOutput import OutputBuffer
 
 
+_logger = logging.getLogger(__name__)
+
+
 class McaAdvancedFitBatch(object):
 
     def __init__(self, initdict, filelist=None, outputdir=None,
                  roifit=False, roiwidth=100,
                  overwrite=1, filestep=1, mcastep=1,
-                 fitfiles=1, fitimages=1,
+                 fitfiles=0, fitimages=1,
                  concentrations=0, fitconcfile=1,
                  filebeginoffset=0, fileendoffset=0,
                  mcaoffset=0, chunk=None,
@@ -69,6 +73,7 @@ class McaAdvancedFitBatch(object):
         #that is not necessary, but it will be correctly implemented in
         #future releases
         self._lock = lock
+        self._obsolete = False  # obsolete output
 
         self.setFileList(filelist)
         self.__ncols = None
@@ -102,7 +107,8 @@ class McaAdvancedFitBatch(object):
             self._toolConversion = ConcentrationsTool.ConcentrationsConversion()
 
         self.overwrite = overwrite
-        self._nosave = bool(nosave)  # TODO: to be removed
+        if self._obsolete:
+            self._nosave = bool(nosave)  # TODO: to be removed
         self.outputdir = outputdir
         self.outbuffer = outbuffer
         if fitimages:
@@ -196,7 +202,8 @@ class McaAdvancedFitBatch(object):
         if value is None:
             value = os.getcwd()
         self._outputdir = value
-        self._obsoleteUpdateImgDir()
+        if self._obsolete:
+            self._obsoleteUpdateImgDir()
 
     def _obsoleteUpdateImgDir(self):
         if self._nosave:
@@ -207,11 +214,11 @@ class McaAdvancedFitBatch(object):
                 try:
                     os.mkdir(imgdir)
                 except:
-                    print("I could not create directory %s" %\
+                    _logger.error("I could not create directory %s" %\
                           imgdir)
                     return
             elif not os.path.isdir(imgdir):
-                print("%s does not seem to be a valid directory" %\
+                _logger.error("%s does not seem to be a valid directory" %\
                       imgdir)
             self.imgDir = imgdir
 
@@ -220,49 +227,56 @@ class McaAdvancedFitBatch(object):
         self.__row = self.fileBeginOffset - 1
         self.__stack = None
         self.listfile = None
-        with self.outbuffer.saveContext():
-            start = 0+self.fileBeginOffset
-            stop = len(self._filelist)-start
-            for i in range(start, stop, self.fileStep):
-                if not self.roiFit:
-                    if len(self.__configList) > 1:
-                        if i != 0:
-                            self.mcafit = ClassMcaTheory.McaTheory(self.__configList[i])
-                            self.__currentConfig = i
-                            # TODO: outbuffer does not support multiple configurations
-                self.mcafit.enableOptimizedLinearFit()
-
-                inputfile = self._filelist[i]
-                self.__row += 1  #should be plus fileStep?
-                self.onNewFile(inputfile, self._filelist)
-                self.file = self.getFileHandle(inputfile)
-                if self.pleaseBreak:
-                    break
-                if self.__stack is None:
-                    self.__stack = False
-                    if hasattr(self.file, "info"):
-                        if "SourceType" in self.file.info:
-                            if self.file.info["SourceType"] in\
-                            ["EdfFileStack", "HDF5Stack1D"]:
-                                self.__stack = True
-                if self.__stack:
-                    self.__processStack()
-                    if self._HDF5:
-                        # The complete stack has been analyzed
-                        break
-                else:
-                    self.__processOneFile()
-
-            if self.counter:
-                # Finish list of FIT files
-                if not self.roiFit and self.fitFiles and \
-                   self.listfile is not None:
-                        self.listfile.write(']\n')
-                        self.listfile.close()
-                # Save results as .edf and .dat
-                if self.__ncols and (not self._nosave):
-                    self._obsoleteSaveImage()  # TODO: remove
+        if self.outbuffer is None:
+            self._processList()
+        else:
+            with self.outbuffer.saveContext():
+                self._processList()
         self.onEnd()
+
+    def _processList(self):
+        start = 0+self.fileBeginOffset
+        stop = len(self._filelist)-start
+        for i in range(start, stop, self.fileStep):
+            if not self.roiFit:
+                if len(self.__configList) > 1:
+                    if i != 0:
+                        self.mcafit = ClassMcaTheory.McaTheory(self.__configList[i])
+                        self.__currentConfig = i
+                        # TODO: outbuffer does not support multiple configurations
+            self.mcafit.enableOptimizedLinearFit()
+
+            inputfile = self._filelist[i]
+            self.__row += 1  #should be plus fileStep?
+            self.onNewFile(inputfile, self._filelist)
+            self.file = self.getFileHandle(inputfile)
+            if self.pleaseBreak:
+                break
+            if self.__stack is None:
+                self.__stack = False
+                if hasattr(self.file, "info"):
+                    if "SourceType" in self.file.info:
+                        if self.file.info["SourceType"] in\
+                        ["EdfFileStack", "HDF5Stack1D"]:
+                            self.__stack = True
+            if self.__stack:
+                self.__processStack()
+                if self._HDF5:
+                    # The complete stack has been analyzed
+                    break
+            else:
+                self.__processOneFile()
+
+        if self.counter:
+            # Finish list of FIT files
+            if not self.roiFit and self.fitFiles and \
+                self.listfile is not None:
+                    self.listfile.write(']\n')
+                    self.listfile.close()
+            # Save results as .edf and .dat
+            if self._obsolete:
+                if self.__ncols and (not self._nosave):
+                    self._obsoleteSaveImage()
 
     def getFileHandle(self,inputfile):
         try:
@@ -272,7 +286,6 @@ class McaAdvancedFitBatch(object):
                     a = NumpyStack.NumpyStack(inputfile)
                     return a
                 except Exception as e:
-#                     print e
                     raise
         
             if HDF5SUPPORT:
@@ -319,7 +332,7 @@ class McaAdvancedFitBatch(object):
         pass
 
     def __log(self,text):
-        print(text)
+        _logger.info(text)
 
     def __tryEdf(self,inputfile):
         try:
@@ -377,7 +390,7 @@ class McaAdvancedFitBatch(object):
                 if type(stack.x) == type([]):
                     xStack = stack.x[0]
                 else:
-                    print("THIS SHOULD NOT BE USED")
+                    _logger.warning("THIS SHOULD NOT BE USED")
                     xStack = stack.x
         nimages = stack.info['Dim_1']
         self.__nrows = nimages
@@ -399,9 +412,9 @@ class McaAdvancedFitBatch(object):
             try:
                 cache_data = data[i, :, :]
             except:
-                print("Error reading dataset row %d" % i)
-                print(sys.exc_info())
-                print("Batch resumed")
+                _logger.error("Error reading dataset row %d" % i)
+                _logger.error(str(sys.exc_info()))
+                _logger.error("Batch resumed")
                 continue
             for mca in colsToIter:
                 if self.pleaseBreak:
@@ -475,7 +488,7 @@ class McaAdvancedFitBatch(object):
                                                     info=infoDict)
                 else:
                     if info['NbMca'] > 0:
-                        self._initOutputBuffer()
+                        # self._initOutputBuffer() # TODO: do it or not
                         numberofmca = info['NbMca'] * 1
                         self.__ncols = len(range(0+self.mcaOffset,
                                              numberofmca,self.mcaStep))
@@ -554,7 +567,7 @@ class McaAdvancedFitBatch(object):
                 try:
                     os.mkdir(fitdir)
                 except:
-                    print("I could not create directory %s" % fitdir)
+                    _logger.error("I could not create directory %s" % fitdir)
                     return
         fitdir = self.os_path_join(fitdir, filename+"_FITDIR")
         if createdirs:
@@ -562,10 +575,10 @@ class McaAdvancedFitBatch(object):
                 try:
                     os.mkdir(fitdir)
                 except:
-                    print("I could not create directory %s" % fitdir)
+                    _logger.error("I could not create directory %s" % fitdir)
                     return
             if not os.path.isdir(fitdir):
-                print("%s does not seem to be a valid directory" % fitdir)
+                _logger.error("%s does not seem to be a valid directory" % fitdir)
                 return
         fitfilename = filename + "_" + key + ".fit"
         fitfilename = self.os_path_join(fitdir, fitfilename)
@@ -583,7 +596,7 @@ class McaAdvancedFitBatch(object):
                 try:
                     os.remove(cfitfilename)
                 except:
-                    print("I could not delete existing concentrations file %s" %\
+                    _logger.error("I could not delete existing concentrations file %s" %\
                         cfitfilename)
         return cfitfilename
 
@@ -611,13 +624,15 @@ class McaAdvancedFitBatch(object):
     def __processOneMca(self,x,y,filename,key,info=None):
         if self.roiFit:
             result = self.__roiOneMca(x,y)
-            self._obsoleteOutputRoiFit(result, filename)  # TODO: remove
+            if self._obsolete:
+                self._obsoleteOutputRoiFit(result, filename)
             if self.outbuffer and self.__ncols and not self.counter:
                 self._allocateMemoryRoiFit(result)
             self._saveRoiFitResult(result)
         else:
             result, concentrations = self.__fitOneMca(x,y,filename,key,info=info)
-            self._obsoleteOutputFit(result, concentrations, filename)  # TODO: remove
+            if self._obsolete:
+                self._obsoleteOutputFit(result, concentrations, filename)
             if self.outbuffer and self.__ncols and not self.counter:
                 self._allocateMemoryFit(result, concentrations)
             self._saveFitResult(result, concentrations)
@@ -644,9 +659,9 @@ class McaAdvancedFitBatch(object):
                 concentrationsInFitFile = bool(concentrations)
                 result = fitdict['result']
             except:
-                print("Error trying to use result file %s" % fitfile)
-                print("Please, consider deleting it.")
-                print(sys.exc_info())
+                _logger.error("Error trying to use result file %s" % fitfile)
+                _logger.error("Please, consider deleting it.")
+                _logger.error(str(sys.exc_info()))
                 return
         else:
             # Load MCA data
@@ -696,12 +711,12 @@ class McaAdvancedFitBatch(object):
         return True
 
     def _restoreFitConfig(self, filename):
-        print("Error entering data of file with output = %s\n%s" %\
+        _logger.error("Error entering data of file with output = %s\n%s" %\
                     (filename, sys.exc_info()[1]))
         # Restore when a fit strategy like `matrix adjustment` is used
         if self.mcafit.config['fit'].get("strategyflag", False):
             config = self.__configList[self.__currentConfig]
-            print("Restoring fitconfiguration")
+            _logger.info("Restoring fitconfiguration")
             self.mcafit = ClassMcaTheory.McaTheory(config)
             self.mcafit.enableOptimizedLinearFit()  # TODO: why???
 
@@ -711,9 +726,14 @@ class McaAdvancedFitBatch(object):
         fitresult = None
         try:
             self.mcafit.estimate()
-            if self.fitFiles:
-                fitresult, result = self.mcafit.startfit(digest=1)
-            elif self._concentrations and (self.mcafit._fluoRates is None):
+            # Avoid digest=1 when possible (slow but more detailed information)
+            digest = self.fitFiles or\
+                     (self._concentrations and (self.mcafit._fluoRates is None))
+            if self.outbuffer is not None:
+                # TODO: we just need yfit and ydata which are
+                # thrown away by Gefit.LeastSquaresFit
+                digest |= self.outbuffer.saveDiagnostics
+            if digest:
                 fitresult, result = self.mcafit.startfit(digest=1)
             elif self._concentrations:
                 fitresult = self.mcafit.startfit(digest=0)
@@ -735,8 +755,8 @@ class McaAdvancedFitBatch(object):
                                     fluorates = self.mcafit._fluoRates)
                 except:
                     concentrations = None
-                    print("error in concentrations")
-                    print(sys.exc_info()[0:-1])
+                    _logger.error("error in concentrations")
+                    _logger.error(str(sys.exc_info()[0:-1]))
             else:
                 #just images
                 fitresult = self.mcafit.startfit(digest=0)
@@ -761,15 +781,15 @@ class McaAdvancedFitBatch(object):
             tconf.update(conf['concentrations'])
         else:
             pass
-            #print "Concentrations not calculated"
-            #print "Is your fit configuration file correct?"
+            #_logger.error("Concentrations not calculated")
+            #_logger.error("Is your fit configuration file correct?")
         try:
             concentrations = self._tool.processFitResult(config=tconf,
                             fitresult=fitresult0,
                             elementsfrommatrix=False)
         except:
-            print("error in concentrations")
-            print(sys.exc_info()[0:-1])
+            _logger.error("error in concentrations")
+            _logger.error(str(sys.exc_info()[0:-1]))
         return result, concentrations
 
     def _updateFitFile(self, concentrations, outfile):
@@ -782,11 +802,11 @@ class McaAdvancedFitBatch(object):
             try:
                 os.remove(outfile)
             except:
-                print("error deleting fit file")
+                _logger.error("error deleting fit file")
             f.write(outfile)
         except:
-            print("Error writing concentrations to fit file")
-            print(sys.exc_info())
+            _logger.error("Error writing concentrations to fit file")
+            _logger.error(str(sys.exc_info()))
 
     def _updateFitFileList(self, outfile):
         """Append FIT file to list of FIT files
@@ -821,6 +841,15 @@ class McaAdvancedFitBatch(object):
         return self.mcafit.roifit(x,y,width=self.roiWidth)
 
     def _allocateMemoryFit(self, result, concentrations):
+        if not self.__stack:
+            self.__nrows = len(range(0, len(self._filelist), self.fileStep))
+        if self._concentrations:
+            layerlist = concentrations['layerlist']
+            if 'mmolar' in concentrations:
+                self.__conKey   = "mmolar"
+            else:
+                self.__conKey   = "mass fraction"
+
         outbuffer = self.outbuffer
 
         # Fit parameters and their uncertainties
@@ -919,11 +948,17 @@ class McaAdvancedFitBatch(object):
                 stackAxesNames = ['dim{}'.format(i) for i in range(len(stackShape))]
                 dataAxes = [(name, numpy.arange(n, dtype=dtypeResult), {})
                             for name, n in zip(stackAxesNames, stackShape)]
-                mcacfg = result['config']['detector']
-                linear = result['config']["fit"]["linearfitflag"]
+                if 'config' in result:
+                    cfg = result['config']
+                else:
+                    cfg = self.mcafit.getConfiguration()
+                mcacfg = cfg['detector']
+                linear = cfg["fit"]["linearfitflag"]
                 if linear or (mcacfg['fixedzero'] and mcacfg['fixedgain']):
-                    zero = result['fittedpar'][result['parameters'].index('Zero')]
-                    gain = result['fittedpar'][result['parameters'].index('Gain')]
+                    #zero = result['fittedpar'][result['parameters'].index('Zero')]
+                    #gain = result['fittedpar'][result['parameters'].index('Gain')]
+                    zero = mcacfg['zero']
+                    gain = mcacfg['gain']
                     xenergy = zero + gain*xdata0
                     stackAxesNames[mcaIndex] = 'energy'
                     dataAxes[mcaIndex] = 'energy', xenergy.astype(dtypeResult), {'units': 'keV'}
@@ -1026,13 +1061,18 @@ class McaAdvancedFitBatch(object):
         try:
             self.__images['chisq'][self.__row, self.__col] = result['chisq']
         except:
-            print("Error on chisq row %d col %d" %\
+            _logger.error("Error on chisq row %d col %d" %\
                     (self.__row, self.__col))
-            print("File = %s\n" % filename)
+            _logger.error("File = %s\n" % filename)
             pass
 
     def _allocateMemoryRoiFit(self, result):
+        if self.__ncols is not None and not self.__stack:
+                self.__nrows = len(self._filelist)
+
         outbuffer = self.outbuffer
+
+        # Fit parameters (ROIs)
         parameter_names = [(group, roi)
                            for group, rois in result.items()
                            for roi in rois]
@@ -1072,15 +1112,15 @@ class McaAdvancedFitBatch(object):
                                                             numpy.float)
 
         if not hasattr(self, "_ROIimages"):
-            print("ROI fitting only supported on EDF")
+            _logger.error("ROI fitting only supported on EDF")
         for group in self.__ROIpeaks:
             for roi in self._ROIimages[group].keys():
                 try:
                     self._ROIimages[group][roi][self.__row, self.__col] = result[group][roi]
                 except:
-                    print("error on (row,col) = %d,%d" %\
+                    _logger.error("error on (row,col) = %d,%d" %\
                             (self.__row, self.__col))
-                    print("File = %s" % filename)
+                    _logger.error("File = %s" % filename)
                     pass
 
     def _obsoleteSaveImage(self,ffile=None):
@@ -1108,21 +1148,21 @@ class McaAdvancedFitBatch(object):
                     speclabel +="  %s" % (peak)
                     edfname = ffile +"_"+peak+suffix+".edf"
                 else:
-                    print("Unhandled peak name: %s. Not saved." % peak)
+                    _logger.error("Unhandled peak name: %s. Not saved." % peak)
                     continue
                 dirname = os.path.dirname(edfname)
                 if not os.path.exists(dirname):
                     try:
                         os.mkdir(dirname)
                     except:
-                        print("I could not create directory %s" % dirname)
+                        _logger.error("I could not create directory %s" % dirname)
                 Append = 0
                 if os.path.exists(edfname):
                     try:
                         os.remove(edfname)
                     except:
-                        print("I cannot delete output file")
-                        print("trying to append image to the end")
+                        _logger.error("I cannot delete output file")
+                        _logger.error("trying to append image to the end")
                         Append = 1
                 edfout   = EdfFile.EdfFile(edfname, access='ab')
                 edfout.WriteImage ({'Title':peak} , self.__images[peak], Append=Append)
@@ -1174,7 +1214,7 @@ class McaAdvancedFitBatch(object):
                         try:
                             os.mkdir(dirname)
                         except:
-                            print("I could not create directory %s" % dirname)
+                            _logger.error("I could not create directory %s" % dirname)
                     edfout  = EdfFile.EdfFile(edfname)
                     edfout.WriteImage ({'Title':group+" "+roi} , self._ROIimages[group][roi],
                                          Append=i)
@@ -1183,13 +1223,13 @@ class McaAdvancedFitBatch(object):
                         i=1
 
 
-if __name__ == "__main__":
+def main():
     import getopt
     options     = 'f'
     longoptions = ['cfg=', 'pkm=', 'outdir=', 'roifit=', 'roi=',
                    'roiwidth=', 'concentrations=', 'overwrite=',
                    'outroot=', 'outentry=', 'outprocess=',
-                   'edf=', 'h5=', 'csv=', 'tif=',
+                   'edf=', 'h5=', 'csv=', 'tif=', 'dat=',
                    'diagnostics=', 'debug=']
     filelist = None
     cfg = None
@@ -1228,6 +1268,8 @@ if __name__ == "__main__":
             edf = int(arg)
         elif opt == '--csv':
             csv = int(arg)
+        elif opt == '--dat':
+            dat = int(arg)
         elif opt == '--h5':
             h5 = int(arg)
         elif opt == '--overwrite':
@@ -1246,9 +1288,16 @@ if __name__ == "__main__":
             saveFit = int(arg)
             saveResiduals = saveFit
             saveData = saveFit
+    
+    logging.basicConfig()
+    if debug:
+        _logger.setLevel(logging.DEBUG)
+    else:
+        _logger.setLevel(logging.INFO)
+
     filelist=args
     if len(filelist) == 0:
-        print("No input files, run GUI")
+        _logger.error("No input files, run GUI")
         sys.exit(0)
     t0 = time.time()
 
@@ -1256,19 +1305,24 @@ if __name__ == "__main__":
                         outputRoot=outputRoot, fileEntry=fileEntry,
                         fileProcess=fileProcess, saveData=saveData,
                         saveFit=saveFit, saveResiduals=saveResiduals,
-                        tif=tif, edf=edf, csv=csv, h5=h5, overwrite=overwrite)
+                        tif=tif, edf=edf, csv=csv, h5=h5, dat=dat,
+                        overwrite=overwrite)
 
     from PyMca5.PyMcaMisc import ProfilingUtils
     with ProfilingUtils.profile(memory=debug, time=debug):
-        with outbuffer.saveContext():
-            b = McaAdvancedFitBatch(cfg,filelist=filelist,
-                            fitfiles=1, fitconcfile=1,
-                            outputdir=outputDir,
-                            roifit=roifit,
-                            roiwidth=roiwidth,
-                            concentrations=concentrations,
-                            outbuffer=outbuffer,
-                            overwrite=overwrite)
-            b.processList()
+        b = McaAdvancedFitBatch(cfg,filelist=filelist,
+                        fitfiles=False,
+                        fitconcfile=False,
+                        outputdir=outputDir,
+                        roifit=roifit,
+                        roiwidth=roiwidth,
+                        concentrations=concentrations,
+                        outbuffer=outbuffer,
+                        overwrite=overwrite)
+        b.processList()
         # Without saveContext you need to execute: b.outbuffer.save()
         print("Total Elapsed = % s " % (time.time() - t0))
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    main()

@@ -457,10 +457,11 @@ class testStackInfo(unittest.TestCase):
                                         concentrations=True,
                                         selection=selection,
                                         quiet=True)
+        batch.outbuffer.extensions = ['.dat']
         batch.processList()
 
         # recover the results
-        imageFile = os.path.join(self._outputDir, "IMAGES", "Steel.dat")
+        imageFile = batch.outbuffer.filename('.dat')
         self.assertTrue(os.path.isfile(imageFile),
                 "Batch fit result file <%s> not present" % imageFile)
         sf = specfile.Specfile(imageFile)
@@ -478,7 +479,7 @@ class testStackInfo(unittest.TestCase):
                     continue
                 elif point == 0:
                     referenceResult[label] = scanData[idx, point]
-                elif label.endswith("-mass-fraction"):
+                elif label.startswith("w("):
                     #print("label = ", label)
                     #print("reference = ", referenceResult[label])
                     #print("current = ", scanData[idx, point])
@@ -488,7 +489,7 @@ class testStackInfo(unittest.TestCase):
                     #print("time ratio = ", readLiveTime[point] / readLiveTime[0])
                     if point % nTimes:
                         if abs(reference) > 1.0e-10:
-                            self.assertTrue(reference != current,
+                            self.assertNotEqual(reference, current,
                                 "Incorrect concentration for point %d" % point)
                         corrected = current * \
                                     (readLiveTime[point] / readLiveTime[0])
@@ -501,12 +502,12 @@ class testStackInfo(unittest.TestCase):
                             self.assertTrue(abs(reference - corrected) < 1.0e-5,
                                  "Incorrect concentration(t) for point %d" % point)
                     else:
-                        self.assertTrue(reference == current,
+                        self.assertEqual(reference, current,
                             "Incorrect concentration for point %d" % point)
-                elif label not in ["Point", "row", "column"]:
+                else:
                     reference = referenceResult[label]
                     current = scanData[idx, point]
-                    self.assertTrue( reference == current,
+                    self.assertEqual(reference, current,
                                     "Incorrect value for point %d" % point)
 
         # Batch fitting went well
@@ -519,7 +520,7 @@ class testStackInfo(unittest.TestCase):
 
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()
-    if True:
+    if auto:
         testSuite.addTest(unittest.TestLoader().loadTestsFromTestCase(testStackInfo))
     else:
         # use a predefined order
