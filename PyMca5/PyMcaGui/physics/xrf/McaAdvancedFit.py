@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -2919,8 +2919,9 @@ class McaGraphWindow(PlotWindow):
 
     def setActiveCurve(self, legend, replot=None):
         if legend is not None:
-            # see vasole/pymca#314
-            super(McaGraphWindow, self).setActiveCurve(legend, replot)
+            # see pymca#314
+            # see pymca#434 replot argument ignored by silx
+            super(McaGraphWindow, self).setActiveCurve(legend)
         self.setGraphYLabel("Counts")
         if self.energyButton.isChecked():
             self.setGraphXLabel("Energy")
