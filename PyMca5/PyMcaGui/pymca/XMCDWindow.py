@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2017 T. Rueter, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 T. Rueter, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -411,10 +411,13 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
             'Replace all curves in main window '
            +'with all curves from analysis window')
 
-        # this is a hack: silx does not provide an attribute for the
-        # bottom bar, but it has a handle for the last widget in the bar
-        # which uses a HBoxLayout.
-        bottomBarHLayout = self.positionWidget.layout()
+        if hasattr(self, "getPositionInfoWidget"):
+            bottomBarHLayout = self.getPositionInfoWidget().layout()
+        else:
+            # this is a hack: silx does not provide an attribute for the
+            # bottom bar, but it has a handle for the last widget in the bar
+            # which uses a HBoxLayout.
+            bottomBarHLayout = self.positionWidget.layout()
         bottomBarHLayout.addWidget(qt.HorizontalSpacer())
         bottomBarHLayout.addWidget(buttonAdd)
         bottomBarHLayout.addWidget(buttonAddAll)
