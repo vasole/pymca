@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -35,8 +35,7 @@ from PyMca5.PyMcaPhysics import Elements
 from PyMca5.PyMcaPhysics import XRayTubeEbel
 import numpy
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.PyMcaGui.PluginsToolButton import PluginsToolButton
-from silx.gui.plot import PlotWindow
+from PyMca5.PyMcaGui.plotting.PlotWindow import PlotWindow
 
 _logger = logging.getLogger(__name__)
 
@@ -88,14 +87,7 @@ class QXTube(qt.QWidget):
         self.l.addWidget(label)
 
         self.l.addWidget(hbox)
-        self.graph = PlotWindow(self, colormap=False, yInverted=False,
-                                aspectRatio=False, control=False,
-                                position=False, roi=False, mask=False,
-                                fit=False)
-        self.pluginsToolButton = PluginsToolButton(plot=self.graph)
-        self.graph.toolBar().addWidget(self.pluginsToolButton)
-        self.graph.getInteractiveModeToolBar().getZoomModeAction().setVisible(False)
-        self.graph.getInteractiveModeToolBar().getPanModeAction().setVisible(False)
+        self.graph = PlotWindow(self, backend=None)
         self.l.addWidget(self.graph)
         self.graph.setGraphXLabel("Energy (keV)")
         self.graph.setGraphYLabel("photons/sr/mA/keV/s")
@@ -141,8 +133,8 @@ class QXTube(qt.QWidget):
                                              targetthickness=anodethickness,
                                              filterlist=filterlist)
 
-            self.graph.addCurve(e, continuumR, "continuumR")
-            self.graph.addCurve(e, continuumT, "continuumT")
+            self.graph.addCurve(e, continuumR, "continuumR", replot=False)
+            self.graph.addCurve(e, continuumT, "continuumT", replot=False)
         else:
             continuum = XRayTubeEbel.continuumEbel([anode, anodedensity, anodethickness],
                                              voltage, e,
@@ -151,7 +143,7 @@ class QXTube(qt.QWidget):
                                              transmission=transmission,
                                              targetthickness=anodethickness,
                                              filterlist=filterlist)
-            self.graph.addCurve(e, continuum, "continuum")
+            self.graph.addCurve(e, continuum, "continuum", replot=False)
             self.graph.setActiveCurve("continuum")
 
         self.graph.resetZoom()
@@ -197,11 +189,6 @@ class QXTube(qt.QWidget):
                      filterlist=filterlist)
 
         d["characteristic"] = fllines
-        fsum = 0.0
-        for l in fllines:
-            _logger.debug("%s %.4f %.3e", l[2], l[0], l[1])
-            fsum += l[1]
-        _logger.debug("%s", fsum)
 
         energy, energyweight, energyscatter = XRayTubeEbel.generateLists(
                                                         [anode, anodedensity, anodethickness],

@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -38,7 +38,8 @@ import numpy
 import traceback
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaPhysics import Elements
-from silx.gui.plot import PlotWindow
+from PyMca5.PyMcaGui.plotting import PlotWindow
+ScanWindow = PlotWindow.PlotWindow
 
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -106,10 +107,13 @@ class MaterialEditor(qt.QWidget):
         if self.__toolMode:
             self.materialGUI.setCurrent(a[0])
             if (self.graph is None):
-                self.graph = PlotWindow(self, control=True, position=True,
-                                        colormap=False, aspectRatio=False,
-                                        yInverted=False, roi=False, mask=False)
-                self.graph.setDefaultPlotPoints(True)
+                self.graph = ScanWindow(self, newplot=False,
+                                        fit=False,
+                                        plugins=False,
+                                        control=True,
+                                        position=True)
+                self.graph._togglePointsSignal()
+                self.graph.enableOwnSave(True)
             layout.addWidget(self.materialGUI)
             layout.addWidget(self.graph)
         else:
@@ -172,13 +176,13 @@ class MaterialEditor(qt.QWidget):
                                              density=density, thickness=thickness, listoutput=False)
             addButton = False
             if self.graph is None:
-                # probably dead code (ScanWindow.ScanWindow not imported)
-                # TODO: if needed, this should be updated for silx based ScanWindow
+                # probably dead code (ScanWindow not imported)
                 self.graphDialog = qt.QDialog(self)
                 self.graphDialog.mainLayout = qt.QVBoxLayout(self.graphDialog)
                 self.graphDialog.mainLayout.setContentsMargins(0, 0, 0, 0)
                 self.graphDialog.mainLayout.setSpacing(0)
-                self.graph = ScanWindow.ScanWindow(self.graphDialog)
+                #self.graph = ScanWindow.ScanWindow(self.graphDialog)
+                self.graph = ScanWindow(self.graphDialog)
                 self.graphDialog.mainLayout.addWidget(self.graph)
                 self.graph._togglePointsSignal()
                 self.graph.graph.crossPicker.setEnabled(False)
@@ -217,12 +221,12 @@ class MaterialEditor(qt.QWidget):
             addButton = False
             if self.graph is None:
                 # probably dead code (ScanWindow.ScanWindow not imported)
-                # TODO: if needed, this should be updated for silx based ScanWindow
                 self.graphDialog = qt.QDialog(self)
                 self.graphDialog.mainLayout = qt.QVBoxLayout(self.graphDialog)
                 self.graphDialog.mainLayout.setContentsMargins(0, 0, 0, 0)
                 self.graphDialog.mainLayout.setSpacing(0)
-                self.graph = ScanWindow.ScanWindow(self.graphDialog)
+                #self.graph = ScanWindow.ScanWindow(self.graphDialog)
+                self.graph = ScanWindow(self.graphDialog)
                 self.graphDialog.mainLayout.addWidget(self.graph)
                 self.graph._togglePointsSignal()
                 self.graph.graph.crossPicker.setEnabled(False)
@@ -235,13 +239,15 @@ class MaterialEditor(qt.QWidget):
                                 legend=legend,
                                 xlabel='Energy (keV)',
                                 ylabel='Mass Att. (cm2/g)',
-                                replace=True)
+                                replace=True,
+                                replot=False)
             for legend in ['Compton', 'Photo','Total']:
                 self.graph.addCurve(energy, numpy.array(data[legend.lower()]),
                                     legend=legend,
                                     xlabel='Energy (keV)',
                                     ylabel='Mass Att. (cm2/g)',
-                                    replace=False)
+                                    replace=False,
+                                    replot=False)
             self.graph.setActiveCurve(legend+' '+'Mass Att. (cm2/g)')
             self.graph.setGraphTitle(ddict['Comment'])
             if self.graphDialog is not None:
