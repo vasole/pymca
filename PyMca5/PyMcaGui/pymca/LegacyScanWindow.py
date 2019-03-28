@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -23,9 +23,6 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-"""Legacy PyMca ScanWindow, to be replaced by a ScanWindow based on a
-silx PlotWidget.
-This module should not be used anywhere, it will no longer be maintained."""
 __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
@@ -50,7 +47,7 @@ from . import ScanFit
 from PyMca5.PyMcaMath import SimpleMath
 from PyMca5.PyMcaCore import DataObject
 import copy
-from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
+from PyMca5.PyMcaGui import PyMcaPrintPreview
 from PyMca5.PyMcaCore import PyMcaDirs
 from . import ScanWindowInfoWidget
 #implement the plugins interface
@@ -239,6 +236,13 @@ class ScanWindow(PlotWindow.PlotWindow):
             #there must be something to plot
             if not hasattr(dataObject, 'y'):
                 continue
+            if len(dataObject.y) == 0:
+                # nothing to be plot
+                continue
+            else:
+                for i in range(len(dataObject.y)):
+                    if numpy.isscalar(dataObject.y[i]):
+                        dataObject.y[i] = numpy.array([dataObject.y[i]])
             if not hasattr(dataObject, 'x'):
                 ylen = len(dataObject.y[0])
                 if ylen:
@@ -258,6 +262,8 @@ class ScanWindow(PlotWindow.PlotWindow):
                     print("Mesh plots")
                 continue
             else:
+                if numpy.isscalar(dataObject.x[0]):
+                    dataObject.x[0] = numpy.array([dataObject.x[0]])    
                 xdata = dataObject.x[0]
             sps_source = False
             if 'SourceType' in sel:
@@ -332,6 +338,11 @@ class ScanWindow(PlotWindow.PlotWindow):
                     ycounter += 1
                     newDataObject   = DataObject.DataObject()
                     newDataObject.info = copy.deepcopy(dataObject.info)
+                    if dataObject.m is not None:
+                        for imon in range(len(dataObject.m)):
+                            if numpy.isscalar(dataObject.m[imon]):
+                                dataObject.m[imon] = \
+                                             numpy.array([dataObject.m[imon]])
                     if dataObject.m is None:
                         mdata = numpy.ones(len(ydata)).astype(numpy.float)
                     elif len(dataObject.m[0]) > 0:
@@ -741,7 +752,7 @@ class ScanWindow(PlotWindow.PlotWindow):
             os.remove(filename)
         if filterused[0].upper() == "WIDGET":
             fformat = filename[-3:].upper()
-            if hasattr(qt.QPixmap,"grabWidget"):
+            if hasattr(qt.QPixmap, "grabWidget"):
                 pixmap = qt.QPixmap.grabWidget(self)
             else:
                 pixmap = self.grab()
