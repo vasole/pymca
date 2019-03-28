@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -30,10 +30,8 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import numpy
 from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaGui.plotting.PlotWindow import PlotWindow
 from PyMca5.PyMcaMath.fitting import SpecfitFuns
-
-from silx.gui.plot import PlotWindow
-
 
 class StripParametersWidget(qt.QWidget):
     sigStripParametersWidgetSignal = qt.pyqtSignal(object)
@@ -236,12 +234,10 @@ class StripBackgroundWidget(qt.QWidget):
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(2)
         self.parametersWidget = StripParametersWidget(self)
-        self.graphWidget = PlotWindow(self, position=False, aspectRatio=False,
-                                      colormap=False, yInverted=False,
-                                      roi=False, mask=False, fit=False)
-        toolBar = self.graphWidget.getInteractiveModeToolBar()
-        toolBar.getZoomModeAction().setVisible(False)
-        toolBar.getPanModeAction().setVisible(False)
+        self.graphWidget = PlotWindow(self,
+                                      newplot=False,
+                                      plugins=False,
+                                      fit=False)
 
         self.mainLayout.addWidget(self.parametersWidget)
         self.mainLayout.addWidget(self.graphWidget)
@@ -326,14 +322,14 @@ class StripBackgroundWidget(qt.QWidget):
 
         self.graphWidget.addCurve(x, y,
                                   legend='Input Data',
-                                  resetzoom=False)
+                                  replace=True,
+                                  replot=False)
         self.graphWidget.addCurve(x, stripBackground,
-                                  resetzoom=False,
-                                  legend='Strip Background')
+                                  legend='Strip Background',
+                                  replot=False)
         self.graphWidget.addCurve(x, snipBackground,
-                                  resetzoom=False,
-                                  legend='SNIP Background')
-        self.graphWidget.setActiveCurve('Input Data')
+                                  legend='SNIP Background',
+                                  replot=True)
 
 class StripBackgroundDialog(qt.QDialog):
     def __init__(self, parent=None):
