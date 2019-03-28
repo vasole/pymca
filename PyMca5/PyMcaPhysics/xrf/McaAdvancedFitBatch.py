@@ -68,12 +68,13 @@ class McaAdvancedFitBatch(object):
                  filebeginoffset=0, fileendoffset=0,
                  mcaoffset=0, chunk=None,
                  selection=None, lock=None, nosave=None,
-                 quiet=False, outbuffer=None):
+                 quiet=False, outbuffer=None,
+                 **outbufferkwargs):
         #for the time being the concentrations are bound to the .fit files
         #that is not necessary, but it will be correctly implemented in
         #future releases
         self._lock = lock
-        self._obsolete = False  # obsolete output
+        self._obsolete = False  # TODO: remove in the future
 
         self.setFileList(filelist)
         self.pleaseBreak = 0  # stop the processing of filelist
@@ -114,6 +115,7 @@ class McaAdvancedFitBatch(object):
             self._nosave = bool(nosave)
         self.outputdir = outputdir
         self.outbuffer = outbuffer
+        self.outbufferkwargs = outbufferkwargs
         if fitimages:
             self._initOutputBuffer()
 
@@ -127,8 +129,8 @@ class McaAdvancedFitBatch(object):
                                           outputRoot=self._rootname,
                                           fileEntry=self._rootname,
                                           overwrite=self.overwrite,
-                                          h5=True, edf=True, dat=True,
-                                          suffix=self._outputSuffix())
+                                          suffix=self._outputSuffix(),
+                                          **self.outbufferkwargs)
         self.outbuffer['configuration'] = self.mcafit.getConfiguration()
 
     def _outputSuffix(self):
@@ -1029,7 +1031,7 @@ class McaAdvancedFitBatch(object):
     def _obsoleteOutputFit(self, result, concentrations, filename):
         if self.outbuffer is None:
             return
-        if self.__ncols and self._nrows:
+        if self.__ncols and self.__nrows:
             if self.counter == 0:
                 self.__peaks  = []
                 self.__images = {}
@@ -1119,7 +1121,7 @@ class McaAdvancedFitBatch(object):
     def _obsoleteOutputRoiFit(self, result, filename):
         if self.outbuffer is None:
             return
-        if self.__ncols and self._nrows:
+        if self.__ncols and self.__nrows:
             if self.counter == 0:
                 self.__ROIpeaks = []
                 self._ROIimages = {}
@@ -1259,12 +1261,11 @@ def main():
     edf = 1
     csv = 0
     h5 = 1
+    dat = 0
     debug = 0
     outputDir = None
     concentrations = 0
-    saveFit = 0
-    saveResiduals = 0
-    saveData = 0
+    saveDiagnostics = 0
     overwrite = 1
     outputRoot = ""
     fileEntry = ""
@@ -1305,10 +1306,16 @@ def main():
         elif opt == '--debug':
             debug = int(arg)
         elif opt == '--diagnostics':
-            saveFit = int(arg)
-            saveResiduals = saveFit
-            saveData = saveFit
-    
+            saveDiagnostics = int(arg)
+        elif opt == '--edf':
+            edf = int(arg)
+        elif opt == '--csv':
+            csv = int(arg)
+        elif opt == '--h5':
+            h5 = int(arg)
+        elif opt == '--dat':
+            dat = int(arg)
+
     logging.basicConfig()
     if debug:
         _logger.setLevel(logging.DEBUG)
@@ -1322,9 +1329,10 @@ def main():
     t0 = time.time()
 
     outbuffer = OutputBuffer(outputDir=outputDir,
-                        outputRoot=outputRoot, fileEntry=fileEntry,
-                        fileProcess=fileProcess, saveData=saveData,
-                        saveFit=saveFit, saveResiduals=saveResiduals,
+                        outputRoot=outputRoot,
+                        fileEntry=fileEntry,
+                        fileProcess=fileProcess,
+                        saveDiagnostics=saveDiagnostics,
                         tif=tif, edf=edf, csv=csv, h5=h5, dat=dat,
                         overwrite=overwrite)
 

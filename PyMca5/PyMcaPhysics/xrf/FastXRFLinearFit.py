@@ -1012,7 +1012,7 @@ def main():
     import getopt
     options     = ''
     longoptions = ['cfg=', 'outdir=', 'concentrations=', 'weight=', 'refit=',
-                   'tif=', 'edf=', 'csv=', 'h5=',
+                   'tif=', 'edf=', 'csv=', 'h5=', 'dat=',
                    'filepattern=', 'begin=', 'end=', 'increment=',
                    'outroot=', 'outentry=', 'outprocess=',
                    'diagnostics=', 'debug=', 'overwrite=']
@@ -1039,10 +1039,9 @@ def main():
     edf = 0
     csv = 0
     h5 = 1
+    dat = 0
     concentrations = 0
-    saveFit = 0
-    saveResiduals = 0
-    saveData = 0
+    saveDiagnostics = 0
     debug = 0
     overwrite = 1
     for opt, arg in opts:
@@ -1075,9 +1074,7 @@ def main():
         elif opt == '--concentrations':
             concentrations = int(arg)
         elif opt == '--diagnostics':
-            saveFit = int(arg)
-            saveResiduals = saveFit
-            saveData = saveFit
+            saveDiagnostics = int(arg)
         elif opt == '--outroot':
             outputRoot = arg
         elif opt == '--outentry':
@@ -1092,6 +1089,8 @@ def main():
             csv = int(arg)
         elif opt == '--h5':
             h5 = int(arg)
+        elif opt == '--dat':
+            dat = int(arg)
         elif opt == '--debug':
             debug = int(arg)
         elif opt == '--overwrite':
@@ -1127,10 +1126,12 @@ def main():
     print("Main configuring Elapsed = % s " % (time.time() - t0))
 
     outbuffer = OutputBuffer(outputDir=outputDir,
-                        outputRoot=outputRoot, fileEntry=fileEntry,
-                        fileProcess=fileProcess, saveData=saveData,
-                        saveFit=saveFit, saveResiduals=saveResiduals,
-                        tif=tif, edf=edf, csv=csv, h5=h5, overwrite=overwrite)
+                        outputRoot=outputRoot,
+                        fileEntry=fileEntry,
+                        fileProcess=fileProcess,
+                        saveDiagnostics=saveDiagnostics,
+                        tif=tif, edf=edf, csv=csv, h5=h5, dat=dat
+                        overwrite=overwrite)
 
     from PyMca5.PyMcaMisc import ProfilingUtils
     with ProfilingUtils.profile(memory=debug, time=debug):

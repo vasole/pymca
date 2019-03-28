@@ -49,7 +49,8 @@ class OutputBuffer(object):
                  outputRoot=None, fileEntry=None, fileProcess=None,
                  saveResiduals=False, saveFit=False, saveData=False,
                  tif=False, edf=False, csv=False, dat=False, h5=True,
-                 multiedf=True, overwrite=False, suffix=None):
+                 saveDiagnostics=False, multiedf=True, overwrite=False,
+                 suffix=None):
         """
         XRf batch fitting output buffer, to be saved as:
          .h5 : outputDir/outputRoot+suffix.h5::/fileEntry/fileProcess
@@ -72,6 +73,7 @@ class OutputBuffer(object):
         :param saveResiduals:
 -       :param saveFit:
 -       :param saveData:
+        :param saveDiagnostics:
         :param bool tif:
         :param bool edf:
         :param bool csv:
@@ -99,6 +101,7 @@ class OutputBuffer(object):
         self.saveResiduals = saveResiduals
         self.saveFit = saveFit
         self.saveData = saveData
+        self.saveDiagnostics = saveDiagnostics
         self.overwrite = overwrite
         self.suffix = suffix
 
@@ -232,7 +235,13 @@ class OutputBuffer(object):
 
     @property
     def saveDiagnostics(self):
-        return self.saveResiduals or self.saveFit
+        return self.saveResiduals or self.saveFit or self.saveData 
+
+    @saveDiagnostics.setter
+    def saveDiagnostics(self, value):
+        self.saveResiduals = value
+        self.saveFit = value
+        self.saveData = value
 
     @property
     def overwrite(self):

@@ -143,6 +143,12 @@ class FastXRFLinearFitWindow(qt.QWidget):
         self._csvBox.setText("CSV")
         self._csvBox.setChecked(False)
         self._csvBox.setEnabled(True)
+
+        # generate dat file
+        self._datBox = qt.QCheckBox(self._boxContainer2)
+        self._datBox.setText("DAT")
+        self._datBox.setChecked(False)
+        self._datBox.setEnabled(True)
         
         # generate edf file
         self._edfBox = qt.QCheckBox(self._boxContainer2)
@@ -170,6 +176,7 @@ class FastXRFLinearFitWindow(qt.QWidget):
         self._boxContainerLayout2.addWidget(self._h5Box)
         self._boxContainerLayout2.addWidget(self._edfBox)
         self._boxContainerLayout2.addWidget(self._csvBox)
+        self._boxContainerLayout2.addWidget(self._datBox)
         self._boxContainerLayout2.addWidget(self._tiffBox)
         self._boxContainerLayout2.addWidget(self._overwriteBox)
         
@@ -266,13 +273,12 @@ class FastXRFLinearFitWindow(qt.QWidget):
         output['fileProcess'] = qt.safe_str(self._outnameLine.text()).replace(" ", "")
         output['tif'] = int(self._tiffBox.isChecked())
         output['csv'] = int(self._csvBox.isChecked())
+        output['dat'] = int(self._datBox.isChecked())
         output['edf'] = int(self._edfBox.isChecked())
         output['h5'] = int(self._h5Box.isChecked())
         output['overwrite'] = int(self._overwriteBox.isChecked())
         diagnostics = int(self._diagnosticsBox.isChecked())
-        output['saveData'] = diagnostics
-        output['saveFit'] = diagnostics
-        output['saveResiduals'] = diagnostics
+        output['saveDiagnostics'] = diagnostics
         return ddict
 
 class FastXRFLinearFitDialog(qt.QDialog):
