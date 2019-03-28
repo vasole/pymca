@@ -74,7 +74,7 @@ class FastXRFLinearFit(object):
     def fitMultipleSpectra(self, x=None, y=None, xmin=None, xmax=None,
                            configuration=None, concentrations=False,
                            ysum=None, weight=None, refit=True, livetime=None,
-                           outbuffer=None):
+                           outbuffer=None, save=True):
         """
         This method performs the actual fit. The y keyword is the only mandatory input argument.
 
@@ -86,10 +86,11 @@ class FastXRFLinearFit(object):
         :param weight: 0 Means no weight, 1 Use an average weight, 2 Individual weights (slow)
         :param concentrations: 0 Means no calculation, 1 Calculate elemental concentrations
         :param refit: if False, no check for negative results. Default is True.
-        :livetime: It will be used if not different from None and concentrations
-                   are to be calculated by using fundamental parameters with
-                   automatic time. The default is None.
-        :outbuffer dict: 
+        :param livetime: It will be used if not different from None and concentrations
+                         are to be calculated by using fundamental parameters with
+                         automatic time. The default is None.
+        :param outbuffer:
+        :param save: set to False to postpone saving the in-memory buffers
         :return dict: outbuffer
         """
         # Parse data
@@ -99,7 +100,7 @@ class FastXRFLinearFit(object):
         # Calculation needs buffer for memory allocation (memory or H5)
         if outbuffer is None:
             outbuffer = OutputBuffer()
-        with outbuffer._bufferContext(update=False):
+        with outbuffer.saveContext(save=save):
             t0 = time.time()
 
             # Configure fit
@@ -1139,7 +1140,6 @@ def main():
                                                 refit=refit,
                                                 concentrations=concentrations,
                                                 outbuffer=outbuffer)
-        # Without saveContext you need to execute: outbuffer.save()
         print("Total Elapsed = % s " % (time.time() - t0))
 
 

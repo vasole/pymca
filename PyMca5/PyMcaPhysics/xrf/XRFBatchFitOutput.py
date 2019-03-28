@@ -46,10 +46,10 @@ _logger = logging.getLogger(__name__)
 class OutputBuffer(object):
 
     def __init__(self, outputDir=None, 
-                 outputRoot=None, fileEntry=None, fileProcess=None, 
+                 outputRoot=None, fileEntry=None, fileProcess=None,
                  saveResiduals=False, saveFit=False, saveData=False,
                  tif=False, edf=False, csv=False, dat=False, h5=True,
-                 overwrite=False, suffix=None):
+                 multiedf=True, overwrite=False, suffix=None):
         """
         XRf batch fitting output buffer, to be saved as:
          .h5 : outputDir/outputRoot+suffix.h5::/fileEntry/fileProcess
@@ -77,9 +77,11 @@ class OutputBuffer(object):
         :param bool csv:
         :param bool dat:
         :param bool h5:
+        :param bool multiedf: all images in 1 edf file
         :param bool overwrite:
         """
-        self._init_buffer = False
+        self._inBufferContext = False
+        self._inSaveContext = False
         self._output = {}
         self._attrs = {}
         self._nxprocess = None
@@ -93,6 +95,7 @@ class OutputBuffer(object):
         self.csv = csv
         self.dat = dat
         self.h5 = h5
+        self.multiedf = multiedf
         self.saveResiduals = saveResiduals
         self.saveFit = saveFit
         self.saveData = saveData
@@ -241,7 +244,7 @@ class OutputBuffer(object):
         self._overwrite = value
 
     def _check_bufferContext(self):
-        if self._init_buffer:
+        if self._inBufferContext:
             raise RuntimeError('Buffer is locked')
 
     @property
@@ -257,6 +260,11 @@ class OutputBuffer(object):
             return os.path.join(self.outputDir, self.outputRoot+suffix+ext)
         else:
             return os.path.join(self.outroot_localfs, self.fileEntry+suffix+ext)
+
+    def __repr__(self):
+        return "OutputBuffer(outputDir={}, outputRoot={}, fileEntry={}, suffix={})"\
+                .format(repr(self.outputDir), repr(self.outputRoot),
+                        repr(self.fileEntry), repr(self.suffix))
 
     def __getitem__(self, key):
         return self._output[key]
@@ -311,14 +319,15 @@ class OutputBuffer(object):
         """
         Prepare output buffers (HDF5: create file, NXentry and NXprocess)
 
-        :param bool update: True: update existing NXprocess,  False: overwrite or raise an exception
+        :param bool update: True: update existing NXprocess
+                            False: overwrite or raise an exception
         :raises RuntimeError: NXprocess exists and overwrite==False
         """
-        if self._init_buffer:
+        if self._inBufferContext:
             yield
         else:
-            self._init_buffer = True
-            _logger.debug('Output buffer hold ...')
+            self._inBufferContext = True
+            _logger.debug('Enter buffering context of {}'.format(self))
             try:
                 if self.h5:
                     if self._nxprocess is None and self.outputDir:
@@ -336,8 +345,8 @@ class OutputBuffer(object):
                 else:
                     yield
             finally:
-                self._init_buffer = False
-                _logger.debug('Output buffer released')
+                self._inBufferContext = False
+                _logger.debug('Exit buffering context of {}'.format(self))
 
     @contextmanager
     def _h5Context(self, cleanup_funcs, update=True):
@@ -400,14 +409,24 @@ class OutputBuffer(object):
             self._output.update(update)
 
     @contextmanager
-    def saveContext(self):
+    def saveContext(self, save=True):
+        alreadyIn = self._inSaveContext
+        if not alreadyIn:
+            self._inSaveContext = True
+            _logger.debug('Enter saving context of {}'.format(self))
         with self._bufferContext(update=False):
             try:
                 yield
             except:
                 raise
             else:
-                self.save()
+                if save and not alreadyIn:
+                    _logger.debug('Saving {}'.format(self))
+                    self.save()
+            finally:
+                if not alreadyIn:
+                    self._inSaveContext = False
+        _logger.debug('Exit saving context of {}'.format(self))
 
     def flush(self):
         if self._nxprocess is not None:
@@ -494,10 +513,21 @@ class OutputBuffer(object):
 
         NexusUtils.mkdir(self.outroot_localfs)
         if self.edf:
-            fileName = self.filename('.edf')
-            self._checkOverwrite(fileName)
-            ArraySave.save2DArrayListAsEDF(imageList, fileName,
-                                           labels=imageNames)
+            if self.multiedf:
+                fileName = self.filename('.edf')
+                self._checkOverwrite(fileName)
+                ArraySave.save2DArrayListAsEDF(imageList, fileName,
+                                               labels=imageNames)
+            else:
+                for label, image in zip(imageNames, imageList):
+                    label = label.replace('(', '')
+                    label = label.replace(')', '')
+                    label = label.replace(' ', '_')
+                    fileName = self.filename('.edf', suffix="_" + label)
+                    self._checkOverwrite(fileName)
+                    ArraySave.save2DArrayListAsEDF([image],
+                                                   fileName,
+                                                   labels=[label])
         if self.csv:
             fileName = self.filename('.csv')
             self._checkOverwrite(fileName)

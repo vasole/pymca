@@ -1340,7 +1340,6 @@ def main():
                         outbuffer=outbuffer,
                         overwrite=overwrite)
         b.processList()
-        # Without saveContext you need to execute: b.outbuffer.save()
         print("Total Elapsed = % s " % (time.time() - t0))
 
 if __name__ == "__main__":

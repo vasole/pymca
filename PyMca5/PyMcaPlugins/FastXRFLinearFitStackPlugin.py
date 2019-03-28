@@ -205,6 +205,7 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
                                                         y=stack,
                                                         ysum=spectrum,
                                                         outbuffer=outbuffer,
+                                                        save=False,
                                                         **fitparams)
         return outbuffer
 

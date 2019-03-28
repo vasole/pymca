@@ -1153,7 +1153,7 @@ class McaBatchGUI(qt.QWidget):
         delete = _logger.getEffectiveLevel() != logging.DEBUG
         edfoutlist, datoutlist, h5outlist = work.buildOutput(delete=delete)
         for h5filename in h5outlist:
-            # outputDir/filename.h5 -> look in outputDir/filename for .edf, .dat, ...
+            # outputDir/filename.h5 -> look in outputDir/filename/ for .edf, .dat, ...
             subdir = os.path.splitext(os.path.basename(h5filename))[0]
             inputdir = os.path.join(self.outputDir, subdir)
             edfoutlist2, datoutlist2, h5outlist2 = work.buildOutput(inputdir=inputdir, delete=delete)
