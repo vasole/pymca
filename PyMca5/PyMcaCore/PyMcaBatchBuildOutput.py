@@ -68,7 +68,6 @@ class PyMcaBatchBuildOutput(object):
             for key, value in partialList.items():
                 if filename.endswith('000000_partial' + value['ext']):
                     value['list'].append(filename)
-        print(allfiles)
         outListH5 = self._merge(inputdir, outputdir, delete,
                                 partialList['h5']['list'], self._mergeH5)
         outListEdf = self._merge(inputdir, outputdir, delete,
@@ -82,6 +81,9 @@ class PyMcaBatchBuildOutput(object):
         return outListEdf, outListDat, outListH5
 
     def _merge(self, inputdir, outputdir, delete, partialList, func):
+        """
+        The images to be merged already have the final size but are filled with NaN's
+        """
         outList = []
         for filename in partialList:
             parts = self.getIndexedFileList(os.path.join(inputdir, filename))
@@ -115,7 +117,7 @@ class PyMcaBatchBuildOutput(object):
                 headers = [edf.GetHeader(j) for j in range(nImages)]
             else:
                 for j, img in enumerate(images):
-                    img += edf.GetData(j)
+                    self._fillPartial(img, edf.GetData(j))
             del edf
         if os.path.exists(outfilename):
             _logger.debug("Output file already exists, trying to delete it")
@@ -124,6 +126,10 @@ class PyMcaBatchBuildOutput(object):
         for i, (img, header) in enumerate(zip(images, headers)):
             edfout.WriteImage(header, img, Append=i > 0)
         del edfout
+
+    def _fillPartial(self, buffer, input):
+        mask = ~numpy.isnan(input)
+        buffer[mask] = input[mask]
 
     def _mergeDat(self, parts, outfilename):
         first = True
@@ -143,7 +149,7 @@ class PyMcaBatchBuildOutput(object):
                 inputdata = numpy.zeros((nrows, nlabels), numpy.double)
             for i in range(nrows):
                 inputdata[i, :] = [float(x) for x in lines[i+1].split()]
-            data += inputdata
+            self._fillPartial(data, inputdata)
         if os.path.exists(outfilename):
             os.remove(outfilename)
         outfile = open(outfilename, 'w+')
@@ -177,18 +183,16 @@ class PyMcaBatchBuildOutput(object):
             ffile.close()
         outfile.close()
 
-    def getIndexedFileList(self, filename, begin=None,end=None, skip = None, fileindex=0):
+    def getIndexedFileList(self, filename, begin=None, end=None,
+                           skip = None, fileindex=0):
         name = os.path.basename(filename)
         n = len(name)
         i = 1
         numbers = ['0', '1', '2', '3', '4', '5',
-                   '6', '7', '8','9']
+                   '6', '7', '8', '9']
         while (i <= n):
             c = name[n-i:n-i+1]
-            if c in ['0', '1', '2',
-                                '3', '4', '5',
-                                '6', '7', '8',
-                                '9']:
+            if c in numbers:
                 break
             i += 1
         suffix = name[n-i+1:]
@@ -200,10 +204,7 @@ class PyMcaBatchBuildOutput(object):
             nchain = []
             while (i<=n):
                 c = name[n-i:n-i+1]
-                if c not in ['0', '1', '2',
-                                    '3', '4', '5',
-                                    '6', '7', '8',
-                                    '9']:
+                if c not in numbers:
                     break
                 else:
                     nchain.append(c)
@@ -226,10 +227,11 @@ class PyMcaBatchBuildOutput(object):
             if begin is None:
                 begin = 0
                 testname = prefix+fformat % begin+suffix
-                while not os.path.exists(prefix+ fformat % begin+suffix):
+                while not os.path.exists(prefix + fformat % begin+suffix):
                     begin += 1
                     testname = prefix+fformat % begin+suffix
-                    if len(testname) > len(filename):break
+                    if len(testname) > len(filename):
+                        break
                 i = begin
             else:
                 i = begin

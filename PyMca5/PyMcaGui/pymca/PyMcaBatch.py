@@ -951,7 +951,8 @@ class McaBatchGUI(qt.QWidget):
                     for i in range(nbatches):
                         beginoffset = filechunk * i
                         endoffset   = len(self.fileList) - filechunk * (i+1)
-                        if (i+1) == nbatches:endoffset = 0
+                        if (i+1) == nbatches:
+                            endoffset = 0
                         cmd1        = cmd + " --filebeginoffset=%d --fileendoffset=%d --chunk=%d" % \
                                               (beginoffset, endoffset, i)
                         try:
@@ -1058,7 +1059,6 @@ class McaBatchGUI(qt.QWidget):
                                                     self.outputDir, overwrite,
                                                     filestep, mcastep, html, htmlindex,
                                                     listfile, concentrations, table, fitfiles, selectionFlag, debugFlag)
-            _logger.debug("cmd = %s", cmd)
             if self.__splitBox.isChecked():
                 qApp = qt.QApplication.instance()
                 qApp.processEvents()
@@ -1081,6 +1081,7 @@ class McaBatchGUI(qt.QWidget):
                                          cwd=os.getcwd(),
                                          shell=True,
                                          close_fds=True))
+                    _logger.debug("cmd = %s", cmd1)
                 self._processList = processList
                 self.hide()
                 self._pollProcessList()
@@ -1144,13 +1145,12 @@ class McaBatchGUI(qt.QWidget):
             self.raiseW()
         else:
             self.raise_()
-        #args = self._mergeProcessResults()
-        #self._showProcessResults(*args)
+        args = self._mergeProcessResults()
+        self._showProcessResults(*args)
 
     def _mergeProcessResults(self):
         work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(inputdir=self.outputDir)
-        #delete = _logger.getEffectiveLevel() != logging.DEBUG
-        delete = False
+        delete = _logger.getEffectiveLevel() != logging.DEBUG
         edfoutlist, datoutlist, h5outlist = work.buildOutput(delete=delete)
         for h5filename in h5outlist:
             # outputDir/filename.h5 -> look in outputDir/filename for .edf, .dat, ...

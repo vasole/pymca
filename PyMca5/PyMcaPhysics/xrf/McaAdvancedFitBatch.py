@@ -76,22 +76,24 @@ class McaAdvancedFitBatch(object):
         self._obsolete = False  # obsolete output
 
         self.setFileList(filelist)
-        self.__ncols = None
-        self.fileStep = filestep
-        self.mcaStep = mcastep
-        self.savedImages = []
-        self.pleaseBreak = 0
+        self.pleaseBreak = 0  # stop the processing of filelist
         self.roiFit = roifit
         self.roiWidth = roiwidth
-        self.fileBeginOffset = filebeginoffset
-        self.fileEndOffset = fileendoffset
-        self.mcaOffset = mcaoffset
-        self.chunk = chunk
         self.selection = selection
         self.quiet = quiet
         self.fitFiles = fitfiles
         self.fitConcFile = fitconcfile
         self._concentrations = concentrations
+
+        # Assume each file in filelist = 1 row of XRF spectra
+        # Rows to be fitted: range(filebeginoffset, nColumns-fileEndOffset, filestep)
+        # Columns to be fitted: range(mcaOffset, nColumns, mcaStep)
+        self.fileBeginOffset = filebeginoffset
+        self.fileEndOffset = fileendoffset
+        self.fileStep = filestep
+        self.mcaStep = mcastep
+        self.mcaOffset = mcaoffset
+        self.chunk = chunk
 
         if isinstance(initdict, list):
             self.mcafit = ClassMcaTheory.McaTheory(initdict[mcaoffset])
@@ -108,7 +110,8 @@ class McaAdvancedFitBatch(object):
 
         self.overwrite = overwrite
         if self._obsolete:
-            self._nosave = bool(nosave)  # TODO: to be removed
+            self.savedImages = []
+            self._nosave = bool(nosave)
         self.outputdir = outputdir
         self.outbuffer = outbuffer
         if fitimages:
@@ -215,18 +218,14 @@ class McaAdvancedFitBatch(object):
                     os.mkdir(imgdir)
                 except:
                     _logger.error("I could not create directory %s" %\
-                          imgdir)
+                                  imgdir)
                     return
             elif not os.path.isdir(imgdir):
                 _logger.error("%s does not seem to be a valid directory" %\
-                      imgdir)
+                              imgdir)
             self.imgDir = imgdir
 
     def processList(self):
-        self.counter = 0
-        self.__row = self.fileBeginOffset - 1
-        self.__stack = None
-        self.listfile = None
         if self.outbuffer is None:
             self._processList()
         else:
@@ -235,8 +234,17 @@ class McaAdvancedFitBatch(object):
         self.onEnd()
 
     def _processList(self):
-        start = 0+self.fileBeginOffset
-        stop = len(self._filelist)-start
+        # Initialize list processing variables
+        self.counter = 0  # spectrum counter
+        self.__ncols = 0
+        self.__nrows = 0
+        self.__row = self.fileBeginOffset - 1
+        self.__stack = None
+        self._fitlistfile = None
+
+        # Loop over the files in filelist (1 file = 1 row in image)
+        start = 0 + self.fileBeginOffset
+        stop = len(self._filelist)-self.fileEndOffset
         for i in range(start, stop, self.fileStep):
             if not self.roiFit:
                 if len(self.__configList) > 1:
@@ -244,10 +252,11 @@ class McaAdvancedFitBatch(object):
                         self.mcafit = ClassMcaTheory.McaTheory(self.__configList[i])
                         self.__currentConfig = i
                         # TODO: outbuffer does not support multiple configurations
-            self.mcafit.enableOptimizedLinearFit()
+            self.mcafit.enableOptimizedLinearFit()  # TODO: why????
 
+            # Load file
             inputfile = self._filelist[i]
-            self.__row += 1  #should be plus fileStep?
+            self.__row += 1
             self.onNewFile(inputfile, self._filelist)
             self.file = self.getFileHandle(inputfile)
             if self.pleaseBreak:
@@ -259,34 +268,37 @@ class McaAdvancedFitBatch(object):
                         if self.file.info["SourceType"] in\
                         ["EdfFileStack", "HDF5Stack1D"]:
                             self.__stack = True
+        
+            # Fit spectra in current file
             if self.__stack:
                 self.__processStack()
                 if self._HDF5:
                     # The complete stack has been analyzed
+                    # TODO: what if the user gave more than one HDF5 file?
                     break
+                else:
+                    _logger.warning("Multiple stacks may no work yet")
+                    # TODO: I doubt this works for multiple non-HDF5 stacks
+                    #       __processStack restarts from __row = 0
             else:
                 self.__processOneFile()
 
         if self.counter:
             # Finish list of FIT files
             if not self.roiFit and self.fitFiles and \
-                self.listfile is not None:
-                    self.listfile.write(']\n')
-                    self.listfile.close()
+                self._fitlistfile is not None:
+                    self._fitlistfile.write(']\n')
+                    self._fitlistfile.close()
             # Save results as .edf and .dat
             if self._obsolete:
-                if self.__ncols and (not self._nosave):
+                if self.__ncols and not self._nosave:
                     self._obsoleteSaveImage()
 
-    def getFileHandle(self,inputfile):
+    def getFileHandle(self, inputfile):
         try:
             self._HDF5 = False
             if type(inputfile) == numpy.ndarray:
-                try:
-                    a = NumpyStack.NumpyStack(inputfile)
-                    return a
-                except Exception as e:
-                    raise
+                return NumpyStack.NumpyStack(inputfile)
         
             if HDF5SUPPORT:
                 if h5py.is_hdf5(inputfile):
@@ -309,16 +321,15 @@ class McaAdvancedFitBatch(object):
             if ffile is None:
                 if LispixMap.isLispixMapFile(inputfile):
                     ffile = LispixMap.LispixMap(inputfile, native=False)
-            if (ffile is None):
+            if ffile is None:
                 del ffile
-                ffile   = SpecFileLayer.SpecFileLayer()
+                ffile = SpecFileLayer.SpecFileLayer()
                 ffile.SetSource(inputfile)
             return ffile
         except:
             raise IOError("I do not know what to do with file %s" % inputfile)
 
-
-    def onNewFile(self,ffile, filelist):
+    def onNewFile(self, ffile, filelist):
         if not self.quiet:
             self.__log(ffile)
 
@@ -381,6 +392,10 @@ class McaAdvancedFitBatch(object):
         return ffile
 
     def __processStack(self):
+        """
+        Fit spectra from one file, which corresponds to the spectra
+        from the entire image.
+        """
         stack = self.file
         info = stack.info
         data = stack.data
@@ -392,14 +407,14 @@ class McaAdvancedFitBatch(object):
                 else:
                     _logger.warning("THIS SHOULD NOT BE USED")
                     xStack = stack.x
-        nimages = stack.info['Dim_1']
-        self.__nrows = nimages
+        nrows = stack.info['Dim_1']
+        self.__nrows = nrows  # TODO: shouldn't we take all files into account?
         numberofmca = stack.info['Dim_2']
-        keylist = ["1.1"] * nimages
-        for i in range(nimages):
+        keylist = ["1.1"] * nrows
+        for i in range(nrows):
             keylist[i] = "1.%04d" % i
 
-        for i in range(nimages):
+        for i in range(nrows):
             if self.pleaseBreak:
                 break
             self.onImage(keylist[i], keylist)
@@ -407,7 +422,7 @@ class McaAdvancedFitBatch(object):
             colsToIter = range(0+self.mcaOffset,
                                numberofmca,
                                self.mcaStep)
-            self.__row = i
+            self.__row = i  # TODO: shouldn't we +1 instead of assign
             self.__col = -1
             try:
                 cache_data = data[i, :, :]
@@ -442,123 +457,123 @@ class McaAdvancedFitBatch(object):
                             info["McaLiveTime"][i * numberofmca + mca]
                 self.__processOneMca(x, y0, filename, key, info=infoDict)
                 self.onMca(mca, numberofmca, filename=filename,
-                                            key=key,
-                                            info=infoDict)
+                           key=key, info=infoDict)
 
     def __processOneFile(self):
+        """
+        Fit spectra from one file, which corresponds to the spectra
+        from one image row.
+        """
         ffile = self.file
         fileinfo = ffile.GetSourceInfo()
-        if 1:
-            i = 0
-            for scankey in fileinfo['KeyList']:
-                if self.pleaseBreak:
-                    break
-                self.onImage(scankey, fileinfo['KeyList'])
-                scan, order = scankey.split(".")
-                info, data = ffile.LoadSource(scankey)
-                if info['SourceType'] == "EdfFile":
-                    nrows = int(info['Dim_1'])
-                    ncols = int(info['Dim_2'])
-                    numberofmca = ncols
+        i = 0
+        for scankey in fileinfo['KeyList']:
+            if self.pleaseBreak:
+                break
+            self.onImage(scankey, fileinfo['KeyList'])
+            scan, order = scankey.split(".")
+            info, data = ffile.LoadSource(scankey)
+            if info['SourceType'] == "EdfFile":
+                nrows = int(info['Dim_1'])
+                ncols = int(info['Dim_2'])
+                numberofmca = ncols
+                self.__ncols = len(range(0+self.mcaOffset,
+                                            numberofmca,
+                                            self.mcaStep))
+                self.__col = -1
+                for mca_index in range(self.__ncols):
+                    mca = 0 + self.mcaOffset + mca_index * self.mcaStep
+                    if self.pleaseBreak:
+                        break
+                    self.__col += 1
+                    mcadata = data[mca,:]
+                    if 'MCA start ch' in info:
+                        xmin = float(info['MCA start ch'])
+                    else:
+                        xmin = 0.0
+                    key = "%s.%s.%04d" % (scan,order,mca)
+                    y0  = numpy.array(mcadata)
+                    x = numpy.arange(len(y0))*1.0 + xmin
+                    filename = os.path.basename(info['SourceName'])
+                    infoDict = {}
+                    infoDict['SourceName'] = info['SourceName']
+                    infoDict['Key']        = key
+                    infoDict['McaLiveTime'] = info.get('McaLiveTime', None)
+                    self.__processOneMca(x,y0,filename,key,info=infoDict)
+                    self.onMca(mca, numberofmca, filename=filename,
+                               key=key, info=infoDict)
+            else:
+                if info['NbMca'] > 0:
+                    numberofmca = info['NbMca'] * 1
                     self.__ncols = len(range(0+self.mcaOffset,
-                                             numberofmca,
-                                             self.mcaStep))
+                                       numberofmca, self.mcaStep))
+                    numberOfMcaToTakeFromScan = self.__ncols * 1
                     self.__col = -1
-                    for mca_index in range(self.__ncols):
-                        mca = 0 + self.mcaOffset + mca_index * self.mcaStep
+                    scan_key = "%s.%s" % (scan,order)
+                    scan_obj= ffile.Source.select(scan_key)
+                    #I assume always same number of detectors and
+                    #same offset for each detector otherways I would
+                    #slow down everything to deal with not very common
+                    #situations
+                    #if self.__row == 0:
+                    if self.counter == 0:
+                        self.__chann0List = numpy.zeros(info['NbMcaDet'])
+                        chan0list = scan_obj.header('@CHANN')
+                        if len(chan0list):
+                            for i in range(info['NbMcaDet']):
+                                self.__chann0List[i] = int(chan0list[i].split()[2])
+                        # The calculation of self.__ncols is wrong if there are
+                        # several scans containing MCAs. One needs to multiply by
+                        # the number of scans assuming all of them contain MCAs.
+                        # We have to assume the same structure in all files.
+                        # Only in the case of "pseudo" two scan files where only
+                        # the second scan contains MCAs we do not multiply.
+                        if (len(fileinfo['KeyList']) == 2) and (fileinfo['KeyList'].index(scan_key) == 1):
+                            # leave self.__ncols untouched
+                            self.__ncolsModified = False
+                        else:
+                            # multiply by the number of scans
+                            self.__ncols *= len(fileinfo['KeyList'])
+                            self.__ncolsModified = True
+
+                    #import time
+                    for mca_index in range(numberOfMcaToTakeFromScan):
+                        i = 0 + self.mcaOffset + mca_index * self.mcaStep
+                        #e0 = time.time()
                         if self.pleaseBreak:
                             break
-                        self.__col += 1
-                        mcadata = data[mca,:]
-                        if 'MCA start ch' in info:
-                            xmin = float(info['MCA start ch'])
+                        if self.__ncolsModified:
+                            self.__col = i + \
+                                    fileinfo['KeyList'].index(scan_key) * \
+                                    numberofmca
                         else:
-                            xmin = 0.0
-                        key = "%s.%s.%04d" % (scan,order,mca)
+                            self.__col += 1
+                        point = int(i/info['NbMcaDet']) + 1
+                        mca   = (i % info['NbMcaDet'])  + 1
+                        key = "%s.%s.%05d.%d" % (scan,order,point,mca)
+                        autotime = self.mcafit.config["concentrations"].get(\
+                                    "useautotime", False)
+                        if autotime:
+                            #slow info reading methods needed to access time
+                            mcainfo,mcadata = ffile.LoadSource(key)
+                            info['McaLiveTime'] = mcainfo.get('McaLiveTime',
+                                                            None)
+                        else:
+                            mcadata = scan_obj.mca(i+1)
                         y0  = numpy.array(mcadata)
-                        x = numpy.arange(len(y0))*1.0 + xmin
+                        x = numpy.arange(len(y0))*1.0 + \
+                            self.__chann0List[mca-1]
                         filename = os.path.basename(info['SourceName'])
+
                         infoDict = {}
                         infoDict['SourceName'] = info['SourceName']
                         infoDict['Key']        = key
-                        infoDict['McaLiveTime'] = info.get('McaLiveTime', None)
+                        infoDict['McaLiveTime'] = info.get('McaLiveTime',
+                                                            None)
                         self.__processOneMca(x,y0,filename,key,info=infoDict)
-                        self.onMca(mca, numberofmca, filename=filename,
-                                                    key=key,
-                                                    info=infoDict)
-                else:
-                    if info['NbMca'] > 0:
-                        # self._initOutputBuffer() # TODO: do it or not
-                        numberofmca = info['NbMca'] * 1
-                        self.__ncols = len(range(0+self.mcaOffset,
-                                             numberofmca,self.mcaStep))
-                        numberOfMcaToTakeFromScan = self.__ncols * 1
-                        self.__col   = -1
-                        scan_key = "%s.%s" % (scan,order)
-                        scan_obj= ffile.Source.select(scan_key)
-                        #I assume always same number of detectors and
-                        #same offset for each detector otherways I would
-                        #slow down everything to deal with not very common
-                        #situations
-                        #if self.__row == 0:
-                        if self.counter == 0:
-                            self.__chann0List = numpy.zeros(info['NbMcaDet'])
-                            chan0list = scan_obj.header('@CHANN')
-                            if len(chan0list):
-                                for i in range(info['NbMcaDet']):
-                                    self.__chann0List[i] = int(chan0list[i].split()[2])
-                            # The calculation of self.__ncols is wrong if there are
-                            # several scans containing MCAs. One needs to multiply by
-                            # the number of scans assuming all of them contain MCAs.
-                            # We have to assume the same structure in all files.
-                            # Only in the case of "pseudo" two scan files where only
-                            # the second scan contains MCAs we do not multiply.
-                            if (len(fileinfo['KeyList']) == 2) and (fileinfo['KeyList'].index(scan_key) == 1):
-                                # leave self.__ncols untouched
-                                self.__ncolsModified = False
-                            else:
-                                # multiply by the number of scans
-                                self.__ncols *= len(fileinfo['KeyList'])
-                                self.__ncolsModified = True
-
-                        #import time
-                        for mca_index in range(numberOfMcaToTakeFromScan):
-                            i = 0 + self.mcaOffset + mca_index * self.mcaStep
-                            #e0 = time.time()
-                            if self.pleaseBreak: break
-                            if self.__ncolsModified:
-                                self.__col = i + \
-                                      fileinfo['KeyList'].index(scan_key) * \
-                                      numberofmca
-                            else:
-                                self.__col += 1
-                            point = int(i/info['NbMcaDet']) + 1
-                            mca   = (i % info['NbMcaDet'])  + 1
-                            key = "%s.%s.%05d.%d" % (scan,order,point,mca)
-                            autotime = self.mcafit.config["concentrations"].get(\
-                                        "useautotime", False)
-                            if autotime:
-                                #slow info reading methods needed to access time
-                                mcainfo,mcadata = ffile.LoadSource(key)
-                                info['McaLiveTime'] = mcainfo.get('McaLiveTime',
-                                                              None)
-                            else:
-                                mcadata = scan_obj.mca(i+1)
-                            y0  = numpy.array(mcadata)
-                            x = numpy.arange(len(y0))*1.0 + \
-                                self.__chann0List[mca-1]
-                            filename = os.path.basename(info['SourceName'])
-
-                            infoDict = {}
-                            infoDict['SourceName'] = info['SourceName']
-                            infoDict['Key']        = key
-                            infoDict['McaLiveTime'] = info.get('McaLiveTime',
-                                                               None)
-                            self.__processOneMca(x,y0,filename,key,info=infoDict)
-                            self.onMca(i, info['NbMca'],filename=filename,
-                                                    key=key,
-                                                    info=infoDict)
-                            #print "remaining = ",(time.time()-e0) * (info['NbMca'] - i)
+                        self.onMca(i, info['NbMca'], filename=filename,
+                                   key=key, info=infoDict)
+                        #print "remaining = ",(time.time()-e0) * (info['NbMca'] - i)
 
     def __getFitFile(self, filename, key, createdirs=False):
         fitdir = self.os_path_join(self.outputdir, "FIT")
@@ -622,21 +637,29 @@ class McaAdvancedFitBatch(object):
         return outfile
 
     def __processOneMca(self,x,y,filename,key,info=None):
+        if not self.__nrows:
+            if self.roiFit:
+                self.__nrows = len(self._filelist)
+            else:
+                self.__nrows = len(range(0, len(self._filelist), self.fileStep))
+        bFirstSpectrum = self.counter == 0
+        bOutput = self.outbuffer is not None and \
+                  self.__ncols and self.__nrows
         if self.roiFit:
             result = self.__roiOneMca(x,y)
             if self._obsolete:
                 self._obsoleteOutputRoiFit(result, filename)
-            if self.outbuffer and self.__ncols and not self.counter:
-                self._allocateMemoryRoiFit(result)
-            if self.__nrows:
+            if bOutput:
+                if bFirstSpectrum:
+                    self._allocateMemoryRoiFit(result)
                 self._saveRoiFitResult(result)
         else:
             result, concentrations = self.__fitOneMca(x,y,filename,key,info=info)
             if self._obsolete:
                 self._obsoleteOutputFit(result, concentrations, filename)
-            if self.outbuffer and self.__ncols and not self.counter:
-                self._allocateMemoryFit(result, concentrations)
-            if self.__nrows:
+            if bOutput:
+                if bFirstSpectrum:
+                    self._allocateMemoryFit(result, concentrations)
                 self._saveFitResult(result, concentrations)
         self.counter += 1
 
@@ -814,7 +837,7 @@ class McaAdvancedFitBatch(object):
         """Append FIT file to list of FIT files
         """
         if self.counter:
-            self.listfile.write(',\n'+outfile)
+            self._fitlistfile.write(',\n'+outfile)
         else:
             name = self._rootname +"_fitfilelist.py"
             name = self.os_path_join(self.outputdir,name)
@@ -822,9 +845,9 @@ class McaAdvancedFitBatch(object):
                 os.remove(name)
             except:
                 pass
-            self.listfile=open(name,"w+")
-            self.listfile.write("fitfilelist = [")
-            self.listfile.write('\n'+outfile)
+            self._fitlistfile = open(name,"w+")
+            self._fitlistfile.write("fitfilelist = [")
+            self._fitlistfile.write('\n'+outfile)
 
     def _updateConcFile(self, concentrations, filename, key):
         if not self.fitConcFile or concentrations is None:
@@ -843,10 +866,6 @@ class McaAdvancedFitBatch(object):
         return self.mcafit.roifit(x,y,width=self.roiWidth)
 
     def _allocateMemoryFit(self, result, concentrations):
-        if not self.__stack:
-            self.__nrows = len(range(0, len(self._filelist), self.fileStep))
-        if not self.__nrows:
-            return
         if self._concentrations:
             layerlist = concentrations['layerlist']
             if 'mmolar' in concentrations:
@@ -865,10 +884,12 @@ class McaAdvancedFitBatch(object):
         outbuffer.allocateMemory('parameters',
                                  shape=paramShape,
                                  dtype=dtypeResult,
+                                 fill_value=numpy.nan,
                                  attrs={'units':'counts'})
         outbuffer.allocateMemory('uncertainties',
                                  shape=paramShape,
                                  dtype=dtypeResult,
+                                 fill_value=numpy.nan,
                                  attrs={'units':'counts'})
 
         # Concentrations
@@ -894,6 +915,7 @@ class McaAdvancedFitBatch(object):
             outbuffer.allocateMemory(concentration_key,
                                      shape=paramShape,
                                      dtype=dtypeResult,
+                                     fill_value=numpy.nan,
                                      attrs=concentration_attrs)
 
         # Model ,residuals, chisq ,...
@@ -914,7 +936,7 @@ class McaAdvancedFitBatch(object):
                                      dtype=numpy.int32)
             outbuffer.allocateMemory('Chisq',
                                      shape=imageShape,
-                                     fill_value=-1,
+                                     fill_value=numpy.nan,
                                      dtype=dtypeResult)
             outaxes = False
             if outbuffer.saveFit:
@@ -922,14 +944,14 @@ class McaAdvancedFitBatch(object):
                                                 nxdata='fit',
                                                 shape=stackShape,
                                                 dtype=dtypeResult,
+                                                fill_value=numpy.nan,
                                                 chunks=True,
-                                                fill_value=0,
                                                 attrs={'units':'counts'})
-                idx = [slice(None)]*fitmodel.ndim
-                idx[mcaIndex] = slice(0, iXMin)
-                fitmodel[tuple(idx)] = numpy.nan
-                idx[mcaIndex] = slice(iXMax, None)
-                fitmodel[tuple(idx)] = numpy.nan
+                #idx = [slice(None)]*fitmodel.ndim
+                #idx[mcaIndex] = slice(0, iXMin)
+                #fitmodel[tuple(idx)] = numpy.nan
+                #idx[mcaIndex] = slice(iXMax, None)
+                #fitmodel[tuple(idx)] = numpy.nan
                 self._mcaIdx = slice(iXMin, iXMax)
             if outbuffer.saveData:
                 outaxes = True
@@ -937,6 +959,7 @@ class McaAdvancedFitBatch(object):
                                      nxdata='fit',
                                      shape=stackShape,
                                      dtype=dtypeResult,
+                                     fill_value=numpy.nan,
                                      chunks=True,
                                      attrs={'units':'counts'})
             if outbuffer.saveResiduals:
@@ -945,6 +968,7 @@ class McaAdvancedFitBatch(object):
                                      nxdata='fit',
                                      shape=stackShape,
                                      dtype=dtypeResult,
+                                     fill_value=numpy.nan,
                                      chunks=True,
                                      attrs={'units':'counts'})
             if outaxes:
@@ -972,8 +996,7 @@ class McaAdvancedFitBatch(object):
 
     def _saveFitResult(self, result, concentrations):
         outbuffer = self.outbuffer
-        if outbuffer is None:
-            return
+
         # Fit parameters and their uncertainties
         output = outbuffer['parameters']
         outputs = outbuffer['uncertainties']
@@ -1006,13 +1029,13 @@ class McaAdvancedFitBatch(object):
     def _obsoleteOutputFit(self, result, concentrations, filename):
         if self.outbuffer is None:
             return
-        if self.__ncols is not None:
-            if not self.counter:
+        if self.__ncols and self._nrows:
+            if self.counter == 0:
                 self.__peaks  = []
                 self.__images = {}
                 self.__sigmas = {}
                 if not self.__stack:
-                    self.__nrows   = len(range(0, len(self._filelist), self.fileStep))
+                    self.__nrows = len(range(0, len(self._filelist), self.fileStep))
                 for group in result['groups']:
                     self.__peaks.append(group)
                     self.__images[group]= numpy.zeros((self.__nrows,
@@ -1071,10 +1094,6 @@ class McaAdvancedFitBatch(object):
             pass
 
     def _allocateMemoryRoiFit(self, result):
-        if self.__ncols is not None and not self.__stack:
-            self.__nrows = len(self._filelist)
-        if not self.__nrows:
-            return
         outbuffer = self.outbuffer
 
         # Fit parameters (ROIs)
@@ -1092,8 +1111,6 @@ class McaAdvancedFitBatch(object):
 
     def _saveRoiFitResult(self, result):
         outbuffer = self.outbuffer
-        if outbuffer is None:
-            return
         output = outbuffer['parameters']
         for i, name in enumerate(outbuffer['parameter_names']):
             group, roi = name
@@ -1102,12 +1119,10 @@ class McaAdvancedFitBatch(object):
     def _obsoleteOutputRoiFit(self, result, filename):
         if self.outbuffer is None:
             return
-        if self.__ncols is not None:
-            if not self.counter:
+        if self.__ncols and self._nrows:
+            if self.counter == 0:
                 self.__ROIpeaks = []
                 self._ROIimages = {}
-                if not self.__stack:
-                    self.__nrows = len(self._filelist)
                 for group in result.keys():
                     self.__ROIpeaks.append(group)
                     self._ROIimages[group]={}
