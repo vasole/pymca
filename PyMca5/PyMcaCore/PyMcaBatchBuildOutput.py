@@ -157,22 +157,26 @@ class PyMcaBatchBuildOutput(object):
         if maxdims is None:
             maxdims = output.ndim
         if output.ndim > maxdims:
-            # This is d
-            print(output)
+            # This is meant to preserve memory when copying
+            # h5py datasets
             idx = [slice(None)]*output.ndim
             shape = output.shape
             iterdims = sorted(numpy.argsort(shape)[:-maxdims])
             iterlst = [list(range(shape[i])) for i in iterdims]
-            for iteridx in itertools.product(iterlst):
+            for iteridx in itertools.product(*iterlst):
                 for axis, i in zip(iterdims, iteridx):
                     idx[axis] = i
                 idxtpl = tuple(idx)
-                buffer = input[idxtpl]
-                mask = ~numpy.isnan(buffer)
-                output[idxtpl][mask] = buffer[mask]
+                bufferin = input[idxtpl]
+                mask = ~numpy.isnan(bufferin)
+                if mask.any():
+                    bufferout = output[idxtpl]
+                    bufferout[mask] = bufferin[mask]
+                    output[idxtpl] = bufferout
         else:
             mask = ~numpy.isnan(input)
-            output[mask] = input[mask]
+            if mask.any():
+                output[mask] = input[mask]
 
     def _mergeDat(self, parts, outfilename):
         first = True
