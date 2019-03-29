@@ -49,7 +49,7 @@ class OutputBuffer(object):
                  outputRoot=None, fileEntry=None, fileProcess=None,
                  saveResiduals=False, saveFit=False, saveData=False,
                  tif=False, edf=False, csv=False, dat=False, h5=True,
-                 saveDiagnostics=False, multiedf=True, overwrite=False,
+                 diagnostics=False, multiedf=True, overwrite=False,
                  suffix=None):
         """
         XRf batch fitting output buffer, to be saved as:
@@ -73,7 +73,7 @@ class OutputBuffer(object):
         :param saveResiduals:
 -       :param saveFit:
 -       :param saveData:
-        :param saveDiagnostics:
+        :param diagnostics:
         :param bool tif:
         :param bool edf:
         :param bool csv:
@@ -101,7 +101,7 @@ class OutputBuffer(object):
         self.saveResiduals = saveResiduals
         self.saveFit = saveFit
         self.saveData = saveData
-        self.saveDiagnostics = saveDiagnostics
+        self.diagnostics = diagnostics
         self.overwrite = overwrite
         self.suffix = suffix
 
@@ -234,11 +234,11 @@ class OutputBuffer(object):
         self._saveResiduals = value
 
     @property
-    def saveDiagnostics(self):
+    def diagnostics(self):
         return self.saveResiduals or self.saveFit or self.saveData 
 
-    @saveDiagnostics.setter
-    def saveDiagnostics(self, value):
+    @diagnostics.setter
+    def diagnostics(self, value):
         self.saveResiduals = value
         self.saveFit = value
         self.saveData = value
@@ -492,8 +492,11 @@ class OutputBuffer(object):
             if nempty > 0:
                 args = args + ('',)*nempty
             elif nempty < 0:
-                raise RuntimeError('{} cannot be represented as {}'
-                                   .format(args, repr(fmt)))
+                if n == 1:
+                    args = ''.join(args)
+                else:
+                    raise RuntimeError('{} cannot be represented as {}'
+                                       .format(args, repr(fmt)))
             out.append(fmt.format(*args))
         return out
 

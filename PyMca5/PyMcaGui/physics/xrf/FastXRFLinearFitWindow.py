@@ -278,7 +278,7 @@ class FastXRFLinearFitWindow(qt.QWidget):
         output['h5'] = int(self._h5Box.isChecked())
         output['overwrite'] = int(self._overwriteBox.isChecked())
         diagnostics = int(self._diagnosticsBox.isChecked())
-        output['saveDiagnostics'] = diagnostics
+        output['diagnostics'] = diagnostics
         return ddict
 
 class FastXRFLinearFitDialog(qt.QDialog):

@@ -180,7 +180,7 @@ class FastXRFLinearFit(object):
                                                 shape=paramShape,
                                                 dtype=dtypeResult,
                                                 attrs={'units':'counts'})
-            if outbuffer.saveDiagnostics:
+            if outbuffer.diagnostics:
                 nFreeParameters = outbuffer.allocateMemory('nFreeParameters',
                                                 shape=imageShape,
                                                 fill_value=nFree,
@@ -1041,7 +1041,7 @@ def main():
     h5 = 1
     dat = 0
     concentrations = 0
-    saveDiagnostics = 0
+    diagnostics = 0
     debug = 0
     overwrite = 1
     for opt, arg in opts:
@@ -1074,7 +1074,7 @@ def main():
         elif opt == '--concentrations':
             concentrations = int(arg)
         elif opt == '--diagnostics':
-            saveDiagnostics = int(arg)
+            diagnostics = int(arg)
         elif opt == '--outroot':
             outputRoot = arg
         elif opt == '--outentry':
@@ -1129,8 +1129,8 @@ def main():
                         outputRoot=outputRoot,
                         fileEntry=fileEntry,
                         fileProcess=fileProcess,
-                        saveDiagnostics=saveDiagnostics,
-                        tif=tif, edf=edf, csv=csv, h5=h5, dat=dat
+                        diagnostics=diagnostics,
+                        tif=tif, edf=edf, csv=csv, h5=h5, dat=dat,
                         overwrite=overwrite)
 
     from PyMca5.PyMcaMisc import ProfilingUtils

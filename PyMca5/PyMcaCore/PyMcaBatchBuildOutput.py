@@ -35,9 +35,17 @@ import os
 import numpy
 import logging
 import shutil
+import re
+import itertools
 from PyMca5.PyMcaIO import EdfFile
+from PyMca5.PyMcaCore import NexusTools
+try:
+    import h5py
+except ImportError:
+    h5py = None
 
 _logger = logging.getLogger(__name__)
+
 
 class PyMcaBatchBuildOutput(object):
     def __init__(self, inputdir=None, outputdir=None):
@@ -86,7 +94,7 @@ class PyMcaBatchBuildOutput(object):
         """
         outList = []
         for filename in partialList:
-            parts = self.getIndexedFileList(os.path.join(inputdir, filename))
+            parts = self.getPartialFileList(os.path.join(inputdir, filename))
             outfilename = parts[0].replace("_000000_partial", "")
             _logger.debug("Merging %s (%d parts)", filename, len(parts))
             outfilename = os.path.join(outputdir, outfilename)
@@ -101,8 +109,24 @@ class PyMcaBatchBuildOutput(object):
         return outList
 
     def _mergeH5(self, parts, outfilename):
-        pass
-
+        shutil.copy(parts[0], outfilename)
+        with h5py.File(outfilename) as fout:
+            for entry in NexusTools.getNXClassGroups(fout, '/', [u'NXentry']):
+                for process in NexusTools.getNXClassGroups(fout, entry.name, [u'NXprocess']):
+                    for results in NexusTools.getNXClassGroups(fout, process.name, [u'NXcollection']):
+                        for dataout in NexusTools.getNXClassGroups(fout, results.name, [u'NXdata']):
+                            for part in parts[1:]:
+                                with h5py.File(part) as fin:
+                                    try:
+                                        datain = fin[dataout.name]
+                                    except KeyError:
+                                        raise RuntimeError('{} does not have {}'
+                                                           .format(part, repr(dataout.name)))
+                                    for datasetname in dataout:
+                                        self._fillPartial(dataout[datasetname],
+                                                          datain[datasetname],
+                                                          maxdims=2)
+                       
     def _mergeCfg(self, parts, outfilename):
         # They should be all the same so pick the first one
         shutil.copy(parts[0], outfilename)
@@ -127,9 +151,28 @@ class PyMcaBatchBuildOutput(object):
             edfout.WriteImage(header, img, Append=i > 0)
         del edfout
 
-    def _fillPartial(self, buffer, input):
-        mask = ~numpy.isnan(input)
-        buffer[mask] = input[mask]
+    def _fillPartial(self, output, input, maxdims=None):
+        if output.shape != input.shape:
+            raise ValueError("Cannot merge array's with different shapes")
+        if maxdims is None:
+            maxdims = output.ndim
+        if output.ndim > maxdims:
+            # This is d
+            print(output)
+            idx = [slice(None)]*output.ndim
+            shape = output.shape
+            iterdims = sorted(numpy.argsort(shape)[:-maxdims])
+            iterlst = [list(range(shape[i])) for i in iterdims]
+            for iteridx in itertools.product(iterlst):
+                for axis, i in zip(iterdims, iteridx):
+                    idx[axis] = i
+                idxtpl = tuple(idx)
+                buffer = input[idxtpl]
+                mask = ~numpy.isnan(buffer)
+                output[idxtpl][mask] = buffer[mask]
+        else:
+            mask = ~numpy.isnan(input)
+            output[mask] = input[mask]
 
     def _mergeDat(self, parts, outfilename):
         first = True
@@ -183,71 +226,36 @@ class PyMcaBatchBuildOutput(object):
             ffile.close()
         outfile.close()
 
-    def getIndexedFileList(self, filename, begin=None, end=None,
-                           skip = None, fileindex=0):
-        name = os.path.basename(filename)
-        n = len(name)
-        i = 1
-        numbers = ['0', '1', '2', '3', '4', '5',
-                   '6', '7', '8', '9']
-        while (i <= n):
-            c = name[n-i:n-i+1]
-            if c in numbers:
-                break
-            i += 1
-        suffix = name[n-i+1:]
-        if len(name) == len(suffix):
-            #just one file, one should use standard widget
-            #and not this one.
-            self.loadFileList(filename, fileindex=fileindex)
-        else:
-            nchain = []
-            while (i<=n):
-                c = name[n-i:n-i+1]
-                if c not in numbers:
-                    break
-                else:
-                    nchain.append(c)
-                i += 1
-            number = ""
-            nchain.reverse()
-            for c in nchain:
-                number += c
-            fformat = "%" + "0%dd" % len(number)
-            if (len(number) + len(suffix)) == len(name):
-                prefix = ""
-            else:
-                prefix = name[0:n-i+1]
-            prefix = os.path.join(os.path.dirname(filename),prefix)
-            if not os.path.exists(prefix + number + suffix):
-                _logger.error("Internal error in EDFStack")
-                _logger.error("file should exist: %s " % (prefix + number + suffix))
-                return
+    @staticmethod
+    def getPartialFileList(filename, begin=None, end=None, skip=None):
+        # Decompose filename, for example "/tmp/base_000000_partial.h5"
+        name, ext = os.path.splitext(os.path.basename(filename))
+        m = re.search("^(.+?)(\d+)([^\d]+)$", name)
+        if not m:
+            return [filename]
+        prefix, number, suffix = m.groups()
+        prefix = os.path.join(os.path.dirname(filename), prefix)
+        suffix += ext
+        # Prepare iteration over "/tmp/base_{:d}_partial.h5"
+        fformat = prefix + "{{:0{}d}}".format(len(number)) + suffix
+        if begin is None:
             i = 0
-            if begin is None:
-                begin = 0
-                testname = prefix+fformat % begin+suffix
-                while not os.path.exists(prefix + fformat % begin+suffix):
-                    begin += 1
-                    testname = prefix+fformat % begin+suffix
-                    if len(testname) > len(filename):
-                        break
-                i = begin
-            else:
-                i = begin
-            if not os.path.exists(prefix+fformat % i+suffix):
-                raise ValueError("Invalid start index file = %s" % \
-                      (prefix+fformat % i+suffix))
-            f = prefix+fformat % i+suffix
-            filelist = []
-            while os.path.exists(f):
-                filelist.append(f)
+            while not os.path.exists(fformat.format(i)):
                 i += 1
-                if end is not None:
-                    if i > end:
-                        break
-                f = prefix+fformat % i+suffix
-            return filelist
+        else:
+            i = begin
+        if not skip:
+            skip = []
+        # Find all "/tmp/base_{:d}_partial.h5"
+        filelist = []
+        while os.path.exists(fformat.format(i)) or i in skip:
+            if i not in skip:
+                filelist.append(fformat.format(i))
+            i += 1
+            if end is not None:
+                if i > end:
+                    break
+        return filelist
 
 
 if __name__ == "__main__":
@@ -267,5 +275,5 @@ if __name__ == "__main__":
         if filename.endswith('000000_partial.edf'):edflist.append(filename)
         elif filename.endswith('000000_partial.dat'):datlist.append(filename)
     for filename in edflist:
-        print w.getIndexedFileList(os.path.join(directory, filename))
+        print w.getPartialFileList(os.path.join(directory, filename))
     """

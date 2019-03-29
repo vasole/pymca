@@ -81,7 +81,9 @@ def moduleRunCmd(modulePath):
 
 
 class Option(object):
-    """Option wrapper used by `Command`
+    """
+    Command option wrapper used by `Command`
+    which converts to a string "--option=..." 
     """
 
     def __init__(self, name, value=None, convert=None, format=None):
@@ -112,7 +114,8 @@ class Option(object):
 class Command(object):
     """
     Class that wraps "cmd --option1=... --option2=..."
-    while allowing modifications and conversion to string
+    while allowing for adding/removing/modifying options
+    and conversion to a string for execution
     """
 
     def __init__(self):
@@ -134,6 +137,8 @@ class Command(object):
 
     def __str__(self):
         name, fmt = self._cmd
+        if not name:
+            raise RuntimeError("Specify a command with 'setCommand'")
         cmd = fmt.format(name)
         options = map(str, self._options.values())
         cmd += ''.join(list(options))
@@ -157,7 +162,36 @@ class Command(object):
         super(Command, self).__setattr__(attr, value)
 
 
+def launchThreadBatchFit(thread, window, qApp=None):
+    """Launch thread with control window
+    """
+    def cleanup():
+        thread.pleasePause = 0
+        thread.pleaseBreak = 1
+        thread.wait()
+        app = qt.QApplication.instance()
+        app.processEvents()
+    def pause():
+        if thread.pleasePause:
+            thread.pleasePause=0
+            window.pauseButton.setText("Pause")
+        else:
+            thread.pleasePause=1
+            window.pauseButton.setText("Continue")
+    window.pauseButton.clicked.connect(pause)
+    window.abortButton.clicked.connect(window.close)
+    if qApp is None:
+        qApp = qt.QApplication.instance()
+    qApp.aboutToQuit[()].connect(cleanup)
+    window.show()
+    thread.start()
+    return qApp
+
+
 class McaBatchGUI(qt.QWidget):
+    """
+    Main batch fitting widget
+    """
 
     def __init__(self,parent=None,name="PyMca batch fitting",fl=None,
                 filelist=None,config=None,outputdir=None, actions=0):
@@ -886,7 +920,7 @@ class McaBatchGUI(qt.QWidget):
         cmd.addOption('roifit', value=self.__roiBox.isChecked(), format="{:d}")
         cmd.addOption('html', value=self.__htmlBox.isChecked(), format="{:d}")
         cmd.addOption('concentrations', value=self.__concentrationsBox.isChecked(), format="{:d}")
-        cmd.addOption('saveDiagnostics', value=self.__diagnosticsBox.isChecked(), format="{:d}", name='diagnostics')
+        cmd.addOption('diagnostics', value=self.__diagnosticsBox.isChecked(), format="{:d}")
         cmd.addOption('tif', value=self._tiffBox.isChecked(), format="{:d}")
         cmd.addOption('csv', value=self._csvBox.isChecked(), format="{:d}")
         cmd.addOption('dat', value=self._datBox.isChecked(), format="{:d}")
@@ -957,42 +991,26 @@ class McaBatchGUI(qt.QWidget):
 
     def _runAsThreadRoiFit(self, cmd, wname):
         kwargs = cmd.getOptions('html', 'htmlindex', 'table')
-        window = McaBatchWindow(wname="ROI"+wname, actions=1, outputdir=self.outputDir, **kwargs)
+        window = McaBatchWindow(name="ROI"+wname, actions=1, outputdir=self.outputDir, **kwargs)
         kwargs = cmd.getOptions('roifit', 'roiwidth', 'overwrite', 'filestep',
-                                'mcastep', 'concentrations', 'fitfiles', 'selection')
+                                'mcastep', 'concentrations', 'fitfiles', 'selection',
+                                'edf', 'csv', 'dat', 'h5', 'tif')
         thread = McaBatch(window, self.configFile, filelist=self.fileList, outputdir=self.outputDir, **kwargs)
-        self._launchBatchFit(thread, window)
+        self._launchThreadBatchFit(thread, window)
     
     def _runAsThreadDarwin(self, cmd, wname):
-        #almost identical to batch
+        #TODO: are the right parameters passed? Looks like we're passing roifit parameters while this is not a roifit
         kwargs = cmd.getOptions('html', 'htmlindex', 'table')
         window = McaBatchWindow(name=wname, actions=1, outputdir=self.outputDir, **kwargs)
         kwargs = cmd.getOptions('roifit', 'roiwidth', 'overwrite', 'filestep',
-                                'mcastep', 'concentrations', 'fitfiles', 'selection')
+                                'mcastep', 'concentrations', 'fitfiles', 'selection',
+                                'edf', 'csv', 'dat', 'h5', 'tif')
         thread = McaBatch(window, self.configFile, filelist=self.fileList, outputdir=self.outputDir, **kwargs)
         window._rootname = "%s"% thread._rootname
-        self._launchBatchFit(thread, window)
+        self._launchThreadBatchFit(thread, window)
 
-    def _launchBatchFit(self, thread, window):
-        def cleanup():
-            thread.pleasePause = 0
-            thread.pleaseBreak = 1
-            thread.wait()
-            qApp = qt.QApplication.instance()
-            qApp.processEvents()
-        def pause():
-            if thread.pleasePause:
-                thread.pleasePause=0
-                window.pauseButton.setText("Pause")
-            else:
-                thread.pleasePause=1
-                window.pauseButton.setText("Continue")
-        window.pauseButton.clicked.connect(pause)
-        window.abortButton.clicked.connect(window.close)
-        qApp = qt.QApplication.instance()
-        qApp.aboutToQuit[()].connect(cleanup)
-        window.show()
-        thread.start()
+    def _launchThreadBatchFit(self, thread, window):
+        launchThreadBatchFit(thread, window)
         self.__window = window
         self.__thread = thread
         
@@ -1295,6 +1313,9 @@ class McaBatchGUI(qt.QWidget):
 
 
 class McaBatch(McaAdvancedFitBatch.McaAdvancedFitBatch, qt.QThread):
+    """
+    Batch fitting thread
+    """
 
     def __init__(self, parent, configfile, **kwargs):
         McaAdvancedFitBatch.McaAdvancedFitBatch.__init__(self, configfile, **kwargs)
@@ -1377,6 +1398,10 @@ class McaBatch(McaAdvancedFitBatch.McaAdvancedFitBatch, qt.QThread):
 
 
 class McaBatchWindow(qt.QWidget):
+    """
+    Widget to control batch fitting threads
+    """
+
     def __init__(self,parent=None, name="BatchWindow", fl=0, actions = 0, outputdir=None, html=0,
                     htmlindex = None, table=2, chunk=None, exitonend=False):
         if QTVERSION < '4.0.0':
@@ -1746,7 +1771,7 @@ def main():
                    'listfile=','cfglistfile=', 'concentrations=', 'table=', 'fitfiles=',
                    'filebeginoffset=','fileendoffset=','mcaoffset=', 'chunk=',
                    'nativefiledialogs=','selection=', 'exitonend=',
-                   'edf=', 'h5=', 'csv=', 'tif=', 'dat=', 'diagnostics='
+                   'edf=', 'h5=', 'csv=', 'tif=', 'dat=', 'diagnostics=',
                    'logging=', 'debug=', 'gui=']
     filelist = None
     outdir   = None
@@ -1770,7 +1795,7 @@ def main():
     chunk = None
     exitonend = False
     gui = 0
-    saveDiagnostics = 0
+    diagnostics = 0
     tif = 0
     edf = 1
     csv = 0
@@ -1833,7 +1858,7 @@ def main():
         elif opt in ('--exitonend'):
             exitonend = int(arg)
         elif opt == '--diagnostics':
-            saveDiagnostics = int(arg)
+            diagnostics = int(arg)
         elif opt == '--edf':
             edf = int(arg)
         elif opt == '--csv':
@@ -1906,7 +1931,7 @@ def main():
                               concentrations=concentrations, fitfiles=fitfiles,
                               filebeginoffset=filebeginoffset,fileendoffset=fileendoffset,
                               mcaoffset=mcaoffset, chunk=chunk, selection=selection,
-                              saveDiagnostics=saveDiagnostics,
+                              diagnostics=diagnostics,
                               tif=tif, edf=edf, csv=csv, h5=h5, dat=dat)
         except:
             if exitonend:
@@ -1920,25 +1945,9 @@ def main():
                 msg.exec_()
                 return
 
-        def cleanup():
-            thread.pleasePause = 0
-            thread.pleaseBreak = 1
-            thread.wait()
-            qApp = qt.QApplication.instance()
-            qApp.processEvents()
-        def pause():
-            if thread.pleasePause:
-                thread.pleasePause=0
-                window.pauseButton.setText("Pause")
-            else:
-                thread.pleasePause=1
-                window.pauseButton.setText("Continue")
-        window.pauseButton.clicked.connect(pause)
-        window.abortButton.clicked.connect(window.close)
-        app.aboutToQuit[()].connect(cleanup)
         window._rootname = "%s"% thread._rootname
-        window.show()
-        thread.start()
+        launchThreadBatchFit(thread, window, qApp=app)
+        
     app.exec_()
 
 if __name__ == "__main__":

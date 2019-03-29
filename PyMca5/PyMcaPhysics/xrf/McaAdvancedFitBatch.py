@@ -64,7 +64,7 @@ class McaAdvancedFitBatch(object):
                  roifit=False, roiwidth=100,
                  overwrite=1, filestep=1, mcastep=1,
                  fitfiles=0, fitimages=1,
-                 concentrations=0, fitconcfile=1,
+                 concentrations=0, fitconcfile=None,
                  filebeginoffset=0, fileendoffset=0,
                  mcaoffset=0, chunk=None,
                  selection=None, lock=None, nosave=None,
@@ -83,6 +83,8 @@ class McaAdvancedFitBatch(object):
         self.selection = selection
         self.quiet = quiet
         self.fitFiles = fitfiles
+        if fitconcfile is None:
+            fitconcfile = fitfiles
         self.fitConcFile = fitconcfile
         self._concentrations = concentrations
 
@@ -254,6 +256,7 @@ class McaAdvancedFitBatch(object):
                         self.mcafit = ClassMcaTheory.McaTheory(self.__configList[i])
                         self.__currentConfig = i
                         # TODO: outbuffer does not support multiple configurations
+                        #       Only the first one is saved.
             self.mcafit.enableOptimizedLinearFit()  # TODO: why????
 
             # Load file
@@ -281,7 +284,7 @@ class McaAdvancedFitBatch(object):
                 else:
                     _logger.warning("Multiple stacks may no work yet")
                     # TODO: I doubt this works for multiple non-HDF5 stacks
-                    #       __processStack restarts from __row = 0
+                    #       because __processStack restarts from __row = 0
             else:
                 self.__processOneFile()
 
@@ -675,7 +678,7 @@ class McaAdvancedFitBatch(object):
         fitfile = self.__getFitFile(filename,key,createdirs=False)
         if os.path.exists(fitfile) and not self.overwrite:
             # Load MCA data when needed
-            if outbuffer.saveDiagnostics:
+            if outbuffer.diagnostics:
                 if not self._attemptMcaLoad(x, y, filename, info=info):
                     return
             # Load result from FIT file
@@ -699,7 +702,7 @@ class McaAdvancedFitBatch(object):
 
         # Extract/calculate + save concentrations
         if result:
-            # TODO: concentrationsInResult, when does this happend and should we pop it????
+            # TODO: 'concentrations' in result, when does this happend and should we pop it????
             concentrationsInResult = 'concentrations' not in result
         else:
             concentrationsInResult = False
@@ -757,9 +760,9 @@ class McaAdvancedFitBatch(object):
             digest = self.fitFiles or\
                      (self._concentrations and (self.mcafit._fluoRates is None))
             if self.outbuffer is not None:
-                # TODO: we just need yfit and ydata which are
-                # thrown away by Gefit.LeastSquaresFit
-                digest |= self.outbuffer.saveDiagnostics
+                # TODO: we need a full digest although only yfit and ydata
+                # are needed, which are thrown away by Gefit.LeastSquaresFit
+                digest |= self.outbuffer.diagnostics
             if digest:
                 fitresult, result = self.mcafit.startfit(digest=1)
             elif self._concentrations:
@@ -921,7 +924,7 @@ class McaAdvancedFitBatch(object):
                                      attrs=concentration_attrs)
 
         # Model ,residuals, chisq ,...
-        if outbuffer.saveDiagnostics:
+        if outbuffer.diagnostics:
             xdata0 = self.mcafit.xdata0.flatten().astype(numpy.int32)  # channels
             xdata = self.mcafit.xdata.flatten().astype(numpy.int32)  # channels after limits
             stackShape = self.__nrows, self.__ncols, len(xdata0)
@@ -1015,7 +1018,7 @@ class McaAdvancedFitBatch(object):
                 else:
                     output[i, self.__row, self.__col] = concentrations[self.__conKey][name]
         # Diagnostics: model, residuals, chisq ,...
-        if outbuffer.saveDiagnostics:
+        if outbuffer.diagnostics:
             outbuffer['Chisq'][self.__row, self.__col] = result['chisq']
             idx = self.__row, self.__col, self._mcaIdx
             if outbuffer.saveFit:
@@ -1265,7 +1268,7 @@ def main():
     debug = 0
     outputDir = None
     concentrations = 0
-    saveDiagnostics = 0
+    diagnostics = 0
     overwrite = 1
     outputRoot = ""
     fileEntry = ""
@@ -1306,7 +1309,7 @@ def main():
         elif opt == '--debug':
             debug = int(arg)
         elif opt == '--diagnostics':
-            saveDiagnostics = int(arg)
+            diagnostics = int(arg)
         elif opt == '--edf':
             edf = int(arg)
         elif opt == '--csv':
@@ -1332,7 +1335,7 @@ def main():
                         outputRoot=outputRoot,
                         fileEntry=fileEntry,
                         fileProcess=fileProcess,
-                        saveDiagnostics=saveDiagnostics,
+                        diagnostics=diagnostics,
                         tif=tif, edf=edf, csv=csv, h5=h5, dat=dat,
                         overwrite=overwrite)
 
