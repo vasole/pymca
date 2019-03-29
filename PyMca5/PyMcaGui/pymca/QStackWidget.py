@@ -224,7 +224,7 @@ class QStackWidget(StackBase.StackBase,
         infotext = 'Toggle background subtraction from current image\n'
         infotext += 'subtracting a straight line between the ROI limits.'
         self.roiBackgroundIcon = qt.QIcon(qt.QPixmap(IconDict["subtract"]))
-        self.roiBackgroundButton = self.roiWidget.graphWidget._addToolButton(
+        self.roiBackgroundButton = self.roiWidget.graphWidget._addToolButton(\
                                     self.roiBackgroundIcon,
                                     self._roiSubtractBackgroundClicked,
                                     infotext,
@@ -887,11 +887,7 @@ class QStackWidget(StackBase.StackBase,
             self.rgbWidget = RGBCorrelator.RGBCorrelator()
             self.tab.addTab(self.rgbWidget, "RGB Correlator")
             self.mainLayout.addWidget(self.tab)
-
-        curvesRoiWidget = self.mcaWidget.getCurvesRoiDockWidget().roiWidget
-        if hasattr(curvesRoiWidget, "setMiddleROIMarkerFlag"):
-            # Not implemented prior to silx >= 0.7
-            curvesRoiWidget.setMiddleROIMarkerFlag(True)
+        self.mcaWidget.setMiddleROIMarkerFlag(True)
 
     def _buildAndConnectButtonBox(self):
         #the MCA selection
@@ -1199,9 +1195,11 @@ class QStackWidget(StackBase.StackBase,
             return
         if ddict['event'] == "hFlipSignal":
             if ddict['id'] != id(self.stackWidget):
-                self.stackWidget.graph.getYAxis().setInverted(ddict['current'])
+                self.stackWidget.graph.invertYAxis(ddict['current'])
+                self.stackWidget.graph.replot()
             if ddict['id'] != id(self.roiWidget):
-                self.roiWidget.graph.getYAxis().setInverted(ddict['current'])
+                self.roiWidget.graph.invertYAxis(ddict['current'])
+                self.roiWidget.graph.replot()
             return
 
     def _stackGraphSignal(self, ddict):
@@ -1337,8 +1335,8 @@ if __name__ == "__main__":
     if backend is not None:
         # set the default backend
         try:
-            from silx.gui.plot import PlotWidget
-            PlotWidget.setDefaultBackend(backend)
+            from PyMca5.PyMcaGraph.Plot import Plot
+            Plot.defaultBackend = backend
         except:
             _logger.warning("WARNING: Cannot set backend to %s", backend)
     widget = QStackWidget()

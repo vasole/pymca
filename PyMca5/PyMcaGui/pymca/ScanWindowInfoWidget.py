@@ -68,8 +68,7 @@ class SpecArithmetic(object):
         idx = self.__give_index(ymax, ydata)
         return xdata[idx], ymax, idx
 
-    @staticmethod
-    def search_com(xdata, ydata):
+    def search_com(self, xdata,ydata):
         """
         Return the center of mass in arrays xdata and ydata
         """
@@ -132,17 +131,15 @@ class SpecArithmetic(object):
         cfwhm = (uhmx + lhmx) / 2
         return fwhm, cfwhm
 
-    @staticmethod
-    def __give_index(elem, array):
-        """
-        Return the index of elem in array
-        """
-        mylist = array.tolist()
-        return mylist.index(elem)
 
+    def __give_index(self, elem,array):
+         """
+         Return the index of elem in array
+         """
+         mylist = array.tolist()
+         return mylist.index(elem)
 
 class HKL(qt.QWidget):
-
     def __init__(self, parent=None, h="", k="", l=""):
         qt.QWidget.__init__(self, parent)
         layout = qt.QHBoxLayout(self)
@@ -263,7 +260,7 @@ class GraphInfoWidget(qt.QWidget):
         self.maximum = qt.QLineEdit(self)
         self.maximum.setReadOnly(True)
 
-        # mean
+        # Min
         minimum = qt.QLabel(self)
         minimum.setText("Min:")
         self.minimum = qt.QLineEdit(self)
@@ -296,10 +293,24 @@ class GraphInfoWidget(qt.QWidget):
         layout.addWidget(self.delta,    1, 8)
         self.specArithmetic = SpecArithmetic()
 
+    def updateFromDataObject(self, dataObject):
+        ydata = numpy.ravel(dataObject.y[0])
+        ylen = len(ydata)
+        if ylen:
+            if dataObject.x is None:
+                xdata = numpy.arange(ylen).astype(numpy.float)
+            elif not len(dataObject.x):
+                xdata = numpy.arange(ylen).astype(numpy.float)
+            else:
+                xdata = numpy.ravel(dataObject.x[0])
+        else:
+            xdata = None
+        self.updateFromXY(xdata, ydata)
+
+
     def updateFromXY(self, xdata, ydata):
         if len(ydata):
-            peakpos, peak, myidx = self.specArithmetic.search_peak(
-                xdata, ydata)
+            peakpos, peak, myidx = self.specArithmetic.search_peak(xdata, ydata)
             com = self.specArithmetic.search_com(xdata, ydata)
             fwhm, cfwhm = self.specArithmetic.search_fwhm(xdata, ydata,
                                                           peak=peak, index=myidx)
@@ -307,8 +318,7 @@ class GraphInfoWidget(qt.QWidget):
             ymin = min(ydata)
             ymean = sum(ydata) / len(ydata)
             if len(ydata) > 1:
-                ystd = numpy.sqrt(
-                    sum((ydata - ymean) * (ydata - ymean)) / len(ydata))
+                ystd = numpy.sqrt(sum((ydata - ymean) * (ydata - ymean)) / len(ydata))
             else:
                 ystd = 0
             delta = ymax - ymin
@@ -348,18 +358,18 @@ class GraphInfoWidget(qt.QWidget):
         self.delta.setText(delta)
 
     def getInfo(self):
-        return {
-            'peak': self.peak.text(),
-            'peakat': self.peakAt.text(),
-            'fwhm': self.fwhm.text(),
-            'fwhmat': self.fwhmAt.text(),
-            'com': self.com.text(),
-            'mean': self.mean.text(),
-            'std': self.std.text(),
-            'min': self.minimum.text(),
-            'max': self.maximum.text(),
-            'delta': self.delta.text(),
-        }
+        ddict={}
+        ddict['peak']   = self.peak.text()
+        ddict['peakat'] = self.peakAt.text()
+        ddict['fwhm']   = self.fwhm.text()
+        ddict['fwhmat'] = self.fwhmAt.text()
+        ddict['com']    = self.com.text()
+        ddict['mean']   = self.mean.text()
+        ddict['std']    = self.std.text()
+        ddict['min']    = self.minimum.text()
+        ddict['max']    = self.maximum.text()
+        ddict['delta']  = self.delta.text()
+        return ddict
 
 
 class ScanInfoWidget(qt.QWidget):
@@ -397,6 +407,10 @@ class ScanInfoWidget(qt.QWidget):
         layout.addWidget(self.scanLabel,   1, 1)
         layout.addWidget(self.hkl,         1, 4, 1, 3)
 
+    def updateFromDataObject(self, dataObject):
+        info = dataObject.info
+        return updateFromInfoDict(self, info)
+
     def updateFromInfoDict(self, info):
         source = info.get('SourceName', None)
         if source is None:
@@ -421,18 +435,16 @@ class ScanInfoWidget(qt.QWidget):
             self.hkl.setHKL(*hkl)
 
     def getInfo(self):
-        return {
-            'source': self.sourceLabel.text(),
-            'scan': self.scanLabel.text(),
-            'hkl': ["%s" % self.hkl.h.text(),
-                    "%s" % self.hkl.k.text(),
-                    "%s" % self.hkl.l.text()]
-        }
-
+        ddict = {}
+        ddict['source'] = self.sourceLabel.text()
+        ddict['scan'] = self.scanLabel.text()
+        ddict['hkl'] = ["%s" % self.hkl.h.text(),
+                        "%s" % self.hkl.k.text(),
+                        "%s" % self.hkl.l.text()]
+        return ddict
 
 class ScanWindowInfoWidget(qt.QWidget):
-
-    def __init__(self, parent=None):
+    def __init__(self, parent = None):
         qt.QWidget.__init__(self, parent)
         layout = qt.QVBoxLayout(self)
         layout.setContentsMargins(2, 2, 2, 2)
@@ -444,15 +456,19 @@ class ScanWindowInfoWidget(qt.QWidget):
         layout.addWidget(self.scanInfo)
         layout.addWidget(self.graphInfo)
 
+    def updateFromDataObject(self, dataObject):
+        self.scanInfo.updateFromDataObject(dataObject)
+        self.graphInfo.updateFromDataObject(dataObject)
+
     def updateFromXYInfo(self, xdata, ydata, info):
         self.scanInfo.updateFromInfoDict(info)
         self.graphInfo.updateFromXY(xdata, ydata)
 
     def getInfo(self):
-        return {
-            'scan': self.scanInfo.getInfo(),
-            'graph': self.graphInfo.getInfo()
-        }
+        ddict = {}
+        ddict['scan']  = self.scanInfo.getInfo()
+        ddict['graph'] = self.graphInfo.getInfo()
+        return ddict
 
 
 def test():
@@ -464,5 +480,4 @@ def test():
 
 
 if __name__ == '__main__':
-    test()
-
+        test()

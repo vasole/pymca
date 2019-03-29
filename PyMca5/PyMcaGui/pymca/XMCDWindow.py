@@ -365,8 +365,15 @@ class XMCDOptions(qt.QDialog):
                 if type(button) == type(qt.QRadioButton()):
                         button.setChecked(True)
 
+class XMCDScanWindow(sw.ScanWindow):
 
-class XMCDScanWindow(ScanWindow.ScanWindow):
+    xmcdToolbarOptions = {
+        'logx': False,
+        'logy': False,
+        'flip': False,
+        'fit': False,
+        'roi': False,
+    }
 
     plotModifiedSignal = qt.pyqtSignal()
     saveOptionsSignal  = qt.pyqtSignal('QString')
@@ -381,21 +388,21 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
         :type parent: QWidget
         """
         ScanWindow.ScanWindow.__init__(self,
-                                       parent,
-                                       name='XLD/XMCD Analysis',
-                                       specfit=None,
-                                       plugins=False,
-                                       roi=False, fit=False)
+                               parent,
+                               name='XLD/XMCD Analysis',
+                               specfit=None,
+                               plugins=False,
+                               newplot=False,
+                               **self.xmcdToolbarOptions)
+        if hasattr(self, 'pluginsIconFlag'):
+            self.pluginsIconFlag = False
         self.plotWindow = origin
-
-        # hide the first 2 actions
-        self.xAxisLogarithmicAction.setVisible(False)
-        self.yAxisLogarithmicAction.setVisible(False)
-
-        # hide additional toolbar with simple math actions
-        self._mathToolBar.setVisible(False)
+        if hasattr(self, 'scanWindowInfoWidget'):
+            if self.scanWindowInfoWidget:
+                self.scanWindowInfoWidget.hide()
 
         # Buttons to push spectra to main Window
+        buttonWidget = qt.QWidget()
         buttonAdd = qt.QPushButton('Add', self)
         buttonAdd.setToolTip('Add active curve to main window')
         buttonReplace = qt.QPushButton('Replace', self)
@@ -410,19 +417,11 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
         buttonReplaceAll.setToolTip(
             'Replace all curves in main window '
            +'with all curves from analysis window')
-
-        if hasattr(self, "getPositionInfoWidget"):
-            bottomBarHLayout = self.getPositionInfoWidget().layout()
-        else:
-            # this is a hack: silx does not provide an attribute for the
-            # bottom bar, but it has a handle for the last widget in the bar
-            # which uses a HBoxLayout.
-            bottomBarHLayout = self.positionWidget.layout()
-        bottomBarHLayout.addWidget(qt.HorizontalSpacer())
-        bottomBarHLayout.addWidget(buttonAdd)
-        bottomBarHLayout.addWidget(buttonAddAll)
-        bottomBarHLayout.addWidget(buttonReplace)
-        bottomBarHLayout.addWidget(buttonReplaceAll)
+        self.graphBottomLayout.addWidget(qt.HorizontalSpacer())
+        self.graphBottomLayout.addWidget(buttonAdd)
+        self.graphBottomLayout.addWidget(buttonAddAll)
+        self.graphBottomLayout.addWidget(buttonReplace)
+        self.graphBottomLayout.addWidget(buttonReplaceAll)
 
         buttonAdd.clicked.connect(self.add)
         buttonReplace.clicked.connect(self.replace)
@@ -447,9 +446,8 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
         self.xmcd = None
         self.xas  = None
 
-        self.getLegendsDockWidget().show()
-        self.addDockWidget(qt.Qt.RightDockWidgetArea,
-                           self.getLegendsDockWidget())
+        if hasattr(self, '_buildLegendWidget'):
+            self._buildLegendWidget()
 
     def sizeHint(self):
         if self.parent():
@@ -621,7 +619,7 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
             active = self.plotWindow.getActiveCurve()
             if active:
                 _logger.debug('processSelection -- xrange: use active')
-                x = active.getXData()
+                x, y, leg, info = active[0:4]
                 xRange = self.interpXRange(xRange=x)
             else:
                 return
@@ -682,9 +680,9 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
                           ylabel=ylabel,
                           color=color)
             if idx == 'A':
-                self.avgA = self.getAllCurves(just_legend=True)[-1]
+                self.avgA = self.dataObjectsList[-1]
             if idx == 'B':
-                self.avgB = self.getAllCurves(just_legend=True)[-1]
+                self.avgB = self.dataObjectsList[-1]
 
         if (self.avgA and self.avgB):
             self.performXMCD()
@@ -883,7 +881,7 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
                       xlabel=xlabel,
                       ylabel=ylabel,
                       color="pink")
-        self.xas = self.getAllCurves(just_legend=True)[-1]
+        self.xas = self.dataObjectsList[-1]
 
     def performXMCD(self):
         keys = self.dataObjectsDict.keys()
@@ -915,8 +913,8 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
                       ylabel=ylabel,
                       yaxis="right")
         # DELETE ME self.graph.mapToY2(' '.join([xmcdLegend, ylabel]))
-        self.resetZoom()
-        self.xmcd = self.getAllCurves(just_legend=True)[-1]
+        self._zoomReset()
+        self.xmcd = self.dataObjectsList[-1]
 
     def selectionInfo(self, idx, key):
         """
@@ -1000,7 +998,7 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
             return
 
         title = ''
-        legends = self.getAllCurves(just_legend=True)
+        legends = self.dataObjectsList
         tmpLegs = sorted(self.curvesDict.keys())
         if len(tmpLegs) > 0:
             title += self.curvesDict[tmpLegs[0]].info.get('selectionlegend','')
@@ -1068,7 +1066,7 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
             self.saveOptionsSignal.emit(splitext(sepFileName)[0])
 
     def add(self):
-        if len(self.getAllCurves(just_legend=True)) == 0:
+        if len(self.dataObjectsList) == 0:
             return
         activeCurve = self.getActiveCurve()
         if activeCurve is None:
@@ -1104,7 +1102,7 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
         self.plotModifiedSignal.emit()
 
     def replace(self):
-        if len(self.getAllCurves(just_legend=True)) == 0:
+        if len(self.dataObjectsList) == 0:
             return
         activeCurve = self.getActiveCurve()
         if activeCurve is None:
@@ -2013,8 +2011,8 @@ class XMCDWidget(qt.QWidget):
             _logger.debug('_setLists -- Set self.plotWindow before calling self._setLists')
             return
         # nCurves = len(curves)
-        self.legendList = [curve.getLegend() for curve in curves]
-        self.infoList   = [curve.getInfo() for curve in curves]
+        self.legendList = [leg for (xvals, yvals,  leg,  info) in curves]
+        self.infoList   = [info for (xvals, yvals,  leg,  info) in curves]
         # Try to recover the scan number from the legend, if not set
         # Requires additional import:
         #from re import search as regexpSearch
@@ -2085,9 +2083,9 @@ def main():
     y1 =  10*x + 10000.*numpy.exp(-0.5*(x-600)**2/400) + 1500*numpy.random.random(1000)
     y2 =  10*x + 10000.*numpy.exp(-0.5*(x-400)**2/400) + 1500*numpy.random.random(1000)
 
-    swin.newCurve(x, y2, legend="Curve2", xlabel='ene_st2', ylabel='Ihor', info=info2, replace=False)
-    swin.newCurve(x, y0, legend="Curve0", xlabel='ene_st0', ylabel='Iver', info=info0, replace=False)
-    swin.newCurve(x, y1, legend="Curve1", xlabel='ene_st1', ylabel='Ihor', info=info1, replace=False)
+    swin.newCurve(x, y2, legend="Curve2", xlabel='ene_st2', ylabel='Ihor', info=info2, replot=False, replace=False)
+    swin.newCurve(x, y0, legend="Curve0", xlabel='ene_st0', ylabel='Iver', info=info0, replot=False, replace=False)
+    swin.newCurve(x, y1, legend="Curve1", xlabel='ene_st1', ylabel='Ihor', info=info1, replot=False, replace=False)
 
     # info['Key'] is overwritten when using newCurve
     swin.dataObjectsDict['Curve2 Ihor'].info['Key'] = '1.1'
