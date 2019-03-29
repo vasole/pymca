@@ -230,6 +230,7 @@ if __name__ == "__main__":
         qApp = qt.QApplication.instance()
         qApp.processEvents()
 
+from PyMca5.PyMcaGraph.Plot import Plot
 from PyMca5.PyMcaGui.pymca import ScanWindow
 from PyMca5.PyMcaGui.pymca import McaWindow
 
@@ -325,14 +326,13 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 self.mdi.addWindow(self.scanWindow)
             else:
                 if backend is not None:
-                    import silx
-                    silx.config.DEFAULT_PLOT_BACKEND = backend
+                    Plot.defaultBackend = backend
                 self.mainTabWidget = qt.QTabWidget(self.mdi)
                 self.mainTabWidget.setWindowTitle("Main Window")
                 self.mcaWindow = McaWindow.McaWindow(backend=backend)
                 self.scanWindow = ScanWindow.ScanWindow(info=True,
                                                         backend=backend)
-                self.scanWindow.getCurveStyleAction().trigger()
+                self.scanWindow._togglePointsSignal()
                 if OBJECT3D:
                     self.glWindow = SceneGLWindow.SceneGLWindow()
                 self.mainTabWidget.addTab(self.mcaWindow, "MCA")
@@ -743,7 +743,11 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
 
         #ROIs
         d['ROI'] = {}
-        roilist, roidict = self.mcaWindow.getCurvesRoiDockWidget().roiWidget.getROIListAndDict()
+        if self.mcaWindow.roiWidget is None:
+            roilist = []
+            roidict = {}
+        else:
+            roilist, roidict = self.mcaWindow.roiWidget.getROIListAndDict()
         d['ROI']['roilist'] = roilist
         d['ROI']['roidict'] = {}
         d['ROI']['roidict'].update(roidict)
@@ -800,7 +804,6 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             key = 'Splitter'
             if key in ddict['Geometry'].keys():
                 self.splitter.setSizes(ddict['Geometry'][key])
-            # TODO: Recover this functionality with silx
             if hasattr(self.mcaWindow, "graph"):
                 # this was the way of working of 4.x.x versions
                 key = 'McaWindow'
@@ -893,10 +896,10 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 if type(roilist) != type([]):
                     roilist=[roilist]
                 roidict = ddict['roidict']
-                # TODO: silx branch should show the ROI always with the McaWindow
-                roiWidget = self.mcaWindow.getCurvesRoiDockWidget().roiWidget
-                roiWidget.fillFromROIDict(roilist=roilist,
-                                          roidict=roidict)
+                if self.mcaWindow.roiWidget is None:
+                    self.mcaWindow.showRoiWidget(qt.Qt.BottomDockWidgetArea)
+                self.mcaWindow.roiWidget.fillFromROIDict(roilist=roilist,
+                                                         roidict=roidict)
 
     def __configureElements(self, ddict):
         if 'Material' in ddict:
@@ -939,8 +942,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                (d['LastFit']['ydata0'] != 'None'):
                 self.mcaWindow.advancedfit.setdata(x=d['LastFit']['xdata0'],
                                                    y=d['LastFit']['ydata0'],
-                                                   sigmay=d['LastFit']['sigmay0'],
-                                                   **d['Information'])
+                                              sigmay=d['LastFit']['sigmay0'],
+                                              **d['Information'])
                 if d['LastFit']['hidden'] == 'False':
                     self.mcaWindow.advancedfit.show()
                     self.mcaWindow.advancedfit.raiseW()
@@ -1435,10 +1438,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             self.saveMenu.addAction("Active Mca",
                              self.mcaWindow._saveIconSignal)
         elif text.upper() == 'SCAN':
-            self.saveMenu.addAction(
-                    "Active Scan",
-                    self.scanWindow.getSaveAction().trigger)
-
+            self.saveMenu.addAction("Active Scan",
+                             self.scanWindow._saveIconSignal)
         elif text in self.imageWindowDict.keys():
             self.saveMenu.addAction("Active Image",
                   self.imageWindowDict[text].graphWidget._saveIconSignal)
@@ -1678,7 +1679,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         _logger.debug("onPrint called")
 
         if not self.scanWindow.isHidden():
-            self.scanWindow.printPreview.menu().exec_(self.cursor().pos())
+            self.scanWindow.printGraph()
             return
 
         if not self.__useTabWidget:
@@ -1686,7 +1687,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             self.mcaWindow.raise_()
         else:
             self.mainTabWidget.setCurrentWidget(self.mcaWindow)
-        self.mcaWindow.printPreview.menu().exec_(self.cursor().pos())
+        self.mcaWindow.printGraph()
 
 if 0:
 
