@@ -47,7 +47,7 @@ import copy
 
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from PyMca5.PyMcaGui import IconDict
-from .LegacyScanWindow import ScanWindow
+from .ScanWindow import ScanWindow
 from . import McaCalibrationControlGUI
 from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaGui.physics.xrf import McaAdvancedFit
