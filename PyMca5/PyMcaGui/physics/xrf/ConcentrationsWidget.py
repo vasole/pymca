@@ -219,12 +219,13 @@ class SimpleThread(qt.QThread):
         self._result = None
 
     def run(self):
-        try:
+        if _logger.getEffectiveLevel() == logging.DEBUG:
             self._result = self._function(*self._var, **self._kw)
-        except:
-            if _logger.getEffectiveLevel() == logging.DEBUG:
-                raise
-            self._result = ("Exception",) + sys.exc_info()
+        else:
+            try:
+                self._result = self._function(*self._var, **self._kw)
+            except:
+                self._result = ("Exception",) + sys.exc_info()
 
 
 class ConcentrationsWidget(qt.QWidget):

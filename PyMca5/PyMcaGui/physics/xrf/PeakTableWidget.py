@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -249,7 +249,7 @@ class PeakTableWidget(QTable):
             try:
                 value = float(str(newvalue))
             except:
-                _logger.warning("%s newvalue = %s taking old value %s", field, newvalue, oldvalue)
+                _logger.warning("%s newvalue = %s taking old value %s" % (field, newvalue, oldvalue))
                 item = self.item(row, col)
                 item.setText("%s" % oldvalue)
                 value = float(str(oldvalue))
@@ -263,7 +263,7 @@ class PeakTableWidget(QTable):
             try:
                 value = float(str(newvalue))
             except:
-                _logger.warning("%s newvalue = %s taking old value%s", field, newvalue, oldvalue)
+                _logger.warning("%s newvalue = %s taking old value%s" % (field, newvalue, oldvalue))
                 item = self.item(row, col)
                 item.setText("%s" % oldvalue)
                 value = float(str(oldvalue))
@@ -282,17 +282,17 @@ class PeakTableWidget(QTable):
             self.sigPeakTableWidgetSignal.emit(ddict)
 
     def setReadOnly(self, parameter, fields):
-        _logger.debug("peak %s fields = %s asked to be read only", parameter, fields)
+        _logger.debug("peak %s fields = %s asked to be read only" % (parameter, fields))
         self.setfield(parameter, fields,
                       qt.Qt.ItemIsSelectable | qt.Qt.ItemIsEnabled)
 
     def setReadWrite(self, parameter, fields):
-        _logger.debug("peak %s fields = %s asked to be read write", parameter, fields)
+        _logger.debug("peak %s fields = %s asked to be read write" % (parameter, fields))
         self.setfield(parameter, fields,
                       qt.Qt.ItemIsEditable | qt.Qt.ItemIsSelectable | qt.Qt.ItemIsEnabled)
 
     def setfield(self,peak,fields,EditType):
-        _logger.debug("setfield. peak = %s fields = %s",peak, fields)
+        _logger.debug("setfield. peak = %s fields = %s" % (peak, fields))
         if type(peak) == type (()) or \
            type(peak) == type ([]):
             peaklist=peak
@@ -327,8 +327,8 @@ class PeakTableWidget(QTable):
 
 
     def configure(self,*vars,**kw):
-        _logger.debug("configure called with **kw = %s", kw)
-        _logger.debug("configure called with *vars = %s", vars)
+        _logger.debug("configure called with **kw = %s" % kw)
+        _logger.debug("configure called with *vars = %s" % vars)
         name = None
         error=0
         if 'name' in kw:

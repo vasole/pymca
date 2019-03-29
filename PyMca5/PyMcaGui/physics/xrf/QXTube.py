@@ -34,8 +34,8 @@ import logging
 from PyMca5.PyMcaPhysics import Elements
 from PyMca5.PyMcaPhysics import XRayTubeEbel
 import numpy
+from PyMca5.PyMcaGui import PlotWindow
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.PyMcaGui.plotting.PlotWindow import PlotWindow
 
 _logger = logging.getLogger(__name__)
 
@@ -147,6 +147,7 @@ class QXTube(qt.QWidget):
             self.graph.setActiveCurve("continuum")
 
         self.graph.resetZoom()
+        self.graph.replot()
 
     def _export(self):
         d = self.tubeWidget.getParameters()
@@ -447,7 +448,7 @@ class MyQComboBox(qt.QComboBox):
         return   self.currentIndex(),str(self.currentText())
 
     def _mySignal(self, qstring0):
-        _logger.debug("_mySignal %s", qstring0)
+        _logger.debug("_mySignal %s" % qstring0)
         text = str(qstring0)
         d = {}
         d['event']   = 'activated'
