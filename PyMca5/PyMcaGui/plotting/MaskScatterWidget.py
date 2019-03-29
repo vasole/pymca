@@ -42,7 +42,7 @@ import logging
 from PyMca5.PyMcaGraph.ctools import pnpoly
 _logger = logging.getLogger(__name__)
 
-from .PlotWindow import PlotWindow
+from . import PlotWindow
 from . import MaskImageWidget
 from . import MaskImageTools
 qt = PlotWindow.qt
@@ -52,7 +52,7 @@ else:
     QString = qt.safe_str
 IconDict = PlotWindow.IconDict
 
-class MaskScatterWidget(PlotWindow):
+class MaskScatterWidget(PlotWindow.PlotWindow):
     sigMaskScatterWidgetSignal = qt.pyqtSignal(object)
     DEFAULT_COLORMAP_INDEX = 2
     DEFAULT_COLORMAP_LOG_FLAG = True
