@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -53,13 +53,6 @@ DEBUG = 0
 if DEBUG:
     PlotBase.DEBUG = True
     _logger.setLevel(logging.DEBUG)
-
-_logger.warning("%s is deprecated, you are advised to use "
-                "silx.gui.plot.PlotWidget instead",
-                __name__)
-for line in traceback.format_stack(limit=4):
-    _logger.warning(line.rstrip())
-
 
 _COLORDICT =  Colors.COLORDICT
 _COLORLIST = [_COLORDICT['black'],
@@ -154,9 +147,17 @@ class Plot(PlotBase.PlotBase):
                 from .backends.GLUTOpenGLBackend import GLUTOpenGLBackend as be
             elif lowerCaseString in ["osmesa", "mesa"]:
                 from .backends.OSMesaGLBackend import OSMesaGLBackend as be
+            elif lowerCaseString in ["silx", "silx-mpl", "silxmpl",
+                                     "silx-gl", "silxgl"]:
+                from .backends.SilxBackend import SilxBackend as be
             else:
                 raise ValueError("Backend not understood %s" % backend)
-            self._plot = be(parent)
+            if lowerCaseString in ["silx-gl", "silxgl"]:
+                self._plot = be(parent, backend="gl")
+            elif lowerCaseString in ["silx-mpl", "silxmpl"]:
+                self._plot = be(parent, backend="mpl")
+            else:
+                self._plot = be(parent)
         super(Plot, self).__init__()
         widget = self._plot.getWidgetHandle()
         if widget is None:
