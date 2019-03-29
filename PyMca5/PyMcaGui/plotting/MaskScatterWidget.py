@@ -629,7 +629,7 @@ class MaskScatterWidget(PlotWindow):
         super(MaskScatterWidget, self).graphCallback(ddict)
 
     def _brushIconSignal(self):
-        if _logger.getEffectiveLevel() == logging.DEBUG::
+        if _logger.getEffectiveLevel() == logging.DEBUG:
             _logger.debug("brushIconSignal")
         if self._brushMenu is None:
             self._brushMenu = qt.QMenu()
