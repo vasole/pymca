@@ -39,13 +39,12 @@ import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaCore import PyMcaMatplotlibSave
 from PyMca5.PyMcaGui import IconDict
+from PyMca5.PyMcaGui import PyMcaPrintPreview
 from PyMca5 import PyMcaDirs
-
-from silx.gui.widgets.PrintPreview import SingletonPrintPreviewDialog
 
 from matplotlib import cm
 from matplotlib.font_manager import FontProperties
-from silx.gui.plot.matplotlib import FigureCanvasQTAgg as FigureCanvas
+from PyMca5.PyMcaGraph.backends.MatplotlibBackend import FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.colors import LinearSegmentedColormap, LogNorm, Normalize
 from matplotlib.ticker import MaxNLocator, AutoLocator
@@ -112,7 +111,7 @@ class SaveImageSetup(qt.QWidget):
         self.setWindowTitle("PyMca - Matplotlib save image")
         self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
         self.lastOutputDir = None
-        self.printPreview = SingletonPrintPreviewDialog(parent=self)
+        self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
 
         #top
         self.top = TopWidget(self)
@@ -184,31 +183,17 @@ class SaveImageSetup(qt.QWidget):
 
     def printClicked(self):
         try:
-            imgData = StringIO()
-            self.imageWidget.figure.savefig(imgData, format="svg")  # dpi=...)
-            imgData.flush()
-            imgData.seek(0)
-            svgData = imgData.read()
-            svgRenderer = qt.QSvgRenderer()
-            svgRenderer.load(qt.QXmlStreamReader(svgData.encode(errors="replace")))
-            self.printPreview.addSvgItem(svgRenderer)
+            pixmap = qt.QPixmap.grabWidget(self.imageWidget)
+            self.printPreview.addPixmap(pixmap)
+            if self.printPreview.isHidden():
+                self.printPreview.show()
+            self.printPreview.raise_()
         except:
-            try:
-                if hasattr(qt.QPixmap,"grabWidget"):
-                    pixmap = qt.QPixmap.grabWidget(self.imageWidget)
-                else:
-                    pixmap = self.imageWidget.grab()
-                self.printPreview.addPixmap(pixmap)
-            except:
-                msg = qt.QMessageBox(self)
-                msg.setIcon(qt.QMessageBox.Critical)
-                msg.setText("Error printing image: %s" % sys.exc_info()[1])
-                msg.setWindowTitle('Matplotlib Save Image')
-                msg.exec_()
-                return
-        if self.printPreview.isHidden():
-            self.printPreview.show()
-        self.printPreview.raise_()
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Error printing image: %s" % sys.exc_info()[1])
+            msg.setWindowTitle('Matplotlib Save Image')
+            msg.exec_()
 
 
     def saveClicked(self):
