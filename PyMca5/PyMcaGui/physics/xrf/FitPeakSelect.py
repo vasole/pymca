@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -375,7 +375,7 @@ class FitPeakSelect(qt.QWidget):
         self._energyClicked()
 
     def _energyTableAction(self, ddict):
-        _logger.debug("_energyTableAction called, ddict = %s", ddict)
+        _logger.debug("_energyTableAction called, ddict = %s" % ddict)
         elist, wlist, flist, slist= self.energyTable.getParameters()
         maxenergy = 0.0
         for i in range(len(flist)):

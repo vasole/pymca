@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -174,7 +174,7 @@ class XASNormalizationParameters(qt.QGroupBox):
         self.postEdgeEndBox.valueChanged[float].connect(self._postEdgeEndChanged)
 
     def _normalizationChanged(self, value):
-        _logger.debug("_normalizationChanged, %s ", value)
+        _logger.debug("_normalizationChanged, %s " % value)
         if self.__connected:
             self._emitSignal("JumpNormalizationChanged")
 
@@ -205,7 +205,7 @@ class XASNormalizationParameters(qt.QGroupBox):
             self.e0SpinBox.setEnabled(True)
 
     def _e0Changed(self, value):
-        _logger.debug("E0 CHANGED, %s", value)
+        _logger.debug("E0 CHANGED, %s" % value)
         if self.__connected:
             try:
                 self.__connected = False
@@ -215,12 +215,12 @@ class XASNormalizationParameters(qt.QGroupBox):
             self._emitSignal("E0Changed")
 
     def _preEdgeChanged(self, value):
-        _logger.debug("Current pre-edge value = %s", value)
+        _logger.debug("Current pre-edge value = %s" % value)
         if self.__connected:
             self._emitSignal("PreEdgeChanged")
 
     def _preEdgeStartChanged(self, value):
-        _logger.debug("pre start changed: %s", value)
+        _logger.debug("pre start changed: %s" % value)
         if self.__connected:
             try:
                 self.__connected = False
@@ -230,7 +230,7 @@ class XASNormalizationParameters(qt.QGroupBox):
             self._emitSignal("PreEdgeChanged")
 
     def _preEdgeEndChanged(self, value):
-        _logger.debug("pre end changed: %s", value)
+        _logger.debug("pre end changed: %s" % value)
         if self.__connected:
             try:
                 self.__connected = False
@@ -240,12 +240,12 @@ class XASNormalizationParameters(qt.QGroupBox):
             self._emitSignal("PreEdgeChanged")
 
     def _postEdgeChanged(self, value):
-        _logger.debug("post-edge changed: %s", value)
+        _logger.debug("post-edge changed: %s" % value)
         if self.__connected:
             self._emitSignal("PostEdgeChanged")
 
     def _postEdgeStartChanged(self, value):
-        _logger.debug("post-edge start changed: %s", value)
+        _logger.debug("post-edge start changed: %s" % value)
         if self.__connected:
             try:
                 self.__connected = False
@@ -255,7 +255,7 @@ class XASNormalizationParameters(qt.QGroupBox):
             self._emitSignal("PostEdgeChanged")
 
     def _postEdgeEndChanged(self, value):
-        _logger.debug("post-edge changed: %s", value)
+        _logger.debug("post-edge changed: %s" % value)
         if self.__connected:
             try:
                 self.__connected = False
@@ -337,7 +337,7 @@ class XASNormalizationParameters(qt.QGroupBox):
         return ddict
 
     def setParameters(self, ddict, signal=True):
-        _logger.debug("setParameters called, %s %s", ddict, signal)
+        _logger.debug("setParameters called, %s %s" % (ddict, signal))
         if "Normalization" in ddict:
             ddict = ddict["Normalization"]
         try:
