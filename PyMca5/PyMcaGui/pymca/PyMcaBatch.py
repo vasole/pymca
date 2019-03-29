@@ -1093,7 +1093,7 @@ class McaBatchGUI(qt.QWidget):
                             subprocess.Popen(str(cmd).encode(sys.getfilesystemencoding()),
                                              cwd=os.getcwd()))
 
-                    _logger.info("COMMAND = %s", cmd1)
+                    _logger.info("COMMAND = %s", cmd)
             else:
                 cmd.addOption('mcaoffset', value=0)
                 cmd.addOption('chunk', value=0)
@@ -1111,6 +1111,7 @@ class McaBatchGUI(qt.QWidget):
             else:
                 _logger.info("timer was already active")
         else:
+            cmd = str(cmd)
             try:
                 subprocess.call(cmd)
             except UnicodeEncodeError:
