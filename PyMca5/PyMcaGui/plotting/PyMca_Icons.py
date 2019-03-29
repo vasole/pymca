@@ -4184,7 +4184,7 @@ IconDict = _PatchedIconDict(IconDict0)
 def change_icons(plot):
     """Replace some of the silx icons with PyMca icons.
 
-    :param plot: Silx plot window, or ScanWindow, or McaWindow
+    :param plot: Silx plot window, or SilxScanWindow, or SilxMcaWindow
     :return:
     """
     from PyMca5.PyMcaGui import PyMcaQt as qt

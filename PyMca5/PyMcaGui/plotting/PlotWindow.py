@@ -1645,6 +1645,10 @@ if __name__ == "__main__":
         backend = "opengl"
     elif "pyqtgraph" in sys.argv:
         backend = "pyqtgraph"
+    elif "silx" in sys.argv:
+        backend = "silx"
+    else:
+        backend = "matplotlib"
     plot = PlotWindow(backend=backend, roi=True, control=True,
                           position=True, colormap=True)#uselegendmenu=True)
     plot.setPanWithArrowKeys(True)

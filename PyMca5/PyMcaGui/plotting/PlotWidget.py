@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -91,12 +91,6 @@ DEBUG = 0
 if DEBUG:
     _logger.setLevel(logging.DEBUG)
     Plot.DEBUG = DEBUG
-
-_logger.warning("%s is deprecated, you are advised to use "
-                "silx.gui.plot.PlotWidget instead",
-                __name__)
-for line in traceback.format_stack(limit=3):
-    _logger.warning(line.rstrip())
 
 
 class PlotWidget(QtGui.QMainWindow, Plot.Plot):
@@ -334,6 +328,10 @@ if __name__ == "__main__":
     if ("matplotlib" in sys.argv) or ("mpl" in sys.argv):
         backend = "matplotlib"
         print("USING matplotlib")
+        time.sleep(1)
+    elif ("silx" in sys.argv):
+        backend = "silx"
+        print("USING silx")
         time.sleep(1)
     elif ("pyqtgraph" in sys.argv):
         backend = "pyqtgraph"

@@ -40,14 +40,6 @@ __revision__="$Revision: 1.7 $"
 
 QTVERSION = qt.qVersion()
 
-_logger = logging.getLogger(__name__)
-_logger.warning("%s is deprecated, you are advised to use "
-                "silx.gui.widgets.PrintPreview instead",
-                __name__)
-
-for line in traceback.format_stack(limit=3):
-    _logger.warning(line.rstrip())
-
 
 ################################################################################
 ##################             PyMcaPrintPreview               ###################
