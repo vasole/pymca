@@ -827,7 +827,7 @@ class MaskImageWidget(qt.QWidget):
                                     float(deltaRow) * deltaRow)/(npoints-1.0)
                 xdata *= deltaDistance
         else:
-            _logger.debug("Mode %s not supported yet" ddict['mode'])
+            _logger.debug("Mode %s not supported yet %s", ddict['mode'])
             return
 
         self.__lastOverlayWidth = ddict['pixelwidth']
