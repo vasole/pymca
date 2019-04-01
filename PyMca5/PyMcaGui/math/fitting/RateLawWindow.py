@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -36,10 +36,8 @@ import numpy
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import PyMca_Icons
 IconDict = PyMca_Icons.IconDict
+from PyMca5.PyMcaGui import PlotWindow
 from PyMca5.PyMcaMath.fitting import RateLaw
-from PyMca5.PyMcaGui.PluginsToolButton import PluginsToolButton
-
-from silx.gui.plot import PlotWindow
 
 class RateLawWindow(qt.QMainWindow):
     def __init__(self, parent=None, backend=None):
@@ -66,12 +64,9 @@ class RateLawMdiArea(qt.QMdiArea):
                             "First", "Second"]
         self._windowList.reverse()
         for title in self._windowList:
-            plot = PlotWindow(self,
-                              position=True, backend=backend,
-                              colormap=False, aspectRatio=False,
-                              yInverted=False, roi=False, mask=False)
-            self.pluginsToolButton = PluginsToolButton(plot=plot)
-            plot.toolBar().addWidget(self.pluginsToolButton)
+            plot = PlotWindow.PlotWindow(self,
+                                         position=True,
+                                         backend=backend)
             plot.setWindowTitle(title)
             self.addSubWindow(plot)
             self._windowDict[title] = plot
@@ -91,25 +86,16 @@ class RateLawMdiArea(qt.QMdiArea):
                                               ylabel=ylabel,
                                               yerror=sigmay,
                                               symbol="o")
-        self._windowDict["Original"].setActiveCurve(legend)
         self.update()
 
     def update(self):
         plot = self._windowDict["Original"]
         activeCurve = plot.getActiveCurve()
-        if activeCurve is None:
-            allCurves = plot.getAllCurves()
-            if len(allCurves):
-                activeCurve = allCurves[0]
-            else:
-                return
-        x = activeCurve.getXData(copy=False)
-        y = activeCurve.getYData(copy=False)
-        xlabel = activeCurve.getXLabel()
-        ylabel = activeCurve.getYLabel()
-
-        # xmin, xmax = plot.getGraphXLimits()
-        # ymin, ymax = plot.getGraphYLimits()
+        if not len(activeCurve):
+            return
+        [x, y, legend, info] = activeCurve[:4]
+        xmin, xmax = plot.getGraphXLimits()
+        ymin, ymax = plot.getGraphYLimits()
         
         result = RateLaw.rateLaw(x, y, sigmay=None)
         labels = ["Zero", "First", "Second"]
@@ -128,6 +114,8 @@ class RateLawMdiArea(qt.QMdiArea):
             stderr = workingResult["stderr"]
             xw = workingResult["x"]
             yw = workingResult["y"]
+            xlabel = info["ylabel"]
+            ylabel = info["ylabel"]
             title = "r = %.5f slope = %.3E +/- %.2E" % (r_value, slope, sigma_slope)
             fit_legend = "%.3g * x + %.3g" % (slope, intercept) 
             if key == "First":
@@ -136,7 +124,7 @@ class RateLawMdiArea(qt.QMdiArea):
                 ylabel = "1 / %s" %  ylabel
             plot.addCurve(xw, yw,
                           legend="Data",
-                          replace=True, resetzoom=False,
+                          replace=True, replot=False,
                           symbol="o",
                           linestyle=" ",
                           ylabel=ylabel)
@@ -144,11 +132,10 @@ class RateLawMdiArea(qt.QMdiArea):
             plot.addCurve(xw, intercept + slope * xw,
                           legend=fit_legend,
                           replace=False,
-                          resetzoom=True,
+                          replot=True,
                           symbol=None,
                           color="red",
                           ylabel=ylabel)
-            plot.setActiveCurve("Data")
             plot.resetZoom()
         self.sigRateLawMdiAreaSignal.emit(result)
 
