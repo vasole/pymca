@@ -34,7 +34,7 @@ import logging
 from PyMca5.PyMcaPhysics import Elements
 from PyMca5.PyMcaPhysics import XRayTubeEbel
 import numpy
-from PyMca5.PyMcaGui import PlotWindow
+from PyMca5.PyMcaGui.plotting.PlotWindow import PlotWindow
 from PyMca5.PyMcaGui import PyMcaQt as qt
 
 _logger = logging.getLogger(__name__)

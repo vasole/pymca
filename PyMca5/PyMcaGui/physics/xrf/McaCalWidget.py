@@ -38,7 +38,7 @@ import copy
 import logging
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.PyMcaGui import PlotWidget
+from PyMca5.PyMcaGui.PlotWidget import PlotWidget
 
 if hasattr(qt, "QString"):
     QString = qt.QString
