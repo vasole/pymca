@@ -329,11 +329,11 @@ class SpecfitGui(qt.QWidget):
             #for param in self.specfit.paramlist:
             #    print param['name'],param['group'],param['estimation']
             self.specfit.paramlist=self.guiparameters.fillfitfromtable()
-            for param in self.specfit.paramlist:
-                _logger.debug("name %s; group %s; estimation %s",
+            if _logger.getEffectiveLevel() == logging.DEBUG:
+                for param in self.specfit.paramlist:
+                    _logger.debug("name %s; group %s; estimation %s",
                               param['name'], param['group'], param['estimation'])
-            _logger.debug("TESTING")
-
+                _logger.debug("TESTING")
             try:
                 self.specfit.startfit()
             except:
