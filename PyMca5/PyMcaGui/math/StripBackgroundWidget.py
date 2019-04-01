@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -30,8 +30,9 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import numpy
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.PyMcaGui.plotting.PlotWindow import PlotWindow
+from PyMca5.PyMcaGui import PlotWindow
 from PyMca5.PyMcaMath.fitting import SpecfitFuns
+
 
 class StripParametersWidget(qt.QWidget):
     sigStripParametersWidgetSignal = qt.pyqtSignal(object)
@@ -234,11 +235,10 @@ class StripBackgroundWidget(qt.QWidget):
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(2)
         self.parametersWidget = StripParametersWidget(self)
-        self.graphWidget = PlotWindow(self,
-                                      newplot=False,
-                                      plugins=False,
-                                      fit=False)
-
+        self.graphWidget = PlotWindow.PlotWindow(self,
+                                                 newplot=False,
+                                                 plugins=False,
+                                                 fit=False)
         self.mainLayout.addWidget(self.parametersWidget)
         self.mainLayout.addWidget(self.graphWidget)
         self.getParameters = self.parametersWidget.getParameters
@@ -252,7 +252,6 @@ class StripBackgroundWidget(qt.QWidget):
         self._x = x
         self._y = y
         self.update()
-        self.graphWidget.resetZoom()
 
     def _slot(self, ddict):
         self.update()
@@ -320,14 +319,14 @@ class StripBackgroundWidget(qt.QWidget):
             snipBackground[lastAnchor:] =\
                             SpecfitFuns.snip1d(ysmooth[lastAnchor:], width, 0)
 
-        self.graphWidget.addCurve(x, y,
-                                  legend='Input Data',
+        self.graphWidget.addCurve(x, y, \
+                                  legend='Input Data',\
                                   replace=True,
                                   replot=False)
-        self.graphWidget.addCurve(x, stripBackground,
-                                  legend='Strip Background',
+        self.graphWidget.addCurve(x, stripBackground,\
+                                  legend='Strip Background',\
                                   replot=False)
-        self.graphWidget.addCurve(x, snipBackground,
+        self.graphWidget.addCurve(x, snipBackground,\
                                   legend='SNIP Background',
                                   replot=True)
 
