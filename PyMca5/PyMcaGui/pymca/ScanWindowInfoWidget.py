@@ -409,7 +409,7 @@ class ScanInfoWidget(qt.QWidget):
 
     def updateFromDataObject(self, dataObject):
         info = dataObject.info
-        return updateFromInfoDict(self, info)
+        return self.updateFromInfoDict(info)
 
     def updateFromInfoDict(self, info):
         source = info.get('SourceName', None)
