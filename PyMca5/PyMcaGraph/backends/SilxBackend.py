@@ -41,7 +41,7 @@ class SilxBackend(PlotWidget):
     def __init__(self, *var, **kw):
         PlotWidget.__init__(self, *var, **kw)
         # No context menu by default, execute zoomBack on right click
-        print("CALLED!!!!!!!!!")
+        print("SilxBackend CALLED")
         plotArea = self.getWidgetHandle()
         plotArea.setContextMenuPolicy(qt.Qt.CustomContextMenu)
         plotArea.customContextMenuRequested.connect(self._zoomBack)
@@ -51,6 +51,8 @@ class SilxBackend(PlotWidget):
 
     def addCurve(self, *var, **kw):
         if "replot" in kw:
+            if kw["replot"]:
+                kw["resetzoom"] = True
             del kw["replot"]
         return PlotWidget.addCurve(self, *var, **kw)
 
@@ -93,6 +95,8 @@ class SilxBackend(PlotWidget):
     def removeCurve(self, *var, **kw):
         if "replot" in kw:
             del kw["replot"]
+            # silx schedules replots, explicit replot call
+            # should not be needed
         return PlotWidget.removeCurve(self, *var, **kw)
 
     def isActiveCurveHandlingEnabled(self):
