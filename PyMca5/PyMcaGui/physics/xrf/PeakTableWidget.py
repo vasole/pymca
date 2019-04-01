@@ -327,8 +327,8 @@ class PeakTableWidget(QTable):
 
 
     def configure(self,*vars,**kw):
-        _logger.debug("configure called with **kw = %s" % kw)
-        _logger.debug("configure called with *vars = %s" % vars)
+        _logger.debug("configure called with **kw = %s", kw)
+        _logger.debug("configure called with *vars = %s", vars)
         name = None
         error=0
         if 'name' in kw:
