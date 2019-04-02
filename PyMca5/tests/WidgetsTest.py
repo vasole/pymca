@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2018 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -29,7 +29,7 @@ import os
 import sys
 import unittest
 import PyMca5.PyMcaGui.PyMcaQt as qt
-from silx.gui.test.utils import TestCaseQt
+from PyMca5.PyMcaGui.misc.testutils import TestCaseQt
 
 from PyMca5.PyMcaGui.pymca import ScanWindow
 from PyMca5.PyMcaGui.pymca import McaWindow
@@ -106,6 +106,13 @@ def getSuite(auto=True):
             unittest.defaultTestLoader.loadTestsFromTestCase(TestCaseCls))
     return test_suite
 
+def test(auto=False):
+    return unittest.TextTestRunner(verbosity=2).run(getSuite(auto=auto))
 
 if __name__ == '__main__':
-    unittest.main(defaultTest='getSuite')
+    if len(sys.argv) > 1:
+        auto = False
+    else:
+        auto = True
+    result = test(auto)
+    sys.exit(not result.wasSuccessful())
