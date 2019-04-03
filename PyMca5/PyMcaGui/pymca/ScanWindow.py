@@ -576,8 +576,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                 else:
                     return
             if legend not in self.dataObjectsList:
-                if DEBUG:
-                    print("unknown legend %s" % legend)
+                _logger.debug("unknown legend %s" % legend)
                 return
 
             #force the current x label to the appropriate value
