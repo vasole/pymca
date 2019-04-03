@@ -24,8 +24,7 @@
 #
 #############################################################################*/
 """This module defines a :class:`ScanWindow` inheriting a 
-:class:`PlotWindow` with additional tools and actions.
-The main addition is a menu with plugins.
+:class:`PlotWindow` with additional tools and actions."""
 __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
