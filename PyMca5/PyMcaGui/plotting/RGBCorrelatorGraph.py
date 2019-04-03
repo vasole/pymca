@@ -32,6 +32,8 @@ import os
 import numpy
 import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
+from . import PlotWidget
+from . import PyMcaPrintPreview
 from .PyMca_Icons import IconDict
 from PyMca5.PyMcaCore import PyMcaDirs
 
