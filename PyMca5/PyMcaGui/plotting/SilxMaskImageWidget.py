@@ -988,13 +988,18 @@ class SilxMaskImageWidget(qt.QMainWindow):
             self.plot.setGraphTitle(mf_text + self._labels[index] + " Net")
             imdata -= self._images[bg_index]
 
+        if len(self._infos) > 1:
+            info = self._infos[index]
+        else:
+            info = self._infos[0]
+
         self.plot.addImage(imdata,
                            legend="current",
                            origin=self._origin,
                            scale=self._deltaXY,
                            replace=False,
                            z=0,
-                           info=self._infos[index])
+                           info=info)
         self.plot.setActiveImage("current")
         self.slider.setValue(index)
 
@@ -1033,6 +1038,7 @@ class SilxMaskImageWidget(qt.QMainWindow):
         if infos is None:
             infos = [{} for _img in images]
 
+        print("received infos = ", infos)
         self._labels = labels
         self._infos = infos
 
