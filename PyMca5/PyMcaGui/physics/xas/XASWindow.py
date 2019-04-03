@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -42,6 +42,8 @@ from PyMca5.PyMcaGui import PlotWindow
 from PyMca5.PyMcaGui import XASParameters
 
 from PyMca5.PyMca import XASClass
+import logging
+
 logger = logging.getLogger(__name__)
 
 class XASDialog(qt.QDialog):
