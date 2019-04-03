@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -30,10 +30,10 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import numpy
 import logging
-from PyMca5.PyMcaGui import MaskImageWidget
-from PyMca5.PyMcaGui import ColormapDialog
+from PyMca5.PyMcaGui.plotting import MaskImageWidget
+from PyMca5.PyMcaGui.plotting import ColormapDialog
 from PyMca5 import spslut
-from PyMca5.PyMcaGui import QPyMcaMatplotlibSave
+from PyMca5.PyMcaGui.plotting import QPyMcaMatplotlibSave
 MATPLOTLIB = True
 
 convertToRowAndColumn = MaskImageWidget.convertToRowAndColumn
