@@ -33,7 +33,7 @@ import logging
 from PyMca5.PyMcaGui.plotting import MaskImageWidget
 from PyMca5.PyMcaGui.plotting import ColormapDialog
 from PyMca5 import spslut
-from PyMca5.PyMcaGui.plotting import QPyMcaMatplotlibSave
+from . import QPyMcaMatplotlibSave
 MATPLOTLIB = True
 
 convertToRowAndColumn = MaskImageWidget.convertToRowAndColumn
