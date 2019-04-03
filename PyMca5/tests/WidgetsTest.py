@@ -61,6 +61,8 @@ class TestRGBCorrelatorGraph(TestCaseQt):
         widget = RGBCorrelatorGraph.RGBCorrelatorGraph()
         widget.show()
         self.qapp.processEvents()
+        from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
+        PyMcaPrintPreview.resetSingletonPrintPreview()
 
 class TestMaskImageWidget(TestCaseQt):
     def setUp(self):
@@ -71,6 +73,8 @@ class TestMaskImageWidget(TestCaseQt):
         widget = MaskImageWidget.MaskImageWidget()
         widget.show()
         self.qapp.processEvents()
+        from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
+        PyMcaPrintPreview.resetSingletonPrintPreview()
 
 class TestPlotWindow(TestCaseQt):
     def setUp(self):
@@ -91,6 +95,8 @@ class TestScanWindow(TestCaseQt):
         widget = ScanWindow.ScanWindow()
         widget.show()
         self.qapp.processEvents()
+        from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
+        PyMcaPrintPreview.resetSingletonPrintPreview()
 
 
 class TestMcaWindow(TestCaseQt):
@@ -102,6 +108,8 @@ class TestMcaWindow(TestCaseQt):
         widget = McaWindow.McaWindow()
         widget.show()
         self.qapp.processEvents()
+        from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
+        PyMcaPrintPreview.resetSingletonPrintPreview()
 
 
 class TestMcaAdvancedFit(TestCaseQt):
@@ -113,7 +121,8 @@ class TestMcaAdvancedFit(TestCaseQt):
         widget = McaAdvancedFit.McaAdvancedFit()
         widget.show()
         self.qapp.processEvents()
-
+        from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
+        PyMcaPrintPreview.resetSingletonPrintPreview()
 
 def getSuite(auto=True):
     test_suite = unittest.TestSuite()
@@ -140,6 +149,8 @@ def getSuite(auto=True):
     for TestCaseCls in (TestQtWrapper,
                         TestPlotWidget,
                         TestPlotWindow,
+                        TestRGBCorrelatorGraph,
+                        TestMaskImageWidget,
                         TestScanWindow,
                         TestMcaWindow,
                         TestMcaAdvancedFit,
