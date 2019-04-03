@@ -314,8 +314,9 @@ class StackBase(object):
 
         logger.debug("__stackImageData.shape = %s", self._stackImageData.shape)
 
-        if previousStackImageSize != self._stackImageData.size:
-            self._clearPositioners()
+        if previousStackImageSize:
+            if previousStackImageSize != self._stackImageData.size:
+                self._clearPositioners()
 
         calib = self._stack.info.get('McaCalib', [0.0, 1.0, 0.0])
         dataObject = DataObject.DataObject()
