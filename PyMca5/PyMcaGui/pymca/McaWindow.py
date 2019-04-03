@@ -859,7 +859,7 @@ class McaWindow(ScanWindow):
         w.sigReplaceSelection.connect(self._replaceSelection)
 
     def _addSelection(self, selection, replot=True):
-        _logger.debug("__add, selection = ",selection)
+        _logger.debug("__add, selection = %s",selection)
 
         if type(selection) == type([]):
             sellist = selection

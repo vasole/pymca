@@ -56,7 +56,7 @@ def resetSingletonPrintPreview():
         _logger.debug("PrintPreview never instantiated")
         return needed
     import gc
-    _logger.debug("_preview_instance before =", PrintPreview._preview_instance)
+    _logger.debug("_preview_instance before = %s", PrintPreview._preview_instance)
     try:
         if PrintPreview._preview_instance:
             needed = True
@@ -64,7 +64,7 @@ def resetSingletonPrintPreview():
         gc.collect()
     except NameError:
         needed = False
-    _logger.debug("RETURNING = ", needed)
+    _logger.debug("RETURNING = %s", needed)
     return needed
 
 if qt.QApplication.instance():
@@ -72,7 +72,7 @@ if qt.QApplication.instance():
         _logger.debug("PrintPreview not there creating it")
         PrintPreview._preview_instance = PrintPreview()
     else:
-        _logger.debug("PrintPreview already there = ",
+        _logger.debug("PrintPreview already there = %s",
                       PrintPreview._preview_instance)
 
 def testPreview():
