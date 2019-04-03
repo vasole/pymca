@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -34,23 +34,35 @@ DEBUG = 0
 
 from .Q4PyMcaPrintPreview import PyMcaPrintPreview as PrintPreview
 
-#SINGLETON
-if 0:
-    #It seems sip gets confused by this singleton implementation
-    class PyMcaPrintPreview(PrintPreview):
-        _instance = None
-        def __new__(self, *var, **kw):
-            if self._instance is None:
-                self._instance = PrintPreview.__new__(self,*var, **kw)
-            return self._instance
-else:
-    #but sip is happy about this one
-    class PyMcaPrintPreview(PrintPreview):
-        _instance = None
-        def __new__(self, *var, **kw):
-            if self._instance is None:
-                self._instance = PrintPreview(*var, **kw)
-            return self._instance
+if not hasattr(__name__, "_preview_instance"):
+    _preview_instance = None
+
+def PyMcaPrintPreview(*var, **kw):
+    print("WARNING: Using PyMcaPrintPreview")
+    return getSingletonPrintPreview(*var, **kw)
+
+def getSingletonPrintPreview(*var, **kw):
+    global _preview_instance
+    try:
+        if _preview_instance:
+            return _preview_instance
+    except NameError:
+        _preview_instance = PrintPreview(modal=0)
+    return _preview_instance
+
+def resetSingletonPrintPreview():
+    """
+    To be called on Application to get rid of internal reference.
+    """
+    global _preview_instance
+    needed = False
+    try:
+        if _preview_instance:
+            needed = True
+        _preview_instance = None
+        gc.collect()
+    except NameError:
+        return needed
 
 def testPreview():
     """
