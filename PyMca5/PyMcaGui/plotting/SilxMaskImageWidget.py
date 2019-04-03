@@ -1038,7 +1038,6 @@ class SilxMaskImageWidget(qt.QMainWindow):
         if infos is None:
             infos = [{} for _img in images]
 
-        print("received infos = ", infos)
         self._labels = labels
         self._infos = infos
 
