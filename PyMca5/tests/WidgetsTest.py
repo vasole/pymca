@@ -31,11 +31,6 @@ import unittest
 import PyMca5.PyMcaGui.PyMcaQt as qt
 from PyMca5.PyMcaGui.misc.testutils import TestCaseQt
 
-from PyMca5.PyMcaGui.pymca import ScanWindow
-from PyMca5.PyMcaGui.pymca import McaWindow
-from PyMca5.PyMcaGui.physics.xrf import McaAdvancedFit
-
-
 _logger = logging.getLogger(__name__)
 
 
@@ -47,12 +42,32 @@ class TestQtWrapper(unittest.TestCase):
         obj = qt.QObject()
         self.assertTrue(obj is not None)
 
+class TestPlotWidget(TestCaseQt):
+    def setUp(self):
+        super(TestPlotWidget, self).setUp()
+
+    def testShow(self):
+        from PyMca5.PyMcaGui.plotting import PlotWidget
+        widget = PlotWidget.PlotWidget()
+        widget.show()
+        self.qapp.processEvents()
+
+class TestPlotWindow(TestCaseQt):
+    def setUp(self):
+        super(TestPlotWindow, self).setUp()
+
+    def testShow(self):
+        from PyMca5.PyMcaGui.plotting import PlotWindow
+        widget = PlotWindow.PlotWindow()
+        widget.show()
+        self.qapp.processEvents()
 
 class TestScanWindow(TestCaseQt):
     def setUp(self):
         super(TestScanWindow, self).setUp()
 
     def testShow(self):
+        from PyMca5.PyMcaGui.pymca import ScanWindow
         widget = ScanWindow.ScanWindow()
         widget.show()
         self.qapp.processEvents()
@@ -63,6 +78,7 @@ class TestMcaWindow(TestCaseQt):
         super(TestMcaWindow, self).setUp()
 
     def testShow(self):
+        from PyMca5.PyMcaGui.pymca import McaWindow
         widget = McaWindow.McaWindow()
         widget.show()
         self.qapp.processEvents()
@@ -73,6 +89,7 @@ class TestMcaAdvancedFit(TestCaseQt):
         super(TestMcaAdvancedFit, self).setUp()
 
     def testShow(self):
+        from PyMca5.PyMcaGui.physics.xrf import McaAdvancedFit
         widget = McaAdvancedFit.McaAdvancedFit()
         widget.show()
         self.qapp.processEvents()
@@ -100,8 +117,13 @@ def getSuite(auto=True):
         test_suite.addTest(SkipGUITest())
         return test_suite
 
-    for TestCaseCls in (TestQtWrapper, TestScanWindow,
-                        TestMcaWindow, TestMcaAdvancedFit):
+    for TestCaseCls in (TestQtWrapper,
+                        TestPlotWidget,
+                        TestPlotWindow,
+                        TestScanWindow,
+                        TestMcaWindow,
+                        TestMcaAdvancedFit,
+                        ):
         test_suite.addTest(
             unittest.defaultTestLoader.loadTestsFromTestCase(TestCaseCls))
     return test_suite
