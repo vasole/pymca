@@ -28,41 +28,52 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
+import logging
+
 from PyMca5.PyMcaGui import PyMcaQt as qt
-
-DEBUG = 0
-
 from .Q4PyMcaPrintPreview import PyMcaPrintPreview as PrintPreview
 
-if not hasattr(__name__, "_preview_instance"):
-    _preview_instance = None
+_logger = logging.getLogger(__name__)
 
 def PyMcaPrintPreview(*var, **kw):
-    print("WARNING: Using PyMcaPrintPreview")
+    _logger.debug("PyMcaPrintPreview kept for backwards compatibility")
     return getSingletonPrintPreview(*var, **kw)
 
 def getSingletonPrintPreview(*var, **kw):
-    global _preview_instance
-    try:
-        if _preview_instance:
-            return _preview_instance
-    except NameError:
-        _preview_instance = PrintPreview(modal=0)
-    return _preview_instance
+    if not hasattr(PrintPreview, "_preview_instance") or \
+       PrintPreview._preview_instance:
+        _logger.debug("Instantiating preview instance")
+        PrintPreview._preview_instance = PrintPreview(modal=0)
+    return PrintPreview._preview_instance
 
 def resetSingletonPrintPreview():
     """
     To be called on Application to get rid of internal reference.
     """
-    global _preview_instance
+    _logger.debug("resetSingletonPrintPreview CALLED")
     needed = False
+    if not hasattr(PrintPreview, "_preview_instance"):
+        _logger.debug("PrintPreview never instantiated")
+        return needed
+    import gc
+    _logger.debug("_preview_instance before =", PrintPreview._preview_instance)
     try:
-        if _preview_instance:
+        if PrintPreview._preview_instance:
             needed = True
-        _preview_instance = None
+        PrintPreview._preview_instance = None
         gc.collect()
     except NameError:
-        return needed
+        needed = False
+    _logger.debug("RETURNING = ", needed)
+    return needed
+
+if qt.QApplication.instance():
+    if not hasattr(PrintPreview, "_preview_instance"):
+        _logger.debug("PrintPreview not there creating it")
+        PrintPreview._preview_instance = PrintPreview()
+    else:
+        _logger.debug("PrintPreview already there = ",
+                      PrintPreview._preview_instance)
 
 def testPreview():
     """
@@ -102,6 +113,3 @@ def testPreview():
 
 if  __name__ == '__main__':
     testPreview()
-
-
-
