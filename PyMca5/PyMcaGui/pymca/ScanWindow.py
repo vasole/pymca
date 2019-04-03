@@ -23,14 +23,17 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
+"""This module defines a :class:`ScanWindow` inheriting a 
+:class:`PlotWindow` with additional tools and actions.
+The main addition is a menu with plugins.
 __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
+import logging
 import numpy
-#from numpy import argsort, nonzero, take
 import time
 import traceback
 from PyMca5.PyMcaGui import PyMcaQt as qt
@@ -85,7 +88,7 @@ try:
 except:
     pass
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
 
 class ScanWindow(PlotWindow.PlotWindow):
     def __init__(self, parent=None, name="Scan Window", specfit=None, backend=None,
@@ -203,8 +206,10 @@ class ScanWindow(PlotWindow.PlotWindow):
         w.sigReplaceSelection.connect(self._replaceSelection)
 
     def _addSelection(self, selectionlist, replot=True):
-        if DEBUG:
-            print("_addSelection(self, selectionlist)",selectionlist)
+        """Add curves to plot and data objects to :attr:`dataObjectsDict`
+        """
+        _logger.debug("_addSelection(self, selectionlist) " +
+                      str(selectionlist))
         if type(selectionlist) == type([]):
             sellist = selectionlist
         else:
@@ -227,15 +232,19 @@ class ScanWindow(PlotWindow.PlotWindow):
             if not ("scanselection" in sel): continue
             if sel['scanselection'] == "MCA":
                 continue
-            if not sel["scanselection"]:continue
-            if len(key.split(".")) > 2: continue
+            if not sel["scanselection"]:
+                continue
+            if len(key.split(".")) > 2:
+                continue
             dataObject = sel['dataobject']
-            #only one-dimensional selections considered
-            if dataObject.info["selectiontype"] != "1D": continue
+            # only one-dimensional selections considered
+            if dataObject.info["selectiontype"] != "1D":
+                continue
 
-            #there must be something to plot
+            # there must be something to plot
             if not hasattr(dataObject, 'y'):
                 continue
+
             if len(dataObject.y) == 0:
                 # nothing to be plot
                 continue
@@ -250,16 +259,14 @@ class ScanWindow(PlotWindow.PlotWindow):
                 else:
                     #nothing to be plot
                     continue
-            if dataObject.x is None:
+            if getattr(dataObject, 'x', None) is None:
                 ylen = len(dataObject.y[0])
-                if ylen:
-                    xdata = numpy.arange(ylen).astype(numpy.float)
-                else:
-                    #nothing to be plot
+                if not ylen:
+                    # nothing to be plot
                     continue
+                xdata = numpy.arange(ylen).astype(numpy.float)
             elif len(dataObject.x) > 1:
-                if DEBUG:
-                    print("Mesh plots")
+                _logger.debug("Mesh plots. Ignoring")
                 continue
             else:
                 if numpy.isscalar(dataObject.x[0]):
@@ -326,7 +333,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                                 dummyDataObject.x=[numpy.array([])]
                                 self.scanWindowInfoWidget.updateFromDataObject(dummyDataObject)
             else:
-                #we have to loop for all y values
+                # we have to loop for all y values
                 ycounter = -1
                 for ydata in dataObject.y:
                     ylen = len(ydata)
@@ -336,8 +343,9 @@ class ScanWindow(PlotWindow.PlotWindow):
                     elif len(xdata) == 1:
                         xdata = xdata[0] * numpy.ones(ylen).astype(numpy.float)
                     ycounter += 1
-                    newDataObject   = DataObject.DataObject()
+                    newDataObject = DataObject.DataObject()
                     newDataObject.info = copy.deepcopy(dataObject.info)
+
                     if dataObject.m is not None:
                         for imon in range(len(dataObject.m)):
                             if numpy.isscalar(dataObject.m[imon]):
@@ -396,7 +404,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                         newDataObject.info['legend'] = legend
                         symbol = 'x'
                     else:
-                        symbol=None
+                        symbol = None
                         newDataObject.info['legend'] = legend + " " + ylegend
                         newDataObject.info['selectionlegend'] = legend
                     yaxis = None
@@ -405,7 +413,6 @@ class ScanWindow(PlotWindow.PlotWindow):
                     elif 'operations' in dataObject.info:
                         if dataObject.info['operations'][-1] == 'derivate':
                             yaxis = 'right'
-                    #print("sending legend = ", newDataObject.info['legend'], "replot = ", False)
                     self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
                     self.addCurve(xdata, ydata, legend=newDataObject.info['legend'],
                                     info=newDataObject.info,
@@ -430,8 +437,7 @@ class ScanWindow(PlotWindow.PlotWindow):
         self.updateLegends()
 
     def _removeSelection(self, selectionlist):
-        if DEBUG:
-            print("_removeSelection(self, selectionlist)",selectionlist)
+        _logger.debug("_removeSelection(self, selectionlist)",selectionlist)
         if type(selectionlist) == type([]):
             sellist = selectionlist
         else:
@@ -440,14 +446,17 @@ class ScanWindow(PlotWindow.PlotWindow):
         removelist = []
         for sel in sellist:
             source = sel['SourceName']
-            key    = sel['Key']
-            if not ("scanselection" in sel): continue
+            key = sel['Key']
+            if not ("scanselection" in sel):
+                continue
             if sel['scanselection'] == "MCA":
                 continue
-            if not sel["scanselection"]:continue
-            if len(key.split(".")) > 2: continue
+            if not sel["scanselection"]:
+                continue
+            if len(key.split(".")) > 2:
+                continue
 
-            legend = sel['legend'] #expected form sourcename + scan key
+            legend = sel['legend'] # expected form sourcename + scan key
             if type(sel['selection']) == type({}):
                 if 'y' in sel['selection']:
                     for lName in ['cntlist', 'LabelNames']:
@@ -470,24 +479,28 @@ class ScanWindow(PlotWindow.PlotWindow):
         self.dataObjectsList = self._curveList
 
     def _replaceSelection(self, selectionlist):
-        if DEBUG:
-            print("_replaceSelection(self, selectionlist)",selectionlist)
+        """Delete existing curves and data objects, then add new selection.
+        """
+        _logger.debug("_replaceSelection(self, selectionlist) ", selectionlist)
         if type(selectionlist) == type([]):
             sellist = selectionlist
         else:
             sellist = [selectionlist]
 
-        doit = 0
+        doit = False
         for sel in sellist:
-            if not ("scanselection" in sel): continue
+            if not ("scanselection" in sel):
+                continue
             if sel['scanselection'] == "MCA":
                 continue
-            if not sel["scanselection"]:continue
-            if len(sel["Key"].split(".")) > 2: continue
+            if not sel["scanselection"]:
+                continue
+            if len(sel["Key"].split(".")) > 2:
+                continue
             dataObject = sel['dataobject']
             if dataObject.info["selectiontype"] == "1D":
                 if hasattr(dataObject, 'y'):
-                    doit = 1
+                    doit = True
                     break
         if not doit:
             return
@@ -502,13 +515,11 @@ class ScanWindow(PlotWindow.PlotWindow):
             if label.startswith('ROI'):
                 return self._handleROIMarkerEvent(ddict)
             else:
-                if DEBUG:
-                    print("Unhandled marker %s" % label)
+                _logger.debug("Unhandled marker %s" % label)
                 return
 
     def graphCallback(self, ddict):
-        if DEBUG:
-            print("graphCallback", ddict)
+        _logger.debug("graphCallback", ddict)
         if ddict['event'] in ['markerMoved', 'markerSelected']:
             self._handleMarkerEvent(ddict)
         elif ddict['event'] in ["mouseMoved", "MouseAt"]:
@@ -633,8 +644,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                           legend=newDataObject.info['legend'])
 
     def _scanFitSignalReceived(self, ddict):
-        if DEBUG:
-            print("_scanFitSignalReceived", ddict)
+        _logger.debug("_scanFitSignalReceived", ddict)
         if ddict['event'] == "EstimateFinished":
             return
         if ddict['event'] == "FitFinished":
@@ -650,33 +660,27 @@ class ScanWindow(PlotWindow.PlotWindow):
             self.addCurve(x=xplot, y=yplot, legend=newDataObject.info['legend'])
 
     def _fitIconSignal(self):
-        if DEBUG:
-            print("_fitIconSignal")
+        _logger.debug("_fitIconSignal")
         self.fitButtonMenu.exec_(self.cursor().pos())
 
     def _simpleFitSignal(self):
-        if DEBUG:
-            print("_simpleFitSignal")
+        _logger.debug("_simpleFitSignal")
         self._QSimpleOperation("fit")
 
     def _customFitSignal(self):
-        if DEBUG:
-            print("_customFitSignal")
+        _logger.debug("_customFitSignal")
         self._QSimpleOperation("custom_fit")
 
     def _saveIconSignal(self):
-        if DEBUG:
-            print("_saveIconSignal")
+        _logger.debug("_saveIconSignal")
         self._QSimpleOperation("save")
 
     def _averageIconSignal(self):
-        if DEBUG:
-            print("_averageIconSignal")
+        _logger.debug("_averageIconSignal")
         self._QSimpleOperation("average")
 
     def _smoothIconSignal(self):
-        if DEBUG:
-            print("_smoothIconSignal")
+        _logger.debug("_smoothIconSignal")
         self._QSimpleOperation("smooth")
 
     def _getOutputFileName(self):
@@ -925,8 +929,7 @@ class ScanWindow(PlotWindow.PlotWindow):
             i = 0
             ndata = 0
             for key in self._curveList:
-                if DEBUG:
-                    print("key -> ", key)
+                _logger.debug("key -> ", key)
                 if key in self.dataObjectsDict:
                     x.append(self.dataObjectsDict[key].x[0]) #only the first X
                     if len(self.dataObjectsDict[key].y) == 1:
@@ -944,9 +947,8 @@ class ScanWindow(PlotWindow.PlotWindow):
                                         break
                                 if label in self.dataObjectsDict[key].info['LabelNames']:
                                     ilabel = self.dataObjectsDict[key].info['LabelNames'].index(label)
-                                if DEBUG:
-                                    print("LABEL = ", label)
-                                    print("ilabel = ", ilabel)
+                                _logger.debug("LABEL = ", label)
+                                _logger.debug("ilabel = ", ilabel)
                         y.append(self.dataObjectsDict[key].y[ilabel])
                     if i == 0:
                         legend = key
@@ -1148,23 +1150,19 @@ class ScanWindow(PlotWindow.PlotWindow):
         return super(ScanWindow,self).getActiveCurve(just_legend=True)
 
     def _deriveIconSignal(self):
-        if DEBUG:
-            print("_deriveIconSignal")
+        _logger.debug("_deriveIconSignal")
         self._QSimpleOperation('derivate')
 
     def _swapSignIconSignal(self):
-        if DEBUG:
-            print("_swapSignIconSignal")
+        _logger.debug("_swapSignIconSignal")
         self._QSimpleOperation('swapsign')
 
     def _yMinToZeroIconSignal(self):
-        if DEBUG:
-            print("_yMinToZeroIconSignal")
+        _logger.debug("_yMinToZeroIconSignal")
         self._QSimpleOperation('forceymintozero')
 
     def _subtractIconSignal(self):
-        if DEBUG:
-            print("_subtractIconSignal")
+        _logger.debug("_subtractIconSignal")
         self._QSimpleOperation('subtract')
 
     def _subtractOperation(self):
@@ -1212,8 +1210,7 @@ class ScanWindow(PlotWindow.PlotWindow):
             legend = ""
             x = [xActive]
             y = [-yActive]
-            if DEBUG:
-                print("key -> ", key)
+            _logger.debug("key -> ", key)
             if key in self.dataObjectsDict:
                 x.append(self.dataObjectsDict[key].x[0]) #only the first X
                 if len(self.dataObjectsDict[key].y) == 1:
@@ -1232,9 +1229,8 @@ class ScanWindow(PlotWindow.PlotWindow):
                                     break
                             if label in self.dataObjectsDict[key].info['LabelNames']:
                                 ilabel = self.dataObjectsDict[key].info['LabelNames'].index(label)
-                            if DEBUG:
-                                print("LABEL = ", label)
-                                print("ilabel = ", ilabel)
+                            _logger.debug("LABEL = ", label)
+                            _logger.debug("ilabel = ", ilabel)
                     y.append(self.dataObjectsDict[key].y[ilabel])
                 outputlegend = "(%s - %s)" %  (key, yActiveLegend)
                 ndata += 1
@@ -1294,22 +1290,22 @@ class ScanWindow(PlotWindow.PlotWindow):
             if color is None:
                 color = info.get("plot_color", oldInfo.get("plot_color", None))
             if symbol is None:
-                symbol =  info.get("plot_symbol",oldInfo.get("plot_symbol", None))
+                symbol = info.get("plot_symbol",oldInfo.get("plot_symbol", None))
             if linestyle is None:
-                linestyle =  info.get("plot_linestyle",oldInfo.get("plot_linestyle", None))
+                linestyle = info.get("plot_linestyle",oldInfo.get("plot_linestyle", None))
             if yaxis is None:
-                yaxis =  info.get("plot_yaxis",oldInfo.get("plot_yaxis", None))
+                yaxis = info.get("plot_yaxis",oldInfo.get("plot_yaxis", None))
         else:
             if info is None:
                 info = {}
             if color is None:
                 color = info.get("plot_color", None)
             if symbol is None:
-                symbol =  info.get("plot_symbol", None)
+                symbol = info.get("plot_symbol", None)
             if linestyle is None:
-                linestyle =  info.get("plot_linestyle", None)
+                linestyle = info.get("plot_linestyle", None)
             if yaxis is None:
-                yaxis =  info.get("plot_yaxis", None)
+                yaxis = info.get("plot_yaxis", None)
         if legend in self.dataObjectsDict:
             # the info is changing
             super(ScanWindow, self).addCurve(x, y, legend=legend, info=info,
@@ -1355,7 +1351,7 @@ class ScanWindow(PlotWindow.PlotWindow):
         newDataObject.info['Key'] = ""
         newDataObject.info['selectiontype'] = "1D"
         newDataObject.info['LabelNames'] = [xlabel, ylabel]
-        newDataObject.info['selection'] = {'x':[0], 'y':[1]}
+        newDataObject.info['selection'] = {'x': [0], 'y': [1]}
         sel_list = []
         sel = {}
         sel['SourceType'] = "Operation"
