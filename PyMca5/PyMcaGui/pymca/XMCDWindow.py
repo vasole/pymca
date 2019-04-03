@@ -365,7 +365,7 @@ class XMCDOptions(qt.QDialog):
                 if type(button) == type(qt.QRadioButton()):
                         button.setChecked(True)
 
-class XMCDScanWindow(sw.ScanWindow):
+class XMCDScanWindow(ScanWindow.ScanWindow):
 
     xmcdToolbarOptions = {
         'logx': False,
