@@ -52,6 +52,26 @@ class TestPlotWidget(TestCaseQt):
         widget.show()
         self.qapp.processEvents()
 
+class TestRGBCorrelatorGraph(TestCaseQt):
+    def setUp(self):
+        super(TestRGBCorrelatorGraph, self).setUp()
+
+    def testShow(self):
+        from PyMca5.PyMcaGui.plotting import RGBCorrelatorGraph
+        widget = RGBCorrelatorGraph.RGBCorrelatorGraph()
+        widget.show()
+        self.qapp.processEvents()
+
+class TestMaskImageWidget(TestCaseQt):
+    def setUp(self):
+        super(TestMaskImageWidget, self).setUp()
+
+    def testShow(self):
+        from PyMca5.PyMcaGui.plotting import MaskImageWidget
+        widget = MaskImageWidget.MaskImageWidget()
+        widget.show()
+        self.qapp.processEvents()
+
 class TestPlotWindow(TestCaseQt):
     def setUp(self):
         super(TestPlotWindow, self).setUp()
