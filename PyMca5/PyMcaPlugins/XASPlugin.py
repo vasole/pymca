@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -31,11 +31,7 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import numpy
-try:
-    from PyMca5 import Plugin1DBase
-except ImportError:
-    from . import Plugin1DBase
-
+from PyMca5.PyMcaCore import Plugin1DBase
 try:
     from PyMca5.PyMcaPhysics.xas import XASClass
     from PyMca5.PyMcaGui.physics.xas import XASWindow
