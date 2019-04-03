@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -581,12 +581,12 @@ if hasattr(qt, 'QGraphicsSvgItem'):
             self._renderer.render(painter, self.boundingRect())
 
 class GraphicsResizeRectItem(qt.QGraphicsRectItem):
-    def __init__(self, parent = None, scene = None, keepratio = True):
+    """Resizable QGraphicsRectItem."""
+    def __init__(self, parent=None, scene=None, keepratio=True):
         if QTVERSION < '5.0':
             qt.QGraphicsRectItem.__init__(self, parent, scene)
         else:
             qt.QGraphicsRectItem.__init__(self, parent)
-        #rect = parent.sceneBoundingRect()
         rect = parent.boundingRect()
         x = rect.x()
         y = rect.y()
@@ -596,16 +596,13 @@ class GraphicsResizeRectItem(qt.QGraphicsRectItem):
         self.keepRatio = keepratio
         self.setRect(qt.QRectF(x + w - 40, y + h - 40, 40, 40))
         self.setAcceptHoverEvents(True)
-        if DEBUG:
-            self.setBrush(qt.QBrush(qt.Qt.white, qt.Qt.SolidPattern))
-        else:
-            pen = qt.QPen()
-            color = qt.QColor(qt.Qt.white)
-            color.setAlpha(0)
-            pen.setColor(color)
-            pen.setStyle(qt.Qt.NoPen)
-            self.setPen(pen)
-            self.setBrush(color)
+        pen = qt.QPen()
+        color = qt.QColor(qt.Qt.white)
+        color.setAlpha(0)
+        pen.setColor(color)
+        pen.setStyle(qt.Qt.NoPen)
+        self.setPen(pen)
+        self.setBrush(color)
         self.setFlag(self.ItemIsMovable, True)
         self.show()
 
@@ -635,20 +632,21 @@ class GraphicsResizeRectItem(qt.QGraphicsRectItem):
             print("ResizeRect mouseDoubleClick")
 
     def mousePressEvent(self, event):
-        if DEBUG:
-            print("ResizeRect mousePress")
         if self._newRect is not None:
             self._newRect = None
-        self.__point0 = self.pos()
+        self._point0 = self.pos()
         parent = self.parentItem()
-        scene  = self.scene()
+        scene = self.scene()
+        # following line prevents dragging along the previously selected
+        # item when resizing another one
         scene.clearSelection()
-        rect = parent.rect()
+
+        rect = parent.boundingRect()
         self._x = rect.x()
         self._y = rect.y()
         self._w = rect.width()
         self._h = rect.height()
-        self._ratio = self._w /self._h
+        self._ratio = self._w / self._h
         if QTVERSION < "5.0":
             self._newRect = qt.QGraphicsRectItem(parent, scene)
         else:
@@ -660,11 +658,9 @@ class GraphicsResizeRectItem(qt.QGraphicsRectItem):
         qt.QGraphicsRectItem.mousePressEvent(self, event)
 
     def mouseMoveEvent(self, event):
-        if DEBUG:
-            print("ResizeRect mouseMove")
         point1 = self.pos()
-        deltax = point1.x() -  self.__point0.x()
-        deltay = point1.y() -  self.__point0.y()
+        deltax = point1.x() - self._point0.x()
+        deltay = point1.y() - self._point0.y()
         if self.keepRatio:
             r1 = (self._w + deltax) / self._w
             r2 = (self._h + deltay) / self._h
@@ -672,53 +668,42 @@ class GraphicsResizeRectItem(qt.QGraphicsRectItem):
                 self._newRect.setRect(qt.QRectF(self._x,
                                                 self._y,
                                                 self._w + deltax,
-                                                (self._w + deltax)/self._ratio))
+                                                (self._w + deltax) / self._ratio))
             else:
                 self._newRect.setRect(qt.QRectF(self._x,
                                                 self._y,
-                                                (self._h + deltay)* self._ratio,
+                                                (self._h + deltay) * self._ratio,
                                                 self._h + deltay))
         else:
             self._newRect.setRect(qt.QRectF(self._x,
-                                        self._y,
-                                        self._w + deltax,
-                                        self._h + deltay))
+                                            self._y,
+                                            self._w + deltax,
+                                            self._h + deltay))
         qt.QGraphicsRectItem.mouseMoveEvent(self, event)
 
     def mouseReleaseEvent(self, event):
-        if DEBUG:
-            print("ResizeRect mouseRelease")
         point1 = self.pos()
-        deltax = point1.x() -  self.__point0.x()
-        deltay = point1.y() -  self.__point0.y()
+        deltax = point1.x() - self._point0.x()
+        deltay = point1.y() - self._point0.y()
         self.moveBy(-deltax, -deltay)
         parent = self.parentItem()
-        if 0:
-            #this works if no zoom at the viewport
-            rect = parent.sceneBoundingRect()
-            w = rect.width()
-            h = rect.height()
-            scalex = (w + deltax) / w
-            scaley = (h + deltay) / h
-            if self.keepRatio:
-                scalex = min(scalex, scalex)
-                parent.scale(scalex, scalex)
-            else:
-                parent.scale(scalex, scaley)
+
+        # deduce scale from rectangle
+        if (QTVERSION < "5.0") or self.keepRatio:
+            scalex = self._newRect.rect().width() / self._w
+            scaley = scalex
         else:
-            #deduce it from the rect because it always work
-            if (QTVERSION < "5.0") or self.keepRatio:
-                scalex = self._newRect.rect().width()/ self._w
-                scaley = scalex
-            else:
-                scalex = self._newRect.rect().width()/ self._w
-                scaley = self._newRect.rect().height()/self._h
-            if QTVERSION < "5.0":
-                parent.scale(scalex, scaley)
-            else:
-                # the correct equivalent would be:
-                # rectItem.setTransform(qt.QTransform.fromScale(scalex, scaley))
-                parent.setScale(scalex)
+            scalex = self._newRect.rect().width() / self._w
+            scaley = self._newRect.rect().height() / self._h
+
+        if QTVERSION < "5.0":
+            parent.scale(scalex, scaley)
+        else:
+            # apply the scale to the previous transformation matrix
+            previousTransform = parent.transform()
+            parent.setTransform(
+                    previousTransform.scale(scalex, scaley))
+
         self.scene().removeItem(self._newRect)
         self._newRect = None
         qt.QGraphicsRectItem.mouseReleaseEvent(self, event)
