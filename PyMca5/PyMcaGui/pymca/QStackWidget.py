@@ -1255,6 +1255,19 @@ class QStackWidget(StackBase.StackBase,
         for key in self.pluginInstanceDict.keys():
             self.pluginInstanceDict[key].stackClosed()
         CloseEventNotifyingWidget.CloseEventNotifyingWidget.closeEvent(self, event)
+        if __name__ == "__main__":
+            app = qt.QApplication.instance()
+            allWidgets = app.allWidgets()
+            for widget in allWidgets:
+                try:
+                    # we cannot afford to crash here
+                    if id(widget) != id(self):
+                        if widget.parent() is None:
+                            widget.close()
+                except:
+                    _logger.debug("Error closing widget")
+            from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
+            PyMcaPrintPreview.resetSingletonPrintPreview()
 
 
 def test():

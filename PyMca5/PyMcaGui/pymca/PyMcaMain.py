@@ -1405,6 +1405,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                             widget.close()
                 except:
                     _logger.debug("Error closing widget")
+            from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
+            PyMcaPrintPreview.resetSingletonPrintPreview()
         return PyMcaMdi.PyMcaMdi.closeEvent(self, event)
 
     def __xiaCorrect(self):
