@@ -2052,6 +2052,7 @@ class McaAdvancedFit(qt.QWidget):
             logfilter = 1
         else:
             logfilter = 0
+        self.graph.clearCurves(replot=False)
         config = self.mcafit.configure()
         if ddict is None:
             if not self.__fitdone:

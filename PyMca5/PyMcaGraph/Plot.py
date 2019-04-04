@@ -1048,7 +1048,7 @@ class Plot(PlotBase.PlotBase):
         else:
             self._plot.replot()
 
-    def clear(self):
+    def clear(self, replot=True):
         self._curveList = []
         self._curveDict = {}
         self._colorIndex = 0
@@ -1058,24 +1058,27 @@ class Plot(PlotBase.PlotBase):
         self._imageDict = {}
         self._markerList = []
         self._plot.clear()
-        self.replot()
+        if replot:
+            self.replot()
 
-    def clearCurves(self):
+    def clearCurves(self, replot=True):
         self._curveList = []
         self._curveDict = {}
         self._colorIndex = 0
         self._styleIndex = 0
         self._plot.clearCurves()
-        self.replot()
+        if replot:
+            self.replot()
 
-    def clearImages(self):
+    def clearImages(self, replot=True):
         """
         Clear all images from the plot. Not the curves or markers.
         """
         self._imageList = []
         self._imageDict = {}
         self._plot.clearImages()
-        self.replot()
+        if replot:
+            self.replot()
         return
 
     def getDataMargins(self):
