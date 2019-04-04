@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -251,13 +251,15 @@ class PlotBase(PlotBackend.PlotBackend, PluginLoader.PluginLoader):
         print("PlotBase printGraph not implemented")
 
 
-    def setActiveCurve(self, legend):
+    def setActiveCurve(self, legend, replot=True):
         """
         Funtion to request the plot window to set the curve with the specified legend
         as the active curve.
 
         :param legend: The legend associated to the curve
         :type legend: string
+        :param replot: Flag to indicate plot is to be immediately updated
+        :type replot: boolean default True
         """
         print("setActiveCurve not implemented")
         return None
