@@ -1201,7 +1201,7 @@ class McaWindow(ScanWindow):
             return
         self.sigPlotSignal.emit(ddict)
 
-    def setActiveCurve(self, legend=None):
+    def setActiveCurve(self, legend=None, replot=True):
         if legend is None:
             legend = self.getActiveCurve(just_legend=True)
         if legend is None:
@@ -1251,7 +1251,8 @@ class McaWindow(ScanWindow):
         super(McaWindow, self).setActiveCurve(legend, replot=False)
         self.setGraphXLabel(xlabel)
         self.setGraphYLabel(ylabel)
-        self.replot()
+        if replot:
+            self.replot()
 
     def _customFitSignalReceived(self, ddict):
         if ddict['event'] == "FitFinished":
