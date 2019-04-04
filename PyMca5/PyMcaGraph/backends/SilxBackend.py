@@ -54,7 +54,11 @@ class SilxBackend(PlotWidget):
             if kw["replot"]:
                 kw["resetzoom"] = True
             del kw["replot"]
-        return PlotWidget.addCurve(self, *var, **kw)
+        result = PlotWidget.addCurve(self, *var, **kw)
+        allCurves = self.getAllCurves(just_legend=True) 
+        if len(allCurves) == 1:
+            self.setActiveCurve(allCurves[0])
+        return result
 
     def addImage(self, *var, **kw):
         if "replot" in kw:
@@ -73,10 +77,8 @@ class SilxBackend(PlotWidget):
                 kw["scale"] = xScale[1], yScale[1]
         return PlotWidget.addImage(self, *var, **kw)
 
-    def setActiveCurve(self, *var, **kw):
-        if "replot" in kw:
-            del kw["replot"]
-        return PlotWidget.setActiveCurve(self, *var, **kw)
+    def setActiveCurve(self, legend, replot=True):
+        return PlotWidget.setActiveCurve(self, legend)
 
     def setActiveImage(self, *var, **kw):
         if "replot" in kw:
