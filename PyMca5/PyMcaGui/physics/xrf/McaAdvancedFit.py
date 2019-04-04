@@ -2052,6 +2052,7 @@ class McaAdvancedFit(qt.QWidget):
             logfilter = 1
         else:
             logfilter = 0
+        formerActiveCurveLegend = self.graph.getActiveCurve(just_legend=True)
         self.graph.clearCurves(replot=False)
         config = self.mcafit.configure()
         if ddict is None:
@@ -2142,6 +2143,12 @@ class McaAdvancedFit(qt.QWidget):
                         self.graph.removeCurve(group, replot=False)
         else:
             self.__clearPeaksSpectrum()
+
+        curveList = self.graph.getAllCurves(just_legend=True)
+        if formerActiveCurveLegend in curveList:
+            currentActiveCurveLegend = self.graph.getActiveCurve(just_legend=True)
+            if currentActiveCurveLegend != formerActiveCurveLegend:
+                self.graph.setActiveCurve(formerActiveCurveLegend, replot=False)
 
         self.graph.replot()
         self.graph.updateLegends()
