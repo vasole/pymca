@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -2135,10 +2135,10 @@ class McaAdvancedFit(qt.QWidget):
                     self.graph.addCurve(xdata,
                                         ddict['result'][label],
                                         legend=group,
-                                        resetzoom=False)
+                                        replot=False)
                 else:
                     if group in curveList:
-                        self.graph.removeCurve(group)
+                        self.graph.removeCurve(group, replot=False)
         else:
             self.__clearPeaksSpectrum()
 
@@ -2218,8 +2218,6 @@ class McaAdvancedFit(qt.QWidget):
 
         if len(outputFile):
             outputFile = outputFile[0]
-            print("outputfile = ", outputFile)
-            print("filterused = ", filterused)
             filterused = filterused.split()
             filedescription = filterused[0]
             filetype  = filterused[1]
