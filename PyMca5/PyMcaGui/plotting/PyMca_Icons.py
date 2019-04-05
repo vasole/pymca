@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -4132,18 +4132,32 @@ class _PatchedIconDict(MutableMapping):
             self._qt = qt
             try:
                 from silx.gui import icons as silx_icons
+                IconDict = {}
             except ImportError:
                 _logger.debug("Could not import silx. Legacy icons will be used.")
                 silx_icons = None
+                from PyMca5.PyMcaGui.plotting.Silx_Icons import IconDict
 
             self._silx_icons = silx_icons
             # keep an internal copy:
             self._translation_table = TRANSLATION_TABLE.copy()
             self.__initialized = True
+            self._fallBackDict = IconDict
+
         if key not in self._unpatched_icons:
             raise KeyError("Unknown icon '%s'" % key)
 
-        if self._silx_icons is None or key not in TRANSLATION_TABLE:
+        if key not in TRANSLATION_TABLE:
+            _logger.debug("Using legacy icon '%s' because there is no "
+                          "corresponding icon.",
+                          key)
+            return self._unpatched_icons[key]
+
+        if self._silx_icons is None:
+            if TRANSLATION_TABLE[key] in self._fallBackDict:
+                _logger.info("Using fallback translation '%s' for '%s'" %
+                              (TRANSLATION_TABLE[key], key))
+                return self._fallBackDict[TRANSLATION_TABLE[key]]
             _logger.debug("Using legacy icon '%s' because silx is not "
                           "available or because it has no corresponding icon.",
                           key)
@@ -4198,11 +4212,13 @@ def showIcons():
     g = qt.QGridLayout(w)
 
     idx = 0
-    for name, icon in IconDict.items():
-        print(name, type(icon))
-        column = int(idx / 10)
-        row = idx % 10
-        #print "name",name
+    keyList = list(IconDict.keys())
+    keyList.sort()
+    for key in keyList:
+        name = key
+        icon = IconDict[name]
+        column = int(idx / 20)
+        row = idx % 20
         lab = qt.QLabel(w)
         lab.setText(str(name))
         g.addWidget(lab, row, 2 * column + 1)
