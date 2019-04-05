@@ -38,8 +38,7 @@ import copy
 import logging
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from silx.gui.plot import PlotWidget
-from silx.gui.plot.tools.toolbars import OutputToolBar
+from PyMca5.PyMcaGui.PlotWidget import PlotWidget
 
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -222,13 +221,6 @@ class McaCalWidget(qt.QDialog):
                             self.manualsearch,
                             'Add a peak to the graph',
                             toggle=True)
-        # copy to clipboard
-        output_tb = OutputToolBar(parent=self.toolbar,
-                                  plot=self.graph)
-        output_tb.getPrintAction().setVisible(False)
-        output_tb.getSaveAction().setVisible(False)
-        self.toolbar.layout.addWidget(output_tb)
-
         self.toolbar.layout.addWidget(qt.HorizontalSpacer(toolbar))
         label=qt.QLabel(toolbar)
         label.setText('<b>Channel:</b>')
@@ -321,11 +313,10 @@ class McaCalWidget(qt.QDialog):
     def plot(self, x, y, legend):
         #clear graph
         self.graph.clear()
-        self.graph.addCurve(x, y, legend=legend)
+        self.graph.addCurve(x, y , legend=legend, replot=True)
         self.dict['x']      = x
         self.dict['y']      = y
         self.dict['legend'] = legend
-        self.graph.setActiveCurve(legend)
         #reset the zoom
         self._resetZoom()
 
@@ -369,12 +360,14 @@ class McaCalWidget(qt.QDialog):
         for idx in peaksidx:
             self.foundPeaks.append(self.specfit.xdata[int(idx)])
             #self.graph.insertx1marker(self.specfit.xdata[int(idx)],self.specfit.ydata[int(idx)])
-            self.graph.addXMarker(self.specfit.xdata[int(idx)],
-                                  legend="%d" % i,
-                                  text=None,
-                                  selectable=True,
-                                  draggable=False)
+            self.graph.insertXMarker(self.specfit.xdata[int(idx)],
+                                     legend="%d" % i,
+                                     text=None,
+                                     selectable=True,
+                                     draggable=False,
+                                     replot=False)
             i += 1
+        self.graph.replot()
         #make sure marker mode is on
         self.markermode = 0
         self.__peakmarkermode()
@@ -388,6 +381,7 @@ class McaCalWidget(qt.QDialog):
         self.graph.clearMarkers()
         self.__destroylinewidgets()
         self.peakTable.clearPeaks()
+        self.graph.replot()
 
     def manualsearch(self):
         #disable peak selection
@@ -405,12 +399,12 @@ class McaCalWidget(qt.QDialog):
         if self.markermode:
             self.graph.setCursor(qt.QCursor(qt.Qt.CrossCursor))
             self.markermode = 0
-            self.graph.setInteractiveMode('select')
+            self.graph.setZoomModeEnabled(False)
         else:
             self.markermode = 1
             self.nomarkercursor = self.graph.cursor().shape()
             self.graph.setCursor(qt.QCursor(qt.Qt.PointingHandCursor))
-            self.graph.setInteractiveMode('zoom')
+            self.graph.setZoomModeEnabled(True)
         #self.markerButton.setOn(self.markermode == 1)
 
     def __calparsignal(self,dict):
@@ -447,9 +441,10 @@ class McaCalWidget(qt.QDialog):
                     calenergy = deltat * (i + 1)
                     self.foundPeaks.append(channel)
                     name = "%d" % i
-                    marker = self.graph.addXMarker(channel,
-                                                   legend=name,
-                                                   color="red")
+                    marker = self.graph.insertXMarker(channel,
+                                                      legend=name,
+                                                      color="red",
+                                                      replot=False)
                     if name in self.peakTable.peaks.keys():
                         self.peakTable.configure(number=name,
                                              channel=channel,
@@ -467,6 +462,7 @@ class McaCalWidget(qt.QDialog):
                 #make sure we cannot select the peaks again
                 self.markermode = 1
                 self.__peakmarkermode()
+                self.graph.replot()
             else:
                 self.caldict[current]['A']     = dict['caldict'][current]['A']
                 self.caldict[current]['B']     = dict['caldict'][current]['B']
@@ -504,9 +500,11 @@ class McaCalWidget(qt.QDialog):
             marker = int(ddict['label'])
             #The marker corresponds to the peak number
             channel = self.foundPeaks[marker]
-            self.graph.addXMarker(channel,
-                                  legend=ddict['label'],
-                                  color='red')
+            self.graph.insertXMarker(channel,
+                                     legend=ddict['label'],
+                                     color='red',
+                                     replot=False)
+            self.graph.replot()
             current = self.current
             calenergy = self.caldict[current]['A']+ \
                         self.caldict[current]['B'] * channel+ \
@@ -569,9 +567,11 @@ class McaCalWidget(qt.QDialog):
                     self.__peakTableSignal({'event':'use'}, calculate=False)
             else:
                 _logger.debug("Dialog cancelled or closed ")
-                self.graph.addXMarker(channel,
-                                      legend=ddict['label'],
-                                      color='black')
+                self.graph.insertXMarker(channel,
+                                         legend=ddict['label'],
+                                         color='black',
+                                         replot=False)
+                self.graph.replot()
             del linewidget
         elif ddict['event'] in ["mouseMoved", 'MouseAt']:
             self.xpos.setText('%.1f' % ddict['x'])
@@ -593,8 +593,9 @@ class McaCalWidget(qt.QDialog):
                 self.foundPeaks.append(x)
                 legend = "%d" % (len(self.foundPeaks)-1)
                 #self.graph.insertx1marker(self.specfit.xdata[int(idx)],self.specfit.ydata[int(idx)])
-                self.graph.addXMarker(x, legend=legend,
-                                      selectable=True)
+                self.graph.insertXMarker(x, legend=legend,
+                                         selectable=True, replot=False)
+                self.graph.replot()
                 self.markermode = 0
                 self.__peakmarkermode()
             self.__msb.setChecked(0)
@@ -1066,7 +1067,8 @@ class CalibrationParameters(qt.QWidget):
         self.CFixed.clicked.connect(self._CFixSlot)
 
         self.orderbox.activated[str].connect(self.__orderbox)
-        self.savebox.lineEdit().editingFinished[()].connect(self.__savebox)
+        if hasattr(self.savebox.lineEdit(), "editingFinished"):
+            self.savebox.lineEdit().editingFinished[()].connect(self.__savebox)
         self.savebox.activated[str].connect(self.__savebox)
 
     def setParameters(self, pars):

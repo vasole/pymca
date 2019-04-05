@@ -178,7 +178,7 @@ def getPlugin1DInstance(plotWindow, **kw):
 if __name__ == "__main__":
     import os
     from PyMca5.PyMcaGui import PyMcaQt as qt
-    from PyMca5.PyMcaGui.pymca import ScanWindow
+    from PyMca5.PyMcaGui import PlotWindow
     # first order, k = 4.820e-04
     x = [0, 600, 1200, 1800, 2400, 3000, 3600]
     y = [0.0365, 0.0274, 0.0206, 0.0157, 0.0117, 0.00860, 0.00640]
@@ -188,11 +188,10 @@ if __name__ == "__main__":
     print("Expected slope: 0.000482")
     sigmay = None
     app = qt.QApplication([])
-    plot = ScanWindow.ScanWindow()
-    plot.pluginsToolButton.setPluginDirectoryList([os.path.dirname(__file__)])
-    plot.pluginsToolButton.getPlugins()
-    plot.addCurve(x, y, "Test Data",
-                  resetzoom=True)
+    plot = PlotWindow.PlotWindow()
+    plot.setPluginDirectoryList([os.path.dirname(__file__)])
+    plot.getPlugins()
+    plot.addCurve(x, y, "Test Data")
     plot.show()
     plugin = getPlugin1DInstance(plot)
     for method in plugin.getMethods():

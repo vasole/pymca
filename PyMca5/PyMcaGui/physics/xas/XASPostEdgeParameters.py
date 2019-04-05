@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -163,7 +163,7 @@ class XASPostEdgeParameters(qt.QGroupBox):
         self.__connected = True
 
     def _knotNumberChanged(self, value):
-        _logger.debug("Current number of knots = %s", value)
+        _logger.debug("Current number of knots = %s" % value)
         oldValue = self.__connected
         self.__connected = False
         try:
@@ -182,7 +182,7 @@ class XASPostEdgeParameters(qt.QGroupBox):
             self.emitSignal("KnotNumberChanged")
 
     def _kMinChanged(self, value):
-        _logger.debug("Current kMin Value = %s", value)
+        _logger.debug("Current kMin Value = %s" % value)
         oldValue = self.__connected
         self.__connected = False
         try:
@@ -193,7 +193,7 @@ class XASPostEdgeParameters(qt.QGroupBox):
             self.emitSignal("KMinChanged")
 
     def _kMaxChanged(self, value):
-        _logger.debug("Current kMax Value = %s", value)
+        _logger.debug("Current kMax Value = %s" % value)
         if value <= self.kMinBox.value():
             # I should check if we have the focus prior to
             # raise any error.
@@ -209,12 +209,12 @@ class XASPostEdgeParameters(qt.QGroupBox):
             self.emitSignal("KMaxChanged")
 
     def _kWeightChanged(self, value):
-        _logger.debug("Current kWeight Value = %s", value)
+        _logger.debug("Current kWeight Value = %s" % value)
         if self.__connected:
             self.emitSignal("KWeightChanged")
 
     def _knotChanged(self, value):
-        _logger.debug("One knot has been changed = %s", value)
+        _logger.debug("One knot has been changed = %s" % value)
         # adjust limits
         oldValue = self.__connected
         self.__connected = False
@@ -239,7 +239,7 @@ class XASPostEdgeParameters(qt.QGroupBox):
             self.emitSignal("KnotPositionChanged")
 
     def _degreeChanged(self, value):
-        _logger.debug("One knot polynomial degree changed: %s", value)
+        _logger.debug("One knot polynomial degree changed: %s" % value)
         if self.__connected:
             self.emitSignal("KnotOrderChanged")
 
@@ -263,7 +263,7 @@ class XASPostEdgeParameters(qt.QGroupBox):
         return ddict
 
     def setParameters(self, ddict, signal=True):
-        _logger.debug("setParameters called: ddict %s, signal%s", ddict, signal)
+        _logger.debug("setParameters called: ddict %s, signal %s" % (ddict, signal))
         if "EXAFS" in ddict:
             ddict = ddict["EXAFS"]
         elif "PostEdge" in ddict:

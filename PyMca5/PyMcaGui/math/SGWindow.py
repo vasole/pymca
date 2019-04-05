@@ -129,13 +129,13 @@ class SGWindow(qt.QWidget):
                                                     degree=degree,
                                                     order=order)
         if order > 0:
-            yaxis = "right"
+            maptoy2 = True
         else:
-            yaxis = "left"
-        self.graph.addCurve(self.xValues,
-                            self.background, "Filtered Spectrum",
-                            replace=False,
-                            yaxis=yaxis)
+            maptoy2 = False
+        self.graph.newCurve(self.xValues,
+                    self.background, "Filtered Spectrum",
+                    replace=False,
+                    maptoy2=maptoy2)
 
         #Force information update
         legend = self.graph.getActiveCurve(just_legend=True)
@@ -190,10 +190,9 @@ if __name__ == "__main__":
     import numpy
     app = qt.QApplication([])
     if 1:
-        noise = numpy.random.randn(1000)
-        y = numpy.arange(1000.)
-        w = SGDialog(None,
-                     y + numpy.sqrt(y) * noise)
+        noise = numpy.random.randn(1000.)
+        y=numpy.arange(1000.)
+        w = SGDialog(None, y+numpy.sqrt(y)* noise)
     w.show()
     ret = w.exec_()
     if ret:

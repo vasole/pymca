@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -40,16 +40,21 @@ _logger = logging.getLogger(__name__)
 
 class HtmlIndex(object):
     def __init__(self, htmldir):
-        if htmldir is None:htmldir = "/tmp/HTML"
+        if htmldir is None:
+            htmldir = "/tmp/HTML"
         self.htmldir = htmldir
 
     def isHtml(self, x):
-        if len(x) < 5: return 0
-        if x[-5:] == ".html":return 1
+        if len(x) < 5:
+            return 0
+        if x[-5:] == ".html":
+            return 1
 
     def isHtmlDir(self, x):
-        if len(x) < 7: return 0
-        if x[-7:] == "HTMLDIR":return 1
+        if len(x) < 7:
+            return 0
+        if x[-7:] == "HTMLDIR":
+            return 1
 
     def getHeader(self,addlink=None):
         link= [ ['http://www.esrf.fr', 'ESRF home'],
@@ -162,8 +167,9 @@ class HtmlIndex(object):
     def _getHtmlDirList(self, directory):
         return filter(self.isHtmlDir, os.listdir(directory))
 
-    def buildIndex(self, directory = None):
-        if directory is None: directory = self.htmldir
+    def buildIndex(self, directory=None):
+        if directory is None:
+            directory = self.htmldir
         index = os.path.join(directory, "index.html")
         if os.path.exists(index):
             try:
@@ -174,18 +180,21 @@ class HtmlIndex(object):
         filelist = self._getHtmlFileList(directory)
         text = ""
         text += self.getHeader()
-        for file in filelist:
-            text +="<a href=""%s"">%s</a><BR>" % (file, file.split(".html")[0])
+        for ffile in filelist:
+            text +="<a href=""%s"">%s</a><BR>" % (ffile, ffile.split(".html")[0])
         text += self.getFooter()
-        file = open(index,'wb')
-        try:
-            file.write(text)
-        except TypeError:
-            file.write(text.encode('utf-8'))
-        file.close()
 
-    def buildRecursiveIndex(self, directory = None):
-        if directory is None: directory = self.htmldir
+        if sys.version_info < (3,):
+            fformat = 'wb'
+        else:
+            fformat = 'w'
+        ffile = open(index, fformat)
+        ffile.write(text)
+        ffile.close()
+
+    def buildRecursiveIndex(self, directory=None):
+        if directory is None:
+            directory = self.htmldir
         index = os.path.join(directory, "index.html")
         if os.path.exists(index):
             try:
@@ -196,19 +205,20 @@ class HtmlIndex(object):
         directorylist = self._getHtmlDirList(directory)
         text = ""
         text += self.getHeader()
-        for file in directorylist:
-            fulldir = os.path.join(directory,file)
+        for ffile in directorylist:
+            fulldir = os.path.join(directory, ffile)
             self.buildIndex(fulldir)
-            fileroot = file.split('_HTMLDIR')[0]
-            link     = "./"+file+"/index.html"
+            fileroot = ffile.split('_HTMLDIR')[0]
+            link     = "./" + ffile + "/index.html"
             text +="<a href=""%s"">%s</a><BR>" % (link, fileroot)
         text += self.getFooter()
-        file = open(index,'wb')
-        try:
-            file.write(text)
-        except TypeError:
-            file.write(text.encode('utf-8'))
-        file.close()
+        if sys.version_info < (3,):
+            fformat = 'wb'
+        else:
+            fformat = 'w'
+        ffile = open(index, fformat)
+        ffile.write(text)
+        ffile.close()
 
 
 if __name__ == "__main__":

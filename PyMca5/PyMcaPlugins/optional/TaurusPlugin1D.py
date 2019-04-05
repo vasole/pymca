@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2018 V.A. Sole, T. Coutinho, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, T. Coutinho, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -171,7 +171,13 @@ if __name__ == "__main__":
     import os
     from PyMca5.PyMcaGui import ScanWindow
     plot = ScanWindow.ScanWindow()
-    plot.pluginsToolButton.setPluginDirectoryList([os.path.dirname(os.path.abspath(__file__))])
-    plot.pluginsToolButton.getPlugins()
+    pluginDir = os.path.dirname(os.path.abspath(__file__))
+    SILX = False
+    if silx:
+        plot.pluginsToolButton.setPluginDirectoryList([pluginDir])
+        plot.pluginsToolButton.getPlugins()
+    else
+        plot.setPluginDirectoryList([pluginDir])
+        plot.getPlugins()
     plot.show()
     app.exec_()

@@ -115,7 +115,7 @@ class ShowSpectra(StackPluginBase.StackPluginBase):
         if self.widget is None:
             self.widget = ScanWindow.ScanWindow()
         data = stack.data
-        resetzoom = False
+        replot = False
         if step in [None, 1]:
             for i in range(data.shape[0]):
                 for j in range(data.shape[1]):
@@ -123,8 +123,7 @@ class ShowSpectra(StackPluginBase.StackPluginBase):
                         replace = True
                     else:
                         replace = False
-                    self.widget.addCurve(x, data[i, j], legend="Row %03d Col %03d" % (i, j),
-                                         replace=replace, resetzoom=resetzoom)
+                    self.widget.addCurve(x, data[i, j], legend="Row %03d Col %03d" % (i, j), replace=replace, replot=replot)
         else:
             counter = 0
             for i in range(data.shape[0]):
@@ -134,10 +133,9 @@ class ShowSpectra(StackPluginBase.StackPluginBase):
                             replace = True
                         else:
                             replace = False
-                        self.widget.addCurve(
-                            x, data[i, j],
-                            legend="Row %03d Col %03d" % (i, j),
-                            replace=replace, resetzoom=resetzoom)
+                        self.widget.addCurve(x, data[i, j],
+                                legend="Row %03d Col %03d" % (i, j),
+                                replace=replace, replot=replot)
                     counter += 1
         self.widget.resetZoom()
         self.widget.show()

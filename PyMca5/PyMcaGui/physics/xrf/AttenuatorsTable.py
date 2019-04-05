@@ -574,7 +574,7 @@ class AttenuatorsTableWidget(QTable):
             self.cellWidget(row, 0).setText(text)
             return
         if col not in [1, 3, 4, 5]:
-            _logger.debug("only compatible columns 1, 3 and 4")
+            _logger.warning("only compatible columns 1, 3 and 4")
             raise ValueError("method for column > 2")
         item = self.item(row, col)
         if item is None:

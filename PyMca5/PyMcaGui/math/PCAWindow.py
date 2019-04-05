@@ -172,16 +172,17 @@ class PCAParametersDialog(qt.QDialog):
             toValue   = ddict['to']
             self.graph.setEnabled(True)
             self.graph.clearMarkers()
-            self.graph.addXMarker(fromValue,
-                                  'From',
-                                  text='From',
-                                  color='blue',
-                                  draggable=True)
-            self.graph.addXMarker(toValue,
-                                  'To',
-                                  text='To',
-                                  color='blue',
-                                  draggable=True)
+            self.graph.insertXMarker(fromValue,
+                                      'From',
+                                       text='From',
+                                       color='blue',
+                                       draggable=True)
+            self.graph.insertXMarker(toValue,
+                                     'To',
+                                      text= 'To',
+                                      color='blue',
+                                      draggable=True)
+            self.graph.replot()
         else:
             self.graph.clearMarkers()
             self.graph.setEnabled(False)

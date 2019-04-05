@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -147,7 +147,7 @@ class XASParameters(qt.QWidget):
         self._emitSignal(ddict["event"])
 
     def _postEdgeParameterSlot(self, ddict):
-        _logger.debug("_postEdgeParameterSlot: %s", ddict)
+        _logger.debug("_postEdgeParameterSlot: %s" % ddict)
         # Should I change the event to "EXAFSChanged"?
         self.fourierTransformWidget.setKRange([ddict["KMin"], ddict["KMax"]])
         self._emitSignal(ddict["event"])
@@ -214,7 +214,7 @@ class XASParameters(qt.QWidget):
             self.postEdgeWidget.setTitleColor(color)
             self.fourierTransformWidget.setTitleColor(color)
         except:
-            _logger.error("Error setting title color: %s", sys.exc_info())
+            _logger.error("Error setting title color: %s" % sys.exc_info())
 
 if __name__ == "__main__":
     _logger.setLevel(logging.DEBUG)

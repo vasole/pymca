@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2018 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -29,12 +29,7 @@ import os
 import sys
 import unittest
 import PyMca5.PyMcaGui.PyMcaQt as qt
-from silx.gui.test.utils import TestCaseQt
-
-from PyMca5.PyMcaGui.pymca import ScanWindow
-from PyMca5.PyMcaGui.pymca import McaWindow
-from PyMca5.PyMcaGui.physics.xrf import McaAdvancedFit
-
+from PyMca5.PyMcaGui.misc.testutils import TestCaseQt
 
 _logger = logging.getLogger(__name__)
 
@@ -47,15 +42,61 @@ class TestQtWrapper(unittest.TestCase):
         obj = qt.QObject()
         self.assertTrue(obj is not None)
 
+class TestPlotWidget(TestCaseQt):
+    def setUp(self):
+        super(TestPlotWidget, self).setUp()
+
+    def testShow(self):
+        from PyMca5.PyMcaGui.plotting import PlotWidget
+        widget = PlotWidget.PlotWidget()
+        widget.show()
+        self.qapp.processEvents()
+
+class TestRGBCorrelatorGraph(TestCaseQt):
+    def setUp(self):
+        super(TestRGBCorrelatorGraph, self).setUp()
+
+    def testShow(self):
+        from PyMca5.PyMcaGui.plotting import RGBCorrelatorGraph
+        widget = RGBCorrelatorGraph.RGBCorrelatorGraph()
+        widget.show()
+        self.qapp.processEvents()
+        from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
+        PyMcaPrintPreview.resetSingletonPrintPreview()
+
+class TestMaskImageWidget(TestCaseQt):
+    def setUp(self):
+        super(TestMaskImageWidget, self).setUp()
+
+    def testShow(self):
+        from PyMca5.PyMcaGui.plotting import MaskImageWidget
+        widget = MaskImageWidget.MaskImageWidget()
+        widget.show()
+        self.qapp.processEvents()
+        from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
+        PyMcaPrintPreview.resetSingletonPrintPreview()
+
+class TestPlotWindow(TestCaseQt):
+    def setUp(self):
+        super(TestPlotWindow, self).setUp()
+
+    def testShow(self):
+        from PyMca5.PyMcaGui.plotting import PlotWindow
+        widget = PlotWindow.PlotWindow()
+        widget.show()
+        self.qapp.processEvents()
 
 class TestScanWindow(TestCaseQt):
     def setUp(self):
         super(TestScanWindow, self).setUp()
 
     def testShow(self):
+        from PyMca5.PyMcaGui.pymca import ScanWindow
         widget = ScanWindow.ScanWindow()
         widget.show()
         self.qapp.processEvents()
+        from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
+        PyMcaPrintPreview.resetSingletonPrintPreview()
 
 
 class TestMcaWindow(TestCaseQt):
@@ -63,9 +104,12 @@ class TestMcaWindow(TestCaseQt):
         super(TestMcaWindow, self).setUp()
 
     def testShow(self):
+        from PyMca5.PyMcaGui.pymca import McaWindow
         widget = McaWindow.McaWindow()
         widget.show()
         self.qapp.processEvents()
+        from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
+        PyMcaPrintPreview.resetSingletonPrintPreview()
 
 
 class TestMcaAdvancedFit(TestCaseQt):
@@ -73,10 +117,12 @@ class TestMcaAdvancedFit(TestCaseQt):
         super(TestMcaAdvancedFit, self).setUp()
 
     def testShow(self):
+        from PyMca5.PyMcaGui.physics.xrf import McaAdvancedFit
         widget = McaAdvancedFit.McaAdvancedFit()
         widget.show()
         self.qapp.processEvents()
-
+        from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
+        PyMcaPrintPreview.resetSingletonPrintPreview()
 
 def getSuite(auto=True):
     test_suite = unittest.TestSuite()
@@ -100,12 +146,26 @@ def getSuite(auto=True):
         test_suite.addTest(SkipGUITest())
         return test_suite
 
-    for TestCaseCls in (TestQtWrapper, TestScanWindow,
-                        TestMcaWindow, TestMcaAdvancedFit):
+    for TestCaseCls in (TestQtWrapper,
+                        TestPlotWidget,
+                        TestPlotWindow,
+                        TestRGBCorrelatorGraph,
+                        TestMaskImageWidget,
+                        TestScanWindow,
+                        TestMcaWindow,
+                        TestMcaAdvancedFit,
+                        ):
         test_suite.addTest(
             unittest.defaultTestLoader.loadTestsFromTestCase(TestCaseCls))
     return test_suite
 
+def test(auto=False):
+    return unittest.TextTestRunner(verbosity=2).run(getSuite(auto=auto))
 
 if __name__ == '__main__':
-    unittest.main(defaultTest='getSuite')
+    if len(sys.argv) > 1:
+        auto = False
+    else:
+        auto = True
+    result = test(auto)
+    sys.exit(not result.wasSuccessful())

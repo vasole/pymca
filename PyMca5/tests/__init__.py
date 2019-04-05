@@ -32,7 +32,6 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
 
-from PyMca5.tests.TestAll import main as testAll
 from PyMca5.tests.ConfigDictTest import test as testConfigDict
 from PyMca5.tests.EdfFileTest import test as testEdfFile
 from PyMca5.tests.ElementsTest import test as testElements
@@ -44,3 +43,7 @@ from PyMca5.tests.XrfTest import test as testXrf
 from PyMca5.tests.McaStackViewTest import test as testMcaStackView
 from PyMca5.tests.NexusUtilsTest import test as testNexusUtils
 from PyMca5.tests.StackInfoTest import test as testStackInfo
+
+def testAll():
+    from PyMca5.tests.TestAll import main as testAll
+    return testAll()

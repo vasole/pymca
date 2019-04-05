@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -367,9 +367,9 @@ class IterationTable(qt.QTableWidget):
         item.setEditText(material)
 
     def mySlot(self,row,col):
-        _logger.debug("Value changed row = %d col = %d", row, col)
+        _logger.debug("Value changed row = %d col = %d" % (row, col))
         if col != 0:
-            _logger.debug("Text = %s", self.cellWidget(row, col).currentText())
+            _logger.debug("Text = %s" % self.cellWidget(row, col).currentText())
 
     def _checkBoxSlot(self, ddict):
         # check we do not have duplicates
@@ -462,7 +462,7 @@ class IterationTable(qt.QTableWidget):
             materialItem.setCurrentIndex(0)
 
     def _peakFamilySlot(self, ddict):
-        _logger.debug("_peakFamilySlot %s", ddict)
+        _logger.debug("_peakFamilySlot %s" % ddict)
         # check we do not have duplicates
         target = ddict["text"].split()[0]
         row = ddict['row']
@@ -486,7 +486,7 @@ class IterationTable(qt.QTableWidget):
         self.sigValueChanged.emit(row, col)
 
     def _comboSlot(self, ddict):
-        _logger.debug("_comboSlot %s", ddict)
+        _logger.debug("_comboSlot %s" % ddict)
         row = ddict['row']
         col = ddict['col']
         text = ddict['text']
