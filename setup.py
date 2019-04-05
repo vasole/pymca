@@ -898,12 +898,13 @@ install_requires = ["numpy",
                     "fisx>=1.1.6",
                     "h5py"]
 if use_gui():
-    # install requires with all easy-to-provide GUI functionality
-    # please take a look at requirements.txt for detailed explanation
+    # install requires with easy-to-provide modules for GUI functionality
+    # Please take a look at requirements.txt for detailed explanation
+    # and additonal optional dependencies.
     install_requires += ["PyOpenGL",
                          "qtconsole",
                          "PyQt5",   # either PyQt4 or PySide supported too
-                         "silx>=0.8"]
+                        ]
 
 setup_requires = ["numpy"]
 
