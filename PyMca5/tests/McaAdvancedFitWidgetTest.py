@@ -1,0 +1,165 @@
+#/*##########################################################################
+#
+# The PyMca X-Ray Fluorescence Toolkit
+#
+# Copyright (c) 2019 European Synchrotron Radiation Facility
+#
+# This file is part of the PyMca X-ray Fluorescence Toolkit developed at
+# the ESRF by the Software group.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
+#############################################################################*/
+__author__ = "V. Armando Sole - ESRF Data Analysis"
+__contact__ = "sole@esrf.fr"
+__license__ = "MIT"
+__copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+
+import numpy
+import os
+import sys
+import time
+import unittest
+import PyMca5.PyMcaGui.PyMcaQt as qt
+from PyMca5.PyMcaGui.misc.testutils import TestCaseQt
+
+class TestMcaAdvancedFitWidget(TestCaseQt):
+    def setUp(self):
+        super(TestMcaAdvancedFitWidget, self).setUp()
+
+    def testInteraction(self):
+        from PyMca5.PyMcaGui.physics.xrf import McaAdvancedFit
+        widget = McaAdvancedFit.McaAdvancedFit()
+        widget.show()
+        self.qapp.processEvents()
+
+        # read the data
+        from PyMca5 import PyMcaDataDir
+        dataDir = PyMcaDataDir.PYMCA_DATA_DIR        
+        from PyMca5.PyMcaIO import specfilewrapper as specfile
+        from PyMca5.PyMcaPhysics.xrf import ClassMcaTheory
+        from PyMca5.PyMcaPhysics.xrf import ConcentrationsTool
+        from PyMca5.PyMcaIO import ConfigDict
+
+        dataFile = os.path.join(dataDir, "Steel.spe")
+        self.assertTrue(os.path.isfile(dataFile),
+                        "File %s is not an actual file" % dataFile)
+        sf = specfile.Specfile(dataFile)
+        self.assertTrue(len(sf) == 1, "File %s cannot be read" % dataFile)
+        self.assertTrue(sf[0].nbmca() == 1,
+                        "Spe file should contain MCA data")
+        y = counts = sf[0].mca(1)
+        x = channels = numpy.arange(y.size).astype(numpy.float)
+        sf = None
+        widget.setData(x, y)
+        self.qapp.processEvents()
+
+        # read the fit configuration
+        configFile = os.path.join(dataDir, "Steel.cfg")
+        self.assertTrue(os.path.isfile(configFile),
+                        "File %s is not an actual file" % configFile)
+        configuration = ConfigDict.ConfigDict()
+        configuration.read(configFile)
+        widget.configure(configuration)
+        self.qapp.processEvents()
+        time.sleep(1)
+
+        # switch log axis
+        #   widget.graphWindow.yLogButton clicked
+        isLogy0 = widget.graphWindow.isYAxisLogarithmic()
+        self.mouseClick(widget.graphWindow.yLogButton, qt.Qt.LeftButton)
+        self.qapp.processEvents()
+        isLogy1 = widget.graphWindow.isYAxisLogarithmic()
+        self.assertTrue(isLogy0 != isLogy1,
+                        "Y scale not toggled!")
+        time.sleep(1)
+        # reset zoom
+        widget.graphWindow.resetZoom()
+
+        # swith energy axis:
+        #   widget.graphWindow._energyIconSignal
+        #   widget.graphWindow.energyButton clicked
+        label0 = widget.graphWindow.getGraphXLabel()
+        self.mouseClick(widget.graphWindow.energyButton, qt.Qt.LeftButton)
+        self.qapp.processEvents()
+        label1 = widget.graphWindow.getGraphXLabel()
+        self.assertTrue(label0 != label1,
+                        "Energy scale not toggled!")
+        self.assertTrue(label0.lower() in ["channel", "energy"],
+                        "Unexpected plot X label <%s>" % label0)
+        self.assertTrue(label1.lower() in ["channel", "energy"],
+                        "Unexpected plot X label <%s>" % label0)
+
+        # reset zoom
+        widget.graphWindow.resetZoom()
+
+        # fit:
+        #   callback widget.fit
+        #   widget.graphWindow.fitButton clicked
+        #   widget.graphWindow._fitIconSignal
+        self.assertTrue(not widget._fitdone(),
+                        "Bad fit widget state. Fit should not be finished")
+        self.mouseClick(widget.graphWindow.fitButton, qt.Qt.LeftButton)
+        self.qapp.processEvents()
+        self.assertTrue(widget._fitdone(),
+                        "Bad fit widget state. Fit should be finished")
+
+        # toggle peaks
+        curveList0 = widget.graphWindow.getAllCurves(just_legend=True)
+        for curve in ["Data", "Fit", "Continuum", "Pile-up"]:
+            self.assertTrue(curve in curveList0,
+                            "Curve <%s> expected but not found" % curve)
+        self.mouseClick(widget.peaksSpectrumButton, qt.Qt.LeftButton)
+        self.qapp.processEvents()
+        curveList1 = widget.graphWindow.getAllCurves(just_legend=True)
+        self.assertTrue(len(curveList0) != len(curveList1),
+                        "Peaks spectrum not working!!")
+
+        # toggle matrix spectrum
+        curveList0 = widget.graphWindow.getAllCurves(just_legend=True)
+        self.mouseClick(widget.matrixSpectrumButton, qt.Qt.LeftButton)
+        self.qapp.processEvents()
+        curveList1 = widget.graphWindow.getAllCurves(just_legend=True)
+        self.assertTrue(abs(len(curveList0) - len(curveList1)) == 1,
+                        "Matrix spectrum not working!!")
+
+        time.sleep(1)
+        from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
+        PyMcaPrintPreview.resetSingletonPrintPreview()
+
+def getSuite(auto=True):
+    testSuite = unittest.TestSuite()
+    if auto:
+        testSuite.addTest(unittest.TestLoader().loadTestsFromTestCase( \
+            TestMcaAdvancedFitWidget))
+    else:
+        # use a predefined order
+        testSuite.addTest(TestMcaAdvancedFitWidget("testInteraction"))
+    return testSuite
+
+def test(auto=False):
+    return unittest.TextTestRunner(verbosity=2).run(getSuite(auto=auto))
+
+if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        auto = False
+    else:
+        auto = True
+    result = test(auto)
+    sys.exit(not result.wasSuccessful())
