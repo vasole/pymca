@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -31,11 +31,7 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import numpy
-try:
-    from PyMca5 import Plugin1DBase
-except ImportError:
-    from . import Plugin1DBase
-
+from PyMca5.PyMcaCore import Plugin1DBase
 try:
     from PyMca5.PyMcaPhysics.xas import XASClass
     from PyMca5.PyMcaGui.physics.xas import XASWindow
@@ -380,7 +376,7 @@ if __name__ == "__main__":
     import sys
     import os
     from PyMca5.PyMcaGui import PyMcaQt as qt
-    from PyMca5.PyMcaGui.pymca import ScanWindow
+    from PyMca5.PyMcaGui import PlotWindow
     from PyMca5.PyMcaIO import specfilewrapper as specfile
     from PyMca5.PyMcaDataDir import PYMCA_DATA_DIR
     if len(sys.argv) > 1:
@@ -391,11 +387,10 @@ if __name__ == "__main__":
     energy = data[0, :]
     mu = data[1, :]
     app = qt.QApplication([])
-    plot = ScanWindow.ScanWindow()
-    plot.pluginsToolButton.setPluginDirectoryList([os.path.dirname(__file__)])
-    plot.pluginsToolButton.getPlugins()
-    plot.addCurve(energy, mu, os.path.basename(fileName),
-                  resetzoom=True)
+    plot = PlotWindow.PlotWindow()
+    plot.setPluginDirectoryList([os.path.dirname(__file__)])
+    plot.getPlugins()
+    plot.addCurve(energy, mu, os.path.basename(fileName))
     plot.show()
     plugin = getPlugin1DInstance(plot)
     for method in plugin.getMethods():

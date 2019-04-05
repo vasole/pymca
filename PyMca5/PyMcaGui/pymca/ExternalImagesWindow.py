@@ -378,8 +378,11 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
             if i == 0:
                 overlay = MaskImageWidget.OVERLAY_DRAW
                 replace = True
-                replot = len(self.imageNames) == 1
-            elif i == (nImages - 1):
+                if len(self.imageNames) == 1:
+                    replot = True
+                else:
+                    replot = False
+            elif i == (nImages -1):
                 replot = True
                 replace = False
             else:
@@ -393,7 +396,7 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
             self._profileSelectionWindow.addCurve(xdata, ydata,
                                                   legend=newLegend,
                                                   info=info,
-                                                  resetzoom=replot,
+                                                  replot=replot,
                                                   replace=replace)
 
     def getCurrentIndex(self):

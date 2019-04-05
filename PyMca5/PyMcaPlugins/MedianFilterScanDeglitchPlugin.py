@@ -191,6 +191,7 @@ class MedianFilterScanDeglitchPlugin(Plugin1DBase.Plugin1DBase):
                 self.addCurve(x,ynew,legend,info, replace=False, replot=True)
             else:
                 self.addCurve(x,ynew,legend,info, replace=False, replot=False)
+        #self._plotWindow.replot()
 
 
 MENU_TEXT = "Remove glitches from curves"
@@ -199,10 +200,10 @@ def getPlugin1DInstance(plotWindow,  **kw):
     return ob
 
 if __name__ == "__main__":
-    from silx.gui.plot import Plot1D
+    from PyMca5.PyMcaGui import PlotWindow
     app = qt.QApplication([])
 
-    sw = Plot1D()
+    sw = PlotWindow.PlotWindow()
 
     x = numpy.linspace(0, 1999, 2000)
     y0 = x/100. + 100.*numpy.exp(-(x-500)**2/1000.) + 50.*numpy.exp(-(x-1200)**2/5000.) + 100.*numpy.exp(-(x-1700)**2/500.) + 10 * numpy.random.random(2000)

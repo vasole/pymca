@@ -104,7 +104,7 @@ class SilxRoiStackPlugin(StackPluginBase.StackPluginBase):
         else:
             self.widget.setMotorPositionsVisible(False)
 
-        infos = [info for _img in images]
+        infos = [info] # for _img in images]
 
         h = scale[1] * image_shape[0]
         w = scale[0] * image_shape[1]

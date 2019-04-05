@@ -3,7 +3,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -127,7 +127,7 @@ class SampleConfiguration(qt.QWidget):
             _logger.debug("ValidMaterial")
             elementDict = Elements.getMaterialMassFractions([txt], [1.0])
         else:
-            _logger.debug("to be defined")
+            _logger.debug("Material to be defined")
             msg=qt.QMessageBox.information(self,
                                     "Invalid Material %s" % txt,
                                     "The material %s is not a valid Formula " \

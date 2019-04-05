@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -31,7 +31,7 @@ import sys
 import logging
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from silx.gui.plot import PlotWidget
+from .PlotWidget import PlotWidget
 
 QTVERSION = qt.qVersion()
 _logger = logging.getLogger(__name__)
@@ -216,7 +216,7 @@ class ColormapDialog(qt.QDialog):
         # Graph widget for color curve...
         self.c = PlotWidget(self, backend=None)
         self.c.setGraphXLabel("Data Values")
-        self.c.setInteractiveMode('select')
+        self.c.setZoomModeEnabled(False)
 
         self.marge = (abs(self.dataMax) + abs(self.dataMin)) / 6.0
         self.minmd = self.dataMin - self.marge
@@ -245,11 +245,11 @@ class ColormapDialog(qt.QDialog):
                 color = "black"
             #TODO symbol
             legend = "%d" % i
-            self.c.addXMarker(x[i],
-                              legend=legend,
-                              text=labelList[i],
-                              draggable=draggable,
-                              color=color)
+            self.c.insertXMarker(x[i],
+                                 legend=legend,
+                                 text=labelList[i],
+                                 draggable=draggable,
+                                 color=color)
             self.markers.append((legend, ""))
 
         self.c.setMinimumSize(qt.QSize(250,200))
@@ -268,10 +268,12 @@ class ColormapDialog(qt.QDialog):
         bins, counts = self.histogramData
         self.c.addCurve(bins, counts,
                         "Histogram",
-                        color='darkYellow',
-                        histogram='center',
-                        yaxis='right',
-                        fill=True)
+                        color='pink', # TODO: Change fill color
+                        symbol='s',
+                        linestyle='-', # Line style
+                        #fill=True,
+                        yaxis='right')
+                        # TODO: Do not use info!
 
     def _update(self):
         _logger.debug("colormap _update called")
@@ -298,11 +300,12 @@ class ColormapDialog(qt.QDialog):
                 color = "black"
             key = self.markers[i][0]
             label = self.markers[i][1]
-            self.c.addXMarker(self.__x[i],
-                              legend=key,
-                              text=label,
-                              draggable=draggable,
-                              color=color)
+            self.c.insertXMarker(self.__x[i],
+                                 legend=key,
+                                 text=label,
+                                 draggable=draggable,
+                                 color=color)
+        self.c.replot()
         self.sendColormap()
 
     def buttonGroupChange(self, val):
@@ -323,7 +326,7 @@ class ColormapDialog(qt.QDialog):
             self._update()
 
     def chval(self, ddict):
-        _logger.debug("Received %s", ddict)
+        _logger.debug("Received %s" % ddict)
         if ddict['event'] == 'markerMoving':
             diam = int(ddict['label'])
             x = ddict['x']
@@ -363,7 +366,7 @@ class ColormapDialog(qt.QDialog):
         self.sendColormap()
 
     def setAutoscale(self, val):
-        _logger.debug("setAutoscale called %s", val)
+        _logger.debug("setAutoscale called %s" % val)
         if val:
             self.autoScaleButton.setChecked(True)
             self.autoScale90Button.setChecked(False)
@@ -372,14 +375,14 @@ class ColormapDialog(qt.QDialog):
             self.setMaxValue(self.dataMax)
             self.maxText.setEnabled(0)
             self.minText.setEnabled(0)
-            self.c.setEnabled(False)
+            self.c.setEnabled(0)
             #self.c.disablemarkermode()
         else:
             self.autoScaleButton.setChecked(False)
             self.autoScale90Button.setChecked(False)
             self.minText.setEnabled(1)
             self.maxText.setEnabled(1)
-            self.c.setEnabled(True)
+            self.c.setEnabled(1)
             #self.c.enablemarkermode()
 
     """
@@ -397,12 +400,12 @@ class ColormapDialog(qt.QDialog):
             self.setMaxValue(self.dataMax - abs(self.dataMax/10))
             self.minText.setEnabled(0)
             self.maxText.setEnabled(0)
-            self.c.setEnabled(False)
+            self.c.setEnabled(0)
         else:
             self.autoScale90Button.setChecked(False)
             self.minText.setEnabled(1)
             self.maxText.setEnabled(1)
-            self.c.setEnabled(True)
+            self.c.setEnabled(1)
             self.c.setFocus()
 
 
@@ -418,7 +421,7 @@ class ColormapDialog(qt.QDialog):
         self.__x[1] = v
         key = self.markers[1][0]
         label = self.markers[1][1]
-        self.c.addXMarker(v, legend=key, text=label, color="blue", draggable=True)
+        self.c.insertXMarker(v, legend=key, text=label, color="blue", draggable=True)
         self.c.addCurve(self.__x,
                         self.__y,
                         legend="ConstrainedCurve",
@@ -449,7 +452,7 @@ class ColormapDialog(qt.QDialog):
         self.__x[1] = val
         key = self.markers[1][0]
         label = self.markers[1][1]
-        self.c.addXMarker(val, legend=key, text=label, color="blue", draggable=True)
+        self.c.insertXMarker(val, legend=key, text=label, color="blue", draggable=True)
         self.c.addCurve(self.__x, self.__y,
                         legend="ConstrainedCurve",
                         color='black',
@@ -466,7 +469,7 @@ class ColormapDialog(qt.QDialog):
         self.__x[2] = v
         key = self.markers[2][0]
         label = self.markers[2][1]
-        self.c.addXMarker(v, legend=key, text=label, color="blue", draggable=True)
+        self.c.insertXMarker(v, legend=key, text=label, color="blue", draggable=True)
         self.c.addCurve(self.__x, self.__y,
                         legend="ConstrainedCurve",
                         color='black',
@@ -495,7 +498,7 @@ class ColormapDialog(qt.QDialog):
         self.__x[2] = val
         key = self.markers[2][0]
         label = self.markers[2][1]
-        self.c.addXMarker(val, legend=key, text=label, color="blue", draggable=True)
+        self.c.insertXMarker(val, legend=key, text=label, color="blue", draggable=True)
         self.c.addCurve(self.__x, self.__y,
                         legend="ConstrainedCurve",
                         color='black',

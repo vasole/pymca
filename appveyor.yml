@@ -62,6 +62,7 @@ test_script:
     - "pip install matplotlib"
     - "pip install silx"
     - "pip install h5py"
+    - "pip install PyQt5"
     - "pip install --pre --no-index --no-cache-dir --find-links dist/ PyMca5"
 
     # Print Python info

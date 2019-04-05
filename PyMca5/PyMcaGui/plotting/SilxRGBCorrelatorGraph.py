@@ -32,13 +32,21 @@ import os
 import numpy
 import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from . import PlotWidget
-from . import PyMcaPrintPreview
+from silx.gui.plot import PlotWidget
+from silx.gui.plot.PrintPreviewToolButton import SingletonPrintPreviewToolButton
 from .PyMca_Icons import IconDict
 from PyMca5.PyMcaCore import PyMcaDirs
+from silx.gui import icons as silx_icons
+
+if sys.version_info[0] == 3:
+    from io import BytesIO
+else:
+    import cStringIO as _StringIO
+    BytesIO = _StringIO.StringIO
 
 QTVERSION = qt.qVersion()
 _logger = logging.getLogger(__name__)
+
 
 
 def convertToRowAndColumn(x, y, shape, xScale=None, yScale=None, safe=True):
@@ -74,17 +82,22 @@ class RGBCorrelatorGraph(qt.QWidget):
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
         self._keepDataAspectRatioFlag = False
+        self.graph = PlotWidget(parent=self, backend=backend)
+        self.graph.setGraphXLabel("Column")
+        self.graph.setGraphYLabel("Row")
+        self.graph.setYAxisAutoScale(True)
+        self.graph.setXAxisAutoScale(True)
+        plotArea = self.graph.getWidgetHandle()
+        plotArea.setContextMenuPolicy(qt.Qt.CustomContextMenu)
+        plotArea.customContextMenuRequested.connect(self._zoomBack)
+
         self._buildToolBar(selection, colormap, imageicons,
                            standalonesave,
                            standalonezoom=standalonezoom,
                            profileselection=profileselection,
                            aspect=aspect,
                            polygon=polygon)
-        self.graph = PlotWidget.PlotWidget(self, backend=backend, aspect=aspect)
-        self.graph.setGraphXLabel("Column")
-        self.graph.setGraphYLabel("Row")
-        self.graph.setYAxisAutoScale(True)
-        self.graph.setXAxisAutoScale(True)
+
         if profileselection:
             if len(self._pickerSelectionButtons):
                 self.graph.sigPlotSignal.connect(\
@@ -94,7 +107,6 @@ class RGBCorrelatorGraph(qt.QWidget):
 
         self.saveDirectory = os.getcwd()
         self.mainLayout.addWidget(self.graph)
-        self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
 
     def sizeHint(self):
         return qt.QSize(1.5 * qt.QWidget.sizeHint(self).width(),
@@ -124,6 +136,7 @@ class RGBCorrelatorGraph(qt.QWidget):
         self.hLineIcon     = qt.QIcon(qt.QPixmap(IconDict["horizontal"]))
         self.vLineIcon     = qt.QIcon(qt.QPixmap(IconDict["vertical"]))
         self.lineIcon     = qt.QIcon(qt.QPixmap(IconDict["diagonal"]))
+        self.copyIcon     = silx_icons.getQIcon("edit-copy")
 
         self.toolBar = qt.QWidget(self)
         self.toolBarLayout = qt.QHBoxLayout(self.toolBar)
@@ -190,6 +203,10 @@ class RGBCorrelatorGraph(qt.QWidget):
                                  None,
                                  'Save')
         self.saveToolButton = tb
+
+        self.copyToolButton = self._addToolButton(self.copyIcon,
+                                                  self._copyIconSignal,
+                                                  "Copy graph to clipboard")
 
         #Selection
         if selection:
@@ -311,9 +328,10 @@ class RGBCorrelatorGraph(qt.QWidget):
         self.toolBarLayout.addWidget(qt.HorizontalSpacer(self.toolBar))
 
         # ---print
-        tb = self._addToolButton(self.printIcon,
-                                 self.printGraph,
-                                 'Prints the Graph')
+        self.printPreview = SingletonPrintPreviewToolButton(parent=self,
+                                                            plot=self.graph)
+        self.printPreview.setIcon(self.printIcon)
+        self.toolBarLayout.addWidget(self.printPreview)
 
     def _aspectButtonSignal(self):
         _logger.debug("_aspectButtonSignal")
@@ -331,7 +349,7 @@ class RGBCorrelatorGraph(qt.QWidget):
             self._keepDataAspectRatioFlag = False
             self.aspectButton.setIcon(self.solidCircleIcon)
             self.aspectButton.setToolTip("Keep data aspect ratio")
-        self.graph.keepDataAspectRatio(self._keepDataAspectRatioFlag)
+        self.graph.setKeepDataAspectRatio(self._keepDataAspectRatioFlag)
 
     def showInfo(self):
         self.infoWidget.show()
@@ -446,8 +464,8 @@ class RGBCorrelatorGraph(qt.QWidget):
             button.hide()
         self._pickerSelectionWidthLabel.hide()
         self._pickerSelectionWidthValue.hide()
-        #self.graph.setPickerSelectionModeOff()
-        self.graph.setDrawModeEnabled(False)
+        if self.graph.getInteractiveMode()['mode'] == 'draw':
+            self.graph.setInteractiveMode('select')
 
     def showProfileSelectionIcons(self):
         if not len(self._pickerSelectionButtons):
@@ -470,8 +488,7 @@ class RGBCorrelatorGraph(qt.QWidget):
 
     def _setPickerSelectionMode(self, mode=None):
         if mode is None:
-            self.graph.setDrawModeEnabled(False)
-            self.graph.setZoomModeEnabled(True)
+            self.graph.setInteractiveMode('zoom')
         else:
             if mode == "HORIZONTAL":
                 shape = "hline"
@@ -479,8 +496,7 @@ class RGBCorrelatorGraph(qt.QWidget):
                 shape = "vline"
             else:
                 shape = "line"
-            self.graph.setZoomModeEnabled(False)
-            self.graph.setDrawModeEnabled(True,
+            self.graph.setInteractiveMode('draw',
                                           shape=shape,
                                           label=mode)
         ddict = {}
@@ -530,30 +546,32 @@ class RGBCorrelatorGraph(qt.QWidget):
 
     def _zoomReset(self, replot=None):
         _logger.debug("_zoomReset")
-        if replot is None:
-            replot = True
         if self.graph is not None:
             self.graph.resetZoom()
-            if replot:
-                self.graph.replot()
 
     def _yAutoScaleToggle(self):
         if self.graph is not None:
-            if self.graph.isYAxisAutoScale():
-                self.graph.setYAxisAutoScale(False)
-                self.yAutoScaleToolButton.setDown(False)
-            else:
-                self.graph.setYAxisAutoScale(True)
-                self.yAutoScaleToolButton.setDown(True)
+            self.yAutoScaleToolButton.setDown(
+                    not self.graph.isYAxisAutoScale())
+            self.graph.setYAxisAutoScale(
+                    not self.graph.isYAxisAutoScale())
 
     def _xAutoScaleToggle(self):
         if self.graph is not None:
-            if self.graph.isXAxisAutoScale():
-                self.graph.setXAxisAutoScale(False)
-                self.xAutoScaleToolButton.setDown(False)
-            else:
-                self.graph.setXAxisAutoScale(True)
-                self.xAutoScaleToolButton.setDown(True)
+            self.xAutoScaleToolButton.setDown(
+                    not self.graph.isXAxisAutoScale())
+            self.graph.setXAxisAutoScale(
+                    not self.graph.isXAxisAutoScale())
+
+    def _copyIconSignal(self):
+        pngFile = BytesIO()
+        self.graph.saveGraph(pngFile, fileFormat='png')
+        pngFile.flush()
+        pngFile.seek(0)
+        pngData = pngFile.read()
+        pngFile.close()
+        image = qt.QImage.fromData(pngData, 'png')
+        qt.QApplication.clipboard().setImage(image)
 
     def _saveIconSignal(self):
         self.saveDirectory = PyMcaDirs.outputDir
@@ -625,17 +643,18 @@ class RGBCorrelatorGraph(qt.QWidget):
 
     def saveGraphImage(self, filename, original=False):
         format_ = filename[-3:].upper()
-        #This is the whole image, not the zoomed one ...
-        rgbData, legend, info, pixmap = self.graph.getActiveImage()
+        activeImage = self.graph.getActiveImage()
+        rgbdata = activeImage.getRgbaImageData()
+        # silx to pymca scale convention (a + b x)
+        xScale = activeImage.getOrigin()[0], activeImage.getScale()[0]
+        yScale = activeImage.getOrigin()[1], activeImage.getScale()[1]
         if original:
             # save whole image
-            bgrData = numpy.array(rgbData, copy=True)
-            bgrData[:,:,0] = rgbData[:, :, 2]
-            bgrData[:,:,2] = rgbData[:, :, 0]
+            bgradata = numpy.array(rgbdata, copy=True)
+            bgradata[:, :, 0] = rgbdata[:, :, 2]
+            bgradata[:, :, 2] = rgbdata[:, :, 0]
         else:
-            xScale = info.get("plot_xScale", None)
-            yScale = info.get("plot_yScale", None)
-            shape = rgbData.shape[:2]
+            shape = rgbdata.shape[:2]
             xmin, xmax = self.graph.getGraphXLimits()
             ymin, ymax = self.graph.getGraphYLimits()
             # save zoomed image, for that we have to get the limits
@@ -649,16 +668,16 @@ class RGBCorrelatorGraph(qt.QWidget):
                 row1 += 1
             if col1 < shape[1]:
                 col1 += 1
-            tmpArray = rgbData[row0:row1, col0:col1, :]
-            bgrData = numpy.array(tmpArray, copy=True, dtype=rgbData.dtype)
-            bgrData[:,:,0] = tmpArray[:, :, 2]
-            bgrData[:,:,2] = tmpArray[:, :, 0]
+            tmpArray = rgbdata[row0:row1, col0:col1, :]
+            bgradata = numpy.array(tmpArray, copy=True, dtype=rgbdata.dtype)
+            bgradata[:, :, 0] = tmpArray[:, :, 2]
+            bgradata[:, :, 2] = tmpArray[:, :, 0]
         if self.graph.isYAxisInverted():
-            qImage = qt.QImage(bgrData, bgrData.shape[1], bgrData.shape[0],
-                                   qt.QImage.Format_RGB32)
+            qImage = qt.QImage(bgradata, bgradata.shape[1], bgradata.shape[0],
+                               qt.QImage.Format_ARGB32)
         else:
-            qImage = qt.QImage(bgrData, bgrData.shape[1], bgrData.shape[0],
-                                   qt.QImage.Format_RGB32).mirrored(False, True)
+            qImage = qt.QImage(bgradata, bgradata.shape[1], bgradata.shape[0],
+                               qt.QImage.Format_ARGB32).mirrored(False, True)
         pixmap = qt.QPixmap.fromImage(qImage)
         if pixmap.save(filename, format_):
             return
@@ -666,7 +685,7 @@ class RGBCorrelatorGraph(qt.QWidget):
             qt.QMessageBox.critical(self, "Save Error",
                                     "%s" % sys.exc_info()[1])
             return
-
+    
     def saveGraphWidget(self, filename):
         format_ = filename[-3:].upper()
         if hasattr(qt.QPixmap, "grabWidget"):
@@ -688,19 +707,11 @@ class RGBCorrelatorGraph(qt.QWidget):
         else:
             return False
 
-    def printGraph(self):
-        if hasattr(qt.QPixmap, "grabWidget"):
-            pixmap = qt.QPixmap.grabWidget(self.graph.getWidgetHandle())
-        else:
-            pixmap = self.graph.getWidgetHandle().grab()
-        self.printPreview.addPixmap(pixmap)
-        if self.printPreview.isReady():
-            if self.printPreview.isHidden():
-                self.printPreview.show()
-            self.printPreview.raise_()
-
     def selectColormap(self):
         qt.QMessageBox.information(self, "Open", "Not implemented (yet)")
+
+    def _zoomBack(self, pos):
+        self.graph.getLimitsHistory().pop()
 
 class MyQLabel(qt.QLabel):
     def __init__(self,parent=None,name=None,fl=0,bold=True, color= qt.Qt.red):

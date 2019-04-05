@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -48,7 +48,7 @@ import sys
 import traceback
 import weakref
 
-from silx.gui import qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 
 from PyMca5.PyMcaGraph.PluginLoader import PluginLoader
 from PyMca5.PyMcaGui.plotting.PyMca_Icons import IconDict

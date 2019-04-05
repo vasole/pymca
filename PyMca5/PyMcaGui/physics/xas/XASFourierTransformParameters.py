@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -164,7 +164,7 @@ class XASFourierTransformParameters(qt.QGroupBox):
         self.pointsSelector.activated[int].connect(self._pointsChanged)
 
     def _windowChanged(self, value):
-        _logger.debug("_windowChanged %s", value)
+        _logger.debug("_windowChanged %s" % value)
         current = str(self.windowSelector.currentText())
         if current.lower() in ["gaussian", "gauss", "tukey", "papul"]:
             self.apodizationBox.setEnabled(False)
@@ -176,17 +176,17 @@ class XASFourierTransformParameters(qt.QGroupBox):
             self.emitSignal("FTWindowChanged")
 
     def _apodizationChanged(self, value):
-        _logger.debug("_apodizationChanged %s", value)
+        _logger.debug("_apodizationChanged %s" % value)
         if self.__connected:
             self.emitSignal("FTApodizationChanged")
 
     def _kMinChanged(self, value):
-        _logger.debug("Current kMin Value = %s", value)
+        _logger.debug("Current kMin Value = %s" % value)
         if self.__connected:
             self.emitSignal("FTKMinChanged")
 
     def _kMaxChanged(self, value):
-        _logger.debug("Current kMax Value = %s", value)
+        _logger.debug("Current kMax Value = %s" % value)
         if self.__connected:
             if value > self.kMinBox.value():
                 self.emitSignal("FTKMaxChanged")
@@ -197,7 +197,7 @@ class XASFourierTransformParameters(qt.QGroupBox):
                 pass
 
     def _kStepChanged(self, value):
-        _logger.debug("Current kStep value = %s", value)
+        _logger.debug("Current kStep value = %s" % value)
         if self.__connected:
             self.emitSignal("FTKStepChanged")
 
@@ -207,7 +207,7 @@ class XASFourierTransformParameters(qt.QGroupBox):
             self.emitSignal("FTRMaxChanged")
 
     def _pointsChanged(self, value):
-        _logger.debug("_pointsChanged %s", value)
+        _logger.debug("_pointsChanged %s" % value)
         if self.__connected:
             self.emitSignal("FTPointsChanged")
 
@@ -227,8 +227,7 @@ class XASFourierTransformParameters(qt.QGroupBox):
         return ddict
 
     def setParameters(self, ddict, signal=True):
-        _logger.debug("setParameters called, ddict %s, signal %s",
-                      ddict, signal)
+        _logger.debug("setParameters called, ddict %s, signal %s" % (ddict, signal))
         if "FT" in ddict:
             ddict = ddict["FT"]
         try:
