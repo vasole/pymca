@@ -137,6 +137,14 @@ class TestMcaAdvancedFitWidget(TestCaseQt):
         self.assertTrue(widget._fitdone(),
                         "Bad fit widget state. Fit should be finished")
 
+        # toggle matrix spectrum
+        curveList0 = widget.graphWindow.getAllCurves(just_legend=True)
+        self.mouseClick(widget.matrixSpectrumButton, qt.Qt.LeftButton)
+        self.qapp.processEvents()
+        curveList1 = widget.graphWindow.getAllCurves(just_legend=True)
+        self.assertTrue(abs(len(curveList0) - len(curveList1)) == 1,
+                        "Matrix spectrum not working!!")
+
         # toggle peaks
         curveList0 = widget.graphWindow.getAllCurves(just_legend=True)
         for curve in ["Data", "Fit", "Continuum", "Pile-up"]:
@@ -147,14 +155,6 @@ class TestMcaAdvancedFitWidget(TestCaseQt):
         curveList1 = widget.graphWindow.getAllCurves(just_legend=True)
         self.assertTrue(len(curveList0) != len(curveList1),
                         "Peaks spectrum not working!!")
-
-        # toggle matrix spectrum
-        curveList0 = widget.graphWindow.getAllCurves(just_legend=True)
-        self.mouseClick(widget.matrixSpectrumButton, qt.Qt.LeftButton)
-        self.qapp.processEvents()
-        curveList1 = widget.graphWindow.getAllCurves(just_legend=True)
-        self.assertTrue(abs(len(curveList0) - len(curveList1)) == 1,
-                        "Matrix spectrum not working!!")
 
         time.sleep(1)
         from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
