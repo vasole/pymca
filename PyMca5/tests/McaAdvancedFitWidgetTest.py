@@ -39,12 +39,29 @@ import unittest
 import PyMca5.PyMcaGui.PyMcaQt as qt
 from PyMca5.PyMcaGui.misc.testutils import TestCaseQt
 
+if os.environ.get('WITH_OPENGL_TEST', 'True') == 'False':
+    OPENGL = False
+else:
+    try:
+        import OpenGL
+        OPENGL = True
+    except:
+        OPENGL = False
+
+try:
+    import silx.gui
+    SILX = True
+except ImportError:
+    SILX = False
+
 class TestMcaAdvancedFitWidget(TestCaseQt):
     def setUp(self):
         super(TestMcaAdvancedFitWidget, self).setUp()
 
-    def testInteraction(self):
+    def _workOnBackend(self, backend):
         from PyMca5.PyMcaGui.physics.xrf import McaAdvancedFit
+        from PyMca5.PyMcaGraph import Plot
+        Plot.defaultBackend = backend
         widget = McaAdvancedFit.McaAdvancedFit()
         widget.show()
         self.qapp.processEvents()
@@ -143,14 +160,52 @@ class TestMcaAdvancedFitWidget(TestCaseQt):
         from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
         PyMcaPrintPreview.resetSingletonPrintPreview()
 
+    @unittest.skipUnless(SILX, "silx not installed")
+    def testInteractionSilxMpl(self, backend="silx-mpl"):
+        return self._workOnBackend(backend)
+
+    @unittest.skipUnless(SILX and OPENGL, "silx and/or OpenGL disabled")
+    def testInteractionSilxGL(self, backend="silx-gl"):
+        return self._workOnBackend(backend)
+
+    def testInteractionMpl(self, backend="mpl"):
+        return self._workOnBackend(backend)
+
+    @unittest.skipUnless(OPENGL, "OpenGL not imported or disabled")
+    def testInteractionOpenGL(self, backend="gl"):
+        return self._workOnBackend(backend)
+
 def getSuite(auto=True):
+    with_qt_test = True
+    skip_msg = ""
+    if sys.platform.startswith('linux') and not os.environ.get('DISPLAY', ''):
+        # On Linux and no DISPLAY available (e.g., ssh without -X)
+        skip_msg = 'Widgets tests disabled (DISPLAY env. variable not set)'
+        with_qt_test = False
+
+    elif os.environ.get('WITH_QT_TEST', 'True') == 'False':
+        skip_msg = "Widgets tests skipped by WITH_QT_TEST env var"
+        with_qt_test = False
+
     testSuite = unittest.TestSuite()
+
+    if not with_qt_test:
+        class SkipGUITest(unittest.TestCase):
+            def runTest(self):
+                self.skipTest(
+                    skip_msg)
+        testSuite.addTest(SkipGUITest())
+        return testSuite
+
     if auto:
         testSuite.addTest(unittest.TestLoader().loadTestsFromTestCase( \
             TestMcaAdvancedFitWidget))
     else:
         # use a predefined order
-        testSuite.addTest(TestMcaAdvancedFitWidget("testInteraction"))
+        testSuite.addTest(TestMcaAdvancedFitWidget("testInteractionMpl"))
+        testSuite.addTest(TestMcaAdvancedFitWidget("testInteractionOpenGL"))
+        testSuite.addTest(TestMcaAdvancedFitWidget("testInteractionSilxMpl"))
+        testSuite.addTest(TestMcaAdvancedFitWidget("testInteractionSilxGL"))
     return testSuite
 
 def test(auto=False):
