@@ -60,7 +60,7 @@ class TestMcaAdvancedFitWidget(TestCaseQt):
 
     def _workOnBackend(self, backend):
         from PyMca5.PyMcaGui.physics.xrf import McaAdvancedFit
-        from PyMca5.PyMcaGraph import Plot
+        from PyMca5.PyMcaGraph.Plot import Plot
         Plot.defaultBackend = backend
         widget = McaAdvancedFit.McaAdvancedFit()
         widget.show()
