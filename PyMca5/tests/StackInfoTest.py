@@ -289,6 +289,7 @@ class testStackInfo(unittest.TestCase):
         from PyMca5.PyMcaIO import ConfigDict
         from PyMca5.PyMcaIO import HDF5Stack1D
         from PyMca5.PyMcaPhysics.xrf import McaAdvancedFitBatch
+        from PyMca5.PyMcaPhysics.xrf import LegacyMcaAdvancedFitBatch
         spe = os.path.join(self.dataDir, "Steel.spe")
         cfg = os.path.join(self.dataDir, "Steel.cfg")
         sf = specfile.Specfile(spe)
@@ -451,6 +452,8 @@ class testStackInfo(unittest.TestCase):
         if not os.path.exists(cfgFile):
             configuration.write(cfgFile)
             os.chmod(cfgFile, 0o777)
+
+        # Test batch fitting
         batch = McaAdvancedFitBatch.McaAdvancedFitBatch(cfgFile,
                                         filelist=[self._h5File],
                                         outputdir=self._outputDir,
@@ -459,9 +462,31 @@ class testStackInfo(unittest.TestCase):
                                         quiet=True)
         batch.outbuffer.extensions = ['.dat']
         batch.processList()
+        imageFile = batch.outbuffer.filename('.dat')
+        self._assert_batchfit(imageFile, nRows, nColumns, nTimes, readLiveTime)
+
+        # Test batch fitting (legacy)
+        batch = LegacyMcaAdvancedFitBatch.McaAdvancedFitBatch(cfgFile,
+                                        filelist=[self._h5File],
+                                        outputdir=self._outputDir,
+                                        concentrations=True,
+                                        selection=selection,
+                                        quiet=True)
+        os.remove(imageFile)
+        batch.processList()
+        self._assert_batchfit(imageFile, nRows, nColumns, nTimes, readLiveTime)
+    
+        # Batch fitting went well
+        # Test the fast XRF
+        configuration["concentrations"]["usematrix"] = 0
+        configuration["concentrations"]["useautotime"] = 1
+        configuration['fit']['stripalgorithm'] = 1
+        self._assert_fastfit(stack, configuration, live_time, nTimes)
+
+    def _assert_batchfit(self, imageFile, nRows, nColumns, nTimes, readLiveTime):
+        from PyMca5.PyMcaIO import specfilewrapper as specfile
 
         # recover the results
-        imageFile = batch.outbuffer.filename('.dat')
         self.assertTrue(os.path.isfile(imageFile),
                 "Batch fit result file <%s> not present" % imageFile)
         sf = specfile.Specfile(imageFile)
@@ -509,13 +534,6 @@ class testStackInfo(unittest.TestCase):
                     current = scanData[idx, point]
                     self.assertEqual(reference, current,
                                     "Incorrect value for point %d" % point)
-
-        # Batch fitting went well
-        # Test the fast XRF
-        configuration["concentrations"]["usematrix"] = 0
-        configuration["concentrations"]["useautotime"] = 1
-        configuration['fit']['stripalgorithm'] = 1
-        self._assert_fastfit(stack, configuration, live_time, nTimes)
 
 
 def getSuite(auto=True):
