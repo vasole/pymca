@@ -861,12 +861,12 @@ class McaAdvancedFitBatch(object):
                                  shape=paramShape,
                                  dtype=dtypeResult,
                                  fill_value=numpy.nan,
-                                 attrs=unit_attrs)
+                                 attrs=data_attrs)
         outbuffer.allocateMemory('uncertainties',
                                  shape=paramShape,
                                  dtype=dtypeResult,
                                  fill_value=numpy.nan,
-                                 attrs=unit_attrs)
+                                 attrs=data_attrs)
 
         # Concentrations
         if self._concentrations:
@@ -1034,7 +1034,7 @@ def main():
                    'roiwidth=', 'concentrations=', 'overwrite=',
                    'outroot=', 'outentry=', 'outprocess=',
                    'edf=', 'h5=', 'csv=', 'tif=', 'dat=',
-                   'diagnostics=', 'debug=']
+                   'diagnostics=', 'debug=', 'multipage=']
     filelist = None
     cfg = None
     roifit = 0
@@ -1044,6 +1044,7 @@ def main():
     csv = 0
     h5 = 1
     dat = 0
+    multipage = 0
     debug = 0
     outputDir = None
     concentrations = 0
@@ -1097,6 +1098,8 @@ def main():
             h5 = int(arg)
         elif opt == '--dat':
             dat = int(arg)
+        elif opt == '--multipage':
+            multipage = int(arg)
 
     logging.basicConfig()
     if debug:
@@ -1111,24 +1114,26 @@ def main():
     t0 = time.time()
 
     outbuffer = OutputBuffer(outputDir=outputDir,
-                        outputRoot=outputRoot,
-                        fileEntry=fileEntry,
-                        fileProcess=fileProcess,
-                        diagnostics=diagnostics,
-                        tif=tif, edf=edf, csv=csv, h5=h5, dat=dat,
-                        overwrite=overwrite)
+                             outputRoot=outputRoot,
+                             fileEntry=fileEntry,
+                             fileProcess=fileProcess,
+                             diagnostics=diagnostics,
+                             tif=tif, edf=edf, csv=csv,
+                             h5=h5, dat=dat,
+                             multipage=multipage,
+                             overwrite=overwrite)
 
     from PyMca5.PyMcaMisc import ProfilingUtils
     with ProfilingUtils.profile(memory=debug, time=debug):
         b = McaAdvancedFitBatch(cfg,filelist=filelist,
-                        fitfiles=False,
-                        fitconcfile=False,
-                        outputdir=outputDir,
-                        roifit=roifit,
-                        roiwidth=roiwidth,
-                        concentrations=concentrations,
-                        outbuffer=outbuffer,
-                        overwrite=overwrite)
+                                fitfiles=False,
+                                fitconcfile=False,
+                                outputdir=outputDir,
+                                roifit=roifit,
+                                roiwidth=roiwidth,
+                                concentrations=concentrations,
+                                outbuffer=outbuffer,
+                                overwrite=overwrite)
         b.processList()
         print("Total Elapsed = % s " % (time.time() - t0))
 

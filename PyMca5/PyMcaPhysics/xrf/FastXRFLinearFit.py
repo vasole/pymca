@@ -1016,7 +1016,7 @@ def main():
                    'tif=', 'edf=', 'csv=', 'h5=', 'dat=',
                    'filepattern=', 'begin=', 'end=', 'increment=',
                    'outroot=', 'outentry=', 'outprocess=',
-                   'diagnostics=', 'debug=', 'overwrite=']
+                   'diagnostics=', 'debug=', 'overwrite=', 'multipage=']
     try:
         opts, args = getopt.getopt(
                      sys.argv[1:],
@@ -1045,6 +1045,7 @@ def main():
     diagnostics = 0
     debug = 0
     overwrite = 1
+    multipage = 0
     for opt, arg in opts:
         if opt == '--cfg':
             configurationFile = arg
@@ -1096,6 +1097,8 @@ def main():
             debug = int(arg)
         elif opt == '--overwrite':
             overwrite = int(arg)
+        elif opt == '--multipage':
+            multipage = int(arg)
 
     logging.basicConfig()
     if debug:
@@ -1131,7 +1134,9 @@ def main():
                         fileEntry=fileEntry,
                         fileProcess=fileProcess,
                         diagnostics=diagnostics,
-                        tif=tif, edf=edf, csv=csv, h5=h5, dat=dat,
+                        tif=tif, edf=edf, csv=csv,
+                        h5=h5, dat=dat,
+                        multipage=multipage,
                         overwrite=overwrite)
 
     from PyMca5.PyMcaMisc import ProfilingUtils

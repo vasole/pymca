@@ -49,7 +49,7 @@ class OutputBuffer(object):
                  outputRoot=None, fileEntry=None, fileProcess=None,
                  saveResiduals=False, saveFit=False, saveData=False,
                  tif=False, edf=False, csv=False, dat=False, h5=True,
-                 diagnostics=False, multiedf=True, overwrite=False,
+                 diagnostics=False, multipage=False, overwrite=False,
                  suffix=None):
         """
         XRf batch fitting output buffer, to be saved as:
@@ -79,7 +79,7 @@ class OutputBuffer(object):
         :param bool csv:
         :param bool dat:
         :param bool h5:
-        :param bool multiedf: all images in 1 edf file
+        :param bool multipage: all images in 1 file if the format allows it
         :param bool overwrite:
         """
         self._inBufferContext = False
@@ -97,7 +97,7 @@ class OutputBuffer(object):
         self.csv = csv
         self.dat = dat
         self.h5 = h5
-        self.multiedf = multiedf
+        self.multipage = multipage
         self.saveResiduals = saveResiduals
         self.saveFit = saveFit
         self.saveData = saveData
@@ -525,7 +525,7 @@ class OutputBuffer(object):
 
         NexusUtils.mkdir(self.outroot_localfs)
         if self.edf:
-            if self.multiedf:
+            if self.multipage:
                 fileName = self.filename('.edf')
                 self._checkOverwrite(fileName)
                 ArraySave.save2DArrayListAsEDF(imageList, fileName,
@@ -551,16 +551,24 @@ class OutputBuffer(object):
             ArraySave.save2DArrayListAsASCII(imageList, fileName, csv=False,
                                              labels=imageNames)
         if self.tif:
-            for label, image in zip(imageNames, imageList):
-                label = label.replace('(', '')
-                label = label.replace(')', '')
-                label = label.replace(' ', '_')
-                fileName = self.filename('.tif', suffix="_" + label)
+            if self.multipage:
+                fileName = self.filename('.tif')
                 self._checkOverwrite(fileName)
-                ArraySave.save2DArrayListAsMonochromaticTiff([image],
+                ArraySave.save2DArrayListAsMonochromaticTiff(imageList,
                                                              fileName,
-                                                             labels=[label],
+                                                             labels=imageNames,
                                                              dtype=numpy.float32)
+            else:
+                for label, image in zip(imageNames, imageList):
+                    label = label.replace('(', '')
+                    label = label.replace(')', '')
+                    label = label.replace(' ', '_')
+                    fileName = self.filename('.tif', suffix="_" + label)
+                    self._checkOverwrite(fileName)
+                    ArraySave.save2DArrayListAsMonochromaticTiff([image],
+                                                                 fileName,
+                                                                 labels=[label],
+                                                                 dtype=numpy.float32)
         if self.cfg and 'configuration' in self:
             fileName = self.filename('.cfg')
             self._checkOverwrite(fileName)

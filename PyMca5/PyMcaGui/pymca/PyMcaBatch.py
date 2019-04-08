@@ -367,6 +367,13 @@ class McaBatchGUI(qt.QWidget):
         self.__extendedTable.setEnabled(False)
         vbox2.l.addWidget(self.__extendedTable)
 
+        # overwrite output
+        self._overwriteBox = qt.QCheckBox(vbox3)
+        self._overwriteBox.setText("Overwrite")
+        self._overwriteBox.setChecked(True)
+        self._overwriteBox.setEnabled(True)
+        vbox3.l.addWidget(self._overwriteBox)
+
         # concentrations
         self.__concentrationsBox = qt.QCheckBox(vbox3)
         self.__concentrationsBox.setText('Concentrations')
@@ -396,25 +403,36 @@ class McaBatchGUI(qt.QWidget):
         vbox2.l.addWidget(self._edfBox)
 
         # generate csv file
-        self._csvBox = qt.QCheckBox(vbox3)
+        self._csvBox = qt.QCheckBox(vbox1)
         self._csvBox.setText("CSV")
         self._csvBox.setChecked(False)
         self._csvBox.setEnabled(False)
-        vbox3.l.addWidget(self._csvBox)
+        vbox1.l.addWidget(self._csvBox)
 
         # generate tiff files
-        self._tiffBox = qt.QCheckBox(vbox1)
+        self._tiffBox = qt.QCheckBox(vbox2)
         self._tiffBox.setText("TIFF")
         self._tiffBox.setChecked(False)
         self._tiffBox.setEnabled(False)
-        vbox1.l.addWidget(self._tiffBox)
+        vbox2.l.addWidget(self._tiffBox)
 
         # generate dat file
-        self._datBox = qt.QCheckBox(vbox2)
+        self._datBox = qt.QCheckBox(vbox1)
         self._datBox.setText("DAT")
         self._datBox.setChecked(False)
         self._datBox.setEnabled(True)
-        vbox2.l.addWidget(self._datBox)
+        vbox1.l.addWidget(self._datBox)
+
+        # multipage edf/tif
+        self._multipageBox = qt.QCheckBox(vbox2)
+        self._multipageBox.setText("Multipage")
+        self._multipageBox.setChecked(True)
+        self._multipageBox.setEnabled(True)
+        vbox2.l.addWidget(self._multipageBox)
+
+        self._edfBox.stateChanged.connect(self.__stateMultiPage)
+        self._tiffBox.stateChanged.connect(self.__stateMultiPage)
+        self.__stateMultiPage()
 
         self._layout.addWidget(box1)
 
@@ -561,6 +579,9 @@ class McaBatchGUI(qt.QWidget):
         if multiProc:
             self._tiffBox.setChecked(False)
             self._csvBox.setChecked(False)
+
+    def __stateMultiPage(self, state=None):
+        self._multipageBox.setEnabled(self._edfBox.isChecked() or self._tiffBox.isChecked())
 
     def __clickSignal0(self):
         if self.__overwrite.isChecked():
@@ -926,6 +947,8 @@ class McaBatchGUI(qt.QWidget):
         cmd.addOption('dat', value=self._datBox.isChecked(), format="{:d}")
         cmd.addOption('edf', value=self._edfBox.isChecked(), format="{:d}")
         cmd.addOption('h5', value=self._h5Box.isChecked(), format="{:d}")
+        cmd.addOption('overwrite', value=self._overwriteBox.isChecked(), format="{:d}")
+        cmd.addOption('multipage', value=self._multipageBox.isChecked(), format="{:d}")
 
         if self.__tableBox.isChecked():
             if self.__extendedTable.isChecked():
@@ -1773,7 +1796,7 @@ def main():
                    'filebeginoffset=','fileendoffset=','mcaoffset=', 'chunk=',
                    'nativefiledialogs=','selection=', 'exitonend=',
                    'edf=', 'h5=', 'csv=', 'tif=', 'dat=', 'diagnostics=',
-                   'logging=', 'debug=', 'gui=']
+                   'logging=', 'debug=', 'gui=', 'multipage=']
     filelist = None
     outdir   = None
     cfg      = None
@@ -1802,6 +1825,7 @@ def main():
     csv = 0
     h5 = 1
     dat = 1
+    multipage = 0
     opts, args = getopt.getopt(
                     sys.argv[1:],
                     options,
@@ -1870,6 +1894,8 @@ def main():
             dat = int(arg)
         elif opt == '--tif':
             tif = int(arg)
+        elif opt == '--multipage':
+            multipage = int(arg)
 
     level = getLoggingLevel(opts)
     logging.basicConfig(level=level)
@@ -1928,11 +1954,11 @@ def main():
             fitfiles=1
         try:
             thread = McaBatch(window,cfg,filelist=filelist,outputdir=outdir,roifit=roifit,roiwidth=roiwidth,
-                              overwrite = overwrite, filestep=filestep, mcastep=mcastep,
+                              overwrite=overwrite, filestep=filestep, mcastep=mcastep,
                               concentrations=concentrations, fitfiles=fitfiles,
                               filebeginoffset=filebeginoffset,fileendoffset=fileendoffset,
                               mcaoffset=mcaoffset, chunk=chunk, selection=selection,
-                              diagnostics=diagnostics,
+                              diagnostics=diagnostics, multipage=multipage,
                               tif=tif, edf=edf, csv=csv, h5=h5, dat=dat)
         except:
             if exitonend:
