@@ -1017,7 +1017,7 @@ class McaAdvancedFit(qt.QWidget):
             self.plot()
         else:
             if "Matrix" in self.graph.getAllCurves(just_legend=True):
-                self.graph.removeCurve("Matrix")
+                self.graph.removeCurve("Matrix", replot=False)
                 self.plot()
 
     def __togglePeaksSpectrum(self):
