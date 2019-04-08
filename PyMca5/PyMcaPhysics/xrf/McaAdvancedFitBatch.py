@@ -74,7 +74,6 @@ class McaAdvancedFitBatch(object):
         #that is not necessary, but it will be correctly implemented in
         #future releases
         self._lock = lock
-        self._obsolete = False  # TODO: remove in the future
 
         self.setFileList(filelist)
         self.pleaseBreak = 0  # stop the processing of filelist
@@ -112,9 +111,7 @@ class McaAdvancedFitBatch(object):
             self._toolConversion = ConcentrationsTool.ConcentrationsConversion()
 
         self.overwrite = overwrite
-        if self._obsolete:
-            self.savedImages = []
-            self._nosave = bool(nosave)
+        self._nosave = bool(nosave)
         self.outputdir = outputdir
         self.outbuffer = outbuffer
         self.outbufferkwargs = outbufferkwargs
@@ -209,25 +206,6 @@ class McaAdvancedFitBatch(object):
         if value is None:
             value = os.getcwd()
         self._outputdir = value
-        if self._obsolete:
-            self._obsoleteUpdateImgDir()
-
-    def _obsoleteUpdateImgDir(self):
-        if self._nosave:
-            self.imgDir = None
-        else:
-            imgdir = self.os_path_join(self.outputdir, "IMAGES")
-            if not os.path.exists(imgdir):
-                try:
-                    os.mkdir(imgdir)
-                except:
-                    _logger.error("I could not create directory %s" %\
-                                  imgdir)
-                    return
-            elif not os.path.isdir(imgdir):
-                _logger.error("%s does not seem to be a valid directory" %\
-                              imgdir)
-            self.imgDir = imgdir
 
     def processList(self):
         if self.outbuffer is None:
@@ -294,10 +272,6 @@ class McaAdvancedFitBatch(object):
                 self._fitlistfile is not None:
                     self._fitlistfile.write(']\n')
                     self._fitlistfile.close()
-            # Save results as .edf and .dat
-            if self._obsolete:
-                if self.__ncols and not self._nosave:
-                    self._obsoleteSaveImage()
 
     def getFileHandle(self, inputfile):
         try:
@@ -652,16 +626,12 @@ class McaAdvancedFitBatch(object):
                   self.__ncols and self.__nrows
         if self.roiFit:
             result = self.__roiOneMca(x,y)
-            if self._obsolete:
-                self._obsoleteOutputRoiFit(result, filename)
             if bOutput:
                 if bFirstSpectrum:
                     self._allocateMemoryRoiFit(result)
                 self._saveRoiFitResult(result)
         else:
             result, concentrations = self.__fitOneMca(x,y,filename,key,info=info)
-            if self._obsolete:
-                self._obsoleteOutputFit(result, concentrations, filename)
             if bOutput:
                 if bFirstSpectrum:
                     self._allocateMemoryFit(result, concentrations)
@@ -886,23 +856,24 @@ class McaAdvancedFitBatch(object):
         paramShape = nFree, self.__nrows, self.__ncols
         dtypeResult = numpy.float32
         outbuffer['parameter_names'] = result['groups']
+        data_attrs = {} #{'units':'counts'}
         outbuffer.allocateMemory('parameters',
                                  shape=paramShape,
                                  dtype=dtypeResult,
                                  fill_value=numpy.nan,
-                                 attrs={'units':'counts'})
+                                 attrs=unit_attrs)
         outbuffer.allocateMemory('uncertainties',
                                  shape=paramShape,
                                  dtype=dtypeResult,
                                  fill_value=numpy.nan,
-                                 attrs={'units':'counts'})
+                                 attrs=unit_attrs)
 
         # Concentrations
         if self._concentrations:
             if 'mmolar' in concentrations:
                 concentration_key = 'molarconcentrations'
                 concentration_names = 'molarconcentration_names'
-                concentration_attrs = {'units': 'mM'}
+                concentration_attrs = {} #{'units': 'mM'}
             else:
                 concentration_key = 'massfractions'
                 concentration_names = 'massfraction_names'
@@ -951,7 +922,7 @@ class McaAdvancedFitBatch(object):
                                                 dtype=dtypeResult,
                                                 fill_value=numpy.nan,
                                                 chunks=True,
-                                                attrs={'units':'counts'})
+                                                attrs=data_attrs)
                 #idx = [slice(None)]*fitmodel.ndim
                 #idx[mcaIndex] = slice(0, iXMin)
                 #fitmodel[tuple(idx)] = numpy.nan
@@ -966,7 +937,7 @@ class McaAdvancedFitBatch(object):
                                      dtype=dtypeResult,
                                      fill_value=numpy.nan,
                                      chunks=True,
-                                     attrs={'units':'counts'})
+                                     attrs=data_attrs)
             if outbuffer.saveResiduals:
                 outaxes = True
                 outbuffer.allocateH5('residuals',
@@ -975,7 +946,7 @@ class McaAdvancedFitBatch(object):
                                      dtype=dtypeResult,
                                      fill_value=numpy.nan,
                                      chunks=True,
-                                     attrs={'units':'counts'})
+                                     attrs=data_attrs)
             if outaxes:
                 # Generic axes
                 stackAxesNames = ['dim{}'.format(i) for i in range(len(stackShape))]
@@ -1031,73 +1002,6 @@ class McaAdvancedFitBatch(object):
                 output = outbuffer['residuals']
                 output[idx] = result['yfit'] - result['ydata']
 
-    def _obsoleteOutputFit(self, result, concentrations, filename):
-        if self.outbuffer is None:
-            return
-        if self.__ncols and self.__nrows:
-            if self.counter == 0:
-                self.__peaks  = []
-                self.__images = {}
-                self.__sigmas = {}
-                if not self.__stack:
-                    self.__nrows = len(range(0, len(self._filelist), self.fileStep))
-                for group in result['groups']:
-                    self.__peaks.append(group)
-                    self.__images[group]= numpy.zeros((self.__nrows,
-                                                        self.__ncols),
-                                                        numpy.float)
-                    self.__sigmas[group]= numpy.zeros((self.__nrows,
-                                                        self.__ncols),
-                                                        numpy.float)
-                self.__images['chisq']  = numpy.zeros((self.__nrows,
-                                                        self.__ncols),
-                                                        numpy.float) - 1.
-
-                if self._concentrations:
-                    layerlist = concentrations['layerlist']
-                    if 'mmolar' in concentrations:
-                        self.__conLabel = " mM"
-                        self.__conKey   = "mmolar"
-                    else:
-                        self.__conLabel = " mass fraction"
-                        self.__conKey   = "mass fraction"
-                    for group in concentrations['groups']:
-                        key = group+self.__conLabel
-                        self.__concentrationsKeys.append(key)
-                        self.__images[key] = numpy.zeros((self.__nrows,
-                                                            self.__ncols),
-                                                            numpy.float)
-                        if len(layerlist) > 1:
-                            for layer in layerlist:
-                                key = group+" "+layer
-                                self.__concentrationsKeys.append(key)
-                                self.__images[key] = numpy.zeros((self.__nrows,
-                                                            self.__ncols),
-                                                            numpy.float)
-
-        for peak in self.__peaks:
-            try:
-                self.__images[peak][self.__row, self.__col] = result[peak]['fitarea']
-                self.__sigmas[peak][self.__row, self.__col] = result[peak]['sigmaarea']
-            except:
-                pass
-        if self._concentrations:
-            layerlist = concentrations['layerlist']
-            for group in concentrations['groups']:
-                self.__images[group+self.__conLabel][self.__row, self.__col] = \
-                                        concentrations[self.__conKey][group]
-                if len(layerlist) > 1:
-                    for layer in layerlist:
-                        self.__images[group+" "+layer] [self.__row, self.__col] = \
-                                        concentrations[layer][self.__conKey][group]
-        try:
-            self.__images['chisq'][self.__row, self.__col] = result['chisq']
-        except:
-            _logger.error("Error on chisq row %d col %d" %\
-                    (self.__row, self.__col))
-            _logger.error("File = %s\n" % filename)
-            pass
-
     def _allocateMemoryRoiFit(self, result):
         outbuffer = self.outbuffer
 
@@ -1109,10 +1013,11 @@ class McaAdvancedFitBatch(object):
         paramShape = nFree, self.__nrows, self.__ncols
         dtypeResult = numpy.float32
         outbuffer['parameter_names'] = parameter_names
+        data_attrs = {} #{'units':'counts'}
         outbuffer.allocateMemory('parameters',
                                     shape=paramShape,
                                     dtype=dtypeResult,
-                                    attrs={'units':'counts'})
+                                    attrs=data_attrs)
 
     def _saveRoiFitResult(self, result):
         outbuffer = self.outbuffer
@@ -1120,132 +1025,6 @@ class McaAdvancedFitBatch(object):
         for i, name in enumerate(outbuffer['parameter_names']):
             group, roi = name
             output[i, self.__row, self.__col] = result[group][roi]
-
-    def _obsoleteOutputRoiFit(self, result, filename):
-        if self.outbuffer is None:
-            return
-        if self.__ncols and self.__nrows:
-            if self.counter == 0:
-                self.__ROIpeaks = []
-                self._ROIimages = {}
-                for group in result.keys():
-                    self.__ROIpeaks.append(group)
-                    self._ROIimages[group]={}
-                    for roi in result[group].keys():
-                        self._ROIimages[group][roi]=numpy.zeros((self.__nrows,
-                                                            self.__ncols),
-                                                            numpy.float)
-
-        if not hasattr(self, "_ROIimages"):
-            _logger.error("ROI fitting only supported on EDF")
-        for group in self.__ROIpeaks:
-            for roi in self._ROIimages[group].keys():
-                try:
-                    self._ROIimages[group][roi][self.__row, self.__col] = result[group][roi]
-                except:
-                    _logger.error("error on (row,col) = %d,%d" %\
-                            (self.__row, self.__col))
-                    _logger.error("File = %s" % filename)
-                    pass
-
-    def _obsoleteSaveImage(self,ffile=None):
-        self.savedImages=[]
-        if ffile is None:
-            ffile = self.os_path_join(self.imgDir, self._rootname)
-        suffix = self._outputSuffix()
-        if not self.roiFit:
-            #speclabel = "#L row  column"
-            speclabel = "row  column"
-            iterationList = self.__peaks * 1
-            iterationList += ['chisq']
-            if self._concentrations:
-                iterationList += self.__concentrationsKeys
-            for peak in iterationList:
-                if peak in self.__peaks:
-                    a,b = peak.split()
-                    speclabel +="  %s" % (a+"-"+b)
-                    speclabel +="  s(%s)" % (a+"-"+b)
-                    edfname = ffile +"_"+a+"_"+b+suffix+".edf"
-                elif peak in self.__concentrationsKeys:
-                    speclabel +="  %s" % peak.replace(" ","-")
-                    edfname = ffile +"_"+peak.replace(" ","_")+suffix+".edf"
-                elif peak == 'chisq':
-                    speclabel +="  %s" % (peak)
-                    edfname = ffile +"_"+peak+suffix+".edf"
-                else:
-                    _logger.error("Unhandled peak name: %s. Not saved." % peak)
-                    continue
-                dirname = os.path.dirname(edfname)
-                if not os.path.exists(dirname):
-                    try:
-                        os.mkdir(dirname)
-                    except:
-                        _logger.error("I could not create directory %s" % dirname)
-                Append = 0
-                if os.path.exists(edfname):
-                    try:
-                        os.remove(edfname)
-                    except:
-                        _logger.error("I cannot delete output file")
-                        _logger.error("trying to append image to the end")
-                        Append = 1
-                edfout   = EdfFile.EdfFile(edfname, access='ab')
-                edfout.WriteImage ({'Title':peak} , self.__images[peak], Append=Append)
-                edfout = None
-                self.savedImages.append(edfname)
-            #save specfile format
-            specname = ffile+suffix+".dat"
-            if os.path.exists(specname):
-                try:
-                    os.remove(specname)
-                except:
-                    pass
-            specfile=open(specname,'w+')
-            #specfile.write('\n')
-            #specfile.write('#S 1  %s\n' % (file+suffix))
-            #specfile.write('#N %d\n' % (len(self.__peaks)+2))
-            specfile.write('%s\n' % speclabel)
-            specline=""
-            imageRows = self.__images['chisq'].shape[0]
-            imageColumns = self.__images['chisq'].shape[1]
-            for row in range(imageRows):
-                for col in range(imageColumns):
-                    specline += "%d" % row
-                    specline += "  %d" % col
-                    for peak in self.__peaks:
-                        #write area
-                        specline +="  %g" % self.__images[peak][row][col]
-                        #write sigma area
-                        specline +="  %g" % self.__sigmas[peak][row][col]
-                    #write global chisq
-                    specline +="  %g" % self.__images['chisq'][row][col]
-                    if self._concentrations:
-                        for peak in self.__concentrationsKeys:
-                            specline +="  %g" % self.__images[peak][row][col]
-                    specline += "\n"
-                    specfile.write("%s" % specline)
-                    specline =""
-            specfile.write("\n")
-            specfile.close()
-        else:
-            for group in self.__ROIpeaks:
-                i = 0
-                grouptext = group.replace(" ","_")
-                for roi in self._ROIimages[group].keys():
-                    #roitext = roi.replace(" ","-")
-                    edfname = ffile+"_"+grouptext+suffix+'.edf'
-                    dirname = os.path.dirname(edfname)
-                    if not os.path.exists(dirname):
-                        try:
-                            os.mkdir(dirname)
-                        except:
-                            _logger.error("I could not create directory %s" % dirname)
-                    edfout  = EdfFile.EdfFile(edfname)
-                    edfout.WriteImage ({'Title':group+" "+roi} , self._ROIimages[group][roi],
-                                         Append=i)
-                    if i==0:
-                        self.savedImages.append(edfname)
-                        i=1
 
 
 def main():

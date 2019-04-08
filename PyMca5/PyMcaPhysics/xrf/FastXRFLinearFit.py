@@ -172,14 +172,15 @@ class FastXRFLinearFit(object):
             imageShape = tuple(imageShape)
             paramShape = (nFree,) + imageShape
             dtypeResult = self._fitDtypeResult(data)
+            data_attrs = {} #{'units':'counts'})
             results = outbuffer.allocateMemory('parameters',
                                                 shape=paramShape,
                                                 dtype=dtypeResult,
-                                                attrs={'units':'counts'})
+                                                attrs=data_attrs)
             uncertainties = outbuffer.allocateMemory('uncertainties',
                                                 shape=paramShape,
                                                 dtype=dtypeResult,
-                                                attrs={'units':'counts'})
+                                                attrs=data_attrs)
             if outbuffer.diagnostics:
                 nFreeParameters = outbuffer.allocateMemory('nFreeParameters',
                                                 shape=imageShape,
@@ -195,7 +196,7 @@ class FastXRFLinearFit(object):
                                                 dtype=dtypeResult,
                                                 chunks=True,
                                                 fill_value=0,
-                                                attrs={'units':'counts'})
+                                                attrs=data_attrs)
                 idx = [slice(None)]*fitmodel.ndim
                 idx[mcaIndex] = slice(0, iXMin)
                 fitmodel[tuple(idx)] = numpy.nan
@@ -243,7 +244,7 @@ class FastXRFLinearFit(object):
                                      data=data,
                                      dtype=dtypeResult,
                                      chunks=True,
-                                     attrs={'units':'counts'})
+                                     attrs=data_attrs)
             if outbuffer.saveResiduals:
                 outaxes = True
                 residuals = outbuffer.allocateH5('residuals',
@@ -251,7 +252,7 @@ class FastXRFLinearFit(object):
                                                  data=data,
                                                  dtype=dtypeResult,
                                                  chunks=True,
-                                                 attrs={'units':'counts'})
+                                                 attrs=data_attrs)
                 residuals[()] -= fitmodel
             if outaxes:
                 # Generic axes
