@@ -225,18 +225,18 @@ class testStackInfo(unittest.TestCase):
             configuration["concentrations"]["useautotime"] = 1
             # make sure we use the SNIP background
             configuration['fit']['stripalgorithm'] = 1
-            self._assert_fastfit(stack, configuration, live_time, nTimes)
+            self._verifyFastFit(stack, configuration, live_time, nTimes)
 
-    def _assert_fastfit(self, stack, configuration, live_time, nTimes):
+    def _verifyFastFit(self, stack, configuration, live_time, nTimes):
         from PyMca5.PyMcaPhysics.xrf import FastXRFLinearFit
         ffit = FastXRFLinearFit.FastXRFLinearFit()
         firstIndex = tuple([0]*(stack.data.ndim-1))
         for refit in [0, 1]:
             outputDict = ffit.fitMultipleSpectra(y=stack,
-                                                weight=0,
-                                                configuration=configuration,
-                                                concentrations=True,
-                                                refit=0)
+                                                 weight=0,
+                                                 configuration=configuration,
+                                                 concentrations=True,
+                                                 refit=refit)
 
             parameter_names = outputDict.parameter_names
             parameters = outputDict["parameters"].astype(numpy.float32)
@@ -453,18 +453,6 @@ class testStackInfo(unittest.TestCase):
             configuration.write(cfgFile)
             os.chmod(cfgFile, 0o777)
 
-        # Test batch fitting
-        batch = McaAdvancedFitBatch.McaAdvancedFitBatch(cfgFile,
-                                        filelist=[self._h5File],
-                                        outputdir=self._outputDir,
-                                        concentrations=True,
-                                        selection=selection,
-                                        quiet=True)
-        batch.outbuffer.extensions = ['.dat']
-        batch.processList()
-        imageFile = batch.outbuffer.filename('.dat')
-        self._assert_batchfit(imageFile, nRows, nColumns, nTimes, readLiveTime)
-
         # Test batch fitting (legacy)
         batch = LegacyMcaAdvancedFitBatch.McaAdvancedFitBatch(cfgFile,
                                         filelist=[self._h5File],
@@ -472,18 +460,87 @@ class testStackInfo(unittest.TestCase):
                                         concentrations=True,
                                         selection=selection,
                                         quiet=True)
-        os.remove(imageFile)
         batch.processList()
-        self._assert_batchfit(imageFile, nRows, nColumns, nTimes, readLiveTime)
+        imageFile = os.path.join(self._outputDir, "IMAGES", "Steel.dat")
+        self._verifyBatchFitResult(imageFile, nRows, nColumns, live_time, nTimes, legacy=True)
+
+        # Test batch fitting
+        batch = McaAdvancedFitBatch.McaAdvancedFitBatch(cfgFile,
+                                                        filelist=[self._h5File],
+                                                        outputdir=self._outputDir,
+                                                        concentrations=True,
+                                                        selection=selection,
+                                                        quiet=True)
+        batch.outbuffer.extensions = ['.dat']
+        batch.processList()
+        imageFile = batch.outbuffer.filename('.dat')
+        self._verifyBatchFitResult(imageFile, nRows, nColumns, live_time, nTimes)
     
         # Batch fitting went well
         # Test the fast XRF
         configuration["concentrations"]["usematrix"] = 0
         configuration["concentrations"]["useautotime"] = 1
         configuration['fit']['stripalgorithm'] = 1
-        self._assert_fastfit(stack, configuration, live_time, nTimes)
+        self._verifyFastFit(stack, configuration, live_time, nTimes)
 
-    def _assert_batchfit(self, imageFile, nRows, nColumns, nTimes, readLiveTime):
+    def _verifyBatchFitResult(self, imageFile, nRows, nColumns, live_time, nTimes, legacy=False):
+        from PyMca5.PyMcaIO import specfilewrapper as specfile
+
+        # recover the results
+        self.assertTrue(os.path.isfile(imageFile),
+                        "Batch fit result file <%s> not present" % imageFile)
+        sf = specfile.Specfile(imageFile)
+        labels = sf[0].alllabels()
+        scanData = sf[0].data()
+        sf = None
+        self.assertTrue(scanData.shape[-1] == (nRows * nColumns),
+           "Expected %d values got %d" % (nRows * nColumns, scanData.shape[-1]))
+
+        if legacy:
+            ismassfrac = lambda label: label.endswith("-mass-fraction")
+        else:
+            ismassfrac = lambda label: label.startswith("w(")
+
+        referenceResult = {}
+        for point in range(scanData.shape[-1]):
+            for label in labels:
+                idx = labels.index(label)
+                if label in ["Point", "row", "column"]:
+                    continue
+                elif point == 0:
+                    referenceResult[label] = scanData[idx, point]
+                elif ismassfrac(label):
+                    #print("label = ", label)
+                    #print("reference = ", referenceResult[label])
+                    #print("current = ", scanData[idx, point])
+                    reference = referenceResult[label]
+                    current = scanData[idx, point]
+                    #print("ratio = ", current / reference)
+                    #print("time ratio = ", live_time[point] / live_time[0])
+                    if point % nTimes:
+                        if abs(reference) > 1.0e-10:
+                            self.assertNotEqual(reference, current,
+                                "Incorrect concentration for point %d" % point)
+                        corrected = current * \
+                                    (live_time[point] / live_time[0])
+                        if abs(reference) > 1.0e-10:
+                            delta = \
+                                100 * abs((reference - corrected) / reference)
+                            self.assertTrue(delta < 0.01,
+                                "Incorrect concentration(t) for point %d" % point)
+                        else:
+                            self.assertTrue(abs(reference - corrected) < 1.0e-5,
+                                 "Incorrect concentration(t) for point %d" % point)
+                    else:
+                        self.assertEqual(reference, current,
+                            "Incorrect concentration for point %d" % point)
+                else:
+                    reference = referenceResult[label]
+                    current = scanData[idx, point]
+                    self.assertEqual(reference, current,
+                                    "Incorrect value for point %d" % point)
+
+    def _verifyLegacyBatchFitResult(self, imageFile, nRows, nColumns, live_time, nTimes):
         from PyMca5.PyMcaIO import specfilewrapper as specfile
 
         # recover the results
@@ -504,20 +561,20 @@ class testStackInfo(unittest.TestCase):
                     continue
                 elif point == 0:
                     referenceResult[label] = scanData[idx, point]
-                elif label.startswith("w("):
+                elif label.endswith("-mass-fraction"):
                     #print("label = ", label)
                     #print("reference = ", referenceResult[label])
                     #print("current = ", scanData[idx, point])
                     reference = referenceResult[label]
                     current = scanData[idx, point]
                     #print("ratio = ", current / reference)
-                    #print("time ratio = ", readLiveTime[point] / readLiveTime[0])
+                    #print("time ratio = ", live_time[point] / live_time[0])
                     if point % nTimes:
                         if abs(reference) > 1.0e-10:
-                            self.assertNotEqual(reference, current,
+                            self.assertTrue(reference != current,
                                 "Incorrect concentration for point %d" % point)
                         corrected = current * \
-                                    (readLiveTime[point] / readLiveTime[0])
+                                    (live_time[point] / live_time[0])
                         if abs(reference) > 1.0e-10:
                             delta = \
                                 100 * abs((reference - corrected) / reference)
@@ -527,12 +584,12 @@ class testStackInfo(unittest.TestCase):
                             self.assertTrue(abs(reference - corrected) < 1.0e-5,
                                  "Incorrect concentration(t) for point %d" % point)
                     else:
-                        self.assertEqual(reference, current,
+                        self.assertTrue(reference == current,
                             "Incorrect concentration for point %d" % point)
-                else:
+                elif label not in ["Point", "row", "column"]:
                     reference = referenceResult[label]
                     current = scanData[idx, point]
-                    self.assertEqual(reference, current,
+                    self.assertTrue( reference == current,
                                     "Incorrect value for point %d" % point)
 
 

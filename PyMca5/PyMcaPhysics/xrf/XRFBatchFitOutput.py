@@ -50,7 +50,7 @@ class OutputBuffer(object):
                  saveResiduals=False, saveFit=False, saveData=False,
                  tif=False, edf=False, csv=False, dat=False, h5=True,
                  diagnostics=False, multipage=False, overwrite=False,
-                 suffix=None):
+                 suffix=None, nosave=False):
         """
         XRf batch fitting output buffer, to be saved as:
          .h5 : outputDir/outputRoot+suffix.h5::/fileEntry/fileProcess
@@ -81,6 +81,7 @@ class OutputBuffer(object):
         :param bool h5:
         :param bool multipage: all images in 1 file if the format allows it
         :param bool overwrite:
+        :param bool nosave: prevent saving (everything will be in memory)
         """
         self._inBufferContext = False
         self._inSaveContext = False
@@ -103,6 +104,7 @@ class OutputBuffer(object):
         self.saveData = saveData
         self.diagnostics = diagnostics
         self.overwrite = overwrite
+        self.nosave = nosave
         self.suffix = suffix
 
     @property
@@ -111,7 +113,7 @@ class OutputBuffer(object):
     
     @outputRoot.setter
     def outputRoot(self, value):
-        self._check_bufferContext()
+        self._checkBufferContext()
         if value:
             self._outputRoot = value
         else:
@@ -123,7 +125,7 @@ class OutputBuffer(object):
     
     @fileEntry.setter
     def fileEntry(self, value):
-        self._check_bufferContext()
+        self._checkBufferContext()
         if value:
             self._fileEntry = value
         else:
@@ -135,7 +137,7 @@ class OutputBuffer(object):
     
     @fileProcess.setter
     def fileProcess(self, value):
-        self._check_bufferContext()
+        self._checkBufferContext()
         if value:
             self._fileProcess = value
         else:
@@ -172,7 +174,7 @@ class OutputBuffer(object):
     
     @edf.setter
     def edf(self, value):
-        self._check_bufferContext()
+        self._checkBufferContext()
         self._edf = value
 
     @property
@@ -181,7 +183,7 @@ class OutputBuffer(object):
     
     @tif.setter
     def tif(self, value):
-        self._check_bufferContext()
+        self._checkBufferContext()
         self._tif = value
 
     @property
@@ -190,7 +192,7 @@ class OutputBuffer(object):
     
     @csv.setter
     def csv(self, value):
-        self._check_bufferContext()
+        self._checkBufferContext()
         self._csv = value
 
     @property
@@ -199,7 +201,7 @@ class OutputBuffer(object):
     
     @dat.setter
     def dat(self, value):
-        self._check_bufferContext()
+        self._checkBufferContext()
         self._dat = value
 
     @property
@@ -212,7 +214,7 @@ class OutputBuffer(object):
     
     @saveData.setter
     def saveData(self, value):
-        self._check_bufferContext()
+        self._checkBufferContext()
         self._saveData = value
 
     @property
@@ -221,7 +223,7 @@ class OutputBuffer(object):
     
     @saveFit.setter
     def saveFit(self, value):
-        self._check_bufferContext()
+        self._checkBufferContext()
         self._saveFit = value
 
     @property
@@ -230,7 +232,7 @@ class OutputBuffer(object):
     
     @saveResiduals.setter
     def saveResiduals(self, value):
-        self._check_bufferContext()
+        self._checkBufferContext()
         self._saveResiduals = value
 
     @property
@@ -249,10 +251,19 @@ class OutputBuffer(object):
     
     @overwrite.setter
     def overwrite(self, value):
-        self._check_bufferContext()
-        self._overwrite = value
+        self._checkBufferContext()
+        self._overwrite = bool(value)
 
-    def _check_bufferContext(self):
+    @property
+    def nosave(self):
+        return self._nosave
+    
+    @nosave.setter
+    def nosave(self, value):
+        self._checkBufferContext()
+        self._nosave = bool(value)
+
+    def _checkBufferContext(self):
         if self._inBufferContext:
             raise RuntimeError('Buffer is locked')
 
@@ -362,41 +373,44 @@ class OutputBuffer(object):
         """
         Initialize NXprocess on enter and close/cleanup on exit
         """
-        fileName = self.filename('.h5')
-        existed = [False]*3  # h5file, nxentry, nxprocess
-        existed[0] = os.path.exists(fileName)
-        with NexusUtils.nxRoot(fileName, mode='a') as f:
-            # Open/overwrite NXprocess: h5file::/entry/process
-            entryname = self.fileEntry
-            existed[1] = entryname in f
-            entry = NexusUtils.nxEntry(f, entryname)
-            procname = self.fileProcess
-            if procname in entry:
-                existed[2] = True
-                path = entry[procname].name
-                if update:
-                    _logger.debug('edit {}'.format(path))
-                elif self.overwrite:
-                    _logger.warning('overwriting {}::{}'.format(fileName, path))
-                    del entry[procname]
-                    existed[2] = False
-                else:
-                    raise RuntimeError('{}::{} already exists'.format(fileName, path))
-            self._nxprocess = NexusUtils.nxProcess(entry, procname)
-            try:
-                with self._h5DatasetContext(f):
-                    yield
-            except:
-                # clean-up and re-raise
-                if not existed[0]:
-                    cleanup_funcs.append(lambda: os.remove(fileName))
-                elif not existed[1]:
-                    del f[entryname]
-                elif not existed[2]:
-                    del entry[procname]
-                raise
-            finally:
-                self._nxprocess = None
+        if self.nosave:
+            yield
+        else:
+            fileName = self.filename('.h5')
+            existed = [False]*3  # h5file, nxentry, nxprocess
+            existed[0] = os.path.exists(fileName)
+            with NexusUtils.nxRoot(fileName, mode='a') as f:
+                # Open/overwrite NXprocess: h5file::/entry/process
+                entryname = self.fileEntry
+                existed[1] = entryname in f
+                entry = NexusUtils.nxEntry(f, entryname)
+                procname = self.fileProcess
+                if procname in entry:
+                    existed[2] = True
+                    path = entry[procname].name
+                    if update:
+                        _logger.debug('edit {}'.format(path))
+                    elif self.overwrite:
+                        _logger.warning('overwriting {}::{}'.format(fileName, path))
+                        del entry[procname]
+                        existed[2] = False
+                    else:
+                        raise RuntimeError('{}::{} already exists'.format(fileName, path))
+                self._nxprocess = NexusUtils.nxProcess(entry, procname)
+                try:
+                    with self._h5DatasetContext(f):
+                        yield
+                except:
+                    # clean-up and re-raise
+                    if not existed[0]:
+                        cleanup_funcs.append(lambda: os.remove(fileName))
+                    elif not existed[1]:
+                        del f[entryname]
+                    elif not existed[2]:
+                        del entry[procname]
+                    raise
+                finally:
+                    self._nxprocess = None
 
     @contextmanager
     def _h5DatasetContext(self, f):
@@ -430,7 +444,6 @@ class OutputBuffer(object):
                 raise
             else:
                 if save and not alreadyIn:
-                    _logger.debug('Saving {}'.format(self))
                     self.save()
             finally:
                 if not alreadyIn:
@@ -446,14 +459,17 @@ class OutputBuffer(object):
         Save result of XRF batch fitting. Preferrable use saveContext instead.
         HDF5 NXprocess will be updated, not overwritten.
         """
+        if self.nosave:
+            _logger.warning('Saving is disabled')
+            return
         if not (self.tif or self.edf or self.csv or self.dat or self.h5):
-            _logger.warning('fit result not saved (no output format specified)')
+            _logger.warning('Fit result not saved (no output format specified)')
             return
         if not self.outputDir:
-            _logger.warning('fit result not saved (no output directory specified)')
+            _logger.warning('Fit result not saved (no output directory specified)')
             return
         t0 = time.time()
-        _logger.debug('Saving results ...')
+        _logger.debug('Saving {}'.format(self))
 
         with self._bufferContext(update=True):
             if self.tif or self.edf or self.csv or self.dat:

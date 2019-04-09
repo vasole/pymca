@@ -110,10 +110,10 @@ class McaAdvancedFitBatch(object):
             self._tool = ConcentrationsTool.ConcentrationsTool()
             self._toolConversion = ConcentrationsTool.ConcentrationsConversion()
 
-        self.overwrite = overwrite
-        self._nosave = bool(nosave)
-        self.outputdir = outputdir
         self.outbuffer = outbuffer
+        self.overwrite = overwrite
+        self.nosave = nosave
+        self.outputdir = outputdir
         self.outbufferkwargs = outbufferkwargs
         if fitimages:
             self._initOutputBuffer()
@@ -122,12 +122,33 @@ class McaAdvancedFitBatch(object):
     def useExistingFiles(self):
         return not self.overwrite
 
+    @property
+    def nosave(self):
+        return self._nosave
+    
+    @nosave.setter
+    def nosave(self, value):
+        self._nosave = bool(value)
+        if self.outbuffer is not None:
+            self.outbuffer.nosave = self._nosave
+
+    @property
+    def overwrite(self):
+        return self._overwrite
+    
+    @overwrite.setter
+    def overwrite(self, value):
+        self._overwrite = bool(value)
+        if self.outbuffer is not None:
+            self.outbuffer.overwrite = self._overwrite
+
     def _initOutputBuffer(self):
         if self.outbuffer is None:
             self.outbuffer = OutputBuffer(outputDir=self.outputdir,
                                           outputRoot=self._rootname,
                                           fileEntry=self._rootname,
                                           overwrite=self.overwrite,
+                                          nosave=self.nosave,
                                           suffix=self._outputSuffix(),
                                           **self.outbufferkwargs)
         self.outbuffer['configuration'] = self.mcafit.getConfiguration()
