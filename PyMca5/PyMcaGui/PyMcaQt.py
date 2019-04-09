@@ -113,15 +113,15 @@ if BINDING == "PySide":
     from PySide.QtGui import *
     try:
         from PySide.QtSvg import *
+        HAS_SVG = True
     except:
         _logger.info("PySide.QtSVG not available")
-        HAS_SVG = False
 
     try:
         from PySide.QtOpenGL import *
+        HAS_OPENGL = True
     except:
         _logger.info("PySide.QtOpenGL not available")
-        HAS_OPENGL = False
 
     pyqtSignal = Signal
     pyqtSlot = Slot
@@ -152,15 +152,15 @@ elif BINDING == "PyQt4":
 
     try:
         from PyQt4.QtOpenGL import *
+        HAS_OPENGL = True
     except:
         _logger.info("PyQt4.QtOpenGL not available")
-        HAS_OPENGL = False
 
     try:
         from PyQt4.QtSvg import *
+        HAS_SVG = True
     except:
         _logger.info("PyQt4.QtSVG not available")
-        HAS_SVG = False
 
     Signal = pyqtSignal
     Slot = pyqtSlot
@@ -173,15 +173,15 @@ elif BINDING == "PyQt5":
 
     try:
         from PyQt5.QtOpenGL import *
+        HAS_OPENGL = True
     except:
         _logger.info("PyQt5.QtOpenGL not available")
-        HAS_OPENGL = False
 
     try:
         from PyQt5.QtSvg import *
+        HAS_SVG = True
     except:
         _logger.info("PyQt5.QtSVG not available")
-        HAS_SVG = False
 
     Signal = pyqtSignal
     Slot = pyqtSlot
@@ -195,16 +195,16 @@ elif BINDING == "PySide2":
 
     try:
         from PySide2.QtOpenGL import *
+        HAS_OPENGL = True
     except:
         _logger.info("PySide2.QtOpenGL not available")
-        HAS_OPENGL = False
+
 
     try:
         from PySide2.QtSvg import *
+        HAS_SVG = True
     except:
         _logger.info("PySide2.QtSVG not available")
-        HAS_SVG = False
-
     pyqtSignal = Signal
     pyqtSlot = Slot
 
