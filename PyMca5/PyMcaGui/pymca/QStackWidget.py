@@ -242,7 +242,7 @@ class QStackWidget(StackBase.StackBase,
 
 
         #add some missing icons
-        offset = 6
+        offset = 8
         infotext = 'If checked, spectra will be added normalized to the number\n'
         infotext += 'of pixels. Be carefull if you are preparing a batch and you\n'
         infotext += 'fit the normalized spectra because the data in the batch will\n'
