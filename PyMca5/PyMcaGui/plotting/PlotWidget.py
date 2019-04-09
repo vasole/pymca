@@ -30,6 +30,11 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import logging
 import traceback
+if sys.version_info < (3,0):
+    import cStringIO as _StringIO
+    BytesIO = _StringIO.StringIO
+else:
+    from io import BytesIO
 
 from PyMca5.PyMcaGraph import Plot
 
@@ -321,6 +326,18 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
             # See QWidget.keyPressEvent for details.
             super(PlotWidget, self).keyPressEvent(event)
 
+    def copyToClipboard(self):
+        """
+        Copy the plot to the clipboard
+        """
+        pngFile = BytesIO()
+        self.saveGraph(pngFile, fileFormat='png')
+        pngFile.flush()
+        pngFile.seek(0)
+        pngData = pngFile.read()
+        pngFile.close()
+        image = qt.QImage.fromData(pngData, 'png')
+        qt.QApplication.clipboard().setImage(image)        
 
 if __name__ == "__main__":
     import time

@@ -40,11 +40,6 @@ import time
 import traceback
 import numpy
 from numpy import argsort, nonzero, take
-if sys.version_info < (3,0):
-    import cStringIO as _StringIO
-    BytesIO = _StringIO.StringIO
-else:
-    from io import BytesIO
 
 from . import LegendSelector
 from .ObjectPrintConfigurationDialog import ObjectPrintConfigurationDialog
@@ -720,14 +715,7 @@ class PlotWindow(PlotWidget.PlotWidget):
         self.colormapDialog._update()
 
     def _copyIconSignal(self):
-        pngFile = BytesIO()
-        self.saveGraph(pngFile, fileFormat='png')
-        pngFile.flush()
-        pngFile.seek(0)
-        pngData = pngFile.read()
-        pngFile.close()
-        image = qt.QImage.fromData(pngData, 'png')
-        qt.QApplication.clipboard().setImage(image)
+        self.copyToClipboard()
 
     def updateActiveImageColormap(self, colormap, replot=True):
         if len(colormap) == 1:
