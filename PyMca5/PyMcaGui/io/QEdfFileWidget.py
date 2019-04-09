@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2018 E. Papillon, V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -335,6 +335,7 @@ class QEdfFileWidget(qt.QWidget):
         self.colormapIcon   = qt.QIcon(qt.QPixmap(IconDict["colormap"]))
         self.zoomResetIcon	= qt.QIcon(qt.QPixmap(IconDict["zoomreset"]))
         self.printIcon	= qt.QIcon(qt.QPixmap(IconDict["fileprint"]))
+        self.copyIcon = qt.QIcon(qt.QPixmap(IconDict["clipboard"]))
         self.saveIcon	= qt.QIcon(qt.QPixmap(IconDict["filesave"]))
         try:
             self.infoIcon	= qt.QApplication.style().\
@@ -347,7 +348,7 @@ class QEdfFileWidget(qt.QWidget):
         self.toolBarLayout.setSpacing(0)
         self.toolBarLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.addWidget(self.toolBar)
-        #Autoscale
+        # Autoscale
         self._addToolButton(self.zoomResetIcon,
                             self._zoomReset,
                             'Auto-Scale the Graph')
@@ -359,7 +360,7 @@ class QEdfFileWidget(qt.QWidget):
         self.aspectButton.setChecked(False)
         self._keepDataAspectRatioFlag = False
 
-        #colormap
+        # colormap
         self._addToolButton(self.colormapIcon,
                             self.selectColormap,
                             'Color-Scale the Graph')
@@ -368,13 +369,17 @@ class QEdfFileWidget(qt.QWidget):
                              'Flip Horizontal')
         self.hFlipToolButton = tb
 
-        #info
+        # info
         if self.infoIcon is not None:
             self._addToolButton(self.infoIcon,
                              self._showInformation,
                             'Show source information')
 
-        #save
+        # clipboard
+        self.copyToolButton = self._addToolButton(self.copyIcon,
+                                                  self._copyIconSignal,
+                                                  "Copy graph to clipboard")
+        # save
         if MATPLOTLIB:
             tb = self._addToolButton(self.saveIcon,
                                      self.__saveIconSignal,
@@ -387,7 +392,7 @@ class QEdfFileWidget(qt.QWidget):
                                  self._saveIconSignal,
                                  'Export Graph')
 
-        #info
+        # info
         self.infoText = qt.QLabel(self.toolBar)
         self.infoText.setText("    X = ???? Y = ???? Z = ????")
         self.toolBarLayout.addWidget(self.infoText)
@@ -478,6 +483,9 @@ class QEdfFileWidget(qt.QWidget):
             self._matplotlibSaveImage.setImageData(self.lastData)
         self._matplotlibSaveImage.show()
         self._matplotlibSaveImage.raise_()
+
+    def _copyIconSignal(self):
+        self.graph.copyToClipboard()
 
     def __saveIconSignal(self):
         self._saveMenu.exec_(self.cursor().pos())
