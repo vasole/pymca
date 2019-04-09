@@ -4012,6 +4012,7 @@ file_save = ["22 22 5 1",
 IconDict0 = {
     "derive": derive,
     "close": close,
+    "clipboard": clipboard,
     "fileclose": fileclose,
     "fileopen": file_open,
     "filesave": file_save,
