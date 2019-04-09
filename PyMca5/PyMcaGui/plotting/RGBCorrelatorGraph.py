@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -124,13 +124,14 @@ class RGBCorrelatorGraph(qt.QWidget):
         self.hLineIcon     = qt.QIcon(qt.QPixmap(IconDict["horizontal"]))
         self.vLineIcon     = qt.QIcon(qt.QPixmap(IconDict["vertical"]))
         self.lineIcon     = qt.QIcon(qt.QPixmap(IconDict["diagonal"]))
+        self.copyIcon     = qt.QIcon(qt.QPixmap(IconDict["clipboard"]))
 
         self.toolBar = qt.QWidget(self)
         self.toolBarLayout = qt.QHBoxLayout(self.toolBar)
         self.toolBarLayout.setContentsMargins(0, 0, 0, 0)
         self.toolBarLayout.setSpacing(0)
         self.mainLayout.addWidget(self.toolBar)
-        #Autoscale
+        # Autoscale
         if standalonezoom:
             tb = self._addToolButton(self.zoomResetIcon,
                             self.__zoomReset,
@@ -140,7 +141,7 @@ class RGBCorrelatorGraph(qt.QWidget):
                             None,
                             'Auto-Scale the Graph')
         self.zoomResetToolButton = tb
-        #y Autoscale
+        # y Autoscale
         tb = self._addToolButton(self.yAutoIcon,
                             self._yAutoScaleToggle,
                             'Toggle Autoscale Y Axis (On/Off)',
@@ -150,7 +151,7 @@ class RGBCorrelatorGraph(qt.QWidget):
         self.yAutoScaleToolButton = tb
         tb.setDown(True)
 
-        #x Autoscale
+        # x Autoscale
         tb = self._addToolButton(self.xAutoIcon,
                             self._xAutoScaleToggle,
                             'Toggle Autoscale X Axis (On/Off)',
@@ -158,7 +159,7 @@ class RGBCorrelatorGraph(qt.QWidget):
         self.xAutoScaleToolButton = tb
         tb.setDown(True)
 
-        #Aspect ratio
+        # Aspect ratio
         if aspect:
             self.aspectButton = self._addToolButton(self.solidCircleIcon,
                                                     self._aspectButtonSignal,
@@ -166,21 +167,25 @@ class RGBCorrelatorGraph(qt.QWidget):
                                                     toggle=False)
             self.aspectButton.setChecked(False)
 
-        #colormap
+        # colormap
         if colormap:
             tb = self._addToolButton(self.colormapIcon,
                                      None,
                                      'Change Colormap')
             self.colormapToolButton = tb
 
-        #flip
+        # flip
         tb = self._addToolButton(self.hFlipIcon,
                                  None,
                                  'Flip Horizontal')
         self.hFlipToolButton = tb
 
+        # clipboard
+        self.copyToolButton = self._addToolButton(self.copyIcon,
+                                                  self._copyIconSignal,
+                                                  "Copy graph to clipboard")
 
-        #save
+        # save
         if standalonesave:
             tb = self._addToolButton(self.saveIcon,
                                  self._saveIconSignal,
@@ -191,7 +196,7 @@ class RGBCorrelatorGraph(qt.QWidget):
                                  'Save')
         self.saveToolButton = tb
 
-        #Selection
+        # Selection
         if selection:
             tb = self._addToolButton(self.selectionIcon,
                                 None,
@@ -200,7 +205,7 @@ class RGBCorrelatorGraph(qt.QWidget):
                                 state = False)
             tb.setDown(False)
             self.selectionToolButton = tb
-        #image selection icons
+        # image selection icons
         if imageicons:
             tb = self._addToolButton(self.imageIcon,
                                      None,
@@ -244,7 +249,7 @@ class RGBCorrelatorGraph(qt.QWidget):
                         'Polygon selection\nRight click to finish')
                 self.polygonSelectionToolButton = tb
             self.imageToolButton = None
-        #picker selection
+        # picker selection
         self._pickerSelectionButtons = []
         if profileselection:
             self._profileSelection = True
@@ -293,7 +298,8 @@ class RGBCorrelatorGraph(qt.QWidget):
                 #self._pickerSelectionButtons.append(tb)
             if self._polygonSelection:
                 _logger.info("Polygon selection not implemented yet")
-        #hide profile selection buttons
+
+        # hide profile selection buttons
         if imageicons:
             for button in self._pickerSelectionButtons:
                 button.hide()
@@ -554,6 +560,10 @@ class RGBCorrelatorGraph(qt.QWidget):
             else:
                 self.graph.setXAxisAutoScale(True)
                 self.xAutoScaleToolButton.setDown(True)
+
+    def _copyIconSignal(self):
+        self.graph.copyToClipboard()
+
 
     def _saveIconSignal(self):
         self.saveDirectory = PyMcaDirs.outputDir

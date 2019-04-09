@@ -40,6 +40,7 @@ import time
 import traceback
 import numpy
 from numpy import argsort, nonzero, take
+
 from . import LegendSelector
 from .ObjectPrintConfigurationDialog import ObjectPrintConfigurationDialog
 from . import McaROIWidget
@@ -226,8 +227,9 @@ class PlotWindow(PlotWidget.PlotWidget):
         self.additionalIcon     = qt.QIcon(qt.QPixmap(IconDict["additionalselect"]))
         self.polygonIcon = qt.QIcon(qt.QPixmap(IconDict["polygon"]))
 
-        self.printIcon	= qt.QIcon(qt.QPixmap(IconDict["fileprint"]))
-        self.saveIcon	= qt.QIcon(qt.QPixmap(IconDict["filesave"]))
+        self.printIcon = qt.QIcon(qt.QPixmap(IconDict["fileprint"]))
+        self.copyIcon = qt.QIcon(qt.QPixmap(IconDict["clipboard"]))
+        self.saveIcon = qt.QIcon(qt.QPixmap(IconDict["filesave"]))
 
         self.pluginIcon     = qt.QIcon(qt.QPixmap(IconDict["plugin"]))
 
@@ -434,7 +436,12 @@ class PlotWindow(PlotWidget.PlotWidget):
                                 self._subtractIconSignal,
                                 'Subtract Active Curve')
 
-        #save
+        # clipboard
+        self.copyToolButton = self._addToolButton(self.copyIcon,
+                                                  self._copyIconSignal,
+                                                  "Copy graph to clipboard")
+
+        # save
         infotext = 'Save Active Curve or Widget'
         tb = self._addToolButton(self.saveIcon,
                                  self._saveIconSignal,
@@ -706,6 +713,9 @@ class PlotWindow(PlotWidget.PlotWidget):
         self.colormapDialog.sigColormapChanged.connect(\
                     self.updateActiveImageColormap)
         self.colormapDialog._update()
+
+    def _copyIconSignal(self):
+        self.copyToClipboard()
 
     def updateActiveImageColormap(self, colormap, replot=True):
         if len(colormap) == 1:
