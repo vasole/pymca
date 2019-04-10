@@ -64,7 +64,7 @@ class McaAdvancedFitBatch(object):
                  roifit=False, roiwidth=100,
                  overwrite=1, filestep=1, mcastep=1,
                  fitfiles=0, fitimages=1,
-                 concentrations=0, fitconcfile=None,
+                 concentrations=0, fitconcfile=1,
                  filebeginoffset=0, fileendoffset=0,
                  mcaoffset=0, chunk=None,
                  selection=None, lock=None, nosave=None,
@@ -82,8 +82,6 @@ class McaAdvancedFitBatch(object):
         self.selection = selection
         self.quiet = quiet
         self.fitFiles = fitfiles
-        if fitconcfile is None:
-            fitconcfile = fitfiles
         self.fitConcFile = fitconcfile
         self._concentrations = concentrations
 
@@ -1173,7 +1171,6 @@ def main():
     with ProfilingUtils.profile(memory=debug, time=debug):
         b = McaAdvancedFitBatch(cfg,filelist=filelist,
                                 fitfiles=False,
-                                fitconcfile=False,
                                 outputdir=outputDir,
                                 roifit=roifit,
                                 roiwidth=roiwidth,
