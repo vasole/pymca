@@ -238,7 +238,7 @@ class testStackInfo(unittest.TestCase):
                                                  concentrations=True,
                                                  refit=refit)
 
-            parameter_names = outputDict.parameter_names
+            parameter_names = outputDict.labels('parameters')
             parameters = outputDict["parameters"].astype(numpy.float32)
             uncertainties = outputDict["uncertainties"].astype(numpy.float32)
             for i, (name, values, uvalues) in enumerate(zip(parameter_names, parameters, uncertainties)):
@@ -259,7 +259,7 @@ class testStackInfo(unittest.TestCase):
                     "Different sigma value for parameter %s delta %f" % \
                                 (name, delta.min()))
 
-            massfraction_names = outputDict.massfraction_names
+            massfraction_names = outputDict.labels('massfractions')
             massfractions = outputDict["massfractions"]
             for i, (name, fractions) in enumerate(zip(massfraction_names, massfractions)):
                 # verify that massfractions took into account the time

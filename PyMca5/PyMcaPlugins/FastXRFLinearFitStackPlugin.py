@@ -205,7 +205,7 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
                                                         y=stack,
                                                         ysum=spectrum,
                                                         outbuffer=outbuffer,
-                                                        save=False,
+                                                        save=False,  # do it later
                                                         **fitparams)
         return outbuffer
 
@@ -231,26 +231,27 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
                     return
 
         # Show results
-        if 'massfractions' in result:
-            imageNames = result.parameter_names + result.massfraction_names
-            images = numpy.concatenate((result['parameters'],
-                                        result['massfractions']), axis=0)
-        else:
-            imageNames = result.parameter_names
-            images = result['parameters']
-        nImages = images.shape[0]
-        self._widget = StackPluginResultsWindow.StackPluginResultsWindow(\
-                                        usetab=False)
-        self._widget.buildAndConnectImageButtonBox(replace=True,
-                                                  multiple=True)
-        qt = StackPluginResultsWindow.qt
-        self._widget.sigMaskImageWidgetSignal.connect(self.mySlot)
-        self._widget.setStackPluginResults(images,
-                                          image_names=imageNames)
-        self._showWidget()
+        with result.bufferContext(update=True):
+            if 'massfractions' in result:
+                imageNames = result.parameter_names + result.massfraction_names
+                images = numpy.concatenate((result['parameters'],
+                                            result['massfractions']), axis=0)
+            else:
+                imageNames = result.parameter_names
+                images = result['parameters']
+            nImages = images.shape[0]
+            self._widget = StackPluginResultsWindow.StackPluginResultsWindow(\
+                                            usetab=False)
+            self._widget.buildAndConnectImageButtonBox(replace=True,
+                                                    multiple=True)
+            qt = StackPluginResultsWindow.qt
+            self._widget.sigMaskImageWidgetSignal.connect(self.mySlot)
+            self._widget.setStackPluginResults(images,
+                                            image_names=imageNames)
+            self._showWidget()
 
-        # Save results
-        result.save()
+            # Save results
+            result.save()
 
     def _showWidget(self):
         if self._widget is None:

@@ -45,7 +45,6 @@ from PyMca5.PyMcaMath.linalg import lstsq
 from PyMca5.PyMcaMath.fitting import Gefit
 from PyMca5.PyMcaMath.fitting import SpecfitFuns
 from PyMca5.PyMcaIO import ConfigDict
-from PyMca5.PyMcaMisc import PhysicalMemory
 from .XRFBatchFitOutput import OutputBuffer
 from . import McaStackView
 
@@ -100,7 +99,7 @@ class FastXRFLinearFit(object):
         # Calculation needs buffer for memory allocation (memory or H5)
         if outbuffer is None:
             outbuffer = OutputBuffer()
-        with outbuffer.saveContext(save=save):
+        with outbuffer.Context(save=save):
             t0 = time.time()
 
             # Configure fit
@@ -138,7 +137,6 @@ class FastXRFLinearFit(object):
             dtypeCalculcation = self._fitDtypeCalculation(data)
             self._mcaTheory.setData(x=x, y=yref, xmin=xmin, xmax=xmax)
             derivatives, freeNames, nFree, nFreeBkg = self._fitCreateModel(dtype=dtypeCalculcation)
-            outbuffer['parameter_names'] = freeNames
 
             # Background anchor points (if any)
             anchorslist = self._fitBkgAnchorList(config=config)
@@ -172,31 +170,63 @@ class FastXRFLinearFit(object):
             imageShape = tuple(imageShape)
             paramShape = (nFree,) + imageShape
             dtypeResult = self._fitDtypeResult(data)
-            data_attrs = {} #{'units':'counts'})
+            dataAttrs = {}  #{'units':'counts'})
+            paramAttrs = {'error': 'uncertainties',
+                          'default': not concentrations}
             results = outbuffer.allocateMemory('parameters',
                                                 shape=paramShape,
                                                 dtype=dtypeResult,
-                                                attrs=data_attrs)
+                                                labels=freeNames,
+                                                dataAttrs=dataAttrs,
+                                                groupAttrs=paramAttrs,
+                                                memtype='ram')
             uncertainties = outbuffer.allocateMemory('uncertainties',
                                                 shape=paramShape,
                                                 dtype=dtypeResult,
-                                                attrs=data_attrs)
+                                                labels=freeNames,
+                                                dataAttrs=dataAttrs,
+                                                groupAttrs=None,
+                                                memtype='ram')
+            fitAttrs = {}
             if outbuffer.diagnostics:
+                # Generic axes
+                dataAxesNames = ['dim{}'.format(i) for i in range(data.ndim)]
+                dataAxes = [(name, numpy.arange(n, dtype=dtypeResult), {})
+                            for name, n in zip(dataAxesNames, stackShape)]
+                # MCA axis: use energy and add channels as extra (unused) axis
+                xdata = self._mcaTheory.xdata0.flatten()
+                zero, gain = self._mcaTheory.parameters[:2]
+                xenergy = zero + gain*xdata
+                dataAxesNames[mcaIndex] = 'energy'
+                dataAxes[mcaIndex] = 'energy', xenergy.astype(dtypeResult), {'units': 'keV'}
+                dataAxes.append(('channels', xdata.astype(numpy.int32), {}))
+                fitAttrs['axes'] = dataAxes
+                fitAttrs['axesused'] = dataAxesNames
+            if outbuffer.diagnostics:
+                dataAttrs = {}
                 nFreeParameters = outbuffer.allocateMemory('nFreeParameters',
                                                 shape=imageShape,
                                                 fill_value=nFree,
-                                                dtype=numpy.int32)
+                                                dtype=numpy.int32,
+                                                dataAttrs=dataAttrs,
+                                                groupAttrs=None,
+                                                memtype='ram')
                 nObservations = outbuffer.allocateMemory('nObservations',
                                                 shape=imageShape,
                                                 fill_value=nObs,
-                                                dtype=numpy.int32)
-                fitmodel = outbuffer.allocateH5('model',
-                                                nxdata='fit',
+                                                dtype=numpy.int32,
+                                                dataAttrs=dataAttrs,
+                                                groupAttrs=None,
+                                                memtype='ram')
+                fitmodel = outbuffer.allocateMemory('model',
+                                                group='fit',
                                                 shape=stackShape,
                                                 dtype=dtypeResult,
                                                 chunks=True,
                                                 fill_value=0,
-                                                attrs=data_attrs)
+                                                dataAttrs=dataAttrs,
+                                                groupAttrs=fitAttrs,
+                                                memtype='hdf5')
                 idx = [slice(None)]*fitmodel.ndim
                 idx[mcaIndex] = slice(0, iXMin)
                 fitmodel[tuple(idx)] = numpy.nan
@@ -236,46 +266,41 @@ class FastXRFLinearFit(object):
                 t0 = time.time()
 
             # Return results as a dictionary
-            outaxes = False
             if outbuffer.saveData:
-                outaxes = True
-                outbuffer.allocateH5('data',
-                                     nxdata='fit',
+                outbuffer.allocateMemory('data',
+                                     group='fit',
                                      data=data,
                                      dtype=dtypeResult,
                                      chunks=True,
-                                     attrs=data_attrs)
+                                     dataAttrs=dataAttrs,
+                                     groupAttrs=fitAttrs,
+                                     memtype='hdf5')
             if outbuffer.saveResiduals:
-                outaxes = True
-                residuals = outbuffer.allocateH5('residuals',
-                                                 nxdata='fit',
+                residuals = outbuffer.allocateMemory('residuals',
+                                                 group='fit',
                                                  data=data,
                                                  dtype=dtypeResult,
                                                  chunks=True,
-                                                 attrs=data_attrs)
+                                                 dataAttrs=dataAttrs,
+                                                 groupAttrs=fitAttrs,
+                                                 memtype='hdf5')
                 residuals[()] -= fitmodel
-            if outaxes:
-                # Generic axes
-                stackAxesNames = ['dim{}'.format(i) for i in range(data.ndim)]
-                dataAxes = [(name, numpy.arange(n, dtype=dtypeResult), {})
-                            for name, n in zip(stackAxesNames, stackShape)]
-                # MCA axis: use energy and add channels as extra (unused) axis
-                xdata = self._mcaTheory.xdata0.flatten()
-                zero, gain = self._mcaTheory.parameters[:2]
-                xenergy = zero + gain*xdata
-                stackAxesNames[mcaIndex] = 'energy'
-                dataAxes[mcaIndex] = 'energy', xenergy.astype(dtypeResult), {'units': 'keV'}
-                dataAxes.append(('channels', xdata.astype(numpy.int32), {}))
-                outbuffer['dataAxesUsed'] = tuple(stackAxesNames)
-                outbuffer['dataAxes'] = tuple(dataAxes)
+
             if concentrations:
                 t0 = time.time()
-                self._fitDeriveMassFractions(config=config,
-                                             outputDict=outbuffer,
+                labels, concentrations = self._fitDeriveMassFractions(config=config,
                                              nFreeBkg=nFreeBkg,
                                              results=results,
                                              autotime=autotime,
                                              liveTimeFactor=liveTimeFactor)
+                dataAttrs = {}  #{'units':'dimensionless'})
+                massfracAttrs = {'default': True}
+                outbuffer.allocateMemory('massfractions',
+                                         data=concentrations,
+                                         labels=labels,
+                                         dataAttrs=dataAttrs,
+                                         groupAttrs=massfracAttrs,
+                                         memtype='ram')
                 t = time.time() - t0
                 _logger.debug("Calculation of concentrations elapsed = %f", t)
             return outbuffer
@@ -801,9 +826,8 @@ class FastXRFLinearFit(object):
                                   nmin=nmin, **kwargs)
             iIter += 1
 
-    def _fitDeriveMassFractions(self, config=None, outputDict=None,
-                                results=None, nFreeBkg=None, autotime=None,
-                                liveTimeFactor=None):
+    def _fitDeriveMassFractions(self, config=None, results=None, nFreeBkg=None,
+                                autotime=None, liveTimeFactor=None):
         """Calculate concentrations from peak areas
         """
         # check if an internal reference is used and if it is set to auto
@@ -875,7 +899,7 @@ class FastXRFLinearFit(object):
         referenceTransitions = addInfo['ReferenceTransitions']
         _logger.debug("Reference <%s>  transition <%s>",
                       referenceElement, referenceTransitions)
-        outputDict['massfraction_names'] = []
+        labels = []
         if referenceElement in ["", None, "None"]:
             _logger.debug("No reference")
             counter = 0
@@ -883,7 +907,7 @@ class FastXRFLinearFit(object):
                 if group.lower().startswith("scatter"):
                     _logger.debug("skept %s", group)
                     continue
-                outputDict['massfraction_names'].append(group)
+                labels.append(group)
                 if counter == 0:
                     if hasattr(liveTimeFactor, "shape"):
                         liveTimeFactor.shape = results[nFreeBkg+i].shape
@@ -894,7 +918,7 @@ class FastXRFLinearFit(object):
                 counter += 1
                 if len(concentrationsResult['layerlist']) > 1:
                     for layer in concentrationsResult['layerlist']:
-                        outputDict['massfraction_names'].append((group, layer))
+                        labels.append((group, layer))
                         massFractions[counter] = liveTimeFactor * \
                                 results[nFreeBkg+i] * \
                                 (concentrationsResult[layer]['mass fraction'][group] / \
@@ -921,7 +945,7 @@ class FastXRFLinearFit(object):
                 if group.lower().startswith("scatter"):
                     _logger.debug("skept %s", group)
                     continue
-                outputDict['massfraction_names'].append(group)
+                labels.append(group)
                 goodI = results[nFreeBkg+i] > 0
                 tmp = results[nFreeBkg+idx][goodI]
                 massFractions[counter][goodI] = (results[nFreeBkg+i][goodI]/(tmp + (tmp == 0))) *\
@@ -930,12 +954,12 @@ class FastXRFLinearFit(object):
                 counter += 1
                 if len(concentrationsResult['layerlist']) > 1:
                     for layer in concentrationsResult['layerlist']:
-                        outputDict['massfraction_names'].append((group, layer))
+                        labels.append((group, layer))
                         massFractions[counter][goodI] = (results[nFreeBkg+i][goodI]/(tmp + (tmp == 0))) *\
                             ((referenceArea/fitresult['result'][group]['fitarea']) *\
                             (concentrationsResult[layer]['mass fraction'][group]))
                         counter += 1
-        outputDict['massfractions'] = massFractions
+        return labels, massFractions
 
 
 def getFileListFromPattern(pattern, begin, end, increment=None):

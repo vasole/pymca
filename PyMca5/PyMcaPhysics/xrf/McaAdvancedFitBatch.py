@@ -865,55 +865,63 @@ class McaAdvancedFitBatch(object):
         if self._concentrations:
             layerlist = concentrations['layerlist']
             if 'mmolar' in concentrations:
-                self.__conKey   = "mmolar"
+                self.__conKey = "mmolar"
             else:
-                self.__conKey   = "mass fraction"
+                self.__conKey = "mass fraction"
 
         outbuffer = self.outbuffer
 
         # Fit parameters and their uncertainties
-        nFree = len(result['groups'])
+        labels = result['groups']
+        nFree = len(labels)
         imageShape = self.__nrows, self.__ncols
         paramShape = nFree, self.__nrows, self.__ncols
         dtypeResult = numpy.float32
-        outbuffer['parameter_names'] = result['groups']
-        data_attrs = {} #{'units':'counts'}
+        dataAttrs = {} #{'units':'counts'}
+        paramAttrs = {'errors': 'uncertainties', 'default': not self._concentrations}
         outbuffer.allocateMemory('parameters',
                                  shape=paramShape,
                                  dtype=dtypeResult,
                                  fill_value=numpy.nan,
-                                 attrs=data_attrs)
+                                 labels=labels,
+                                 dataAttrs=dataAttrs,
+                                 groupAttrs=paramAttrs,
+                                 memtype='ram')
         outbuffer.allocateMemory('uncertainties',
                                  shape=paramShape,
                                  dtype=dtypeResult,
                                  fill_value=numpy.nan,
-                                 attrs=data_attrs)
+                                 labels=labels,
+                                 dataAttrs=dataAttrs,
+                                 groupAttrs=None,
+                                 memtype='ram')
 
         # Concentrations
         if self._concentrations:
+            groupAttrs = {'default': True}
             if 'mmolar' in concentrations:
                 concentration_key = 'molarconcentrations'
-                concentration_names = 'molarconcentration_names'
-                concentration_attrs = {} #{'units': 'mM'}
+                dataAttrs = {} #{'units': 'mM'}
             else:
                 concentration_key = 'massfractions'
-                concentration_names = 'massfraction_names'
-                concentration_attrs = {}
+                dataAttrs = {}
             self._concentration_key = concentration_key
-            self._concentration_names = concentration_names
-            outbuffer[concentration_names] = concentrations['groups']
+            labels = concentrations['groups']
             layerlist = concentrations['layerlist']
             if len(layerlist) > 1:
-                outbuffer[concentration_names] += [(group, layer)
-                                                    for group in concentrations['groups']
-                                                    for layer in layerlist]
+                labels += [(group, layer)
+                            for group in concentrations['groups']
+                            for layer in layerlist]
             nConcFree = len(concentrations['groups'])
             paramShape = nConcFree, self.__nrows, self.__ncols
             outbuffer.allocateMemory(concentration_key,
                                      shape=paramShape,
                                      dtype=dtypeResult,
                                      fill_value=numpy.nan,
-                                     attrs=concentration_attrs)
+                                     labels=labels,
+                                     dataAttrs=dataAttrs,
+                                     groupAttrs=groupAttrs,
+                                     memtype='ram')
 
         # Model ,residuals, chisq ,...
         if outbuffer.diagnostics:
@@ -926,53 +934,31 @@ class McaAdvancedFitBatch(object):
             outbuffer.allocateMemory('nFreeParameters',
                                      shape=imageShape,
                                      fill_value=nFree,
-                                     dtype=numpy.int32)
+                                     dtype=numpy.int32,
+                                     dataAttrs=None,
+                                     groupAttrs=None,
+                                     memtype='hdf5')
             outbuffer.allocateMemory('nObservations',
                                      shape=imageShape,
                                      fill_value=nObs,
-                                     dtype=numpy.int32)
+                                     dtype=numpy.int32,
+                                     dataAttrs=None,
+                                     groupAttrs=None,
+                                     memtype='hdf5')
             outbuffer.allocateMemory('Chisq',
                                      shape=imageShape,
                                      fill_value=numpy.nan,
-                                     dtype=dtypeResult)
-            outaxes = False
-            if outbuffer.saveFit:
-                fitmodel = outbuffer.allocateH5('model',
-                                                nxdata='fit',
-                                                shape=stackShape,
-                                                dtype=dtypeResult,
-                                                fill_value=numpy.nan,
-                                                chunks=True,
-                                                attrs=data_attrs)
-                #idx = [slice(None)]*fitmodel.ndim
-                #idx[mcaIndex] = slice(0, iXMin)
-                #fitmodel[tuple(idx)] = numpy.nan
-                #idx[mcaIndex] = slice(iXMax, None)
-                #fitmodel[tuple(idx)] = numpy.nan
-                self._mcaIdx = slice(iXMin, iXMax)
-            if outbuffer.saveData:
-                outaxes = True
-                outbuffer.allocateH5('data',
-                                     nxdata='fit',
-                                     shape=stackShape,
                                      dtype=dtypeResult,
-                                     fill_value=numpy.nan,
-                                     chunks=True,
-                                     attrs=data_attrs)
-            if outbuffer.saveResiduals:
-                outaxes = True
-                outbuffer.allocateH5('residuals',
-                                     nxdata='fit',
-                                     shape=stackShape,
-                                     dtype=dtypeResult,
-                                     fill_value=numpy.nan,
-                                     chunks=True,
-                                     attrs=data_attrs)
-            if outaxes:
+                                     dataAttrs=None,
+                                     groupAttrs=None,
+                                     memtype='hdf5')
+            dataAttrs = {} #{'units':'counts'}
+            fitAttrs = {}
+            if outbuffer.diagnostics:
                 # Generic axes
-                stackAxesNames = ['dim{}'.format(i) for i in range(len(stackShape))]
+                dataAxesNames = ['dim{}'.format(i) for i in range(len(stackShape))]
                 dataAxes = [(name, numpy.arange(n, dtype=dtypeResult), {})
-                            for name, n in zip(stackAxesNames, stackShape)]
+                            for name, n in zip(dataAxesNames, stackShape)]
                 if 'config' in result:
                     cfg = result['config']
                 else:
@@ -985,11 +971,47 @@ class McaAdvancedFitBatch(object):
                     zero = mcacfg['zero']
                     gain = mcacfg['gain']
                     xenergy = zero + gain*xdata0
-                    stackAxesNames[mcaIndex] = 'energy'
+                    dataAxesNames[mcaIndex] = 'energy'
                     dataAxes[mcaIndex] = 'energy', xenergy.astype(dtypeResult), {'units': 'keV'}
                     dataAxes.append(('channels', xdata0.astype(numpy.int32), {}))
-                outbuffer['dataAxesUsed'] = tuple(stackAxesNames)
-                outbuffer['dataAxes'] = tuple(dataAxes)
+                fitAttrs['axes'] = dataAxes
+                fitAttrs['axesused'] = dataAxesNames
+            if outbuffer.saveFit:
+                fitmodel = outbuffer.allocateMemory('model',
+                                                    group='fit',
+                                                    shape=stackShape,
+                                                    dtype=dtypeResult,
+                                                    fill_value=numpy.nan,
+                                                    chunks=True,
+                                                    dataAttrs=dataAttrs,
+                                                    groupAttrs=fitAttrs,
+                                                    memtype='hdf5')
+                #idx = [slice(None)]*fitmodel.ndim
+                #idx[mcaIndex] = slice(0, iXMin)
+                #fitmodel[tuple(idx)] = numpy.nan
+                #idx[mcaIndex] = slice(iXMax, None)
+                #fitmodel[tuple(idx)] = numpy.nan
+                self._mcaIdx = slice(iXMin, iXMax)
+            if outbuffer.saveData:
+                outbuffer.allocateMemory('data',
+                                         group='fit',
+                                         shape=stackShape,
+                                         dtype=dtypeResult,
+                                         fill_value=numpy.nan,
+                                         chunks=True,
+                                         dataAttrs=dataAttrs,
+                                         groupAttrs=fitAttrs,
+                                         memtype='hdf5')
+            if outbuffer.saveResiduals:
+                outbuffer.allocateMemory('residuals',
+                                         group='fit',
+                                         shape=stackShape,
+                                         dtype=dtypeResult,
+                                         fill_value=numpy.nan,
+                                         chunks=True,
+                                         dataAttrs=dataAttrs,
+                                         groupAttrs=fitAttrs,
+                                         memtype='hdf5')
 
     def _saveFitResult(self, result, concentrations):
         outbuffer = self.outbuffer
@@ -997,18 +1019,18 @@ class McaAdvancedFitBatch(object):
         # Fit parameters and their uncertainties
         output = outbuffer['parameters']
         outputs = outbuffer['uncertainties']
-        for i, group in enumerate(outbuffer['parameter_names']):
+        for i, group in enumerate(outbuffer.labels('parameters')):
             output[i, self.__row, self.__col] = result[group]['fitarea']
             outputs[i, self.__row, self.__col] = result[group]['sigmaarea']
         # Concentrations
         if self._concentrations:
             output = outbuffer[self._concentration_key]
-            for i, name in enumerate(outbuffer[self._concentration_names]):
-                if isinstance(name, tuple):
-                    group, layer = name
+            for i, label in enumerate(outbuffer.labels(self._concentration_key)):
+                if isinstance(label, tuple):
+                    group, layer = label
                     output[i, self.__row, self.__col] = concentrations[layer][self.__conKey][group]
                 else:
-                    output[i, self.__row, self.__col] = concentrations[self.__conKey][name]
+                    output[i, self.__row, self.__col] = concentrations[self.__conKey][label]
         # Diagnostics: model, residuals, chisq ,...
         if outbuffer.diagnostics:
             outbuffer['Chisq'][self.__row, self.__col] = result['chisq']
@@ -1027,24 +1049,27 @@ class McaAdvancedFitBatch(object):
         outbuffer = self.outbuffer
 
         # Fit parameters (ROIs)
-        parameter_names = [(group, roi)
+        labels = [(group, roi)
                            for group, rois in result.items()
                            for roi in rois]
-        nFree = len(parameter_names)
+        nFree = len(labels)
         paramShape = nFree, self.__nrows, self.__ncols
         dtypeResult = numpy.float32
-        outbuffer['parameter_names'] = parameter_names
-        data_attrs = {} #{'units':'counts'}
+        dataAttrs = {} #{'units':'counts'}
+        groupAttrs = {'default': True}
         outbuffer.allocateMemory('parameters',
-                                    shape=paramShape,
-                                    dtype=dtypeResult,
-                                    attrs=data_attrs)
+                                 shape=paramShape,
+                                 dtype=dtypeResult,
+                                 labels=labels,
+                                 dataAttrs=dataAttrs,
+                                 groupAttrs=groupAttrs,
+                                 memtype='ram')
 
     def _saveRoiFitResult(self, result):
         outbuffer = self.outbuffer
         output = outbuffer['parameters']
-        for i, name in enumerate(outbuffer['parameter_names']):
-            group, roi = name
+        for i, label in enumerate(outbuffer.labels('parameters')):
+            group, roi = label
             output[i, self.__row, self.__col] = result[group][roi]
 
 

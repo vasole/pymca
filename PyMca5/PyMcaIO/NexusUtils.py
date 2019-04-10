@@ -539,7 +539,9 @@ def nxDataAddSignals(data, signals, append=True):
     Add signals to NXdata instance
 
     :param h5py.Group data:
-    :param list(2-tuple) signals: name(str), value(None,h5py.Dataset,numpy.ndarray,dict), attrs(dict)
+    :param list(3-tuple) signals: name(str),
+                                  value(None, h5py.Dataset, numpy.ndarray, dict),
+                                  attrs(dict)
     :param bool append:
     """
     raiseIsNotNxClass(data, u'NXdata')
@@ -548,6 +550,10 @@ def nxDataAddSignals(data, signals, append=True):
     else:
         newsignals = []
     for name, value, attrs in signals:
+        if isinstance(value, dict):
+            dset = value.get('data', None)
+            if isinstance(dset, h5py.Dataset):
+                value = dset
         if value is None:
             pass  # is or will be created elsewhere
         elif isinstance(value, h5py.Dataset):

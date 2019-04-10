@@ -36,14 +36,21 @@ import numpy
 import logging
 import time
 import re
+import itertools
 from six import string_types
 from contextlib import contextmanager
+from collections import defaultdict, MutableMapping
 from PyMca5.PyMcaIO import NexusUtils
 
 _logger = logging.getLogger(__name__)
 
+if NexusUtils.h5py is None:
+    bufferTypes = list,  numpy.ndarray
+else:
+    bufferTypes = list,  numpy.ndarray, NexusUtils.h5py.Dataset
 
-class OutputBuffer(object):
+
+class OutputBuffer(MutableMapping):
 
     def __init__(self, outputDir=None, 
                  outputRoot=None, fileEntry=None, fileProcess=None,
@@ -85,8 +92,10 @@ class OutputBuffer(object):
         """
         self._inBufferContext = False
         self._inSaveContext = False
-        self._output = {}
-        self._attrs = {}
+        self._buffers = {}
+        self._info = {}
+        self._results = {}
+        self._labels = {}
         self._nxprocess = None
 
         self.outputDir = outputDir
@@ -106,6 +115,47 @@ class OutputBuffer(object):
         self.overwrite = overwrite
         self.nosave = nosave
         self.suffix = suffix
+        self._labelFormats = defaultdict(lambda: '')
+        self.labelFormat('uncertainties', 's')
+        self.labelFormat('massfractions', 'w')
+        self.labelFormat('molarconcentrations', 'mM')
+        self._defaultgroups = 'molarconcentrations', 'massfractions', 'parameters'
+        self._optionalimage = 'chisq',
+        self._configurationkey = 'configuration'
+
+    def __getitem__(self, key):
+        try:
+            return self._buffers[key]
+        except KeyError:
+            return self._info[key]
+            
+    def __setitem__(self, key, value):
+        if isinstance(value, bufferTypes):
+            self.allocateMemory(key, data=value)
+        else:
+            self._info[key] = value
+
+    def __delitem__(self, key):
+        try:
+            del self._buffers[key]
+        except KeyError:
+            del self._info[key]
+        
+    def __iter__(self):
+        return itertools.chain(iter(self._buffers), iter(self._info))
+
+    def __len__(self):
+        return len(self._buffers) + len(self._info)
+
+    def __repr__(self):
+        return "OutputBuffer(outputDir={}, outputRoot={}, fileEntry={}, suffix={})"\
+                .format(repr(self.outputDir), repr(self.outputRoot),
+                        repr(self.fileEntry), repr(self.suffix))
+
+    def labelFormat(self, group, prefix):
+        """For single-page edf/tif file names
+        """
+        self._labelFormats[group] = prefix
 
     @property
     def outputRoot(self):
@@ -281,61 +331,256 @@ class OutputBuffer(object):
         else:
             return os.path.join(self.outroot_localfs, self.fileEntry+suffix+ext)
 
-    def __repr__(self):
-        return "OutputBuffer(outputDir={}, outputRoot={}, fileEntry={}, suffix={})"\
-                .format(repr(self.outputDir), repr(self.outputRoot),
-                        repr(self.fileEntry), repr(self.suffix))
-
-    def __getitem__(self, key):
-        return self._output[key]
-
-    def __setitem__(self, key, value):
-        self._output[key] = value
-
-    def __contains__(self, key):
-        return key in self._output
-
-    def get(self, key, default=None):
-        return self._output.get(key, default)
-
-    def allocateMemory(self, name, fill_value=None, shape=None, dtype=None, attrs=None):
+    def allocateMemory(self, label, group=None, memtype='ram', **kwargs):
         """
-        :param str name:
-        :param num fill_value:
-        :param tuple shape:
-        :param dtype:
+        :param str label:
+        :param str group: group name of this dataset (in hdf5 this is the nxdata name)
+        :param str memtype: ram or hdf5
+        :param \**kwargs: see _allocateRam or _allocateHdf5
         """
-        if fill_value is None:
+        memtype = memtype.lower()
+        if not group:
+            group = label
+        if memtype in ('hdf5', 'h5', 'nx', 'nexus'):
+            if self.nosave:
+                errmsg = 'saving is disabled'
+            elif not self.h5:
+                errmsg = 'h5 format is disabled'
+            elif NexusUtils.h5py is None:
+                errmsg = 'h5py not installed'
+            elif not self.outputDir:
+                _logger.warning('no output directory specified')
+            else:
+                errmsg = None
+            if errmsg:
+                _logger.warning('Allocate in memory instead of Hdf5 ({})'.format(errmsg))
+                buffer = self._allocateRam(label, group=group, **kwargs)
+            else:
+                buffer = self._allocateHdf5(label, group=group, **kwargs)
+        else:
+            buffer = self._allocateRam(label, group=group, **kwargs)
+        return buffer
+
+    def _allocateRam(self, label, group=None, fill_value=None, dataAttrs=None,
+                     data=None, shape=None, dtype=None, labels=None,
+                     groupAttrs=None, **unused):
+        """
+        :param str label: 
+        :param str group: group name of this dataset (in hdf5 this is the nxdata name)
+        :param num fill_value: initial buffer item value
+        :param dict dataAttrs: dataset attributes
+        :param ndarray data: dataset or stack of datasets
+        :param tuple shape: buffer shape
+        :param dtype: buffer type
+        :param list labels: for stack of datasets
+        :param dict groupAttrs: nxdata attributes (e.g. axes)
+        """
+        if data is not None:
+            buffer = numpy.asarray(data)
+            if fill_value is not None:
+                buffer[:] = fill_value
+        elif fill_value is None:
             buffer = numpy.empty(shape, dtype=dtype)
         elif fill_value == 0:
             buffer = numpy.zeros(shape, dtype=dtype)
         else:
             buffer = numpy.full(shape, fill_value, dtype=dtype)
-        self._output[name] = buffer
-        self._attrs[name] = attrs
+        
+        self._buffers[label] = buffer
+
+        # Prepare Hdf5 dataset arguments
+        if labels:
+            names = self._labelsToHdf5Strings(labels)
+            for lbl, name, data in zip(labels, names, buffer):
+                self._addResult(group, lbl, name, data, dataAttrs, groupAttrs)
+        else:
+            name = self._labelsToHdf5Strings([label])[0]
+            self._addResult(group, label, name, buffer, dataAttrs, groupAttrs)
         return buffer
 
-    def allocateH5(self, name, nxdata=None, fill_value=None, attrs=None, **kwargs):
+    def _allocateHdf5(self, label, group=None, fill_value=None, dataAttrs=None,
+                      data=None, shape=None, dtype=None, labels=None,
+                      groupAttrs=None, **createkwargs):
         """
-        :param str name:
-        :param str nxdata:
-        :param num fill_value:
-        :param \**kwargs: see h5py.Group.create_dataset
+        :param str or tuple label: 
+        :param str group: group name of this dataset (in hdf5 this is the nxdata name)
+        :param num fill_value: initial buffer item value
+        :param dict dataAttrs: dataset attributes
+        :param ndarray data: dataset or stack of datasets
+        :param tuple shape: buffer shape
+        :param dtype: buffer type
+        :param list labels: for stack of datasets
+        :param dict groupAttrs: nxdata attributes (e.g. axes)
+        :param \**createkwargs: see h5py.Group.create_dataset
+        """
+        if data is None and shape is None:
+                raise ValueError("Missing 'dtype' argument")
+        if data is None and dtype is None:
+            raise ValueError("Provide 'data' or 'shape'")
+
+        # Create Nxdata group (if not already there)
+        nxdata = self._getNXdataGroup(group)
+
+        # Create datasets (attributes will be handled later)
+        if labels:
+            names = self._labelsToHdf5Strings(labels)
+            buffer = []  # TODO: list of datasets cannot be indexed like a numpy array
+            if data is None:
+                signalshape = shape[1:]
+                for lbl, name in zip(labels, names):
+                    dset = nxdata.create_dataset(name, shape=signalshape,
+                                                 dtype=dtype, **createkwargs)
+                    if fill_value is not None:
+                        dset[()] = fill_value
+                    self._addResult(group, lbl, name, dset, dataAttrs, groupAttrs)
+                    buffer.append(dset)
+            else:
+                for lbl, name, signaldata in zip(labels, names, data):
+                    dset = nxdata.create_dataset(name, data=signaldata,
+                                                 **createkwargs)
+                    if fill_value is not None:
+                        dset[()] = fill_value
+                    self._addResult(group, lbl, name, dset, dataAttrs, groupAttrs)
+                    buffer.append(dset)
+        else:
+            name = self._labelsToHdf5Strings([label])[0]
+            if data is None:
+                buffer = nxdata.create_dataset(name, shape=shape,
+                                               dtype=dtype, **createkwargs)
+            else:
+                buffer = nxdata.create_dataset(name, data=data, **createkwargs)
+            if fill_value is not None:
+                buffer[()] = fill_value
+            self._addResult(group, label, name, buffer, dataAttrs, groupAttrs)
+
+        self.flush()
+        self._buffers[label] = buffer
+        return buffer
+
+    def _getNXdataGroup(self, group):
+        """
+        Get h5py.Group (create when missing, verify class when present)
+        :param str group:
         """
         parent = self._nxprocess['results']
-        if nxdata:
-            parent = NexusUtils.nxData(parent, nxdata)
-        buffer = parent.create_dataset(name, **kwargs)
-        if attrs:
-            buffer.attrs.update(attrs)
-        if fill_value is not None:
-            buffer[()] = fill_value
-        self.flush()
-        self._output[name] = buffer
-        return buffer
+        if group in parent:
+            nxdata = parent[group]
+            NexusUtils.raiseIsNotNxClass(nxdata, u'NXdata')
+        else:
+            nxdata = NexusUtils.nxData(parent, group)
+        return nxdata
+
+    def _addResult(self, group, label, h5name, buffer, dataAttrs, groupAttrs):
+        # Prepare HDF5 output
+        # group -> NXdata (h5py.group), label -> signal (h5py.dataset)
+        info = self._results.get(group, None)
+        if info is None:
+            if groupAttrs:
+                info = groupAttrs.copy()
+            else:
+                info = {}
+            info['_signals'] = []
+            info['default'] = info.get('default', False)
+            info['errors'] = info.get('errors', None)
+            info['axes'] = info.get('axes', None)
+            info['axesused'] = info.get('axesused', None)
+            self._results[group] = info
+        if dataAttrs is None:
+            attrs = {}
+        else:
+            attrs = dataAttrs.copy()
+        attrs['chunks'] = attrs.get('chunks', True)
+        if buffer.ndim == 2:
+            interpretation = 'image'
+        else:
+            interpretation = 'spectrum'
+        attrs['interpretation'] = attrs.get('interpretation', interpretation)
+        info['_signals'].append((h5name, {'data': buffer}, attrs))
+
+        # Groups labels
+        labels = self._labels.get(group, None)
+        if labels is None:
+            self._labels[group] = labels = []
+        labels.append(label)
+
+        # Mark as default (unmark others)
+        if info['default']:
+            self.markDefault(group)
+
+    def labels(self, group, labeltype=None):
+        """
+        :param str group:
+        :param str labeltype: 'hdf5': hdf5 datasets
+                              'singlepage': file names
+                              'multipage': multipage titles
+                              else: as given
+        :returns list: strings or tuples
+        """
+        labels = self._labels.get(group, [])
+        return self._labelsToStrings(group, labels, labeltype=labeltype)
+    
+    def _labelsToStrings(self, group, labels, labeltype=None):
+        if not labels:
+            return labels
+        if labeltype == 'hdf5':
+            return self._labelsToHdf5Strings(labels)
+        elif labeltype == 'singlepage' or labeltype == 'multipage':
+            prefix = self._labelFormats[group]
+            return self._labelsToPathStrings(labels,
+                                             prefix=prefix,
+                                             multipage=labeltype == 'multipage')
+        else:
+            return labels
+
+    @staticmethod
+    def _labelsToPathStrings(labels, prefix='', multipage=True):
+        """Used for edf files names for example
+        """
+        if not labels:
+            return []
+        out = []
+        def replbrackets(matchobj):
+            return matchobj.group(1)+'_'
+        for args in labels:
+            if not isinstance(args, tuple):
+                args = (args,)
+            separator = '_'
+            if prefix:
+                args = ('{}({})'.format(prefix, args[0]), ) + args[1:]
+            label = separator.join(args)
+            # Multipage titles should not contain spaces
+            label = label.replace(' ', '_')
+            if not multipage:
+                # Ensure valid filename
+                label = re.sub('\((.+)\)', replbrackets, label)
+                label = re.sub('\[(.+)\]', replbrackets, label)
+                label = re.sub('\{(.+)\}', replbrackets, label)
+                label = re.sub('[^0-9a-zA-Z_]+', '', label)
+                label = re.sub('_+', '_', label)
+                label = re.sub('_+$', '', label)
+            label = re.sub('_+', '_', label)
+            out.append(label)
+        return out
+
+    @staticmethod
+    def _labelsToHdf5Strings(labels, separator=' '):
+        """Used for hdf5 dataset names
+        """
+        if not labels:
+            return []
+        out = []
+        for args in labels:
+            if not isinstance(args, tuple):
+                args = (args,)
+            out.append(separator.join(args))
+        return out
+
+    def markDefault(self, group):
+        for groupname, info in self._results.items():
+            info['default'] = groupname == group
 
     @contextmanager
-    def _bufferContext(self, update=True):
+    def bufferContext(self, update=True):
         """
         Prepare output buffers (HDF5: create file, NXentry and NXprocess)
 
@@ -418,37 +663,54 @@ class OutputBuffer(object):
         Swap strings for dataset objects on enter and back on exit
         """
         update = {}
-        for k, v in self._output.items():
+        for k, v in self._buffers.items():
             if isinstance(v, string_types):
                 update[k] = f[v]
-        self._output.update(update)
+        self._buffers.update(update)
         try:
             yield
         finally:
             update = {}
-            for k, v in self._output.items():
+            for k, v in self._buffers.items():
                 if isinstance(v, NexusUtils.h5py.Dataset):
                     update[k] = v.name
-            self._output.update(update)
+            self._buffers.update(update)
 
     @contextmanager
-    def saveContext(self, save=True):
+    def saveContext(self, update=False):
+        """
+        Same as `bufferContext` but with `save` when leaving the context.
+        By default `update=False`: try overwriting (exception when not allowed)
+        """
         alreadyIn = self._inSaveContext
         if not alreadyIn:
             self._inSaveContext = True
             _logger.debug('Enter saving context of {}'.format(self))
-        with self._bufferContext(update=False):
+        with self.bufferContext(update=update):
             try:
                 yield
             except:
                 raise
             else:
-                if save and not alreadyIn:
+                if not alreadyIn:
                     self.save()
             finally:
                 if not alreadyIn:
                     self._inSaveContext = False
         _logger.debug('Exit saving context of {}'.format(self))
+
+    @contextmanager
+    def Context(self, save=True, update=False):
+        """
+        Either saveContext or bufferContext.
+        By default `update=False`: try overwriting (exception when not allowed)
+        """
+        if save:
+            with self.saveContext(update=update):
+                yield
+        else:
+            with self.bufferContext(update=update):
+                yield
 
     def flush(self):
         if self._nxprocess is not None:
@@ -459,84 +721,53 @@ class OutputBuffer(object):
         Save result of XRF batch fitting. Preferrable use saveContext instead.
         HDF5 NXprocess will be updated, not overwritten.
         """
+        _logger.debug('Saving {}'.format(self))
         if self.nosave:
-            _logger.warning('Saving is disabled')
-            return
-        if not (self.tif or self.edf or self.csv or self.dat or self.h5):
-            _logger.warning('Fit result not saved (no output format specified)')
-            return
-        if not self.outputDir:
-            _logger.warning('Fit result not saved (no output directory specified)')
+            errmsg = 'saving is disabled'
+        elif not (self.tif or self.edf or self.csv or self.dat or self.h5):
+            errmsg = 'all output formats disabled'
+        elif not self.outputDir:
+            errmsg = 'no output directory specified'
+        else:
+            errmsg = ''
+        if errmsg:
+            _logger.warning('Fit results are not saved ({})'.format(errmsg))
             return
         t0 = time.time()
-        _logger.debug('Saving {}'.format(self))
-
-        with self._bufferContext(update=True):
+        with self.bufferContext(update=True):
             if self.tif or self.edf or self.csv or self.dat:
-                self._saveSingle()
+                self._saveImages()
             if self.h5:
                 self._saveH5()
-
         t = time.time() - t0
         _logger.debug("Saving results elapsed = %f", t)
 
-    @property
-    def parameter_names(self):
-        return self._getNames('parameter_names', '{}')
-
-    @property
-    def uncertainty_names(self):
-        return self._getNames('parameter_names', 's({})')
-
-    @property
-    def massfraction_names(self):
-        return self._getNames('massfraction_names', 'w({}){}', n=2)
-
-    @property
-    def molarconcentration_names(self):
-        return self._getNames('molarconcentration_names', 'mM({}){}', n=2)
-
-    def _getNames(self, names, fmt, n=1):
-        labels = self.get(names, None)
-        if not labels:
-            return []
-        out = []
-        for args in labels:
-            if not isinstance(args, tuple):
-                args = (args,)
-            nempty = n-len(args)
-            if nempty > 0:
-                args = args + ('',)*nempty
-            elif nempty < 0:
-                if n == 1:
-                    args = ''.join(args)
-                else:
-                    raise RuntimeError('{} cannot be represented as {}'
-                                       .format(args, repr(fmt)))
-            out.append(fmt.format(*args))
-        return out
-
-    def _saveSingle(self):
+    def _saveImages(self):
         from PyMca5.PyMca import ArraySave
 
-        imageNames = []
+        # Save only the buffers for which group name = buffer name
+        imageSingleNames = []
+        imageMultiNames = []
         imageList = []
-        lst = [('parameter_names', 'parameters'),
-               ('uncertainty_names', 'uncertainties'),
-               ('massfraction_names', 'massfractions'),
-               ('molarconcentration_names', 'molarconcentrations')]
-        for names, key in lst:
-            images = self.get(key, None)
-            if images is not None:
-                for img in images:
-                    imageList.append(img)
-                imageNames += getattr(self, names)
-        for name in ['Chisq']:
-            img = self.get(name, None)
-            if img is not None:
-                imageList.append(img)
-                imageNames.append(name)
-        if not imageNames:
+        for group, buffer in self._buffers.items():
+            names = self.labels(group, labeltype='singlepage')
+            if len(names) == len(buffer):
+                # Stack of datasets
+                mnames = self.labels(group, labeltype='multipage')
+                for name, mname, bufferi in zip(names, mnames, buffer):
+                    if bufferi.ndim <= 2:
+                        imageSingleNames.append(name)
+                        imageMultiNames.append(mname)
+                        imageList.append(bufferi[()])
+            else:
+                # Single dataset
+                if buffer.ndim <= 2 and group.lower() in self._optionalimage:
+                    name = self._labelsToStrings(group, [group], labeltype='singlepage')[0]
+                    mname = self._labelsToStrings(group, [group], labeltype='multipage')[0]
+                    imageSingleNames.append(name)
+                    imageMultiNames.append(mname)
+                    imageList.append(buffer[()])
+        if not imageSingleNames:
             return
 
         NexusUtils.mkdir(self.outroot_localfs)
@@ -545,50 +776,45 @@ class OutputBuffer(object):
                 fileName = self.filename('.edf')
                 self._checkOverwrite(fileName)
                 ArraySave.save2DArrayListAsEDF(imageList, fileName,
-                                               labels=imageNames)
+                                               labels=imageMultiNames)
             else:
-                for label, image in zip(imageNames, imageList):
-                    label = label.replace('(', '')
-                    label = label.replace(')', '')
-                    label = label.replace(' ', '_')
+                for label, title, image in zip(imageSingleNames, imageMultiNames, imageList):
                     fileName = self.filename('.edf', suffix="_" + label)
                     self._checkOverwrite(fileName)
                     ArraySave.save2DArrayListAsEDF([image],
                                                    fileName,
-                                                   labels=[label])
-        if self.csv:
-            fileName = self.filename('.csv')
-            self._checkOverwrite(fileName)
-            ArraySave.save2DArrayListAsASCII(imageList, fileName, csv=True,
-                                             labels=imageNames)
-        if self.dat:
-            fileName = self.filename('.dat')
-            self._checkOverwrite(fileName)
-            ArraySave.save2DArrayListAsASCII(imageList, fileName, csv=False,
-                                             labels=imageNames)
+                                                   labels=[title])
         if self.tif:
             if self.multipage:
                 fileName = self.filename('.tif')
                 self._checkOverwrite(fileName)
                 ArraySave.save2DArrayListAsMonochromaticTiff(imageList,
                                                              fileName,
-                                                             labels=imageNames,
+                                                             labels=imageMultiNames,
                                                              dtype=numpy.float32)
             else:
-                for label, image in zip(imageNames, imageList):
-                    label = label.replace('(', '')
-                    label = label.replace(')', '')
-                    label = label.replace(' ', '_')
+                for label, title, image in zip(imageSingleNames, imageMultiNames, imageList):
                     fileName = self.filename('.tif', suffix="_" + label)
                     self._checkOverwrite(fileName)
                     ArraySave.save2DArrayListAsMonochromaticTiff([image],
                                                                  fileName,
-                                                                 labels=[label],
+                                                                 labels=[title],
                                                                  dtype=numpy.float32)
-        if self.cfg and 'configuration' in self:
+        if self.csv:
+            fileName = self.filename('.csv')
+            self._checkOverwrite(fileName)
+            ArraySave.save2DArrayListAsASCII(imageList, fileName, csv=True,
+                                             labels=imageMultiNames)
+        if self.dat:
+            fileName = self.filename('.dat')
+            self._checkOverwrite(fileName)
+            ArraySave.save2DArrayListAsASCII(imageList, fileName, csv=False,
+                                             labels=imageMultiNames)
+
+        if self.cfg and self._configurationkey in self:
             fileName = self.filename('.cfg')
             self._checkOverwrite(fileName)
-            self['configuration'].write(fileName)
+            self[self._configurationkey].write(fileName)
 
     def _checkOverwrite(self, fileName):
         if os.path.exists(fileName):
@@ -598,60 +824,47 @@ class OutputBuffer(object):
                 raise RuntimeError('{} already exists'.format(fileName))
 
     def _saveH5(self):
-        # Save fit configuration
         nxprocess = self._nxprocess
         if nxprocess is None:
             return
-        nxresults = nxprocess['results']
-        configdict = self.get('configuration', None)
+        
+        # Save fit configuration
+        configdict = self.get(self._configurationkey, None)
         NexusUtils.nxProcessConfigurationInit(nxprocess, configdict=configdict)
 
-        # Save fitted parameters, uncertainties and elemental concentrations
-        lst = [('parameter_names', 'uncertainties'),
-               ('parameter_names', 'parameters'),
-               ('massfraction_names', 'massfractions'),
-               ('molarconcentration_names', 'molarconcentrations')]
-        for names, key in lst:
-            images = self.get(key, None)
-            if images is not None:
-                attrs = self._attrs.get(key, {})
-                attrs['interpretation'] = 'image'
-                signals = []
-                for label, img in zip(self[names], images):
-                    if isinstance(label, tuple):
-                        label = ' '.join(label)
-                    signals.append((label, {'data': img, 'chunks': True}, attrs))
-                if signals:
-                    data = NexusUtils.nxData(nxresults, key)
-                    NexusUtils.nxDataAddSignals(data, signals)
-                    NexusUtils.markDefault(data)
-        if 'parameters' in nxresults and 'uncertainties' in nxresults:
-            NexusUtils.nxDataAddErrors(nxresults['parameters'], nxresults['uncertainties'])
-
-        # Save fitted model and residuals
-        signals = []
-        attrs = {'interpretation': 'spectrum'}
-        for name in ['data', 'model', 'residuals']:
-            if name in self:
-                signals.append((name, self[name], attrs))
-        if signals:
-            nxdata = NexusUtils.nxData(nxresults, 'fit')
-            NexusUtils.nxDataAddSignals(nxdata, signals)
-            axes = self.get('dataAxes', None)
-            axes_used = self.get('dataAxesUsed', None)
+        # Save allocated memory
+        nxresults = nxprocess['results']
+        adderrors = []
+        markdefault = []
+        for group, info in self._results.items():
+            # Create group
+            nxdata = self._getNXdataGroup(group)
+            # Add signals
+            NexusUtils.nxDataAddSignals(nxdata, info['_signals'])
+            # Add axes
+            axes = info.get('axes', None)
+            axes_used = info.get('axesused', None)
             if axes:
                 NexusUtils.nxDataAddAxes(nxdata, axes)
             if axes_used:
                 axes = [(ax, None, None) for ax in axes_used]
                 NexusUtils.nxDataAddAxes(nxdata, axes, append=False)
+            # Add error links
+            errors = info['errors']
+            if errors:
+                if errors in nxresults:
+                    adderrors.append((nxdata, nxresults[errors]))
+            # Default nxdata for visualization
+            if info['default']:
+                markdefault.append(nxdata)
 
-        # Save diagnostics
-        signals = []
-        attrs = {'interpretation': 'image'}
-        for name in ['nObservations', 'nFreeParameters', 'Chisq']:
-            img = self.get(name, None)
-            if img is not None:
-                signals.append((name, img, attrs))
-        if signals:
-            nxdata = NexusUtils.nxData(nxresults, 'diagnostics')
-            NexusUtils.nxDataAddSignals(nxdata, signals)
+        # Error links and default for visualization
+        for nxdata, errors in adderrors:
+            NexusUtils.nxDataAddErrors(nxdata, errors)
+        if markdefault:
+            NexusUtils.markDefault(markdefault[-1])
+        else:
+            for group in self._defaultgroups:
+                if group in nxresults:
+                    NexusUtils.markDefault(nxresults[group])
+                    break
