@@ -510,10 +510,10 @@ class OutputBuffer(MutableMapping):
     def labels(self, group, labeltype=None):
         """
         :param str group:
-        :param str labeltype: 'hdf5': hdf5 datasets
-                              'singlepage': file names
-                              'multipage': multipage titles
-                              else: as given
+        :param str labeltype: 'hdf5': dataset names used in h5
+                              'filename': file names
+                              'title': titles used in edf/dat/csv/tif
+                              else: join with space-separator
         :returns list: strings or tuples
         """
         labels = self._labels.get(group, [])
@@ -524,16 +524,16 @@ class OutputBuffer(MutableMapping):
             return labels
         if labeltype == 'hdf5':
             return self._labelsToHdf5Strings(labels)
-        elif labeltype == 'singlepage' or labeltype == 'multipage':
+        elif labeltype == 'filename' or labeltype == 'title':
             prefix = self._labelFormats[group]
             return self._labelsToPathStrings(labels,
                                              prefix=prefix,
-                                             multipage=labeltype == 'multipage')
+                                             filename=labeltype == 'filename')
         else:
             return labels
 
     @staticmethod
-    def _labelsToPathStrings(labels, prefix='', multipage=True):
+    def _labelsToPathStrings(labels, prefix='', filename=False):
         """Used for edf files names for example
         """
         if not labels:
@@ -548,16 +548,21 @@ class OutputBuffer(MutableMapping):
             if prefix:
                 args = ('{}({})'.format(prefix, args[0]), ) + args[1:]
             label = separator.join(args)
-            # Multipage titles should not contain spaces
-            label = label.replace(' ', '_')
-            if not multipage:
-                # Ensure valid filename
+            # Replace spaces with underscores
+            label = re.sub('\s', '_', label)
+            if filename:
+                # Replace separators with underscores
+                label = re.sub('[-:;]', '_', label)
+                # Replace brackets with a trailing underscore
                 label = re.sub('\((.+)\)', replbrackets, label)
                 label = re.sub('\[(.+)\]', replbrackets, label)
                 label = re.sub('\{(.+)\}', replbrackets, label)
-                label = re.sub('[^0-9a-zA-Z_]+', '', label)
-                label = re.sub('_+', '_', label)
+                # Remove non-alphanumeric characters (except . and _)
+                label = re.sub('[^0-9a-zA-Z_\.]+', '', label)
+                # Remove trailing/leading underscores
+                label = re.sub('^_+', '', label)
                 label = re.sub('_+$', '', label)
+            # Remove repeated underscores
             label = re.sub('_+', '_', label)
             out.append(label)
         return out
@@ -750,10 +755,10 @@ class OutputBuffer(MutableMapping):
         imageMultiNames = []
         imageList = []
         for group, buffer in self._buffers.items():
-            names = self.labels(group, labeltype='singlepage')
+            names = self.labels(group, labeltype='filename')
             if len(names) == len(buffer):
                 # Stack of datasets
-                mnames = self.labels(group, labeltype='multipage')
+                mnames = self.labels(group, labeltype='title')
                 for name, mname, bufferi in zip(names, mnames, buffer):
                     if bufferi.ndim <= 2:
                         imageSingleNames.append(name)
@@ -762,8 +767,8 @@ class OutputBuffer(MutableMapping):
             else:
                 # Single dataset
                 if buffer.ndim <= 2 and group.lower() in self._optionalimage:
-                    name = self._labelsToStrings(group, [group], labeltype='singlepage')[0]
-                    mname = self._labelsToStrings(group, [group], labeltype='multipage')[0]
+                    name = self._labelsToStrings(group, [group], labeltype='filename')[0]
+                    mname = self._labelsToStrings(group, [group], labeltype='title')[0]
                     imageSingleNames.append(name)
                     imageMultiNames.append(mname)
                     imageList.append(buffer[()])

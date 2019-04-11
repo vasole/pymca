@@ -171,7 +171,7 @@ class FastXRFLinearFit(object):
             paramShape = (nFree,) + imageShape
             dtypeResult = self._fitDtypeResult(data)
             dataAttrs = {}  #{'units':'counts'})
-            paramAttrs = {'error': 'uncertainties',
+            paramAttrs = {'errors': 'uncertainties',
                           'default': not concentrations}
             results = outbuffer.allocateMemory('parameters',
                                                 shape=paramShape,

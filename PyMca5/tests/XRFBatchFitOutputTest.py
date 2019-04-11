@@ -123,7 +123,7 @@ class testXRFBatchFitOutput(unittest.TestCase):
                     if not b:
                         continue
                     expected += [os.path.join(subdir, 'sample_dataset_{}{}'.format(label, ext))
-                                 for labeldict in outlabels['single'].values()
+                                 for labeldict in outlabels['filename'].values()
                                  for label in labeldict.values()]
             if csv:
                 expected.append(os.path.join(subdir, 'sample_dataset.csv'))
@@ -146,19 +146,19 @@ class testXRFBatchFitOutput(unittest.TestCase):
             f = EdfFile.EdfFile(filename)
             edfdata = {f.GetHeader(i)['Title']: f.GetData(i) for i in range(f.GetNumImages())}
         for group, datadict in outdata.items():
-            if group not in outlabels:
+            if group not in outlabels['title']:
                 continue
             if not multipage:
                 edfdata = {}
                 for label, data in datadict.items():
-                    suffix = outlabels[group]['single'].get(label, None)
+                    suffix = outlabels['filename'][group].get(label, None)
                     if not suffix:
                         continue
                     filename = os.path.join(subdir, 'sample_dataset_{}{}'.format(suffix, ext))
                     f = EdfFile.EdfFile(filename)
                     edfdata[f.GetHeader(0)['Title']] = f.GetData(0)
             for label, data in datadict.items():
-                edflabel = outlabels[group]['multi'].get(label, None)
+                edflabel = outlabels['title'][group].get(label, None)
                 if edflabel:
                     numpy.testing.assert_array_equal(data, edfdata[edflabel], '{}: {}'.format(group, label))
 
@@ -213,7 +213,7 @@ class testXRFBatchFitOutput(unittest.TestCase):
         else:
             memsmall = membig = 'hdf5'
 
-        labels = ['zero', 'area1', ('area1', 'Layer1')]
+        labels = ['zero', 'Ca K', ('Ca K', 'Layer1'), 'Fe-K', ('Fe-K', 'Layer1')]
         nparams = len(labels)
         imgshape = 4, 5
         paramshape = (nparams,)+imgshape
@@ -301,26 +301,36 @@ class testXRFBatchFitOutput(unittest.TestCase):
         # Hdf5 group names, edf file suffixes and edf titles
         outlabels = {}
         outlabels['h5'] = h5labels = {}
-        outlabels['multi'] = multilabels = {}
-        outlabels['single'] = singlelabels = {}
+        outlabels['title'] = titlelabels = {}
+        outlabels['filename'] = singlelabels = {}
         h5labels['parameters'] = {'zero': 'zero',
-                                  'area1': 'area1',
-                                  ('area1', 'Layer1'): 'area1 Layer1'}
-        multilabels['parameters'] = {'zero': 'zero',
-                                     'area1': 'area1',
-                                     ('area1', 'Layer1'): 'area1 Layer1'}
+                                  'Ca K': 'Ca K',
+                                  ('Ca K', 'Layer1'): 'Ca K Layer1',
+                                  'Fe-K': 'Fe-K',
+                                  ('Fe-K', 'Layer1'): 'Fe-K Layer1'}
+        titlelabels['parameters'] = {'zero': 'zero',
+                                     'Ca K': 'Ca_K',
+                                     ('Ca K', 'Layer1'): 'Ca_K_Layer1',
+                                     'Fe-K': 'Fe-K',
+                                     ('Fe-K', 'Layer1'): 'Fe-K_Layer1'}
         singlelabels['parameters'] = {'zero': 'zero',
-                                      'area1': 'area1',
-                                      ('area1', 'Layer1'): 'area1_Layer1'}
+                                      'Ca K': 'Ca_K',
+                                      ('Ca K', 'Layer1'): 'Ca_K_Layer1',
+                                      'Fe-K': 'Fe_K',
+                                      ('Fe-K', 'Layer1'): 'Fe_K_Layer1'}
         h5labels['uncertainties'] = h5labels['parameters']
-        multilabels['uncertainties'] = {'zero': 's(zero)',
-                                        'area1': 's(area1)',
-                                        ('area1', 'Layer1'): 's(area1)_Layer1'}
+        titlelabels['uncertainties'] = {'zero': 's(zero)',
+                                        'Ca K': 's(Ca_K)',
+                                        ('Ca K', 'Layer1'): 's(Ca_K)_Layer1',
+                                        'Fe-K': 's(Fe-K)',
+                                        ('Fe-K', 'Layer1'): 's(Fe-K)_Layer1'}
         singlelabels['uncertainties'] = {'zero': 'szero',
-                                         'area1': 'sarea1',
-                                         ('area1', 'Layer1'): 'sarea1_Layer1'}
+                                         'Ca K': 'sCa_K',
+                                         ('Ca K', 'Layer1'): 'sCa_K_Layer1',
+                                         'Fe-K': 'sFe_K',
+                                         ('Fe-K', 'Layer1'): 'sFe_K_Layer1'}
         h5labels['diagnostics'] = {'nFree': 'nFree', 'chisq': 'chisq'}
-        multilabels['diagnostics'] = {'chisq': 'chisq'}
+        titlelabels['diagnostics'] = {'chisq': 'chisq'}
         singlelabels['diagnostics'] = {'chisq': 'chisq'}
         h5labels['fit'] = {'residuals': 'residuals'}
         h5labels['dummy'] = {'dummy': 'dummy'}

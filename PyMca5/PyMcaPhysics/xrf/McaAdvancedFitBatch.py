@@ -1047,15 +1047,15 @@ class McaAdvancedFitBatch(object):
         outbuffer = self.outbuffer
 
         # Fit parameters (ROIs)
-        labels = [(group, roi)
-                           for group, rois in result.items()
-                           for roi in rois]
+        labels = [(group, roi.replace(' ROI', ''))
+                  for group, rois in result.items()
+                  for roi in rois]
         nFree = len(labels)
         paramShape = nFree, self.__nrows, self.__ncols
         dtypeResult = numpy.float32
         dataAttrs = {} #{'units':'counts'}
         groupAttrs = {'default': True}
-        outbuffer.allocateMemory('parameters',
+        outbuffer.allocateMemory('roi',
                                  shape=paramShape,
                                  dtype=dtypeResult,
                                  labels=labels,
@@ -1065,10 +1065,10 @@ class McaAdvancedFitBatch(object):
 
     def _saveRoiFitResult(self, result):
         outbuffer = self.outbuffer
-        output = outbuffer['parameters']
-        for i, label in enumerate(outbuffer.labels('parameters')):
+        output = outbuffer['roi']
+        for i, label in enumerate(outbuffer.labels('roi')):
             group, roi = label
-            output[i, self.__row, self.__col] = result[group][roi]
+            output[i, self.__row, self.__col] = result[group][roi+' ROI']
 
 
 def main():
