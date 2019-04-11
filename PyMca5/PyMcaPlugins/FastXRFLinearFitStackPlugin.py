@@ -243,11 +243,11 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
             self._widget = StackPluginResultsWindow.StackPluginResultsWindow(\
                                             usetab=False)
             self._widget.buildAndConnectImageButtonBox(replace=True,
-                                                    multiple=True)
+                                                       multiple=True)
             qt = StackPluginResultsWindow.qt
             self._widget.sigMaskImageWidgetSignal.connect(self.mySlot)
             self._widget.setStackPluginResults(images,
-                                            image_names=imageNames)
+                                               image_names=imageNames)
             self._showWidget()
 
             # Save results

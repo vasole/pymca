@@ -205,6 +205,7 @@ class FastXRFLinearFit(object):
             if outbuffer.diagnostics:
                 dataAttrs = {}
                 nFreeParameters = outbuffer.allocateMemory('nFreeParameters',
+                                                group='diagnostics',
                                                 shape=imageShape,
                                                 fill_value=nFree,
                                                 dtype=numpy.int32,
@@ -212,6 +213,7 @@ class FastXRFLinearFit(object):
                                                 groupAttrs=None,
                                                 memtype='ram')
                 nObservations = outbuffer.allocateMemory('nObservations',
+                                                group='diagnostics',
                                                 shape=imageShape,
                                                 fill_value=nObs,
                                                 dtype=numpy.int32,

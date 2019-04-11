@@ -640,21 +640,20 @@ class McaAdvancedFitBatch(object):
                 self.__nrows = len(self._filelist)
             else:
                 self.__nrows = len(range(0, len(self._filelist), self.fileStep))
-        bFirstSpectrum = self.counter == 0
         bOutput = self.outbuffer is not None and \
                   self.__ncols and self.__nrows
         if self.roiFit:
             result = self.__roiOneMca(x,y)
-            if bOutput:
-                if bFirstSpectrum:
+            if bOutput and result is not None:
+                if not self.outbuffer.hasAllocatedMemory():
                     self._allocateMemoryRoiFit(result)
-                self._saveRoiFitResult(result)
+                self._storeRoiFitResult(result)
         else:
             result, concentrations = self.__fitOneMca(x,y,filename,key,info=info)
-            if bOutput:
-                if bFirstSpectrum:
+            if bOutput and result is not None:
+                if not self.outbuffer.hasAllocatedMemory():
                     self._allocateMemoryFit(result, concentrations)
-                self._saveFitResult(result, concentrations)
+                self._storeFitResult(result, concentrations)
         self.counter += 1
 
     def __fitOneMca(self,x,y,filename,key,info=None):
@@ -725,13 +724,13 @@ class McaAdvancedFitBatch(object):
             self.mcafit.config['fit']['use_limit'] = 1  # TODO: why???
             self.mcafit.setData(x, y, time=info.get("McaLiveTime", None))
         except:
-            self._restoreFitConfig(filename)
+            self._restoreFitConfig(filename, 'entering data')
             return False
         return True
 
-    def _restoreFitConfig(self, filename):
-        _logger.error("Error entering data of file with output = %s\n%s" %\
-                    (filename, sys.exc_info()[1]))
+    def _restoreFitConfig(self, filename, task):
+        _logger.error("Error %s of file with output = %s\n%s" %\
+                    (task, filename, sys.exc_info()[1]))
         # Restore when a fit strategy like `matrix adjustment` is used
         if self.mcafit.config['fit'].get("strategyflag", False):
             config = self.__configList[self.__currentConfig]
@@ -780,7 +779,7 @@ class McaAdvancedFitBatch(object):
                 #just images
                 fitresult = self.mcafit.startfit(digest=0)
         except:
-            self._restoreFitConfig(filename)
+            self._restoreFitConfig(filename, 'fitting data')
         return fitresult, result, concentrations
 
     def _concentrationsFromResult(self, fitresult, result):
@@ -930,6 +929,7 @@ class McaAdvancedFitBatch(object):
             iXMin, iXMax = xdata[0], xdata[-1]+1
             nObs = iXMax-iXMin
             outbuffer.allocateMemory('nFreeParameters',
+                                     group='diagnostics',
                                      shape=imageShape,
                                      fill_value=nFree,
                                      dtype=numpy.int32,
@@ -937,6 +937,7 @@ class McaAdvancedFitBatch(object):
                                      groupAttrs=None,
                                      memtype='hdf5')
             outbuffer.allocateMemory('nObservations',
+                                     group='diagnostics',
                                      shape=imageShape,
                                      fill_value=nObs,
                                      dtype=numpy.int32,
@@ -944,6 +945,7 @@ class McaAdvancedFitBatch(object):
                                      groupAttrs=None,
                                      memtype='hdf5')
             outbuffer.allocateMemory('Chisq',
+                                     group='diagnostics',
                                      shape=imageShape,
                                      fill_value=numpy.nan,
                                      dtype=dtypeResult,
@@ -1011,7 +1013,7 @@ class McaAdvancedFitBatch(object):
                                          groupAttrs=fitAttrs,
                                          memtype='hdf5')
 
-    def _saveFitResult(self, result, concentrations):
+    def _storeFitResult(self, result, concentrations):
         outbuffer = self.outbuffer
 
         # Fit parameters and their uncertainties
@@ -1063,7 +1065,7 @@ class McaAdvancedFitBatch(object):
                                  groupAttrs=groupAttrs,
                                  memtype='ram')
 
-    def _saveRoiFitResult(self, result):
+    def _storeRoiFitResult(self, result):
         outbuffer = self.outbuffer
         output = outbuffer['roi']
         for i, label in enumerate(outbuffer.labels('roi')):

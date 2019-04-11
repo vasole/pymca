@@ -1194,8 +1194,14 @@ class QEdfFileWidget(qt.QWidget):
             self._x1Limit = int(info["Dim_1"])
             self._y1Limit = int(info["Dim_2"])
             self.graph.clear()
-            minData = data.min()
-            maxData = data.max()
+            finiteData = numpy.isfinite(data)
+            if finiteData.any():
+                finiteData = data[finiteData]
+                minData = finiteData.min()
+                maxData = finiteData.max()
+            else:
+                minData = 0
+                maxData = 1
             wasnone = 0
             self.lastData = data
             if self.colormapDialog is None:

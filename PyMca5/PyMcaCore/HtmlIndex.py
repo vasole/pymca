@@ -183,7 +183,6 @@ class HtmlIndex(object):
         for ffile in filelist:
             text +="<a href=""%s"">%s</a><BR>" % (ffile, ffile.split(".html")[0])
         text += self.getFooter()
-
         if sys.version_info < (3,):
             fformat = 'wb'
         else:

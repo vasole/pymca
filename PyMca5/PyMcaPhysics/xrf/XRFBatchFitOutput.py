@@ -120,6 +120,7 @@ class OutputBuffer(MutableMapping):
         self.labelFormat('massfractions', 'w')
         self.labelFormat('molarconcentrations', 'mM')
         self._defaultgroups = 'molarconcentrations', 'massfractions', 'parameters'
+        self._defaultorder = 'molarconcentrations', 'massfractions', 'parameters', 'uncertainties'
         self._optionalimage = 'chisq',
         self._configurationkey = 'configuration'
 
@@ -151,6 +152,9 @@ class OutputBuffer(MutableMapping):
         return "OutputBuffer(outputDir={}, outputRoot={}, fileEntry={}, suffix={})"\
                 .format(repr(self.outputDir), repr(self.outputRoot),
                         repr(self.fileEntry), repr(self.suffix))
+
+    def hasAllocatedMemory(self):
+        return bool(self._buffers)
 
     def labelFormat(self, group, prefix):
         """For single-page edf/tif file names
@@ -750,29 +754,37 @@ class OutputBuffer(MutableMapping):
     def _saveImages(self):
         from PyMca5.PyMca import ArraySave
 
-        # Save only the buffers for which group name = buffer name
-        imageSingleNames = []
-        imageMultiNames = []
+        # List of images in deterministic order
+        imageFileLabels = []
+        imageTitleLabels = []
         imageList = []
-        for group, buffer in self._buffers.items():
+        keys = list(self._buffers.keys())
+        groups = []
+        for key in self._defaultorder:
+            if key in keys:
+                groups.append(key)
+                keys.pop(keys.index(key))
+        groups += sorted(keys)
+        for group in groups:
             names = self.labels(group, labeltype='filename')
+            buffer = self._buffers[group]
             if len(names) == len(buffer):
                 # Stack of datasets
                 mnames = self.labels(group, labeltype='title')
                 for name, mname, bufferi in zip(names, mnames, buffer):
                     if bufferi.ndim <= 2:
-                        imageSingleNames.append(name)
-                        imageMultiNames.append(mname)
+                        imageFileLabels.append(name)
+                        imageTitleLabels.append(mname)
                         imageList.append(bufferi[()])
             else:
                 # Single dataset
                 if buffer.ndim <= 2 and group.lower() in self._optionalimage:
                     name = self._labelsToStrings(group, [group], labeltype='filename')[0]
                     mname = self._labelsToStrings(group, [group], labeltype='title')[0]
-                    imageSingleNames.append(name)
-                    imageMultiNames.append(mname)
+                    imageFileLabels.append(name)
+                    imageTitleLabels.append(mname)
                     imageList.append(buffer[()])
-        if not imageSingleNames:
+        if not imageFileLabels:
             return
 
         NexusUtils.mkdir(self.outroot_localfs)
@@ -781,9 +793,9 @@ class OutputBuffer(MutableMapping):
                 fileName = self.filename('.edf')
                 self._checkOverwrite(fileName)
                 ArraySave.save2DArrayListAsEDF(imageList, fileName,
-                                               labels=imageMultiNames)
+                                               labels=imageTitleLabels)
             else:
-                for label, title, image in zip(imageSingleNames, imageMultiNames, imageList):
+                for label, title, image in zip(imageFileLabels, imageTitleLabels, imageList):
                     fileName = self.filename('.edf', suffix="_" + label)
                     self._checkOverwrite(fileName)
                     ArraySave.save2DArrayListAsEDF([image],
@@ -795,10 +807,10 @@ class OutputBuffer(MutableMapping):
                 self._checkOverwrite(fileName)
                 ArraySave.save2DArrayListAsMonochromaticTiff(imageList,
                                                              fileName,
-                                                             labels=imageMultiNames,
+                                                             labels=imageTitleLabels,
                                                              dtype=numpy.float32)
             else:
-                for label, title, image in zip(imageSingleNames, imageMultiNames, imageList):
+                for label, title, image in zip(imageFileLabels, imageTitleLabels, imageList):
                     fileName = self.filename('.tif', suffix="_" + label)
                     self._checkOverwrite(fileName)
                     ArraySave.save2DArrayListAsMonochromaticTiff([image],
@@ -809,12 +821,12 @@ class OutputBuffer(MutableMapping):
             fileName = self.filename('.csv')
             self._checkOverwrite(fileName)
             ArraySave.save2DArrayListAsASCII(imageList, fileName, csv=True,
-                                             labels=imageMultiNames)
+                                             labels=imageTitleLabels)
         if self.dat:
             fileName = self.filename('.dat')
             self._checkOverwrite(fileName)
             ArraySave.save2DArrayListAsASCII(imageList, fileName, csv=False,
-                                             labels=imageMultiNames)
+                                             labels=imageTitleLabels)
 
         if self.cfg and self._configurationkey in self:
             fileName = self.filename('.cfg')
@@ -857,15 +869,15 @@ class OutputBuffer(MutableMapping):
             # Add error links
             errors = info['errors']
             if errors:
-                if errors in nxresults:
-                    adderrors.append((nxdata, nxresults[errors]))
+                adderrors.append((nxdata, errors))
             # Default nxdata for visualization
             if info['default']:
                 markdefault.append(nxdata)
 
         # Error links and default for visualization
         for nxdata, errors in adderrors:
-            NexusUtils.nxDataAddErrors(nxdata, errors)
+            if errors in nxresults:
+                NexusUtils.nxDataAddErrors(nxdata, nxresults[errors])
         if markdefault:
             NexusUtils.markDefault(markdefault[-1])
         else:

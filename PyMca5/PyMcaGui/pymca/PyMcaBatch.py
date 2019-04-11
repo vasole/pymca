@@ -33,6 +33,7 @@ import os
 import time
 import subprocess
 import logging
+from contextlib import contextmanager
 
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
@@ -58,6 +59,7 @@ from PyMca5.PyMcaGui.pymca import EdfFileSimpleViewer
 from PyMca5.PyMcaCore import HtmlIndex
 from PyMca5.PyMcaCore import PyMcaDirs
 from PyMca5.PyMcaCore import PyMcaBatchBuildOutput
+
 
 ROIWIDTH = 100.
 _logger = logging.getLogger(__name__)
@@ -426,7 +428,7 @@ class McaBatchGUI(qt.QWidget):
         # multipage edf/tif
         self._multipageBox = qt.QCheckBox(vbox2)
         self._multipageBox.setText("Multipage")
-        self._multipageBox.setChecked(True)
+        self._multipageBox.setChecked(False)
         self._multipageBox.setEnabled(True)
         vbox2.l.addWidget(self._multipageBox)
 
@@ -1896,7 +1898,6 @@ def main():
             tif = int(arg)
         elif opt == '--multipage':
             multipage = int(arg)
-
     level = getLoggingLevel(opts)
     logging.basicConfig(level=level)
     _logger.setLevel(level)

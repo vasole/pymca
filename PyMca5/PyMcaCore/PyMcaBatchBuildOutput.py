@@ -123,10 +123,10 @@ class PyMcaBatchBuildOutput(object):
                                         raise RuntimeError('{} does not have {}'
                                                            .format(part, repr(dataout.name)))
                                     for datasetname in dataout:
-                                        self._fillPartial(dataout[datasetname],
-                                                          datain[datasetname],
-                                                          maxdims=2)
-                       
+                                            self._fillPartial(dataout[datasetname],
+                                                              datain[datasetname],
+                                                              maxdims=2)
+
     def _mergeCfg(self, parts, outfilename):
         # They should be all the same so pick the first one
         shutil.copy(parts[0], outfilename)
@@ -140,8 +140,10 @@ class PyMcaBatchBuildOutput(object):
                 images = [edf.GetData(j).copy() for j in range(nImages)]
                 headers = [edf.GetHeader(j) for j in range(nImages)]
             else:
-                for j, img in enumerate(images):
-                    self._fillPartial(img, edf.GetData(j))
+                headersi = [edf.GetHeader(j) for j in range(nImages)]
+                for header, img in zip(headers, images):
+                    k = headersi.index(header)
+                    self._fillPartial(img, edf.GetData(k))
             del edf
         if os.path.exists(outfilename):
             _logger.debug("Output file already exists, trying to delete it")
@@ -194,13 +196,17 @@ class PyMcaBatchBuildOutput(object):
                 nrows = len(lines) - j
                 data = numpy.zeros((nrows, nlabels), numpy.double)
                 inputdata = numpy.zeros((nrows, nlabels), numpy.double)
+                colSelect = list(range(nlabels))
+            else:
+                labelsi = lines[0].replace("\n", "").split("  ")
+                colSelect = [labels.index(label) for label in labelsi]
             for i in range(nrows):
-                inputdata[i, :] = [float(x) for x in lines[i+1].split()]
+                inputdata[i, colSelect] = [float(x) for x in lines[i+1].split()]
             self._fillPartial(data, inputdata)
         if os.path.exists(outfilename):
             os.remove(outfilename)
         outfile = open(outfilename, 'w+')
-        outfile.write('%s' % lines[0])
+        outfile.write('  '.join(labels) + "\n")
         line = ""
         for row in range(nrows):
             #line = "%d" % inputdata[row, 0]
