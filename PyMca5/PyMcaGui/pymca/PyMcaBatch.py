@@ -408,14 +408,14 @@ class McaBatchGUI(qt.QWidget):
         self._csvBox = qt.QCheckBox(vbox1)
         self._csvBox.setText("CSV")
         self._csvBox.setChecked(False)
-        self._csvBox.setEnabled(False)
+        self._csvBox.setEnabled(True)
         vbox1.l.addWidget(self._csvBox)
 
         # generate tiff files
         self._tiffBox = qt.QCheckBox(vbox2)
         self._tiffBox.setText("TIFF")
         self._tiffBox.setChecked(False)
-        self._tiffBox.setEnabled(False)
+        self._tiffBox.setEnabled(True)
         vbox2.l.addWidget(self._tiffBox)
 
         # generate dat file
@@ -576,10 +576,8 @@ class McaBatchGUI(qt.QWidget):
 
     def __toggleMultiProcess(self, state):
         multiProc = bool(state)
-        self._tiffBox.setEnabled(not multiProc)
         self._csvBox.setEnabled(not multiProc)
         if multiProc:
-            self._tiffBox.setChecked(False)
             self._csvBox.setChecked(False)
 
     def __stateMultiPage(self, state=None):
@@ -1301,6 +1299,7 @@ class McaBatchGUI(qt.QWidget):
         self._showProcessResults(*args)
 
     def _mergeProcessResults(self):
+        _logger.info('Merging multi-process results...')
         work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(inputdir=self.outputDir)
         delete = _logger.getEffectiveLevel() != logging.DEBUG
         edfoutlist, datoutlist, h5outlist = work.buildOutput(delete=delete)
@@ -1311,6 +1310,7 @@ class McaBatchGUI(qt.QWidget):
             edfoutlist2, datoutlist2, h5outlist2 = work.buildOutput(inputdir=inputdir, delete=delete)
             edfoutlist += edfoutlist2
             datoutlist += datoutlist2
+        _logger.info('Finished merging multi-process results.')
         return edfoutlist, datoutlist
 
     def _showProcessResults(self, edfoutlist, datoutlist):

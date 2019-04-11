@@ -38,6 +38,7 @@ import shutil
 import re
 import itertools
 from PyMca5.PyMcaIO import EdfFile
+from PyMca5.PyMcaIO import TiffIO
 from PyMca5.PyMcaCore import NexusTools
 try:
     import h5py
@@ -67,6 +68,7 @@ class PyMcaBatchBuildOutput(object):
         _logger.debug("delete option = %s", delete)
         allfiles = os.listdir(inputdir)
         partialList = {'edf': {'ext': '.edf', 'list': []},
+                       'tif': {'ext': '.tif', 'list': []},
                        'dat': {'ext': '.dat', 'list': []},
                        'h5': {'ext': '.h5', 'list': []},
                        'cfg': {'ext': '.cfg', 'list': []},
@@ -82,6 +84,8 @@ class PyMcaBatchBuildOutput(object):
                                  partialList['edf']['list'], self._mergeEdf)
         outListDat = self._merge(inputdir, outputdir, delete,
                                  partialList['dat']['list'], self._mergeDat)
+        self._merge(inputdir, outputdir, delete,
+                    partialList['tif']['list'], self._mergeTif)
         self._merge(inputdir, outputdir, delete,
                     partialList['conc']['list'], self._mergeConcTxt)
         self._merge(inputdir, outputdir, delete,
@@ -152,6 +156,27 @@ class PyMcaBatchBuildOutput(object):
         for i, (img, header) in enumerate(zip(images, headers)):
             edfout.WriteImage(header, img, Append=i > 0)
         del edfout
+
+    def _mergeTif(self, parts, outfilename):
+        for i, tifname in enumerate(parts):
+            tif = TiffIO.TiffIO(tifname, mode='rb')
+            nImages = tif.getNumberOfImages()
+            if i == 0:
+                images = [tif.getData(j).copy() for j in range(nImages)]
+                headers = [tif.getInfo(j) for j in range(nImages)]
+            else:
+                headersi = [tif.getInfo(j) for j in range(nImages)]
+                for header, img in zip(headers, images):
+                    k = headersi.index(header)
+                    self._fillPartial(img, tif.getData(k))
+            del tif
+        if os.path.exists(outfilename):
+            _logger.debug("Output file already exists, trying to delete it")
+            os.remove(outfilename)
+        tifout = TiffIO.TiffIO(outfilename, mode="rb+")
+        for i, (img, header) in enumerate(zip(images, headers)):
+            tifout.writeImage(img, info=header)
+        del tifout
 
     def _fillPartial(self, output, input, maxdims=None):
         if output.shape != input.shape:
