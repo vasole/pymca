@@ -32,6 +32,7 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
+import sys
 import numpy
 import logging
 import shutil
@@ -70,6 +71,7 @@ class PyMcaBatchBuildOutput(object):
         partialList = {'edf': {'ext': '.edf', 'list': []},
                        'tif': {'ext': '.tif', 'list': []},
                        'dat': {'ext': '.dat', 'list': []},
+                       'csv': {'ext': '.csv', 'list': []},
                        'h5': {'ext': '.h5', 'list': []},
                        'cfg': {'ext': '.cfg', 'list': []},
                        'conc': {'ext': '_concentrations.txt', 'list': []}
@@ -87,6 +89,8 @@ class PyMcaBatchBuildOutput(object):
         self._merge(inputdir, outputdir, delete,
                     partialList['tif']['list'], self._mergeTif)
         self._merge(inputdir, outputdir, delete,
+                    partialList['csv']['list'], self._mergeCsv)
+        self._merge(inputdir, outputdir, delete,
                     partialList['conc']['list'], self._mergeConcTxt)
         self._merge(inputdir, outputdir, delete,
                     partialList['cfg']['list'], self._mergeCfg)
@@ -100,9 +104,13 @@ class PyMcaBatchBuildOutput(object):
         for filename in partialList:
             parts = self.getPartialFileList(os.path.join(inputdir, filename))
             outfilename = parts[0].replace("_000000_partial", "")
-            _logger.debug("Merging %s (%d parts)", filename, len(parts))
+            _logger.debug("Merging %s (%d parts)", outfilename, len(parts))
             outfilename = os.path.join(outputdir, outfilename)
-            func(parts, outfilename)
+            try:
+                func(parts, outfilename)
+            except:
+                _logger.error("Error merging %s\n: %s", outfilename, sys.exc_info()[1])
+                continue
             outList.append(outfilename)
             if delete:
                 for filename in parts:
@@ -124,8 +132,8 @@ class PyMcaBatchBuildOutput(object):
                                     try:
                                         datain = fin[dataout.name]
                                     except KeyError:
-                                        raise RuntimeError('{} does not have {}'
-                                                           .format(part, repr(dataout.name)))
+                                        _logger.error('%s does not have %s', part, repr(dataout.name))
+                                        continue
                                     for datasetname in dataout:
                                             self._fillPartial(dataout[datasetname],
                                                               datain[datasetname],
@@ -142,9 +150,11 @@ class PyMcaBatchBuildOutput(object):
             nImages = edf.GetNumImages()
             if i == 0:
                 images = [edf.GetData(j).copy() for j in range(nImages)]
-                headers = [edf.GetHeader(j) for j in range(nImages)]
+                headers = [{'Title': edf.GetHeader(j)['Title']}
+                           for j in range(nImages)]
             else:
-                headersi = [edf.GetHeader(j) for j in range(nImages)]
+                headersi = [{'Title': edf.GetHeader(j)['Title']}
+                            for j in range(nImages)]
                 for header, img in zip(headers, images):
                     k = headersi.index(header)
                     self._fillPartial(img, edf.GetData(k))
@@ -163,9 +173,11 @@ class PyMcaBatchBuildOutput(object):
             nImages = tif.getNumberOfImages()
             if i == 0:
                 images = [tif.getData(j).copy() for j in range(nImages)]
-                headers = [tif.getInfo(j) for j in range(nImages)]
+                headers = [{'Title': tif.getInfo(j)['info']['Title']}
+                           for j in range(nImages)]
             else:
-                headersi = [tif.getInfo(j) for j in range(nImages)]
+                headersi = [{'Title': tif.getInfo(j)['info']['Title']}
+                            for j in range(nImages)]
                 for header, img in zip(headers, images):
                     k = headersi.index(header)
                     self._fillPartial(img, tif.getData(k))
@@ -173,14 +185,20 @@ class PyMcaBatchBuildOutput(object):
         if os.path.exists(outfilename):
             _logger.debug("Output file already exists, trying to delete it")
             os.remove(outfilename)
-        tifout = TiffIO.TiffIO(outfilename, mode="rb+")
         for i, (img, header) in enumerate(zip(images, headers)):
+            # TODO: there must be a better way
+            if i == 0:
+                tifout = TiffIO.TiffIO(outfilename, mode="wb+")
+            elif i == 1:
+                del tifout
+                tifout = TiffIO.TiffIO(outfilename, mode="rb+")
             tifout.writeImage(img, info=header)
         del tifout
 
     def _fillPartial(self, output, input, maxdims=None):
         if output.shape != input.shape:
-            raise ValueError("Cannot merge array's with different shapes")
+            _logger.error("Cannot merge array's with different shapes")
+            return
         if maxdims is None:
             maxdims = output.ndim
         if output.ndim > maxdims:
@@ -206,6 +224,12 @@ class PyMcaBatchBuildOutput(object):
                 output[mask] = input[mask]
 
     def _mergeDat(self, parts, outfilename):
+        self._mergeAscii(parts, outfilename, '  ')
+    
+    def _mergeCsv(self, parts, outfilename):
+        self._mergeAscii(parts, outfilename, ';')
+
+    def _mergeAscii(self, parts, outfilename, separator):
         first = True
         for specname in parts:
             f = open(specname)
@@ -216,35 +240,32 @@ class PyMcaBatchBuildOutput(object):
                 j += 1
             if first:
                 first = False
-                labels = lines[0].replace("\n", "").split("  ")
+                labels = lines[0].replace("\n", "").split(separator)
                 nlabels = len(labels)
                 nrows = len(lines) - j
                 data = numpy.zeros((nrows, nlabels), numpy.double)
                 inputdata = numpy.zeros((nrows, nlabels), numpy.double)
                 colSelect = list(range(nlabels))
             else:
-                labelsi = lines[0].replace("\n", "").split("  ")
+                labelsi = lines[0].replace("\n", "").split(separator)
                 colSelect = [labels.index(label) for label in labelsi]
             for i in range(nrows):
-                inputdata[i, colSelect] = [float(x) for x in lines[i+1].split()]
+                inputdata[i, colSelect] = [float(x) for x in lines[i+1].split(separator)]
             self._fillPartial(data, inputdata)
         if os.path.exists(outfilename):
             os.remove(outfilename)
         outfile = open(outfilename, 'w+')
-        outfile.write('  '.join(labels) + "\n")
-        line = ""
+        outfile.write("%s\n" % separator.join(labels))
         for row in range(nrows):
-            #line = "%d" % inputdata[row, 0]
+            line = ""
             for col in range(nlabels):
                 if col == 0:
                     line += "%d" % inputdata[row, col]
                 elif col == 1:
-                    line += "  %d" % inputdata[row, col]
+                    line += separator + "%d" % inputdata[row, col]
                 else:
-                    line += "  %g" % data[row, col]
-            line += "\n"
-            outfile.write("%s" % line)
-            line = ""
+                    line += separator + "%g" % data[row, col]
+            outfile.write("%s\n" % line)
         outfile.write("\n")
         outfile.close()
 
@@ -263,7 +284,7 @@ class PyMcaBatchBuildOutput(object):
 
     @staticmethod
     def getPartialFileList(filename, begin=None, end=None, skip=None):
-        # Decompose filename, for example "/tmp/base_000000_partial.h5"
+        # Decempose filename, for example "/tmp/base_000000_partial.ext"
         name, ext = os.path.splitext(os.path.basename(filename))
         m = re.search("^(.+?)(\d+)([^\d]+)$", name)
         if not m:
@@ -271,7 +292,7 @@ class PyMcaBatchBuildOutput(object):
         prefix, number, suffix = m.groups()
         prefix = os.path.join(os.path.dirname(filename), prefix)
         suffix += ext
-        # Prepare iteration over "/tmp/base_{:d}_partial.h5"
+        # Prepare iteration over "/tmp/base_{:d}_partial.ext"
         fformat = prefix + "{{:0{}d}}".format(len(number)) + suffix
         if begin is None:
             i = 0
@@ -281,7 +302,7 @@ class PyMcaBatchBuildOutput(object):
             i = begin
         if not skip:
             skip = []
-        # Find all "/tmp/base_{:d}_partial.h5"
+        # Find all "/tmp/base_{:d}_partial.ext"
         filelist = []
         while os.path.exists(fformat.format(i)) or i in skip:
             if i not in skip:

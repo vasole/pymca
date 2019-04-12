@@ -34,7 +34,10 @@ import time
 import subprocess
 import logging
 from contextlib import contextmanager
-
+try:
+    from collections.abc import MutableMapping
+except ImportError:
+    from collections import MutableMapping
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 
@@ -113,7 +116,7 @@ class Option(object):
             return self._name + "=" + self._format.format(value)
 
 
-class Command(object):
+class Command(MutableMapping):
     """
     Class that wraps "cmd --option1=... --option2=..."
     while allowing for adding/removing/modifying options
@@ -140,28 +143,53 @@ class Command(object):
     def __str__(self):
         name, fmt = self._cmd
         if not name:
-            raise RuntimeError("Specify a command with 'setCommand'")
+            name = "<missing command>"
         cmd = fmt.format(name)
         options = map(str, self._options.values())
         cmd += ''.join(list(options))
         return cmd
     
     def getOptions(self, *attrs):
-        return {attr:getattr(self, attr) for attr in attrs}
+        return {attr: getattr(self, attr) for attr in attrs}
+
+    def getAllOptionsBut(self, *attrs):
+        attrs = [attr for attr in self._options if attr not in attrs]
+        return self.getOptions(*attrs)
+
+    def getAllOptions(self):
+        attrs = list(self._options.keys())
+        return self.getOptions(*attrs)
 
     def __getattr__(self, attr):
         if attr in self._options:
             return self._options[attr].value
         else:
-            raise AttributeError
+            raise AttributeError(attr)
 
     def __setattr__(self, attr, value):
-        if attr != "_options":
+        if attr.startswith('_'):
+            super(Command, self).__setattr__(attr, value)
+        else:
             if attr in self._options:
                 option = self._options[attr]
                 option.value = value
-                return
-        super(Command, self).__setattr__(attr, value)
+            else:
+                self.addOption(attr, value=value)
+
+    def __getitem__(self, attr):
+        return self._options[attr].value
+            
+    def __setitem__(self, attr, value):
+        self.addOption(attr, value=value)
+
+    def __delitem__(self, key):
+        del self._options[key]
+        
+    def __iter__(self):
+        return iter(self._options)
+
+    def __len__(self):
+        return len(self._options)
 
 
 def launchThreadBatchFit(thread, window, qApp=None):
@@ -196,7 +224,7 @@ class McaBatchGUI(qt.QWidget):
     """
 
     def __init__(self,parent=None,name="PyMca batch fitting",fl=None,
-                filelist=None,config=None,outputdir=None, actions=0):
+                filelist=None,config=None,outputdir=None, actions=0,**guikwargs):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle(name)
         self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
@@ -207,12 +235,12 @@ class McaBatchGUI(qt.QWidget):
         self._timer = None
         self._processList = []
         self._selection = None
-        self.__build(actions)
+        self.__build(actions, **guikwargs)
         if filelist is None:
             filelist = []
         self.inputDir = None
         self.inputFilter = None
-        self.outputDir  = None
+        self.outputDir = None
         if outputdir is not None:
             if os.path.exists(outputdir):
                 self.outputDir = outputdir
@@ -225,24 +253,27 @@ class McaBatchGUI(qt.QWidget):
         self.setConfigFile(config)
         self.setOutputDir(self.outputDir)
 
-    def __build(self,actions):
+    def __build(self, actions, roifit=0, roiwidth=ROIWIDTH, overwrite=1,
+                concentrations=0, fitfiles=0, diagnostics=0, multipage=0,
+                tif=0, edf=1, csv=0, h5=1, dat=0, nproc=1,
+                table=2, html=0):
         self.__grid= qt.QWidget(self)
         self._layout.addWidget(self.__grid)
         #self.__grid.setGeometry(qt.QRect(30,30,288,156))
         if QTVERSION < '4.0.0':
-            grid       = qt.QGridLayout(self.__grid,3,3,11,6)
+            grid = qt.QGridLayout(self.__grid,3,3,11,6)
             grid.setColStretch(0,0)
             grid.setColStretch(1,1)
             grid.setColStretch(2,0)
         else:
-            grid       = qt.QGridLayout(self.__grid)
+            grid = qt.QGridLayout(self.__grid)
             grid.setContentsMargins(11, 11, 11, 11)
             grid.setSpacing(6)
         #input list
-        listrow  = 0
-        listlabel   = qt.QLabel(self.__grid)
+        listrow = 0
+        listlabel = qt.QLabel(self.__grid)
         listlabel.setText("Input File list:")
-        self.__listView   = qt.QTextEdit(self.__grid)
+        self.__listView = qt.QTextEdit(self.__grid)
         self.__listView.setMaximumHeight(30*listlabel.sizeHint().height())
         self.__listButton = qt.QPushButton(self.__grid)
         self.__listButton.setText('Browse')
@@ -275,8 +306,8 @@ class McaBatchGUI(qt.QWidget):
 
 
         #output dir
-        outrow    = 2 + row_offset
-        outlabel   = qt.QLabel(self.__grid)
+        outrow = 2 + row_offset
+        outlabel = qt.QLabel(self.__grid)
         outlabel.setText("Output dir:")
         if QTVERSION < '4.0.0':
             outlabel.setAlignment(qt.QLabel.WordBreak | qt.QLabel.AlignVCenter)
@@ -290,7 +321,7 @@ class McaBatchGUI(qt.QWidget):
         grid.addWidget(self.__outLine,   outrow, 1)
         grid.addWidget(self.__outButton, outrow, 2, qt.Qt.AlignLeft)
 
-        box1  = qt.QWidget(self)
+        box1 = qt.QWidget(self)
         box1.l = qt.QHBoxLayout(box1)
         box1.l.setContentsMargins(11, 11, 11, 11)
         box1.l.setSpacing(0)
@@ -320,7 +351,7 @@ class McaBatchGUI(qt.QWidget):
         #    palette.setDisabled(palette.active())
         #else:
         #    print("palette set disabled")
-        self.__fitBox.setChecked(False)
+        self.__fitBox.setChecked(fitfiles)
         self.__fitBox.setEnabled(True)
         vbox1.l.addWidget(self.__fitBox)
 
@@ -346,7 +377,7 @@ class McaBatchGUI(qt.QWidget):
         self.__htmlBox.setText('Generate Report (SLOW!)')
         #palette = self.__htmlBox.palette()
         #palette.setDisabled(palette.active())
-        self.__htmlBox.setChecked(False)
+        self.__htmlBox.setChecked(html)
         self.__htmlBox.setEnabled(True)
         vbox3.l.addWidget(self.__htmlBox)
 
@@ -359,76 +390,76 @@ class McaBatchGUI(qt.QWidget):
         #    palette.setDisabled(palette.active())
         #else:
         #    print("palette set disabled")
-        self.__tableBox.setChecked(True)
+        self.__tableBox.setChecked(bool(table))
         self.__tableBox.setEnabled(False)
         vbox1.l.addWidget(self.__tableBox)
 
         self.__extendedTable = qt.QCheckBox(vbox2)
         self.__extendedTable.setText('Extended Table')
-        self.__extendedTable.setChecked(True)
+        self.__extendedTable.setChecked(table>1)
         self.__extendedTable.setEnabled(False)
         vbox2.l.addWidget(self.__extendedTable)
 
         # overwrite output
         self._overwriteBox = qt.QCheckBox(vbox3)
         self._overwriteBox.setText("Overwrite")
-        self._overwriteBox.setChecked(True)
+        self._overwriteBox.setChecked(overwrite)
         self._overwriteBox.setEnabled(True)
         vbox3.l.addWidget(self._overwriteBox)
 
         # concentrations
         self.__concentrationsBox = qt.QCheckBox(vbox3)
         self.__concentrationsBox.setText('Concentrations')
-        self.__concentrationsBox.setChecked(False)
+        self.__concentrationsBox.setChecked(concentrations)
         self.__concentrationsBox.setEnabled(True)
         vbox3.l.addWidget(self.__concentrationsBox)
 
         # diagnostics
         self.__diagnosticsBox = qt.QCheckBox(vbox3)
         self.__diagnosticsBox.setText("Diagnostics")
-        self.__diagnosticsBox.setChecked(False)
+        self.__diagnosticsBox.setChecked(diagnostics and HDF5SUPPORT)
         self.__diagnosticsBox.setEnabled(HDF5SUPPORT)
         vbox3.l.addWidget(self.__diagnosticsBox)
 
         # generate hdf5 file
         self._h5Box = qt.QCheckBox(vbox1)
         self._h5Box.setText("HDF5")
-        self._h5Box.setChecked(HDF5SUPPORT)
+        self._h5Box.setChecked(h5 and HDF5SUPPORT)
         self._h5Box.setEnabled(HDF5SUPPORT)
         vbox1.l.addWidget(self._h5Box)
 
         # generate edf file
         self._edfBox = qt.QCheckBox(vbox2)
         self._edfBox.setText("EDF")
-        self._edfBox.setChecked(True)
+        self._edfBox.setChecked(edf)
         self._edfBox.setEnabled(True)
         vbox2.l.addWidget(self._edfBox)
 
         # generate csv file
         self._csvBox = qt.QCheckBox(vbox1)
         self._csvBox.setText("CSV")
-        self._csvBox.setChecked(False)
+        self._csvBox.setChecked(csv)
         self._csvBox.setEnabled(True)
         vbox1.l.addWidget(self._csvBox)
 
         # generate tiff files
         self._tiffBox = qt.QCheckBox(vbox2)
         self._tiffBox.setText("TIFF")
-        self._tiffBox.setChecked(False)
+        self._tiffBox.setChecked(tif)
         self._tiffBox.setEnabled(True)
         vbox2.l.addWidget(self._tiffBox)
 
         # generate dat file
         self._datBox = qt.QCheckBox(vbox1)
         self._datBox.setText("DAT")
-        self._datBox.setChecked(False)
+        self._datBox.setChecked(dat)
         self._datBox.setEnabled(True)
         vbox1.l.addWidget(self._datBox)
 
         # multipage edf/tif
         self._multipageBox = qt.QCheckBox(vbox2)
         self._multipageBox.setText("Multipage")
-        self._multipageBox.setChecked(False)
+        self._multipageBox.setChecked(multipage)
         self._multipageBox.setEnabled(True)
         vbox2.l.addWidget(self._multipageBox)
 
@@ -439,7 +470,7 @@ class McaBatchGUI(qt.QWidget):
         self._layout.addWidget(box1)
 
         # other stuff
-        bigbox   = qt.QWidget(self)
+        bigbox = qt.QWidget(self)
         bigbox.l = qt.QHBoxLayout(bigbox)
         bigbox.l.setContentsMargins(0, 0, 0, 0)
         bigbox.l.setSpacing(0)
@@ -467,9 +498,9 @@ class McaBatchGUI(qt.QWidget):
         self.__concentrationsBox.clicked.connect(self.__clickSignal2)
         self.__htmlBox.clicked.connect(self.__clickSignal3)
 
-        boxStep0   = qt.QWidget(bigbox)
+        boxStep0 = qt.QWidget(bigbox)
         boxStep0.l = qt.QVBoxLayout(boxStep0)
-        boxStep  = qt.QWidget(boxStep0)
+        boxStep = qt.QWidget(boxStep0)
         boxStep.l= qt.QHBoxLayout(boxStep)
         boxStep.l.setContentsMargins(0, 0, 0, 0)
         boxStep.l.setSpacing(0)
@@ -477,7 +508,7 @@ class McaBatchGUI(qt.QWidget):
         bigbox.l.addWidget(boxStep0)
 
         if 0:
-            self.__boxFStep   = qt.QWidget(boxStep)
+            self.__boxFStep = qt.QWidget(boxStep)
             boxFStep = self.__boxFStep
             boxFStep.l = qt.QHBoxLayout(boxFStep)
             boxFStep.l.setContentsMargins(0, 0, 0, 0)
@@ -496,7 +527,7 @@ class McaBatchGUI(qt.QWidget):
             boxFStep.l.addWidget(label)
             boxFStep.l.addWidget(self.__fileSpin)
 
-            self.__boxMStep   = qt.QWidget(boxStep0)
+            self.__boxMStep = qt.QWidget(boxStep0)
             boxMStep = self.__boxMStep
             boxMStep.l = qt.QHBoxLayout(boxMStep)
             boxMStep.l.setContentsMargins(0, 0, 0, 0)
@@ -520,6 +551,8 @@ class McaBatchGUI(qt.QWidget):
         #box2 = qt.QHBox(self)
         self.__roiBox = qt.QCheckBox(vBox)
         self.__roiBox.setText('ROI Fitting Mode')
+        self.__roiBox.setChecked(roifit)
+        self.__roiBox.setEnabled(True)
         vBox.l.addWidget(self.__roiBox)
         #box3 = qt.QHBox(box2)
         self.__box3 = qt.QWidget(boxStep0)
@@ -538,16 +571,16 @@ class McaBatchGUI(qt.QWidget):
         else:
             self.__roiSpin.setMinimum(10)
             self.__roiSpin.setMaximum(1000)
-        self.__roiSpin.setValue(ROIWIDTH)
+        self.__roiSpin.setValue(roiwidth)
         box3.l.addWidget(label)
         box3.l.addWidget(self.__roiSpin)
 
         #BATCH SPLITTING
         self.__splitBox = qt.QCheckBox(vBox)
         self.__splitBox.setText('EXPERIMENTAL: Use several processes')
+        self.__splitBox.setChecked(nproc > 1)
+        self.__splitBox.setEnabled(True)
         vBox.l.addWidget(self.__splitBox)
-        self.__splitBox.stateChanged.connect(self.__toggleMultiProcess)
-        self.__toggleMultiProcess(False)
         #box3 = qt.QHBox(box2)
         self.__box4 = qt.QWidget(boxStep0)
         box4 = self.__box4
@@ -565,7 +598,7 @@ class McaBatchGUI(qt.QWidget):
         else:
             self.__splitSpin.setMinimum(1)
             self.__splitSpin.setMaximum(1000)
-        self.__splitSpin.setValue(2)
+        self.__splitSpin.setValue(max(nproc, 2))
         box4.l.addWidget(label)
         box4.l.addWidget(self.__splitSpin)
 
@@ -573,12 +606,6 @@ class McaBatchGUI(qt.QWidget):
 
         if actions:
             self.__buildActions()
-
-    def __toggleMultiProcess(self, state):
-        multiProc = bool(state)
-        self._csvBox.setEnabled(not multiProc)
-        if multiProc:
-            self._csvBox.setChecked(False)
 
     def __stateMultiPage(self, state=None):
         self._multipageBox.setEnabled(self._edfBox.isChecked() or self._tiffBox.isChecked())
@@ -619,7 +646,7 @@ class McaBatchGUI(qt.QWidget):
         box.l.addWidget(self.__dismissButton)
         box.l.addWidget(qt.HorizontalSpacer(box))
         self.__dismissButton.setText("Close")
-        self.__startButton   = qt.QPushButton(box)
+        self.__startButton = qt.QPushButton(box)
         box.l.addWidget(self.__startButton)
         box.l.addWidget(qt.HorizontalSpacer(box))
         self.__startButton.setText("Start")
@@ -805,7 +832,7 @@ class McaBatchGUI(qt.QWidget):
         try:
             ffile = None
             try:
-                ffile   = EdfFileLayer.EdfFileLayer(fastedf=0)
+                ffile = EdfFileLayer.EdfFileLayer(fastedf=0)
                 ffile.SetSource(inputfile)
                 fileinfo = ffile.GetSourceInfo()
                 if fileinfo['KeyList'] == []:ffile=None
@@ -813,7 +840,7 @@ class McaBatchGUI(qt.QWidget):
             except:
                 pass
             if (ffile is None):
-                ffile   = SpecFileLayer.SpecFileLayer()
+                ffile = SpecFileLayer.SpecFileLayer()
                 ffile.SetSource(inputfile)
             del ffile
             return "Specfile"
@@ -833,7 +860,7 @@ class McaBatchGUI(qt.QWidget):
             self.inputDir =  os.getcwd()
         wdir = self.inputDir
         wfilter = self.inputFilter
-        filetypes  = "McaFiles (*.mca)\nEdfFiles (*.edf)\n"
+        filetypes = "McaFiles (*.mca)\nEdfFiles (*.edf)\n"
         if HDF5SUPPORT:
             filetypes += "HDF5 (*.nxs *.h5 *.hdf *.hdf5)\n"
         filetypes += "SpecFiles (*.spec)\nSpecFiles (*.dat)\nAll files (*)"
@@ -901,7 +928,7 @@ class McaBatchGUI(qt.QWidget):
         if self.__splitBox.isChecked():
             if sys.platform == 'darwin':
                 if ".app" in os.path.dirname(__file__):
-                    text  = 'Multiple processes only supported on MacOS X when built from source\n'
+                    text = 'Multiple processes only supported on MacOS X when built from source\n'
                     text += 'and not when running the frozen binary.'
                     qt.QMessageBox.critical(self, "ERROR",text)
                     self.raise_()
@@ -973,7 +1000,7 @@ class McaBatchGUI(qt.QWidget):
         if 0:
             overwrite= self.__overwrite.isChecked()
             filestep = int(qt.safe_str(self.__fileSpin.text()))
-            mcastep  = int(qt.safe_str(self.__mcaSpin.text()))
+            mcastep = int(qt.safe_str(self.__mcaSpin.text()))
         else:
             overwrite= 1
             filestep = 1
@@ -987,7 +1014,6 @@ class McaBatchGUI(qt.QWidget):
         cmd.addOption('mcastep', value=mcastep)
         cmd.addOption('fitfiles', value=self.__fitBox.isChecked(), format="{:d}")
         cmd.addOption('selection', value=self._selection, format="{:d}", convert=bool)
-        cmd.addOption('debug', value=_logger.getEffectiveLevel() == logging.DEBUG, format="{:d}")
 
         if cmd.roifit:
             cmd.addOption('roiwidth', value=float(qt.safe_str(self.__roiSpin.text())))
@@ -1003,80 +1029,87 @@ class McaBatchGUI(qt.QWidget):
         wname = "Batch from %s to %s " % (os.path.basename(self.fileList[ 0]),
                                           os.path.basename(self.fileList[-1]))
         if cmd.roifit:
-            self._runAsThreadRoiFit(cmd, wname)
+            self._runAsThread(cmd, wname)
         elif (sys.platform == 'darwin') and\
              ((".app" in os.path.dirname(__file__)) or (not self.__splitBox.isChecked())):
-            self._runAsThreadDarwin(cmd, wname)
+            self._runAsThread(cmd, wname)
         elif sys.platform == 'win32':
-            self._runAsProcessWin32(cmd)
+            self._runAsProcess(cmd)
         else:
             self._runAsProcess(cmd)
 
-    def _runAsThreadRoiFit(self, cmd, wname):
-        kwargs = cmd.getOptions('html', 'htmlindex', 'table')
-        window = McaBatchWindow(name="ROI"+wname, actions=1, outputdir=self.outputDir, **kwargs)
-        kwargs = cmd.getOptions('roifit', 'roiwidth', 'overwrite', 'filestep',
-                                'mcastep', 'concentrations', 'fitfiles', 'selection',
-                                'edf', 'csv', 'dat', 'h5', 'tif')
-        thread = McaBatch(window, self.configFile, filelist=self.fileList, outputdir=self.outputDir, **kwargs)
-        self._launchThreadBatchFit(thread, window)
-    
-    def _runAsThreadDarwin(self, cmd, wname):
-        #TODO: are the right parameters passed? Looks like we're passing roifit parameters while this is not a roifit
-        kwargs = cmd.getOptions('html', 'htmlindex', 'table')
-        window = McaBatchWindow(name=wname, actions=1, outputdir=self.outputDir, **kwargs)
-        kwargs = cmd.getOptions('roifit', 'roiwidth', 'overwrite', 'filestep',
-                                'mcastep', 'concentrations', 'fitfiles', 'selection',
-                                'edf', 'csv', 'dat', 'h5', 'tif')
-        thread = McaBatch(window, self.configFile, filelist=self.fileList, outputdir=self.outputDir, **kwargs)
+    def _runAsThread(self, cmd, wname):
+        kwargs = cmd.getOptions('outdir', 'html', 'htmlindex', 'table')
+        kwargs['outputdir'] = kwargs.pop('outdir')
+        window = McaBatchWindow(name=wname, actions=1, **kwargs)
+        kwargs = cmd.getAllOptionsBut('html', 'htmlindex', 'table')
+        kwargs['outputdir'] = kwargs.pop('outdir')
+        thread = McaBatch(window, self.configFile, filelist=self.fileList, **kwargs)
         window._rootname = "%s"% thread._rootname
-        self._launchThreadBatchFit(thread, window)
-
-    def _launchThreadBatchFit(self, thread, window):
         launchThreadBatchFit(thread, window)
         self.__window = window
         self.__thread = thread
-        
-    def _runAsProcessWin32(self, cmd):
+    
+    def _runAsProcess(self, cmd):
+        cmd.addOption('debug', value=_logger.getEffectiveLevel() == logging.DEBUG, format="{:d}")
+
         listfile = os.path.join(self.outputDir, "tmpfile")
         cmd.addOption("listfile", value=listfile, format='"{}"')
         self.genListFile(listfile, config=False)
 
-        # Executables/modules to fit spectra (myself)
-        # and show the resulting images (viewer/rgb)
+        if sys.platform == 'win32':
+            self._runAsProcessWin32(cmd)
+        else:
+            self._runAsProcessDefault(cmd)
+
+    def processInfo(self):
+        """
+        :returns 2-tuple: rootdir(str): directory of executables or GUI launch scripts
+                          frozen(bool): run as frozen executable
+        """
         try:
-            dirname = os.path.dirname(__file__)
+            rootdir = os.path.dirname(__file__)
             frozen = False
-            if not os.path.exists(os.path.join(dirname, "PyMcaBatch.py")):
+            if not os.path.exists(os.path.join(rootdir, "PyMcaBatch.py")):
                 # script usage case
-                dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
+                rootdir = os.path.dirname(EdfFileSimpleViewer.__file__)
         except:
             # __file__ is not defined
-            dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
             frozen = True
-        if os.path.basename(sys.executable) in ["PyMcaMain.exe",
-                                                "PyMcaBatch.exe"]:
-            frozen = True
-            dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
+            rootdir = os.path.dirname(EdfFileSimpleViewer.__file__)
+        if not frozen:
+            lst = ["PyMcaMain.exe", "PyMcaBatch.exe"]
+            if sys.platform != 'win32':
+                lst += ["PyMcaMain", "PyMcaBatch"]
+            if os.path.basename(sys.executable) in lst:
+                frozen = True
+                rootdir = os.path.dirname(EdfFileSimpleViewer.__file__)
         if frozen:
             # we are at level PyMca5\PyMcaGui\pymca
-            dirname  = os.path.dirname(dirname)
+            rootdir = os.path.dirname(rootdir)
             # level PyMcaGui
-            dirname  = os.path.dirname(dirname)
+            rootdir = os.path.dirname(rootdir)
             # level PyMca5
-            dirname  = os.path.dirname(dirname)
+            rootdir = os.path.dirname(rootdir)
             # directory level with exe files
-            myself   = os.path.join(dirname, "PyMcaBatch.exe")
-            viewer   = os.path.join(dirname, "EdfFileSimpleViewer.exe")
-            rgb    = os.path.join(dirname, "PyMcaPostBatch.exe")
+        return rootdir, frozen
+
+    def _runAsProcessWin32(self, cmd):
+        # Executables/modules to fit spectra (myself)
+        # and show the resulting images (viewer/rgb)
+        rootdir, frozen = self.processInfo()
+        if frozen:
+            myself = os.path.join(rootdir, "PyMcaBatch.exe")
+            viewer = os.path.join(rootdir, "EdfFileSimpleViewer.exe")
+            rgb = os.path.join(rootdir, "PyMcaPostBatch.exe")
             if not os.path.exists(viewer):
                 viewer = None
             if not os.path.exists(rgb):
                 rgb = None
         else:
-            myself = moduleRunCmd(os.path.join(dirname, "PyMcaBatch.py"))
-            viewer = moduleRunCmd(os.path.join(dirname, "EdfFileSimpleViewer.py"))
-            rgb    = moduleRunCmd(os.path.join(dirname, "PyMcaPostBatch.py"))
+            myself = moduleRunCmd(os.path.join(rootdir, "PyMcaBatch.py"))
+            viewer = moduleRunCmd(os.path.join(rootdir, "EdfFileSimpleViewer.py"))
+            rgb = moduleRunCmd(os.path.join(rootdir, "PyMcaPostBatch.py"))
         self._rgb = rgb
 
         if frozen:
@@ -1097,16 +1130,19 @@ class McaBatchGUI(qt.QWidget):
         if self.__splitBox.isChecked():
             processList = []
             nbatches = int(qt.safe_str(self.__splitSpin.text()))
-            if len(self.fileList) > 1:
-                filechunk = int(len(self.fileList)/nbatches)
+            nFiles = len(self.fileList)
+            if nFiles > 1:
+                filechunk = max(int(nFiles/nbatches), 1)
                 cmd.addOption('filebeginoffset', value=0)
                 cmd.addOption('fileendoffset', value=0)
                 cmd.addOption('chunk', value=0)
                 for i in range(nbatches):
                     cmd.filebeginoffset = filechunk * i
-                    cmd.fileendoffset = len(self.fileList) - filechunk * (i+1)
+                    cmd.fileendoffset = nFiles - filechunk * (i+1)
                     if (i+1) == nbatches:
                         cmd.fileendoffset = 0
+                    if cmd.filebeginoffset >= nFiles or cmd.fileendoffset < 0:
+                        continue
                     cmd.chunk = i
                     try:
                         processList.append(subprocess.Popen(str(cmd),
@@ -1148,56 +1184,29 @@ class McaBatchGUI(qt.QWidget):
                         subprocess.call(cmd.encode('latin-1'))
         self.show()
 
-    def _runAsProcess(self, cmd):
-        listfile = os.path.join(self.outputDir, "tmpfile")
-        cmd.addOption("listfile", value=listfile, format='"{}"')
-        self.genListFile(listfile, config=False)
-
+    def _runAsProcessDefault(self, cmd):
         # Executables/modules to fit spectra (myself)
         # and show the resulting images (viewer/rgb)
-        try:
-            dirname = os.path.dirname(__file__)
-            frozen = False
-            if not os.path.exists(os.path.join(dirname, "PyMcaBatch.py")):
-                # script usage case
-                dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
-        except:
-            # __file__ is not defined
-            dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
-            frozen = True
-        if not frozen:
-            if os.path.basename(sys.executable) in ["PyMcaMain.exe",
-                                                    "PyMcaBatch.exe",
-                                                    "PyMcaMain",
-                                                    "PyMcaBatch"]:
-                frozen = True
-                dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
+        rootdir, frozen = self.processInfo()
         if frozen:
-            # we are at level PyMca5\PyMcaGui\pymca
-            dirname  = os.path.dirname(dirname)
-            # level PyMcaGui
-            dirname  = os.path.dirname(dirname)
-            # level PyMca5
-            dirname  = os.path.dirname(dirname)
-            # directory level with exe files
-            myself   = os.path.join(dirname, "PyMcaBatch")
-            viewer   = os.path.join(dirname, "EdfFileSimpleViewer")
-            rgb    = os.path.join(dirname, "PyMcaPostBatch")
+            myself = os.path.join(rootdir, "PyMcaBatch")
+            viewer = os.path.join(rootdir, "EdfFileSimpleViewer")
+            rgb = os.path.join(rootdir, "PyMcaPostBatch")
             if not os.path.exists(viewer):
                 viewer = None
             if not os.path.exists(rgb):
                 rgb = None
         else:
-            if not os.path.exists(os.path.join(dirname, "PyMcaBatch.py")):
-                dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
-                if not os.path.exists(os.path.join(dirname, "PyMcaBatch.py")):
-                    text  = 'Cannot locate PyMcaBatch.py file.\n'
+            if not os.path.exists(os.path.join(rootdir, "PyMcaBatch.py")):
+                rootdir = os.path.dirname(EdfFileSimpleViewer.__file__)
+                if not os.path.exists(os.path.join(rootdir, "PyMcaBatch.py")):
+                    text = 'Cannot locate PyMcaBatch.py file.\n'
                     qt.QMessageBox.critical(self, "ERROR",text)
                     self.raise_()
                     return
-            myself = moduleRunCmd(os.path.join(dirname, "PyMcaBatch.py"))
-            viewer = moduleRunCmd(os.path.join(dirname, "EdfFileSimpleViewer.py"))
-            rgb = moduleRunCmd(os.path.join(dirname, "PyMcaPostBatch.py"))
+            myself = moduleRunCmd(os.path.join(rootdir, "PyMcaBatch.py"))
+            viewer = moduleRunCmd(os.path.join(rootdir, "EdfFileSimpleViewer.py"))
+            rgb = moduleRunCmd(os.path.join(rootdir, "PyMcaPostBatch.py"))
 
         cmd.setCommand(myself)
         if isinstance(self.configFile, list):
@@ -1216,15 +1225,18 @@ class McaBatchGUI(qt.QWidget):
             qApp.processEvents()
             processList = []
             nbatches = int(qt.safe_str(self.__splitSpin.text()))
-            filechunk = int(len(self.fileList)/nbatches)
+            nFiles = len(self.fileList)
+            filechunk = max(int(nFiles/nbatches), 1)
             cmd.addOption('filebeginoffset', value=0)
             cmd.addOption('fileendoffset', value=0)
             cmd.addOption('chunk', value=0)
             for i in range(nbatches):
                 cmd.filebeginoffset = filechunk * i
-                cmd.fileendoffset   = len(self.fileList) - filechunk * (i+1)
+                cmd.fileendoffset = nFiles - filechunk * (i+1)
                 if (i+1) == nbatches:
                     cmd.fileendoffset = 0
+                if cmd.filebeginoffset >= nFiles or cmd.fileendoffset < 0:
+                    continue
                 cmd.chunk = i
                 # unfortunately I have to set shell = True
                 # otherways I get a file not found error in the
@@ -1448,13 +1460,13 @@ class McaBatchWindow(qt.QWidget):
             self.barsLayout = qt.QGridLayout(self.bars)
             self.barsLayout.setContentsMargins(2, 2, 2, 2)
             self.barsLayout.setSpacing(3)
-        self.progressBar   = qt.QProgressBar(self.bars)
+        self.progressBar = qt.QProgressBar(self.bars)
         self.progressLabel = qt.QLabel(self.bars)
         self.progressLabel.setText('File Progress:')
-        self.imageBar   = qt.QProgressBar(self.bars)
+        self.imageBar = qt.QProgressBar(self.bars)
         self.imageLabel = qt.QLabel(self.bars)
         self.imageLabel.setText('Image in File:')
-        self.mcaBar   = qt.QProgressBar(self.bars)
+        self.mcaBar = qt.QProgressBar(self.bars)
         self.mcaLabel = qt.QLabel(self.bars)
         self.mcaLabel.setText('MCA in Image:')
 
@@ -1464,20 +1476,20 @@ class McaBatchWindow(qt.QWidget):
         self.barsLayout.addWidget(self.imageBar,1,1)
         self.barsLayout.addWidget(self.mcaLabel,2,0)
         self.barsLayout.addWidget(self.mcaBar,2,1)
-        self.status      = qt.QLabel(self)
+        self.status = qt.QLabel(self)
         self.status.setText(" ")
-        self.timeLeft      = qt.QLabel(self)
+        self.timeLeft = qt.QLabel(self)
         self.l.addWidget(self.status)
         self.l.addWidget(self.timeLeft)
 
         self.timeLeft.setText("Estimated time left = ???? min")
         self.time0 = None
-        self.html  = html
+        self.html = html
         if htmlindex is None:htmlindex="index.html"
         self.htmlindex = htmlindex
         self.outputdir = outputdir
         self.table = table
-        self.__ended         = False
+        self.__ended = False
         self.__writingReport = False
 
         if actions: self.addButtons()
@@ -1496,7 +1508,7 @@ class McaBatchWindow(qt.QWidget):
         l.addWidget(self.pauseButton)
         l.addWidget(qt.HorizontalSpacer(self.buttonsBox))
         self.pauseButton.setText("Pause")
-        self.abortButton   = qt.QPushButton(self.buttonsBox)
+        self.abortButton = qt.QPushButton(self.buttonsBox)
         l.addWidget(self.abortButton)
         l.addWidget(qt.HorizontalSpacer(self.buttonsBox))
         self.abortButton.setText("Abort")
@@ -1531,7 +1543,7 @@ class McaBatchWindow(qt.QWidget):
     def onNewFile(self, file, filelist, filestep, filebeginoffset =0, fileendoffset = 0):
         _logger.debug("onNewFile: %s", file)
         indexlist = list(range(0,len(filelist),filestep))
-        index  = indexlist.index(filelist.index(file)) - filebeginoffset
+        index = indexlist.index(filelist.index(file)) - filebeginoffset
         #print index + filebeginoffset
         if index == 0:
             self.report= None
@@ -1585,9 +1597,9 @@ class McaBatchWindow(qt.QWidget):
     #def onMca(self, mca, nmca, mcastep):
     def onMca(self, ddict):
         _logger.debug("onMca %s", ddict['mca'])
-        mca  = ddict['mca']
+        mca = ddict['mca']
         nmca = ddict['nmca']
-        mcastep  = ddict['mcastep']
+        mcastep = ddict['mcastep']
         filename = ddict['filename']
         key = ddict['key']
         info = ddict['info']
@@ -1691,7 +1703,7 @@ class McaBatchWindow(qt.QWidget):
             """
             #The code below has been moved to McaAdvancedFitBatch.py
             if len(self.report._concentrationsTextASCII) > 1:
-                text  = ""
+                text = ""
                 text += "SOURCE: "+ filename +"\n"
                 text += "KEY: "+key+"\n"
                 text += self.report._concentrationsTextASCII + "\n"
@@ -1762,27 +1774,27 @@ class McaBatchWindow(qt.QWidget):
             for ffile in imagelist:
                 filelist+=" %s" % ffile
             try:
-                dirname = os.path.dirname(__file__)
+                rootdir = os.path.dirname(__file__)
                 frozen = False
             except:
                 frozen = True
-                dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
+                rootdir = os.path.dirname(EdfFileSimpleViewer.__file__)
             if not frozen:
                 if sys.executable in ["PyMcaMain", "PyMcaMain.exe",
                                       "PyMcaBatch", "PyMcaBatch.exe"]:
                     frozen = True
-            _logger.debug("final dirname = %s", dirname)
+            _logger.debug("final rootdir = %s", rootdir)
             if frozen:
                 # we are at level PyMca5\PyMcaGui\pymca
-                dirname  = os.path.dirname(dirname)
+                rootdir = os.path.dirname(rootdir)
                 # level PyMcaGui
-                dirname  = os.path.dirname(dirname)
+                rootdir = os.path.dirname(rootdir)
                 # level PyMca5
-                dirname  = os.path.dirname(dirname)
+                rootdir = os.path.dirname(rootdir)
                 # directory level with exe files
-                myself   = os.path.join(dirname, "EdfFileSimpleViewer")
+                myself = os.path.join(rootdir, "EdfFileSimpleViewer")
             else:
-                myself  = moduleRunCmd(os.path.join(dirname, "EdfFileSimpleViewer.py"))
+                myself = moduleRunCmd(os.path.join(rootdir, "EdfFileSimpleViewer.py"))
             cmd = "%s %s &" % (myself, filelist)
             _logger.debug("cmd = %s", cmd)
             os.system(cmd)
@@ -1791,29 +1803,29 @@ def main():
     sys.excepthook = qt.exceptionHandler
     import getopt
     from PyMca5.PyMcaCore.LoggingLevel import getLoggingLevel
-    options     = 'f'
+    options = 'f'
     longoptions = ['cfg=','outdir=','roifit=','roi=','roiwidth=',
                    'overwrite=', 'filestep=', 'mcastep=', 'html=','htmlindex=',
                    'listfile=','cfglistfile=', 'concentrations=', 'table=', 'fitfiles=',
                    'filebeginoffset=','fileendoffset=','mcaoffset=', 'chunk=',
                    'nativefiledialogs=','selection=', 'exitonend=',
                    'edf=', 'h5=', 'csv=', 'tif=', 'dat=', 'diagnostics=',
-                   'logging=', 'debug=', 'gui=', 'multipage=']
+                   'logging=', 'debug=', 'gui=', 'multipage=', 'nproc=']
     filelist = None
-    outdir   = None
-    cfg      = None
+    outdir = None
+    cfg = None
     listfile = None
     cfglistfile = None
     selection = False
-    roifit   = 0
+    roifit = 0
     roiwidth = ROIWIDTH
     overwrite= 1
     filestep = 1
     html = 0
     htmlindex= None
-    mcastep  = 1
-    table    = 2
-    fitfiles = 1
+    mcastep = 1
+    table = 2
+    fitfiles = 0
     concentrations = 0
     filebeginoffset = 0
     fileendoffset = 0
@@ -1828,6 +1840,7 @@ def main():
     h5 = 1
     dat = 1
     multipage = 0
+    nproc = 1
     opts, args = getopt.getopt(
                     sys.argv[1:],
                     options,
@@ -1838,7 +1851,7 @@ def main():
         elif opt in ('--outdir'):
             outdir = arg
         elif opt in ('--roi','--roifit'):
-            roifit   = int(arg)
+            roifit = int(arg)
         elif opt in ('--roiwidth'):
             roiwidth = float(arg)
         elif opt in ('--overwrite'):
@@ -1846,33 +1859,33 @@ def main():
         elif opt in ('--filestep'):
             filestep = int(arg)
         elif opt in ('--mcastep'):
-            mcastep  = int(arg)
+            mcastep = int(arg)
         elif opt in ('--html'):
-            html  = int(arg)
+            html = int(arg)
         elif opt in ('--htmlindex'):
-            htmlindex  = arg
+            htmlindex = arg
         elif opt in ('--listfile'):
-            listfile  = arg
+            listfile = arg
         elif opt in ('--cfglistfile'):
-            cfglistfile  = arg
+            cfglistfile = arg
         elif opt in ('--concentrations'):
-            concentrations  = int(arg)
+            concentrations = int(arg)
         elif opt in ('--table'):
-            table  = int(arg)
+            table = int(arg)
         elif opt in ('--fitfiles'):
-            fitfiles  = int(arg)
+            fitfiles = int(arg)
         elif opt in ('--filebeginoffset'):
             filebeginoffset = int(arg)
         elif opt in ('--fileendoffset'):
-            fileendoffset   = int(arg)
+            fileendoffset = int(arg)
         elif opt in ('--mcaoffset'):
-            mcaoffset  = int(arg)
+            mcaoffset = int(arg)
         elif opt in ('--chunk'):
-            chunk  = int(arg)
+            chunk = int(arg)
         elif opt in ('--gui'):
-            gui  = int(arg)
+            gui = int(arg)
         elif opt in ('--selection'):
-            selection  = int(arg)
+            selection = int(arg)
             if selection:
                 selection = True
             else:
@@ -1898,6 +1911,8 @@ def main():
             tif = int(arg)
         elif opt == '--multipage':
             multipage = int(arg)
+        elif opt == '--nproc':
+            nproc = max(int(arg), 1)
     level = getLoggingLevel(opts)
     logging.basicConfig(level=level)
     _logger.setLevel(level)
@@ -1937,10 +1952,17 @@ def main():
     app=qt.QApplication(sys.argv)
     winpalette = qt.QPalette(qt.QColor(230,240,249),qt.QColor(238,234,238))
     app.setPalette(winpalette)
+    if html:
+        fitfiles=1
     if len(filelist) == 0 or gui:
         # Launch GUI when no files are provided
         app.lastWindowClosed.connect(app.quit)
-        w = McaBatchGUI(actions=1,filelist=filelist,config=cfg,outputdir=outdir)
+        w = McaBatchGUI(actions=1,filelist=filelist,config=cfg,outputdir=outdir,
+                        roifit=roifit,roiwidth=roiwidth,overwrite=overwrite,
+                        concentrations=concentrations, fitfiles=fitfiles,
+                        diagnostics=diagnostics, multipage=multipage,
+                        tif=tif, edf=edf, csv=csv, h5=h5, dat=dat, nproc=nproc,
+                        table=table, html=html)
         w.show()
         w.raise_()
     else:
@@ -1950,9 +1972,6 @@ def main():
         window = McaBatchWindow(name=text,actions=1,
                                 outputdir=outdir,html=html, htmlindex=htmlindex, table=table,
                                 chunk=chunk, exitonend=exitonend)
-
-        if html:
-            fitfiles=1
         try:
             thread = McaBatch(window,cfg,filelist=filelist,outputdir=outdir,roifit=roifit,roiwidth=roiwidth,
                               overwrite=overwrite, filestep=filestep, mcastep=mcastep,
