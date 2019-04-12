@@ -860,7 +860,6 @@ class McaAdvancedFitBatch(object):
 
     def _allocateMemoryFit(self, result, concentrations):
         if self._concentrations:
-            layerlist = concentrations['layerlist']
             if 'mmolar' in concentrations:
                 self.__conKey = "mmolar"
             else:

@@ -34,7 +34,7 @@ import time
 import subprocess
 import logging
 from contextlib import contextmanager
-
+from collections import MutableMapping
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 
@@ -113,7 +113,7 @@ class Option(object):
             return self._name + "=" + self._format.format(value)
 
 
-class Command(object):
+class Command(MutableMapping):
     """
     Class that wraps "cmd --option1=... --option2=..."
     while allowing for adding/removing/modifying options
@@ -140,14 +140,22 @@ class Command(object):
     def __str__(self):
         name, fmt = self._cmd
         if not name:
-            raise RuntimeError("Specify a command with 'setCommand'")
+            name = "<missing command>"
         cmd = fmt.format(name)
         options = map(str, self._options.values())
         cmd += ''.join(list(options))
         return cmd
     
     def getOptions(self, *attrs):
-        return {attr:getattr(self, attr) for attr in attrs}
+        return {attr: getattr(self, attr) for attr in attrs}
+
+    def getAllButOptions(self, *attrs):
+        attrs = [attr for attr in self._options if attr not in attrs]
+        return self.getOptions(*attrs)
+
+    def getAllOptions(self):
+        attrs = list(self._options.keys())
+        return self.getOptions(*attrs)
 
     def __getattr__(self, attr):
         if attr in self._options:
@@ -156,12 +164,29 @@ class Command(object):
             raise AttributeError
 
     def __setattr__(self, attr, value):
-        if attr != "_options":
+        if attr.startswith('_'):
+            super(Command, self).__setattr__(attr, value)
+        else:
             if attr in self._options:
                 option = self._options[attr]
                 option.value = value
-                return
-        super(Command, self).__setattr__(attr, value)
+            else:
+                self.addOption(attr, value=value)
+
+    def __getitem__(self, attr):
+        return self._options[attr].value
+            
+    def __setitem__(self, attr, value):
+        self.addOption(attr, value=value)
+
+    def __delitem__(self, key):
+        del self._options[key]
+        
+    def __iter__(self):
+        return iter(self._options)
+
+    def __len__(self):
+        return len(self._options)
 
 
 def launchThreadBatchFit(thread, window, qApp=None):
@@ -545,9 +570,9 @@ class McaBatchGUI(qt.QWidget):
         #BATCH SPLITTING
         self.__splitBox = qt.QCheckBox(vBox)
         self.__splitBox.setText('EXPERIMENTAL: Use several processes')
+        self.__splitBox.setChecked(False)
+        self.__splitBox.setEnabled(True)
         vBox.l.addWidget(self.__splitBox)
-        self.__splitBox.stateChanged.connect(self.__toggleMultiProcess)
-        self.__toggleMultiProcess(False)
         #box3 = qt.QHBox(box2)
         self.__box4 = qt.QWidget(boxStep0)
         box4 = self.__box4
@@ -573,12 +598,6 @@ class McaBatchGUI(qt.QWidget):
 
         if actions:
             self.__buildActions()
-
-    def __toggleMultiProcess(self, state):
-        multiProc = bool(state)
-        self._csvBox.setEnabled(not multiProc)
-        if multiProc:
-            self._csvBox.setChecked(False)
 
     def __stateMultiPage(self, state=None):
         self._multipageBox.setEnabled(self._edfBox.isChecked() or self._tiffBox.isChecked())
@@ -1014,21 +1033,16 @@ class McaBatchGUI(qt.QWidget):
 
     def _runAsThreadRoiFit(self, cmd, wname):
         kwargs = cmd.getOptions('html', 'htmlindex', 'table')
-        window = McaBatchWindow(name="ROI"+wname, actions=1, outputdir=self.outputDir, **kwargs)
-        kwargs = cmd.getOptions('roifit', 'roiwidth', 'overwrite', 'filestep',
-                                'mcastep', 'concentrations', 'fitfiles', 'selection',
-                                'edf', 'csv', 'dat', 'h5', 'tif')
-        thread = McaBatch(window, self.configFile, filelist=self.fileList, outputdir=self.outputDir, **kwargs)
+        window = McaBatchWindow(name="ROI"+wname, actions=1, **kwargs)
+        kwargs = cmd.getAllButOptions('html', 'htmlindex', 'table')
+        thread = McaBatch(window, self.configFile, filelist=self.fileList, **kwargs)
         self._launchThreadBatchFit(thread, window)
     
     def _runAsThreadDarwin(self, cmd, wname):
-        #TODO: are the right parameters passed? Looks like we're passing roifit parameters while this is not a roifit
-        kwargs = cmd.getOptions('html', 'htmlindex', 'table')
-        window = McaBatchWindow(name=wname, actions=1, outputdir=self.outputDir, **kwargs)
-        kwargs = cmd.getOptions('roifit', 'roiwidth', 'overwrite', 'filestep',
-                                'mcastep', 'concentrations', 'fitfiles', 'selection',
-                                'edf', 'csv', 'dat', 'h5', 'tif')
-        thread = McaBatch(window, self.configFile, filelist=self.fileList, outputdir=self.outputDir, **kwargs)
+        kwargs = cmd.getOptions('html', 'htmlindex', 'table', 'outputdir')
+        window = McaBatchWindow(name=wname, actions=1, **kwargs)
+        kwargs = cmd.getAllButOptions('html', 'htmlindex', 'table')
+        thread = McaBatch(window, self.configFile, filelist=self.fileList, **kwargs)
         window._rootname = "%s"% thread._rootname
         self._launchThreadBatchFit(thread, window)
 
