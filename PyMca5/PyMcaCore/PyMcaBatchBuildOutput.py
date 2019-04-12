@@ -150,9 +150,11 @@ class PyMcaBatchBuildOutput(object):
             nImages = edf.GetNumImages()
             if i == 0:
                 images = [edf.GetData(j).copy() for j in range(nImages)]
-                headers = [{'Title': edf.GetHeader(j)['Title']} for j in range(nImages)]
+                headers = [{'Title': edf.GetHeader(j)['Title']}
+                           for j in range(nImages)]
             else:
-                headersi = [{'Title': edf.GetHeader(j)['Title']} for j in range(nImages)]
+                headersi = [{'Title': edf.GetHeader(j)['Title']}
+                            for j in range(nImages)]
                 for header, img in zip(headers, images):
                     k = headersi.index(header)
                     self._fillPartial(img, edf.GetData(k))
@@ -171,9 +173,11 @@ class PyMcaBatchBuildOutput(object):
             nImages = tif.getNumberOfImages()
             if i == 0:
                 images = [tif.getData(j).copy() for j in range(nImages)]
-                headers = [{'Title': tif.getInfo(j)['info']['Title']} for j in range(nImages)]
+                headers = [{'Title': tif.getInfo(j)['info']['Title']}
+                           for j in range(nImages)]
             else:
-                headersi = [{'Title': tif.getInfo(j)['info']['Title']} for j in range(nImages)]
+                headersi = [{'Title': tif.getInfo(j)['info']['Title']}
+                            for j in range(nImages)]
                 for header, img in zip(headers, images):
                     k = headersi.index(header)
                     self._fillPartial(img, tif.getData(k))
