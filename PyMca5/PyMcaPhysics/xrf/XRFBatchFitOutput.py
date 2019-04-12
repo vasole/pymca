@@ -39,7 +39,8 @@ import re
 import itertools
 from six import string_types
 from contextlib import contextmanager
-from collections import defaultdict, MutableMapping
+from collections import defaultdict
+from collections.abc import MutableMapping
 from PyMca5.PyMcaIO import NexusUtils
 
 _logger = logging.getLogger(__name__)
