@@ -34,7 +34,10 @@ import time
 import subprocess
 import logging
 from contextlib import contextmanager
-from collections.abc import MutableMapping
+try:
+    from collections.abc import MutableMapping
+except ImportError:
+    from collections import MutableMapping
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 
