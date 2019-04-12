@@ -943,7 +943,7 @@ class McaAdvancedFitBatch(object):
                                      dataAttrs=None,
                                      groupAttrs=None,
                                      memtype='hdf5')
-            outbuffer.allocateMemory('Chisq',
+            outbuffer.allocateMemory('chisq',
                                      group='diagnostics',
                                      shape=imageShape,
                                      fill_value=numpy.nan,
@@ -1032,7 +1032,7 @@ class McaAdvancedFitBatch(object):
                     output[i, self.__row, self.__col] = concentrations[self.__conKey][label]
         # Diagnostics: model, residuals, chisq ,...
         if outbuffer.diagnostics:
-            outbuffer['Chisq'][self.__row, self.__col] = result['chisq']
+            outbuffer['chisq'][self.__row, self.__col] = result['chisq']
             idx = self.__row, self.__col, self._mcaIdx
             if outbuffer.saveFit:
                 output = outbuffer['model']

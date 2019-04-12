@@ -1138,8 +1138,7 @@ class McaBatchGUI(qt.QWidget):
                     cmd.fileendoffset = nFiles - filechunk * (i+1)
                     if (i+1) == nbatches:
                         cmd.fileendoffset = 0
-                    nFilesChunk = nFiles - cmd.filebeginoffset - cmd.fileendoffset
-                    if nFilesChunk <= 0:
+                    if cmd.filebeginoffset >= nFiles or cmd.fileendoffset < 0:
                         continue
                     cmd.chunk = i
                     try:
@@ -1233,8 +1232,7 @@ class McaBatchGUI(qt.QWidget):
                 cmd.fileendoffset = nFiles - filechunk * (i+1)
                 if (i+1) == nbatches:
                     cmd.fileendoffset = 0
-                nFilesChunk = nFiles - cmd.filebeginoffset - cmd.fileendoffset
-                if nFilesChunk <= 0:
+                if cmd.filebeginoffset >= nFiles or cmd.fileendoffset < 0:
                     continue
                 cmd.chunk = i
                 # unfortunately I have to set shell = True
