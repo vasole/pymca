@@ -34,7 +34,10 @@ import time
 import subprocess
 import logging
 from contextlib import contextmanager
-from collections import MutableMapping
+try:
+    from collections.abc import MutableMapping
+except ImportError:
+    from collections import MutableMapping
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 
@@ -1127,16 +1130,20 @@ class McaBatchGUI(qt.QWidget):
         if self.__splitBox.isChecked():
             processList = []
             nbatches = int(qt.safe_str(self.__splitSpin.text()))
-            if len(self.fileList) > 1:
-                filechunk = int(len(self.fileList)/nbatches)
+            nFiles = len(self.fileList)
+            if nFiles > 1:
+                filechunk = max(int(nFiles/nbatches), 1)
                 cmd.addOption('filebeginoffset', value=0)
                 cmd.addOption('fileendoffset', value=0)
                 cmd.addOption('chunk', value=0)
                 for i in range(nbatches):
                     cmd.filebeginoffset = filechunk * i
-                    cmd.fileendoffset = len(self.fileList) - filechunk * (i+1)
+                    cmd.fileendoffset = nFiles - filechunk * (i+1)
                     if (i+1) == nbatches:
                         cmd.fileendoffset = 0
+                    nFilesChunk = nFiles - cmd.filebeginoffset - cmd.fileendoffset
+                    if nFilesChunk <= 0:
+                        continue
                     cmd.chunk = i
                     try:
                         processList.append(subprocess.Popen(str(cmd),
@@ -1219,15 +1226,19 @@ class McaBatchGUI(qt.QWidget):
             qApp.processEvents()
             processList = []
             nbatches = int(qt.safe_str(self.__splitSpin.text()))
-            filechunk = int(len(self.fileList)/nbatches)
+            nFiles = len(self.fileList)
+            filechunk = max(int(nFiles/nbatches), 1)
             cmd.addOption('filebeginoffset', value=0)
             cmd.addOption('fileendoffset', value=0)
             cmd.addOption('chunk', value=0)
             for i in range(nbatches):
                 cmd.filebeginoffset = filechunk * i
-                cmd.fileendoffset = len(self.fileList) - filechunk * (i+1)
+                cmd.fileendoffset = nFiles - filechunk * (i+1)
                 if (i+1) == nbatches:
                     cmd.fileendoffset = 0
+                nFilesChunk = nFiles - cmd.filebeginoffset - cmd.fileendoffset
+                if nFilesChunk <= 0:
+                    continue
                 cmd.chunk = i
                 # unfortunately I have to set shell = True
                 # otherways I get a file not found error in the
