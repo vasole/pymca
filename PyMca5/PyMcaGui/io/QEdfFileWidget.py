@@ -35,12 +35,6 @@ import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import PlotWidget
 
-if sys.version_info > (2, 7):
-    from io import BytesIO
-else:
-    import cStringIO as _StringIO
-    BytesIO = _StringIO.StringIO
-
 if not hasattr(qt, 'QString'):
     QString = qt.safe_str
     QStringList = list
