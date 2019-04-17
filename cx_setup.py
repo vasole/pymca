@@ -515,6 +515,9 @@ if not SCIPY:
 
 nsis = os.path.join("\Program Files (x86)", "NSIS", "makensis.exe")
 if sys.platform.startswith("win") and os.path.exists(nsis):
+    program = "PyMca"
+    version = PyMca5.version()
+    frozenDir = os.path.join(".", "build", "PyMca5 %s" % version) 
     # check if we can perform the packaging
     outFile = "nsisscript.nsi"
     f = open("nsisscript.nsi.in", "rb")
@@ -522,12 +525,19 @@ if sys.platform.startswith("win") and os.path.exists(nsis):
     f.close()
     if os.path.exists(outFile):
         os.remove(outFile)
-    pymcaexe = "pymca%s-win64.exe" % PyMca5.version()
+    pymcaexe = "pymca%s-win64.exe" % version
     if os.path.exists(pymcaexe):
         os.remove(pymcaexe)
     f = open(outFile, "wb")
     for line in content:
-        line = line.replace("__VERSION__", PyMca5.version())
+        if "__VERSION__" in line:
+            line = line.replace("__VERSION__", version)
+        if "__PROGRAM__" in line:
+            line = line.replace("__PROGRAM__", program)
+        if "__OUTFILE__" in line:
+            line = line.replace("__OUTFILE__", pymcaexe)
+        if "__SOURCE_DIRECTORY__" in line:
+            line = line.replace("__SOURCE_DIRECTORY__", frozenDir)
         f.write(line)
     f.close()
     cmd = '"%s" %s' % (nsis, outFile)
