@@ -19,16 +19,12 @@ Python installation.
 
 The simplest solution is to use `pip`:
 
-``
-pip install PyMca5
-``
+``pip install PyMca5``
 
 You can add the usual `--user` qualifier to install only for your
 local user rather than system-wide:
 
-``
-pip install PyMca5 --user
-``
+`` pip install PyMca5 --user ``
 
 If you want to build from the source distribution or from a git
 repository checkout, you may want to have Cython installed on
@@ -84,4 +80,4 @@ feel free to contact me or submit a pull request.
 
 Enjoy,
 
-    V. Armando Sole
+V. Armando Sole
