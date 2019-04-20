@@ -54,7 +54,7 @@ Examples of source installation
 
       # Run one of the following (not both); pip is preferred
       python setup.py install --user   # use python setuptool
-      pip install --user               # use the pip package manager
+      pip install . --user               # use the pip package manager
 
 You will need the following dependencies installed:
 
