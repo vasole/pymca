@@ -72,6 +72,6 @@ Development Plans
 If you have any questions or comments (or contributions!), please
 feel free to contact me or submit a pull request.
 
-Enjoy,
+Enjoy.
 
 V. Armando Sole
