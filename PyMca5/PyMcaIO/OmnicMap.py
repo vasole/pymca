@@ -62,10 +62,7 @@ class OmnicMap(DataObject.DataObject):
             It is expected to work with OMNIC versions 7.x and 8.x
         '''
         DataObject.DataObject.__init__(self)
-        if sys.platform == 'win32':
-            fid = open(filename, 'rb')
-        else:
-            fid = open(filename, 'r')
+        fid = open(filename, 'rb')
         data = fid.read()
         fid.close()
 
