@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -128,7 +128,7 @@ class TiffIO(object):
             fd = filename
             self._access = None
         else:
-            # the b is needed for windows and python 3
+            # the b is needed to mkae sure we read bytes
             fd = open(filename, mode)
             self._access = mode
 
