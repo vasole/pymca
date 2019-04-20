@@ -2,7 +2,7 @@ PyMca
 =====
 
 This is the MIT version of the PyMca XRF Toolkit. Please read the
-```LICENSE`` <./LICENSE>`__ file for details.
+`LICENSE <./LICENSE>`_ file for details.
 
 Installation
 ------------
@@ -58,10 +58,10 @@ Examples of source installation
 
 You will need the following dependencies installed:
 
--  ```python`` <https://www.python.org/>`__ (one of 2.7, 3.5 or higher
+-  `python <https://www.python.org/>`_ (one of 2.7, 3.5 or higher
    recommended)
--  ```numpy`` <https://www.numpy.org/>`__
--  ```fisx`` <https://github.com/vasole/fisx>`__
+-  `numpy <https://www.numpy.org/>`_
+-  `fisx <https://github.com/vasole/fisx>`_
 
 If you want to use the graphical interface provided, you will need a
 running python installation with one of the following combinations:
@@ -78,7 +78,7 @@ running python installation with one of the following combinations:
 
 If you want to embed ``PyMca`` in your own graphical applications, I
 recommend you to use the
-```McaAdvancedFit.py`` <PyMca5/PyMcaGui/physics/xrf/McaAdvancedFit.py>`__
+`McaAdvancedFit.py <PyMca5/PyMcaGui/physics/xrf/McaAdvancedFit.py>`_
 module. It is very easy to embed.
 
 Development Plans
@@ -93,8 +93,4 @@ free to contact me or submit a pull request.
 
 Enjoy,
 
-::
-
-   V. Armando Sole
-   Lead Developer
-
+   \V. Armando Sole, Lead Developer
