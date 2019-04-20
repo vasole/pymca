@@ -17,14 +17,14 @@ if official pacakges are available for your distribution.
 Please continue reading if you want to use PyMca with your existing
 Python installation.
 
-The simplest solution is to use `pip`:
+The simplest solution is to use `pip`::
 
-``pip install PyMca5``
+    pip install PyMca5
 
 You can add the usual `--user` qualifier to install only for your
-local user rather than system-wide:
+local user rather than system-wide::
 
-`` pip install PyMca5 --user ``
+    pip install PyMca5 --user
 
 If you want to build from the source distribution or from a git
 repository checkout, you may want to have Cython installed on
@@ -34,21 +34,15 @@ Examples of source installation
 ...............................
 
 1. In your default system-wide python installation, run one
-   or the other of the two (not both) commands below (may require root/adminstrator access):
+   or the other of the two (not both) commands below (may require root/administrator access)::
 
-    ```bash
-    # Run one of the following (not both); pip is preferred
     python setup.py install    # use python setuptools
     pip install .              # use the pip package manager
-    ```
 
-2. Or, to install just in your local user account:
+2. Or, to install just in your local user account, run one of the following (pip is preferred)::
 
-    ```bash
-    # Run one of the following (not both); pip is preferred
     python setup.py install --user   # use python setuptool
     pip install --user               # use the pip package manager
-    ```
 
 You will need the following dependencies installed:
 
