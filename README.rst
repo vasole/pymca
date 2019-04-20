@@ -2,7 +2,7 @@ PyMca
 =====
 
 This is the MIT version of the PyMca XRF Toolkit.
-Please read the [`LICENSE`](./LICENSE) file for details.
+Please read the `LICENSE <./LICENSE>`_ file for details.
 
 Installation
 ------------
@@ -19,16 +19,16 @@ Python installation.
 
 The simplest solution is to use `pip`:
 
-```
+``
 pip install PyMca5
-```
+``
 
 You can add the usual `--user` qualifier to install only for your
 local user rather than system-wide:
 
-```
+``
 pip install PyMca5 --user
-```
+``
 
 If you want to build from the source distribution or from a git
 repository checkout, you may want to have Cython installed on
@@ -56,7 +56,7 @@ Examples of source installation
 
 You will need the following dependencies installed:
 
-- `python <https://www.python.org/`_ (one of 2.7, 3.5 or higher
+- `python <https://www.python.org/>`_ (one of 2.7, 3.5 or higher
   recommended)
 - `numpy <https://www.numpy.org/>`_
 - `fisx <https://github.com/vasole/fisx>`_
