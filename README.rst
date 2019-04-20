@@ -74,4 +74,4 @@ feel free to contact me or submit a pull request.
 
 Enjoy.
 
-V. Armando Sole
+Armando
