@@ -9,8 +9,7 @@ Installation
 
 Ready-to-use packages are available for the most common platforms.
 
-PyMca frozen binaries for MacOS and Windows can be obtained from 
-[Sourceforge](https://sourceforge.net/projects/pymca/files/pymca)
+PyMca frozen binaries for MacOS and Windows can be obtained from `Sourceforge <https://sourceforge.net/projects/pymca/files/pymca>`_
 
 Unofficial Debian packages are also available, but you should check
 if official pacakges are available for your distribution.
@@ -20,14 +19,14 @@ Python installation.
 
 The simplest solution is to use `pip`:
 
-```bash
+```
 pip install PyMca5
 ```
 
 You can add the usual `--user` qualifier to install only for your
 local user rather than system-wide:
 
-```bash
+```
 pip install PyMca5 --user
 ```
 
@@ -57,20 +56,20 @@ Examples of source installation
 
 You will need the following dependencies installed:
 
-- [`python`](https://www.python.org/) (one of 2.7, 3.5 or higher
+- `python <https://www.python.org/`_ (one of 2.7, 3.5 or higher
   recommended)
-- [`numpy`](https://www.numpy.org/)
-- [`fisx`](https://github.com/vasole/fisx)
+- `numpy <https://www.numpy.org/>`_
+- `fisx <https://github.com/vasole/fisx>`_
 
 If you want to use the graphical interface provided, you will need a
 running python installation with one of the following combinations:
 
-- `PyQt4` + `matplotlib` (PyMca license will be [GPL](https://www.gnu.org/licenses/gpl-3.0.en.html) unless you have a commercial PyQt4 license)
-- `PyQt5` + `matplotlib` (PyMca license will be [GPL](https://www.gnu.org/licenses/gpl-3.0.en.html) unless you have a commercial PyQt5 license)
-- `PySide` + `matplotlib` (PyMca license will be [MIT](https://tldrlegal.com/license/mit-license) because PySide is [LGPL](https://www.gnu.org/licenses/lgpl-3.0.en.html))
+- `PyQt4` + `matplotlib` (PyMca license will be `GPL <https://www.gnu.org/licenses/gpl-3.0.en.html>`_ unless you have a commercial PyQt4 license)
+- `PyQt5` + `matplotlib` (PyMca license will be `GPL <https://www.gnu.org/licenses/gpl-3.0.en.html>`_ unless you have a commercial PyQt5 license)
+- `PySide` + `matplotlib` (PyMca license will be `MIT <https://tldrlegal.com/license/mit-license>`_ because PySide is `LGPL <https://www.gnu.org/licenses/lgpl-3.0.en.html>`_)
 
 If you want to embed `PyMca` in your own graphical applications, I
-recommend you to use the [`McaAdvancedFit.py`](PyMca5/PyMcaGui/physics/xrf/McaAdvancedFit.py)
+recommend you to use the `McaAdvancedFit.py <PyMca5/PyMcaGui/physics/xrf/McaAdvancedFit.py>`_
 module. It is very easy to embed.
 
 Development Plans
