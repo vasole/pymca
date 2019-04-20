@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -62,10 +62,7 @@ class OmnicMap(DataObject.DataObject):
             It is expected to work with OMNIC versions 7.x and 8.x
         '''
         DataObject.DataObject.__init__(self)
-        if sys.platform == 'win32':
-            fid = open(filename, 'rb')
-        else:
-            fid = open(filename, 'r')
+        fid = open(filename, 'rb')
         data = fid.read()
         fid.close()
 
