@@ -128,7 +128,7 @@ class TiffIO(object):
             fd = filename
             self._access = None
         else:
-            # the b is needed to mkae sure we read bytes
+            # the b is needed to make sure we read bytes
             fd = open(filename, mode)
             self._access = mode
 
