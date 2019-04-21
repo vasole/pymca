@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -1399,7 +1399,7 @@ class MyQLabel(qt.QLabel):
             painter.font().setBold(0)
 
 def test():
-    from PyMca5 import RGBCorrelatorGraph
+    from PyMca5.PyMcaGui.plotting import RGBCorrelatorGraph
     app = qt.QApplication([])
     app.lastWindowClosed.connect(app.quit)
 
@@ -1409,9 +1409,10 @@ def test():
     graph = RGBCorrelatorGraph.RGBCorrelatorGraph(container)
     def slot(ddict):
         if 'image' in ddict:
-            image_buffer = ddict['image'].tostring()
+            image_buffer = ddict['image']
             size = ddict['size']
-            graph.graph.pixmapPlot(image_buffer,size)
+            image_buffer.shape = size[1], size[0], 4
+            graph.graph.addImage(image_buffer)
             graph.graph.replot()
     w.sigRGBCorrelatorWidgetSignal.connect(slot)
     import getopt
@@ -1429,7 +1430,7 @@ def test():
             import DataSource
             DataReader = DataSource.DataSource
         except:
-            import EdfFileDataSource
+            from PyMca5.PyMcaCore import EdfFileDataSource
             DataReader = EdfFileDataSource.EdfFileDataSource
         for fname in filelist:
             source = DataReader(fname)
