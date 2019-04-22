@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -76,7 +76,7 @@ class PilatusCBF(object):
         if isinstance(filename, _fileClass):
             fd = filename
         else:
-            #the b is needed for windows
+            # make sure we read bytes
             fd = open(filename, 'rb')
         self.cif = CIF()
         self.__data = np.array([])

@@ -65,6 +65,7 @@ class OmnicMap(DataObject.DataObject):
         fid = open(filename, 'rb')
         data = fid.read()
         fid.close()
+        fid = None
 
         try:
             omnicInfo = self._getOmnicInfo(data)
