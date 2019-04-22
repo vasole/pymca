@@ -27,6 +27,7 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+import os
 import sys
 import traceback
 import logging
@@ -90,19 +91,19 @@ elif sys.version_info < (3,):
 
 if BINDING is None: # Try the different bindings
     try:
-        import PyQt5
+        import PyQt5.QtCore
         BINDING = "PyQt5"
     except ImportError:
         try:
-            import PyQt4
+            import PyQt4.QtCore
             BINDING = "PyQt4"
         except ImportError:
             try:
-                import PySide
+                import PySide.QtCore
                 BINDING = "PySide"
             except ImportError:
                 try:
-                    import PySide2
+                    import PySide2.QtCore
                     BINDING = "PySide2"
                 except ImportError:
                     raise ImportError(
@@ -208,6 +209,25 @@ elif BINDING == "PySide2":
     pyqtSignal = Signal
     pyqtSlot = Slot
 
+    # workaround not finding the Qt platform plugin "windows" in "" error
+    # when creating a QApplication
+    if sys.platform.startswith("win")and QApplication.instance() is None:
+        _platform_plugin_path = os.environ.get("QT_QPA_PLATFORM_PLUGIN_PATH",
+                                                 None)
+        if _platform_plugin_path:
+            if not os.path.exists(_platform_plugin_path):
+                _logger.info("QT_QPA_PLATFORM_PLUGIN_PATH <%s> ignored" % \
+                             _platform_plugin_path)
+                _platform_plugin_path = None
+        if not _platform_plugin_path:
+            import PySide2
+            _platform_plugin_path = os.path.join( \
+                            os.path.dirname(PySide2.__file__),
+                            "plugins", "platforms")
+            os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = \
+                                                _platform_plugin_path
+            _logger.info("QT_QPA_PLATFORM_PLUGIN_PATH set to <%s>" % \
+                             _platform_plugin_path)
 else:
     raise ImportError('No Qt wrapper found. Install one of PyQt5, PyQt4, PySide or PySide2 (untested)')
 
