@@ -77,6 +77,7 @@ class testXrfData(unittest.TestCase):
                     mca = scan.mca(i*nColumns*nDet+j*nDet+k+1)
                     # TODO: bug in specfile (reads one channel less)
                     numpy.testing.assert_array_equal(mca, info['data'][k, i, j, :-1])
+        del ffile.Source
 
     def testEdfMap(self):
         filename = os.path.join(self.path, 'xrfmap.edf')
