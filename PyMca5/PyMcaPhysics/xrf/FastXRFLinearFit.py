@@ -188,7 +188,7 @@ class FastXRFLinearFit(object):
                                                 groupAttrs=None,
                                                 memtype='ram')
             fitAttrs = {}
-            if outbuffer.diagnostics:
+            if outbuffer.saveDataDiagnostics:
                 # Generic axes
                 dataAxesNames = ['dim{}'.format(i) for i in range(data.ndim)]
                 dataAxes = [(name, numpy.arange(n, dtype=dtypeResult), {})
@@ -202,33 +202,36 @@ class FastXRFLinearFit(object):
                 dataAxes.append(('channels', xdata.astype(numpy.int32), {}))
                 fitAttrs['axes'] = dataAxes
                 fitAttrs['axesused'] = dataAxesNames
-            if outbuffer.diagnostics:
-                dataAttrs = {}
+            dataAttrs = {}
+            if outbuffer.saveFOM:
                 nFreeParameters = outbuffer.allocateMemory('nFreeParameters',
-                                                group='diagnostics',
-                                                shape=imageShape,
-                                                fill_value=nFree,
-                                                dtype=numpy.int32,
-                                                dataAttrs=dataAttrs,
-                                                groupAttrs=None,
-                                                memtype='ram')
+                                                           group='diagnostics',
+                                                           shape=imageShape,
+                                                           fill_value=nFree,
+                                                           dtype=numpy.int32,
+                                                           dataAttrs=dataAttrs,
+                                                           groupAttrs=None,
+                                                           memtype='ram')
                 nObservations = outbuffer.allocateMemory('nObservations',
-                                                group='diagnostics',
-                                                shape=imageShape,
-                                                fill_value=nObs,
-                                                dtype=numpy.int32,
-                                                dataAttrs=dataAttrs,
-                                                groupAttrs=None,
-                                                memtype='ram')
+                                                         group='diagnostics',
+                                                         shape=imageShape,
+                                                         fill_value=nObs,
+                                                         dtype=numpy.int32,
+                                                         dataAttrs=dataAttrs,
+                                                         groupAttrs=None,
+                                                         memtype='ram')
+            else:
+                nFreeParameters = None
+            if outbuffer.saveFit:
                 fitmodel = outbuffer.allocateMemory('model',
-                                                group='fit',
-                                                shape=stackShape,
-                                                dtype=dtypeResult,
-                                                chunks=True,
-                                                fill_value=0,
-                                                dataAttrs=dataAttrs,
-                                                groupAttrs=fitAttrs,
-                                                memtype='hdf5')
+                                                    group='fit',
+                                                    shape=stackShape,
+                                                    dtype=dtypeResult,
+                                                    chunks=True,
+                                                    fill_value=0,
+                                                    dataAttrs=dataAttrs,
+                                                    groupAttrs=fitAttrs,
+                                                    memtype='hdf5')
                 idx = [slice(None)]*fitmodel.ndim
                 idx[mcaIndex] = slice(0, iXMin)
                 fitmodel[tuple(idx)] = numpy.nan
@@ -236,7 +239,6 @@ class FastXRFLinearFit(object):
                 fitmodel[tuple(idx)] = numpy.nan
             else:
                 fitmodel = None
-                nFreeParameters = None
 
             _logger.debug("Configuration elapsed = %f", time.time() - t0)
             t0 = time.time()

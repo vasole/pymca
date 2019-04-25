@@ -540,58 +540,6 @@ class testStackInfo(unittest.TestCase):
                     self.assertEqual(reference, current,
                                     "Incorrect value for point %d" % point)
 
-    def _verifyLegacyBatchFitResult(self, imageFile, nRows, nColumns, live_time, nTimes):
-        from PyMca5.PyMcaIO import specfilewrapper as specfile
-
-        # recover the results
-        self.assertTrue(os.path.isfile(imageFile),
-                "Batch fit result file <%s> not present" % imageFile)
-        sf = specfile.Specfile(imageFile)
-        labels = sf[0].alllabels()
-        scanData = sf[0].data()
-        sf = None
-        self.assertTrue(scanData.shape[-1] == (nRows * nColumns),
-           "Expected %d values got %d" % (nRows * nColumns, scanData.shape[-1]))
-
-        referenceResult = {}
-        for point in range(scanData.shape[-1]):
-            for label in labels:
-                idx = labels.index(label)
-                if label in ["Point", "row", "column"]:
-                    continue
-                elif point == 0:
-                    referenceResult[label] = scanData[idx, point]
-                elif label.endswith("-mass-fraction"):
-                    #print("label = ", label)
-                    #print("reference = ", referenceResult[label])
-                    #print("current = ", scanData[idx, point])
-                    reference = referenceResult[label]
-                    current = scanData[idx, point]
-                    #print("ratio = ", current / reference)
-                    #print("time ratio = ", live_time[point] / live_time[0])
-                    if point % nTimes:
-                        if abs(reference) > 1.0e-10:
-                            self.assertTrue(reference != current,
-                                "Incorrect concentration for point %d" % point)
-                        corrected = current * \
-                                    (live_time[point] / live_time[0])
-                        if abs(reference) > 1.0e-10:
-                            delta = \
-                                100 * abs((reference - corrected) / reference)
-                            self.assertTrue(delta < 0.01,
-                                "Incorrect concentration(t) for point %d" % point)
-                        else:
-                            self.assertTrue(abs(reference - corrected) < 1.0e-5,
-                                 "Incorrect concentration(t) for point %d" % point)
-                    else:
-                        self.assertTrue(reference == current,
-                            "Incorrect concentration for point %d" % point)
-                elif label not in ["Point", "row", "column"]:
-                    reference = referenceResult[label]
-                    current = scanData[idx, point]
-                    self.assertTrue( reference == current,
-                                    "Incorrect value for point %d" % point)
-
 
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()

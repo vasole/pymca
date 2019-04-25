@@ -55,10 +55,15 @@ class PyMcaBatchBuildOutput(object):
         self.outputDir = outputdir
 
     def buildOutput(self, inputdir=None, outputdir=None, delete=None):
+        """
+        :returns: 3 lists of merged filenames: .edf filenames, .dat filenames and .h5 filenames
+        """
         if inputdir is None:
             inputdir = self.inputDir
         if inputdir is None:
             inputdir = os.getcwd()
+        if not os.path.isdir(inputdir):
+            return [], [], []
         if outputdir is None:
             outputdir = self.outputDir
         if outputdir is None:

@@ -61,7 +61,7 @@ class OutputBuffer(MutableMapping):
                  saveResiduals=False, saveFit=False, saveData=False,
                  tif=False, edf=False, csv=False, dat=False, h5=True,
                  diagnostics=False, multipage=False, overwrite=False,
-                 suffix=None, nosave=False):
+                 suffix=None, nosave=False, saveFOM=False):
         """
         XRf batch fitting output buffer, to be saved as:
          .h5 : outputDir/outputRoot+suffix.h5::/fileEntry/fileProcess
@@ -84,6 +84,7 @@ class OutputBuffer(MutableMapping):
         :param saveResiduals:
 -       :param saveFit:
 -       :param saveData:
+        :param saveFOM:
         :param diagnostics:
         :param bool tif:
         :param bool edf:
@@ -115,6 +116,7 @@ class OutputBuffer(MutableMapping):
         self.saveResiduals = saveResiduals
         self.saveFit = saveFit
         self.saveData = saveData
+        self.saveFOM = saveFOM
         self.diagnostics = diagnostics
         self.overwrite = overwrite
         self.nosave = nosave
@@ -267,6 +269,15 @@ class OutputBuffer(MutableMapping):
         return self.csv or self.dat or self.edf or self.tif
 
     @property
+    def saveFOM(self):
+        return self._saveFOM
+    
+    @saveFOM.setter
+    def saveFOM(self, value):
+        self._checkBufferContext()
+        self._saveFOM = value
+
+    @property
     def saveData(self):
         return self._saveData and self.h5
     
@@ -294,14 +305,19 @@ class OutputBuffer(MutableMapping):
         self._saveResiduals = value
 
     @property
-    def diagnostics(self):
+    def saveDataDiagnostics(self):
         return self.saveResiduals or self.saveFit or self.saveData 
+
+    @property
+    def diagnostics(self):
+        return self.saveDataDiagnostics or self.saveFOM
 
     @diagnostics.setter
     def diagnostics(self, value):
         self.saveResiduals = value
         self.saveFit = value
         self.saveData = value
+        self.saveFOM = value
 
     @property
     def overwrite(self):

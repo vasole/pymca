@@ -123,9 +123,9 @@ class Command(MutableMapping):
     and conversion to a string for execution
     """
 
-    def __init__(self):
+    def __init__(self, cmd=''):
         self._options = {}
-        self.setCommand("")
+        self.setCommand(cmd)
 
     def setCommand(self, name, fmt=None):
         if not fmt:
@@ -218,13 +218,72 @@ def launchThreadBatchFit(thread, window, qApp=None):
     return qApp
 
 
+def SubCommands(cmd, nFiles, nBatches, func, chunks=True):
+    """
+    Each batch handles a slice of the 2D XRF map.
+    Two slicing strategies are supported:
+
+    ..code: python
+
+        if chunks:
+            for mcaoffset in range(nBatchesPerFile):
+                for filebeginoffset, fileendoffset in ...:
+                    image[filebeginoffset:fileendoffset:1, mcaoffset:None:nBatchesPerFile] 
+        else:
+            for mcaoffset in range(nBatchesPerFile):
+                for filebeginoffset in range(nChunks):
+                    image[filebeginoffset:None:nFilesPerChunk, mcaoffset:None:nBatchesPerFile] 
+    
+    :param cmd:
+    :param num nFiles: number of files to be process
+    :param num nBatches: number sub processes
+    :param func: callable(cmd)
+    :param chunks: 
+    """
+    cmd.addOption('filebeginoffset', value=0)
+    cmd.addOption('fileendoffset', value=0)
+    cmd.addOption('filestep', value=1)
+    cmd.addOption('mcaoffset', value=0)
+    cmd.addOption('mcastep', value=1)
+    cmd.addOption('chunk', value=0)
+
+    nFilesPerChunk = min((nFiles + nBatches - 1)//nBatches, nFiles)
+    nChunks = (nFiles + nFilesPerChunk - 1)//nFilesPerChunk
+    nBatchesPerFile = max(nBatches//nChunks, 1)
+    if chunks:
+        cmd.mcastep = nBatchesPerFile
+        cmd.filestep = nChunks
+        cmd.fileendoffset = 0
+        for i in range(nBatchesPerFile):
+            cmd.mcaoffset = i
+            for j in range(nChunks):
+                cmd.filebeginoffset = j
+                cmd.chunk = i*nChunks + j
+                func(cmd)
+    else:
+        cmd.mcastep = nBatchesPerFile
+        cmd.filestep = 1
+        for i in range(nBatchesPerFile):
+            cmd.mcaoffset = i
+            for j in range(nChunks):
+                filebeginoffset = j * nFilesPerChunk
+                fileend = min(filebeginoffset + nFilesPerChunk, nFiles)
+                if filebeginoffset >= fileend:
+                    break
+                cmd.filebeginoffset = filebeginoffset
+                cmd.fileendoffset = nFiles - fileend
+                cmd.chunk = i*nChunks + j
+                func(cmd)
+
+
 class McaBatchGUI(qt.QWidget):
     """
     Main batch fitting widget
     """
 
     def __init__(self,parent=None,name="PyMca batch fitting",fl=None,
-                filelist=None,config=None,outputdir=None, actions=0,**guikwargs):
+                 filelist=None,config=None,outputdir=None, actions=0,
+                 selection=None, showresult=True, **guikwargs):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle(name)
         self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
@@ -232,6 +291,7 @@ class McaBatchGUI(qt.QWidget):
         self._layout.setContentsMargins(0, 0, 0, 0)
         self._layout.setSpacing(0)
         self._edfSimpleViewer = None
+        self._showResult = showresult
         self._timer = None
         self._processList = []
         self._selection = None
@@ -249,7 +309,8 @@ class McaBatchGUI(qt.QWidget):
                     "Directory %s does not exist\nUsing %s"% (outputdir, self.outputDir))
 
         self.configFile = None
-        self.setFileList(filelist)
+        self.fileList = []
+        self.setFileList(filelist, selection=selection)
         self.setConfigFile(config)
         self.setOutputDir(self.outputDir)
 
@@ -603,7 +664,6 @@ class McaBatchGUI(qt.QWidget):
         box4.l.addWidget(self.__splitSpin)
 
         self._layout.addWidget(bigbox)
-
         if actions:
             self.__buildActions()
 
@@ -660,88 +720,109 @@ class McaBatchGUI(qt.QWidget):
             self._edfSimpleViewer = None
         qt.QWidget.close(self)
 
-    def setFileList(self,filelist=None):
-        if filelist is None:filelist = []
-        if True or self.__goodFileList(filelist):
-            text = ""
-            oldtype = None
-            #do not sort the file list
-            #respect user choice
-            #filelist.sort()
-            for file in filelist:
-                filetype = self.__getFileType(file)
-                if filetype is None:return
-                if oldtype  is None: oldtype = filetype
-                if oldtype != filetype:
-                    qt.QMessageBox.critical(self, "ERROR",
-                        "Type %s does not match type %s on\n%s"% (filetype,oldtype,file))
-                    return
-                text += "%s\n" % file
+    def setFileList(self, filelist=None, selection=None):
+        self._selection = selection
+        if filelist is None:
+            filelist = []
 
-            if len(filelist):
-                if HDF5SUPPORT:
-                    if not h5py.is_hdf5(filelist[0]):
-                        self._hdf5Widget.hide()
-                        self._selection=None
-                    else:
-                        dialog = qt.QDialog(self)
-                        dialog.setWindowTitle('Select your data set')
-                        dialog.mainLayout = qt.QVBoxLayout(dialog)
-                        dialog.mainLayout.setContentsMargins(0, 0, 0, 0)
-                        dialog.mainLayout.setSpacing(0)
-                        datasource = NexusDataSource.NexusDataSource(filelist[0])
-                        nexusWidget = QNexusWidget.QNexusWidget(dialog,
-                                                                buttons=True)
-                        nexusWidget.buttons.hide()
-                        nexusWidget.setDataSource(datasource)
-                        button = qt.QPushButton(dialog)
-                        button.setText("Done")
-                        button.setAutoDefault(True)
-                        button.clicked.connect(dialog.accept)
-                        dialog.mainLayout.addWidget(nexusWidget)
-                        dialog.mainLayout.addWidget(button)
-                        ret = dialog.exec_()
-                        cntSelection = nexusWidget.cntTable.getCounterSelection()
-                        cntlist = cntSelection['cntlist']
-                        if not len(cntlist):
-                            text = "No dataset selection"
-                            self.showMessage(text)
-                            self.__listView.clear()
-                            return
-                        if not len(cntSelection['y']):
-                            text = "No dataset selected as y"
-                            self.showMessage(text)
-                            self.__listView.clear()
-                            return
-                        datasource = None
-                        selection = {}
-                        selection['x'] = []
-                        selection['y'] = []
-                        selection['m'] = []
-                        for key in ['x', 'y', 'm']:
-                            if len(cntSelection[key]):
-                                for idx in cntSelection[key]:
-                                    selection[key].append(cntlist[idx])
+        # Check file existence
+        if not self.__goodFileList(filelist) and False:
+            return
+
+        # Check file types
+        text = ""
+        oldtype = None
+        #do not sort the file list
+        #respect user choice
+        #filelist.sort()
+        for file in filelist:
+            filetype = self.__getFileType(file)
+            if filetype is None:
+                return
+            if oldtype is None:
+                oldtype = filetype
+            if oldtype != filetype:
+                qt.QMessageBox.critical(self, "ERROR",
+                    "Type %s does not match type %s on\n%s"% (filetype,oldtype,file))
+                return
+            text += "%s\n" % file
+
+        # HDF5 selection
+        if len(filelist):
+            if HDF5SUPPORT:
+                if h5py.is_hdf5(filelist[0]):
+                    if selection is None:
+                        selection = self._hdf5Selection(filelist[0])
+                    if selection:
                         self._selection = selection
                         self._hdf5Widget.setSelection(selection)
                         #they are not used yet
                         #self._hdf5Widget.selectionWidgetsDict['x'].hide()
                         #self._hdf5Widget.selectionWidgetsDict['m'].hide()
-                        if self._hdf5Widget.isHidden():
-                            self._hdf5Widget.show()
-                elif filelist[0][-3:].lower() in ['.h5', 'nxs', 'hdf', 'hdf5']:
-                            text = "Warning, this looks as an HDF5 file "
-                            text += "but you do not have HDF5 support."
-                            self.showMessage(text)
-            self.fileList = filelist
-            if len(self.fileList):
-                self.inputDir = os.path.dirname(self.fileList[0])
-                PyMcaDirs.inputDir = os.path.dirname(self.fileList[0])
-            if QTVERSION < '4.0.0':
-                self.__listView.setText(text)
+                    if self._hdf5Widget.isHidden():
+                        self._hdf5Widget.show()
+                else:
+                    self._selection = None
+                    self._hdf5Widget.hide()
+            elif filelist[0][-3:].lower() in ['.h5', 'nxs', 'hdf', 'hdf5']:
+                        text = "Warning, this looks as an HDF5 file "
+                        text += "but you do not have HDF5 support."
+                        self.showMessage(text)
             else:
-                self.__listView.clear()
-                self.__listView.insertPlainText(text)
+                self._selection = None
+                self._hdf5Widget.hide()
+
+        # Accept new file list
+        self.fileList = filelist
+        if len(self.fileList):
+            self.inputDir = os.path.dirname(self.fileList[0])
+            PyMcaDirs.inputDir = os.path.dirname(self.fileList[0])
+        if QTVERSION < '4.0.0':
+            self.__listView.setText(text)
+        else:
+            self.__listView.clear()
+            self.__listView.insertPlainText(text)
+
+    def _hdf5Selection(self, filename):
+        selection = {}
+        dialog = qt.QDialog(self)
+        dialog.setWindowTitle('Select your data set')
+        dialog.mainLayout = qt.QVBoxLayout(dialog)
+        dialog.mainLayout.setContentsMargins(0, 0, 0, 0)
+        dialog.mainLayout.setSpacing(0)
+        datasource = NexusDataSource.NexusDataSource(filename)
+        nexusWidget = QNexusWidget.QNexusWidget(dialog,
+                                                buttons=True)
+        nexusWidget.buttons.hide()
+        nexusWidget.setDataSource(datasource)
+        button = qt.QPushButton(dialog)
+        button.setText("Done")
+        button.setAutoDefault(True)
+        button.clicked.connect(dialog.accept)
+        dialog.mainLayout.addWidget(nexusWidget)
+        dialog.mainLayout.addWidget(button)
+        ret = dialog.exec_()
+        cntSelection = nexusWidget.cntTable.getCounterSelection()
+        cntlist = cntSelection['cntlist']
+        if not len(cntlist):
+            text = "No dataset selection"
+            self.showMessage(text)
+            self.__listView.clear()
+            return selection
+        if not len(cntSelection['y']):
+            text = "No dataset selected as y"
+            self.showMessage(text)
+            self.__listView.clear()
+            return selection
+        datasource = None
+        selection['x'] = []
+        selection['y'] = []
+        selection['m'] = []
+        for key in ['x', 'y', 'm']:
+            if len(cntSelection[key]):
+                for idx in cntSelection[key]:
+                    selection[key].append(cntlist[idx])
+        return selection
 
     def showMessage(self, text):
         msg = qt.QMessageBox(self)
@@ -919,7 +1000,7 @@ class McaBatchGUI(qt.QWidget):
         else:
             self.raise_()
 
-    def start(self):
+    def start(self, allowIndependent=True):
         if not len(self.fileList):
             qt.QMessageBox.critical(self, "ERROR",'Empty file list')
             self.raise_()
@@ -935,7 +1016,7 @@ class McaBatchGUI(qt.QWidget):
                     return
             if len(self.fileList) == 1:
                 if int(qt.safe_str(self.__splitSpin.text())) > 1:
-                    allowSingleFileSplitProcesses = False
+                    allowSingleFileSplitProcesses = True
                     if HDF5SUPPORT:
                         if h5py.is_hdf5(self.fileList[0]):
                             _logger.info("Allowing single HDF5 file process split")
@@ -1033,10 +1114,8 @@ class McaBatchGUI(qt.QWidget):
         elif (sys.platform == 'darwin') and\
              ((".app" in os.path.dirname(__file__)) or (not self.__splitBox.isChecked())):
             self._runAsThread(cmd, wname)
-        elif sys.platform == 'win32':
-            self._runAsProcess(cmd)
         else:
-            self._runAsProcess(cmd)
+            self._runAsProcess(cmd, allowIndependent=allowIndependent)
 
     def _runAsThread(self, cmd, wname):
         kwargs = cmd.getOptions('outdir', 'html', 'htmlindex', 'table')
@@ -1050,19 +1129,87 @@ class McaBatchGUI(qt.QWidget):
         self.__window = window
         self.__thread = thread
     
-    def _runAsProcess(self, cmd):
+    def _runAsProcess(self, cmd, allowIndependent=True):
         cmd.addOption('debug', value=_logger.getEffectiveLevel() == logging.DEBUG, format="{:d}")
 
+        # Prepare tools (executables or python scripts) for processing/viewing
+        if not self._processToolsInit(cmd):
+            return
+
+        # Create file with files to be processed
         listfile = os.path.join(self.outputDir, "tmpfile")
         cmd.addOption("listfile", value=listfile, format='"{}"')
         self.genListFile(listfile, config=False)
 
-        if sys.platform == 'win32':
-            self._runAsProcessWin32(cmd)
+        # Create file with config files to be used
+        if isinstance(self.configFile, list):
+            cfglistfile = os.path.join(self.outputDir, "tmpfile.cfg")
+            self.genListFile(cfglistfile, config=True)
+            cmd.addOption("cfglistfile", value=cfglistfile)
         else:
-            self._runAsProcessDefault(cmd)
+            cmd.addOption("cfg", value=self.configFile)
 
-    def processInfo(self):
+        # Run 'cmd'
+        multiprocess = self.__splitBox.isChecked()
+        if sys.platform == 'win32':
+            self.hide()
+            qApp = qt.QApplication.instance()
+            qApp.processEvents()
+            if multiprocess or not allowIndependent:
+                # Run in multiple sub-processes
+                self._runAsSubProcesses(cmd)
+            else:
+                # Run in one sub-process
+                self._runAsSubProcess(cmd)
+            self.show()
+        else:
+            if multiprocess or not allowIndependent:
+                # Run in multiple sub-processes
+                self.hide()
+                qApp = qt.QApplication.instance()
+                qApp.processEvents()
+                self._runAsSubProcesses(cmd)
+                self.show()
+            else:
+                # Run in one independent process
+                self._runAsIndependentProcess(cmd)
+
+    def _processToolsInit(self, cmd):
+        """
+        Initialize tools for processings and inspecting results
+        """
+        rootdir, frozen = self._processToolsInfo()
+        if sys.platform == 'win32':
+            exec_extension = '.exe'
+        else:
+            exec_extension = ''
+        if frozen:
+            myself = os.path.join(rootdir, "PyMcaBatch"+exec_extension)
+            viewer = os.path.join(rootdir, "EdfFileSimpleViewer"+exec_extension)
+            rgb = os.path.join(rootdir, "PyMcaPostBatch"+exec_extension)
+            if not os.path.exists(viewer):
+                viewer = None
+            if not os.path.exists(rgb):
+                rgb = None
+        else:
+            if not os.path.exists(os.path.join(rootdir, "PyMcaBatch.py")):
+                rootdir = os.path.dirname(EdfFileSimpleViewer.__file__)
+                if not os.path.exists(os.path.join(rootdir, "PyMcaBatch.py")):
+                    text = 'Cannot locate PyMcaBatch.py file.\n'
+                    qt.QMessageBox.critical(self, "ERROR",text)
+                    self.raise_()
+                    return False
+            myself = moduleRunCmd(os.path.join(rootdir, "PyMcaBatch.py"))
+            viewer = moduleRunCmd(os.path.join(rootdir, "EdfFileSimpleViewer.py"))
+            rgb = moduleRunCmd(os.path.join(rootdir, "PyMcaPostBatch.py"))
+        if frozen:
+            cmd.setCommand(myself, fmt='"{}"')
+        else:
+            cmd.setCommand(myself)
+        self._rgb = rgb
+        return True
+
+    def _processToolsInfo(self):
         """
         :returns 2-tuple: rootdir(str): directory of executables or GUI launch scripts
                           frozen(bool): run as frozen executable
@@ -1091,180 +1238,83 @@ class McaBatchGUI(qt.QWidget):
             rootdir = os.path.dirname(rootdir)
             # level PyMca5
             rootdir = os.path.dirname(rootdir)
-            # directory level with exe files
+            # directory level with executables
         return rootdir, frozen
 
-    def _runAsProcessWin32(self, cmd):
-        # Executables/modules to fit spectra (myself)
-        # and show the resulting images (viewer/rgb)
-        rootdir, frozen = self.processInfo()
-        if frozen:
-            myself = os.path.join(rootdir, "PyMcaBatch.exe")
-            viewer = os.path.join(rootdir, "EdfFileSimpleViewer.exe")
-            rgb = os.path.join(rootdir, "PyMcaPostBatch.exe")
-            if not os.path.exists(viewer):
-                viewer = None
-            if not os.path.exists(rgb):
-                rgb = None
-        else:
-            myself = moduleRunCmd(os.path.join(rootdir, "PyMcaBatch.py"))
-            viewer = moduleRunCmd(os.path.join(rootdir, "EdfFileSimpleViewer.py"))
-            rgb = moduleRunCmd(os.path.join(rootdir, "PyMcaPostBatch.py"))
-        self._rgb = rgb
-
-        if frozen:
-            cmd.setCommand(myself, format='"{}"')
-        else:
-            cmd.setCommand(myself)
-        if isinstance(self.configFile, list):
-            cfglistfile = os.path.join(self.outputDir, "tmpfile.cfg")
-            self.genListFile(cfglistfile, config=True)
-            cmd.addOption("cfglistfile", value=cfglistfile)
-        else:
-            cmd.addOption("cfg", value=self.configFile)
-
-        # Run cmd in one or more sub-processes
-        self.hide()
-        qApp = qt.QApplication.instance()
-        qApp.processEvents()
+    def _runAsSubProcesses(self, cmd):
+        """
+        Run 'cmd' is several batches
+        """
+        processList = []
         if self.__splitBox.isChecked():
-            processList = []
-            nbatches = int(qt.safe_str(self.__splitSpin.text()))
-            nFiles = len(self.fileList)
-            if nFiles > 1:
-                filechunk = max(int(nFiles/nbatches), 1)
-                cmd.addOption('filebeginoffset', value=0)
-                cmd.addOption('fileendoffset', value=0)
-                cmd.addOption('chunk', value=0)
-                for i in range(nbatches):
-                    cmd.filebeginoffset = filechunk * i
-                    cmd.fileendoffset = nFiles - filechunk * (i+1)
-                    if (i+1) == nbatches:
-                        cmd.fileendoffset = 0
-                    if cmd.filebeginoffset >= nFiles or cmd.fileendoffset < 0:
-                        continue
-                    cmd.chunk = i
-                    try:
-                        processList.append(subprocess.Popen(str(cmd),
-                                           cwd=os.getcwd()))
-                    except UnicodeEncodeError:
-                        processList.append(\
-                            subprocess.Popen(str(cmd).encode(sys.getfilesystemencoding()),
-                                             cwd=os.getcwd()))
-
-                    _logger.info("COMMAND = %s", cmd)
-            else:
-                cmd.addOption('mcaoffset', value=0)
-                cmd.addOption('chunk', value=0)
-                for i in range(nbatches):
-                    cmd.mcaoffset = i
-                    cmd.chunk = i
-                    processList.append(subprocess.Popen(str(cmd), cwd=os.getcwd()))
-                    _logger.info("COMMAND = %s", cmd)
-            self._processList = processList
-            if self._timer is None:
-                self._timer = qt.QTimer(self)
-                self._timer.timeout[()].connect(self._pollProcessList)
-            if not self._timer.isActive():
-                self._timer.start(1000)
-            else:
-                _logger.info("timer was already active")
+            nBatches = int(qt.safe_str(self.__splitSpin.text()))
         else:
-            cmd = str(cmd)
+            nBatches = 1
+        nFiles = len(self.fileList)
+        def func(cmd):
+            self._subprocessAppend(cmd, processList)
+        SubCommands(cmd, nFiles, nBatches, func)
+        self._processList = processList
+        self._pollProcessList()
+        if self._timer is None:
+            self._timer = qt.QTimer(self)
+            self._timer.timeout[()].connect(self._pollProcessList)
+        if not self._timer.isActive():
+            self._timer.start(1000)
+        else:
+            _logger.info("timer was already active")
+
+    def _subprocessAppend(self, cmd, processList):
+        cmd = str(cmd)
+        _logger.info("COMMAND = %s", cmd)
+        kwargs = {'cwd': os.getcwd()} 
+        if sys.platform != 'win32':
+            # unfortunately I have to set shell = True
+            # otherways I get a file not found error in the
+            # child process
+            kwargs['shell'] = True
+            kwargs['close_fds'] = True
+        try:
+            p = subprocess.Popen(cmd, **kwargs)
+        except UnicodeEncodeError:
             try:
-                subprocess.call(cmd)
-            except UnicodeEncodeError:
+                # TODO: no need to explicitely provide system encoding
+                p = subprocess.Popen(cmd.encode(sys.getfilesystemencoding()), **kwargs)
+            except:
+                # be ready for any weird error like missing that encoding
                 try:
-                    subprocess.call(cmd.encode(sys.getfilesystemencoding()))
-                except:
-                    # be ready for any weird error like missing that encoding
-                    try:
-                        subprocess.call(cmd.encode('utf-8'))
-                    except UnicodeEncodeError:
-                        subprocess.call(cmd.encode('latin-1'))
-        self.show()
+                    p = subprocess.Popen(cmd.encode('utf-8'), **kwargs)
+                except UnicodeEncodeError:
+                    p = subprocess.Popen(cmd.encode('latin-1'), **kwargs)
+        processList.append(p)
 
-    def _runAsProcessDefault(self, cmd):
-        # Executables/modules to fit spectra (myself)
-        # and show the resulting images (viewer/rgb)
-        rootdir, frozen = self.processInfo()
-        if frozen:
-            myself = os.path.join(rootdir, "PyMcaBatch")
-            viewer = os.path.join(rootdir, "EdfFileSimpleViewer")
-            rgb = os.path.join(rootdir, "PyMcaPostBatch")
-            if not os.path.exists(viewer):
-                viewer = None
-            if not os.path.exists(rgb):
-                rgb = None
-        else:
-            if not os.path.exists(os.path.join(rootdir, "PyMcaBatch.py")):
-                rootdir = os.path.dirname(EdfFileSimpleViewer.__file__)
-                if not os.path.exists(os.path.join(rootdir, "PyMcaBatch.py")):
-                    text = 'Cannot locate PyMcaBatch.py file.\n'
-                    qt.QMessageBox.critical(self, "ERROR",text)
-                    self.raise_()
-                    return
-            myself = moduleRunCmd(os.path.join(rootdir, "PyMcaBatch.py"))
-            viewer = moduleRunCmd(os.path.join(rootdir, "EdfFileSimpleViewer.py"))
-            rgb = moduleRunCmd(os.path.join(rootdir, "PyMcaPostBatch.py"))
+    def _runAsSubProcess(self, cmd):
+        cmd = str(cmd)
+        _logger.info("COMMAND = %s", cmd)
+        try:
+            subprocess.call(cmd)
+        except UnicodeEncodeError:
+            try:
+                # TODO: no need to explicitely provide system encoding
+                subprocess.call(cmd.encode(sys.getfilesystemencoding()))
+            except:
+                # be ready for any weird error like missing that encoding
+                try:
+                    subprocess.call(cmd.encode('utf-8'))
+                except UnicodeEncodeError:
+                    subprocess.call(cmd.encode('latin-1'))
 
-        cmd.setCommand(myself)
-        if isinstance(self.configFile, list):
-            cfglistfile = os.path.join(self.outputDir, "tmpfile.cfg")
-            self.genListFile(cfglistfile, config=True)
-            cmd.addOption("cfglistfile", value=cfglistfile)
-        else:
-            cmd.addOption("cfg", value=self.configFile)
-        self._rgb = rgb
-
-        # Run cmd in one or more processes
-        if self.__splitBox.isChecked():
-            # Launch multiple sub-processes
-            self.hide()
-            qApp = qt.QApplication.instance()
-            qApp.processEvents()
-            processList = []
-            nbatches = int(qt.safe_str(self.__splitSpin.text()))
-            nFiles = len(self.fileList)
-            filechunk = max(int(nFiles/nbatches), 1)
-            cmd.addOption('filebeginoffset', value=0)
-            cmd.addOption('fileendoffset', value=0)
-            cmd.addOption('chunk', value=0)
-            for i in range(nbatches):
-                cmd.filebeginoffset = filechunk * i
-                cmd.fileendoffset = nFiles - filechunk * (i+1)
-                if (i+1) == nbatches:
-                    cmd.fileendoffset = 0
-                if cmd.filebeginoffset >= nFiles or cmd.fileendoffset < 0:
-                    continue
-                cmd.chunk = i
-                # unfortunately I have to set shell = True
-                # otherways I get a file not found error in the
-                # child process
-                processList.append(subprocess.Popen(str(cmd),
-                                        cwd=os.getcwd(),
-                                        shell=True,
-                                        close_fds=True))
-                _logger.info("COMMAND = %s", cmd)
-            self._processList = processList
-            self._pollProcessList()
-            if self._timer is None:
-                self._timer = qt.QTimer(self)
-                self._timer.timeout[()].connect( \
-                                    self._pollProcessList)
-            if not self._timer.isActive():
-                self._timer.start(1000)
-            else:
-                _logger.info("timer was already active")
-        else:
-            # Run as independent process
-            os.system("{} &".format(cmd))
-            _logger.info("COMMAND = %s", cmd)
-            msg = qt.QMessageBox(self)
-            msg.setIcon(qt.QMessageBox.Information)
-            text = "Your batch has been started as an independent process."
-            msg.setText(text)
-            msg.exec_()
+    def _runAsIndependentProcess(self, cmd):
+        cmd = str(cmd)
+        _logger.info("COMMAND = %s", cmd)
+        os.system("{} &".format(cmd))
+        msg = qt.QMessageBox(self)
+        msg.setIcon(qt.QMessageBox.Information)
+        text = "Your batch has been started as an independent process."
+        msg.setText(text)
+        # TODO: make this non-blocking!
+        #msg.exec_()
+        msg.show()
 
     def genListFile(self, listfile, config=None):
         if os.path.exists(listfile):
@@ -1308,20 +1358,22 @@ class McaBatchGUI(qt.QWidget):
         else:
             self.raise_()
         args = self._mergeProcessResults()
-        self._showProcessResults(*args)
+        if self._showResult:
+            try:
+                self._showProcessResults(*args)
+            except:
+                _logger.error("Failed plotting result (probably interrupted by the user)")
 
     def _mergeProcessResults(self):
         _logger.info('Merging multi-process results...')
         work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(inputdir=self.outputDir)
         delete = _logger.getEffectiveLevel() != logging.DEBUG
         edfoutlist, datoutlist, h5outlist = work.buildOutput(delete=delete)
-        for h5filename in h5outlist:
-            # outputDir/filename.h5 -> look in outputDir/filename/ for .edf, .dat, ...
-            subdir = os.path.splitext(os.path.basename(h5filename))[0]
-            inputdir = os.path.join(self.outputDir, subdir)
-            edfoutlist2, datoutlist2, h5outlist2 = work.buildOutput(inputdir=inputdir, delete=delete)
-            edfoutlist += edfoutlist2
-            datoutlist += datoutlist2
+        subdir = McaAdvancedFitBatch.getRootName(self.fileList)
+        inputdir = os.path.join(self.outputDir, subdir)
+        edfoutlist2, datoutlist2, h5outlist2 = work.buildOutput(inputdir=inputdir, delete=delete)
+        edfoutlist += edfoutlist2
+        datoutlist += datoutlist2
         _logger.info('Finished merging multi-process results.')
         return edfoutlist, datoutlist
 
@@ -1385,9 +1437,9 @@ class McaBatch(McaAdvancedFitBatch.McaAdvancedFitBatch, qt.QThread):
         else:
             qt.QApplication.postEvent(self.parent, McaCustomEvent.McaCustomEvent(ddict))
 
-    def onMca(self, mca, nmca, filename=None, key=None, info=None):
+    def onMca(self, imca, nmca, filename=None, key=None, info=None):
         _logger.debug("onMca key = %s", key)
-        ddict = {'mca':mca,
+        ddict = {'mca':imca,
                  'nmca':nmca,
                  'mcastep':self.mcaStep,
                  'filename':filename,
@@ -1542,8 +1594,8 @@ class McaBatchWindow(qt.QWidget):
 
     def onNewFile(self, file, filelist, filestep, filebeginoffset =0, fileendoffset = 0):
         _logger.debug("onNewFile: %s", file)
-        indexlist = list(range(0,len(filelist),filestep))
-        index = indexlist.index(filelist.index(file)) - filebeginoffset
+        indexlist = list(range(filebeginoffset, len(filelist)-fileendoffset, filestep))
+        index = indexlist.index(filelist.index(file))
         #print index + filebeginoffset
         if index == 0:
             self.report= None
@@ -1557,7 +1609,7 @@ class McaBatchWindow(qt.QWidget):
                         os.remove(self.htmlindex)
                     except:
                         _logger.warning("cannot delete file %s", self.htmlindex)
-        nfiles = len(indexlist)-filebeginoffset-fileendoffset
+        nfiles = len(indexlist)
         self.status.setText("Processing file %s" % file)
         e = time.time()
         if QTVERSION < '4.0.0':
