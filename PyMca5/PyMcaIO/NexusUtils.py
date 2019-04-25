@@ -278,15 +278,20 @@ def updateDataset(parent, name, data):
         parent[name][()] = data
 
 
-def nxClassInit(parent, name, nxclass):
+def nxClassInit(parent, name, nxclass, parentclasses=None):
     """
     Initialize Nexus class instance without default attributes and datasets
 
     :param h5py.Group parent:
     :param str name:
+    :param str nxclass:
+    :param tuple parentclasses:
     :raises RuntimeError: wrong Nexus class or parent not an Nexus class instance
     """
-    raiseIsNxClass(parent, None)
+    if parentclasses:
+        raiseIsNotNxClass(parent, *parentclasses)
+    else:
+        raiseIsNxClass(parent, None)
     if nxClassNeedsInit(parent, name, nxclass):
         h5group = parent[name]
         h5group.attrs['NX_class'] = nxclass
@@ -452,9 +457,45 @@ def nxCollection(parent, name):
     return parent[name]
 
 
+def nxInstrument(parent, name='instrument'):
+    """
+    Get NXinstrument instance (initialize when missing)
+
+    :param h5py.Group parent:
+    :param str name:
+    :returns h5py.Group:
+    """
+    nxClassInit(parent, name, u'NXinstrument', parentclasses=(u'NXentry',))
+    return parent[name]
+
+
+def nxSubEntry(parent, name):
+    """
+    Get NXsubentry instance (initialize when missing)
+
+    :param h5py.Group parent:
+    :param str name:
+    :returns h5py.Group:
+    """
+    nxClassInit(parent, name, u'NXsubentry', parentclasses=(u'NXentry',))
+    return parent[name]
+
+
+def nxDetector(parent, name):
+    """
+    Get NXdetector instance (initialize when missing)
+
+    :param h5py.Group parent:
+    :param str name:
+    :returns h5py.Group:
+    """
+    nxClassInit(parent, name, u'nxDetector', parentclasses=(u'NXinstrument',))
+    return parent[name]
+
+
 def nxData(parent, name):
     """
-    Get NXcollection instance (initialize when missing)
+    Get NXdata instance (initialize when missing)
 
     :param h5py.Group parent:
     :param str or None name:
