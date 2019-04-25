@@ -1131,6 +1131,7 @@ class McaBatchGUI(qt.QWidget):
     
     def _runAsProcess(self, cmd, allowIndependent=True):
         cmd.addOption('debug', value=_logger.getEffectiveLevel() == logging.DEBUG, format="{:d}")
+        cmd.addOption('exitonend', value=1, format="{:d}")
 
         # Prepare tools (executables or python scripts) for processing/viewing
         if not self._processToolsInit(cmd):
