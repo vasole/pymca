@@ -252,16 +252,6 @@ def SubCommands(cmd, nFiles, nBatches, func, chunks=True):
     nBatchesPerFile = max(nBatches//nChunks, 1)
     if chunks:
         cmd.mcastep = nBatchesPerFile
-        cmd.filestep = nChunks
-        cmd.fileendoffset = 0
-        for i in range(nBatchesPerFile):
-            cmd.mcaoffset = i
-            for j in range(nChunks):
-                cmd.filebeginoffset = j
-                cmd.chunk = i*nChunks + j
-                func(cmd)
-    else:
-        cmd.mcastep = nBatchesPerFile
         cmd.filestep = 1
         for i in range(nBatchesPerFile):
             cmd.mcaoffset = i
@@ -272,6 +262,16 @@ def SubCommands(cmd, nFiles, nBatches, func, chunks=True):
                     break
                 cmd.filebeginoffset = filebeginoffset
                 cmd.fileendoffset = nFiles - fileend
+                cmd.chunk = i*nChunks + j
+                func(cmd)
+    else:
+        cmd.mcastep = nBatchesPerFile
+        cmd.filestep = nChunks
+        cmd.fileendoffset = 0
+        for i in range(nBatchesPerFile):
+            cmd.mcaoffset = i
+            for j in range(nChunks):
+                cmd.filebeginoffset = j
                 cmd.chunk = i*nChunks + j
                 func(cmd)
 
