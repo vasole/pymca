@@ -36,7 +36,7 @@ import shutil
 import os
 import sys
 import numpy
-import XrfData
+from PyMca5.tests import XrfData
 try:
     from PyMca5.PyMcaIO import HDF5Stack1D
     HAS_H5PY = True

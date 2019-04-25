@@ -37,7 +37,7 @@ import numpy
 from random import randint
 import tempfile
 import shutil
-import XrfData
+from PyMca5.tests import XrfData
 import PyMca5.PyMcaGui.PyMcaQt as qt
 from PyMca5.PyMcaGui.misc.testutils import TestCaseQt
 try:
