@@ -954,7 +954,7 @@ class TiffIO(object):
                 raw = description
             else:
                 raw = "%s" % description
-                if (sys.version_info > (2,6)) and hasattr(raw, "encode"):
+                if (sys.version_info[:2] > (2,6)) and hasattr(raw, "encode"):
                     raw = raw.encode('utf-8', errors="ignore")
             imageDescription = struct.pack("%ds" % len(raw), raw)
             nDirectoryEntries += 1

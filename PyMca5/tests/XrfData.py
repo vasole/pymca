@@ -201,7 +201,7 @@ def generateEdfMap(filename, fastpulsefraction=0.01, **kwargs):
     for i in range(nRows):
         for k in range(nDet):
             filename = os.path.join(path, '{}_xia{:02d}_0001_0000_{:04d}.edf'
-                .format(basename, k, i))
+                                    .format(basename, k, i))
             edf = EdfFile(filename, 'wb+')
             edf.WriteImage({'time': Treal}, info['data'][k, i, ...])
             edf = None

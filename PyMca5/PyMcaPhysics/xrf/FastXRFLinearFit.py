@@ -73,7 +73,7 @@ class FastXRFLinearFit(object):
     def fitMultipleSpectra(self, x=None, y=None, xmin=None, xmax=None,
                            configuration=None, concentrations=False,
                            ysum=None, weight=None, refit=True, livetime=None,
-                           outbuffer=None, save=True):
+                           outbuffer=None, save=True, **outbufferinitargs):
         """
         This method performs the actual fit. The y keyword is the only mandatory input argument.
 
@@ -98,7 +98,7 @@ class FastXRFLinearFit(object):
 
         # Calculation needs buffer for memory allocation (memory or H5)
         if outbuffer is None:
-            outbuffer = OutputBuffer()
+            outbuffer = OutputBuffer(**outbufferinitargs)
         with outbuffer.Context(save=save):
             t0 = time.time()
 

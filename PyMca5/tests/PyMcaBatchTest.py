@@ -140,78 +140,95 @@ class testPyMcaBatch(TestCaseQt):
         self.assertTrue(len(chunks) <= nBatches, msg)
 
     def testFastFitEdfMap(self):
-        info = self._generateData(fast=True, typ='edf')
-        self._fitXrfMap(info, fast=True)
+        self._assertFastFitMap('edf')
 
     def testSlowFitEdfMap(self):
-        info = self._generateData(typ='edf')
-        self._fitXrfMap(info)
+        self._assertSlowFitMap('edf')
 
     def testSlowMultiFitEdfMap(self):
-        info = self._generateData(typ='edf')
-        result1 = self._fitXrfMap(info, nBatches=4, outputdir='fitresults1')
-        result2 = self._fitXrfMap(info, nBatches=1, outputdir='fitresults2')
-        # TODO: rtol is pretty bad!!!
-        self._compareBatchFitResult(result1, result2, rtol=1e-3)
+        self._assertSlowMultiFitMap('edf')
 
     @unittest.skipIf(not HAS_H5PY, "skipped h5py missing")
     def testFastFitHdf5Map(self):
-        info = self._generateData(fast=True, typ='hdf5')
-        self._fitXrfMap(info, fast=True)
+        self._assertFastFitMap('hdf5')
 
     @unittest.skipIf(not HAS_H5PY, "skipped h5py missing")
     def testSlowFitHdf5Map(self):
-        info = self._generateData(typ='hdf5')
-        result1 = self._fitXrfMap(info, legacy=False, outputdir='fitresults1')
-        result2 = self._fitXrfMap(info, legacy=True, outputdir='fitresults2')
-        self._compareBatchFitResult(result1, result2, rtol=1e-5)
-
+        self._assertSlowFitMap('hdf5')
+    
     @unittest.skipIf(not HAS_H5PY, "skipped h5py missing")
     def testSlowMultiFitHdf5Map(self):
-        info = self._generateData(typ='hdf5')
-        result1 = self._fitXrfMap(info, nBatches=4, outputdir='fitresults1')
-        result2 = self._fitXrfMap(info, nBatches=1, outputdir='fitresults2')
+        self._assertSlowMultiFitMap('hdf5')
+
+    def _assertFastFitMap(self, typ):
+        info = self._generateData(fast=True, typ=typ)
+        result1 = self._fitMap(info, fast=True, outputdir='fitresults1')
+        result2 = self._fitMap(info, fast=True, legacy=True, outputdir='fitresults2')
+        self._compareBatchFitResult(result1, result2, rtol=1e-5)
+
+    def _assertSlowFitMap(self, typ):
+        info = self._generateData(typ=typ)
+        result1 = self._fitMap(info, outputdir='fitresults1')
+        result2 = self._fitMap(info, legacy=True, outputdir='fitresults2')
+        self._compareBatchFitResult(result1, result2, rtol=1e-5)
+
+    def _assertSlowMultiFitMap(self, typ):
+        #TODO: legacy BatchFit does not work with bootstrap
+        info = self._generateData(typ=typ)
+        result1 = self._fitMap(info, nBatches=4, outputdir='fitresults1')
+        result2 = self._fitMap(info, nBatches=1, outputdir='fitresults2')
+        #result3 = self._fitMap(info, nBatches=4, legacy=True, outputdir='fitresults3')
+        #result4 = self._fitMap(info, nBatches=1, legacy=True, outputdir='fitresults4')
         # TODO: rtol is pretty bad!!!
         self._compareBatchFitResult(result1, result2, rtol=1e-3)
+        #self._compareBatchFitResult(result3, result4, rtol=1e-3)
+        #self._compareBatchFitResult(result1, result3, rtol=1e-3)
+        #self._compareBatchFitResult(result2, result4, rtol=1e-3)
 
-    def _fitXrfMap(self, info, fast=False, nBatches=0,
-                   outputdir='fitresults', **kwargs):
+    def _fitMap(self, info, fast=False, nBatches=0,
+                outputdir='fitresults', **kwargs):
         outputdir = os.path.join(self.path, outputdir)
         if fast:
-            imageFile = self._fastFitXrfMap(info, outputdir, **kwargs)
+            imageFile = self._fastFitMap(info, outputdir, **kwargs)
         elif nBatches > 0:
-            imageFile = self._slowMultiFitXrfMap(info, outputdir,
-                                                 nBatches, **kwargs)
+            imageFile = self._slowMultiFitMap(info, outputdir,
+                                              nBatches, **kwargs)
         else:
-            imageFile = self._slowFitXrfMap(info, outputdir, **kwargs)
+            imageFile = self._slowFitMap(info, outputdir, **kwargs)
         labels, scanData = self._parseDatResults(imageFile)
         self._verifyBatchFitResult(labels, scanData, info['liveTimeCorrection'],
                                    multiprocessing=nBatches > 1)
         return labels, scanData
 
-    def _fastFitXrfMap(self, info, outputdir):
-        from PyMca5.PyMcaPhysics.xrf.FastXRFLinearFit import FastXRFLinearFit
-        from PyMca5.PyMcaPhysics.xrf.XRFBatchFitOutput import OutputBuffer
+    def _fastFitMap(self, info, outputdir, legacy=False):
+        if legacy:
+            from PyMca5.PyMcaPhysics.xrf import LegacyFastXRFLinearFit as FastXRFLinearFit 
+        else:
+            from PyMca5.PyMcaPhysics.xrf import FastXRFLinearFit
+        batch = FastXRFLinearFit.FastXRFLinearFit()
         kwargs = {'y': info['input'],
                   'livetime': info['liveTime'],
                   'weight': 0,
                   'configuration': info['configuration'],
                   'concentrations': True,
                   'refit': 1}
-        outbuffer = OutputBuffer(outputDir=outputdir,
-                                 dat=True, edf=False, h5=False,
-                                 diagnostics=True)
-        batch = FastXRFLinearFit()
-        with outbuffer.saveContext():
-            outbuffer = batch.fitMultipleSpectra(outbuffer=outbuffer, **kwargs)
-        return outbuffer.filename('.dat')
-    
-    def _slowFitXrfMap(self, info, outputdir, legacy=False, nBatches=1):
+        if not legacy:
+            kwargs['outputDir'] = outputdir
+            kwargs['dat'] = True
+            kwargs['edf'] = False
+            kwargs['h5'] = False
+            kwargs['diagnostics'] = True
+        outbuffer = batch.fitMultipleSpectra(**kwargs)
         if legacy:
-            from PyMca5.PyMcaPhysics.xrf.LegacyMcaAdvancedFitBatch import McaAdvancedFitBatch
+            FastXRFLinearFit.save(outbuffer, outputdir, csv=False)
+        return self._imageFile(None, outputdir, fast=True, legacy=legacy)
+    
+    def _slowFitMap(self, info, outputdir, legacy=False, nBatches=1):
+        if legacy:
+            from PyMca5.PyMcaPhysics.xrf import LegacyMcaAdvancedFitBatch as McaAdvancedFitBatch
             os.mkdir(outputdir)
         else:
-            from PyMca5.PyMcaPhysics.xrf.McaAdvancedFitBatch import McaAdvancedFitBatch
+            from PyMca5.PyMcaPhysics.xrf import McaAdvancedFitBatch
         kwargs = {'filelist': info['input'],
                   'outputdir': outputdir,
                   'concentrations': True,
@@ -222,42 +239,52 @@ class testPyMcaBatch(TestCaseQt):
             kwargs['edf'] = False
             kwargs['h5'] = False
             kwargs['diagnostics'] = True
-        batch = McaAdvancedFitBatch(info['cfgname'], **kwargs)
+        batch = McaAdvancedFitBatch.McaAdvancedFitBatch(info['cfgname'], **kwargs)
         batch.processList()
-        if legacy:
-            imageFile = os.path.join(outputdir, "IMAGES", "xrfmap.dat")
-        else:
-            imageFile = batch.outbuffer.filename('.dat')
-        return imageFile
+        return self._imageFile(info['input'], outputdir, legacy=legacy)
     
-    def _slowMultiFitXrfMap(self, info, outputdir, nBatches, legacy=False):
-        from PyMca5.PyMcaGui.pymca import PyMcaBatch
-        from PyMca5.PyMcaPhysics.xrf import McaAdvancedFitBatch 
+    def _imageFile(self, filelist, outputdir, fast=False, legacy=False):
+        if filelist:
+            # Slow fit
+            from PyMca5.PyMcaPhysics.xrf import McaAdvancedFitBatch
+            rootname = McaAdvancedFitBatch.getRootName(filelist)
+            if legacy:
+                subdir = 'IMAGES'
+            else:
+                subdir = rootname
+        else:
+            # Fast fit
+            rootname = 'images'
+            subdir = 'IMAGES'
+        return os.path.join(outputdir, subdir, rootname+'.dat')
+
+    def _slowMultiFitMap(self, info, outputdir, nBatches, legacy=False):
         os.mkdir(outputdir)
         kwargs = {'actions': True,
-                  'showresult': False,
                   'filelist': info['input'],
                   'config': info['cfgname'],
-                  'outputdir': outputdir,
-                  'selection': info['selection'],
-                  'nproc': nBatches}
-        if not legacy:
+                  'outputdir': outputdir}
+        if legacy:
+            from PyMca5.PyMcaGui.pymca.LegacyPyMcaBatch import McaBatchGUI
+        else:
+            from PyMca5.PyMcaGui.pymca.PyMcaBatch import McaBatchGUI
             kwargs['dat'] = True
             kwargs['edf'] = False
             kwargs['h5'] = False
             kwargs['diagnostics'] = True
             kwargs['concentrations'] = True
-        else:
-            raise NotImplementedError
-        widget = PyMcaBatch.McaBatchGUI(**kwargs)
+            kwargs['nproc'] = nBatches
+            kwargs['showresult'] = False
+            kwargs['selection'] = info['selection']
+        imageFile = self._imageFile(info['input'], outputdir, legacy=legacy)
+
+        widget = McaBatchGUI(**kwargs)
         #widget.show()
         self.qapp.processEvents()
         widget.start()
 
         # Wait until result is created
         from time import sleep
-        rootname = McaAdvancedFitBatch.getRootName(kwargs['filelist'])
-        imageFile = os.path.join(outputdir, rootname, rootname+'.dat')
         while not os.path.exists(imageFile):
             sleep(1)
             self.qapp.processEvents()
@@ -283,7 +310,7 @@ class testPyMcaBatch(TestCaseQt):
         nRows = 5
         nColumns = 10
         nTimes = 3
-        filename = os.path.join(self.path, 'xrfmap')
+        filename = os.path.join(self.path, 'Map')
         if typ == 'edf':
             genFunc = XrfData.generateEdfMap
             filename += '.edf'
@@ -329,17 +356,16 @@ class testPyMcaBatch(TestCaseQt):
             raise NotImplementedError
         elif typ == 'hdf5':
             datasets = ['/xrf/mca{:02d}/data'.format(k) for k in range(nDet)]
-            
             if fast:
                 from PyMca5.PyMcaIO import HDF5Stack1D
                 info['selection'] = selection = {'y': datasets[0]}
                 info['input'] = HDF5Stack1D.HDF5Stack1D(filelist, selection)
             else:
-                info['selection'] = {'x':[], 'm':[], 'y': [datasets[0]]}
+                info['selection'] = {'x': [], 'm': [], 'y': [datasets[0]]}
                 info['input'] = filelist
         
         # Batch fit configuration
-        info['cfgname'] = os.path.join(self.path, 'xrfmap.cfg')
+        info['cfgname'] = os.path.join(self.path, 'Map.cfg')
         return info
 
     def _compareBatchFitResult(self, result1, result2, rtol=0, atol=0):
@@ -356,6 +382,7 @@ class testPyMcaBatch(TestCaseQt):
         if label.endswith('-mass-fraction'):
             label = label.replace('-mass-fraction', '')
             label = 'w({})'.format(label)
+        label = label.replace('C(', 'w(')
         label = label.replace('-', '_')
         return label
 
@@ -426,11 +453,11 @@ def getSuite(auto=True):
         # use a predefined order
         testSuite.addTest(testPyMcaBatch("testCommand"))
         testSuite.addTest(testPyMcaBatch("testSubCommands"))
-        testSuite.addTest(testPyMcaBatch("testFastFitHdf5Map"))
         testSuite.addTest(testPyMcaBatch("testFastFitEdfMap"))
-        testSuite.addTest(testPyMcaBatch("testSlowFitHdf5Map"))
         testSuite.addTest(testPyMcaBatch("testSlowFitEdfMap"))
         testSuite.addTest(testPyMcaBatch("testSlowMultiFitEdfMap"))
+        testSuite.addTest(testPyMcaBatch("testFastFitHdf5Map"))
+        testSuite.addTest(testPyMcaBatch("testSlowFitHdf5Map"))
         testSuite.addTest(testPyMcaBatch("testSlowMultiFitHdf5Map"))
     return testSuite
 

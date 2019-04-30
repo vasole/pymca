@@ -182,6 +182,9 @@ class testStackInfo(unittest.TestCase):
                 "Incorrect average of masked live time data")
 
     def testStackFastFit(self):
+        # TODO: this is done in PyMcaBatchTest on multiple input formats
+        # so not needed here
+        return
         from PyMca5.PyMcaIO import specfilewrapper as specfile
         from PyMca5.PyMcaIO import ConfigDict
         from PyMca5.PyMcaCore import DataObject
@@ -434,6 +437,10 @@ class testStackInfo(unittest.TestCase):
                             "Incorrect channels read")
             self.assertTrue(numpy.allclose(stack.data, data),
                             "Incorrect data read")
+
+        # TODO: this is done in PyMcaBatchTest on multiple input formats
+        # so not needed here
+        return
 
         # perform the batch fit
         self._outputDir = os.path.join(tempfile.gettempdir(), "SteelTestDir")
