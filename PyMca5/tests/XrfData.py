@@ -79,7 +79,7 @@ def generateXRFData(nRows=5, nColumns=10, nDet=1, nTimes=3, presetTime=1, same=T
                     data[k, i, j] = counts
                 else:
                     data[k, i, j] = counts + mcaIndex*nDet + k
-                liveTime[k, i, j] = initialTime * (1 + mcaIndex % nTimes)
+                liveTime[k, i, j] = initialTime * (1 + mcaIndex % nTimes)/float(nTimes)
             mcaIndex += 1
     return data, liveTime
 
@@ -151,9 +151,13 @@ def generateSpecMesh(filename, **kwargs):
     return info
 
 
-def generateEdfMap(filename, **kwargs):
+def generateEdfMap(filename, fastpulsefraction=0.01, **kwargs):
     """
+    Result of a digital pulse processor with fast and slow channel
+    for pile-up rejection and paralyzable deadtime.
+
     :param str filename: save data under this name
+    :param num fastpulsefraction: ratio of fast pulse width (in time) over slow pulse width
     :param \**kwargs: see `generate`
     :returns dict: {filelist: list(str),
                     configuration: ConfigDict,
@@ -164,22 +168,31 @@ def generateEdfMap(filename, **kwargs):
     from PyMca5.PyMcaIO.EdfFile import EdfFile
     info = generate(**kwargs)
     nDet, nRows, nColumns, nChannels = info['data'].shape
-    RT = info['configuration']["concentrations"]["time"]
+    Treal = float(info['configuration']["concentrations"]["time"])
     nstats = 6
-    stats = numpy.empty((nRows, nColumns, nDet*nstats), dtype=info['data'].dtype)
-    # Fast channel events:
-    #  EV = LT * ICR = RT * OCR
-    # Dead time:
-    #  DT = (ICR-OCR)/ICR = (RT-LT)/RT
+    stats = numpy.empty((nRows, nColumns, nDet*nstats),
+                        dtype=info['data'].dtype)
+
     for k in range(nDet):
-        LT = info['liveTime'][k, ...]
-        OCR = info['data'][k, ...].sum(axis=-1)
+        # Slow channel  events
+        Nslow = info['data'][k, ...].sum(axis=-1)
+        LTslow = info['liveTime'][k, ...]
+        Rslow = Nslow/Treal
+        DTslow = 1-LTslow/Treal
+        Rreal = Rslow/LTslow*Treal
+        tauslow = -numpy.log(1-DTslow)/Rreal
+        # Fast channel events
+        taufast = tauslow*fastpulsefraction
+        factor = numpy.exp(-Rreal*taufast)
+        LTfast = Treal*factor
+        #Rfast = Rreal*factor
+        #DTfast = 1-Rfast/Rreal
         stats[..., k*nstats+0] = k   # detector index
-        stats[..., k*nstats+1] = RT*OCR  # EV
-        stats[..., k*nstats+1] = RT*OCR/LT  # ICR
-        stats[..., k*nstats+1] = OCR  # OCR
-        stats[..., k*nstats+1] = LT*1000  # LT (msec)
-        stats[..., k*nstats+1] = 100-LT*100./RT  # DT (%)
+        stats[..., k*nstats+1] = Nslow  # slow channel events
+        stats[..., k*nstats+2] = Rreal  # real count rate (Hz)
+        stats[..., k*nstats+3] = Rslow  # slow channel count rate (Hz)
+        stats[..., k*nstats+4] = LTfast*1000  # fast channel live time (msec)
+        stats[..., k*nstats+5] = DTslow*100  # dead time %
 
     basename = os.path.splitext(os.path.basename(filename))[0]
     path = os.path.dirname(filename)
@@ -187,14 +200,15 @@ def generateEdfMap(filename, **kwargs):
     filelist = []
     for i in range(nRows):
         for k in range(nDet):
-            filename = os.path.join(path, '{}_xia{:02d}_0001_0000_{:04d}.edf'.format(basename, k, i))
+            filename = os.path.join(path, '{}_xia{:02d}_0001_0000_{:04d}.edf'
+                .format(basename, k, i))
             edf = EdfFile(filename, 'wb+')
-            edf.WriteImage({'time': RT}, info['data'][k, i, ...])
+            edf.WriteImage({'time': Treal}, info['data'][k, i, ...])
             edf = None
             filelist.append(filename)
         filename = os.path.join(path, '{}_xiast_0001_0000_{:04d}.edf'.format(basename, i))
         edf = EdfFile(filename, 'wb+')
-        edf.WriteImage({'time': RT}, stats[i, ...])
+        edf.WriteImage({'time': Treal}, stats[i, ...])
         edf = None
     info['configuration'].write(cfgname)
     info['filelist'] = sorted(filelist)
