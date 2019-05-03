@@ -35,7 +35,7 @@ import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import PlotWidget
 
-if sys.version_info > (2, 7):
+if sys.version_info[:2] > (2, 7):
     from io import BytesIO
 else:
     import cStringIO as _StringIO

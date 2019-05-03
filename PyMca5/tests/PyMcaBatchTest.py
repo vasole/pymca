@@ -162,45 +162,58 @@ class testPyMcaBatch(TestCaseQt):
 
     def _assertFastFitMap(self, typ):
         info = self._generateData(fast=True, typ=typ)
+        # Compare with legacy PyMcaBatch
         result1 = self._fitMap(info, fast=True, outputdir='fitresults1')
         result2 = self._fitMap(info, fast=True, legacy=True, outputdir='fitresults2')
-        self._compareBatchFitResult(result1, result2, rtol=1e-5)
+        self._compareFitResults(result1, result2, rtol=1e-5)
 
     def _assertSlowFitMap(self, typ):
         info = self._generateData(typ=typ)
+        # Compare with legacy PyMcaBatch
         result1 = self._fitMap(info, outputdir='fitresults1')
         result2 = self._fitMap(info, legacy=True, outputdir='fitresults2')
-        self._compareBatchFitResult(result1, result2, rtol=1e-5)
+        self._compareFitResults(result1, result2, rtol=1e-5)
 
     def _assertSlowMultiFitMap(self, typ):
-        #TODO: legacy BatchFit does not work with bootstrap
+        from PyMca5.PyMcaGui.pymca.PyMcaBatch import ranAsBootstrap
         info = self._generateData(typ=typ)
+        # Compare single vs. multi processing
         result1 = self._fitMap(info, nBatches=4, outputdir='fitresults1')
         result2 = self._fitMap(info, nBatches=1, outputdir='fitresults2')
-        #result3 = self._fitMap(info, nBatches=4, legacy=True, outputdir='fitresults3')
-        #result4 = self._fitMap(info, nBatches=1, legacy=True, outputdir='fitresults4')
-        # TODO: rtol is pretty bad!!!
-        self._compareBatchFitResult(result1, result2, rtol=1e-3)
-        #self._compareBatchFitResult(result3, result4, rtol=1e-3)
-        #self._compareBatchFitResult(result1, result3, rtol=1e-3)
-        #self._compareBatchFitResult(result2, result4, rtol=1e-3)
+        self._compareFitResults(result1, result2, rtol=0)
+        if not ranAsBootstrap() and typ != 'hdf5':
+            # TODO: hdf5 selection without user interaction in legacy code
+            # Compare legacy single vs. multi processing
+            result3 = self._fitMap(info, nBatches=4, legacy=True, outputdir='fitresults3')
+            result4 = self._fitMap(info, nBatches=1, legacy=True, outputdir='fitresults4')
+            self._compareFitResults(result3, result4, rtol=0)
+            # Compare with legacy PyMcaBatch
+            self._compareFitResults(result1, result3, rtol=1e-5)
+            self._compareFitResults(result2, result4, rtol=1e-5)
 
     def _fitMap(self, info, fast=False, nBatches=0,
                 outputdir='fitresults', **kwargs):
         outputdir = os.path.join(self.path, outputdir)
         if fast:
+            # Single process fast fitting
             imageFile = self._fastFitMap(info, outputdir, **kwargs)
-        elif nBatches > 0:
+        elif not nBatches:
+            # Single process slow fitting
+            imageFile = self._slowFitMap(info, outputdir, **kwargs)
+        else:
+            # Multi process slow fitting
             imageFile = self._slowMultiFitMap(info, outputdir,
                                               nBatches, **kwargs)
-        else:
-            imageFile = self._slowFitMap(info, outputdir, **kwargs)
+        # Validate result
         labels, scanData = self._parseDatResults(imageFile)
-        self._verifyBatchFitResult(labels, scanData, info['liveTimeCorrection'],
-                                   multiprocessing=nBatches > 1)
+        self._checkFitResult(labels, scanData, info['liveTimeCorrection'],
+                             multiprocessing=nBatches > 1)
         return labels, scanData
 
     def _fastFitMap(self, info, outputdir, legacy=False):
+        """
+        Multi process fast fitting
+        """
         if legacy:
             from PyMca5.PyMcaPhysics.xrf import LegacyFastXRFLinearFit as FastXRFLinearFit 
         else:
@@ -223,7 +236,10 @@ class testPyMcaBatch(TestCaseQt):
             FastXRFLinearFit.save(outbuffer, outputdir, csv=False)
         return self._imageFile(None, outputdir, fast=True, legacy=legacy)
     
-    def _slowFitMap(self, info, outputdir, legacy=False, nBatches=1):
+    def _slowFitMap(self, info, outputdir, legacy=False):
+        """
+        Single process slow fitting
+        """
         if legacy:
             from PyMca5.PyMcaPhysics.xrf import LegacyMcaAdvancedFitBatch as McaAdvancedFitBatch
             os.mkdir(outputdir)
@@ -242,25 +258,14 @@ class testPyMcaBatch(TestCaseQt):
         batch = McaAdvancedFitBatch.McaAdvancedFitBatch(info['cfgname'], **kwargs)
         batch.processList()
         return self._imageFile(info['input'], outputdir, legacy=legacy)
-    
-    def _imageFile(self, filelist, outputdir, fast=False, legacy=False):
-        if filelist:
-            # Slow fit
-            from PyMca5.PyMcaPhysics.xrf import McaAdvancedFitBatch
-            rootname = McaAdvancedFitBatch.getRootName(filelist)
-            if legacy:
-                subdir = 'IMAGES'
-            else:
-                subdir = rootname
-        else:
-            # Fast fit
-            rootname = 'images'
-            subdir = 'IMAGES'
-        return os.path.join(outputdir, subdir, rootname+'.dat')
 
     def _slowMultiFitMap(self, info, outputdir, nBatches, legacy=False):
+        """
+        Multi process slow fitting
+        """
         os.mkdir(outputdir)
         kwargs = {'actions': True,
+                  'showresult': False,
                   'filelist': info['input'],
                   'config': info['cfgname'],
                   'outputdir': outputdir}
@@ -274,11 +279,14 @@ class testPyMcaBatch(TestCaseQt):
             kwargs['diagnostics'] = True
             kwargs['concentrations'] = True
             kwargs['nproc'] = nBatches
-            kwargs['showresult'] = False
             kwargs['selection'] = info['selection']
         imageFile = self._imageFile(info['input'], outputdir, legacy=legacy)
 
         widget = McaBatchGUI(**kwargs)
+        if legacy:
+            widget._McaBatchGUI__concentrationsBox.setChecked(True)
+            widget._McaBatchGUI__splitBox.setChecked(nBatches > 1)
+            widget._McaBatchGUI__splitSpin.setValue(max(nBatches, 1))
         #widget.show()
         self.qapp.processEvents()
         widget.start()
@@ -303,6 +311,21 @@ class testPyMcaBatch(TestCaseQt):
         self.qapp.processEvents()
         #self.qapp.exec_()
         return imageFile
+
+    def _imageFile(self, filelist, outputdir, fast=False, legacy=False):
+        if filelist:
+            # Slow fit
+            from PyMca5.PyMcaPhysics.xrf import McaAdvancedFitBatch
+            rootname = McaAdvancedFitBatch.getRootName(filelist)
+            if legacy:
+                subdir = 'IMAGES'
+            else:
+                subdir = rootname
+        else:
+            # Fast fit
+            rootname = 'images'
+            subdir = 'IMAGES'
+        return os.path.join(outputdir, subdir, rootname+'.dat')
 
     def _generateData(self, fast=False, typ='hdf5'):
         # Generate data (in memory + save in requested format)
@@ -368,7 +391,7 @@ class testPyMcaBatch(TestCaseQt):
         info['cfgname'] = os.path.join(self.path, 'Map.cfg')
         return info
 
-    def _compareBatchFitResult(self, result1, result2, rtol=0, atol=0):
+    def _compareFitResults(self, result1, result2, rtol=0, atol=0):
         labels1, scanData1 = result1
         labels2, scanData2 = result2
         self.assertEqual(set(labels1), set(labels2))
@@ -412,9 +435,11 @@ class testPyMcaBatch(TestCaseQt):
         labels = list(map(self._convertLegacyLabel, labels))
         return labels, scanData
 
-    def _verifyBatchFitResult(self, labels, paramStack, liveTimeCorrection,
-                              multiprocessing=False):
+    def _checkFitResult(self, labels, paramStack, liveTimeCorrection,
+                        multiprocessing=False):
         """
+        Validate fit result
+
         :param list labels: parameter names
         :param ndarray paramStack: nParams x nRows x nColumns
         :param ndarray liveTimeCorrection: nRows x nColumns

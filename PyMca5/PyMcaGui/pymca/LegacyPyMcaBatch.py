@@ -46,7 +46,7 @@ try:
 except ImportError:
     HDF5SUPPORT = False
 from PyMca5.PyMcaIO import ConfigDict
-from PyMca5.PyMcaPhysics.xrf import McaAdvancedFitBatch
+from PyMca5.PyMcaPhysics.xrf import LegacyMcaAdvancedFitBatch as McaAdvancedFitBatch
 from PyMca5.PyMcaGui.physics.xrf import QtMcaAdvancedFitReport
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from PyMca5.PyMcaCore import EdfFileLayer
@@ -56,7 +56,7 @@ from PyMca5.PyMcaGui.pymca import McaCustomEvent
 from PyMca5.PyMcaGui.pymca import EdfFileSimpleViewer
 from PyMca5.PyMcaCore import HtmlIndex
 from PyMca5.PyMcaCore import PyMcaDirs
-from PyMca5.PyMcaCore import PyMcaBatchBuildOutput
+from PyMca5.PyMcaCore import LegacyPyMcaBatchBuildOutput as PyMcaBatchBuildOutput
 
 ROIWIDTH = 100.
 _logger = logging.getLogger(__name__)
@@ -64,7 +64,8 @@ _logger = logging.getLogger(__name__)
 
 class McaBatchGUI(qt.QWidget):
     def __init__(self,parent=None,name="PyMca batch fitting",fl=None,
-                filelist=None,config=None,outputdir=None, actions=0):
+                filelist=None,config=None,outputdir=None, actions=0,
+                showresult=True):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle(name)
         self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
@@ -92,6 +93,7 @@ class McaBatchGUI(qt.QWidget):
         self.setFileList(filelist)
         self.setConfigFile(config)
         self.setOutputDir(self.outputDir)
+        self._showResult = showresult
 
     def __build(self,actions):
         self.__grid= qt.QWidget(self)
@@ -785,7 +787,8 @@ class McaBatchGUI(qt.QWidget):
             self._edfSimpleViewer = None
         if roifit:
             window =  McaBatchWindow(name="ROI"+name,actions=1, outputdir=self.outputDir,
-                                     html=html, htmlindex=htmlindex, table = 0)
+                                     html=html, htmlindex=htmlindex, table = 0,
+                                     showresult=self._showResult)
             b = McaBatch(window,self.configFile,self.fileList,self.outputDir,roifit=roifit,
                          roiwidth=roiwidth,overwrite=overwrite,filestep=1,mcastep=1,
                          concentrations=0, fitfiles=fitfiles, selection=selection)
@@ -815,10 +818,12 @@ class McaBatchGUI(qt.QWidget):
              ((".app" in os.path.dirname(__file__)) or (not self.__splitBox.isChecked())):
             #almost identical to batch
             window =  McaBatchWindow(name="ROI"+name,actions=1,outputdir=self.outputDir,
-                                     html=html,htmlindex=htmlindex, table = table)
+                                     html=html,htmlindex=htmlindex, table = table,
+                                     showresult=self._showResult)
             b = McaBatch(window,self.configFile,self.fileList,self.outputDir,roifit=roifit,
                          roiwidth=roiwidth,overwrite=overwrite,filestep=filestep,
-                         mcastep=mcastep, concentrations=concentrations, fitfiles=fitfiles, selection=selection)
+                         mcastep=mcastep, concentrations=concentrations, fitfiles=fitfiles,
+                         selection=selection)
             def cleanup():
                 b.pleasePause = 0
                 b.pleaseBreak = 1
@@ -846,7 +851,7 @@ class McaBatchGUI(qt.QWidget):
             try:
                 dirname = os.path.dirname(__file__)
                 frozen = False
-                if not os.path.exists(os.path.join(dirname, "PyMcaBatch.py")):
+                if not os.path.exists(os.path.join(dirname, "LegacyPyMcaBatch.py")):
                     # script usage case
                     dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
             except:
@@ -854,7 +859,7 @@ class McaBatchGUI(qt.QWidget):
                 dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
                 frozen = True
             if os.path.basename(sys.executable) in ["PyMcaMain.exe",
-                                                    "PyMcaBatch.exe"]:
+                                                    "LegacyPyMcaBatch.exe"]:
                 frozen = True
                 dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
             listfile = os.path.join(self.outputDir, "tmpfile")
@@ -867,7 +872,7 @@ class McaBatchGUI(qt.QWidget):
                 # level PyMca5
                 dirname  = os.path.dirname(dirname)
                 # directory level with exe files
-                myself   = os.path.join(dirname, "PyMcaBatch.exe")
+                myself   = os.path.join(dirname, "LegacyPyMcaBatch.exe")
                 viewer   = os.path.join(dirname, "EdfFileSimpleViewer.exe")
                 rgb    = os.path.join(dirname, "PyMcaPostBatch.exe")
                 if not os.path.exists(viewer):
@@ -875,7 +880,7 @@ class McaBatchGUI(qt.QWidget):
                 if not os.path.exists(rgb):
                     rgb = None
             else:
-                myself = os.path.join(dirname, "PyMcaBatch.py")
+                myself = os.path.join(dirname, "LegacyPyMcaBatch.py")
                 viewer = os.path.join(dirname, "EdfFileSimpleViewer.py")
                 rgb    = os.path.join(dirname, "PyMcaPostBatch.py")
                 if not os.path.exists(viewer):
@@ -892,42 +897,46 @@ class McaBatchGUI(qt.QWidget):
                 self.genListFile(cfglistfile, config=True)
                 dirname  = os.path.dirname(dirname)
                 if frozen:
-                    cmd = '"%s" --cfglistfile="%s" --outdir="%s" --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile="%s" --concentrations=%d --table=%d --fitfiles=%d --selection=%d' %\
+                    cmd = '"%s" --cfglistfile="%s" --outdir="%s" --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile="%s" --concentrations=%d --table=%d --fitfiles=%d --selection=%d --showresult=%d --exitonend=%d' %\
                                                                   (myself,
                                                                     cfglistfile,
                                                                     self.outputDir, overwrite,
                                                                     filestep, mcastep,
                                                                     html,htmlindex,
                                                                     listfile,concentrations,
-                                                                    table, fitfiles, selectionFlag)
+                                                                    table, fitfiles, selectionFlag,
+                                                                    self._showResult, 1)
                 else:
-                    cmd = '%s "%s" --cfglistfile="%s" --outdir="%s" --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile="%s" --concentrations=%d --table=%d --fitfiles=%d --selection=%d' %\
+                    cmd = '%s "%s" --cfglistfile="%s" --outdir="%s" --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile="%s" --concentrations=%d --table=%d --fitfiles=%d --selection=%d --showresult=%d --exitonend=%d' %\
                                                                   (sys.executable,myself,
                                                                     cfglistfile,
                                                                     self.outputDir, overwrite,
                                                                     filestep, mcastep,
                                                                     html,htmlindex,
                                                                     listfile,concentrations,
-                                                                    table, fitfiles, selectionFlag)
+                                                                    table, fitfiles, selectionFlag,
+                                                                    self._showResult, 1)
             else:
                 if not frozen:
-                    cmd = '%s "%s" --cfg="%s" --outdir="%s" --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile="%s" --concentrations=%d --table=%d --fitfiles=%d --selection=%d' % \
+                    cmd = '%s "%s" --cfg="%s" --outdir="%s" --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile="%s" --concentrations=%d --table=%d --fitfiles=%d --selection=%d --showresult=%d --exitonend=%d' % \
                                                                   (sys.executable, myself,
                                                                     self.configFile,
                                                                     self.outputDir, overwrite,
                                                                     filestep, mcastep,
                                                                     html,htmlindex,
                                                                     listfile,concentrations,
-                                                                    table, fitfiles, selectionFlag)
+                                                                    table, fitfiles, selectionFlag,
+                                                                    self._showResult, 1)
                 else:
-                    cmd = '"%s" --cfg="%s" --outdir="%s" --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile="%s" --concentrations=%d --table=%d --fitfiles=%d --selection=%d' % \
+                    cmd = '"%s" --cfg="%s" --outdir="%s" --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile="%s" --concentrations=%d --table=%d --fitfiles=%d --selection=%d --showresult=%d --exitonend=%d' % \
                                                                   (myself,
                                                                     self.configFile,
                                                                     self.outputDir, overwrite,
                                                                     filestep, mcastep,
                                                                     html,htmlindex,
                                                                     listfile,concentrations,
-                                                                    table, fitfiles, selectionFlag)
+                                                                    table, fitfiles, selectionFlag,
+                                                                    self._showResult, 1)
             self.hide()
             qApp = qt.QApplication.instance()
             qApp.processEvents()
@@ -990,7 +999,7 @@ class McaBatchGUI(qt.QWidget):
             try:
                 dirname = os.path.dirname(__file__)
                 frozen = False
-                if not os.path.exists(os.path.join(dirname, "PyMcaBatch.py")):
+                if not os.path.exists(os.path.join(dirname, "LegacyPyMcaBatch.py")):
                     # script usage case
                     dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
             except:
@@ -999,9 +1008,9 @@ class McaBatchGUI(qt.QWidget):
                 frozen = True
             if not frozen:
                 if os.path.basename(sys.executable) in ["PyMcaMain.exe",
-                                                        "PyMcaBatch.exe",
+                                                        "LegacyPyMcaBatch.exe",
                                                         "PyMcaMain",
-                                                        "PyMcaBatch"]:
+                                                        "LegacyPyMcaBatch"]:
                     frozen = True
                     dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
             if frozen:
@@ -1012,7 +1021,7 @@ class McaBatchGUI(qt.QWidget):
                 # level PyMca5
                 dirname  = os.path.dirname(dirname)
                 # directory level with exe files
-                myself   = os.path.join(dirname, "PyMcaBatch")
+                myself   = os.path.join(dirname, "LegacyPyMcaBatch")
                 viewer   = os.path.join(dirname, "EdfFileSimpleViewer")
                 rgb    = os.path.join(dirname, "PyMcaPostBatch")
                 if not os.path.exists(viewer):
@@ -1020,11 +1029,11 @@ class McaBatchGUI(qt.QWidget):
                 if not os.path.exists(rgb):
                     rgb = None
             else:
-                myself = os.path.join(dirname, "PyMcaBatch.py")
+                myself = os.path.join(dirname, "LegacyPyMcaBatch.py")
                 if not os.path.exists(os.path.join(dirname, myself)):
                     dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
                     if not os.path.exists(os.path.join(dirname, myself)):
-                        text  = 'Cannot locate PyMcaBatch.py file.\n'
+                        text  = 'Cannot locate LegacyPyMcaBatch.py file.\n'
                         qt.QMessageBox.critical(self, "ERROR",text)
                         self.raise_()
                         return
@@ -1044,18 +1053,20 @@ class McaBatchGUI(qt.QWidget):
             if type(self.configFile) == type([]):
                 cfglistfile = os.path.join(self.outputDir, "tmpfile.cfg")
                 self.genListFile(cfglistfile, config=True)
-                cmd = "%s --cfglistfile=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s  --concentrations=%d --table=%d --fitfiles=%d --selection=%d &" % \
+                cmd = "%s --cfglistfile=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s  --concentrations=%d --table=%d --fitfiles=%d --selection=%d  --showresult=%d --exitonend=%d &" % \
                                                     (myself,
                                                     cfglistfile,
                                                     self.outputDir, overwrite,
                                                     filestep, mcastep, html, htmlindex, listfile,
-                                                    concentrations, table, fitfiles, selectionFlag)
+                                                    concentrations, table, fitfiles,
+                                                    selectionFlag, self._showResult, 1)
             else:
-                cmd = "%s --cfg=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s  --concentrations=%d --table=%d --fitfiles=%d  --selection=%d &" % \
+                cmd = "%s --cfg=%s --outdir=%s --overwrite=%d --filestep=%d --mcastep=%d --html=%d --htmlindex=%s --listfile=%s  --concentrations=%d --table=%d --fitfiles=%d  --selection=%d  --showresult=%d --exitonend=%d &" % \
                                                    (myself, self.configFile,
                                                     self.outputDir, overwrite,
-                                                    filestep, mcastep, html, htmlindex,
-                                                    listfile, concentrations, table, fitfiles, selectionFlag)
+                                                    filestep, mcastep, html, htmlindex, listfile,
+                                                    concentrations, table, fitfiles,
+                                                    selectionFlag, self._showResult, 1)
             _logger.debug("cmd = %s", cmd)
             if self.__splitBox.isChecked():
                 qApp = qt.QApplication.instance()
@@ -1097,7 +1108,9 @@ class McaBatchGUI(qt.QWidget):
                 msg.setIcon(qt.QMessageBox.Information)
                 text = "Your batch has been started as an independent process."
                 msg.setText(text)
-                msg.exec_()
+                # REMARK: non-blocking for unit testing
+                #msg.exec_()
+                msg.show()
 
     def genListFile(self, listfile, config=None):
         if os.path.exists(listfile):
@@ -1148,22 +1161,23 @@ class McaBatchGUI(qt.QWidget):
             a, b, c = work.buildOutput(delete=False)
         else:
             a, b, c = work.buildOutput(delete=True)
-        if len(a):
-            if self._edfSimpleViewer is None:
-                self._edfSimpleViewer = EdfFileSimpleViewer.EdfFileSimpleViewer()
-            self._edfSimpleViewer.setFileList(a)
-            self._edfSimpleViewer.show()
-        if rgb is not None:
-            if len(b):
-                if sys.platform == "win32":
-                    try:
-                        subprocess.Popen('%s "%s"' % (rgb, b[0]),
-                                         cwd = os.getcwd())
-                    except UnicodeEncodeError:
-                        subprocess.Popen(('%s "%s"' % (rgb, b[0])).encode(sys.getfilesystemencoding()),
-                                         cwd = os.getcwd())
-                else:
-                    os.system("%s %s &" % (rgb, b[0]))
+        if self._showResult:
+            if len(a):
+                if self._edfSimpleViewer is None:
+                    self._edfSimpleViewer = EdfFileSimpleViewer.EdfFileSimpleViewer()
+                self._edfSimpleViewer.setFileList(a)
+                self._edfSimpleViewer.show()
+            if rgb is not None:
+                if len(b):
+                    if sys.platform == "win32":
+                        try:
+                            subprocess.Popen('%s "%s"' % (rgb, b[0]),
+                                            cwd = os.getcwd())
+                        except UnicodeEncodeError:
+                            subprocess.Popen(('%s "%s"' % (rgb, b[0])).encode(sys.getfilesystemencoding()),
+                                            cwd = os.getcwd())
+                    else:
+                        os.system("%s %s &" % (rgb, b[0]))
         work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(self.outputDir)
         if _logger.getEffectiveLevel() == logging.DEBUG:
             work.buildOutput(delete=False)
@@ -1274,7 +1288,7 @@ class McaBatch(McaAdvancedFitBatch.McaAdvancedFitBatch, qt.QThread):
 
 class McaBatchWindow(qt.QWidget):
     def __init__(self,parent=None, name="BatchWindow", fl=0, actions = 0, outputdir=None, html=0,
-                    htmlindex = None, table=2, chunk=None, exitonend=False):
+                    htmlindex = None, table=2, chunk=None, exitonend=False, showresult=True):
         if QTVERSION < '4.0.0':
             qt.QWidget.__init__(self, parent, name, fl)
             self.setCaption(name)
@@ -1283,6 +1297,8 @@ class McaBatchWindow(qt.QWidget):
             self.setWindowTitle(name)
         self.chunk = chunk
         self.exitonend = exitonend
+        self._showResult = showresult
+        assert not showresult
         self.l = qt.QVBoxLayout(self)
         #self.l.setAutoAdd(1)
         self.bars =qt.QWidget(self)
@@ -1569,7 +1585,7 @@ class McaBatchWindow(qt.QWidget):
             self.pauseButton.hide()
             self.abortButton.setText("OK")
         if self.chunk is None:
-            if 'savedimages' in dict:
+            if 'savedimages' in dict and self._showResult:
                 self.plotImages(dict['savedimages'])
         if self.html:
             if not self.__writingReport:
@@ -1617,7 +1633,7 @@ class McaBatchWindow(qt.QWidget):
                 dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
             if not frozen:
                 if sys.executable in ["PyMcaMain", "PyMcaMain.exe",
-                                      "PyMcaBatch", "PyMcaBatch.exe"]:
+                                      "LegacyPyMcaBatch", "LegacyPyMcaBatch.exe"]:
                     frozen = True
             _logger.debug("final dirname = %s", dirname)
             if frozen:
@@ -1645,7 +1661,7 @@ def main():
                    'listfile=','cfglistfile=', 'concentrations=', 'table=', 'fitfiles=',
                    'filebeginoffset=','fileendoffset=','mcaoffset=', 'chunk=',
                    'nativefiledialogs=','selection=', 'exitonend=',
-                   'logging=', 'debug=']
+                   'logging=', 'debug=', 'showresult=']
     filelist = None
     outdir   = None
     cfg      = None
@@ -1667,6 +1683,7 @@ def main():
     mcaoffset = 0
     chunk = None
     exitonend = False
+    showresult = True
     opts, args = getopt.getopt(
                     sys.argv[1:],
                     options,
@@ -1721,6 +1738,8 @@ def main():
                 PyMcaDirs.nativeFileDialogs = False
         elif opt in ('--exitonend'):
             exitonend = int(arg)
+        elif opt in ('--showresult'):
+            showresult = int(arg)
 
     logging.basicConfig(level=getLoggingLevel(opts))
 
@@ -1765,7 +1784,7 @@ def main():
         text = "Batch from %s to %s" % (os.path.basename(filelist[0]), os.path.basename(filelist[-1]))
         window =  McaBatchWindow(name=text,actions=1,
                                 outputdir=outdir,html=html, htmlindex=htmlindex, table=table,
-                                chunk=chunk, exitonend=exitonend)
+                                chunk=chunk, exitonend=exitonend, showresult=showresult)
 
         if html:fitfiles=1
         try:
@@ -1813,5 +1832,5 @@ if __name__ == "__main__":
     main()
 
 
-# PyMcaBatch.py --cfg=/mntdirect/_bliss/users/sole/COTTE/WithLead.cfg --outdir=/tmp/   /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0007.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0008.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0009.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0010.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0011.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0012.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0013.edf &
-# PyMcaBatch.exe --cfg=E:/COTTE/WithLead.cfg --outdir=C:/tmp/   E:/COTTE/ch09/ch09__mca_0003_0000_0007.edf E:/COTTE/ch09/ch09__mca_0003_0000_0008.edf
+# LegacyPyMcaBatch.py --cfg=/mntdirect/_bliss/users/sole/COTTE/WithLead.cfg --outdir=/tmp/   /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0007.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0008.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0009.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0010.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0011.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0012.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0013.edf &
+# LegacyPyMcaBatch.exe --cfg=E:/COTTE/WithLead.cfg --outdir=C:/tmp/   E:/COTTE/ch09/ch09__mca_0003_0000_0007.edf E:/COTTE/ch09/ch09__mca_0003_0000_0008.edf

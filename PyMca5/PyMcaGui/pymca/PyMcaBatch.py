@@ -85,6 +85,13 @@ def moduleRunCmd(modulePath):
         return '{} "{}"'.format(sysExecutable, modulePath)
 
 
+def ranAsBootstrap():
+    sysExecutable = sys.executable
+    bootstrap = os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', '..', 'bootstrap.py')
+    bootstrap = os.path.abspath(bootstrap)
+    return os.path.isfile(bootstrap)
+
+
 class Option(object):
     """
     Command option wrapper used by `Command`
@@ -1120,7 +1127,8 @@ class McaBatchGUI(qt.QWidget):
     def _runAsThread(self, cmd, wname):
         kwargs = cmd.getOptions('outdir', 'html', 'htmlindex', 'table')
         kwargs['outputdir'] = kwargs.pop('outdir')
-        window = McaBatchWindow(name=wname, actions=1, **kwargs)
+        window = McaBatchWindow(name=wname, actions=1,
+                                showResult=self._showResult, **kwargs)
         kwargs = cmd.getAllOptionsBut('html', 'htmlindex', 'table')
         kwargs['outputdir'] = kwargs.pop('outdir')
         thread = McaBatch(window, self.configFile, filelist=self.fileList, **kwargs)
@@ -1132,6 +1140,7 @@ class McaBatchGUI(qt.QWidget):
     def _runAsProcess(self, cmd, allowIndependent=True):
         cmd.addOption('debug', value=_logger.getEffectiveLevel() == logging.DEBUG, format="{:d}")
         cmd.addOption('exitonend', value=1, format="{:d}")
+        cmd.addOption('showresult', value=self._showResult, format="{:d}")
 
         # Prepare tools (executables or python scripts) for processing/viewing
         if not self._processToolsInit(cmd):
@@ -1313,7 +1322,7 @@ class McaBatchGUI(qt.QWidget):
         msg.setIcon(qt.QMessageBox.Information)
         text = "Your batch has been started as an independent process."
         msg.setText(text)
-        # TODO: make this non-blocking!
+        # REMARK: non-blocking for unit testing
         #msg.exec_()
         msg.show()
 
@@ -1494,7 +1503,7 @@ class McaBatchWindow(qt.QWidget):
     """
 
     def __init__(self,parent=None, name="BatchWindow", fl=0, actions = 0, outputdir=None, html=0,
-                    htmlindex = None, table=2, chunk=None, exitonend=False):
+                    htmlindex = None, table=2, chunk=None, exitonend=False, showresult=True):
         if QTVERSION < '4.0.0':
             qt.QWidget.__init__(self, parent, name, fl)
             self.setCaption(name)
@@ -1503,6 +1512,8 @@ class McaBatchWindow(qt.QWidget):
             self.setWindowTitle(name)
         self.chunk = chunk
         self.exitonend = exitonend
+        self._showResult = showresult
+        assert not showresult
         self.l = qt.QVBoxLayout(self)
         #self.l.setAutoAdd(1)
         self.bars =qt.QWidget(self)
@@ -1787,7 +1798,7 @@ class McaBatchWindow(qt.QWidget):
             self.abortButton.setText("OK")
         if self.chunk is None:
             savedimages = dict.get('savedimages', None)
-            if savedimages:
+            if savedimages and self._showResult:
                 self.plotImages(savedimages)
         if self.html:
             if not self.__writingReport:
@@ -1863,7 +1874,8 @@ def main():
                    'filebeginoffset=','fileendoffset=','mcaoffset=', 'chunk=',
                    'nativefiledialogs=','selection=', 'exitonend=',
                    'edf=', 'h5=', 'csv=', 'tif=', 'dat=', 'diagnostics=',
-                   'logging=', 'debug=', 'gui=', 'multipage=', 'nproc=']
+                   'logging=', 'debug=', 'gui=', 'multipage=', 'nproc=',
+                   'showresult=']
     filelist = None
     outdir = None
     cfg = None
@@ -1885,6 +1897,7 @@ def main():
     mcaoffset = 0
     chunk = None
     exitonend = False
+    showresult = True
     gui = 0
     diagnostics = 0
     tif = 0
@@ -1950,6 +1963,8 @@ def main():
                 PyMcaDirs.nativeFileDialogs = False
         elif opt in ('--exitonend'):
             exitonend = int(arg)
+        elif opt in ('--showresult'):
+            showresult = int(arg)
         elif opt == '--diagnostics':
             diagnostics = int(arg)
         elif opt == '--edf':
@@ -2024,7 +2039,7 @@ def main():
         text = "Batch from %s to %s" % (os.path.basename(filelist[0]), os.path.basename(filelist[-1]))
         window = McaBatchWindow(name=text,actions=1,
                                 outputdir=outdir,html=html, htmlindex=htmlindex, table=table,
-                                chunk=chunk, exitonend=exitonend)
+                                chunk=chunk, exitonend=exitonend, showresult=showresult)
         try:
             thread = McaBatch(window,cfg,filelist=filelist,outputdir=outdir,roifit=roifit,roiwidth=roiwidth,
                               overwrite=overwrite, filestep=filestep, mcastep=mcastep,
