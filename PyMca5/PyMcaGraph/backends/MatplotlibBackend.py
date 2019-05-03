@@ -80,7 +80,9 @@ elif ("PyQt4.QtCore" in sys.modules) or ('PyQt4' in sys.argv):
 elif 'PySide2.QtCore' in sys.modules:
     matplotlib.rcParams['backend'] = 'Qt5Agg'
     if 'backend.qt5' in matplotlib.rcParams:
-        matplotlib.rcParams['backend.qt5'] = 'PySide2'
+        if not matplotlib.__version__.startswith('2.2'):
+            # usage was deprecated in version 2.2
+            matplotlib.rcParams['backend.qt5'] = 'PySide2'
     from PySide2 import QtCore, QtGui, QtWidgets
     QtGui.QApplication = QtWidgets.QApplication
 elif 'PyQt5.QtCore' in sys.modules:
