@@ -31,59 +31,16 @@ import sys
 import logging
 import traceback
 
+if sys.version_info < (3,0):
+    import cStringIO as _StringIO
+    BytesIO = _StringIO.StringIO
+else:
+    from io import BytesIO
+
+from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGraph import Plot
 
-SVG = True
-if "PySide.QtCore" in sys.modules:
-    from PySide import QtCore, QtGui
-    try:
-        from PySide import QtSvg
-    except ImportError:
-        SVG = False
-elif "PySide2.QtCore" in sys.modules:
-    from PySide2 import QtCore, QtGui, QtWidgets
-    QtGui.QApplication = QtWidgets.QApplication
-    QtGui.QMainWindow = QtWidgets.QMainWindow
-    QtGui.QWidget = QtWidgets.QWidget
-    QtGui.QVBoxLayout = QtWidgets.QVBoxLayout
-    QtGui.qApp = QtWidgets.qApp
-    try:
-        from PySide2.QtPrintSupport import QPrinter, QPrintDialog
-        QtGui.QPrinter = QPrinter
-        QtGui.QPrintDialog = QPrintDialog
-    except ImportError:
-        print("PyQt5 No print support available")
-    try:
-        from PySide2 import QtSvg
-    except ImportError:
-        SVG = False
-elif ("PyQt4.QtCore" in sys.modules) or ("PyQt4" in sys.argv):
-    from PyQt4 import QtCore, QtGui
-    try:
-        from PyQt4 import QtSvg
-    except ImportError:
-        SVG = False
-else:
-    from PyQt5 import QtCore, QtGui, QtWidgets
-    QtGui.QApplication = QtWidgets.QApplication
-    QtGui.QMainWindow = QtWidgets.QMainWindow
-    QtGui.QWidget = QtWidgets.QWidget
-    QtGui.QVBoxLayout = QtWidgets.QVBoxLayout
-    QtGui.qApp = QtWidgets.qApp
-    try:
-        from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
-        QtGui.QPrinter = QPrinter
-        QtGui.QPrintDialog = QPrintDialog
-    except ImportError:
-        print("PyQt5 No print support available")
-    try:
-        from PyQt5 import QtSvg
-    except ImportError:
-        SVG = False
-
-if not hasattr(QtCore, "Signal"):
-    QtCore.Signal = QtCore.pyqtSignal
-
+SVG = qt.HAS_SVG
 
 _logger = logging.getLogger(__name__)
 
@@ -93,19 +50,19 @@ if DEBUG:
     Plot.DEBUG = DEBUG
 
 
-class PlotWidget(QtGui.QMainWindow, Plot.Plot):
-    sigPlotSignal = QtCore.Signal(object)
+class PlotWidget(qt.QMainWindow, Plot.Plot):
+    sigPlotSignal = qt.Signal(object)
 
     def __init__(self, parent=None, backend=None,
                          legends=False, callback=None, **kw):
         self._panWithArrowKeys = False
-        QtGui.QMainWindow.__init__(self, parent)
+        qt.QMainWindow.__init__(self, parent)
         Plot.Plot.__init__(self, parent=self, backend=backend)
         if parent is not None:
             # behave as a widget
-            self.setWindowFlags(QtCore.Qt.Widget)
-        self.containerWidget = QtGui.QWidget()
-        self.containerWidget.mainLayout = QtGui.QVBoxLayout(self.containerWidget)
+            self.setWindowFlags(qt.Qt.Widget)
+        self.containerWidget = qt.QWidget()
+        self.containerWidget.mainLayout = qt.QVBoxLayout(self.containerWidget)
         self.containerWidget.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.containerWidget.mainLayout.setSpacing(0)
         widget = self.getWidgetHandle()
@@ -113,20 +70,19 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
             self.containerWidget.mainLayout.addWidget(widget, 1)
             self.setCentralWidget(self.containerWidget)
         else:
-            print("WARNING: No backend. Using default.")
+            _logger.warning("No backend. Using default.")
 
         # defaultPrinter
         self._printer = None
 
-        if legends:
-            print("Legends widget to be implemented")
         self.setGraphTitle("  ")
         self.setGraphXLabel("X")
         self.setGraphYLabel("Y")
         self.setCallback(callback)
 
     def showLegends(self, flag=True):
-        print("Legends widget to be implemented")
+        if legends:
+            _logger.warning("Legends widget to be implemented")
 
     def graphCallback(self, ddict=None):
         if ddict is not None:
@@ -143,8 +99,7 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
         # force update of the widget!!!
         # should this be made at the backend level?
         w = self.centralWidget()
-        QtGui.qApp.postEvent(w, QtGui.QResizeEvent(w.size(),
-                                                   w.size()))
+        qt.qApp.postEvent(w, qt.QResizeEvent(w.size(), w.size()))
 
     def saveGraph(self, fileName, fileFormat=None, dpi=None, **kw):
         supportedFormats = ["png", "svg", "pdf", "ps", "eps",
@@ -170,8 +125,8 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
         imgData.flush()
         imgData.seek(0)
         svgRawData = imgData.read()
-        svgRendererData = QtCore.QXmlStreamReader(svgRawData)
-        svgRenderer = QtSvg.QSvgRenderer(svgRendererData)
+        svgRendererData = qt.QXmlStreamReader(svgRawData)
+        svgRenderer = qt.QSvgRenderer(svgRendererData)
         svgRenderer._svgRawData = svgRawData
         svgRenderer._svgRendererData = svgRendererData
         return svgRenderer
@@ -181,19 +136,19 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
                    dialog=True, keepAspectRatio=True, **kw):
         if printer is None:
             if self._printer is None:
-                printer = QtGui.QPrinter()
+                printer = qt.QPrinter()
             else:
                 printer = self._printer
         if (printer is None) or dialog:
             # allow printer selection/configuration
-            printDialog = QtGui.QPrintDialog(printer, self)
+            printDialog = qt.QPrintDialog(printer, self)
             actualPrint = printDialog.exec_()
         else:
             actualPrint = True
         if actualPrint:
             self._printer = printer
             try:
-                painter = QtGui.QPainter()
+                painter = qt.QPainter()
                 if not(painter.begin(printer)):
                     return 0
                 dpix    = printer.logicalDpiX()
@@ -268,7 +223,7 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
                     bodyWidth = availableWidth
                     bodyHeight = availableHeight
 
-                body = QtCore.QRectF(xOffset,
+                body = qt.QRectF(xOffset,
                                 yOffset,
                                 bodyWidth,
                                 bodyHeight)
@@ -295,17 +250,17 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
         """
         self._panWithArrowKeys = bool(pan)
         if not self._panWithArrowKeys:
-            self.setFocusPolicy(QtCore.Qt.NoFocus)
+            self.setFocusPolicy(qt.Qt.NoFocus)
         else:
-            self.setFocusPolicy(QtCore.Qt.StrongFocus)
-            self.setFocus(QtCore.Qt.OtherFocusReason)
+            self.setFocusPolicy(qt.Qt.StrongFocus)
+            self.setFocus(qt.Qt.OtherFocusReason)
 
     # Dict to convert Qt arrow key code to direction str.
     _ARROWS_TO_PAN_DIRECTION = {
-        QtCore.Qt.Key_Left: 'left',
-        QtCore.Qt.Key_Right: 'right',
-        QtCore.Qt.Key_Up: 'up',
-        QtCore.Qt.Key_Down: 'down'
+        qt.Qt.Key_Left: 'left',
+        qt.Qt.Key_Right: 'right',
+        qt.Qt.Key_Up: 'up',
+        qt.Qt.Key_Down: 'down'
     }
 
     def keyPressEvent(self, event):
@@ -321,6 +276,18 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
             # See QWidget.keyPressEvent for details.
             super(PlotWidget, self).keyPressEvent(event)
 
+    def copyToClipboard(self):
+        """
+        Copy the plot to the clipboard
+        """
+        pngFile = BytesIO()
+        self.saveGraph(pngFile, fileFormat='png')
+        pngFile.flush()
+        pngFile.seek(0)
+        pngData = pngFile.read()
+        pngFile.close()
+        image = qt.QImage.fromData(pngData, 'png')
+        qt.QApplication.clipboard().setImage(image)        
 
 if __name__ == "__main__":
     import time
@@ -351,7 +318,7 @@ if __name__ == "__main__":
     import numpy
     x = numpy.arange(100.)
     y = x * x
-    app = QtGui.QApplication([])
+    app = qt.QApplication([])
     plot = PlotWidget(None, backend=backend, legends=True)
     plot.setPanWithArrowKeys(True)
     plot.show()

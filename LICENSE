@@ -1,4 +1,4 @@
- The PyMca X-Ray Fluorescence Toolkit is Copyright (C) 2004-2018 of the European Synchrotron Radiation Facility (ESRF).
+ The PyMca X-Ray Fluorescence Toolkit is Copyright (C) 2004-2019 of the European Synchrotron Radiation Facility (ESRF).
 
 Unless otherways stated in the relevant accompanying source code, the default license of these modules is MIT.
 
@@ -8,7 +8,7 @@ If, despite its permisivity, the license accompanying any of the PyMca modules i
 
 The MIT license follows:
 
-Copyright (c) 2004-2018 European Synchrotron Radiation Facility (ESRF)
+Copyright (c) 2004-2019 European Synchrotron Radiation Facility (ESRF)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in

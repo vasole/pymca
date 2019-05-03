@@ -1696,7 +1696,7 @@ class SumRulesWindow(qt.QMainWindow):
                     replot=True)
         # Assure margins in plot when using matplotlibbackend
         if not hasattr(self.plotWindow, 'graph'):
-        _logger.debug('plotOnDemand -- Setting margins..\n'
+            _logger.debug('plotOnDemand -- Setting margins..\n'
                       '\txmin: %s xmax: %s\n\tymin: %s ymax: %s',
                       xmin, xmax , ymin, ymax)
             # Pass if no curves present

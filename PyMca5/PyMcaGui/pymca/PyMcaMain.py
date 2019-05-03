@@ -177,28 +177,9 @@ if __name__ == "__main__":
     sys.excepthook = qt.exceptionHandler
 
     app = qt.QApplication(sys.argv)
-    strlist = qt.QStyleFactory.keys()
-    if sys.platform == "win32":
-        for item in strlist:
-            text = str(item)
-            if text == "WindowsXP":
-                style = qt.QStyleFactory.create(item)
-                app.setStyle(style)
-                break
-
     if sys.platform not in ["win32", "darwin"]:
         # some themes of Ubuntu 16.04 give black tool tips on black background
         app.setStyleSheet("QToolTip { color: #000000; background-color: #fff0cd; border: 1px solid black; }")
-
-    # TODO why this strange test
-    if 1 or QTVERSION < '4.0.0':
-        winpalette = qt.QPalette(qt.QColor(230,240,249),qt.QColor(238,234,238))
-        app.setPalette(winpalette)
-    else:
-        palette = app.palette()
-        role = qt.QPalette.Window           #this is the background
-        palette.setColor(role, qt.QColor(238,234,238))
-        app.setPalette(palette)
 
     mpath = PyMcaDataDir.PYMCA_DATA_DIR
     if mpath[-3:] == "exe":
@@ -245,10 +226,12 @@ try:
     OBJECT3D = False
     if ("PyQt4.QtOpenGL" in sys.modules) or \
        ("PySide.QtOpenGL") in sys.modules or \
+       ("PySide2.QtOpenGL") in sys.modules or \
        ("PyQt5.QtOpenGL") in sys.modules:
         OBJECT3D = True
 except:
     OBJECT3D = False
+
 from PyMca5.PyMcaGui.pymca import QDispatcher
 from PyMca5.PyMcaGui import ElementsInfo
 from PyMca5.PyMcaGui import PeakIdentifier

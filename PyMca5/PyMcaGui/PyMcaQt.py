@@ -27,14 +27,27 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+import os
 import sys
 import traceback
+import logging
 
 """
 This module simplifies writing code that has to deal with with PySide and PyQt4.
 
 """
+
+_logger = logging.getLogger(__name__)
+
 BINDING = None
+"""The name of the Qt binding in use: PyQt5, PyQt4 or PySide2."""
+
+HAS_SVG = False
+"""True if Qt provides support for Scalable Vector Graphics (QtSVG)."""
+
+HAS_OPENGL = False
+"""True if Qt provides support for OpenGL (QtOpenGL)."""
+
 # force cx_freeze to consider sip among the modules to add
 # to the binary packages
 if 'PySide2.QtCore' in sys.modules:
@@ -70,7 +83,7 @@ elif sys.version_info < (3,):
             sip.setapi('QTime', 2)
             sip.setapi('QUrl', 2)
         except:
-            print("Cannot set sip API") # Console widget not available
+            _logger.info("Cannot set sip API") # Console widget not available
         import PyQt4
         BINDING = "PyQt4"
     except:
@@ -78,19 +91,19 @@ elif sys.version_info < (3,):
 
 if BINDING is None: # Try the different bindings
     try:
-        import PyQt5
+        import PyQt5.QtCore
         BINDING = "PyQt5"
     except ImportError:
         try:
-            import PyQt4
+            import PyQt4.QtCore
             BINDING = "PyQt4"
         except ImportError:
             try:
-                import PySide
+                import PySide.QtCore
                 BINDING = "PySide"
             except ImportError:
                 try:
-                    import PySide2
+                    import PySide2.QtCore
                     BINDING = "PySide2"
                 except ImportError:
                     raise ImportError(
@@ -101,12 +114,16 @@ if BINDING == "PySide":
     from PySide.QtGui import *
     try:
         from PySide.QtSvg import *
+        HAS_SVG = True
     except:
-        pass
+        _logger.info("PySide.QtSVG not available")
+
     try:
         from PySide.QtOpenGL import *
+        HAS_OPENGL = True
     except:
-        pass
+        _logger.info("PySide.QtOpenGL not available")
+
     pyqtSignal = Signal
     pyqtSlot = Slot
 
@@ -129,17 +146,23 @@ elif BINDING == "PyQt4":
             sip.setapi('QTime', 2)
             sip.setapi('QUrl', 2)
         except:
-            print("Cannot set sip API") # Console widget not available
+            _logger.info("Cannot set sip API") # Console widget not available
+
     from PyQt4.QtCore import *
     from PyQt4.QtGui import *
+
     try:
         from PyQt4.QtOpenGL import *
+        HAS_OPENGL = True
     except:
-        pass
+        _logger.info("PyQt4.QtOpenGL not available")
+
     try:
         from PyQt4.QtSvg import *
+        HAS_SVG = True
     except:
-        pass
+        _logger.info("PyQt4.QtSVG not available")
+
     Signal = pyqtSignal
     Slot = pyqtSlot
 
@@ -148,14 +171,19 @@ elif BINDING == "PyQt5":
     from PyQt5.QtGui import *
     from PyQt5.QtWidgets import *
     from PyQt5.QtPrintSupport import *
+
     try:
         from PyQt5.QtOpenGL import *
+        HAS_OPENGL = True
     except:
-        pass
+        _logger.info("PyQt5.QtOpenGL not available")
+
     try:
         from PyQt5.QtSvg import *
+        HAS_SVG = True
     except:
-        pass
+        _logger.info("PyQt5.QtSVG not available")
+
     Signal = pyqtSignal
     Slot = pyqtSlot
 
@@ -165,17 +193,41 @@ elif BINDING == "PySide2":
     from PySide2.QtGui import *
     from PySide2.QtWidgets import *
     from PySide2.QtPrintSupport import *
+
     try:
         from PySide2.QtOpenGL import *
+        HAS_OPENGL = True
     except:
-        pass
+        _logger.info("PySide2.QtOpenGL not available")
+
+
     try:
         from PySide2.QtSvg import *
+        HAS_SVG = True
     except:
-        pass
+        _logger.info("PySide2.QtSVG not available")
     pyqtSignal = Signal
     pyqtSlot = Slot
 
+    # workaround not finding the Qt platform plugin "windows" in "" error
+    # when creating a QApplication
+    if sys.platform.startswith("win")and QApplication.instance() is None:
+        _platform_plugin_path = os.environ.get("QT_QPA_PLATFORM_PLUGIN_PATH",
+                                                 None)
+        if _platform_plugin_path:
+            if not os.path.exists(_platform_plugin_path):
+                _logger.info("QT_QPA_PLATFORM_PLUGIN_PATH <%s> ignored" % \
+                             _platform_plugin_path)
+                _platform_plugin_path = None
+        if not _platform_plugin_path:
+            import PySide2
+            _platform_plugin_path = os.path.join( \
+                            os.path.dirname(PySide2.__file__),
+                            "plugins", "platforms")
+            os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = \
+                                                _platform_plugin_path
+            _logger.info("QT_QPA_PLATFORM_PLUGIN_PATH set to <%s>" % \
+                             _platform_plugin_path)
 else:
     raise ImportError('No Qt wrapper found. Install one of PyQt5, PyQt4, PySide or PySide2 (untested)')
 

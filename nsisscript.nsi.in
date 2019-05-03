@@ -1,7 +1,7 @@
 ;--------------------------------
 ;Product Info
-Name "PyMca __VERSION__" ;Define your own software name here
-!define PRODUCT "PyMca" ;Define your own software name here
+Name "__PROGRAM__ __VERSION__" ;Define your own software name here
+!define PRODUCT "__PROGRAM__" ;Define your own software name here
 !define VERSION "__VERSION__" ;Define your own software version here
 
 CRCCheck On
@@ -34,10 +34,10 @@ FunctionEnd
 ;--------------------------------
 ;Configuration
  
-   OutFile "pymca${VERSION}-win64.exe"
+   OutFile "__OUTFILE__"
 
    ;Folder selection page
-   InstallDir "$PROGRAMFILES64\PyMca ${VERSION}"
+   InstallDir "$PROGRAMFILES64\${PRODUCT} ${VERSION}"
 
 
 ;Remember install folder
@@ -68,37 +68,37 @@ UninstallIcon "${NSISDIR}\Contrib\Graphics\Icons\win-uninstall.ico"
      
 Section "section_1" section_1
 SetOutPath "$INSTDIR"
-FILE /r ".\build\PyMca5 __VERSION__\*.*"
+FILE /r "__SOURCE_DIRECTORY__\*.*"
 SectionEnd
 
 Section Shortcuts
 SetOutPath "$PROFILE"
 Call RefreshShellIcons   
-CreateDirectory "$SMPROGRAMS\PyMca ${VERSION}"
+CreateDirectory "$SMPROGRAMS\${PRODUCT} ${VERSION}"
 WriteIniStr "$INSTDIR\PyMca.url" "InternetShortcut" "URL" "http://pymca.sourceforge.net/"
-CreateShortCut "$SMPROGRAMS\PyMca ${VERSION}\PyMca Home page.lnk" "$INSTDIR\PyMca.url" "" "$INSTDIR\PyMca.url" 0
-CreateShortCut "$SMPROGRAMS\PyMca ${VERSION}\PyMca.lnk" "$INSTDIR\PyMcaMain.exe" "" "$INSTDIR\PyMcaMain.exe" 0
-CreateShortCut "$SMPROGRAMS\PyMca ${VERSION}\PyMca Fresh Start.lnk" "$INSTDIR\PyMcaMain.exe" "-f" "$INSTDIR\PyMcaMain.exe" 0
-CreateShortCut "$SMPROGRAMS\PyMca ${VERSION}\Identify Peak.lnk" "$INSTDIR\PeakIdentifier.exe" "" "$INSTDIR\PeakIdentifier.exe" 0
-CreateShortCut "$SMPROGRAMS\PyMca ${VERSION}\Elements.lnk" "$INSTDIR\ElementsInfo.exe" "" "$INSTDIR\ElementsInfo.exe" 0
-CreateShortCut "$SMPROGRAMS\PyMca ${VERSION}\PyMcaBatch.lnk" "$INSTDIR\PyMcaBatch.exe" "" "$INSTDIR\PyMcaBatch.exe" 0
-CreateShortCut "$SMPROGRAMS\PyMca ${VERSION}\EDF Viewer.lnk" "$INSTDIR\EdfFileSimpleViewer.exe" "" "$INSTDIR\EdfFileSimpleViewer.exe" 0
-;CreateShortCut "$SMPROGRAMS\PyMca ${VERSION}\Fit to Spec Converter.lnk" "$INSTDIR\Fit2Spec.exe" "" "$INSTDIR\Fit2Spec.exe" 0
-CreateShortCut "$SMPROGRAMS\PyMca ${VERSION}\Mca to Edf Converter.lnk" "$INSTDIR\Mca2Edf.exe" "" "$INSTDIR\Mca2Edf.exe" 0
-CreateShortCut "$SMPROGRAMS\PyMca ${VERSION}\RGB Correlator.lnk" "$INSTDIR\PyMcaPostBatch.exe" "" "$INSTDIR\PyMcaPostBatch.exe" 0
-CreateShortCut "$SMPROGRAMS\PyMca ${VERSION}\ROI Imaging Tool.lnk" "$INSTDIR\QStackWidget.exe" "" "$INSTDIR\QStackWidget.exe" 0
-#CreateShortCut "$SMPROGRAMS\PyMca ${VERSION}\ROI Imaging Tool (OLD).lnk" "$INSTDIR\QStackWidget.exe" "--old" "$INSTDIR\QStackWidget.exe" 0
-;CreateShortCut "$SMPROGRAMS\PyMca ${VERSION}\EDF Binning Tool.lnk" "$INSTDIR\EdfBinWidget.exe" "" "$INSTDIR\EdfBinWidget.exe" 0
-;CreateShortCut "$SMPROGRAMS\PyMca ${VERSION}\Xia Correction Tool.lnk" "$INSTDIR\XiaCorrect.exe" "" "$INSTDIR\XiaCorrect.exe" 0
+CreateShortCut "$SMPROGRAMS\${PRODUCT} ${VERSION}\PyMca Home page.lnk" "$INSTDIR\PyMca.url" "" "$INSTDIR\PyMca.url" 0
+CreateShortCut "$SMPROGRAMS\${PRODUCT} ${VERSION}\PyMca.lnk" "$INSTDIR\PyMcaMain.exe" "" "$INSTDIR\PyMcaMain.exe" 0
+CreateShortCut "$SMPROGRAMS\${PRODUCT} ${VERSION}\PyMca Fresh Start.lnk" "$INSTDIR\PyMcaMain.exe" "-f" "$INSTDIR\PyMcaMain.exe" 0
+CreateShortCut "$SMPROGRAMS\${PRODUCT} ${VERSION}\Identify Peak.lnk" "$INSTDIR\PeakIdentifier.exe" "" "$INSTDIR\PeakIdentifier.exe" 0
+CreateShortCut "$SMPROGRAMS\${PRODUCT} ${VERSION}\Elements.lnk" "$INSTDIR\ElementsInfo.exe" "" "$INSTDIR\ElementsInfo.exe" 0
+CreateShortCut "$SMPROGRAMS\${PRODUCT} ${VERSION}\PyMcaBatch.lnk" "$INSTDIR\PyMcaBatch.exe" "" "$INSTDIR\PyMcaBatch.exe" 0
+CreateShortCut "$SMPROGRAMS\${PRODUCT} ${VERSION}\EDF Viewer.lnk" "$INSTDIR\EdfFileSimpleViewer.exe" "" "$INSTDIR\EdfFileSimpleViewer.exe" 0
+;CreateShortCut "$SMPROGRAMS\${PRODUCT} ${VERSION}\Fit to Spec Converter.lnk" "$INSTDIR\Fit2Spec.exe" "" "$INSTDIR\Fit2Spec.exe" 0
+CreateShortCut "$SMPROGRAMS\${PRODUCT} ${VERSION}\Mca to Edf Converter.lnk" "$INSTDIR\Mca2Edf.exe" "" "$INSTDIR\Mca2Edf.exe" 0
+CreateShortCut "$SMPROGRAMS\${PRODUCT} ${VERSION}\RGB Correlator.lnk" "$INSTDIR\PyMcaPostBatch.exe" "" "$INSTDIR\PyMcaPostBatch.exe" 0
+CreateShortCut "$SMPROGRAMS\${PRODUCT} ${VERSION}\ROI Imaging Tool.lnk" "$INSTDIR\QStackWidget.exe" "" "$INSTDIR\QStackWidget.exe" 0
+#CreateShortCut "$SMPROGRAMS\${PRODUCT} ${VERSION}\ROI Imaging Tool (OLD).lnk" "$INSTDIR\QStackWidget.exe" "--old" "$INSTDIR\QStackWidget.exe" 0
+;CreateShortCut "$SMPROGRAMS\${PRODUCT}${VERSION}\EDF Binning Tool.lnk" "$INSTDIR\EdfBinWidget.exe" "" "$INSTDIR\EdfBinWidget.exe" 0
+;CreateShortCut "$SMPROGRAMS\${PRODUCT} ${VERSION}\Xia Correction Tool.lnk" "$INSTDIR\XiaCorrect.exe" "" "$INSTDIR\XiaCorrect.exe" 0
 SectionEnd
 
 Section Uninstaller
-CreateShortCut "$SMPROGRAMS\PyMca ${VERSION}\Uninstall.lnk" "$INSTDIR\uninst.exe" "" "$INSTDIR\uninst.exe" 0
-WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\PyMca ${VERSION}" "DisplayName" "${PRODUCT} ${VERSION}"
-WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\PyMca ${VERSION}" "DisplayVersion" "${VERSION}"
-WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\PyMca ${VERSION}" "URLInfoAbout" "http://pymca.sourceforge.net"
-WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\PyMca ${VERSION}" "Publisher" "V.A. Solé - ESRF Software Group"
-WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\PyMca ${VERSION}" "UninstallString" "$INSTDIR\Uninst.exe"
+CreateShortCut "$SMPROGRAMS\${PRODUCT} ${VERSION}\Uninstall.lnk" "$INSTDIR\uninst.exe" "" "$INSTDIR\uninst.exe" 0
+WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT} ${VERSION}" "DisplayName" "${PRODUCT} ${VERSION}"
+WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT} ${VERSION}" "DisplayVersion" "${VERSION}"
+WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT} ${VERSION}" "URLInfoAbout" "http://pymca.sourceforge.net"
+WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT} ${VERSION}" "Publisher" "V.A. Solé - ESRF Software Group"
+WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT} ${VERSION}" "UninstallString" "$INSTDIR\Uninst.exe"
 WriteRegStr HKCU "Software\${PRODUCT} ${VERSION}" "" $INSTDIR
 WriteUninstaller "$INSTDIR\Uninst.exe"
  

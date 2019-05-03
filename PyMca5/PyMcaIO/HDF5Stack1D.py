@@ -292,17 +292,24 @@ class HDF5Stack1D(DataObject.DataObject):
                 bytefactor = 8
 
             neededMegaBytes = nFiles * dim0 * dim1 * (mcaDim * bytefactor/(1024*1024.))
+            _logger.info("Using %d bytes per item" % bytefactor)
+            _logger.info("Needed %d Megabytes" % neededMegaBytes)
             physicalMemory = None
             if hasattr(PhysicalMemory, "getAvailablePhysicalMemoryOrNone"):
                 physicalMemory = PhysicalMemory.getAvailablePhysicalMemoryOrNone()
             if not physicalMemory:
                 physicalMemory = PhysicalMemory.getPhysicalMemoryOrNone()
+            else:
+                _logger.info("Available physical memory %.1f GBytes" % \
+                             (physicalMemory/(1024*1024*1024.)))
             if physicalMemory is None:
                 # 6 Gigabytes of available memory
                 # should be a good compromise in 2018
                 physicalMemory = 6000
+                _logger.info("Assumed physical memory %.1f MBytes" % physicalMemory)
             else:
                 physicalMemory /= (1024*1024.)
+            _logger.info("Using physical memory %.1f GBytes" % (physicalMemory/1024))
             if (neededMegaBytes > (0.95*physicalMemory))\
                and (nFiles == 1) and (len(shape) == 3):
                 if self.__dtype0 is None:
@@ -364,7 +371,7 @@ class HDF5Stack1D(DataObject.DataObject):
                             _time = tmpHdf[mcaObjectPaths["live_time"]][()]
                         elif "::" in mcaObjectPaths["live_time"]:
                             tmpFileName, tmpDatasetPath = \
-                                        mcaObjectPaths["live_time"].split("::") 
+                                        mcaObjectPaths["live_time"].split("::")
                             with h5py.File(tmpFileName, "r") as tmpH5:
                                 _time = tmpH5[tmpDatasetPath][()]
                         else:
@@ -373,7 +380,7 @@ class HDF5Stack1D(DataObject.DataObject):
                         # we have to have as many live times as MCA spectra
                         _time = numpy.zeros( \
                                     (self.data.shape[0] * self.data.shape[1]),
-                                    dtype=numpy.float64)                
+                                    dtype=numpy.float64)
                 elif "elapsed_time" in mcaObjectPaths:
                     if DONE:
                         # hopefully it will fit into memory
@@ -382,7 +389,7 @@ class HDF5Stack1D(DataObject.DataObject):
                                 tmpHdf[mcaObjectPaths["elapsed_time"]][()]
                         elif "::" in mcaObjectPaths["elapsed_time"]:
                             tmpFileName, tmpDatasetPath = \
-                                    mcaObjectPaths["elapsed_time"].split("::") 
+                                    mcaObjectPaths["elapsed_time"].split("::")
                             with h5py.File(tmpFileName, "r") as tmpH5:
                                 _time = tmpH5[tmpDatasetPath][()]
                         else:
@@ -390,14 +397,14 @@ class HDF5Stack1D(DataObject.DataObject):
                     else:
                         # we have to have as many elpased times as MCA spectra
                         _time = numpy.zeros((self.data.shape[0] * self.data.shape[1]),
-                                                numpy.float32)                    
+                                                numpy.float32)
                 if "calibration" in mcaObjectPaths:
                     if mcaObjectPaths["calibration"] in tmpHdf:
                         _calibration = \
                                 tmpHdf[mcaObjectPaths["calibration"]][()]
                     elif "::" in mcaObjectPaths["calibration"]:
                         tmpFileName, tmpDatasetPath = \
-                                    mcaObjectPaths["calibration"].split("::") 
+                                    mcaObjectPaths["calibration"].split("::")
                         with h5py.File(tmpFileName, "r") as tmpH5:
                             _calibration = tmpH5[tmpDatasetPath][()]
                     else:
@@ -408,7 +415,7 @@ class HDF5Stack1D(DataObject.DataObject):
                                 tmpHdf[mcaObjectPaths["channels"]][()]
                     elif "::" in mcaObjectPaths["channels"]:
                         tmpFileName, tmpDatasetPath = \
-                                    mcaObjectPaths["channels"].split("::") 
+                                    mcaObjectPaths["channels"].split("::")
                         with h5py.File(tmpFileName, "r") as tmpH5:
                             _channels = tmpH5[tmpDatasetPath][()]
                     else:
@@ -417,6 +424,7 @@ class HDF5Stack1D(DataObject.DataObject):
                 self._pathHasRelevantInfo = False
 
         if (not DONE) and (not considerAsImages):
+            _logger.info("Data in memory as spectra")
             self.info["McaIndex"] = 2
             n = 0
 
@@ -437,10 +445,6 @@ class HDF5Stack1D(DataObject.DataObject):
                     nStart = n
                     for ySelection in ySelectionList:
                         n = nStart
-                        if IN_MEMORY == False:
-                            # We can only deal with one dynamic dataset
-                            _logger.warning("Selection %s ignored", ySelection)
-                            continue
                         if JUST_KEYS:
                             entryName = goodEntryNames[int(scan.split(".")[-1])-1]
                             path = entryName + ySelection
@@ -470,14 +474,18 @@ class HDF5Stack1D(DataObject.DataObject):
                             totalBytes = numpy.ones((1,), yDataset.dtype).itemsize
                             for nItems in tmpShape:
                                 totalBytes *= nItems
-                            if (totalBytes/(1024.*1024.)) > 500:
+                            # should one be conservative or just try?
+                            if (totalBytes/(1024.*1024.)) > (0.4 * physicalMemory):
+                                _logger.info("Force dynamic loading of spectra")
                                 #read from disk
                                 IN_MEMORY = False
                             else:
                                 #read the data into memory
+                                _logger.info("Attempt to load whole map into memory")
                                 yDataset = hdf[path][()]
                                 IN_MEMORY = True
                         except (MemoryError, ValueError):
+                            _logger.info("Dynamic loading of spectra")
                             yDataset = hdf[path]
                             IN_MEMORY = False
                         nMcaInYDataset = 1
@@ -638,6 +646,7 @@ class HDF5Stack1D(DataObject.DataObject):
                                         n += 1
                                 else:
                                     n += tmp.shape[1] * tmp.shape[2]
+                        yDataset = None
                         if dim0 == 1:
                             self.onProgress(j)
                 if dim0 != 1:
@@ -700,7 +709,7 @@ class HDF5Stack1D(DataObject.DataObject):
                 nRequiredValues = 1
                 for i in range(len(self.data.shape)):
                     if i != mcaIndex:
-                        nRequiredValues *= self.data.shape[i] 
+                        nRequiredValues *= self.data.shape[i]
                 if _time.size != nRequiredValues:
                     _logger.warning("I do not know how to interpret the time information")
                     _logger.warning("Ignoring time information")

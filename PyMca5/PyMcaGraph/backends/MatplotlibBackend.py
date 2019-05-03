@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -71,11 +71,20 @@ if TK and ("PyQt4.QtCore" not in sys.modules) and ("PyQt5.QtCore" not in sys.mod
         import tkinter as Tk
 elif ('PySide.QtCore' in sys.modules) or ('PySide' in sys.argv):
     matplotlib.rcParams['backend'] = 'Qt4Agg'
-    matplotlib.rcParams['backend.qt4'] = 'PySide'
+    if 'backend.qt4' in matplotlib.rcParams:
+        matplotlib.rcParams['backend.qt4'] = 'PySide'
     from PySide import QtCore, QtGui
 elif ("PyQt4.QtCore" in sys.modules) or ('PyQt4' in sys.argv):
     from PyQt4 import QtCore, QtGui
     matplotlib.rcParams['backend'] = 'Qt4Agg'
+elif 'PySide2.QtCore' in sys.modules:
+    matplotlib.rcParams['backend'] = 'Qt5Agg'
+    if 'backend.qt5' in matplotlib.rcParams:
+        if not matplotlib.__version__.startswith('2.2'):
+            # usage was deprecated in version 2.2
+            matplotlib.rcParams['backend.qt5'] = 'PySide2'
+    from PySide2 import QtCore, QtGui, QtWidgets
+    QtGui.QApplication = QtWidgets.QApplication
 elif 'PyQt5.QtCore' in sys.modules:
     matplotlib.rcParams['backend'] = 'Qt5Agg'
     from PyQt5 import QtCore, QtGui, QtWidgets
@@ -95,7 +104,7 @@ if ("PyQt4.QtCore" in sys.modules) or ("PySide.QtCore" in sys.modules):
     from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
     TK = False
     QT = True
-elif "PyQt5.QtCore" in sys.modules:
+elif ("PyQt5.QtCore" in sys.modules) or ("PySide2.QtCore" in sys.modules):
     from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
     TK = False
     QT = True
