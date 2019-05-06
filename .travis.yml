@@ -1,38 +1,62 @@
+dist: xenial
+
 language: python
 
 matrix:
     include:
         - python: 2.7
           os: linux
-          env: BUILD_COMMAND=sdist
+          env:
+              - BUILD_COMMAND=sdist
+              - QT_BINDING=PySide2
 
         - python: 3.6
           os: linux
-          env: BUILD_COMMAND=sdist
+          env:
+              - BUILD_COMMAND=sdist
+              - QT_BINDING=PyQt5
 
         - language: generic
           os: osx
           env: 
               - BUILD_COMMAND=bdist_wheel
               - PYTHON_VERSION=2
+              - QT_BINDING=PySide2
 
         - language: generic
           os: osx
           env: 
               - BUILD_COMMAND=bdist_wheel
               - PYTHON_VERSION=3
-                
+              - QT_BINDING=PyQt5
+
 cache:
     apt: true
+
+addons:
+    apt:
+        packages:
+            - libgl1-mesa-dev  # For OpenGL
+            - libegl1-mesa  # Required by Qt xcb platform plugin
+            - libxkbcommon-x11-0  # needed for Qt plugins
+            - libxkbcommon0  # needed for Qt plugins
+            - libxkbcommon-dev  # needed for Qt plugins
+
+services:
+    - xvfb
 
 before_install:
     # On MacOS: install python3 if needed
     - source ./ci/travis_osx.sh
 
+    # X server
+    - if [ "$TRAVIS_OS_NAME" == "linux" ];
+      then
+          export DISPLAY=:99.0;
+      fi
+
 install:
-
     # Upgrade distribution modules
-
     - python -m pip install --upgrade pip
     - pip install --upgrade setuptools
 
@@ -58,6 +82,10 @@ script:
     - pip install fisx
     - pip install h5py
     - pip install silx
+    - if [[ ! -z $QT_BINDING ]];
+      then
+          pip install $QT_BINDING;
+      fi
 
     # Install from source package
     - pip install --pre --find-links dist/ --no-cache-dir --no-index PyMca5 $PIP_INSTALL_EXTRA_ARGS

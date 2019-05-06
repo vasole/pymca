@@ -1007,13 +1007,19 @@ class McaBatchGUI(qt.QWidget):
         else:
             self.raise_()
 
-    def start(self, allowIndependent=True):
+    def start(self, asthread=False, blocking=False):
+        """
+        :param bool asthread: force fit in thread instead of subprocess(es)
+        :param bool blocking: bloccking call in case of single process
+        """
         if not len(self.fileList):
             qt.QMessageBox.critical(self, "ERROR",'Empty file list')
             self.raise_()
             return
 
-        if self.__splitBox.isChecked():
+        # Raise exception in case multi processing is not allowed
+        multiprocess = self.__splitBox.isChecked() and not asthread
+        if multiprocess:
             if sys.platform == 'darwin':
                 if ".app" in os.path.dirname(__file__):
                     text = 'Multiple processes only supported on MacOS X when built from source\n'
@@ -1035,6 +1041,7 @@ class McaBatchGUI(qt.QWidget):
                         self.raise_()
                         return
 
+        # Verify config file
         if (self.configFile is None) or (not self.__goodConfigFile(self.configFile)):
             qt.QMessageBox.critical(self, "ERROR",'Invalid fit configuration file')
             self.raise_()
@@ -1045,6 +1052,8 @@ class McaBatchGUI(qt.QWidget):
                                         'Number of config files should be either one or equal to number of files')
                 self.raise_()
                 return
+
+        # Verify output
         if (self.outputDir is None) or (not self.__goodOutputDir(self.outputDir)):
             qt.QMessageBox.critical(self, "ERROR",'Invalid output directory')
             self.raise_()
@@ -1094,7 +1103,7 @@ class McaBatchGUI(qt.QWidget):
             filestep = 1
             mcastep = 1
             if len(self.fileList) == 1:
-                if self.__splitBox.isChecked():
+                if multiprocess:
                     nbatches = int(qt.safe_str(self.__splitSpin.text()))
                     mcastep = nbatches
         cmd.addOption('overwrite', value=overwrite)
@@ -1114,21 +1123,28 @@ class McaBatchGUI(qt.QWidget):
             self._edfSimpleViewer.close()
             self._edfSimpleViewer = None
 
+        # Launch `cmd` in thread or subprocess(es)
         wname = "Batch from %s to %s " % (os.path.basename(self.fileList[ 0]),
                                           os.path.basename(self.fileList[-1]))
-        if cmd.roifit:
-            self._runAsThread(cmd, wname)
-        elif (sys.platform == 'darwin') and\
-             ((".app" in os.path.dirname(__file__)) or (not self.__splitBox.isChecked())):
-            self._runAsThread(cmd, wname)
+        bthread = asthread or cmd.roifit
+        bthread |= sys.platform == 'darwin' and\
+                   ((".app" in os.path.dirname(__file__)) or (not multiprocess))
+        if bthread :
+            self._runInThread(cmd, wname)
         else:
-            self._runAsProcess(cmd, allowIndependent=allowIndependent)
+            self._runInProcess(cmd, blocking=blocking)
 
-    def _runAsThread(self, cmd, wname):
+    def _runInThread(self, cmd, wname):
+        """
+        Run `cmd` in one thread
+
+        :param Command cmd:
+        :param str wname:
+        """
         kwargs = cmd.getOptions('outdir', 'html', 'htmlindex', 'table')
         kwargs['outputdir'] = kwargs.pop('outdir')
         window = McaBatchWindow(name=wname, actions=1,
-                                showResult=self._showResult, **kwargs)
+                                showresult=self._showResult, **kwargs)
         kwargs = cmd.getAllOptionsBut('html', 'htmlindex', 'table')
         kwargs['outputdir'] = kwargs.pop('outdir')
         thread = McaBatch(window, self.configFile, filelist=self.fileList, **kwargs)
@@ -1137,7 +1153,12 @@ class McaBatchGUI(qt.QWidget):
         self.__window = window
         self.__thread = thread
     
-    def _runAsProcess(self, cmd, allowIndependent=True):
+    def _runInProcess(self, cmd, blocking=False):
+        """
+        Run `cmd` in one of more processes
+
+        :param Command cmd:
+        """
         cmd.addOption('debug', value=_logger.getEffectiveLevel() == logging.DEBUG, format="{:d}")
         cmd.addOption('exitonend', value=1, format="{:d}")
         cmd.addOption('showresult', value=self._showResult, format="{:d}")
@@ -1159,34 +1180,31 @@ class McaBatchGUI(qt.QWidget):
         else:
             cmd.addOption("cfg", value=self.configFile)
 
-        # Run 'cmd'
+        # Launch process(es)
         multiprocess = self.__splitBox.isChecked()
-        if sys.platform == 'win32':
+        if multiprocess:
+            # Run in multiple sub-processes
             self.hide()
             qApp = qt.QApplication.instance()
             qApp.processEvents()
-            if multiprocess or not allowIndependent:
-                # Run in multiple sub-processes
-                self._runAsSubProcesses(cmd)
-            else:
-                # Run in one sub-process
-                self._runAsSubProcess(cmd)
+            self._runInSubProcesses(cmd)
             self.show()
         else:
-            if multiprocess or not allowIndependent:
-                # Run in multiple sub-processes
+            # Run in one sub-process
+            #blocking |= sys.platform == 'win32'
+            if blocking:
                 self.hide()
                 qApp = qt.QApplication.instance()
                 qApp.processEvents()
-                self._runAsSubProcesses(cmd)
+            self._runInSubProcess(cmd, blocking=blocking)
+            if blocking:
                 self.show()
-            else:
-                # Run in one independent process
-                self._runAsIndependentProcess(cmd)
 
     def _processToolsInit(self, cmd):
         """
         Initialize tools for processings and inspecting results
+
+        :param Command cmd:
         """
         rootdir, frozen = self._processToolsInfo()
         if sys.platform == 'win32':
@@ -1251,9 +1269,11 @@ class McaBatchGUI(qt.QWidget):
             # directory level with executables
         return rootdir, frozen
 
-    def _runAsSubProcesses(self, cmd):
+    def _runInSubProcesses(self, cmd):
         """
-        Run 'cmd' is several batches
+        Divide `cmd` over several subprocesses (non-blocking call)
+
+        :param Command cmd:
         """
         processList = []
         if self.__splitBox.isChecked():
@@ -1261,9 +1281,10 @@ class McaBatchGUI(qt.QWidget):
         else:
             nBatches = 1
         nFiles = len(self.fileList)
-        def func(cmd):
-            self._subprocessAppend(cmd, processList)
-        SubCommands(cmd, nFiles, nBatches, func)
+        def launch(cmd):
+            self._runInSubProcess(cmd, blocking=False,
+                                  processList=processList)
+        SubCommands(cmd, nFiles, nBatches, launch)
         self._processList = processList
         self._pollProcessList()
         if self._timer is None:
@@ -1274,57 +1295,77 @@ class McaBatchGUI(qt.QWidget):
         else:
             _logger.info("timer was already active")
 
-    def _subprocessAppend(self, cmd, processList):
+    def _runInSubProcess(self, cmd, blocking=False, processList=None):
+        """
+        Run `cmd` in one subprocess
+
+        :param Command cmd:
+        :param bool blocking: wait for finish or not
+        :param processList: implies non-blocking when a list
+        """
+        if processList is not None:
+            p = self._launchSubProcess(cmd, blocking=False)
+            processList.append(p)
+        elif blocking:
+            self._launchSubProcess(cmd, blocking=True)
+        else:
+            # REMARK: A background process is still a
+            #         dependent process so why not just
+            #         a non-blocking launch?
+            self._launchSubProcess(cmd, background=True)
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Information)
+            text = "Your fit has been started in the background."
+            msg.setText(text)
+            # REMARK: non-blocking for unit testing
+            #msg.exec_()
+            msg.show()
+
+    def _launchSubProcess(self, cmd, blocking=False, background=False):
+        """
+        Run `cmd` in one subprocess
+
+        :param Command cmd:
+        :param bool blocking: wait for finish or not
+        :param bool background: implies non-blocking
+        :returns: process handle when non-blocking
+                  None when blocking or in background
+        """
         cmd = str(cmd)
-        _logger.info("COMMAND = %s", cmd)
-        kwargs = {'cwd': os.getcwd()} 
-        if sys.platform != 'win32':
+        kwargs = {}
+        if blocking:
+            _logger.info("BLOCKING PROCESS = %s", cmd)
+            func = subprocess.call
+        elif background:
+            _logger.info("BACKGROUND PROCESS = %s", cmd)
+            if sys.platform == 'win32':
+                cmd = "START /B {}".format(cmd)
+            else:
+                cmd = "{} &".format(cmd)
+            func = os.system
+        else:
+            _logger.info("NON-BLOCKING PROCESS = %s", cmd)
+            func = subprocess.Popen
+            kwargs['cwd'] = os.getcwd()
+        if sys.platform != 'win32' and not background:
             # unfortunately I have to set shell = True
             # otherways I get a file not found error in the
             # child process
             kwargs['shell'] = True
-            kwargs['close_fds'] = True
+            if not blocking:
+                kwargs['close_fds'] = True
         try:
-            p = subprocess.Popen(cmd, **kwargs)
+            return func(cmd, **kwargs)
         except UnicodeEncodeError:
             try:
-                # TODO: no need to explicitely provide system encoding
-                p = subprocess.Popen(cmd.encode(sys.getfilesystemencoding()), **kwargs)
+                # REMARK: no need to explicitely provide system encoding
+                return func(cmd.encode(sys.getfilesystemencoding()), **kwargs)
             except:
                 # be ready for any weird error like missing that encoding
                 try:
-                    p = subprocess.Popen(cmd.encode('utf-8'), **kwargs)
+                    return func(cmd.encode('utf-8'), **kwargs)
                 except UnicodeEncodeError:
-                    p = subprocess.Popen(cmd.encode('latin-1'), **kwargs)
-        processList.append(p)
-
-    def _runAsSubProcess(self, cmd):
-        cmd = str(cmd)
-        _logger.info("COMMAND = %s", cmd)
-        try:
-            subprocess.call(cmd)
-        except UnicodeEncodeError:
-            try:
-                # TODO: no need to explicitely provide system encoding
-                subprocess.call(cmd.encode(sys.getfilesystemencoding()))
-            except:
-                # be ready for any weird error like missing that encoding
-                try:
-                    subprocess.call(cmd.encode('utf-8'))
-                except UnicodeEncodeError:
-                    subprocess.call(cmd.encode('latin-1'))
-
-    def _runAsIndependentProcess(self, cmd):
-        cmd = str(cmd)
-        _logger.info("COMMAND = %s", cmd)
-        os.system("{} &".format(cmd))
-        msg = qt.QMessageBox(self)
-        msg.setIcon(qt.QMessageBox.Information)
-        text = "Your batch has been started as an independent process."
-        msg.setText(text)
-        # REMARK: non-blocking for unit testing
-        #msg.exec_()
-        msg.show()
+                    return func(cmd.encode('latin-1'), **kwargs)
 
     def genListFile(self, listfile, config=None):
         if os.path.exists(listfile):
