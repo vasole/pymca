@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -39,12 +39,12 @@ IconDict = PyMca_Icons.IconDict
 
 from matplotlib import __version__ as matplotlib_version
 from matplotlib.font_manager import FontProperties
-if "PyQt5" in sys.modules:
+if qt.BINDING in ["PyQt5", "PySide2"]:
     import matplotlib
     matplotlib.rcParams['backend']='Qt5Agg'
     from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 else:
-    from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas    
+    from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
 _logger = logging.getLogger(__name__)

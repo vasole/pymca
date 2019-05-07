@@ -109,6 +109,8 @@ if BINDING is None: # Try the different bindings
                     raise ImportError(
                         'No Qt wrapper found. Install PyQt5, PyQt4, PySide or PySide2.')
 
+_logger.info("BINDING set to %s" % BINDING)
+
 if BINDING == "PySide":
     from PySide.QtCore import *
     from PySide.QtGui import *
