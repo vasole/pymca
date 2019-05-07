@@ -225,6 +225,54 @@ def launchThreadBatchFit(thread, window, qApp=None):
     return qApp
 
 
+def launchSubProcess(cmd, blocking=False, background=False):
+    """
+    Run `cmd` in one subprocess
+
+    :param Command or str cmd:
+    :param bool blocking: wait for finish or not
+    :param bool background: implies non-blocking
+    :returns: process handle when `not blocking and not background`
+              None when `blocking or background`
+    """
+    # Launch arguments:
+    cmd = str(cmd)
+    kwargs = {}
+    if blocking:
+        _logger.info("BLOCKING PROCESS = %s", cmd)
+        func = subprocess.call
+        if sys.platform != 'win32':
+            kwargs['shell'] = True
+    elif background:
+        _logger.info("BACKGROUND PROCESS = %s", cmd)
+        func = os.system
+        if sys.platform == 'win32':
+            cmd = "START /B {}".format(cmd)
+        else:
+            cmd = "{} &".format(cmd)
+    else:
+        _logger.info("NON-BLOCKING PROCESS = %s", cmd)
+        func = subprocess.Popen
+        kwargs['cwd'] = os.getcwd()
+        # Do not inherit file descriptors:
+        kwargs['close_fds'] = True
+        if sys.platform != 'win32':
+            kwargs['shell'] = True
+
+    # Launch with encoding error handling:
+    encodings = None, sys.getfilesystemencoding(), 'utf-8', 'latin-1'
+    for encoding in encodings:
+        try:
+            if encoding:
+                lcmd = cmd.encode(encoding)
+            else:
+                lcmd = cmd
+            return func(lcmd, **kwargs)
+        except UnicodeEncodeError:
+            if encoding == encodings[-1]:
+                raise
+
+
 def SubCommands(cmd, nFiles, nBatches, func, chunks=True):
     """
     Each batch handles a slice of the 2D XRF map.
@@ -1304,15 +1352,15 @@ class McaBatchGUI(qt.QWidget):
         :param processList: implies non-blocking when a list
         """
         if processList is not None:
-            p = self._launchSubProcess(cmd, blocking=False)
+            p = launchSubProcess(cmd, blocking=False)
             processList.append(p)
         elif blocking:
-            self._launchSubProcess(cmd, blocking=True)
+            launchSubProcess(cmd, blocking=True)
         else:
             # REMARK: A background process is still a
             #         dependent process so why not just
             #         a non-blocking launch?
-            self._launchSubProcess(cmd, background=True)
+            launchSubProcess(cmd, background=True)
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Information)
             text = "Your fit has been started in the background."
@@ -1320,52 +1368,6 @@ class McaBatchGUI(qt.QWidget):
             # REMARK: non-blocking for unit testing
             #msg.exec_()
             msg.show()
-
-    def _launchSubProcess(self, cmd, blocking=False, background=False):
-        """
-        Run `cmd` in one subprocess
-
-        :param Command cmd:
-        :param bool blocking: wait for finish or not
-        :param bool background: implies non-blocking
-        :returns: process handle when non-blocking
-                  None when blocking or in background
-        """
-        cmd = str(cmd)
-        kwargs = {}
-        if blocking:
-            _logger.info("BLOCKING PROCESS = %s", cmd)
-            func = subprocess.call
-        elif background:
-            _logger.info("BACKGROUND PROCESS = %s", cmd)
-            if sys.platform == 'win32':
-                cmd = "START /B {}".format(cmd)
-            else:
-                cmd = "{} &".format(cmd)
-            func = os.system
-        else:
-            _logger.info("NON-BLOCKING PROCESS = %s", cmd)
-            func = subprocess.Popen
-            kwargs['cwd'] = os.getcwd()
-        if sys.platform != 'win32' and not background:
-            # unfortunately I have to set shell = True
-            # otherways I get a file not found error in the
-            # child process
-            kwargs['shell'] = True
-            if not blocking:
-                kwargs['close_fds'] = True
-        try:
-            return func(cmd, **kwargs)
-        except UnicodeEncodeError:
-            try:
-                # REMARK: no need to explicitely provide system encoding
-                return func(cmd.encode(sys.getfilesystemencoding()), **kwargs)
-            except:
-                # be ready for any weird error like missing that encoding
-                try:
-                    return func(cmd.encode('utf-8'), **kwargs)
-                except UnicodeEncodeError:
-                    return func(cmd.encode('latin-1'), **kwargs)
 
     def genListFile(self, listfile, config=None):
         if os.path.exists(listfile):
@@ -1442,15 +1444,8 @@ class McaBatchGUI(qt.QWidget):
         else:
             rgb = self._rgb
         if datoutlist and rgb is not None:
-            if sys.platform == "win32":
-                try:
-                    subprocess.Popen('%s "%s"' % (rgb, datoutlist[0]),
-                                        cwd = os.getcwd())
-                except UnicodeEncodeError:
-                    subprocess.Popen(('%s "%s"' % (rgb, datoutlist[0])).encode(sys.getfilesystemencoding()),
-                                        cwd = os.getcwd())
-            else:
-                os.system("%s %s &" % (rgb, datoutlist[0]))
+            cmd = '%s "%s"' % (rgb, datoutlist[0])
+            launchSubProcess(cmd, background=True)
 
 
 class McaBatch(McaAdvancedFitBatch.McaAdvancedFitBatch, qt.QThread):
@@ -1900,8 +1895,8 @@ class McaBatchWindow(qt.QWidget):
             else:
                 myself = moduleRunCmd(os.path.join(rootdir, "EdfFileSimpleViewer.py"))
             cmd = "%s %s &" % (myself, filelist)
-            _logger.debug("cmd = %s", cmd)
-            os.system(cmd)
+            launchSubProcess(cmd, background=True)
+            
 
 def main():
     sys.excepthook = qt.exceptionHandler

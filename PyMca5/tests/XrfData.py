@@ -103,9 +103,10 @@ def generate(modfunc=None, **kwargs):
             'presetTime': presetTime}
 
 
-def generateSpecMesh(filename, **kwargs):
+def generateSpecMesh(filename, nmaps=1, **kwargs):
     """
     :param str filename: save data under this name
+    :param num nmaps: number of mesh scans
     :param \**kwargs: see `generate`
     :returns dict: {filelist: list(str),
                     configuration: ConfigDict,
@@ -130,20 +131,21 @@ def generateSpecMesh(filename, **kwargs):
         ffile.write("#F %s\n" % filename)
         ffile.write("#D %s\n" % (time.ctime(time.time())))
         ffile.write("\n")
-        ffile.write("#S 1 %s\n" % (command))
-        ffile.write("#D %s\n" % (time.ctime(time.time())))
-        ffile.write("#@MCA %16C\n")
-        ffile.write("#@CHANN %d %d %d 1\n" % (nChannels, 0, nChannels-1))
-        ffile.write("#@CALIB %.7g %.7g %.7g\n" % (zero, gain, 0.0))
-        # Live time changes for each spectrum, so this doesn't work:
-        #ffile.write("#@CTIME %.7g %.7g %.7g\n" % (preset, live, real))
-        ffile.write("#L col row\n")
-        for i in range(nRows):
-            for j in range(nColumns):
-                ffile.write('%d %d\n' % (j, i))
-                for k in range(nDet):
-                    ffile.write(mcaToSpecString(info['data'][k, i, j, :]))
-        ffile.write("\n")
+        for scan in range(nmaps):
+            ffile.write("#S %d %s\n" % (scan+1, command))
+            ffile.write("#D %s\n" % (time.ctime(time.time())))
+            ffile.write("#@MCA %16C\n")
+            ffile.write("#@CHANN %d %d %d 1\n" % (nChannels, 0, nChannels-1))
+            ffile.write("#@CALIB %.7g %.7g %.7g\n" % (zero, gain, 0.0))
+            # Live time changes for each spectrum, so this doesn't work:
+            #ffile.write("#@CTIME %.7g %.7g %.7g\n" % (preset, live, real))
+            ffile.write("#L col row\n")
+            for i in range(nRows):
+                for j in range(nColumns):
+                    ffile.write('%d %d\n' % (j, i))
+                    for k in range(nDet):
+                        ffile.write(mcaToSpecString(info['data'][k, i, j, :]))
+            ffile.write("\n")
     basename = os.path.splitext(os.path.basename(filename))[0]
     path = os.path.dirname(filename)
     cfgname = os.path.join(path, basename+'.cfg')

@@ -148,6 +148,16 @@ class testPyMcaBatch(TestCaseQt):
     def testSlowMultiFitEdfMap(self):
         self._assertSlowMultiFitMap('edf')
 
+    def testFastFitSpecMap(self):
+        self._assertFastFitMap('specmesh')
+
+    def testSlowFitSpecMap(self):
+        self._assertSlowFitMap('specmesh')
+
+    @unittest.skipIf(sys.platform == 'darwin', "does not work on mac")
+    def testSlowMultiFitSpecMap(self):
+        self._assertSlowMultiFitMap('specmesh')
+
     @unittest.skipIf(not HAS_H5PY, "skipped h5py missing")
     def testFastFitHdf5Map(self):
         self._assertFastFitMap('hdf5')
@@ -185,7 +195,7 @@ class testPyMcaBatch(TestCaseQt):
         result2 = self._fitMap(info, nBatches=1, outputdir='fitresults2')
         self._assertEqualFitResults(result1, result2, rtol=0)
         if not ranAsBootstrap() and typ != 'hdf5':
-            # REMARK: hdf5 selection without user interaction 
+            # REMARK: hdf5 selection without user interaction
             #         not supported by in legacy code
             # Compare legacy single vs. multi processing
             result3 = self._fitMap(info, nBatches=4, legacy=True, outputdir='fitresults3')
@@ -363,7 +373,7 @@ class testPyMcaBatch(TestCaseQt):
         else:
             raise ValueError('Unknown data type {} for XRF map'.format(repr(typ)))
         # TODO: cannot provide live time when fitting .edf list of files
-        liveTimeIsProvided = fast or typ != 'edf'
+        liveTimeIsProvided = fast or typ == 'hdf5'
 
         def modfunc(configuration):
             configuration["concentrations"]["usematrix"] = 0
@@ -382,6 +392,10 @@ class testPyMcaBatch(TestCaseQt):
             info['liveTimeCorrection'] = float(info['presetTime'])/info['liveTime']
         else:
             info['liveTimeCorrection'] = numpy.ones_like(info['liveTime'])
+        if typ == 'specmesh':
+            # REMARK: spec file data is flattened by the spec loaders
+            nRows, nColumns = info['liveTimeCorrection'].shape
+            info['liveTimeCorrection'] = info['liveTimeCorrection'].reshape((1, nRows*nColumns))
 
         # Batch fit input (list of strings or stack object)
         filelist = info['filelist']
@@ -393,7 +407,12 @@ class testPyMcaBatch(TestCaseQt):
                 info['input'] = filelist
                 info['selection'] = None
         elif typ == 'specmesh':
-            raise NotImplementedError
+            if fast:
+                from PyMca5.PyMcaIO import SpecFileStack
+                info['input'] = SpecFileStack.SpecFileStack(filelist)
+            else:
+                info['input'] = filelist
+                info['selection'] = None
         elif typ == 'hdf5':
             datasets = ['/xrf/mca{:02d}/data'.format(k) for k in range(nDet)]
             if fast:
@@ -498,6 +517,9 @@ def getSuite(auto=True):
         testSuite.addTest(testPyMcaBatch("testFastFitHdf5Map"))
         testSuite.addTest(testPyMcaBatch("testSlowFitHdf5Map"))
         testSuite.addTest(testPyMcaBatch("testSlowMultiFitHdf5Map"))
+        testSuite.addTest(testPyMcaBatch("testFastFitSpecMap"))
+        testSuite.addTest(testPyMcaBatch("testSlowFitSpecMap"))
+        testSuite.addTest(testPyMcaBatch("testSlowMultiFitSpecMap"))
     return testSuite
 
 

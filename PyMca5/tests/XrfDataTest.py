@@ -54,6 +54,25 @@ class testXrfData(unittest.TestCase):
 
     def testSpecMesh(self):
         filename = os.path.join(self.path, 'meshscan.dat')
+
+        # SpecFileStack: only works with one detector
+        nDet = 1
+        info = XrfData.generateSpecMesh(filename, nDet=nDet, same=False)
+        nDet0, nRows0, nColumns0, nChannels = info['data'].shape
+
+        from PyMca5.PyMcaIO import SpecFileStack
+        stack = SpecFileStack.SpecFileStack(filelist=[filename]).data
+        self.assertEqual(nDet, nDet0)
+        self.assertEqual(stack.shape, (1, nRows0*nColumns0, nChannels))
+
+        for i in range(nRows0):
+            for j in range(nColumns0):
+                for k in range(1):
+                    # C-order (row-major)
+                    mca = stack[k, i*nColumns0+j]
+                    numpy.testing.assert_array_equal(mca, info['data'][k, i, j])
+
+        # SpecFileLayer: works with more than one detector
         nDet = 2
         info = XrfData.generateSpecMesh(filename, nDet=nDet, same=False)
         nDet0, nRows0, nColumns0, nChannels = info['data'].shape
@@ -72,6 +91,7 @@ class testXrfData(unittest.TestCase):
         self.assertEqual(nRows, nRows0)
         self.assertEqual(nCounters, nCounters0)
         self.assertEqual(nDet, nDet0)
+
         for i in range(nRows):
             for j in range(nColumns):
                 for k in range(nDet):
