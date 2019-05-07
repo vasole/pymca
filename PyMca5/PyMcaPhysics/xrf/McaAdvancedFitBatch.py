@@ -305,6 +305,9 @@ class McaAdvancedFitBatch(object):
             else:
                 self.__processOneFile()
 
+            # Needed for cleanup
+            self.file = None
+
         if self.counter:
             # Finish list of FIT files
             if not self.roiFit and self.fitFiles and \
@@ -346,6 +349,18 @@ class McaAdvancedFitBatch(object):
             return ffile
         except:
             raise IOError("I do not know what to do with file %s" % inputfile)
+
+    @property
+    def file(self):
+        return self._filehandle
+    
+    @file.setter
+    def file(self, value):
+        try:
+            del self._filehandle.Source
+        except AttributeError:
+            pass
+        self._filehandle = value
 
     def onNewFile(self, ffile, filelist):
         if not self.quiet:
@@ -574,7 +589,7 @@ class McaAdvancedFitBatch(object):
                     self.__processOneMca(x, y0, filename, key, info=infoDict)
                     self.onMca(imca, nmcaToFit, filename=filename,
                                key=key, info=infoDict)
-
+            
     def __getFitFile(self, filename, key, createdirs=False):
         fitdir = self.os_path_join(self.outputdir, "FIT")
         if createdirs:

@@ -195,6 +195,8 @@ class McaAdvancedFitBatch(object):
                     break
             else:
                 self.__processOneFile()
+            # Needed for cleanup
+            self.file = None
 
         if self.counter:
             if not self.roiFit:
@@ -246,6 +248,17 @@ class McaAdvancedFitBatch(object):
         except:
             raise IOError("I do not know what to do with file %s" % inputfile)
 
+    @property
+    def file(self):
+        return self._filehandle
+    
+    @file.setter
+    def file(self, value):
+        try:
+            del self._filehandle.Source
+        except AttributeError:
+            pass
+        self._filehandle = value
 
     def onNewFile(self,ffile, filelist):
         if not self.quiet:
