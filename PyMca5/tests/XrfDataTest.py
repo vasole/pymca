@@ -57,6 +57,7 @@ class testXrfData(unittest.TestCase):
         nDet = 2
         info = XrfData.generateSpecMesh(filename, nDet=nDet, same=False)
         nDet0, nRows0, nColumns0, nChannels = info['data'].shape
+        nCounters0 = 2
 
         from PyMca5.PyMcaCore import SpecFileLayer
         ffile = SpecFileLayer.SpecFileLayer()
@@ -69,14 +70,14 @@ class testXrfData(unittest.TestCase):
         self.assertEqual(scaninfo['NbMca'], nDet*nColumns*nRows)
         self.assertEqual(nColumns, nColumns0)
         self.assertEqual(nRows, nRows0)
-        self.assertEqual(nCounters, 2)
+        self.assertEqual(nCounters, nCounters0)
         self.assertEqual(nDet, nDet0)
         for i in range(nRows):
             for j in range(nColumns):
                 for k in range(nDet):
                     mca = scan.mca(i*nColumns*nDet+j*nDet+k+1)
                     # TODO: bug in specfile (reads one channel less)
-                    numpy.testing.assert_array_equal(mca, info['data'][k, i, j, :-1])
+                    numpy.testing.assert_array_equal(mca, info['data'][k, i, j])
         del ffile.Source
 
     def testEdfMap(self):

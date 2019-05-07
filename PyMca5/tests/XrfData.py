@@ -34,6 +34,7 @@ import numpy
 import time
 import os
 import sys
+import numbers
 
 
 def generateXRFConfig(modfunc=None):
@@ -65,9 +66,9 @@ def generateXRFData(nRows=5, nColumns=10, nDet=1, nTimes=3, presetTime=1, same=T
     from PyMca5.PyMcaIO import specfilewrapper as specfile
     spe = os.path.join(dataDir, "Steel.spe")
     sf = specfile.Specfile(spe)
-    counts = sf[0].mca(1)
+    counts = sf[0].mca(1).astype(numpy.int32)
     #counts = numpy.arange(counts.size, dtype=int) # for testing
-    data = numpy.zeros((nDet, nRows, nColumns, counts.size), dtype=numpy.float)
+    data = numpy.zeros((nDet, nRows, nColumns, counts.size), dtype=counts.dtype)
     liveTime = numpy.zeros((nDet, nRows, nColumns), dtype=numpy.float)
     nTimes *= nDet
     initialTime = presetTime
@@ -259,17 +260,21 @@ def mcaToSpecString(mca):
     :param mca: vector(list or ndarray)
     :returns str: formatted for spec file
     """
-    tmpstr = "@A "
+    tmpstr = "@A"
     length = len(mca)
     nChanPerLine = 16
+    if isinstance(mca[0], numbers.Integral):
+        fmt = " %d"
+    else:
+        fmt = " %.4f"
     for idx in range(0, length, nChanPerLine):
         if idx+nChanPerLine-1 < length:
             for i in range(0, nChanPerLine):
-                tmpstr += "%.4f " % mca[idx+i]
+                tmpstr += fmt % mca[idx+i]
             if idx+nChanPerLine != length:
                 tmpstr += "\\"
         else:
             for i in range(idx, length):
-                tmpstr += "%.4f " % mca[i]
+                tmpstr += fmt % mca[i]
         tmpstr += "\n"
     return tmpstr

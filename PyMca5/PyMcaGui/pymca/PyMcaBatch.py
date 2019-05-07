@@ -1554,7 +1554,6 @@ class McaBatchWindow(qt.QWidget):
         self.chunk = chunk
         self.exitonend = exitonend
         self._showResult = showresult
-        assert not showresult
         self.l = qt.QVBoxLayout(self)
         #self.l.setAutoAdd(1)
         self.bars =qt.QWidget(self)
