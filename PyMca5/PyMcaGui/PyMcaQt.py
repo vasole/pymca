@@ -62,10 +62,12 @@ elif 'PyQt5.QtCore' in sys.modules:
 elif 'PyQt4.QtCore' in sys.modules:
     BINDING = 'PyQt4'
 
-elif hasattr(sys, 'argv') and ('PySide2' in sys.argv):
+elif hasattr(sys, 'argv') and \
+    (('--binding=PySide2' in sys.argv) or ('PySide2' in sys.argv)):
     BINDING = 'PySide2'
 
-elif hasattr(sys, 'argv') and ('PySide' in sys.argv):
+elif hasattr(sys, 'argv') and \
+    (('--binding=PySide' in sys.argv) or ('PySide' in sys.argv)):
     # argv might not be defined for embedded python (e.g., in Qt designer)
     BINDING = 'PySide'
 
