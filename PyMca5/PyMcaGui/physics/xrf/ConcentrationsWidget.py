@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -58,7 +58,7 @@ _logger.debug("ConcentrationsWidget is in debug mode")
 
 class Concentrations(qt.QWidget):
     sigConcentrationsSignal = qt.pyqtSignal(object)
-    sigClosed = qt.pyqtSignal()
+    sigClosed = qt.pyqtSignal(object)
     def __init__(self, parent=None, name="Concentrations"):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle(name)
