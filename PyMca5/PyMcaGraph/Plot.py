@@ -108,11 +108,7 @@ _COLORLIST = [_COLORDICT['black'],
 #"" 	nothing
 #
 
-try:
-    from .backends.MatplotlibBackend import MatplotlibBackend
-    DEFAULT_BACKEND = "matplotlib"
-except:
-    DEFAULT_BACKEND = PlotBackend.PlotBackend
+DEFAULT_BACKEND = "matplotlib"
 
 class Plot(PlotBase.PlotBase):
     PLUGINS_DIR = None
