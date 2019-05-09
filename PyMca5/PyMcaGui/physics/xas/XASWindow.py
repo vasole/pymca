@@ -44,7 +44,7 @@ from PyMca5.PyMcaGui import XASParameters
 from PyMca5.PyMca import XASClass
 import logging
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 class XASDialog(qt.QDialog):
     def __init__(self, parent=None, analyzer=None, backend=None):

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -96,10 +96,10 @@ class Object3D(object):
 
 
     def __del__(self):
+        _logger.debug("DELETING Object3d base")
         if GL is not None:
             if self.boundingBoxList != 0:
                 GL.glDeleteLists(self.boundingBoxList, 1)
-        _logger.debug("DELETING Object3d base")
         _logger.debug("%s DELETED", self.name())
 
     def name(self):

@@ -62,10 +62,10 @@ elif 'PyQt5.QtCore' in sys.modules:
 elif 'PyQt4.QtCore' in sys.modules:
     BINDING = 'PyQt4'
 
-elif hasattr(sys, 'argv') and ('PySide2' in sys.argv):
+elif hasattr(sys, 'argv') and ('--binding=PySide2' in sys.argv):
     BINDING = 'PySide2'
 
-elif hasattr(sys, 'argv') and ('PySide' in sys.argv):
+elif hasattr(sys, 'argv') and ('--binding=PySide' in sys.argv):
     # argv might not be defined for embedded python (e.g., in Qt designer)
     BINDING = 'PySide'
 
@@ -84,7 +84,7 @@ elif sys.version_info < (3,):
             sip.setapi('QUrl', 2)
         except:
             _logger.info("Cannot set sip API") # Console widget not available
-        import PyQt4
+        import PyQt4.QtCore
         BINDING = "PyQt4"
     except:
         pass
@@ -94,20 +94,28 @@ if BINDING is None: # Try the different bindings
         import PyQt5.QtCore
         BINDING = "PyQt5"
     except ImportError:
+        if "PyQt5" in sys.modules:
+            del sys.modules["PyQt5"]
         try:
             import PyQt4.QtCore
             BINDING = "PyQt4"
         except ImportError:
+            if "PyQt4" in sys.modules:
+                del sys.modules["PyQt4"]
             try:
                 import PySide.QtCore
                 BINDING = "PySide"
             except ImportError:
+                if "PySide" in sys.modules:
+                    del sys.modules["PySide"]
                 try:
                     import PySide2.QtCore
                     BINDING = "PySide2"
                 except ImportError:
                     raise ImportError(
                         'No Qt wrapper found. Install PyQt5, PyQt4, PySide or PySide2.')
+
+_logger.info("BINDING set to %s" % BINDING)
 
 if BINDING == "PySide":
     from PySide.QtCore import *
