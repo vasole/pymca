@@ -32,6 +32,8 @@ import sys
 import os
 import time
 import subprocess
+import signal
+import atexit
 import logging
 from contextlib import contextmanager
 try:
@@ -225,39 +227,102 @@ def launchThreadBatchFit(thread, window, qApp=None):
     return qApp
 
 
-def launchSubProcess(cmd, blocking=False, background=False):
+def addToSignal(onSignal, signalNumber):
     """
-    Run `cmd` in one subprocess
+    Add function to signal `signalNumber` handler
+
+    :param callable onSignal: signature `(int, int)`
+    :param int signalNumber:
+    """
+    oldfunc = signal.getsignal(signalNumber)
+    def newfunc(_signalNumber, frame):
+        onSignal(_signalNumber, frame)
+        if oldfunc:
+            oldfunc(_signalNumber, frame)
+    try:
+        signal.signal(signalNumber, newfunc)
+    except RuntimeError:
+        pass
+
+
+def addToSignals(onSignal, signals=None, onexit=True):
+    """
+    Add function to signal handlers
+
+    :param callable onSignal: signature `(int, int)`
+    :param list(int) signals: all signals by default
+    :param bool onexit: execute on python exit
+    """
+    for signalName in dir(signal):
+        if not signalName.startswith('SIG'):
+            continue
+        signalNumber = getattr(signal, signalName, None)
+        if signals:
+            if signalNumber not in signals:
+                continue
+        try:
+            signal.getsignal(signalNumber)
+        except (ValueError, TypeError):
+            pass
+        else:
+            addToSignal(onSignal, signalNumber)
+    if onexit:
+        atexit.register(onSignal, signal.SIGTERM, 0)
+
+
+def launchProcessBatchFit(cmd, blocking=False, independent=False):
+    """
+    Run `cmd` in one process
 
     :param Command or str cmd:
     :param bool blocking: wait for finish or not
-    :param bool background: implies non-blocking
-    :returns: process handle when `not blocking and not background`
-              None when `blocking or background`
+    :param bool independent: implies non-blocking
+    :returns: process handle when `not blocking and not independent`
+              None when `blocking or independent`
     """
     # Launch arguments:
     cmd = str(cmd)
     kwargs = {}
+    def onProcess(proc):
+        return proc
     if blocking:
         _logger.info("BLOCKING PROCESS = %s", cmd)
-        func = subprocess.call
+        launchFunc = subprocess.call
         if sys.platform != 'win32':
             kwargs['shell'] = True
-    elif background:
-        _logger.info("BACKGROUND PROCESS = %s", cmd)
-        func = os.system
-        if sys.platform == 'win32':
-            cmd = "START /B {}".format(cmd)
-        else:
-            cmd = "{} &".format(cmd)
-    else:
-        _logger.info("NON-BLOCKING PROCESS = %s", cmd)
-        func = subprocess.Popen
+    elif independent:
+        _logger.info("INDEPENDENT PROCESS = %s", cmd)
+        launchFunc = subprocess.Popen
         kwargs['cwd'] = os.getcwd()
-        # Do not inherit file descriptors:
+        kwargs['close_fds'] = True
+        if sys.platform == 'win32':
+            kwargs['env'] = os.environ
+            kwargs['creationflags'] = subprocess.CREATE_NEW_CONSOLE
+        else:
+            kwargs['shell'] = True
+    else:
+        _logger.info("DEPENDENT PROCESS = %s", cmd)
+        # Old way:
+        #launchFunc = os.system
+        #if sys.platform == 'win32':
+        #    cmd = "START /B {}".format(cmd)
+        #else:
+        #    cmd = "{} &".format(cmd)
+        # New (equivalent) way:
+        launchFunc = subprocess.Popen
+        kwargs['cwd'] = os.getcwd()
         kwargs['close_fds'] = True
         if sys.platform != 'win32':
             kwargs['shell'] = True
+            # TODO: make process dependent on UNIX
+            #       by forwarding interrupts and termination
+            #def onProcess(proc):
+            #    """Make dependent
+            #    """
+            #    def passSignal(signalNumber, frame):
+            #        os.kill(proc.pid, signalNumber)
+            #    addToSignals(passSignal)
+            #    return proc
 
     # Launch with encoding error handling:
     encodings = None, sys.getfilesystemencoding(), 'utf-8', 'latin-1'
@@ -267,13 +332,13 @@ def launchSubProcess(cmd, blocking=False, background=False):
                 lcmd = cmd.encode(encoding)
             else:
                 lcmd = cmd
-            return func(lcmd, **kwargs)
+            return onProcess(launchFunc(lcmd, **kwargs))
         except UnicodeEncodeError:
             if encoding == encodings[-1]:
                 raise
 
 
-def SubCommands(cmd, nFiles, nBatches, func, chunks=True):
+def subCommands(cmd, nFiles, nBatches, func, chunks=True):
     """
     Each batch handles a slice of the 2D XRF map.
     Two slicing strategies are supported:
@@ -289,10 +354,10 @@ def SubCommands(cmd, nFiles, nBatches, func, chunks=True):
                 for filebeginoffset in range(nChunks):
                     image[filebeginoffset:None:nFilesPerChunk, mcaoffset:None:nBatchesPerFile] 
     
-    :param cmd:
+    :param Command cmd:
     :param num nFiles: number of files to be process
     :param num nBatches: number sub processes
-    :param func: callable(cmd)
+    :param callable func: signature `(Command)`
     :param chunks: 
     """
     cmd.addOption('filebeginoffset', value=0)
@@ -1057,7 +1122,7 @@ class McaBatchGUI(qt.QWidget):
 
     def start(self, asthread=False, blocking=False):
         """
-        :param bool asthread: force fit in thread instead of subprocess(es)
+        :param bool asthread: force fit in thread instead of process(es)
         :param bool blocking: bloccking call in case of single process
         """
         if not len(self.fileList):
@@ -1171,18 +1236,18 @@ class McaBatchGUI(qt.QWidget):
             self._edfSimpleViewer.close()
             self._edfSimpleViewer = None
 
-        # Launch `cmd` in thread or subprocess(es)
+        # Launch `cmd` in thread or process(es)
         wname = "Batch from %s to %s " % (os.path.basename(self.fileList[ 0]),
                                           os.path.basename(self.fileList[-1]))
         bthread = asthread or cmd.roifit
         bthread |= sys.platform == 'darwin' and\
                    ((".app" in os.path.dirname(__file__)) or (not multiprocess))
-        if bthread :
-            self._runInThread(cmd, wname)
+        if bthread:
+            self._runInThreadMain(cmd, wname)
         else:
-            self._runInProcess(cmd, blocking=blocking)
+            self._runInProcessMain(cmd, blocking=blocking)
 
-    def _runInThread(self, cmd, wname):
+    def _runInThreadMain(self, cmd, wname):
         """
         Run `cmd` in one thread
 
@@ -1201,7 +1266,7 @@ class McaBatchGUI(qt.QWidget):
         self.__window = window
         self.__thread = thread
     
-    def _runInProcess(self, cmd, blocking=False):
+    def _runInProcessMain(self, cmd, blocking=False):
         """
         Run `cmd` in one of more processes
 
@@ -1235,16 +1300,16 @@ class McaBatchGUI(qt.QWidget):
             self.hide()
             qApp = qt.QApplication.instance()
             qApp.processEvents()
-            self._runInSubProcesses(cmd)
+            self._runInProcesses(cmd)
             self.show()
         else:
-            # Run in one sub-process
+            # Run in one process
             #blocking |= sys.platform == 'win32'
             if blocking:
                 self.hide()
                 qApp = qt.QApplication.instance()
                 qApp.processEvents()
-            self._runInSubProcess(cmd, blocking=blocking)
+            self._runInProcess(cmd, blocking=blocking)
             if blocking:
                 self.show()
 
@@ -1317,9 +1382,9 @@ class McaBatchGUI(qt.QWidget):
             # directory level with executables
         return rootdir, frozen
 
-    def _runInSubProcesses(self, cmd):
+    def _runInProcesses(self, cmd):
         """
-        Divide `cmd` over several subprocesses (non-blocking call)
+        Divide `cmd` over several processes (non-blocking call)
 
         :param Command cmd:
         """
@@ -1330,9 +1395,9 @@ class McaBatchGUI(qt.QWidget):
             nBatches = 1
         nFiles = len(self.fileList)
         def launch(cmd):
-            self._runInSubProcess(cmd, blocking=False,
-                                  processList=processList)
-        SubCommands(cmd, nFiles, nBatches, launch)
+            self._runInProcess(cmd, blocking=False,
+                               processList=processList)
+        subCommands(cmd, nFiles, nBatches, launch)
         self._processList = processList
         self._pollProcessList()
         if self._timer is None:
@@ -1343,24 +1408,24 @@ class McaBatchGUI(qt.QWidget):
         else:
             _logger.info("timer was already active")
 
-    def _runInSubProcess(self, cmd, blocking=False, processList=None):
+    def _runInProcess(self, cmd, blocking=False, processList=None):
         """
-        Run `cmd` in one subprocess
+        Run `cmd` in one process
 
         :param Command cmd:
         :param bool blocking: wait for finish or not
         :param processList: implies non-blocking when a list
         """
         if processList is not None:
-            p = launchSubProcess(cmd, blocking=False)
+            p = launchProcessBatchFit(cmd, blocking=False)
             processList.append(p)
         elif blocking:
-            launchSubProcess(cmd, blocking=True)
+            launchProcessBatchFit(cmd, blocking=True)
         else:
-            launchSubProcess(cmd, background=True)
+            launchProcessBatchFit(cmd, independent=True)
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Information)
-            text = "Your fit has been started in the background."
+            text = "Your fit has been started as an independent process."
             msg.setText(text)
             # REMARK: non-blocking for unit testing
             #msg.exec_()
@@ -1442,7 +1507,7 @@ class McaBatchGUI(qt.QWidget):
             rgb = self._rgb
         if datoutlist and rgb is not None:
             cmd = '%s "%s"' % (rgb, datoutlist[0])
-            launchSubProcess(cmd, background=True)
+            launchProcessBatchFit(cmd, independent=True)
 
 
 class McaBatch(McaAdvancedFitBatch.McaAdvancedFitBatch, qt.QThread):
@@ -1892,7 +1957,7 @@ class McaBatchWindow(qt.QWidget):
             else:
                 myself = moduleRunCmd(os.path.join(rootdir, "EdfFileSimpleViewer.py"))
             cmd = "%s %s &" % (myself, filelist)
-            launchSubProcess(cmd, background=True)
+            launchProcessBatchFit(cmd, independent=True)
             
 
 def main():

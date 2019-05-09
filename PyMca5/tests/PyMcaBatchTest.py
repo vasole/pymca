@@ -129,7 +129,7 @@ class testPyMcaBatch(TestCaseQt):
                 chunks.append(cmd.chunk)
 
         cmd = PyMcaBatch.Command()
-        PyMcaBatch.SubCommands(cmd, nFiles, nBatches, runProcess, chunks=bchunks)
+        PyMcaBatch.subCommands(cmd, nFiles, nBatches, runProcess, chunks=bchunks)
 
         # Check: each spectrum is processed exactly once
         self.assertTrue((coverage == 1).all(), msg + '\n {}'.format(coverage))
@@ -336,7 +336,6 @@ class testPyMcaBatch(TestCaseQt):
                 break
             else:
                 bytes0 = bytes1
-        
         _logger.info('Finished {}'.format(imageFile))
 
         widget.close()
