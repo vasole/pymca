@@ -155,7 +155,6 @@ class testPyMcaBatch(TestCaseQt):
         self._assertSlowFitMap('specmesh')
 
     @unittest.skipIf(sys.platform == 'darwin', "does not work on mac")
-    @unittest.skip("to be done")
     def testSlowMultiFitSpecMap(self):
         self._assertSlowMultiFitMap('specmesh')
 
@@ -196,19 +195,24 @@ class testPyMcaBatch(TestCaseQt):
         result2 = self._fitMap(info, nBatches=1, outputdir='fitresults2')
         self._assertEqualFitResults(result1, result2, rtol=0)
         if not ranAsBootstrap() and typ != 'hdf5':
-            # REMARK: hdf5 selection without user interaction
-            #         not supported by in legacy code
+            # REMARK: not supported by legacy code
+            #  - testing from source
+            #  - hdf5 selection without user interaction
+            #  - multi process on single non-hdf5 file
             # Compare legacy single vs. multi processing
-            result3 = self._fitMap(info, nBatches=4, legacy=True, outputdir='fitresults3')
+            if typ != 'specmesh':
+                result3 = self._fitMap(info, nBatches=4, legacy=True, outputdir='fitresults3')
             result4 = self._fitMap(info, nBatches=1, legacy=True, outputdir='fitresults4')
-            self._assertEqualFitResults(result3, result4, rtol=0)
-            # Compare with legacy PyMcaBatch
-            self._assertEqualFitResults(result1, result3, rtol=1e-5)
+            if typ != 'specmesh':
+                self._assertEqualFitResults(result3, result4, rtol=0)
+            # Compare new vs. legacy
+            if typ != 'specmesh':
+                self._assertEqualFitResults(result1, result3, rtol=1e-5)
             self._assertEqualFitResults(result2, result4, rtol=1e-5)
-        # Compare thread vs. subprocess
+        # Compare thread vs. process
         result5 = self._fitMap(info, nBatches=1, asthread=True, outputdir='fitresults5')
         self._assertEqualFitResults(result2, result5, rtol=0)
-        # Compare blocking vs. non-blocking subprocess
+        # Compare blocking vs. non-blocking process
         result6 = self._fitMap(info, nBatches=1, blocking=True, outputdir='fitresults6')
         self._assertEqualFitResults(result2, result6, rtol=0)
 
