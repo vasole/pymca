@@ -1357,9 +1357,6 @@ class McaBatchGUI(qt.QWidget):
         elif blocking:
             launchSubProcess(cmd, blocking=True)
         else:
-            # REMARK: A background process is still a
-            #         dependent process so why not just
-            #         a non-blocking launch?
             launchSubProcess(cmd, background=True)
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Information)

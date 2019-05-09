@@ -280,14 +280,14 @@ class McaAdvancedFitBatch(object):
             inputfile = self._filelist[i]
             self.__row = i
             self.onNewFile(inputfile, self._filelist)
-            self.file = self.getFileHandle(inputfile)
+            self.filehandle = self.getFileHandle(inputfile)
             if self.pleaseBreak:
                 break
             if self.__stack is None:
                 self.__stack = False
-                if hasattr(self.file, "info"):
-                    if "SourceType" in self.file.info:
-                        if self.file.info["SourceType"] in\
+                if hasattr(self.filehandle, "info"):
+                    if "SourceType" in self.filehandle.info:
+                        if self.filehandle.info["SourceType"] in\
                         ["EdfFileStack", "HDF5Stack1D"]:
                             self.__stack = True
         
@@ -306,7 +306,7 @@ class McaAdvancedFitBatch(object):
                 self.__processOneFile()
 
             # Needed for cleanup
-            self.file = None
+            self.filehandle = None
 
         if self.counter:
             # Finish list of FIT files
@@ -351,11 +351,11 @@ class McaAdvancedFitBatch(object):
             raise IOError("I do not know what to do with file %s" % inputfile)
 
     @property
-    def file(self):
+    def filehandle(self):
         return self._filehandle
     
-    @file.setter
-    def file(self, value):
+    @filehandle.setter
+    def filehandle(self, value):
         try:
             del self._filehandle.Source
         except AttributeError:
@@ -429,7 +429,7 @@ class McaAdvancedFitBatch(object):
         Fit spectra from one file, which corresponds to the spectra
         from the entire image.
         """
-        stack = self.file
+        stack = self.filehandle
         info = stack.info
         data = stack.data
         xStack = None
@@ -494,7 +494,7 @@ class McaAdvancedFitBatch(object):
         Fit spectra from one file, which corresponds to the spectra
         from one image row.
         """
-        ffile = self.file
+        ffile = self.filehandle
         fileinfo = ffile.GetSourceInfo()
         if self.counter == 0:
             self.__nMcaPerScan = None

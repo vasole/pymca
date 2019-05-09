@@ -179,13 +179,13 @@ class McaAdvancedFitBatch(object):
             inputfile   = self._filelist[i]
             self.__row += 1 #should be plus fileStep?
             self.onNewFile(inputfile, self._filelist)
-            self.file = self.getFileHandle(inputfile)
+            self.filehandle = self.getFileHandle(inputfile)
             if self.pleaseBreak: break
             if self.__stack is None:
                 self.__stack = False
-                if hasattr(self.file, "info"):
-                    if "SourceType" in self.file.info:
-                        if self.file.info["SourceType"] in\
+                if hasattr(self.filehandle, "info"):
+                    if "SourceType" in self.filehandle.info:
+                        if self.filehandle.info["SourceType"] in\
                            ["EdfFileStack", "HDF5Stack1D"]:
                             self.__stack = True
             if self.__stack:
@@ -196,7 +196,7 @@ class McaAdvancedFitBatch(object):
             else:
                 self.__processOneFile()
             # Needed for cleanup
-            self.file = None
+            self.filehandle = None
 
         if self.counter:
             if not self.roiFit:
@@ -249,11 +249,11 @@ class McaAdvancedFitBatch(object):
             raise IOError("I do not know what to do with file %s" % inputfile)
 
     @property
-    def file(self):
+    def filehandle(self):
         return self._filehandle
     
-    @file.setter
-    def file(self, value):
+    @filehandle.setter
+    def filehandle(self, value):
         try:
             del self._filehandle.Source
         except AttributeError:
@@ -324,7 +324,7 @@ class McaAdvancedFitBatch(object):
         return ffile
 
     def __processStack(self):
-        stack = self.file
+        stack = self.filehandle
         info = stack.info
         data = stack.data
         xStack = None
@@ -387,7 +387,7 @@ class McaAdvancedFitBatch(object):
                                             info=infoDict)
 
     def __processOneFile(self):
-        ffile=self.file
+        ffile=self.filehandle
         fileinfo = ffile.GetSourceInfo()
         if 1:
             i = 0
