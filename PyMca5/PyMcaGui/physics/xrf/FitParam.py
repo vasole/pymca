@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -1362,16 +1362,6 @@ class FitParamDialog(qt.QDialog):
                 self.saveParameters(filename, None)
                 self.initDir = os.path.dirname(filename)
 
-
-def openWidget():
-    app= qt.QApplication(sys.argv)
-    app.lastWindowClosed.connect(app.quit)
-    wid= FitParamWidget()
-    app.setMainWidget(wid)
-    wid.show()
-    app.exec_loop()
-
-
 def openDialog():
     app= qt.QApplication(sys.argv)
     app.lastWindowClosed.connect(app.quit)
@@ -1381,10 +1371,10 @@ def openDialog():
         npar = wid.getParameters()
         print(npar)
         del wid
-    app.quit()
-
+    return ret
 
 if __name__=="__main__":
     logging.basicConfig(level=logging.INFO)
-    #openWidget()
+    app = qt.QApplication([])
     openDialog()
+    app = None

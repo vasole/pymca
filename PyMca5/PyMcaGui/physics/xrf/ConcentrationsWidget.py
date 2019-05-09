@@ -950,8 +950,9 @@ if __name__ == "__main__":
                 Elements.Material[material] = copy.deepcopy(d['result']['config']['materials'][material])
             demo.processFitResult(fitresult=d, elementsfrommatrix=False)
         demo.show()
-        app.exec_()
-
+        ret = app.exec_()
+        app = None
+        sys.exit(ret)
     else:
         print("Usage:")
         print("ConcentrationsWidget.py [--flux=xxxx --area=xxxx] fitresultfile")
