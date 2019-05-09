@@ -101,6 +101,8 @@ if ("PyQt4.QtCore" in sys.modules) or ("PySide.QtCore" in sys.modules):
     TK = False
     QT = True
 elif ("PyQt5.QtCore" in sys.modules) or ("PySide2.QtCore" in sys.modules):
+    from ._patch_matplotlib import patch_backend_qt
+    patch_backend_qt()
     from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
     TK = False
     QT = True
