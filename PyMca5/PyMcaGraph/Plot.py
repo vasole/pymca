@@ -126,7 +126,7 @@ class Plot(PlotBase.PlotBase):
     def __init__(self, parent=None, backend=None, callback=None):
         self._parent = parent
         if backend is None:
-            backend = self.defaultBackend
+            backend = Plot.defaultBackend
             self._default = True
         else:
             self._default = False
