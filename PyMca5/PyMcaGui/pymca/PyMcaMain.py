@@ -1810,5 +1810,7 @@ if __name__ == '__main__':
         p=pstats.Stats("test")
         p.strip_dirs().sort_stats(-1).print_stats()
     else:
-        sys.exit(app.exec_())
+        ret = app.exec_()
+        app = None
+        sys.exit(ret)
 
