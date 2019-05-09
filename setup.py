@@ -518,6 +518,24 @@ build_plotting_ctools(ext_modules)
 build_xas_xas(ext_modules)
 
 
+def stringLike(s, sexample, literal=False):
+    if literal:
+        s = s.replace('\\', r'\\')
+    if isinstance(s, type(sexample)):
+        return s
+    encodings = sys.getfilesystemencoding(), 'utf-8', 'latin-1'
+    if isinstance(s, bytes):
+        func = 'decode'
+    else:
+        func = 'encode'
+    for encoding in encodings:
+        try:
+            return getattr(s, func)(encoding)
+        except UnicodeError as e:
+            ex = e
+    raise ex
+
+
 class smart_build_py(build_py):
     """Subclass 'build' to patch 'PyMcaDataDir.py'
     """
@@ -552,18 +570,20 @@ class smart_build_py(build_py):
         # variable in other cases.
 
         target = os.path.join(self.build_lib, "PyMca5", "PyMcaDataDir.py")
-        fid = open(target, 'r')
+        fid = open(target, 'rb')
         content = fid.readlines()
         fid.close()
-        fid = open(target, 'w')
+        fid = open(target, 'wb')
         for line in content:
             lineToBeWritten = line
-            txt = 'DATA_DIR_FROM_SETUP'
+            txt = stringLike('DATA_DIR_FROM_SETUP', line)
             if txt in line:
-                lineToBeWritten = line.replace(txt, PYMCA_DATA_DIR)
-            txt = 'DOC_DIR_FROM_SETUP'
+                txtrepl = stringLike(PYMCA_DATA_DIR, txt, literal=True)
+                lineToBeWritten = line.replace(txt, txtrepl)
+            txt = stringLike('DOC_DIR_FROM_SETUP', line)
             if txt in line:
-                lineToBeWritten = line.replace(txt, PYMCA_DOC_DIR)
+                txtrepl = stringLike(PYMCA_DOC_DIR, txt, literal=True)
+                lineToBeWritten = line.replace(txt, txtrepl)
             fid.write(lineToBeWritten)
         fid.close()
         return toReturn
