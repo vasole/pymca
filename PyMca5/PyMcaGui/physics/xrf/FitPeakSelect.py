@@ -468,12 +468,12 @@ class MyQLabel(qt.QLabel):
             qt.QLabel.drawContents(self,painter)
             painter.font().setBold(0)
 
-def testwidget():
+if __name__ == "__main__":
     import sys
     def change(ddict):
         print("New selection:",)
         print(ddict)
-    a = qt.QApplication(sys.argv)
+    a = qt.QApplication([])
     a.lastWindowClosed.connect(a.quit)
 
     w = qt.QTabWidget()
@@ -483,6 +483,4 @@ def testwidget():
     f.sigFitPeakSelect.connect(change)
     w.show()
     a.exec_()
-
-if __name__ == "__main__":
-    testwidget()
+    a = None

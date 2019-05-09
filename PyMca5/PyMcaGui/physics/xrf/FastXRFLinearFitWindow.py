@@ -308,4 +308,4 @@ if __name__ == "__main__":
     ret = w.exec_()
     if ret:
         print(w.getParameters())
-    #app.exec_()
+    app = None

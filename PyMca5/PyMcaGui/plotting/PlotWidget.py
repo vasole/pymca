@@ -355,3 +355,4 @@ if __name__ == "__main__":
         plot.insertYMarker(5., legend="Y", text="Y", draggable=True)
     print("All curves = ", plot.getAllCurves(just_legend=True))
     app.exec_()
+    app = None

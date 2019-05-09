@@ -4291,3 +4291,4 @@ if __name__ == '__main__':
     _logger.setLevel(logging.DEBUG)
     w = showIcons()
     app.exec_()
+    app = None

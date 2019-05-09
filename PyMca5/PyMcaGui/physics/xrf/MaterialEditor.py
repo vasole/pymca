@@ -951,4 +951,5 @@ if __name__ == "__main__":
     else:
         demo = MaterialEditor(toolmode=False)
     demo.show()
-    app.exec_()
+    ret  = app.exec_()
+    app = None

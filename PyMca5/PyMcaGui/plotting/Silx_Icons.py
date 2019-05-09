@@ -8615,3 +8615,4 @@ if __name__ == '__main__':
     app.lastWindowClosed.connect(app.quit)
     w = showIcons()
     app.exec_()
+    app = None

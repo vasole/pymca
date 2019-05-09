@@ -1375,4 +1375,5 @@ if __name__ == "__main__":
         widget.setStack(stack)
     widget.show()
     app.exec_()
+    app = None
 
