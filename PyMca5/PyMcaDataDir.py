@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -32,9 +32,9 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
 # this will be filled by the setup
-PYMCA_DATA_DIR = 'DATA_DIR_FROM_SETUP'
+PYMCA_DATA_DIR = r'DATA_DIR_FROM_SETUP'
 # This is to be filled by the setup
-PYMCA_DOC_DIR = 'DOC_DIR_FROM_SETUP'
+PYMCA_DOC_DIR = r'DOC_DIR_FROM_SETUP'
 
 PYMCA_DATA_DIR_ENV = os.getenv("PYMCA_DATA_DIR")
 if PYMCA_DATA_DIR_ENV is not None:
