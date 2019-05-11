@@ -101,9 +101,6 @@ class QIPythonWidget(RichIPythonWidget):
             pass
         if BINDING in ["PySide", "PyQt4"]:
             kernel_manager.kernel.gui = 'qt4'
-        else:
-            # this is probably not in used any more
-            kernel_manager.kernel.gui = 'qt5'
         self.kernel_client = kernel_client = self._kernel_manager.client()
         kernel_client.start_channels()
 
