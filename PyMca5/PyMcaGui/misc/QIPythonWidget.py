@@ -88,6 +88,15 @@ class QIPythonWidget(RichIPythonWidget):
         self.setWindowTitle(self.banner)
         self.kernel_manager = kernel_manager = QtInProcessKernelManager()
         kernel_manager.start_kernel()
+        try:
+            # https://github.com/ipython/ipykernel/issues/370
+            from ipykernel import version_info
+            if version_info < (5, 1, 1):
+                def _abort_queues(kernel):
+                    pass
+                kernel_manager.kernel._abort_queues = _abort_queues
+        except:
+            pass
         kernel_manager.kernel.gui = 'qt4'
         self.kernel_client = kernel_client = self._kernel_manager.client()
         kernel_client.start_channels()
