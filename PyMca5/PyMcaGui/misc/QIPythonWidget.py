@@ -37,16 +37,18 @@ import os
 import sys
 
 from PyMca5.PyMcaGui.PyMcaQt import QApplication, QWidget, \
-                                        QPushButton, QVBoxLayout, QMessageBox
-if "PySide" in sys.modules:
-    PYSIDE = True
-else:
-    PYSIDE = False
+                                    QPushButton, QVBoxLayout, QMessageBox, \
+                                    BINDING
 
-if PYSIDE:
+# this seems to be obsolete stuff
+if BINDING == "PySide":
     os.environ['QT_API'] = 'pyside'
-else:
+elif BINDING == "PySide2":
+    os.environ['QT_API'] = 'pyside2'
+elif BINDING == "PyQt4":
     os.environ['QT_API'] = 'pyqt'
+else:
+    os.environ['QT_API'] = 'pyqt5'
 
 QTCONSOLE = True
 if sys.version_info < (3,):
@@ -88,7 +90,17 @@ class QIPythonWidget(RichIPythonWidget):
         self.setWindowTitle(self.banner)
         self.kernel_manager = kernel_manager = QtInProcessKernelManager()
         kernel_manager.start_kernel()
-        kernel_manager.kernel.gui = 'qt4'
+        try:
+            # https://github.com/ipython/ipykernel/issues/370
+            from ipykernel import version_info
+            if version_info < (5, 1, 1):
+                def _abort_queues(kernel):
+                    pass
+                kernel_manager.kernel._abort_queues = _abort_queues
+        except:
+            pass
+        if BINDING in ["PySide", "PyQt4"]:
+            kernel_manager.kernel.gui = 'qt4'
         self.kernel_client = kernel_client = self._kernel_manager.client()
         kernel_client.start_channels()
 
