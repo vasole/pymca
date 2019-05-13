@@ -802,7 +802,6 @@ class McaAdvancedFitBatch(object):
                 dict=self.mcafit.roifit(x,y,width=self.roiWidth)
                 #this only works with EDF
                 if self.__ncols is not None:
-                    self.imgDir=None
                     if not self.counter:
                         if not self._nosave:
                             imgdir = self.os_path_join(self._outputdir,"IMAGES")
@@ -828,7 +827,6 @@ class McaAdvancedFitBatch(object):
                                 self._ROIimages[group][roi]=numpy.zeros((self.__nrows,
                                                                    self.__ncols),
                                                                    numpy.float)
-
                 if not hasattr(self, "_ROIimages"):
                     print("ROI fitting only supported on EDF")
                 for group in self.__ROIpeaks:
@@ -844,7 +842,6 @@ class McaAdvancedFitBatch(object):
         #update counter
         self.counter += 1
 
-
     def saveImage(self,ffile=None):
         self.savedImages=[]
         if ffile is None:
@@ -852,10 +849,13 @@ class McaAdvancedFitBatch(object):
             ffile = self.os_path_join(self.imgDir,ffile)
         if not self.roiFit:
             if (self.fileStep > 1) or (self.mcaStep > 1):
-                trailing = "_filestep_%02d_mcastep_%02d" % ( self.fileStep,
-                                                             self.mcaStep )
+                # REMARK: makes merging difficult and not necessary anyway
+                trailing = ""
+                #trailing = "_filestep_%02d_mcastep_%02d" % ( self.fileStep,
+                #                                             self.mcaStep )
             else:
                 trailing = ""
+            
             #speclabel = "#L row  column"
             speclabel = "row  column"
             if self.chunk is None:

@@ -125,7 +125,7 @@ class McaAdvancedFitBatch(object):
         .. code:: python
 
             range(filebeginoffset, len(filelist)-fileendoffset, filestep)
-        
+
         Range of column indices to be processed for each file:
 
         .. code:: python
@@ -186,7 +186,7 @@ class McaAdvancedFitBatch(object):
     @property
     def nosave(self):
         return self._nosave
-    
+
     @nosave.setter
     def nosave(self, value):
         self._nosave = bool(value)
@@ -196,7 +196,7 @@ class McaAdvancedFitBatch(object):
     @property
     def overwrite(self):
         return self._overwrite
-    
+
     @overwrite.setter
     def overwrite(self, value):
         self._overwrite = bool(value)
@@ -218,7 +218,7 @@ class McaAdvancedFitBatch(object):
         suffix = ""
         if self.roiFit:
             suffix = "_%04deVROI" % self.roiWidth
-        # TODO: makes merging difficult
+        # REMARK: makes merging difficult and not necessary anyway
         #if (self.fileStep > 1) or (self.mcaStep > 1):
         #    suffix += "_filestep_%02d_mcastep_%02d" %\
         #                (self.fileStep, self.mcaStep)
@@ -240,7 +240,7 @@ class McaAdvancedFitBatch(object):
     @property
     def outputdir(self):
         return self._outputdir
-    
+
     @outputdir.setter
     def outputdir(self, value):
         if value is None:
@@ -290,7 +290,7 @@ class McaAdvancedFitBatch(object):
                         if self.filehandle.info["SourceType"] in\
                         ["EdfFileStack", "HDF5Stack1D"]:
                             self.__stack = True
-        
+
             # Fit spectra in current file
             if self.__stack:
                 self.__processStack()
@@ -320,7 +320,7 @@ class McaAdvancedFitBatch(object):
             self._HDF5 = False
             if type(inputfile) == numpy.ndarray:
                 return NumpyStack.NumpyStack(inputfile)
-        
+
             if HDF5SUPPORT:
                 if h5py.is_hdf5(inputfile):
                     self._HDF5 = True
@@ -332,7 +332,7 @@ class McaAdvancedFitBatch(object):
                                                        self.selection)
                     except:
                         raise
-            
+
             ffile = self.__tryEdf(inputfile)
             if ffile is None:
                 ffile = self.__tryLucia(inputfile)
@@ -353,7 +353,7 @@ class McaAdvancedFitBatch(object):
     @property
     def filehandle(self):
         return self._filehandle
-    
+
     @filehandle.setter
     def filehandle(self, value):
         try:
@@ -556,7 +556,7 @@ class McaAdvancedFitBatch(object):
                         _logger.error('Skip scan {} (not enough MCA spectra)'
                                       .format(repr(scan_key)))
                         continue
-                
+
                 mcaIndices = list(range(self.mcaOffset, self.__nMcaPerScan, self.mcaStep))
                 nmcaToFit = len(mcaIndices)
                 multipleScans = self.__ncols > self.__nMcaPerScan
@@ -567,7 +567,7 @@ class McaAdvancedFitBatch(object):
                     if multipleScans:
                         self.__col += fileinfo['KeyList'].index(scan_key) * \
                                         self.__nMcaPerScan
-                        
+
                     point = int(mcaIndex/info['NbMcaDet']) + 1
                     mca = (mcaIndex % info['NbMcaDet']) + 1
                     key = "%s.%s.%05d.%d" % (scan, order, point, mca)
@@ -589,7 +589,7 @@ class McaAdvancedFitBatch(object):
                     self.__processOneMca(x, y0, filename, key, info=infoDict)
                     self.onMca(imca, nmcaToFit, filename=filename,
                                key=key, info=infoDict)
-            
+
     def __getFitFile(self, filename, key, createdirs=False):
         fitdir = self.os_path_join(self.outputdir, "FIT")
         if createdirs:

@@ -144,6 +144,10 @@ class testPyMcaBatch(TestCaseQt):
     def testSlowFitEdfMap(self):
         self._assertSlowFitMap('edf')
 
+    def testSlowRoiFitEdfMap(self):
+        self._assertSlowFitMap('edf', roiwidth=100, outputdir='fitresulta')
+        self._assertSlowGuiFitMap('edf', roiwidth=100, outputdir='fitresultb')
+
     @unittest.skipIf(sys.platform == 'darwin', "does not work on mac")
     def testSlowMultiFitEdfMap(self):
         self._assertSlowMultiFitMap('edf')
@@ -153,6 +157,10 @@ class testPyMcaBatch(TestCaseQt):
 
     def testSlowFitSpecMap(self):
         self._assertSlowFitMap('specmesh')
+
+    def testSlowRoiFitSpecMap(self):
+        self._assertSlowFitMap('specmesh', roiwidth=100, outputdir='fitresulta')
+        self._assertSlowGuiFitMap('specmesh', roiwidth=100, outputdir='fitresultb')
 
     @unittest.skipIf(sys.platform == 'darwin', "does not work on mac")
     def testSlowMultiFitSpecMap(self):
@@ -165,34 +173,37 @@ class testPyMcaBatch(TestCaseQt):
     @unittest.skipIf(not HAS_H5PY, "skipped h5py missing")
     def testSlowFitHdf5Map(self):
         self._assertSlowFitMap('hdf5')
-    
+
+    @unittest.skipIf(not HAS_H5PY, "skipped h5py missing")
+    def testSlowRoiFitHdf5Map(self):
+        self._assertSlowFitMap('hdf5', roiwidth=100, outputdir='fitresulta')
+        self._assertSlowGuiFitMap('hdf5', roiwidth=100, outputdir='fitresultb')
+
     @unittest.skipIf(not HAS_H5PY, "skipped h5py missing")
     @unittest.skipIf(sys.platform == 'darwin', "does not work on mac")
     def testSlowMultiFitHdf5Map(self):
         self._assertSlowMultiFitMap('hdf5')
 
-    def _assertFastFitMap(self, typ):
+    def _assertFastFitMap(self, typ, outputdir='fitresults'):
         info = self._generateData(fast=True, typ=typ)
-        # Compare with legacy PyMcaBatch
-        result1 = self._fitMap(info, fast=True, outputdir='fitresults1')
-        result2 = self._fitMap(info, fast=True, legacy=True, outputdir='fitresults2')
+        # Compare with legacy FastXRFLinearFit
+        result1 = self._fitMap(info, fast=True, outputdir=outputdir+'1')
+        result2 = self._fitMap(info, fast=True, legacy=True, outputdir=outputdir+'2')
         self._assertEqualFitResults(result1, result2, rtol=1e-5)
 
-    def _assertSlowFitMap(self, typ):
-        # TODO: test roifit
+    def _assertSlowFitMap(self, typ, outputdir='fitresults', **kwargs):
         info = self._generateData(typ=typ)
-        # Compare with legacy PyMcaBatch
-        result1 = self._fitMap(info, outputdir='fitresults1')
-        result2 = self._fitMap(info, legacy=True, outputdir='fitresults2')
+        # Compare with legacy McaAdvancedFitBatch
+        result1 = self._fitMap(info, outputdir=outputdir+'1', **kwargs)
+        result2 = self._fitMap(info, legacy=True, outputdir=outputdir+'2', **kwargs)
         self._assertEqualFitResults(result1, result2, rtol=1e-5)
 
-    def _assertSlowMultiFitMap(self, typ):
-        # TODO: test roifit
+    def _assertSlowMultiFitMap(self, typ, outputdir='fitresults', **kwargs):
         from PyMca5.PyMcaGui.pymca.PyMcaBatch import ranAsBootstrap
         info = self._generateData(typ=typ)
         # Compare single vs. multi processing
-        result1 = self._fitMap(info, nBatches=4, outputdir='fitresults1')
-        result2 = self._fitMap(info, nBatches=1, outputdir='fitresults2')
+        result1 = self._fitMap(info, nBatches=4, outputdir=outputdir+'1', **kwargs)
+        result2 = self._fitMap(info, nBatches=1, outputdir=outputdir+'2', **kwargs)
         self._assertEqualFitResults(result1, result2, rtol=0)
         if not ranAsBootstrap() and typ != 'hdf5':
             # REMARK: not supported by legacy code
@@ -201,36 +212,50 @@ class testPyMcaBatch(TestCaseQt):
             #  - multi process on single non-hdf5 file
             # Compare legacy single vs. multi processing
             if typ != 'specmesh':
-                result3 = self._fitMap(info, nBatches=4, legacy=True, outputdir='fitresults3')
-            result4 = self._fitMap(info, nBatches=1, legacy=True, outputdir='fitresults4')
+                result3 = self._fitMap(info, nBatches=4, legacy=True,
+                                       outputdir=outputdir+'3', **kwargs)
+            result4 = self._fitMap(info, nBatches=1, legacy=True,
+                                   outputdir=outputdir+'4', **kwargs)
             if typ != 'specmesh':
                 self._assertEqualFitResults(result3, result4, rtol=0)
-            # Compare new vs. legacy
+            # Compare with legacy PyMcaBatch
             if typ != 'specmesh':
                 self._assertEqualFitResults(result1, result3, rtol=1e-5)
             self._assertEqualFitResults(result2, result4, rtol=1e-5)
         # Compare thread vs. process
-        result5 = self._fitMap(info, nBatches=1, asthread=True, outputdir='fitresults5')
+        result5 = self._fitMap(info, nBatches=1, asthread=True,
+                               outputdir=outputdir+'5', **kwargs)
         self._assertEqualFitResults(result2, result5, rtol=0)
         # Compare blocking vs. non-blocking process
-        result6 = self._fitMap(info, nBatches=1, blocking=True, outputdir='fitresults6')
+        result6 = self._fitMap(info, nBatches=1, blocking=True,
+                               outputdir=outputdir+'6', **kwargs)
         self._assertEqualFitResults(result2, result6, rtol=0)
+
+    def _assertSlowGuiFitMap(self, typ, outputdir='fitresults', **kwargs):
+        from PyMca5.PyMcaGui.pymca.PyMcaBatch import ranAsBootstrap
+        info = self._generateData(typ=typ)
+        result1 = self._fitMap(info, nBatches=1, outputdir=outputdir+'1', **kwargs)
+        if not ranAsBootstrap() and typ != 'hdf5':
+            # Compare with legacy PyMcaBatch
+            result2 = self._fitMap(info, nBatches=1, legacy=True,
+                                   outputdir=outputdir+'2', **kwargs)
+            self._assertEqualFitResults(result1, result2, rtol=1e-5)
 
     def _fitMap(self, info, fast=False, nBatches=0,
                 outputdir='fitresults', **kwargs):
         outputdir = os.path.join(self.path, outputdir)
         if fast:
             # Single process fast fitting (FastXRFLinearFit)
-            imageFile = self._fastFitMap(info, outputdir, **kwargs)
+            resultFileName = self._fastFitMap(info, outputdir, **kwargs)
         elif not nBatches:
             # Single process slow fitting (McaAdvancedFitBatch)
-            imageFile = self._slowFitMap(info, outputdir, **kwargs)
+            resultFileName = self._slowFitMap(info, outputdir, **kwargs)
         else:
             # Multi process slow fitting (PyMcaBatch)
-            imageFile = self._slowMultiFitMap(info, outputdir,
-                                              nBatches, **kwargs)
+            resultFileName = self._slowMultiFitMap(info, outputdir,
+                                                   nBatches, **kwargs)
         # Validate result
-        labels, scanData = self._parseDatResults(imageFile)
+        labels, scanData = self._readResults(resultFileName)
         self._checkFitResult(labels, scanData, info['liveTimeCorrection'],
                              multiprocessing=nBatches > 1, fast=fast)
         return labels, scanData
@@ -240,7 +265,7 @@ class testPyMcaBatch(TestCaseQt):
         Multi process fast fitting
         """
         if legacy:
-            from PyMca5.PyMcaPhysics.xrf import LegacyFastXRFLinearFit as FastXRFLinearFit 
+            from PyMca5.PyMcaPhysics.xrf import LegacyFastXRFLinearFit as FastXRFLinearFit
         else:
             from PyMca5.PyMcaPhysics.xrf import FastXRFLinearFit
         batch = FastXRFLinearFit.FastXRFLinearFit()
@@ -259,9 +284,9 @@ class testPyMcaBatch(TestCaseQt):
         outbuffer = batch.fitMultipleSpectra(**kwargs)
         if legacy:
             FastXRFLinearFit.save(outbuffer, outputdir, csv=False)
-        return self._imageFile(None, outputdir, fast=True, legacy=legacy)
-    
-    def _slowFitMap(self, info, outputdir, legacy=False):
+        return self._fitResultFileName(None, outputdir, fast=True, legacy=legacy)
+
+    def _slowFitMap(self, info, outputdir, legacy=False, roiwidth=0):
         """
         Single process slow fitting
         """
@@ -274,7 +299,9 @@ class testPyMcaBatch(TestCaseQt):
                   'outputdir': outputdir,
                   'concentrations': True,
                   'selection': info['selection'],
-                  'quiet': True}
+                  'quiet': True,
+                  'roifit': bool(roiwidth),
+                  'roiwidth': roiwidth}
         if not legacy:
             kwargs['dat'] = True
             kwargs['edf'] = False
@@ -282,10 +309,11 @@ class testPyMcaBatch(TestCaseQt):
             kwargs['diagnostics'] = True
         batch = McaAdvancedFitBatch.McaAdvancedFitBatch(info['cfgname'], **kwargs)
         batch.processList()
-        return self._imageFile(info['input'], outputdir, legacy=legacy)
+        return self._fitResultFileName(info['input'], outputdir,
+                                       legacy=legacy, roiwidth=roiwidth)
 
     def _slowMultiFitMap(self, info, outputdir, nBatches, legacy=False,
-                         **startargs):
+                         roiwidth=0, **startargs):
         """
         Multi process slow fitting
         """
@@ -304,23 +332,28 @@ class testPyMcaBatch(TestCaseQt):
             kwargs['h5'] = False
             kwargs['diagnostics'] = True
             kwargs['concentrations'] = True
+            kwargs['roifit'] = bool(roiwidth)
+            kwargs['roiwidth'] = roiwidth
             kwargs['nproc'] = nBatches
             kwargs['selection'] = info['selection']
-        imageFile = self._imageFile(info['input'], outputdir, legacy=legacy)
+        resultFileName = self._fitResultFileName(info['input'], outputdir,
+                                                 legacy=legacy, roiwidth=roiwidth)
 
         widget = McaBatchGUI(**kwargs)
         if legacy:
             widget._McaBatchGUI__concentrationsBox.setChecked(True)
             widget._McaBatchGUI__splitBox.setChecked(nBatches > 1)
             widget._McaBatchGUI__splitSpin.setValue(max(nBatches, 1))
-        #widget.show()
+            widget._McaBatchGUI__roiBox.setChecked(bool(roiwidth))
+            widget._McaBatchGUI__roiSpin.setValue(roiwidth)
+        widget.show()
         self.qapp.processEvents()
         widget.start(**startargs)
 
         # Wait until result is created
         from time import sleep
-        msg = 'Waiting for {} ...'.format(imageFile)
-        while not os.path.exists(imageFile):
+        msg = 'Waiting for {} ...'.format(resultFileName)
+        while not os.path.exists(resultFileName):
             sleep(3)
             if msg:
                 _logger.info(msg)
@@ -328,22 +361,24 @@ class testPyMcaBatch(TestCaseQt):
             self.qapp.processEvents()
 
         # Wait until result is finished writting
-        bytes0 = os.stat(imageFile).st_size
+        bytes0 = os.stat(resultFileName).st_size
         while True:
             sleep(1)
-            bytes1 = os.stat(imageFile).st_size
+            bytes1 = os.stat(resultFileName).st_size
             if bytes1 == bytes0:
                 break
             else:
                 bytes0 = bytes1
-        _logger.info('Finished {}'.format(imageFile))
+        _logger.info('Finished {}'.format(resultFileName))
 
         widget.close()
         self.qapp.processEvents()
         #self.qapp.exec_()
-        return imageFile
+        return resultFileName
 
-    def _imageFile(self, filelist, outputdir, fast=False, legacy=False):
+    def _fitResultFileName(self, filelist, outputdir, fast=False,
+                           legacy=False, roiwidth=0):
+        ext = '.dat'
         if filelist:
             # Slow fit
             from PyMca5.PyMcaPhysics.xrf import McaAdvancedFitBatch
@@ -356,7 +391,12 @@ class testPyMcaBatch(TestCaseQt):
             # Fast fit
             rootname = 'images'
             subdir = 'IMAGES'
-        return os.path.join(outputdir, subdir, rootname+'.dat')
+        if roiwidth:
+            if legacy:
+                rootname += '_*'
+                ext = '.edf'
+            rootname += '_{:04d}eVROI'.format(roiwidth)
+        return os.path.join(outputdir, subdir, rootname+ext)
 
     def _generateData(self, fast=False, typ='hdf5'):
         # Generate data (in memory + save in requested format)
@@ -387,7 +427,7 @@ class testPyMcaBatch(TestCaseQt):
         info = genFunc(filename, nDet=nDet, nRows=nRows,
                        nColumns=nColumns, nTimes=nTimes,
                        modfunc=modfunc)
-        
+
         # Concentrations are multiplied by this factor to
         # normalize live time to preset time
         # TODO: currently only works with 1 detector
@@ -426,7 +466,7 @@ class testPyMcaBatch(TestCaseQt):
             else:
                 info['selection'] = {'x': [], 'm': [], 'y': [datasets[0]]}
                 info['input'] = filelist
-        
+
         # Batch fit configuration
         info['cfgname'] = os.path.join(self.path, 'Map.cfg')
         return info
@@ -447,7 +487,42 @@ class testPyMcaBatch(TestCaseQt):
             label = 'w({})'.format(label)
         label = label.replace('C(', 'w(')
         label = label.replace('-', '_')
+        label = label.replace(' ', '_')
+        if label.endswith('_ROI'):
+            label = label[:-4]
         return label
+
+    def _convertLegacyLabels(self, labels, data):
+        labels = list(map(self._convertLegacyLabel, labels))
+        excluded_labels = 'row', 'column', 'point'
+        included = [label.lower() not in excluded_labels for label in labels]
+        if not all(included):
+            data = data[included, ...]
+            labels = [label for label, b in zip(labels, included) if b]
+        return labels, data
+
+    def _readResults(self, filenames):
+        """
+        :param str or list filename:
+        :returns tuple: list(nparams), ndarray(nparams, nrows, ncolumns)
+        """
+        if isinstance(filenames, list):
+            filename0 = filenames[0]
+        elif '*' in filenames:
+            from glob import glob
+            filenames = glob(filenames)
+            filename0 = filenames[0]
+        else:
+            filename0 = filenames
+            filenames = [filenames]
+        ext = os.path.splitext(filename0)[1]
+        if ext == '.dat':
+            labels, data = self._parseDatResults(filenames[0])
+        elif ext == '.edf':
+            labels, data = self._parseEdfResults(filenames)
+        else:
+            raise NotImplementedError
+        return self._convertLegacyLabels(labels, data)
 
     def _parseDatResults(self, filename):
         """
@@ -472,8 +547,24 @@ class testPyMcaBatch(TestCaseQt):
         else:
             order = 'F'
         scanData = scanData.reshape((nParams, nRows, nColumns), order=order)
-        labels = list(map(self._convertLegacyLabel, labels))
         return labels, scanData
+
+    def _parseEdfResults(self, filenames):
+        """
+        :param list filenames:
+        :returns tuple: list(nparams), ndarray(nparams, nrows, ncolumns)
+        """
+        labels = []
+        data = []
+        from PyMca5.PyMcaIO import EdfFile
+        for filename in filenames:
+            # REMARK: each file can contain multiple images (roifit)
+            #stack = EDFStack.EDFStack(filename)
+            stack = EdfFile.EdfFile(filename)
+            for i in range(stack.GetNumImages()):
+                data.append(stack.GetData(i))
+                labels.append(stack.GetHeader(i)['Title'])
+        return labels, numpy.asarray(data)
 
     def _checkFitResult(self, labels, paramStack, liveTimeCorrection,
                         multiprocessing=False, fast=False):
@@ -509,6 +600,7 @@ class testPyMcaBatch(TestCaseQt):
 
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()
+    auto = False
     if auto:
         testSuite.addTest(unittest.TestLoader().loadTestsFromTestCase(testPyMcaBatch))
     else:
@@ -517,12 +609,15 @@ def getSuite(auto=True):
         testSuite.addTest(testPyMcaBatch("testSubCommands"))
         testSuite.addTest(testPyMcaBatch("testFastFitEdfMap"))
         testSuite.addTest(testPyMcaBatch("testSlowFitEdfMap"))
+        testSuite.addTest(testPyMcaBatch("testSlowRoiFitEdfMap"))
         testSuite.addTest(testPyMcaBatch("testSlowMultiFitEdfMap"))
         testSuite.addTest(testPyMcaBatch("testFastFitHdf5Map"))
         testSuite.addTest(testPyMcaBatch("testSlowFitHdf5Map"))
+        testSuite.addTest(testPyMcaBatch("testSlowRoiFitHdf5Map"))
         testSuite.addTest(testPyMcaBatch("testSlowMultiFitHdf5Map"))
         testSuite.addTest(testPyMcaBatch("testFastFitSpecMap"))
         testSuite.addTest(testPyMcaBatch("testSlowFitSpecMap"))
+        testSuite.addTest(testPyMcaBatch("testSlowRoiFitSpecMap"))
         testSuite.addTest(testPyMcaBatch("testSlowMultiFitSpecMap"))
     return testSuite
 
