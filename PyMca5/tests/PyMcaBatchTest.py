@@ -556,8 +556,7 @@ class testPyMcaBatch(TestCaseQt):
             sleep(3)
             if msg:
                 _logger.info(msg)
-                #msg = ''
-                print(msg)
+                msg = ''
             self.qapp.processEvents()
 
         # Wait until result is finished writting
