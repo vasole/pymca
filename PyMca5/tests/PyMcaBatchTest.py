@@ -37,6 +37,7 @@ import numpy
 from random import randint
 import tempfile
 import shutil
+from glob import glob
 import logging
 from PyMca5.tests import XrfData
 import PyMca5.PyMcaGui.PyMcaQt as qt
@@ -246,16 +247,16 @@ class testPyMcaBatch(TestCaseQt):
         outputdir = os.path.join(self.path, outputdir)
         if fast:
             # Single process fast fitting (FastXRFLinearFit)
-            resultFileName = self._fastFitMap(info, outputdir, **kwargs)
+            result = self._fastFitMap(info, outputdir, **kwargs)
         elif not nBatches:
             # Single process slow fitting (McaAdvancedFitBatch)
-            resultFileName = self._slowFitMap(info, outputdir, **kwargs)
+            result = self._slowFitMap(info, outputdir, **kwargs)
         else:
             # Multi process slow fitting (PyMcaBatch)
-            resultFileName = self._slowMultiFitMap(info, outputdir,
-                                                   nBatches, **kwargs)
+            result = self._slowMultiFitMap(info, outputdir,
+                                           nBatches, **kwargs)
         # Validate result
-        labels, scanData = self._readResults(resultFileName)
+        labels, scanData = self._readResult(result)
         self._checkFitResult(labels, scanData, info['liveTimeCorrection'],
                              multiprocessing=nBatches > 1, fast=fast)
         return labels, scanData
@@ -336,8 +337,8 @@ class testPyMcaBatch(TestCaseQt):
             kwargs['roiwidth'] = roiwidth
             kwargs['nproc'] = nBatches
             kwargs['selection'] = info['selection']
-        resultFileName = self._fitResultFileName(info['input'], outputdir,
-                                                 legacy=legacy, roiwidth=roiwidth)
+        result = self._fitResultFileName(info['input'], outputdir,
+                                         legacy=legacy, roiwidth=roiwidth)
 
         widget = McaBatchGUI(**kwargs)
         if legacy:
@@ -346,35 +347,14 @@ class testPyMcaBatch(TestCaseQt):
             widget._McaBatchGUI__splitSpin.setValue(max(nBatches, 1))
             widget._McaBatchGUI__roiBox.setChecked(bool(roiwidth))
             widget._McaBatchGUI__roiSpin.setValue(roiwidth)
-        widget.show()
+        #widget.show()  # show widget for debugging
         self.qapp.processEvents()
         widget.start(**startargs)
-
-        # Wait until result is created
-        from time import sleep
-        msg = 'Waiting for {} ...'.format(resultFileName)
-        while not os.path.exists(resultFileName):
-            sleep(3)
-            if msg:
-                _logger.info(msg)
-                msg = ''
-            self.qapp.processEvents()
-
-        # Wait until result is finished writting
-        bytes0 = os.stat(resultFileName).st_size
-        while True:
-            sleep(1)
-            bytes1 = os.stat(resultFileName).st_size
-            if bytes1 == bytes0:
-                break
-            else:
-                bytes0 = bytes1
-        _logger.info('Finished {}'.format(resultFileName))
-
+        self._waitForFitResult(result)
         widget.close()
         self.qapp.processEvents()
-        #self.qapp.exec_()
-        return resultFileName
+        #self.qapp.exec_()  # block for debugging
+        return result
 
     def _fitResultFileName(self, filelist, outputdir, fast=False,
                            legacy=False, roiwidth=0):
@@ -501,15 +481,14 @@ class testPyMcaBatch(TestCaseQt):
             labels = [label for label, b in zip(labels, included) if b]
         return labels, data
 
-    def _readResults(self, filenames):
+    def _readResult(self, filenames):
         """
-        :param str or list filename:
+        :param str or list filenames:
         :returns tuple: list(nparams), ndarray(nparams, nrows, ncolumns)
         """
         if isinstance(filenames, list):
             filename0 = filenames[0]
         elif '*' in filenames:
-            from glob import glob
             filenames = glob(filenames)
             filename0 = filenames[0]
         else:
@@ -566,6 +545,74 @@ class testPyMcaBatch(TestCaseQt):
                 labels.append(stack.GetHeader(i)['Title'])
         return labels, numpy.asarray(data)
 
+    def _waitForFitResult(self, filenames):
+        """
+        :param list filenames:
+        """
+        # Wait until result is created
+        from time import sleep
+        msg = 'Waiting for {} ...'.format(filenames)
+        while not self._resultExists(filenames):
+            sleep(3)
+            if msg:
+                _logger.info(msg)
+                #msg = ''
+                print(msg)
+            self.qapp.processEvents()
+
+        # Wait until result is finished writting
+        bytes0 = self._resultSize(filenames)
+        nfiles0 = self._resultNFiles(filenames)
+        while True:
+            sleep(1)
+            bytes1 = self._resultSize(filenames)
+            nfiles1 = self._resultNFiles(filenames)
+            if bytes1 == bytes0 and nfiles0 == nfiles1:
+                break
+            else:
+                bytes0 = bytes1
+                nfiles0 = nfiles1
+        _logger.info('Finished {}'.format(filenames))
+
+    def _resultExists(self, filenames):
+        if isinstance(filenames, list):
+            if filenames:
+                return all(map(self._resultExists, filenames))
+            else:
+                return False
+        elif '*' in filenames:
+            return self._resultExists(glob(filenames))
+        elif filenames:
+            return os.path.exists(filenames)
+        else:
+            return False
+
+    def _resultSize(self, filenames):
+        if isinstance(filenames, list):
+            if filenames:
+                return sum(map(self._resultExists, filenames))
+            else:
+                return 0
+        elif '*' in filenames:
+            return self._resultExists(glob(filenames))
+        elif filenames:
+            return os.stat(filenames).st_size
+        else:
+            return 0
+
+    def _resultNFiles(self, filenames):
+        if isinstance(filenames, list):
+            if filenames:
+                return sum(map(self._resultExists, filenames))
+            else:
+                return 0
+        elif '*' in filenames:
+            return self._resultExists(glob(filenames))
+        elif filenames:
+            return int(os.path.exists(filenames))
+        else:
+            return 0
+
     def _checkFitResult(self, labels, paramStack, liveTimeCorrection,
                         multiprocessing=False, fast=False):
         """
@@ -600,7 +647,6 @@ class testPyMcaBatch(TestCaseQt):
 
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()
-    auto = False
     if auto:
         testSuite.addTest(unittest.TestLoader().loadTestsFromTestCase(testPyMcaBatch))
     else:
