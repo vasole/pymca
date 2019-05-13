@@ -55,7 +55,6 @@ def patch_backend_qt():
                         QtCore.Qt.AA_EnableHighDpiScaling)
         except AttributeError:
             pass
-    matplotlib.backends.backend_qt5._create_qApp = _create_qApp
-    matplotlib.backends.backend_qt5.qApp = weakref.proxy(\
+        matplotlib.backends.backend_qt5.qApp = weakref.proxy(\
                                         QApplication.instance())
-
+    matplotlib.backends.backend_qt5._create_qApp = _create_qApp
