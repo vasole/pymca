@@ -782,13 +782,14 @@ class OutputBuffer(MutableMapping):
         t = time.time() - t0
         _logger.debug("Saving results elapsed = %f", t)
 
-    def _saveImages(self):
-        from PyMca5.PyMca import ArraySave
-
-        # List of images in deterministic order
+    def _imageList(self, onlylabels=False):
         imageFileLabels = []
-        imageTitleLabels = []
-        imageList = []
+        if onlylabels:
+            out = imageFileLabels
+        else:
+            imageTitleLabels = []
+            imageList = []
+            out = imageFileLabels, imageTitleLabels, imageList
         keys = list(self._buffers.keys())
         groups = []
         for key in self._defaultorder:
@@ -805,16 +806,32 @@ class OutputBuffer(MutableMapping):
                 for name, mname, bufferi in zip(names, mnames, buffer):
                     if bufferi.ndim <= 2:
                         imageFileLabels.append(name)
-                        imageTitleLabels.append(mname)
-                        imageList.append(bufferi[()])
+                        if not onlylabels:
+                            imageTitleLabels.append(mname)
+                            imageList.append(bufferi[()])
             else:
                 # Single dataset
                 if buffer.ndim <= 2 and group.lower() in self._optionalimage:
                     name = self._labelsToStrings(group, [group], labeltype='filename')[0]
                     mname = self._labelsToStrings(group, [group], labeltype='title')[0]
                     imageFileLabels.append(name)
-                    imageTitleLabels.append(mname)
-                    imageList.append(buffer[()])
+                    if not onlylabels:
+                        imageTitleLabels.append(mname)
+                        imageList.append(buffer[()])
+        return out
+
+    def filenames(self, ext):
+        if self.multipage or ext == '.h5':
+            return [self.filename(ext)]
+        else:
+            labels = self._imageList(onlylabels=True)
+            return [self.filename(ext, suffix="_" + label) for label in labels]
+
+    def _saveImages(self):
+        from PyMca5.PyMca import ArraySave
+
+        # List of images in deterministic order
+        imageFileLabels, imageTitleLabels, imageList = self._imageList()
         if not imageFileLabels:
             return
 

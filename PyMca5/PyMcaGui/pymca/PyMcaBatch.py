@@ -1567,9 +1567,8 @@ class McaBatch(McaAdvancedFitBatch.McaAdvancedFitBatch, qt.QThread):
         _logger.debug("onEnd")
         savedimages = []
         if self.outbuffer is not None:
-            imageFile = self.outbuffer.filename('.edf')
-            if os.path.isfile(imageFile):
-                savedimages = [imageFile]
+            savedimages = self.outbuffer.filenames('.edf')
+            savedimages = [fname for fname in savedimages if os.path.isfile(fname)]
         ddict = {'event':'onEnd',
                  'filestep':self.fileStep,
                  'mcastep':self.mcaStep,
@@ -1956,7 +1955,7 @@ class McaBatchWindow(qt.QWidget):
                 myself = os.path.join(rootdir, "EdfFileSimpleViewer")
             else:
                 myself = moduleRunCmd(os.path.join(rootdir, "EdfFileSimpleViewer.py"))
-            cmd = "%s %s &" % (myself, filelist)
+            cmd = "%s %s" % (myself, filelist)
             launchProcessBatchFit(cmd, independent=True)
             
 
