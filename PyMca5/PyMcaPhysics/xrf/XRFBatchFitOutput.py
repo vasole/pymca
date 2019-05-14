@@ -61,7 +61,7 @@ class OutputBuffer(MutableMapping):
                  saveResiduals=False, saveFit=False, saveData=False,
                  tif=False, edf=False, csv=False, dat=False, h5=True,
                  diagnostics=False, multipage=False, overwrite=False,
-                 suffix=None, nosave=False, saveFOM=False):
+                 suffix=None, nosave=False, saveFOM=False, dtype=None):
         """
         XRf batch fitting output buffer, to be saved as:
          .h5 : outputDir/outputRoot+suffix.h5::/fileEntry/fileProcess
@@ -94,6 +94,7 @@ class OutputBuffer(MutableMapping):
         :param bool multipage: all images in 1 file if the format allows it
         :param bool overwrite:
         :param bool nosave: prevent saving (everything will be in memory)
+        :param dtype: force dtype on memory allocation
         """
         self._inBufferContext = False
         self._inSaveContext = False
@@ -129,6 +130,7 @@ class OutputBuffer(MutableMapping):
         self._defaultorder = 'molarconcentrations', 'massfractions', 'parameters', 'uncertainties'
         self._optionalimage = 'chisq',
         self._configurationkey = 'configuration'
+        self._forcedtype = dtype
 
     def __getitem__(self, key):
         try:
@@ -363,6 +365,8 @@ class OutputBuffer(MutableMapping):
         :param \**kwargs: see _allocateRam or _allocateHdf5
         """
         memtype = memtype.lower()
+        if self._forcedtype is not None:
+            kwargs['dtype'] = self._forcedtype
         if not group:
             group = label
         if memtype in ('hdf5', 'h5', 'nx', 'nexus'):
@@ -400,7 +404,7 @@ class OutputBuffer(MutableMapping):
         :param dict groupAttrs: nxdata attributes (e.g. axes)
         """
         if data is not None:
-            buffer = numpy.asarray(data)
+            buffer = numpy.asarray(data, dtype=dtype)
             if fill_value is not None:
                 buffer[:] = fill_value
         elif fill_value is None:
@@ -438,9 +442,9 @@ class OutputBuffer(MutableMapping):
         :param \**createkwargs: see h5py.Group.create_dataset
         """
         if data is None and shape is None:
-                raise ValueError("Missing 'dtype' argument")
-        if data is None and dtype is None:
             raise ValueError("Provide 'data' or 'shape'")
+        if data is None and dtype is None:
+            raise ValueError("Missing 'dtype' argument")
 
         # Create Nxdata group (if not already there)
         nxdata = self._getNXdataGroup(group)
@@ -460,6 +464,8 @@ class OutputBuffer(MutableMapping):
                     buffer.append(dset)
             else:
                 for lbl, name, signaldata in zip(labels, names, data):
+                    if dtype is not None:
+                        signaldata = signaldata.astype(dtype)
                     dset = nxdata.create_dataset(name, data=signaldata,
                                                  **createkwargs)
                     if fill_value is not None:
@@ -472,6 +478,11 @@ class OutputBuffer(MutableMapping):
                 buffer = nxdata.create_dataset(name, shape=shape,
                                                dtype=dtype, **createkwargs)
             else:
+                if dtype is not None:
+                    try:
+                        data = data.astype(dtype)
+                    except AttributeError:
+                        data = data[()].astype(dtype)
                 buffer = nxdata.create_dataset(name, data=data, **createkwargs)
             if fill_value is not None:
                 buffer[()] = fill_value

@@ -54,6 +54,8 @@ _logger = logging.getLogger(__name__)
 
 class testPyMcaBatch(TestCaseQt):
 
+    _rtolLegacy = 1e-5
+
     def setUp(self):
         self.path = tempfile.mkdtemp(prefix='pymca')
         super(testPyMcaBatch, self).setUp()
@@ -190,14 +192,14 @@ class testPyMcaBatch(TestCaseQt):
         # Compare with legacy FastXRFLinearFit
         result1 = self._fitMap(info, fast=True, outputdir=outputdir+'1')
         result2 = self._fitMap(info, fast=True, legacy=True, outputdir=outputdir+'2')
-        self._assertEqualFitResults(result1, result2, rtol=1e-5)
+        self._assertEqualFitResults(result1, result2, rtol=self._rtolLegacy)
 
     def _assertSlowFitMap(self, typ, outputdir='fitresults', **kwargs):
         info = self._generateData(typ=typ)
         # Compare with legacy McaAdvancedFitBatch
         result1 = self._fitMap(info, outputdir=outputdir+'1', **kwargs)
         result2 = self._fitMap(info, legacy=True, outputdir=outputdir+'2', **kwargs)
-        self._assertEqualFitResults(result1, result2, rtol=1e-5)
+        self._assertEqualFitResults(result1, result2, rtol=self._rtolLegacy)
 
     def _assertSlowMultiFitMap(self, typ, outputdir='fitresults', **kwargs):
         from PyMca5.PyMcaGui.pymca.PyMcaBatch import ranAsBootstrap
@@ -221,8 +223,8 @@ class testPyMcaBatch(TestCaseQt):
                 self._assertEqualFitResults(result3, result4, rtol=0)
             # Compare with legacy PyMcaBatch
             if typ != 'specmesh':
-                self._assertEqualFitResults(result1, result3, rtol=1e-5)
-            self._assertEqualFitResults(result2, result4, rtol=1e-5)
+                self._assertEqualFitResults(result1, result3, rtol=self._rtolLegacy)
+            self._assertEqualFitResults(result2, result4, rtol=self._rtolLegacy)
         # Compare thread vs. process
         result5 = self._fitMap(info, nBatches=1, asthread=True,
                                outputdir=outputdir+'5', **kwargs)
@@ -240,7 +242,7 @@ class testPyMcaBatch(TestCaseQt):
             # Compare with legacy PyMcaBatch
             result2 = self._fitMap(info, nBatches=1, legacy=True,
                                    outputdir=outputdir+'2', **kwargs)
-            self._assertEqualFitResults(result1, result2, rtol=1e-5)
+            self._assertEqualFitResults(result1, result2, rtol=self._rtolLegacy)
 
     def _fitMap(self, info, fast=False, nBatches=0,
                 outputdir='fitresults', **kwargs):
@@ -637,7 +639,6 @@ class testPyMcaBatch(TestCaseQt):
                 param = param/liveTimeCorrection
                 # TODO: why rounding errors?
                 rtol = 1e-5
-                continue
             else:
                 # Same spectrum in each pixel so fitted parameters
                 # should have the same value in each pixel
