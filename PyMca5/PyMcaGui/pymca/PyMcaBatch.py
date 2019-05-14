@@ -1116,7 +1116,7 @@ class McaBatchGUI(qt.QWidget):
         else:
             self.raise_()
 
-    def start(self, asthread=False, blocking=True):
+    def start(self, asthread=False, blocking=None):
         """
         :param bool asthread: force fit in thread instead of process(es)
         :param bool blocking: blocking call in case of single process
@@ -1125,6 +1125,8 @@ class McaBatchGUI(qt.QWidget):
             qt.QMessageBox.critical(self, "ERROR",'Empty file list')
             self.raise_()
             return
+        if blocking is None:
+            blocking = sys.platform == 'win32'
 
         # Raise exception in case multi processing is not allowed
         multiprocess = self.__splitBox.isChecked() and not asthread
@@ -1259,7 +1261,7 @@ class McaBatchGUI(qt.QWidget):
         self.__window = window
         self.__thread = thread
     
-    def _runInProcessMain(self, cmd, blocking=True):
+    def _runInProcessMain(self, cmd, blocking=False):
         """
         Run `cmd` in one of more processes
 
