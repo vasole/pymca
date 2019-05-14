@@ -48,13 +48,16 @@ def patch_backend_qt():
     def _create_qApp():
         if QApplication.instance() is None:
             raise ValueError("A QApplication must be created before")
-        try:
-            QApplication.instance().setAttribute(\
-                        QtCore.Qt.AA_UseHighDpiPixmaps)
-            QApplication.instance().setAttribute(\
-                        QtCore.Qt.AA_EnableHighDpiScaling)
-        except AttributeError:
-            pass
+
+        if 'PyQt5.QtCore' in sys.modules:
+            # why is matplotlib doing this?
+            try:
+                QApplication.instance().setAttribute(\
+                            QtCore.Qt.AA_UseHighDpiPixmaps)
+                QApplication.instance().setAttribute(\
+                            QtCore.Qt.AA_EnableHighDpiScaling)
+            except AttributeError:
+                pass
         matplotlib.backends.backend_qt5.qApp = weakref.proxy(\
                                         QApplication.instance())
     matplotlib.backends.backend_qt5._create_qApp = _create_qApp
