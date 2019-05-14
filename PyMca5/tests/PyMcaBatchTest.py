@@ -203,7 +203,7 @@ class testPyMcaBatch(TestCaseQt):
         from PyMca5.PyMcaGui.pymca.PyMcaBatch import ranAsBootstrap
         info = self._generateData(typ=typ)
         # Compare single vs. multi processing
-        result1 = self._fitMap(info, nBatches=4, outputdir=outputdir+'1', **kwargs)
+        result1 = self._fitMap(info, nBatches=2, outputdir=outputdir+'1', **kwargs)
         result2 = self._fitMap(info, nBatches=1, outputdir=outputdir+'2', **kwargs)
         self._assertEqualFitResults(result1, result2, rtol=0)
         if not ranAsBootstrap() and typ != 'hdf5':
@@ -213,7 +213,7 @@ class testPyMcaBatch(TestCaseQt):
             #  - multi process on single non-hdf5 file
             # Compare legacy single vs. multi processing
             if typ != 'specmesh':
-                result3 = self._fitMap(info, nBatches=4, legacy=True,
+                result3 = self._fitMap(info, nBatches=2, legacy=True,
                                        outputdir=outputdir+'3', **kwargs)
             result4 = self._fitMap(info, nBatches=1, legacy=True,
                                    outputdir=outputdir+'4', **kwargs)
@@ -382,7 +382,7 @@ class testPyMcaBatch(TestCaseQt):
         # Generate data (in memory + save in requested format)
         nDet = 1  # TODO: currently only works with 1 detector
         nRows = 5
-        nColumns = 10
+        nColumns = 4
         nTimes = 3
         filename = os.path.join(self.path, 'Map')
         if typ == 'edf':
@@ -404,6 +404,8 @@ class testPyMcaBatch(TestCaseQt):
             configuration["concentrations"]["useautotime"] = int(liveTimeIsProvided)
             if fast:
                 configuration['fit']['stripalgorithm'] = 1
+            else:
+                configuration['fit']['linearfitflag'] = 1
         info = genFunc(filename, nDet=nDet, nRows=nRows,
                        nColumns=nColumns, nTimes=nTimes,
                        modfunc=modfunc)
