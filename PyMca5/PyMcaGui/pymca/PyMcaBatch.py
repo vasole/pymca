@@ -280,49 +280,45 @@ def launchProcessBatchFit(cmd, blocking=False, independent=False):
     :returns: process handle when `not blocking and not independent`
               None when `blocking or independent`
     """
-    # Launch arguments:
     cmd = str(cmd)
+    # Old way of launching an independent process:
+    #if sys.platform == 'win32':
+    #    os.system("START /B {}".format(cmd))
+    #else:
+    #    os.system("{} &".format(cmd))
+
+    # Launch arguments:
     kwargs = {}
-    def onProcess(proc):
+    kwargs['cwd'] = os.getcwd()
+    kwargs['env'] = os.environ
+    kwargs['close_fds'] = True
+    kwargs['shell'] = True
+
+    def afterLaunch(proc):
         return proc
     if blocking:
         _logger.info("BLOCKING PROCESS = %s", cmd)
-        launchFunc = subprocess.call
-        if sys.platform != 'win32':
-            kwargs['shell'] = True
+        def afterLaunch(proc):
+            """Wait for process to finish
+            """
+            proc.wait()
+            return proc
     elif independent:
         _logger.info("INDEPENDENT PROCESS = %s", cmd)
-        launchFunc = subprocess.Popen
-        kwargs['cwd'] = os.getcwd()
-        kwargs['close_fds'] = True
-        if sys.platform == 'win32':
-            kwargs['env'] = os.environ
-            kwargs['creationflags'] = subprocess.CREATE_NEW_CONSOLE
-        else:
-            kwargs['shell'] = True
+        # REMARK: Not needed when shell=True
+        #if sys.platform == 'win32':
+        #    kwargs['creationflags'] = subprocess.CREATE_NEW_CONSOLE
     else:
         _logger.info("DEPENDENT PROCESS = %s", cmd)
-        # Old way:
-        #launchFunc = os.system
-        #if sys.platform == 'win32':
-        #    cmd = "START /B {}".format(cmd)
-        #else:
-        #    cmd = "{} &".format(cmd)
-        # New (equivalent) way:
-        launchFunc = subprocess.Popen
-        kwargs['cwd'] = os.getcwd()
-        kwargs['close_fds'] = True
-        if sys.platform != 'win32':
-            kwargs['shell'] = True
-            # TODO: make process dependent on UNIX
-            #       by forwarding interrupts and termination
-            #def onProcess(proc):
-            #    """Make dependent
-            #    """
-            #    def passSignal(signalNumber, frame):
-            #        os.kill(proc.pid, signalNumber)
-            #    addToSignals(passSignal)
-            #    return proc
+        # TODO: make process dependent
+        #       by forwarding interrupts and termination
+        #def afterLaunch(proc):
+        #    """Make dependent
+        #    """
+        #    def passSignal(signalNumber, frame):
+        #        os.kill(proc.pid, signalNumber)
+        #    addToSignals(passSignal)
+        #    return proc
 
     # Launch with encoding error handling:
     encodings = None, sys.getfilesystemencoding(), 'utf-8', 'latin-1'
@@ -332,7 +328,7 @@ def launchProcessBatchFit(cmd, blocking=False, independent=False):
                 lcmd = cmd.encode(encoding)
             else:
                 lcmd = cmd
-            return onProcess(launchFunc(lcmd, **kwargs))
+            return afterLaunch(subprocess.Popen(lcmd, **kwargs))
         except UnicodeEncodeError:
             if encoding == encodings[-1]:
                 raise
@@ -1120,10 +1116,10 @@ class McaBatchGUI(qt.QWidget):
         else:
             self.raise_()
 
-    def start(self, asthread=False, blocking=False):
+    def start(self, asthread=False, blocking=True):
         """
         :param bool asthread: force fit in thread instead of process(es)
-        :param bool blocking: bloccking call in case of single process
+        :param bool blocking: blocking call in case of single process
         """
         if not len(self.fileList):
             qt.QMessageBox.critical(self, "ERROR",'Empty file list')
@@ -1263,11 +1259,12 @@ class McaBatchGUI(qt.QWidget):
         self.__window = window
         self.__thread = thread
     
-    def _runInProcessMain(self, cmd, blocking=False):
+    def _runInProcessMain(self, cmd, blocking=True):
         """
         Run `cmd` in one of more processes
 
         :param Command cmd:
+        :param bool blocking: blocking call in case of single process
         """
         cmd.addOption('debug', value=_logger.getEffectiveLevel() == logging.DEBUG, format="{:d}")
         cmd.addOption('exitonend', value=1, format="{:d}")
@@ -1301,7 +1298,6 @@ class McaBatchGUI(qt.QWidget):
             # self.show() when finished (see _pollProcessList)
         else:
             # Run in one process
-            #blocking |= sys.platform == 'win32'
             if blocking:
                 self.hide()
                 qApp = qt.QApplication.instance()

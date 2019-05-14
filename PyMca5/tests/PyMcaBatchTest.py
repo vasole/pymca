@@ -230,7 +230,7 @@ class testPyMcaBatch(TestCaseQt):
                                outputdir=outputdir+'5', **kwargs)
         self._assertEqualFitResults(result2, result5, rtol=0)
         # Compare blocking vs. non-blocking process
-        result6 = self._fitMap(info, nBatches=1, blocking=True,
+        result6 = self._fitMap(info, nBatches=1, blocking=False,
                                outputdir=outputdir+'6', **kwargs)
         self._assertEqualFitResults(result2, result6, rtol=0)
 
