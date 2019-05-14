@@ -1301,7 +1301,7 @@ class McaBatchGUI(qt.QWidget):
             qApp = qt.QApplication.instance()
             qApp.processEvents()
             self._runInProcesses(cmd)
-            self.show()
+            # self.show() when finished (see _pollProcessList)
         else:
             # Run in one process
             #blocking |= sys.platform == 'win32'
