@@ -1208,18 +1208,15 @@ class McaBatchGUI(qt.QWidget):
         cmd.addOption('htmlindex', value=htmlindex)
 
         if 0:
-            overwrite= self.__overwrite.isChecked()
             filestep = int(qt.safe_str(self.__fileSpin.text()))
             mcastep = int(qt.safe_str(self.__mcaSpin.text()))
         else:
-            overwrite= 1
             filestep = 1
             mcastep = 1
             if len(self.fileList) == 1:
                 if multiprocess:
                     nbatches = int(qt.safe_str(self.__splitSpin.text()))
                     mcastep = nbatches
-        cmd.addOption('overwrite', value=overwrite)
         cmd.addOption('filestep', value=filestep)
         cmd.addOption('mcastep', value=mcastep)
         cmd.addOption('fitfiles', value=self.__fitBox.isChecked(), format="{:d}")
