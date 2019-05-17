@@ -54,7 +54,7 @@ class PyMcaBatchBuildOutput(object):
         self.inputDir = inputdir
         self.outputDir = outputdir
 
-    def buildOutput(self, inputdir=None, outputdir=None, delete=None):
+    def buildOutput(self, inputdir=None, basename=None, outputdir=None, delete=None):
         """
         :returns: 3 lists of merged filenames: .edf filenames, .dat filenames and .h5 filenames
         """
@@ -81,8 +81,12 @@ class PyMcaBatchBuildOutput(object):
                        'cfg': {'ext': '.cfg', 'list': []},
                        'conc': {'ext': '_concentrations.txt', 'list': []}
                        }
-        for filename in allfiles:
-            for key, value in partialList.items():
+        for filepath in allfiles:
+            filename = os.path.basename(filepath)
+            for typ, value in partialList.items():
+                if basename:
+                    if not filename.startswith(basename):
+                        continue
                 if filename.endswith('000000_partial' + value['ext']):
                     value['list'].append(filename)
         outListH5 = self._merge(inputdir, outputdir, delete,

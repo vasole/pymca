@@ -151,7 +151,7 @@ class testPyMcaBatch(TestCaseQt):
         self._assertSlowFitMap('edf', roiwidth=100, outputdir='fitresulta')
         self._assertSlowGuiFitMap('edf', roiwidth=100, outputdir='fitresultb')
 
-    @unittest.skipIf(sys.platform == 'darwin', "does not work on mac")
+    #@unittest.skipIf(sys.platform == 'darwin', "fails sometimes on mac")
     def testSlowMultiFitEdfMap(self):
         self._assertSlowMultiFitMap('edf')
 
@@ -165,7 +165,7 @@ class testPyMcaBatch(TestCaseQt):
         self._assertSlowFitMap('specmesh', roiwidth=100, outputdir='fitresulta')
         self._assertSlowGuiFitMap('specmesh', roiwidth=100, outputdir='fitresultb')
 
-    @unittest.skipIf(sys.platform == 'darwin', "does not work on mac")
+    @unittest.skipIf(sys.platform == 'darwin', "fails sometimes on mac")
     def testSlowMultiFitSpecMap(self):
         self._assertSlowMultiFitMap('specmesh')
 
@@ -182,8 +182,8 @@ class testPyMcaBatch(TestCaseQt):
         self._assertSlowFitMap('hdf5', roiwidth=100, outputdir='fitresulta')
         self._assertSlowGuiFitMap('hdf5', roiwidth=100, outputdir='fitresultb')
 
+    @unittest.skipIf(sys.platform == 'darwin', "fails sometimes on mac")
     @unittest.skipIf(not HAS_H5PY, "skipped h5py missing")
-    @unittest.skipIf(sys.platform == 'darwin', "does not work on mac")
     def testSlowMultiFitHdf5Map(self):
         self._assertSlowMultiFitMap('hdf5')
 
@@ -206,7 +206,7 @@ class testPyMcaBatch(TestCaseQt):
         info = self._generateData(typ=typ)
         # Compare single vs. multi processing
         result1 = self._fitMap(info, nBatches=2, outputdir=outputdir+'1', **kwargs)
-        result2 = self._fitMap(info, nBatches=1, blocking=False, outputdir=outputdir+'2', **kwargs)
+        result2 = self._fitMap(info, nBatches=1, outputdir=outputdir+'2', **kwargs)
         self._assertEqualFitResults(result1, result2, rtol=0)
         if not ranAsBootstrap() and typ != 'hdf5':
             # REMARK: not supported by legacy code
@@ -226,7 +226,7 @@ class testPyMcaBatch(TestCaseQt):
                 self._assertEqualFitResults(result1, result3, rtol=self._rtolLegacy)
             self._assertEqualFitResults(result2, result4, rtol=self._rtolLegacy)
         # Compare thread vs. process
-        result5 = self._fitMap(info, nBatches=1, asthread=True,
+        result5 = self._fitMap(info, nBatches=0,
                                outputdir=outputdir+'5', **kwargs)
         self._assertEqualFitResults(result2, result5, rtol=0)
         # Compare blocking vs. non-blocking process
@@ -244,13 +244,13 @@ class testPyMcaBatch(TestCaseQt):
                                    outputdir=outputdir+'2', **kwargs)
             self._assertEqualFitResults(result1, result2, rtol=self._rtolLegacy)
 
-    def _fitMap(self, info, fast=False, nBatches=0,
+    def _fitMap(self, info, fast=False, nBatches=-1,
                 outputdir='fitresults', **kwargs):
         outputdir = os.path.join(self.path, outputdir)
         if fast:
             # Single process fast fitting (FastXRFLinearFit)
             result = self._fastFitMap(info, outputdir, **kwargs)
-        elif not nBatches:
+        elif nBatches < 0:
             # Single process slow fitting (McaAdvancedFitBatch)
             result = self._slowFitMap(info, outputdir, **kwargs)
         else:
@@ -319,6 +319,11 @@ class testPyMcaBatch(TestCaseQt):
                          roiwidth=0, **startargs):
         """
         Multi process slow fitting
+
+        nBatches == 0: thread
+        nBatches == 1, blocking == False: single monitored process
+        nBatches == 1, blocking == True: single unmonitored process
+        nBatches > 1: multi processing
         """
         os.mkdir(outputdir)
         kwargs = {'actions': True,
@@ -345,10 +350,11 @@ class testPyMcaBatch(TestCaseQt):
         widget = McaBatchGUI(**kwargs)
         if legacy:
             widget._McaBatchGUI__concentrationsBox.setChecked(True)
-            widget._McaBatchGUI__splitBox.setChecked(nBatches > 1)
-            widget._McaBatchGUI__splitSpin.setValue(max(nBatches, 1))
             widget._McaBatchGUI__roiBox.setChecked(bool(roiwidth))
             widget._McaBatchGUI__roiSpin.setValue(roiwidth)
+            widget._McaBatchGUI__splitSpin.setValue(min(nBatches, 1))
+            widget._McaBatchGUI__splitBox.setChecked(nBatches > 1)
+
         #widget.show()  # show widget for debugging
         self.qapp.processEvents()
         widget.start(**startargs)

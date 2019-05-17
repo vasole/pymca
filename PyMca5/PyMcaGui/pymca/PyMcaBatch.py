@@ -35,6 +35,7 @@ import subprocess
 import signal
 import atexit
 import logging
+from glob import glob
 from contextlib import contextmanager
 try:
     from collections.abc import MutableMapping
@@ -73,7 +74,7 @@ _logger = logging.getLogger(__name__)
 def moduleRunCmd(modulePath):
     modulePath = os.path.abspath(modulePath)
     if not os.path.exists(modulePath):
-        return None
+        return ''
     sysExecutable = sys.executable
     bootstrap = os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', '..', 'bootstrap.py')
     bootstrap = os.path.abspath(bootstrap)
@@ -88,7 +89,6 @@ def moduleRunCmd(modulePath):
 
 
 def ranAsBootstrap():
-    sysExecutable = sys.executable
     bootstrap = os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', '..', 'bootstrap.py')
     bootstrap = os.path.abspath(bootstrap)
     return os.path.isfile(bootstrap)
@@ -201,7 +201,73 @@ class Command(MutableMapping):
         return len(self._options)
 
 
-def launchThreadBatchFit(thread, window, qApp=None):
+def toolInfo():
+    """
+    :returns 2-tuple: rootdir(str): directory of executables or GUI launch scripts
+                        frozen(bool): run as frozen executable
+    """
+    try:
+        rootdir = os.path.dirname(__file__)
+        if sys.platform == 'darwin':
+            # TODO: is this necessary?
+            frozen = '.app' in rootdir
+        else:
+            frozen = False
+        if not os.path.exists(os.path.join(rootdir, "PyMcaBatch.py")):
+            # script usage case
+            rootdir = os.path.dirname(EdfFileSimpleViewer.__file__)
+    except:
+        # __file__ is not defined
+        frozen = True
+        rootdir = os.path.dirname(EdfFileSimpleViewer.__file__)
+    if not frozen:
+        lst = ["PyMcaMain.exe", "PyMcaBatch.exe"]
+        if sys.platform != 'win32':
+            lst += ["PyMcaMain", "PyMcaBatch"]
+        if os.path.basename(sys.executable) in lst:
+            frozen = True
+            rootdir = os.path.dirname(EdfFileSimpleViewer.__file__)
+    if frozen:
+        # we are at level PyMca5\PyMcaGui\pymca
+        rootdir = os.path.dirname(rootdir)
+        # level PyMcaGui
+        rootdir = os.path.dirname(rootdir)
+        # level PyMca5
+        rootdir = os.path.dirname(rootdir)
+        # directory level with executables
+    return rootdir, frozen
+
+
+def toolPath(toolname):
+    """
+    :params str toolname: e.g. PyMcaBatch
+    :returns str: e.g. /users/denolf/.local/bin/pymca
+    """
+    rootdir, frozen = toolInfo()
+    if frozen:
+        if sys.platform == 'win32':
+            toolname += '.exe'
+        tool = os.path.join(rootdir, toolname)
+        if os.path.exists(tool):
+            tool = '"{}"'.format(tool)
+        else:
+            tool = ''
+    else:
+        tool = os.path.join(rootdir, toolname+".py")
+        if os.path.exists(tool):
+            tool = moduleRunCmd(tool)
+        else:
+            tool = ''
+    return tool
+
+
+def noProcesses():
+    _, forzen = toolInfo()
+    forzenDarwin = sys.platform == 'darwin' and forzen
+    return forzenDarwin
+
+
+def launchThread(thread, window, qApp=None):
     """Launch thread with control window
     """
     def cleanup():
@@ -270,7 +336,7 @@ def addToSignals(onSignal, signals=None, onexit=True):
         atexit.register(onSignal, signal.SIGTERM, 0)
 
 
-def launchProcessBatchFit(cmd, blocking=False, independent=False):
+def launchProcess(cmd, blocking=False, independent=False):
     """
     Run `cmd` in one process
 
@@ -310,7 +376,7 @@ def launchProcessBatchFit(cmd, blocking=False, independent=False):
         #    kwargs['creationflags'] = subprocess.CREATE_NEW_CONSOLE
     else:
         _logger.info("DEPENDENT PROCESS = %s", cmd)
-        # TODO: make process dependent
+        # TODO: make child process dependent on parent
         #       by forwarding interrupts and termination
         #def afterLaunch(proc):
         #    """Make dependent
@@ -754,7 +820,7 @@ class McaBatchGUI(qt.QWidget):
 
         #BATCH SPLITTING
         self.__splitBox = qt.QCheckBox(vBox)
-        self.__splitBox.setText('EXPERIMENTAL: Use several processes')
+        self.__splitBox.setText('Use several processes')
         self.__splitBox.setChecked(nproc > 1)
         self.__splitBox.setEnabled(True)
         vBox.l.addWidget(self.__splitBox)
@@ -770,12 +836,14 @@ class McaBatchGUI(qt.QWidget):
         label.setText("Number of processes:")
         self.__splitSpin = qt.QSpinBox(box4)
         if QTVERSION < '4.0.0':
-            self.__splitSpin.setMinValue(1)
+            self.__splitSpin.setMinValue(0)
             self.__splitSpin.setMaxValue(1000)
         else:
-            self.__splitSpin.setMinimum(1)
+            self.__splitSpin.setMinimum(0)
             self.__splitSpin.setMaximum(1000)
-        self.__splitSpin.setValue(max(nproc, 2))
+        self.__splitSpin.setValue(max(nproc, 0))
+        # nproc == 0: run fit in single thread
+        # nproc != 0: run fit in one or more processes
         box4.l.addWidget(label)
         box4.l.addWidget(self.__splitSpin)
 
@@ -1116,41 +1184,64 @@ class McaBatchGUI(qt.QWidget):
         else:
             self.raise_()
 
-    def start(self, asthread=False, blocking=None):
+    @property
+    def _runAsMultiProcess(self):
+        return self._nProcesses > 1
+
+    @property
+    def _runAsSingleProcess(self):
+        return self._nProcesses == 1
+
+    @property
+    def _runAsSingleThread(self):
+        return self._nProcesses == 0
+
+    @property
+    def _nProcesses(self):
+        roifit = self.__roiBox.isChecked()
+        if roifit or noProcesses():
+            # single thread
+            return 0
+        n = int(qt.safe_str(self.__splitSpin.text()))
+        if not self.__splitBox.isChecked():
+            # single thread or single process
+            n = min(n, 1)
+        return n
+
+    def start(self, blocking=False):
         """
-        :param bool asthread: force fit in thread instead of process(es)
         :param bool blocking: blocking call in case of single process
         """
         if not len(self.fileList):
             qt.QMessageBox.critical(self, "ERROR",'Empty file list')
             self.raise_()
             return
-        if blocking is None:
-            blocking = sys.platform == 'win32'
 
         # Raise exception in case multi processing is not allowed
-        multiprocess = self.__splitBox.isChecked() and not asthread
-        if multiprocess:
-            if sys.platform == 'darwin':
-                if ".app" in os.path.dirname(__file__):
-                    text = 'Multiple processes only supported on MacOS X when built from source\n'
-                    text += 'and not when running the frozen binary.'
-                    qt.QMessageBox.critical(self, "ERROR",text)
-                    self.raise_()
-                    return
-            if len(self.fileList) == 1:
-                if int(qt.safe_str(self.__splitSpin.text())) > 1:
-                    allowSingleFileSplitProcesses = True
-                    if HDF5SUPPORT:
-                        if h5py.is_hdf5(self.fileList[0]):
-                            _logger.info("Allowing single HDF5 file process split")
-                            _logger.info("In the past it was problematic")
-                            allowSingleFileSplitProcesses = True
-                    if not allowSingleFileSplitProcesses:
-                        text = "Multiple processes can only be used with multiple input files."
-                        qt.QMessageBox.critical(self, "ERROR",text)
-                        self.raise_()
-                        return
+        # REMARK: not longer needed because
+        #       - silently ignore multi processing on frozen MacOS X
+        #       - multi processing on single file always allowed
+        #if self._runAsMultiProcess:
+        #    if sys.platform == 'darwin':
+        #        if ".app" in os.path.dirname(__file__):
+        #            text = 'Multiple processes only supported on MacOS X when built from source\n'
+        #            text += 'and not when running the frozen binary.'
+        #            qt.QMessageBox.critical(self, "ERROR",text)
+        #            self.raise_()
+        #            return
+        #    if len(self.fileList) == 1:
+        #        if int(qt.safe_str(self.__splitSpin.text())) > 1:
+        #            allowSingleFileSplitProcesses = True
+        #            if HDF5SUPPORT:
+        #                if h5py.is_hdf5(self.fileList[0]):
+        #                    _logger.info("Allowing single HDF5 file process split")
+        #                    _logger.info("In the past it was problematic")
+        #                    allowSingleFileSplitProcesses = True
+        #            if not allowSingleFileSplitProcesses:
+        #                text = "Multiple processes can only be used with multiple input files."
+        #                qt.QMessageBox.critical(self, "ERROR",text)
+        #                self.raise_()
+        #                return
 
         # Verify config file
         if (self.configFile is None) or (not self.__goodConfigFile(self.configFile)):
@@ -1205,18 +1296,10 @@ class McaBatchGUI(qt.QWidget):
                 htmlindex+=".html"
         cmd.addOption('htmlindex', value=htmlindex)
 
-        if 0:
-            filestep = int(qt.safe_str(self.__fileSpin.text()))
-            mcastep = int(qt.safe_str(self.__mcaSpin.text()))
-        else:
-            filestep = 1
-            mcastep = 1
-            if len(self.fileList) == 1:
-                if multiprocess:
-                    nbatches = int(qt.safe_str(self.__splitSpin.text()))
-                    mcastep = nbatches
-        cmd.addOption('filestep', value=filestep)
-        cmd.addOption('mcastep', value=mcastep)
+        #filestep = int(qt.safe_str(self.__fileSpin.text()))
+        #mcastep = int(qt.safe_str(self.__mcaSpin.text()))
+        cmd.addOption('filestep', value=1)
+        cmd.addOption('mcastep', value=1)
         cmd.addOption('fitfiles', value=self.__fitBox.isChecked(), format="{:d}")
         cmd.addOption('selection', value=self._selection, format="{:d}", convert=bool)
 
@@ -1234,17 +1317,14 @@ class McaBatchGUI(qt.QWidget):
         # Launch `cmd` in thread or process(es)
         wname = "Batch from %s to %s " % (os.path.basename(self.fileList[ 0]),
                                           os.path.basename(self.fileList[-1]))
-        bthread = asthread or cmd.roifit
-        bthread |= sys.platform == 'darwin' and\
-                   ((".app" in os.path.dirname(__file__)) or (not multiprocess))
-        if bthread:
+        if self._runAsSingleThread:
             self._runInThreadMain(cmd, wname)
         else:
             self._runInProcessMain(cmd, blocking=blocking)
 
     def _runInThreadMain(self, cmd, wname):
         """
-        Run `cmd` in one thread
+        Run `cmd` in a single thread
 
         :param Command cmd:
         :param str wname:
@@ -1252,12 +1332,13 @@ class McaBatchGUI(qt.QWidget):
         kwargs = cmd.getOptions('outdir', 'html', 'htmlindex', 'table')
         kwargs['outputdir'] = kwargs.pop('outdir')
         window = McaBatchWindow(name=wname, actions=1,
-                                showresult=self._showResult, **kwargs)
+                                showresult=self._showResult,
+                                **kwargs)
         kwargs = cmd.getAllOptionsBut('html', 'htmlindex', 'table')
         kwargs['outputdir'] = kwargs.pop('outdir')
         thread = McaBatch(window, self.configFile, filelist=self.fileList, **kwargs)
         window._rootname = "%s"% thread._rootname
-        launchThreadBatchFit(thread, window)
+        launchThread(thread, window)
         self.__window = window
         self.__thread = thread
     
@@ -1270,7 +1351,7 @@ class McaBatchGUI(qt.QWidget):
         """
         cmd.addOption('debug', value=_logger.getEffectiveLevel() == logging.DEBUG, format="{:d}")
         cmd.addOption('exitonend', value=1, format="{:d}")
-        cmd.addOption('showresult', value=self._showResult, format="{:d}")
+        cmd.addOption('showresult', value=0, format="{:d}")
 
         # Prepare tools (executables or python scripts) for processing/viewing
         if not self._processToolsInit(cmd):
@@ -1290,16 +1371,21 @@ class McaBatchGUI(qt.QWidget):
             cmd.addOption("cfg", value=self.configFile)
 
         # Launch process(es)
-        multiprocess = self.__splitBox.isChecked()
-        if multiprocess:
-            # Run in multiple sub-processes
+        monitored = self._runAsMultiProcess or not blocking
+        if monitored:
+            # Dependent (monitored) processes
+            # REMARK: _pollProcessList will
+            #   - show the result
+            #   - show the PyMcaBatch window
+            cmd.showresult = 0
             self.hide()
             qApp = qt.QApplication.instance()
             qApp.processEvents()
-            self._runInProcesses(cmd)
-            # self.show() when finished (see _pollProcessList)
+            self._runInProcessMonitored(cmd)
         else:
-            # Run in one process
+            # Blocking or independent (unmonitored) process
+            # REMARK: currently a non-blocking is always monitored (see above)
+            cmd.showresult = self._showResult
             if blocking:
                 self.hide()
                 qApp = qt.QApplication.instance()
@@ -1314,85 +1400,36 @@ class McaBatchGUI(qt.QWidget):
 
         :param Command cmd:
         """
-        rootdir, frozen = self._processToolsInfo()
-        if sys.platform == 'win32':
-            exec_extension = '.exe'
-        else:
-            exec_extension = ''
-        if frozen:
-            myself = os.path.join(rootdir, "PyMcaBatch"+exec_extension)
-            viewer = os.path.join(rootdir, "EdfFileSimpleViewer"+exec_extension)
-            rgb = os.path.join(rootdir, "PyMcaPostBatch"+exec_extension)
-            if not os.path.exists(viewer):
-                viewer = None
-            if not os.path.exists(rgb):
-                rgb = None
-        else:
-            if not os.path.exists(os.path.join(rootdir, "PyMcaBatch.py")):
-                rootdir = os.path.dirname(EdfFileSimpleViewer.__file__)
-                if not os.path.exists(os.path.join(rootdir, "PyMcaBatch.py")):
-                    text = 'Cannot locate PyMcaBatch.py file.\n'
-                    qt.QMessageBox.critical(self, "ERROR",text)
-                    self.raise_()
-                    return False
-            myself = moduleRunCmd(os.path.join(rootdir, "PyMcaBatch.py"))
-            viewer = moduleRunCmd(os.path.join(rootdir, "EdfFileSimpleViewer.py"))
-            rgb = moduleRunCmd(os.path.join(rootdir, "PyMcaPostBatch.py"))
-        if frozen:
-            cmd.setCommand(myself, fmt='"{}"')
-        else:
-            cmd.setCommand(myself)
-        self._rgb = rgb
+        myself = toolPath('PyMcaBatch')
+        if not myself:
+            text = 'Cannot locate PyMcaBatch.\n'
+            qt.QMessageBox.critical(self, "ERROR",text)
+            self.raise_()
+            return False
+        cmd.setCommand(myself)
+        self._rgb = toolPath('PyMcaPostBatch')
+        # REMARK: viewer is currently not launched
+        #         as an independent process (see _showProcessResults)
+        #viewer = toolPath('EdfFileSimpleViewer')
         return True
 
-    def _processToolsInfo(self):
+    def _runInProcessMonitored(self, cmd):
         """
-        :returns 2-tuple: rootdir(str): directory of executables or GUI launch scripts
-                          frozen(bool): run as frozen executable
-        """
-        try:
-            rootdir = os.path.dirname(__file__)
-            frozen = False
-            if not os.path.exists(os.path.join(rootdir, "PyMcaBatch.py")):
-                # script usage case
-                rootdir = os.path.dirname(EdfFileSimpleViewer.__file__)
-        except:
-            # __file__ is not defined
-            frozen = True
-            rootdir = os.path.dirname(EdfFileSimpleViewer.__file__)
-        if not frozen:
-            lst = ["PyMcaMain.exe", "PyMcaBatch.exe"]
-            if sys.platform != 'win32':
-                lst += ["PyMcaMain", "PyMcaBatch"]
-            if os.path.basename(sys.executable) in lst:
-                frozen = True
-                rootdir = os.path.dirname(EdfFileSimpleViewer.__file__)
-        if frozen:
-            # we are at level PyMca5\PyMcaGui\pymca
-            rootdir = os.path.dirname(rootdir)
-            # level PyMcaGui
-            rootdir = os.path.dirname(rootdir)
-            # level PyMca5
-            rootdir = os.path.dirname(rootdir)
-            # directory level with executables
-        return rootdir, frozen
-
-    def _runInProcesses(self, cmd):
-        """
-        Divide `cmd` over several processes (non-blocking call)
+        Run `cmd` in one or more processes and start polling for finish
 
         :param Command cmd:
         """
         processList = []
-        if self.__splitBox.isChecked():
-            nBatches = int(qt.safe_str(self.__splitSpin.text()))
-        else:
-            nBatches = 1
         nFiles = len(self.fileList)
-        def launch(cmd):
+        nBatches = self._nProcesses
+        if nBatches > 1:
+            def launch(cmd):
+                self._runInProcess(cmd, blocking=False,
+                                   processList=processList)
+            subCommands(cmd, nFiles, nBatches, launch)
+        else:
             self._runInProcess(cmd, blocking=False,
                                processList=processList)
-        subCommands(cmd, nFiles, nBatches, launch)
         self._processList = processList
         self._pollProcessList()
         if self._timer is None:
@@ -1412,17 +1449,17 @@ class McaBatchGUI(qt.QWidget):
         :param processList: implies non-blocking when a list
         """
         if processList is not None:
-            p = launchProcessBatchFit(cmd, blocking=False)
+            p = launchProcess(cmd, blocking=False)
             processList.append(p)
         elif blocking:
-            launchProcessBatchFit(cmd, blocking=True)
+            launchProcess(cmd, blocking=True)
         else:
-            launchProcessBatchFit(cmd, independent=True)
+            launchProcess(cmd, independent=True)
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Information)
             text = "Your fit has been started as an independent process."
             msg.setText(text)
-            # REMARK: non-blocking for unit testing
+            # REMARK: needs to be non-blocking for unit testing
             #msg.exec_()
             msg.show()
 
@@ -1467,10 +1504,12 @@ class McaBatchGUI(qt.QWidget):
             self.raiseW()
         else:
             self.raise_()
-        args = self._mergeProcessResults()
+        edfoutlist, datoutlist = self._mergeProcessResults()
+        if not edfoutlist and not datoutlist:
+            edfoutlist, datoutlist = self._fetchProcessResults()
         if self._showResult:
             try:
-                self._showProcessResults(*args)
+                self._showProcessResults(edfoutlist, datoutlist)
             except:
                 _logger.error("Failed plotting result (probably interrupted by the user)")
 
@@ -1478,13 +1517,20 @@ class McaBatchGUI(qt.QWidget):
         _logger.info('Merging multi-process results...')
         work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(inputdir=self.outputDir)
         delete = _logger.getEffectiveLevel() != logging.DEBUG
-        edfoutlist, datoutlist, h5outlist = work.buildOutput(delete=delete)
-        subdir = McaAdvancedFitBatch.getRootName(self.fileList)
-        inputdir = os.path.join(self.outputDir, subdir)
-        edfoutlist2, datoutlist2, h5outlist2 = work.buildOutput(inputdir=inputdir, delete=delete)
+        basename = McaAdvancedFitBatch.getRootName(self.fileList)
+        edfoutlist, datoutlist, h5outlist = work.buildOutput(basename=basename, delete=delete)
+        inputdir = os.path.join(self.outputDir, basename)
+        edfoutlist2, datoutlist2, h5outlist2 = work.buildOutput(basename=basename, inputdir=inputdir, delete=delete)
         edfoutlist += edfoutlist2
         datoutlist += datoutlist2
         _logger.info('Finished merging multi-process results.')
+        return edfoutlist, datoutlist
+
+    def _fetchProcessResults(self):
+        basename = McaAdvancedFitBatch.getRootName(self.fileList)
+        inputdir = os.path.join(self.outputDir, basename)
+        edfoutlist = glob(os.path.join(inputdir, basename+'*.edf'))
+        datoutlist = glob(os.path.join(inputdir, basename+'*.dat'))
         return edfoutlist, datoutlist
 
     def _showProcessResults(self, edfoutlist, datoutlist):
@@ -1502,7 +1548,7 @@ class McaBatchGUI(qt.QWidget):
             rgb = self._rgb
         if datoutlist and rgb is not None:
             cmd = '%s "%s"' % (rgb, datoutlist[0])
-            launchProcessBatchFit(cmd, independent=True)
+            launchProcess(cmd, independent=True)
 
 
 class McaBatch(McaAdvancedFitBatch.McaAdvancedFitBatch, qt.QThread):
@@ -1920,7 +1966,10 @@ class McaBatchWindow(qt.QWidget):
         pass
 
     def plotImages(self,imagelist):
-        if (sys.platform == 'win32') or (sys.platform == 'darwin'):
+        if noProcesses():
+            if self.exitonend:
+                # Do not start because we exit anyway
+                return
             self.__viewer = EdfFileSimpleViewer.EdfFileSimpleViewer()
             self.__viewer.setFileList(imagelist)
             self.__viewer.show()
@@ -1928,30 +1977,9 @@ class McaBatchWindow(qt.QWidget):
             filelist = " "
             for ffile in imagelist:
                 filelist+=" %s" % ffile
-            try:
-                rootdir = os.path.dirname(__file__)
-                frozen = False
-            except:
-                frozen = True
-                rootdir = os.path.dirname(EdfFileSimpleViewer.__file__)
-            if not frozen:
-                if sys.executable in ["PyMcaMain", "PyMcaMain.exe",
-                                      "PyMcaBatch", "PyMcaBatch.exe"]:
-                    frozen = True
-            _logger.debug("final rootdir = %s", rootdir)
-            if frozen:
-                # we are at level PyMca5\PyMcaGui\pymca
-                rootdir = os.path.dirname(rootdir)
-                # level PyMcaGui
-                rootdir = os.path.dirname(rootdir)
-                # level PyMca5
-                rootdir = os.path.dirname(rootdir)
-                # directory level with exe files
-                myself = os.path.join(rootdir, "EdfFileSimpleViewer")
-            else:
-                myself = moduleRunCmd(os.path.join(rootdir, "EdfFileSimpleViewer.py"))
-            cmd = "%s %s" % (myself, filelist)
-            launchProcessBatchFit(cmd, independent=True)
+            viewer = toolPath('EdfFileSimpleViewer')
+            cmd = "%s %s" % (viewer, filelist)
+            launchProcess(cmd, independent=True)
             
 
 def main():
@@ -2071,7 +2099,7 @@ def main():
         elif opt == '--multipage':
             multipage = int(arg)
         elif opt == '--nproc':
-            nproc = max(int(arg), 1)
+            nproc = max(int(arg), 0)
     level = getLoggingLevel(opts)
     logging.basicConfig(level=level)
     _logger.setLevel(level)
@@ -2152,7 +2180,7 @@ def main():
                 return
 
         window._rootname = "%s"% thread._rootname
-        launchThreadBatchFit(thread, window, qApp=app)
+        launchThread(thread, window, qApp=app)
         
     app.exec_()
 
