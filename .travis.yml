@@ -78,7 +78,7 @@ script:
     - pip install --upgrade pip
 
     # Dependencies
-    - pip install matplotlib
+    - pip install "matplotlib>=1.0,<3.1"
     - pip install fisx
     - pip install h5py
     - pip install silx
