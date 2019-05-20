@@ -28,6 +28,7 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+import os
 import sys, getopt
 import traceback
 import logging
@@ -126,6 +127,12 @@ if __name__ == '__main__':
 
     from PyMca5.PyMcaCore.LoggingLevel import getLoggingLevel
     logging.basicConfig(level=getLoggingLevel(opts))
+    if "HDF5_USE_FILE_LOCKING" not in os.environ:
+        if "h5py" in sys.modules:
+             _logger.warning("h5py already imported")            
+        os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
+        _logger.info("%s set to %s" % ("HDF5_USE_FILE_LOCKING",
+                                       os.environ["HDF5_USE_FILE_LOCKING"]))
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
@@ -170,7 +177,6 @@ TOMOGUI_FLAG = True
 
 import PyMca5
 from PyMca5 import PyMcaDataDir
-import os
 __version__ = PyMca5.version()
 
 if __name__ == "__main__":
