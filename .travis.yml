@@ -81,7 +81,7 @@ script:
     - pip install matplotlib
     - pip install fisx
     - pip install h5py
-    - pip install silx
+    - pip install silx --pre --find-links https://silx.gitlab-pages.esrf.fr/bob/silx/
     - if [[ ! -z $QT_BINDING ]];
       then
           pip install $QT_BINDING;
