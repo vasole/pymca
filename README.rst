@@ -62,6 +62,7 @@ You will need the following dependencies installed:
    recommended)
 -  `numpy <https://www.numpy.org/>`_
 -  `fisx <https://github.com/vasole/fisx>`_
+-  `h5py <https://github.com/h5py/h5py>`_
 
 If you want to use the graphical interface provided, you will need a
 running python installation with one of the following combinations:
@@ -72,8 +73,8 @@ running python installation with one of the following combinations:
 -  ``PyQt5`` + ``matplotlib`` (PyMca license will be
    `GPL <https://www.gnu.org/licenses/gpl-3.0.en.html>`_ unless you
    have a commercial PyQt5 license)
--  ``PySide`` + ``matplotlib`` (PyMca license will be
-   `MIT <https://tldrlegal.com/license/mit-license>`_ because PySide is
+-  ``PySide2`` + ``matplotlib`` (PyMca license will be
+   `MIT <https://tldrlegal.com/license/mit-license>`_ because PySide2 is
    `LGPL <https://www.gnu.org/licenses/lgpl-3.0.en.html>`_)
 
 If you want to embed ``PyMca`` in your own graphical applications, I
