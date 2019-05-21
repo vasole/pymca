@@ -82,6 +82,13 @@ recommend you to use the
 `McaAdvancedFit.py <PyMca5/PyMcaGui/physics/xrf/McaAdvancedFit.py>`_
 module. It is very easy to embed.
 
+Testing
+-------
+
+To run the tests **after installation** run::
+
+    python -m PyMca5.tests.TestAll
+
 Development Plans
 -----------------
 
