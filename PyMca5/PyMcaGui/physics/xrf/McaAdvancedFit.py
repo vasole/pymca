@@ -2571,17 +2571,17 @@ class McaAdvancedFit(qt.QWidget):
         """ Write a python array into a Spec array.
             Return the string containing the Spec array
         """
-        tmpstr = "@A "
+        tmpstr = "@A"
         length = len(data)
         for idx in range(0, length, 16):
             if idx+15 < length:
                 for i in range(0,16):
-                    tmpstr += "%.4f " % data[idx+i]
+                    tmpstr += " %.4f" % data[idx+i]
                 if idx+16 != length:
                     tmpstr += "\\"
             else:
                 for i in range(idx, length):
-                    tmpstr += "%.4f " % data[i]
+                    tmpstr += " %.4f" % data[i]
             tmpstr += "\n"
         return tmpstr
 

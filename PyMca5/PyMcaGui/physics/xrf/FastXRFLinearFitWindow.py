@@ -111,13 +111,13 @@ class FastXRFLinearFitWindow(qt.QWidget):
         
         # concentrations
         self._concentrationsBox = qt.QCheckBox(self._boxContainer1)
-        self._concentrationsBox.setText("calculate concentrations")
+        self._concentrationsBox.setText("Concentrations")
         self._concentrationsBox.setChecked(False)
         self._concentrationsBox.setEnabled(True)
 
         # diagnostics
         self._diagnosticsBox = qt.QCheckBox(self._boxContainer1)
-        self._diagnosticsBox.setText("calculate diagnostics")
+        self._diagnosticsBox.setText("Diagnostics")
         self._diagnosticsBox.setChecked(False)
         self._diagnosticsBox.setEnabled(hasH5py)
 
@@ -143,6 +143,12 @@ class FastXRFLinearFitWindow(qt.QWidget):
         self._csvBox.setText("CSV")
         self._csvBox.setChecked(False)
         self._csvBox.setEnabled(True)
+
+        # generate dat file
+        self._datBox = qt.QCheckBox(self._boxContainer2)
+        self._datBox.setText("DAT")
+        self._datBox.setChecked(False)
+        self._datBox.setEnabled(True)
         
         # generate edf file
         self._edfBox = qt.QCheckBox(self._boxContainer2)
@@ -164,14 +170,26 @@ class FastXRFLinearFitWindow(qt.QWidget):
         self._overwriteBox.setChecked(True)
         self._overwriteBox.setEnabled(True)
         
+        # generate mutipage file
+        self._multipageBox = qt.QCheckBox(self._boxContainer2)
+        self._multipageBox.setText("Multipage")
+        self._multipageBox.setChecked(False)
+        self._multipageBox.setEnabled(True)
+
+        self._edfBox.stateChanged.connect(self.stateMultiPage)
+        self._tiffBox.stateChanged.connect(self.stateMultiPage)
+        self.stateMultiPage()
+
         self._boxContainerLayout1.addWidget(self._concentrationsBox)
         self._boxContainerLayout1.addWidget(self._fitAgainBox)
         self._boxContainerLayout1.addWidget(self._diagnosticsBox)
         self._boxContainerLayout2.addWidget(self._h5Box)
         self._boxContainerLayout2.addWidget(self._edfBox)
         self._boxContainerLayout2.addWidget(self._csvBox)
+        self._boxContainerLayout2.addWidget(self._datBox)
         self._boxContainerLayout2.addWidget(self._tiffBox)
         self._boxContainerLayout2.addWidget(self._overwriteBox)
+        self._boxContainerLayout2.addWidget(self._multipageBox)
         
         # weight method
         self._weightWidget = qt.QWidget(self)
@@ -250,6 +268,9 @@ class FastXRFLinearFitWindow(qt.QWidget):
         else:
             self._outnameLine.setStyleSheet("color: gray; background-color: darkGray")
 
+    def stateMultiPage(self, state=None):
+        self._multipageBox.setEnabled(self._edfBox.isChecked() or self._tiffBox.isChecked())
+
     def getParameters(self):
         ddict = {}
         fit = {}
@@ -266,13 +287,12 @@ class FastXRFLinearFitWindow(qt.QWidget):
         output['fileProcess'] = qt.safe_str(self._outnameLine.text()).replace(" ", "")
         output['tif'] = int(self._tiffBox.isChecked())
         output['csv'] = int(self._csvBox.isChecked())
+        output['dat'] = int(self._datBox.isChecked())
         output['edf'] = int(self._edfBox.isChecked())
         output['h5'] = int(self._h5Box.isChecked())
         output['overwrite'] = int(self._overwriteBox.isChecked())
-        diagnostics = int(self._diagnosticsBox.isChecked())
-        output['saveData'] = diagnostics
-        output['saveFit'] = diagnostics
-        output['saveResiduals'] = diagnostics
+        output['multipage'] = int(self._multipageBox.isChecked())
+        output['diagnostics'] = int(self._diagnosticsBox.isChecked())
         return ddict
 
 class FastXRFLinearFitDialog(qt.QDialog):

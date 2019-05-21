@@ -14,7 +14,7 @@ matrix:
           os: linux
           env:
               - BUILD_COMMAND=sdist
-              - QT_BINDING=PySide2
+              - QT_BINDING=PyQt5
 
         - language: generic
           os: osx

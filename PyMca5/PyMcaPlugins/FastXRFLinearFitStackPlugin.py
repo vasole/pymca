@@ -64,7 +64,7 @@ import logging
 import traceback
 from PyMca5 import StackPluginBase
 from PyMca5.PyMcaPhysics import FastXRFLinearFit
-from PyMca5.PyMcaPhysics import FastXRFLinearFitOutput
+from PyMca5.PyMcaPhysics import XRFBatchFitOutput
 from PyMca5.PyMcaGui import FastXRFLinearFitWindow
 from PyMca5.PyMcaGui import CalculationThread
 from PyMca5.PyMcaGui import StackPluginResultsWindow
@@ -200,11 +200,12 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
             x = stack.x[0]
 
         outparams = self._parameters['output']
-        outbuffer = FastXRFLinearFitOutput.OutputBuffer(**outparams)
+        outbuffer = XRFBatchFitOutput.OutputBuffer(**outparams)
         outbuffer = self.fitInstance.fitMultipleSpectra(x=x,
                                                         y=stack,
                                                         ysum=spectrum,
                                                         outbuffer=outbuffer,
+                                                        save=False,  # do it later
                                                         **fitparams)
         return outbuffer
 
@@ -230,26 +231,27 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
                     return
 
         # Show results
-        if 'massfractions' in result:
-            imageNames = result.parameter_names + result.massfraction_names
-            images = numpy.concatenate((result['parameters'],
-                                        result['massfractions']), axis=0)
-        else:
-            imageNames = result.parameter_names
-            images = result['parameters']
-        nImages = images.shape[0]
-        self._widget = StackPluginResultsWindow.StackPluginResultsWindow(\
-                                        usetab=False)
-        self._widget.buildAndConnectImageButtonBox(replace=True,
-                                                  multiple=True)
-        qt = StackPluginResultsWindow.qt
-        self._widget.sigMaskImageWidgetSignal.connect(self.mySlot)
-        self._widget.setStackPluginResults(images,
-                                          image_names=imageNames)
-        self._showWidget()
+        with result.bufferContext(update=True):
+            if 'massfractions' in result:
+                imageNames = result.parameter_names + result.massfraction_names
+                images = numpy.concatenate((result['parameters'],
+                                            result['massfractions']), axis=0)
+            else:
+                imageNames = result.parameter_names
+                images = result['parameters']
+            nImages = images.shape[0]
+            self._widget = StackPluginResultsWindow.StackPluginResultsWindow(\
+                                            usetab=False)
+            self._widget.buildAndConnectImageButtonBox(replace=True,
+                                                       multiple=True)
+            qt = StackPluginResultsWindow.qt
+            self._widget.sigMaskImageWidgetSignal.connect(self.mySlot)
+            self._widget.setStackPluginResults(images,
+                                               image_names=imageNames)
+            self._showWidget()
 
-        # Save results
-        result.save()
+            # Save results
+            result.save()
 
     def _showWidget(self):
         if self._widget is None:

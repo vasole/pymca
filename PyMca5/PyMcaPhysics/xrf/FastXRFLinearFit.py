@@ -45,8 +45,7 @@ from PyMca5.PyMcaMath.linalg import lstsq
 from PyMca5.PyMcaMath.fitting import Gefit
 from PyMca5.PyMcaMath.fitting import SpecfitFuns
 from PyMca5.PyMcaIO import ConfigDict
-from PyMca5.PyMcaMisc import PhysicalMemory
-from .FastXRFLinearFitOutput import OutputBuffer
+from .XRFBatchFitOutput import OutputBuffer
 from . import McaStackView
 
 _logger = logging.getLogger(__name__)
@@ -74,7 +73,7 @@ class FastXRFLinearFit(object):
     def fitMultipleSpectra(self, x=None, y=None, xmin=None, xmax=None,
                            configuration=None, concentrations=False,
                            ysum=None, weight=None, refit=True, livetime=None,
-                           outbuffer=None):
+                           outbuffer=None, save=True, **outbufferinitargs):
         """
         This method performs the actual fit. The y keyword is the only mandatory input argument.
 
@@ -86,10 +85,11 @@ class FastXRFLinearFit(object):
         :param weight: 0 Means no weight, 1 Use an average weight, 2 Individual weights (slow)
         :param concentrations: 0 Means no calculation, 1 Calculate elemental concentrations
         :param refit: if False, no check for negative results. Default is True.
-        :livetime: It will be used if not different from None and concentrations
-                   are to be calculated by using fundamental parameters with
-                   automatic time. The default is None.
-        :outbuffer dict: 
+        :param livetime: It will be used if not different from None and concentrations
+                         are to be calculated by using fundamental parameters with
+                         automatic time. The default is None.
+        :param outbuffer:
+        :param save: set to False to postpone saving the in-memory buffers
         :return dict: outbuffer
         """
         # Parse data
@@ -98,8 +98,8 @@ class FastXRFLinearFit(object):
 
         # Calculation needs buffer for memory allocation (memory or H5)
         if outbuffer is None:
-            outbuffer = OutputBuffer()
-        with outbuffer._bufferContext(update=False):
+            outbuffer = OutputBuffer(**outbufferinitargs)
+        with outbuffer.Context(save=save):
             t0 = time.time()
 
             # Configure fit
@@ -137,7 +137,6 @@ class FastXRFLinearFit(object):
             dtypeCalculcation = self._fitDtypeCalculation(data)
             self._mcaTheory.setData(x=x, y=yref, xmin=xmin, xmax=xmax)
             derivatives, freeNames, nFree, nFreeBkg = self._fitCreateModel(dtype=dtypeCalculcation)
-            outbuffer['parameter_names'] = freeNames
 
             # Background anchor points (if any)
             anchorslist = self._fitBkgAnchorList(config=config)
@@ -171,27 +170,68 @@ class FastXRFLinearFit(object):
             imageShape = tuple(imageShape)
             paramShape = (nFree,) + imageShape
             dtypeResult = self._fitDtypeResult(data)
+            dataAttrs = {}  #{'units':'counts'})
+            paramAttrs = {'errors': 'uncertainties',
+                          'default': not concentrations}
             results = outbuffer.allocateMemory('parameters',
                                                 shape=paramShape,
-                                                dtype=dtypeResult)
+                                                dtype=dtypeResult,
+                                                labels=freeNames,
+                                                dataAttrs=dataAttrs,
+                                                groupAttrs=paramAttrs,
+                                                memtype='ram')
             uncertainties = outbuffer.allocateMemory('uncertainties',
                                                 shape=paramShape,
-                                                dtype=dtypeResult)
-            if outbuffer.save_diagnostics:
-                nFreeParameters = outbuffer.allocateMemory('nFreeParameters',
-                                                shape=imageShape,
-                                                fill_value=nFree,
-                                                dtype=numpy.int32)
-                nObservations = outbuffer.allocateMemory('nObservations',
-                                                shape=imageShape,
-                                                fill_value=nObs,
-                                                dtype=numpy.int32)
-                fitmodel = outbuffer.allocateH5('model',
-                                                nxdata='fit',
-                                                shape=stackShape,
                                                 dtype=dtypeResult,
-                                                chunks=True,
-                                                fill_value=0)
+                                                labels=freeNames,
+                                                dataAttrs=dataAttrs,
+                                                groupAttrs=None,
+                                                memtype='ram')
+            fitAttrs = {}
+            if outbuffer.saveDataDiagnostics:
+                # Generic axes
+                dataAxesNames = ['dim{}'.format(i) for i in range(data.ndim)]
+                dataAxes = [(name, numpy.arange(n, dtype=dtypeResult), {})
+                            for name, n in zip(dataAxesNames, stackShape)]
+                # MCA axis: use energy and add channels as extra (unused) axis
+                xdata = self._mcaTheory.xdata0.flatten()
+                zero, gain = self._mcaTheory.parameters[:2]
+                xenergy = zero + gain*xdata
+                dataAxesNames[mcaIndex] = 'energy'
+                dataAxes[mcaIndex] = 'energy', xenergy.astype(dtypeResult), {'units': 'keV'}
+                dataAxes.append(('channels', xdata.astype(numpy.int32), {}))
+                fitAttrs['axes'] = dataAxes
+                fitAttrs['axesused'] = dataAxesNames
+            dataAttrs = {}
+            if outbuffer.saveFOM:
+                nFreeParameters = outbuffer.allocateMemory('nFreeParameters',
+                                                           group='diagnostics',
+                                                           shape=imageShape,
+                                                           fill_value=nFree,
+                                                           dtype=numpy.int32,
+                                                           dataAttrs=dataAttrs,
+                                                           groupAttrs=None,
+                                                           memtype='ram')
+                nObservations = outbuffer.allocateMemory('nObservations',
+                                                         group='diagnostics',
+                                                         shape=imageShape,
+                                                         fill_value=nObs,
+                                                         dtype=numpy.int32,
+                                                         dataAttrs=dataAttrs,
+                                                         groupAttrs=None,
+                                                         memtype='ram')
+            else:
+                nFreeParameters = None
+            if outbuffer.saveFit:
+                fitmodel = outbuffer.allocateMemory('model',
+                                                    group='fit',
+                                                    shape=stackShape,
+                                                    dtype=dtypeResult,
+                                                    chunks=True,
+                                                    fill_value=0,
+                                                    dataAttrs=dataAttrs,
+                                                    groupAttrs=fitAttrs,
+                                                    memtype='hdf5')
                 idx = [slice(None)]*fitmodel.ndim
                 idx[mcaIndex] = slice(0, iXMin)
                 fitmodel[tuple(idx)] = numpy.nan
@@ -199,7 +239,6 @@ class FastXRFLinearFit(object):
                 fitmodel[tuple(idx)] = numpy.nan
             else:
                 fitmodel = None
-                nFreeParameters = None
 
             _logger.debug("Configuration elapsed = %f", time.time() - t0)
             t0 = time.time()
@@ -231,44 +270,41 @@ class FastXRFLinearFit(object):
                 t0 = time.time()
 
             # Return results as a dictionary
-            outaxes = False
             if outbuffer.saveData:
-                outaxes = True
-                outbuffer.allocateH5('data',
-                                     nxdata='fit',
+                outbuffer.allocateMemory('data',
+                                     group='fit',
                                      data=data,
                                      dtype=dtypeResult,
-                                     chunks=True)
+                                     chunks=True,
+                                     dataAttrs=dataAttrs,
+                                     groupAttrs=fitAttrs,
+                                     memtype='hdf5')
             if outbuffer.saveResiduals:
-                outaxes = True
-                residuals = outbuffer.allocateH5('residuals',
-                                                 nxdata='fit', 
+                residuals = outbuffer.allocateMemory('residuals',
+                                                 group='fit',
                                                  data=data,
                                                  dtype=dtypeResult,
-                                                 chunks=True)
+                                                 chunks=True,
+                                                 dataAttrs=dataAttrs,
+                                                 groupAttrs=fitAttrs,
+                                                 memtype='hdf5')
                 residuals[()] -= fitmodel
-            if outaxes:
-                # Generic axes
-                stackAxesNames = ['dim{}'.format(i) for i in range(data.ndim)]
-                dataAxes = [(name, numpy.arange(n, dtype=dtypeResult), {})
-                            for name, n in zip(stackAxesNames, stackShape)]
-                # MCA axis: use energy and add channels as extra (unused) axis
-                xdata = self._mcaTheory.xdata0.flatten()
-                zero, gain = self._mcaTheory.parameters[:2]
-                xenergy = zero + gain*xdata
-                stackAxesNames[mcaIndex] = 'energy'
-                dataAxes[mcaIndex] = 'energy', xenergy.astype(dtypeResult), {'units': 'keV'}
-                dataAxes.append(('channels', xdata.astype(numpy.int32), {}))
-                outbuffer['dataAxesUsed'] = tuple(stackAxesNames)
-                outbuffer['dataAxes'] = tuple(dataAxes)
+
             if concentrations:
                 t0 = time.time()
-                self._fitDeriveMassFractions(config=config,
-                                             outputDict=outbuffer,
+                labels, concentrations = self._fitDeriveMassFractions(config=config,
                                              nFreeBkg=nFreeBkg,
                                              results=results,
                                              autotime=autotime,
                                              liveTimeFactor=liveTimeFactor)
+                dataAttrs = {}  #{'units':'dimensionless'})
+                massfracAttrs = {'default': True}
+                outbuffer.allocateMemory('massfractions',
+                                         data=concentrations,
+                                         labels=labels,
+                                         dataAttrs=dataAttrs,
+                                         groupAttrs=massfracAttrs,
+                                         memtype='ram')
                 t = time.time() - t0
                 _logger.debug("Calculation of concentrations elapsed = %f", t)
             return outbuffer
@@ -794,8 +830,8 @@ class FastXRFLinearFit(object):
                                   nmin=nmin, **kwargs)
             iIter += 1
 
-    def _fitDeriveMassFractions(self, config=None, outputDict=None, results=None,
-                           nFreeBkg=None, autotime=None, liveTimeFactor=None):
+    def _fitDeriveMassFractions(self, config=None, results=None, nFreeBkg=None,
+                                autotime=None, liveTimeFactor=None):
         """Calculate concentrations from peak areas
         """
         # check if an internal reference is used and if it is set to auto
@@ -867,7 +903,7 @@ class FastXRFLinearFit(object):
         referenceTransitions = addInfo['ReferenceTransitions']
         _logger.debug("Reference <%s>  transition <%s>",
                       referenceElement, referenceTransitions)
-        outputDict['massfraction_names'] = []
+        labels = []
         if referenceElement in ["", None, "None"]:
             _logger.debug("No reference")
             counter = 0
@@ -875,7 +911,7 @@ class FastXRFLinearFit(object):
                 if group.lower().startswith("scatter"):
                     _logger.debug("skept %s", group)
                     continue
-                outputDict['massfraction_names'].append(group)
+                labels.append(group)
                 if counter == 0:
                     if hasattr(liveTimeFactor, "shape"):
                         liveTimeFactor.shape = results[nFreeBkg+i].shape
@@ -886,7 +922,7 @@ class FastXRFLinearFit(object):
                 counter += 1
                 if len(concentrationsResult['layerlist']) > 1:
                     for layer in concentrationsResult['layerlist']:
-                        outputDict['massfraction_names'].append("%s-%s" % (group, layer))
+                        labels.append((group, layer))
                         massFractions[counter] = liveTimeFactor * \
                                 results[nFreeBkg+i] * \
                                 (concentrationsResult[layer]['mass fraction'][group] / \
@@ -913,7 +949,7 @@ class FastXRFLinearFit(object):
                 if group.lower().startswith("scatter"):
                     _logger.debug("skept %s", group)
                     continue
-                outputDict['massfraction_names'].append(group)
+                labels.append(group)
                 goodI = results[nFreeBkg+i] > 0
                 tmp = results[nFreeBkg+idx][goodI]
                 massFractions[counter][goodI] = (results[nFreeBkg+i][goodI]/(tmp + (tmp == 0))) *\
@@ -922,12 +958,12 @@ class FastXRFLinearFit(object):
                 counter += 1
                 if len(concentrationsResult['layerlist']) > 1:
                     for layer in concentrationsResult['layerlist']:
-                        outputDict['massfraction_names'].append("%s-%s" % (group, layer))
+                        labels.append((group, layer))
                         massFractions[counter][goodI] = (results[nFreeBkg+i][goodI]/(tmp + (tmp == 0))) *\
                             ((referenceArea/fitresult['result'][group]['fitarea']) *\
                             (concentrationsResult[layer]['mass fraction'][group]))
                         counter += 1
-        outputDict['massfractions'] = massFractions
+        return labels, massFractions
 
 
 def getFileListFromPattern(pattern, begin, end, increment=None):
@@ -1005,10 +1041,10 @@ def main():
     import getopt
     options     = ''
     longoptions = ['cfg=', 'outdir=', 'concentrations=', 'weight=', 'refit=',
-                   'tif=', 'edf=', 'csv=', 'h5=',
+                   'tif=', 'edf=', 'csv=', 'h5=', 'dat=',
                    'filepattern=', 'begin=', 'end=', 'increment=',
                    'outroot=', 'outentry=', 'outprocess=',
-                   'diagnostics=', 'debug=', 'overwrite=']
+                   'diagnostics=', 'debug=', 'overwrite=', 'multipage=']
     try:
         opts, args = getopt.getopt(
                      sys.argv[1:],
@@ -1032,12 +1068,12 @@ def main():
     edf = 0
     csv = 0
     h5 = 1
+    dat = 0
     concentrations = 0
-    saveFit = 0
-    saveResiduals = 0
-    saveData = 0
+    diagnostics = 0
     debug = 0
     overwrite = 1
+    multipage = 0
     for opt, arg in opts:
         if opt == '--cfg':
             configurationFile = arg
@@ -1068,9 +1104,7 @@ def main():
         elif opt == '--concentrations':
             concentrations = int(arg)
         elif opt == '--diagnostics':
-            saveFit = int(arg)
-            saveResiduals = saveFit
-            saveData = saveFit
+            diagnostics = int(arg)
         elif opt == '--outroot':
             outputRoot = arg
         elif opt == '--outentry':
@@ -1085,10 +1119,14 @@ def main():
             csv = int(arg)
         elif opt == '--h5':
             h5 = int(arg)
+        elif opt == '--dat':
+            dat = int(arg)
         elif opt == '--debug':
             debug = int(arg)
         elif opt == '--overwrite':
             overwrite = int(arg)
+        elif opt == '--multipage':
+            multipage = int(arg)
 
     logging.basicConfig()
     if debug:
@@ -1120,10 +1158,14 @@ def main():
     print("Main configuring Elapsed = % s " % (time.time() - t0))
 
     outbuffer = OutputBuffer(outputDir=outputDir,
-                        outputRoot=outputRoot, fileEntry=fileEntry,
-                        fileProcess=fileProcess, saveData=saveData,
-                        saveFit=saveFit, saveResiduals=saveResiduals,
-                        tif=tif, edf=edf, csv=csv, h5=h5, overwrite=overwrite)
+                        outputRoot=outputRoot,
+                        fileEntry=fileEntry,
+                        fileProcess=fileProcess,
+                        diagnostics=diagnostics,
+                        tif=tif, edf=edf, csv=csv,
+                        h5=h5, dat=dat,
+                        multipage=multipage,
+                        overwrite=overwrite)
 
     from PyMca5.PyMcaMisc import ProfilingUtils
     with ProfilingUtils.profile(memory=debug, time=debug):
@@ -1133,7 +1175,6 @@ def main():
                                                 refit=refit,
                                                 concentrations=concentrations,
                                                 outbuffer=outbuffer)
-        # Without saveContext you need to execute: outbuffer.save()
         print("Total Elapsed = % s " % (time.time() - t0))
 
 

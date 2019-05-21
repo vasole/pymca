@@ -32,213 +32,295 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
+import sys
 import numpy
 import logging
+import shutil
+import re
+import itertools
 from PyMca5.PyMcaIO import EdfFile
+from PyMca5.PyMcaIO import TiffIO
+from PyMca5.PyMcaCore import NexusTools
+try:
+    import h5py
+except ImportError:
+    h5py = None
 
 _logger = logging.getLogger(__name__)
 
+
 class PyMcaBatchBuildOutput(object):
     def __init__(self, inputdir=None, outputdir=None):
-        self.inputDir  = inputdir
+        self.inputDir = inputdir
         self.outputDir = outputdir
 
-    def buildOutput(self, inputdir=None, outputdir=None, delete=None):
-        if inputdir is None:inputdir = self.inputDir
-        if inputdir is None:inputdir = os.getcwd()
-        if outputdir is None: outputdir = self.outputDir
-        if outputdir is None: outputdir = inputdir
+    def buildOutput(self, inputdir=None, basename=None, outputdir=None, delete=None):
+        """
+        :returns: 3 lists of merged filenames: .edf filenames, .dat filenames and .h5 filenames
+        """
+        if inputdir is None:
+            inputdir = self.inputDir
+        if inputdir is None:
+            inputdir = os.getcwd()
+        if not os.path.isdir(inputdir):
+            return [], [], []
+        if outputdir is None:
+            outputdir = self.outputDir
+        if outputdir is None:
+            outputdir = inputdir
         if delete is None:
             if outputdir == inputdir:
                 delete = True
         _logger.debug("delete option = %s", delete)
         allfiles = os.listdir(inputdir)
-        partialedflist = []
-        partialdatlist = []
-        partialconlist = []
-        for filename in allfiles:
-            if filename.endswith('000000_partial.edf'):partialedflist.append(filename)
-            elif filename.endswith('000000_partial.dat'):partialdatlist.append(filename)
-            elif filename.endswith('000000_partial_concentrations.txt'):partialconlist.append(filename)
+        partialList = {'edf': {'ext': '.edf', 'list': []},
+                       'tif': {'ext': '.tif', 'list': []},
+                       'dat': {'ext': '.dat', 'list': []},
+                       'csv': {'ext': '.csv', 'list': []},
+                       'h5': {'ext': '.h5', 'list': []},
+                       'cfg': {'ext': '.cfg', 'list': []},
+                       'conc': {'ext': '_concentrations.txt', 'list': []}
+                       }
+        for filepath in allfiles:
+            filename = os.path.basename(filepath)
+            for typ, value in partialList.items():
+                if basename:
+                    if not filename.startswith(basename):
+                        continue
+                if filename.endswith('000000_partial' + value['ext']):
+                    value['list'].append(filename)
+        outListH5 = self._merge(inputdir, outputdir, delete,
+                                partialList['h5']['list'], self._mergeH5)
+        outListEdf = self._merge(inputdir, outputdir, delete,
+                                 partialList['edf']['list'], self._mergeEdf)
+        outListDat = self._merge(inputdir, outputdir, delete,
+                                 partialList['dat']['list'], self._mergeDat)
+        self._merge(inputdir, outputdir, delete,
+                    partialList['tif']['list'], self._mergeTif)
+        self._merge(inputdir, outputdir, delete,
+                    partialList['csv']['list'], self._mergeCsv)
+        self._merge(inputdir, outputdir, delete,
+                    partialList['conc']['list'], self._mergeConcTxt)
+        self._merge(inputdir, outputdir, delete,
+                    partialList['cfg']['list'], self._mergeCfg)
+        return outListEdf, outListDat, outListH5
 
-        #IMAGES
-        edfoutlist = []
-        for filename in partialedflist:
-            _logger.debug("Dealing with filename %s", filename)
-            edflist = self.getIndexedFileList(os.path.join(inputdir, filename))
-            i = 0
-            for edfname in edflist:
-                edf    = EdfFile.EdfFile(edfname, access='rb', fastedf = 0)
-                nImages = edf.GetNumImages()
-                #get always the last image
-                data0   = edf.GetData(nImages-1)
-                data0[data0<0] = 0
-                if i == 0:
-                    header = edf.GetHeader(0)
-                    data = data0.copy()
-                else:
-                    data += data0
-                del edf
-                i += 1
-            edfname  = filename.replace('_000000_partial.edf',".edf")
-            edfoutname = os.path.join(outputdir, edfname)
-            _logger.debug("Dealing with output filename %s", edfoutname)
-            if os.path.exists(edfoutname):
-                _logger.debug("Output file already exists, trying to delete it")
-                os.remove(edfoutname)
-            edfout   = EdfFile.EdfFile(edfoutname, access="wb")
-            edfout.WriteImage (header , data, Append=0)
-            del edfout
-            edfoutlist.append(edfoutname)
+    def _merge(self, inputdir, outputdir, delete, partialList, func):
+        """
+        The images to be merged already have the final size but are filled with NaN's
+        """
+        outList = []
+        for filename in partialList:
+            parts = self.getPartialFileList(os.path.join(inputdir, filename))
+            outfilename = parts[0].replace("_000000_partial", "")
+            _logger.debug("Merging %s (%d parts)", outfilename, len(parts))
+            outfilename = os.path.join(outputdir, outfilename)
+            try:
+                func(parts, outfilename)
+            except:
+                _logger.error("Error merging %s\n: %s", outfilename, sys.exc_info()[1])
+                continue
+            outList.append(outfilename)
             if delete:
-                for filename in edflist:
+                for filename in parts:
                     try:
                         os.remove(filename)
                     except:
                         _logger.warning("Cannot delete file %s" % filename)
+        return outList
 
-        #DAT IMAGES
-        datoutlist = []
-        for filename in partialdatlist:
-            edflist = self.getIndexedFileList(os.path.join(inputdir, filename))
-            first = True
-            for edfname in edflist:
-                f = open(edfname)
-                lines = f.readlines()
-                f.close()
-                j = 1
-                while (not len( lines[-j].replace("\n",""))):
-                       j += 1
-                if first:
-                    first = False
-                    labels = lines[0].replace("\n","").split("  ")
-                    nlabels = len(labels)
-                    nrows = len(lines) - j
+    def _mergeH5(self, parts, outfilename):
+        shutil.copy(parts[0], outfilename)
+        with h5py.File(outfilename) as fout:
+            for entry in NexusTools.getNXClassGroups(fout, '/', [u'NXentry']):
+                for process in NexusTools.getNXClassGroups(fout, entry.name, [u'NXprocess']):
+                    for results in NexusTools.getNXClassGroups(fout, process.name, [u'NXcollection']):
+                        for dataout in NexusTools.getNXClassGroups(fout, results.name, [u'NXdata']):
+                            for part in parts[1:]:
+                                with h5py.File(part) as fin:
+                                    try:
+                                        datain = fin[dataout.name]
+                                    except KeyError:
+                                        _logger.error('%s does not have %s', part, repr(dataout.name))
+                                        continue
+                                    for datasetname in dataout:
+                                            self._fillPartial(dataout[datasetname],
+                                                              datain[datasetname],
+                                                              maxdims=2)
 
-                    data      = numpy.zeros((nrows, nlabels), numpy.double)
-                    inputdata = numpy.zeros((nrows, nlabels), numpy.double)
-                chisqIndex = labels.index('chisq')
-                for i in range(nrows):
-                    inputdata[i, :] = [float(x) for x in lines[i+1].split()]
-                    if inputdata[i, chisqIndex] < 0.0:
-                        inputdata[i, chisqIndex] = 0.0
-                data += inputdata
-            outfilename = os.path.join(outputdir, filename.replace("_000000_partial",""))
-            if os.path.exists(outfilename):
-                os.remove(outfilename)
-            outfile=open(outfilename,'w+')
-            outfile.write('%s' % lines[0])
-            line=""
-            for row in range(nrows):
-                #line = "%d" % inputdata[row, 0]
-                for col in range(nlabels):
-                    if   col == 0 : line += "%d" % inputdata[row, col]
-                    elif   col == 1 : line += "  %d" % inputdata[row, col]
-                    else: line += "  %g" % data[row, col]
-                line += "\n"
-                outfile.write("%s" % line)
-                line =""
-            outfile.write("\n")
-            outfile.close()
-            datoutlist.append(outfilename)
-            if delete:
-                for filename in edflist:
-                    os.remove(filename)
+    def _mergeCfg(self, parts, outfilename):
+        # They should be all the same so pick the first one
+        shutil.copy(parts[0], outfilename)
+        return outfilename
 
+    def _mergeEdf(self, parts, outfilename):
+        for i, edfname in enumerate(parts):
+            edf = EdfFile.EdfFile(edfname, access='rb', fastedf=0)
+            nImages = edf.GetNumImages()
+            if i == 0:
+                images = [edf.GetData(j).copy() for j in range(nImages)]
+                headers = [{'Title': edf.GetHeader(j)['Title']}
+                           for j in range(nImages)]
+            else:
+                headersi = [{'Title': edf.GetHeader(j)['Title']}
+                            for j in range(nImages)]
+                for header, img in zip(headers, images):
+                    k = headersi.index(header)
+                    self._fillPartial(img, edf.GetData(k))
+            del edf
+        if os.path.exists(outfilename):
+            _logger.debug("Output file already exists, trying to delete it")
+            os.remove(outfilename)
+        edfout = EdfFile.EdfFile(outfilename, access="ab")
+        for i, (img, header) in enumerate(zip(images, headers)):
+            edfout.WriteImage(header, img, Append=i > 0)
+        del edfout
 
-        #CONCENTRATIONS
-        outconlist = []
-        for filename in partialconlist:
-            edflist = self.getIndexedFileList(os.path.join(inputdir, filename))
-            i = 0
-            for edfname in edflist:
-                edf    = open(edfname, 'rb')
-                if i == 0:
-                    outfilename = os.path.join(outputdir, filename.replace("_000000_partial",""))
-                    if os.path.exists(outfilename):
-                        os.remove(outfilename)
-                    outfile = open(outfilename,'wb')
-                lines = edf.readlines()
-                for line in lines:
-                    outfile.write(line)
-                edf.close()
-                i += 1
-            outfile.close()
-            outconlist.append(outfilename)
-            if delete:
-                for filename in edflist:
-                    os.remove(filename)
-        return edfoutlist, datoutlist, outconlist
+    def _mergeTif(self, parts, outfilename):
+        for i, tifname in enumerate(parts):
+            tif = TiffIO.TiffIO(tifname, mode='rb')
+            nImages = tif.getNumberOfImages()
+            if i == 0:
+                images = [tif.getData(j).copy() for j in range(nImages)]
+                headers = [{'Title': tif.getInfo(j)['info']['Title']}
+                           for j in range(nImages)]
+            else:
+                headersi = [{'Title': tif.getInfo(j)['info']['Title']}
+                            for j in range(nImages)]
+                for header, img in zip(headers, images):
+                    k = headersi.index(header)
+                    self._fillPartial(img, tif.getData(k))
+            del tif
+        if os.path.exists(outfilename):
+            _logger.debug("Output file already exists, trying to delete it")
+            os.remove(outfilename)
+        for i, (img, header) in enumerate(zip(images, headers)):
+            # TODO: there must be a better way
+            if i == 0:
+                tifout = TiffIO.TiffIO(outfilename, mode="wb+")
+            elif i == 1:
+                del tifout
+                tifout = TiffIO.TiffIO(outfilename, mode="rb+")
+            tifout.writeImage(img, info=header)
+        del tifout
 
-    def getIndexedFileList(self, filename, begin=None,end=None, skip = None, fileindex=0):
-        name = os.path.basename(filename)
-        n = len(name)
-        i = 1
-        numbers = ['0', '1', '2', '3', '4', '5',
-                   '6', '7', '8','9']
-        while (i <= n):
-            c = name[n-i:n-i+1]
-            if c in ['0', '1', '2',
-                                '3', '4', '5',
-                                '6', '7', '8',
-                                '9']:
-                break
-            i += 1
-        suffix = name[n-i+1:]
-        if len(name) == len(suffix):
-            #just one file, one should use standard widget
-            #and not this one.
-            self.loadFileList(filename, fileindex=fileindex)
+    def _fillPartial(self, output, input, maxdims=None):
+        if output.shape != input.shape:
+            _logger.error("Cannot merge array's with different shapes")
+            return
+        if maxdims is None:
+            maxdims = output.ndim
+        if output.ndim > maxdims:
+            # This is meant to preserve memory when copying
+            # h5py datasets
+            idx = [slice(None)]*output.ndim
+            shape = output.shape
+            iterdims = sorted(numpy.argsort(shape)[:-maxdims])
+            iterlst = [list(range(shape[i])) for i in iterdims]
+            for iteridx in itertools.product(*iterlst):
+                for axis, i in zip(iterdims, iteridx):
+                    idx[axis] = i
+                idxtpl = tuple(idx)
+                bufferin = input[idxtpl]
+                mask = ~numpy.isnan(bufferin)
+                if mask.any():
+                    bufferout = output[idxtpl]
+                    bufferout[mask] = bufferin[mask]
+                    output[idxtpl] = bufferout
         else:
-            nchain = []
-            while (i<=n):
-                c = name[n-i:n-i+1]
-                if c not in ['0', '1', '2',
-                                    '3', '4', '5',
-                                    '6', '7', '8',
-                                    '9']:
-                    break
+            mask = ~numpy.isnan(input)
+            if mask.any():
+                output[mask] = input[mask]
+
+    def _mergeDat(self, parts, outfilename):
+        self._mergeAscii(parts, outfilename, '  ')
+    
+    def _mergeCsv(self, parts, outfilename):
+        self._mergeAscii(parts, outfilename, ';')
+
+    def _mergeAscii(self, parts, outfilename, separator):
+        first = True
+        for specname in parts:
+            f = open(specname)
+            lines = f.readlines()
+            f.close()
+            j = 1
+            while not len(lines[-j].replace("\n", "")):
+                j += 1
+            if first:
+                first = False
+                labels = lines[0].replace("\n", "").split(separator)
+                nlabels = len(labels)
+                nrows = len(lines) - j
+                data = numpy.zeros((nrows, nlabels), numpy.double)
+                inputdata = numpy.zeros((nrows, nlabels), numpy.double)
+                colSelect = list(range(nlabels))
+            else:
+                labelsi = lines[0].replace("\n", "").split(separator)
+                colSelect = [labels.index(label) for label in labelsi]
+            for i in range(nrows):
+                inputdata[i, colSelect] = [float(x) for x in lines[i+1].split(separator)]
+            self._fillPartial(data, inputdata)
+        if os.path.exists(outfilename):
+            os.remove(outfilename)
+        outfile = open(outfilename, 'w+')
+        outfile.write("%s\n" % separator.join(labels))
+        for row in range(nrows):
+            line = ""
+            for col in range(nlabels):
+                if col == 0:
+                    line += "%d" % inputdata[row, col]
+                elif col == 1:
+                    line += separator + "%d" % inputdata[row, col]
                 else:
-                    nchain.append(c)
-                i += 1
-            number = ""
-            nchain.reverse()
-            for c in nchain:
-                number += c
-            fformat = "%" + "0%dd" % len(number)
-            if (len(number) + len(suffix)) == len(name):
-                prefix = ""
-            else:
-                prefix = name[0:n-i+1]
-            prefix = os.path.join(os.path.dirname(filename),prefix)
-            if not os.path.exists(prefix + number + suffix):
-                _logger.error("Internal error in EDFStack")
-                _logger.error("file should exist: %s " % (prefix + number + suffix))
-                return
+                    line += separator + "%g" % data[row, col]
+            outfile.write("%s\n" % line)
+        outfile.write("\n")
+        outfile.close()
+
+    def _mergeConcTxt(self, parts, outfilename):
+        for i, infilename in enumerate(parts):
+            ffile = open(infilename, 'rb')
+            if i == 0:
+                if os.path.exists(outfilename):
+                    os.remove(outfilename)
+                outfile = open(outfilename, 'wb')
+            lines = ffile.readlines()
+            for line in lines:
+                outfile.write(line)
+            ffile.close()
+        outfile.close()
+
+    @staticmethod
+    def getPartialFileList(filename, begin=None, end=None, skip=None):
+        # Decempose filename, for example "/tmp/base_000000_partial.ext"
+        name, ext = os.path.splitext(os.path.basename(filename))
+        m = re.search("^(.+?)(\d+)([^\d]+)$", name)
+        if not m:
+            return [filename]
+        prefix, number, suffix = m.groups()
+        prefix = os.path.join(os.path.dirname(filename), prefix)
+        suffix += ext
+        # Prepare iteration over "/tmp/base_{:d}_partial.ext"
+        fformat = prefix + "{{:0{}d}}".format(len(number)) + suffix
+        if begin is None:
             i = 0
-            if begin is None:
-                begin = 0
-                testname = prefix+fformat % begin+suffix
-                while not os.path.exists(prefix+ fformat % begin+suffix):
-                    begin += 1
-                    testname = prefix+fformat % begin+suffix
-                    if len(testname) > len(filename):break
-                i = begin
-            else:
-                i = begin
-            if not os.path.exists(prefix+fformat % i+suffix):
-                raise ValueError("Invalid start index file = %s" % \
-                      (prefix+fformat % i+suffix))
-            f = prefix+fformat % i+suffix
-            filelist = []
-            while os.path.exists(f):
-                filelist.append(f)
+            while not os.path.exists(fformat.format(i)):
                 i += 1
-                if end is not None:
-                    if i > end:
-                        break
-                f = prefix+fformat % i+suffix
-            return filelist
+        else:
+            i = begin
+        if not skip:
+            skip = []
+        # Find all "/tmp/base_{:d}_partial.ext"
+        filelist = []
+        while os.path.exists(fformat.format(i)) or i in skip:
+            if i not in skip:
+                filelist.append(fformat.format(i))
+            i += 1
+            if end is not None:
+                if i > end:
+                    break
+        return filelist
 
 
 if __name__ == "__main__":
@@ -258,5 +340,5 @@ if __name__ == "__main__":
         if filename.endswith('000000_partial.edf'):edflist.append(filename)
         elif filename.endswith('000000_partial.dat'):datlist.append(filename)
     for filename in edflist:
-        print w.getIndexedFileList(os.path.join(directory, filename))
+        print w.getPartialFileList(os.path.join(directory, filename))
     """

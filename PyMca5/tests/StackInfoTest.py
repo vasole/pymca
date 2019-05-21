@@ -182,6 +182,9 @@ class testStackInfo(unittest.TestCase):
                 "Incorrect average of masked live time data")
 
     def testStackFastFit(self):
+        # TODO: this is done in PyMcaBatchTest on multiple input formats
+        # so not needed here
+        return
         from PyMca5.PyMcaIO import specfilewrapper as specfile
         from PyMca5.PyMcaIO import ConfigDict
         from PyMca5.PyMcaCore import DataObject
@@ -225,20 +228,20 @@ class testStackInfo(unittest.TestCase):
             configuration["concentrations"]["useautotime"] = 1
             # make sure we use the SNIP background
             configuration['fit']['stripalgorithm'] = 1
-            self._assert_fastfit(stack, configuration, live_time, nTimes)
+            self._verifyFastFit(stack, configuration, live_time, nTimes)
 
-    def _assert_fastfit(self, stack, configuration, live_time, nTimes):
+    def _verifyFastFit(self, stack, configuration, live_time, nTimes):
         from PyMca5.PyMcaPhysics.xrf import FastXRFLinearFit
         ffit = FastXRFLinearFit.FastXRFLinearFit()
         firstIndex = tuple([0]*(stack.data.ndim-1))
         for refit in [0, 1]:
             outputDict = ffit.fitMultipleSpectra(y=stack,
-                                                weight=0,
-                                                configuration=configuration,
-                                                concentrations=True,
-                                                refit=0)
+                                                 weight=0,
+                                                 configuration=configuration,
+                                                 concentrations=True,
+                                                 refit=refit)
 
-            parameter_names = outputDict.parameter_names
+            parameter_names = outputDict.labels('parameters')
             parameters = outputDict["parameters"].astype(numpy.float32)
             uncertainties = outputDict["uncertainties"].astype(numpy.float32)
             for i, (name, values, uvalues) in enumerate(zip(parameter_names, parameters, uncertainties)):
@@ -259,7 +262,7 @@ class testStackInfo(unittest.TestCase):
                     "Different sigma value for parameter %s delta %f" % \
                                 (name, delta.min()))
 
-            massfraction_names = outputDict.massfraction_names
+            massfraction_names = outputDict.labels('massfractions')
             massfractions = outputDict["massfractions"]
             for i, (name, fractions) in enumerate(zip(massfraction_names, massfractions)):
                 # verify that massfractions took into account the time
@@ -289,6 +292,7 @@ class testStackInfo(unittest.TestCase):
         from PyMca5.PyMcaIO import ConfigDict
         from PyMca5.PyMcaIO import HDF5Stack1D
         from PyMca5.PyMcaPhysics.xrf import McaAdvancedFitBatch
+        from PyMca5.PyMcaPhysics.xrf import LegacyMcaAdvancedFitBatch
         spe = os.path.join(self.dataDir, "Steel.spe")
         cfg = os.path.join(self.dataDir, "Steel.cfg")
         sf = specfile.Specfile(spe)
@@ -434,6 +438,10 @@ class testStackInfo(unittest.TestCase):
             self.assertTrue(numpy.allclose(stack.data, data),
                             "Incorrect data read")
 
+        # TODO: this is done in PyMcaBatchTest on multiple input formats
+        # so not needed here
+        return
+
         # perform the batch fit
         self._outputDir = os.path.join(tempfile.gettempdir(), "SteelTestDir")
         if not os.path.exists(self._outputDir):
@@ -451,24 +459,54 @@ class testStackInfo(unittest.TestCase):
         if not os.path.exists(cfgFile):
             configuration.write(cfgFile)
             os.chmod(cfgFile, 0o777)
-        batch = McaAdvancedFitBatch.McaAdvancedFitBatch(cfgFile,
+
+        # Test batch fitting (legacy)
+        batch = LegacyMcaAdvancedFitBatch.McaAdvancedFitBatch(cfgFile,
                                         filelist=[self._h5File],
                                         outputdir=self._outputDir,
                                         concentrations=True,
                                         selection=selection,
                                         quiet=True)
         batch.processList()
+        imageFile = os.path.join(self._outputDir, "IMAGES", "Steel.dat")
+        self._verifyBatchFitResult(imageFile, nRows, nColumns, live_time, nTimes, legacy=True)
+
+        # Test batch fitting
+        batch = McaAdvancedFitBatch.McaAdvancedFitBatch(cfgFile,
+                                                        filelist=[self._h5File],
+                                                        outputdir=self._outputDir,
+                                                        concentrations=True,
+                                                        selection=selection,
+                                                        quiet=True)
+        batch.outbuffer.extensions = ['.dat']
+        batch.processList()
+        imageFile = batch.outbuffer.filename('.dat')
+        self._verifyBatchFitResult(imageFile, nRows, nColumns, live_time, nTimes)
+    
+        # Batch fitting went well
+        # Test the fast XRF
+        configuration["concentrations"]["usematrix"] = 0
+        configuration["concentrations"]["useautotime"] = 1
+        configuration['fit']['stripalgorithm'] = 1
+        self._verifyFastFit(stack, configuration, live_time, nTimes)
+
+    def _verifyBatchFitResult(self, imageFile, nRows, nColumns, live_time, nTimes, legacy=False):
+        from PyMca5.PyMcaIO import specfilewrapper as specfile
 
         # recover the results
-        imageFile = os.path.join(self._outputDir, "IMAGES", "Steel.dat")
         self.assertTrue(os.path.isfile(imageFile),
-                "Batch fit result file <%s> not present" % imageFile)
+                        "Batch fit result file <%s> not present" % imageFile)
         sf = specfile.Specfile(imageFile)
         labels = sf[0].alllabels()
         scanData = sf[0].data()
         sf = None
         self.assertTrue(scanData.shape[-1] == (nRows * nColumns),
            "Expected %d values got %d" % (nRows * nColumns, scanData.shape[-1]))
+
+        if legacy:
+            ismassfrac = lambda label: label.endswith("-mass-fraction")
+        else:
+            ismassfrac = lambda label: label.startswith("w(")
 
         referenceResult = {}
         for point in range(scanData.shape[-1]):
@@ -478,20 +516,20 @@ class testStackInfo(unittest.TestCase):
                     continue
                 elif point == 0:
                     referenceResult[label] = scanData[idx, point]
-                elif label.endswith("-mass-fraction"):
+                elif ismassfrac(label):
                     #print("label = ", label)
                     #print("reference = ", referenceResult[label])
                     #print("current = ", scanData[idx, point])
                     reference = referenceResult[label]
                     current = scanData[idx, point]
                     #print("ratio = ", current / reference)
-                    #print("time ratio = ", readLiveTime[point] / readLiveTime[0])
+                    #print("time ratio = ", live_time[point] / live_time[0])
                     if point % nTimes:
                         if abs(reference) > 1.0e-10:
-                            self.assertTrue(reference != current,
+                            self.assertNotEqual(reference, current,
                                 "Incorrect concentration for point %d" % point)
                         corrected = current * \
-                                    (readLiveTime[point] / readLiveTime[0])
+                                    (live_time[point] / live_time[0])
                         if abs(reference) > 1.0e-10:
                             delta = \
                                 100 * abs((reference - corrected) / reference)
@@ -501,25 +539,18 @@ class testStackInfo(unittest.TestCase):
                             self.assertTrue(abs(reference - corrected) < 1.0e-5,
                                  "Incorrect concentration(t) for point %d" % point)
                     else:
-                        self.assertTrue(reference == current,
+                        self.assertEqual(reference, current,
                             "Incorrect concentration for point %d" % point)
-                elif label not in ["Point", "row", "column"]:
+                else:
                     reference = referenceResult[label]
                     current = scanData[idx, point]
-                    self.assertTrue( reference == current,
+                    self.assertEqual(reference, current,
                                     "Incorrect value for point %d" % point)
-
-        # Batch fitting went well
-        # Test the fast XRF
-        configuration["concentrations"]["usematrix"] = 0
-        configuration["concentrations"]["useautotime"] = 1
-        configuration['fit']['stripalgorithm'] = 1
-        self._assert_fastfit(stack, configuration, live_time, nTimes)
 
 
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()
-    if True:
+    if auto:
         testSuite.addTest(unittest.TestLoader().loadTestsFromTestCase(testStackInfo))
     else:
         # use a predefined order
