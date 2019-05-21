@@ -61,5 +61,14 @@ if __name__ == '__main__':
         auto = False
     else:
         auto = True
+    try:
+        from PyMca5.PyMcaGui import PyMcaQt as qt
+        app = qt.QApplication([])
+    except:
+        # if GUI tests are requested they will crash somewhere else
+        pass
     result = main(auto)
-    sys.exit(not result.wasSuccessful())
+    ret = not result.wasSuccessful()
+    # make sure there is no remaining QApplication handle
+    app = None
+    sys.exit(ret)

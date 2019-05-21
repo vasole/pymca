@@ -178,8 +178,13 @@ class TestCaseQt(unittest.TestCase):
 
         global _qapp
         if _qapp is None:
-            # Makes sure a QApplication exists and do it once for all
-            _qapp = qt.QApplication.instance() or qt.QApplication([])
+            app = qt.QApplication.instance()
+            if app is None:
+                # Makes sure a QApplication exists and do it once for all
+                _qapp = qt.QApplication([])
+            else:
+                import weakref
+                _qapp = weakref.proxy(app)
 
     @classmethod
     def tearDownClass(cls):
