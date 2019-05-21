@@ -59,8 +59,8 @@ test_script:
     # Install the generated wheel package to test it
     - "pip install numpy"
     - "pip install fisx"
-    - "pip install matplotlib"
-    - "pip install silx --pre --find-links https://silx.gitlab-pages.esrf.fr/bob/silx/"
+    - "pip install matplotlib<=3.1.0"
+    - "pip install silx"
     - "pip install h5py"
     - "pip install PyQt5"
     - "pip install --pre --no-index --no-cache-dir --find-links dist/ PyMca5"
