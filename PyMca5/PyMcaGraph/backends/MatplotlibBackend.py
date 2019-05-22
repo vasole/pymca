@@ -2271,7 +2271,11 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
     def removeMarker(self, handle, replot=True):
         if hasattr(handle, "remove"):
             self._removeInfoText(handle)
-            handle.remove()
+            try:
+                handle.remove()
+            except ValueError:
+                # it seems it was already removed
+                pass
             del handle
         else:
             # we have received a legend!
@@ -2282,7 +2286,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                     if done:
                         break
                     label = line2d.get_label()
-                    if label == ("__MARKER__"+legend):
+                    if label == ("__MARKER__" + legend):
                         if hasattr(line2d, "_infoText"):
                             line2d._infoText.remove()
                         line2d.remove()
@@ -2295,7 +2299,11 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         if hasattr(handle, "_infoText"):
             t = handle._infoText
             handle._infoText = None
-            t.remove()
+            try:
+                t.remove()
+            except ValueError:
+                # it seems it was already removed
+                pass
             del t
 
     def resetZoom(self, dataMargins=None):
