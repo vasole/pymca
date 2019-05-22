@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -83,9 +83,11 @@ def moduleRunCmd(modulePath):
         parts = [p for p in modulePath.split(os.path.sep) if p][::-1]
         parts = parts[:parts.index('PyMca5')+1][::-1]
         module = '.'.join(parts)
-        return '{} "{}" -m {}'.format(sysExecutable, bootstrap, module)
+        cmd = '"{}" "{}" -m {}'.format(sysExecutable, bootstrap, module)
     else:
-        return '{} "{}"'.format(sysExecutable, modulePath)
+        cmd = '"{}" "{}"'.format(sysExecutable, modulePath)
+    _logger.info("Issued command = <%s>" % cmd)
+    return cmd
 
 
 def ranAsBootstrap():
