@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -60,7 +60,7 @@ try:
     ocl = SIFTAlignmentWindow.silx.opencl.ocl
     SIFT = True
 except:
-    _logger.warning("SIFTAlignmentWindow not successful")
+    _logger.info("SIFTAlignmentWindow not successful")
     SIFT = False
 
 try:
