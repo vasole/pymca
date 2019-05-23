@@ -40,7 +40,7 @@ from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 try:
     from h5py import is_hdf5
-    from PyMca5.PyMcaGui.io.hdf5.HDF5Widget import getDatasetDialog
+    from PyMca5.PyMcaGui.io.hdf5.HDF5Widget import getDatasetValueDialog
     HAS_H5PY = True
 except ImportError:
     HAS_H5PY = False
