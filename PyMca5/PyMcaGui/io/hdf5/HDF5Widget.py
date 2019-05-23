@@ -853,7 +853,7 @@ def _getFilenameDialog():
     return filenamelist[0]
 
 
-def getDatasetValueDialog(filename=None, message=None):
+def getDatasetValueDialog(filename=None, message=None, parent=None):
     """Open a dialog to select a dataset in a HDF5 file.
     Return the value of the dataset.
 
@@ -864,7 +864,7 @@ def getDatasetValueDialog(filename=None, message=None):
     :param str message: Message used as window title for dialog
     :return: HDF5 dataset as numpy array, or None
     """
-    hdf5Dialog = Hdf5SelectionDialog(None, filename, message,
+    hdf5Dialog = Hdf5SelectionDialog(parent, filename, message,
                                      "dataset")
     ret = hdf5Dialog.exec_()
     if not ret:
@@ -879,13 +879,14 @@ def getDatasetValueDialog(filename=None, message=None):
     return data
 
 
-def getDatasetDialog(filename=None, value=False, message=None):
+def getDatasetDialog(filename=None, value=False, message=None, parent=None):
     # function kept for backward compatibility, in case someone
     # uses it with value=False outside PyMca5
     if value:
-        return getDatasetValueDialog(filename, message)
+        return getDatasetValueDialog(filename=filename, message=message,
+                                     parent=parent)
 
-    hdf5Dialog = Hdf5SelectionDialog(None, filename, message,
+    hdf5Dialog = Hdf5SelectionDialog(parent, filename, message,
                                      "dataset")
     ret = hdf5Dialog.exec_()
     if not ret:
@@ -895,7 +896,7 @@ def getDatasetDialog(filename=None, value=False, message=None):
     return hdf5File[selectedHdf5Uri.split("::")[-1]]
 
 
-def getGroupNameDialog(filename=None, message=None):
+def getGroupNameDialog(filename=None, message=None, parent=None):
     """Open a dialog to select a group in a HDF5 file.
     Return the name of the group.
 
@@ -904,7 +905,7 @@ def getGroupNameDialog(filename=None, message=None):
     :param str message: Message used as window title for dialog
     :return: HDF5 group name
     """
-    hdf5Dialog = Hdf5SelectionDialog(None, filename, message,
+    hdf5Dialog = Hdf5SelectionDialog(parent, filename, message,
                                      "group")
     ret = hdf5Dialog.exec_()
     if not ret:
