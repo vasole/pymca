@@ -30,7 +30,11 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __doc__ = """This module provides tools to read configurations from ini files
 and from their representation in an HDF5 file"""
 
-
+import sys
+if sys.version_info < (3,):
+    from StringIO import StringIO
+else:
+    from io import StringIO
 from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
@@ -90,7 +94,7 @@ def getConfigurationFileContents(parent=None, filetypelist=None, message=None,
     else:
         filename = fileList[0]
 
-    cfg = ConfigDict.ConfigDict()    
+    cfg = ConfigDict.ConfigDict()
     if HAS_H5PY and is_hdf5(filename):
         # we have to select a dataset
         msg = 'Select the configuration dataset by a double click'
@@ -103,6 +107,7 @@ def getConfigurationFileContents(parent=None, filetypelist=None, message=None,
         cfg.readfp(StringIO(initxt))
     else:
         cfg.read(filename)
+
     if getfilter:
         return cfg, filterused
     else:
