@@ -98,8 +98,7 @@ def getConfigurationFileContents(parent=None, filetypelist=None, message=None,
     if HAS_H5PY and is_hdf5(filename):
         # we have to select a dataset
         msg = 'Select the configuration dataset by a double click'
-        initxt = getDatasetValueDialog(filename,
-                                  value=True,
+        initxt = getDatasetValueDialog(filename=filename,
                                   message=msg,
                                   parent=parent)
         if not initxt:
