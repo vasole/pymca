@@ -763,7 +763,7 @@ class Hdf5SelectionDialog(qt.QDialog):
                     "Invalid itemtype %s, should be 'group', 'dataset' or 'any'" % itemtype)
 
         if filename is None:
-            filename = _getFilenameDialog()
+            filename = _getFilenameDialog(parent=parent)
         if filename is None:
             raise IOError("No filename specified")
 
@@ -835,14 +835,14 @@ class Hdf5SelectionDialog(qt.QDialog):
         return ret
 
 
-def _getFilenameDialog():
+def _getFilenameDialog(parent=None):
     """Open a dialog to select a file in a filesystem tree view.
     Return the selected filename."""
     from PyMca5.PyMcaGui.io import PyMcaFileDialogs
     fileTypeList = ['HDF5 Files (*.h5 *.nxs *.hdf)',
                     'HDF5 Files (*)']
     message = "Open HDF5 file"
-    filenamelist, ffilter = PyMcaFileDialogs.getFileList(parent=None,
+    filenamelist, ffilter = PyMcaFileDialogs.getFileList(parent=parent,
                                 filetypelist=fileTypeList,
                                 message=message,
                                 getfilter=True,
@@ -886,8 +886,7 @@ def getDatasetDialog(filename=None, value=False, message=None, parent=None):
         return getDatasetValueDialog(filename=filename, message=message,
                                      parent=parent)
 
-    hdf5Dialog = Hdf5SelectionDialog(parent, filename, message,
-                                     "dataset")
+    hdf5Dialog = Hdf5SelectionDialog(parent, filename, message, "dataset")
     ret = hdf5Dialog.exec_()
     if not ret:
         return None
@@ -905,8 +904,7 @@ def getGroupNameDialog(filename=None, message=None, parent=None):
     :param str message: Message used as window title for dialog
     :return: HDF5 group name
     """
-    hdf5Dialog = Hdf5SelectionDialog(parent, filename, message,
-                                     "group")
+    hdf5Dialog = Hdf5SelectionDialog(parent, filename, message, "group")
     ret = hdf5Dialog.exec_()
     if not ret:
         return None
