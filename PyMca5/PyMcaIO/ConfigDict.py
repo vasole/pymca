@@ -114,7 +114,7 @@ class ConfigDict(dict):
                     # check if we have received a URI
                     fname, path = ffile.split("::")
                     if os.path.exists(fname) and h5py.is_hdf5(fname):
-                        with h5py.open(fname, "r") as h5:
+                        with h5py.File(fname, "r") as h5:
                             config = StringIO(h5[path][()])
                             self.readfp(config, sections=sections)
                         hdf5files.append(ffile)
