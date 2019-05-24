@@ -149,14 +149,16 @@ class testConfigDict(unittest.TestCase):
         #read the data back into a string
         with open(self._tmpFileName, "r") as f:
             contentsAsText = f.read()
+        f = None
 
         hdf5FileName = self._tmpFileName + ".h5"
         path = "/entry_1/process/data"
 
-        with open(hdf5FileName, "w") as f:
+        with h5py.File(hdf5FileName, "w") as f:
             f[path] = contentsAsText
             f.flush()
-        
+        f = None
+
         uri = hdf5FileName + "::" + path
         readInstance = ConfigDict.ConfigDict()
         readInstance.read(uri)
