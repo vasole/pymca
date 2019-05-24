@@ -878,6 +878,31 @@ def getDatasetValueDialog(filename=None, message=None, parent=None):
 
     return data
 
+def getDatasetUri(parent=None, filename=None, message=None):
+    # TODO: Accept a filter for type of dataset
+    hdf5Dialog = Hdf5SelectionDialog(parent, filename, message, "dataset")
+    ret = hdf5Dialog.exec_()
+    if not ret:
+        return None
+    selectedHdf5Uri = hdf5Dialog.selectedItemUri
+    return selectedHdf5Uri
+
+def getGroupUri(parent=None, filename=None, message=None):
+    # TODO: Accept a filter for a particular attribute (NXclass)
+    hdf5Dialog = Hdf5SelectionDialog(parent, filename, message, "dataset")
+    ret = hdf5Dialog.exec_()
+    if not ret:
+        return None
+    selectedHdf5Uri = hdf5Dialog.selectedItemUri
+    return selectedHdf5Uri
+
+def getUri(parent=None, filename=None, message=None):
+    hdf5Dialog = Hdf5SelectionDialog(parent, filename, message, "any")
+    ret = hdf5Dialog.exec_()
+    if not ret:
+        return None
+    selectedHdf5Uri = hdf5Dialog.selectedItemUri
+    return selectedHdf5Uri
 
 def getDatasetDialog(filename=None, value=False, message=None, parent=None):
     # function kept for backward compatibility, in case someone
@@ -929,4 +954,6 @@ if __name__ == "__main__":
             print(phynxFile[ddict['name']].dtype, phynxFile[ddict['name']].shape)
     fileView.sigHDF5WidgetSignal.connect(mySlot)
     fileView.show()
-    sys.exit(app.exec_())
+    ret = app.exec_()
+    app = None
+    sys.exit(ret)
