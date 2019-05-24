@@ -40,16 +40,20 @@ from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 try:
     from h5py import is_hdf5
-    from PyMca5.PyMcaGui.io.hdf5.HDF5Widget import getDatasetValueDialog
+    from PyMca5.PyMcaGui.io.hdf5.HDF5Widget import getDatasetUri
     HAS_H5PY = True
 except ImportError:
     HAS_H5PY = False
 
 _HDF5_EXTENSIONS = [".h5", ".hdf5", ".hdf", ".nxs", ".nx"]
 
-def getFitConfiguration(parent=None, filetypelist=None, message=None,
-                        currentdir=None, mode="OPEN", getfilter=None,
-                        single=True, currentfilter=None, native=None):
+def getFitConfigurationFilePath(parent=None, filetypelist=None, message=None,
+                                currentdir=None, mode="OPEN", getfilter=None,
+                                single=True, currentfilter=None, native=None):
+    """
+    Returns a fit configuration file or an URI of the form filename::dataset
+    if an HDF5 dataset is selected.
+    """
     if filetypelist is None:
         filetypelist = ["Fit configuration files (*.cfg)"]
         if HAS_H5PY:
@@ -58,19 +62,19 @@ def getFitConfiguration(parent=None, filetypelist=None, message=None,
         filetypelist.append("All files (*)")
     if message is None:
         message = "Choose fit configuration file"
-    return getConfigurationFileContents(parent=parent,
-                                        filetypelist=filetypelist,
-                                        message=message,
-                                        currentdir=currentdir,
-                                        mode=mode,
-                                        getfilter=getfilter,
-                                        single=single,
-                                        currentfilter=currentdir,
-                                        native=native)
+    return getConfigurationFilePath(parent=parent,
+                                    filetypelist=filetypelist,
+                                    message=message,
+                                    currentdir=currentdir,
+                                    mode=mode,
+                                    getfilter=getfilter,
+                                    single=single,
+                                    currentfilter=currentdir,
+                                    native=native)
 
-def getConfigurationFileContents(parent=None, filetypelist=None, message=None,
-                                 currentdir=None, mode="OPEN", getfilter=None,
-                                 single=True, currentfilter=None, native=None):
+def getConfigurationFilePath(parent=None, filetypelist=None, message=None,
+                             currentdir=None, mode="OPEN", getfilter=None,
+                             single=True, currentfilter=None, native=None):
     if filetypelist is None:
         filetypelist = ["Configuration from .ini files (*.ini)"]
         if HAS_H5PY:
@@ -94,25 +98,36 @@ def getConfigurationFileContents(parent=None, filetypelist=None, message=None,
     else:
         filename = fileList[0]
 
-    cfg = ConfigDict.ConfigDict()
     if HAS_H5PY and is_hdf5(filename):
         # we have to select a dataset
         msg = 'Select the configuration dataset by a double click'
-        initxt = getDatasetValueDialog(filename=filename,
-                                  message=msg,
-                                  parent=parent)
-        if not initxt:
+        uri = getDatasetUri(parent=parent, filename=filename, message=msg)
+        if not uri:
             return None
-        cfg.readfp(StringIO(initxt))
-    else:
-        cfg.read(filename)
+        else:
+            filename = uri
 
     if getfilter:
-        return cfg, filterused
+        return filename, usedfilter
     else:
-        return cfg
+        return filename
+
+
+def getFitConfigurationDict(*var, **kw):
+    selection = getFitConfigurationFilePath(*var, **kw)
+    if selection:
+        return ConfigDict.getDictFromPathOrUri(selection)
+
+def getConfigurationDict(*var, **kw):
+    selection = getConfigurationFilePath(*var, **kw)
+    if selection:
+        return ConfigDict.getDictFromPathOrUri(selection)
 
 if __name__ == "__main__":
     app = qt.QApplication([])
-    print(getFitConfiguration())
+    if len(sys.argv) > 1:
+        config = ConfigDict.ConfigDict(filelist=sys.argv[1])
+    else:
+        config = getFitConfigurationDict()
+    ConfigDict.prtdict(config)
     app = None

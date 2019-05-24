@@ -281,6 +281,12 @@ def prtdict(ddict, lvl=0):
             print('\t' * lvl),
             print('-', key, '=', ddict[key])
 
+def getDictFromPathOrUri(path):
+    """
+    Takes as input an ini-like file or an HDF5 URI
+    """
+    cfg = ConfigDict()
+    return cfg.read(path)
 
 def main():
     if len(sys.argv) > 1:
