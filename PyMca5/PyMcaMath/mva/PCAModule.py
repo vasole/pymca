@@ -928,7 +928,7 @@ def main():
     from PyMca.PyMcaIO import EDFStack
     from PyMca.PyMcaIO import EdfFile
     import sys
-    inputfile = "D:\DATA\COTTE\ch09\ch09__mca_0005_0000_0000.edf"
+    inputfile = r"D:\DATA\COTTE\ch09\ch09__mca_0005_0000_0000.edf"
     if len(sys.argv) > 1:
         inputfile = sys.argv[1]
         print(inputfile)

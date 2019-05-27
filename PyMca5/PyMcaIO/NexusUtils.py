@@ -410,7 +410,7 @@ def nxRoot(path, mode='r', **kwargs):
 
     :param str path:
     :param str mode: h5py.File modes
-    :param \**kwargs: see h5py.File
+    :param **kwargs: see h5py.File
     :returns contextmanager:
     """
     if mode != 'r':
@@ -438,7 +438,7 @@ def nxProcess(entry, name, **kwargs):
 
     :param h5py.Group entry:
     :param str name:
-    :param \**kwargs: see nxProcessInit
+    :param **kwargs: see nxProcessInit
     :returns h5py.Group:
     """
     nxProcessInit(entry, name, **kwargs)

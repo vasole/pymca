@@ -92,8 +92,8 @@ if __name__ == "__main__":
     filename = None
     if len(sys.argv) > 1:
         filename = sys.argv[1]
-    elif os.path.exists(".\PIGE\010826.pige"):
-        filename = ".\PIGE\010826.pige"
+    elif os.path.exists(r".\PIGE\010826.pige"):
+        filename = r".\PIGE\010826.pige"
     if filename is not None:
         _logger.setLevel(logging.DEBUG)
         w = SupaVisioMap(filename)

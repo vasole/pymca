@@ -362,7 +362,7 @@ class OutputBuffer(MutableMapping):
         :param str label:
         :param str group: group name of this dataset (in hdf5 this is the nxdata name)
         :param str memtype: ram or hdf5
-        :param \**kwargs: see _allocateRam or _allocateHdf5
+        :param **kwargs: see _allocateRam or _allocateHdf5
         """
         memtype = memtype.lower()
         if self._forcedtype is not None:
@@ -439,7 +439,7 @@ class OutputBuffer(MutableMapping):
         :param dtype: buffer type
         :param list labels: for stack of datasets
         :param dict groupAttrs: nxdata attributes (e.g. axes)
-        :param \**createkwargs: see h5py.Group.create_dataset
+        :param **createkwargs: see h5py.Group.create_dataset
         """
         if data is None and shape is None:
             raise ValueError("Provide 'data' or 'shape'")
@@ -585,7 +585,7 @@ class OutputBuffer(MutableMapping):
             return matchobj.group(1)+separator
         separators = {'-', ':', ';', '_'}
         separators -= {separator}
-        separators = '[' + ''.join(separators) + ']'
+        separators = '[' + ''.join(separators) + ']+'
         for args in labels:
             if not isinstance(args, tuple):
                 args = (args,)
@@ -593,16 +593,16 @@ class OutputBuffer(MutableMapping):
                 args = ('{}({})'.format(prefix, args[0]), ) + args[1:]
             label = separator.join(args)
             # Replace spaces with separator
-            label = re.sub('\s', separator, label)
+            label = re.sub(r'\s+', separator, label)
             if filename:
                 # Replace separators
                 label = re.sub(separators, separator, label)
                 # Replace brackets with a trailing separator
-                label = re.sub('\((.+)\)', replbrackets, label)
-                label = re.sub('\[(.+)\]', replbrackets, label)
-                label = re.sub('\{(.+)\}', replbrackets, label)
+                label = re.sub(r'\((.+)\)', replbrackets, label)
+                label = re.sub(r'\[(.+)\]', replbrackets, label)
+                label = re.sub(r'\{(.+)\}', replbrackets, label)
                 # Remove non-alphanumeric characters (except . and separator)
-                label = re.sub('[^0-9a-zA-Z\.'+separator+']+', '', label)
+                label = re.sub(r'[^0-9a-zA-Z\.'+separator+']+', '', label)
                 # Remove trailing/leading separators
                 label = re.sub('^'+separator+'+', '', label)
                 label = re.sub(separator+'+$', '', label)
@@ -612,7 +612,7 @@ class OutputBuffer(MutableMapping):
         return out
 
     @staticmethod
-    def _labelsToHdf5Strings(labels, separator='_', replace=('\s',)):
+    def _labelsToHdf5Strings(labels, separator='_', replace=(r'\s+',)):
         """
         Used for hdf5 dataset names
         For example: ('Fe K', 'Layer1') -> `Fe_K_Layer1`

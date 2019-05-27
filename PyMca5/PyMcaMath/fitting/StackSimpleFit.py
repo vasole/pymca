@@ -449,7 +449,7 @@ def test():
     instance = StackSimpleFit()
     instance.setData(x, data)
     # TODO: Generate this file "on-the-fly" to be able to test everywhere
-    instance.setConfigurationFile("C:\StackSimpleFit.cfg")
+    instance.setConfigurationFile(r"C:\StackSimpleFit.cfg")
     instance.processStack()
 
 if __name__=="__main__":

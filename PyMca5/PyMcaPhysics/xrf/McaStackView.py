@@ -191,7 +191,7 @@ def fullChunkIndex(shape, nChunksMax, **kwargs):
 
     :param tuple shape: array shape to be sliced
     :param int nChunksMax: maximal number of chunks
-    :param \**kwargs: see chunkIndexParameters
+    :param **kwargs: see chunkIndexParameters
     :returns tuple: chunkIndex(list(list(slice,int))),
                     chunkAxes(tuple),
                     axesOrder(tuple),
@@ -267,7 +267,7 @@ def maskedChunkIndex(shape, nChunksMax, mask=None, **kwargs):
     :param tuple shape: array shape to be sliced
     :param int nChunksMax: maximal number of chunks
     :param array or tuple(list(int)) mask: mask in axesOrder dimensions (bool array or list of indices)
-    :param \**kwargs: see chunkIndexParameters
+    :param **kwargs: see chunkIndexParameters
     :returns tuple: chunkIndex(index(tuple), shape(tuple), nChunks(int)),
                     chunkAxes(tuple),
                     axesOrder(tuple),
@@ -505,7 +505,7 @@ class MaskedView(ChunkedView):
         :param num nMca: number of spectra per chunk
         :param int mcaAxis: MCA channel dimension
         :param tuple axesOrder: order of other dimensions to be sliced (C order by default)
-        :param \**kwargs: see ChunkedView
+        :param **kwargs: see ChunkedView
         """
         if mcaAxis is None:
             mcaAxis = -1
@@ -630,6 +630,6 @@ class FullView(MaskedView):
     def __init__(self, data, **kwargs):
         """
         :param array data: nD array (numpy.ndarray or h5py.Dataset)
-        :param \**kwargs: see MaskedView
+        :param **kwargs: see MaskedView
         """
         super(FullView, self).__init__(data, mask=None, **kwargs)

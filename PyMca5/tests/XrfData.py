@@ -88,7 +88,7 @@ def generateXRFData(nRows=5, nColumns=10, nDet=1, nTimes=3, presetTime=1, same=T
 def generate(modfunc=None, **kwargs):
     """
     :param callable modfunc: modify configuration on loading
-    :param \**kwargs: see `generateXRFData`
+    :param **kwargs: see `generateXRFData`
     :returns dict: {configuration: ConfigDict,
                     data: ndarray(nDet, nRows, nColumns, nChannels),
                     liveTime: ndarray(nDet, nRows, nColumns),
@@ -107,7 +107,7 @@ def generateSpecMesh(filename, nmaps=1, **kwargs):
     """
     :param str filename: save data under this name
     :param num nmaps: number of mesh scans
-    :param \**kwargs: see `generate`
+    :param **kwargs: see `generate`
     :returns dict: {filelist: list(str),
                     configuration: ConfigDict,
                     data: ndarray(nDet, nRows, nColumns, nChannels),
@@ -161,7 +161,7 @@ def generateEdfMap(filename, fastpulsefraction=0.01, **kwargs):
 
     :param str filename: save data under this name
     :param num fastpulsefraction: ratio of fast pulse width (in time) over slow pulse width
-    :param \**kwargs: see `generate`
+    :param **kwargs: see `generate`
     :returns dict: {filelist: list(str),
                     configuration: ConfigDict,
                     data: ndarray(nDet, nRows, nColumns, nChannels),
@@ -221,7 +221,7 @@ def generateEdfMap(filename, fastpulsefraction=0.01, **kwargs):
 def generateHdf5Map(filename, **kwargs):
     """
     :param str filename: save data under this name
-    :param \**kwargs: see `generate`
+    :param **kwargs: see `generate`
     :returns dict: {filelist: list(str),
                     configuration: ConfigDict,
                     data: ndarray(nDet, nRows, nColumns, nChannels),
