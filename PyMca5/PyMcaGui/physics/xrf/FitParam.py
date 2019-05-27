@@ -1340,7 +1340,7 @@ class FitParamDialog(qt.QDialog):
                             currentdir=self.initDir,
                             single=True)
         if len(filename):
-            filename = qt.safe_str(filename)
+            filename = qt.safe_str(filename[0])
             if len(filename):
                 self.loadParameters(filename, None)
                 self.initDir = os.path.dirname(filename)
