@@ -47,8 +47,8 @@ from . import AttenuatorsTable
 from . import ConcentrationsWidget
 from . import EnergyTable
 from PyMca5.PyMcaCore import PyMcaDirs
-from PyMca5.PyMcaGui import PyMcaFileDialogs
-from PyMca5.PyMcaGui.io import ConfigurationFileDialog
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
+from PyMca5.PyMcaGui.io import ConfigurationFileDialogs
 XRFMC_FLAG = False
 _logger = logging.getLogger(__name__)
 try:
@@ -1186,7 +1186,8 @@ class FitParamDialog(qt.QDialog):
         return self.fitparam.getParameters()
 
     def loadParameters(self, filename, sections=None):
-        cfg= ConfigDict.ConfigDict()
+        _logger.info("Filename to be read <%s>" % filename)
+        cfg = ConfigDict.ConfigDict()
         if sections is not None:
             if 'attenuators' in sections:
                 sections.append('materials')
@@ -1332,7 +1333,7 @@ class FitParamDialog(qt.QDialog):
     def load(self):
         if self.initDir is None:
             self.initDir = PyMcaDirs.inputDir
-        fileList = ConfigurationFileDialog.getFitConfigurationFilePath(self,
+        fileList = ConfigurationFileDialogs.getFitConfigurationFilePath(self,
                             mode="OPEN",
                             currentdir=self.initDir,
                             single=True)
@@ -1346,14 +1347,14 @@ class FitParamDialog(qt.QDialog):
         #diag= SectionFileDialog(self, "Save Parameters", FitParamSections, FitParamHeaders, qt.QFileDialog.AnyFile)
         if self.initDir is None:
             self.initDir = PyMcaDirs.outputDir
-        filename = PyMcaFileDialogs.getFileList(self,
+        fileList = PyMcaFileDialogs.getFileList(self,
                             filetypelist=["Fit configuration files (*.cfg)"],
                             mode="SAVE",
                             message="Enter output fit configuration file",
                             currentdir=self.initDir,
                             single=True)
-        if len(filename):
-            filename = qt.safe_str(filename[0])
+        if fileList:
+            filename = qt.safe_str(fileList[0])
             if len(filename):
                 if not filename.endswith(".cfg"):
                     filename += ".cfg"

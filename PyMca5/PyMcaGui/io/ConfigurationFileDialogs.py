@@ -51,7 +51,7 @@ def getFitConfigurationFilePath(parent=None, filetypelist=None, message=None,
                                 currentdir=None, mode="OPEN", getfilter=None,
                                 single=True, currentfilter=None, native=None):
     """
-    Returns a fit configuration file or an URI of the form filename::dataset
+    Returns a list of fit configuration files or URIs of the form filename::dataset
     if an HDF5 dataset is selected.
     """
     if filetypelist is None:
@@ -88,7 +88,7 @@ def getConfigurationFilePath(parent=None, filetypelist=None, message=None,
                     currentdir=currentdir,
                     mode="OPEN",            # input ignored
                     getfilter=getfilter,
-                    single=True,            # input ignored
+                    single=single,
                     currentfilter=currentfilter,
                     native=native)
     if getfilter:
@@ -109,7 +109,6 @@ def getConfigurationFilePath(parent=None, filetypelist=None, message=None,
         return fileList, usedfilter
     else:
         return fileList
-
 
 def getFitConfigurationDict(*var, **kw):
     selection = getFitConfigurationFilePath(*var, **kw)

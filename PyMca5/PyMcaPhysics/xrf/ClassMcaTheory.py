@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -71,7 +71,7 @@ class McaTheory(object):
                         dirname = os.path.dirname(dirname)
                         initdict = os.path.join(dirname, "McaTheory.cfg")
             if os.path.exists(initdict):
-                self.config = ConfigDict.ConfigDict(filelist = initdict)
+                self.config = ConfigDict.ConfigDict(filelist=initdict)
             else:
                 print("Cannot find file McaTheory.cfg")
                 raise IOError("File %s does not exist" % initdict)
