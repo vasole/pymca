@@ -16,12 +16,13 @@ matrix:
               - BUILD_COMMAND=sdist
               - QT_BINDING=PyQt5
 
-        - language: generic
-          os: osx
-          env: 
-              - BUILD_COMMAND=bdist_wheel
-              - PYTHON_VERSION=2
-              - QT_BINDING=PySide2
+        # No particular need to test Python 2 on OSX
+        #- language: generic
+        #  os: osx
+        #  env: 
+        #      - BUILD_COMMAND=bdist_wheel
+        #      - PYTHON_VERSION=2
+        #      - QT_BINDING=PySide2
 
         - language: generic
           os: osx
