@@ -1075,4 +1075,5 @@ if __name__ == "__main__":
     w.sigAddSelection.connect(addSelection)
     w.sigRemoveSelection.connect(removeSelection)
     w.sigReplaceSelection.connect(replaceSelection)
-    sys.exit(app.exec_())
+    ret = app.exec_()
+    sys.exit(ret)

@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -30,6 +30,8 @@ __author__ = "E. Papillon & V.A. Sole - ESRF Software Group"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+
+import os
 import sys
 if sys.version_info < (3,):
     import ConfigParser
@@ -43,6 +45,11 @@ try:
 except ImportError:
     # do not use numpy, use lists
     USE_NUMPY = False
+try:
+    import h5py
+    HAS_H5PY = True
+except ImportError:
+    HAS_H5PY = False
 
 
 class ConfigDict(dict):
@@ -96,9 +103,27 @@ class ConfigDict(dict):
         """
         filelist = self.__tolist(filelist)
         sections = self.__tolist(sections)
+
+        if not len(filelist):
+            return
+
+        hdf5files = []
+        if HAS_H5PY:
+            for ffile in filelist:
+                if not os.path.exists(ffile) and ("::" in ffile):  
+                    # check if we have received a URI
+                    fname, path = ffile.split("::")
+                    if os.path.exists(fname) and h5py.is_hdf5(fname):
+                        with h5py.File(fname, "r") as h5:
+                            config = StringIO(h5[path][()])
+                            self.readfp(config, sections=sections)
+                        hdf5files.append(ffile)
+
+        cleanlist = [fname for fname in filelist if fname not in hdf5files]
+        
         cfg = ConfigParser.ConfigParser()
         cfg.optionxform = self.__convert
-        cfg.read(filelist)
+        cfg.read(cleanlist)
         self.__read(cfg, sections)
 
         for ffile in filelist:
@@ -192,9 +217,9 @@ class ConfigDict(dict):
         Write the current dictionary to the given filename
         """
         sections = self.__tolist(sections)
-        fp = open(filename, "w")
-        self.__write(fp, self, sections)
-        fp.close()
+
+        with open(filename, "w") as fp:
+            self.__write(fp, self, sections)
 
     def __write(self, fp, ddict, sections=None, secthead=None):
         dictkey = []
@@ -256,6 +281,13 @@ def prtdict(ddict, lvl=0):
             print('\t' * lvl),
             print('-', key, '=', ddict[key])
 
+def getDictFromPathOrUri(path):
+    """
+    Takes as input an ini-like file or an HDF5 URI
+    """
+    cfg = ConfigDict()
+    cfg.read(path)
+    return cfg
 
 def main():
     if len(sys.argv) > 1:

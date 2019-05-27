@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -35,6 +35,15 @@ import sys
 import os
 import gc
 import tempfile
+if sys.version_info < (3,):
+    from StringIO import StringIO
+else:
+    from io import StringIO
+try:
+    import h5py
+    HAS_H5PY = True
+except:
+    HAS_H5PY = None
 
 class testConfigDict(unittest.TestCase):
     def setUp(self):
@@ -54,6 +63,8 @@ class testConfigDict(unittest.TestCase):
         if self._tmpFileName is not None:
             if os.path.exists(self._tmpFileName):
                 os.remove(self._tmpFileName)
+            if os.path.exists(self._tmpFileName + ".h5"):
+                os.remove(self._tmpFileName + ".h5")
 
     def testConfigDictImport(self):
         #"""Test successful import"""
@@ -86,6 +97,71 @@ class testConfigDict(unittest.TestCase):
         #read the data back
         readInstance = ConfigDict.ConfigDict()
         readInstance.read(self._tmpFileName)
+
+        # get read key list
+        testDictKeys = list(testDict.keys())
+        readKeys = list(readInstance.keys())
+        self.assertTrue(len(readKeys) == len(testDictKeys),
+                    "Number of read keys not equal to number of written keys")
+
+        topKey = 'simple_types'
+        for key in testDict[topKey]:
+            original = testDict[topKey][key]
+            read = readInstance[topKey][key]
+            self.assertTrue( read == original,
+                            "Read <%s> instead of <%s>" % (read, original))
+
+        topKey = 'containers'
+        for key in testDict[topKey]:
+            original = testDict[topKey][key]
+            read = readInstance[topKey][key]
+            if key == 'array':
+                self.assertTrue( read.all() == original.all(),
+                            "Read <%s> instead of <%s>" % (read, original))
+            else:
+                self.assertTrue( read == original,
+                            "Read <%s> instead of <%s>" % (read, original))
+
+    @unittest.skipIf(not HAS_H5PY, "skipped h5py missing")
+    def testHdf5Uri(self):
+        # create a dictionnary
+        from PyMca5.PyMcaIO import ConfigDict
+        testDict = {}
+        testDict['simple_types'] = {}
+        testDict['simple_types']['float'] = 1.0
+        testDict['simple_types']['int'] = 1
+        testDict['simple_types']['string'] = "Hello World"
+        testDict['containers'] = {}
+        testDict['containers']['list'] = [-1, 'string', 3.0]
+        if ConfigDict.USE_NUMPY:
+            import numpy
+            testDict['containers']['array'] = numpy.array([1.0, 2.0, 3.0])
+        testDict['containers']['dict'] = {'key1': 'Hello World',
+                                          'key2': 2.0}
+
+        tmpFile = tempfile.mkstemp(text=False)
+        os.close(tmpFile[0])
+        self._tmpFileName = tmpFile[1]
+
+        writeInstance = ConfigDict.ConfigDict(initdict=testDict)
+        writeInstance.write(self._tmpFileName)
+
+        #read the data back into a string
+        with open(self._tmpFileName, "r") as f:
+            contentsAsText = f.read()
+        f = None
+
+        hdf5FileName = self._tmpFileName + ".h5"
+        path = "/entry_1/process/data"
+
+        with h5py.File(hdf5FileName, "w") as f:
+            f[path] = contentsAsText
+            f.flush()
+        f = None
+
+        uri = hdf5FileName + "::" + path
+        readInstance = ConfigDict.ConfigDict()
+        readInstance.read(uri)
 
         # get read key list
         testDictKeys = list(testDict.keys())
