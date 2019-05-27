@@ -571,7 +571,8 @@ class OutputBuffer(MutableMapping):
     def _labelsToPathStrings(labels, prefix='', separator='_', filename=False):
         """
         Used for EDF files names and CSV titles
-        For example: ('Fe-K', 'Layer1') -> `s(Fe-K)_Layer1`
+        For example: ('Fe-K', 'Layer1') -> `s(Fe-K)_Layer1` (title)
+                                        -> `s(Fe_K)_Layer1` (filename)
 
         :param list(tuple) labels:
         :param str prefix: for decoration (for example s(...), w(...), ...)
@@ -583,7 +584,7 @@ class OutputBuffer(MutableMapping):
         out = []
         def replbrackets(matchobj):
             return matchobj.group(1)+separator
-        separators = {'-', ':', ';', '_'}
+        separators = {r'\-', ':', ';', '_'}
         separators -= {separator}
         separators = '[' + ''.join(separators) + ']+'
         for args in labels:
@@ -615,11 +616,11 @@ class OutputBuffer(MutableMapping):
     def _labelsToHdf5Strings(labels, separator='_', replace=(r'\s+',)):
         """
         Used for hdf5 dataset names
-        For example: ('Fe K', 'Layer1') -> `Fe_K_Layer1`
+        For example: ('Fe-K', 'Layer1') -> `Fe-K_Layer1`
 
         :param list(tuple) labels:
         :param str separator: to join the tuples (regular expression)
-        :param tuple(str) replace: to be replaced by the `separator` (regular expression)
+        :param tuple(str) replace: to be replaced by the `separator` (regular expressions)
         """
         if not labels:
             return []
