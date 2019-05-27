@@ -57,6 +57,7 @@ from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaPhysics.xrf import McaAdvancedFitBatch
 from PyMca5.PyMcaGui.physics.xrf import QtMcaAdvancedFitReport
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
+from PyMca5.PyMcaGui.io import ConfigurationFileDialogs
 from PyMca5.PyMcaCore import EdfFileLayer
 from PyMca5.PyMcaCore import SpecFileLayer
 from PyMca5.PyMcaGui import IconDict
@@ -1061,7 +1062,7 @@ class McaBatchGUI(qt.QWidget):
         else:
             configfileList = configfile0
         for configfile in configfileList:
-            if not os.path.exists(configfile):
+            if not os.path.exists(configfile) and not os.path.exists(configfile.split("::")[0]):
                 qt.QMessageBox.critical(self,
                              "ERROR",'File %s\ndoes not exist' % configfile)
                 if QTVERSION < '4.0.0':
@@ -1151,8 +1152,10 @@ class McaBatchGUI(qt.QWidget):
         if not os.path.exists(self.inputDir):
             self.inputDir =  os.getcwd()
         wdir = self.inputDir
-        filetypelist = ["Config Files (*.cfg)", "All files (*)"]
-        fileList, filefilter = PyMcaFileDialogs.getFileList(self,
+        #filetypelist = ["Config Files (*.cfg)", "All files (*)"]
+        filetypelist = None
+        fileList, filefilter = ConfigurationFileDialogs. getFitConfigurationFilePath( \
+                                                self,
                                                 filetypelist=filetypelist,
                                                 message="Open a new fit config file",
                                                 currentdir=wdir,

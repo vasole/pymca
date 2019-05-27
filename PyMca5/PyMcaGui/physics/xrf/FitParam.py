@@ -47,7 +47,8 @@ from . import AttenuatorsTable
 from . import ConcentrationsWidget
 from . import EnergyTable
 from PyMca5.PyMcaCore import PyMcaDirs
-from PyMca5.PyMcaGui import PyMcaFileDialogs
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
+from PyMca5.PyMcaGui.io import ConfigurationFileDialogs
 XRFMC_FLAG = False
 _logger = logging.getLogger(__name__)
 try:
@@ -1185,7 +1186,8 @@ class FitParamDialog(qt.QDialog):
         return self.fitparam.getParameters()
 
     def loadParameters(self, filename, sections=None):
-        cfg= ConfigDict.ConfigDict()
+        _logger.info("Filename to be read <%s>" % filename)
+        cfg = ConfigDict.ConfigDict()
         if sections is not None:
             if 'attenuators' in sections:
                 sections.append('materials')
@@ -1331,9 +1333,8 @@ class FitParamDialog(qt.QDialog):
     def load(self):
         if self.initDir is None:
             self.initDir = PyMcaDirs.inputDir
-        filename = PyMcaFileDialogs.getFileList(self,
-                            filetypelist=["Fit configuration files (*.cfg)",
-                                          "All Files (*)"],
+        filename = ConfigurationFileDialogs.getFitConfigurationFilePath(self,
+                            filetypelist=None,
                             mode="OPEN",
                             message="Choose fit configuration file",
                             currentdir=self.initDir,

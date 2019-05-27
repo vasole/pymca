@@ -51,7 +51,7 @@ def getFitConfigurationFilePath(parent=None, filetypelist=None, message=None,
                                 currentdir=None, mode="OPEN", getfilter=None,
                                 single=True, currentfilter=None, native=None):
     """
-    Returns a fit configuration file or an URI of the form filename::dataset
+    Returns a list of fit configuration files or URIs of the form filename::dataset
     if an HDF5 dataset is selected.
     """
     if filetypelist is None:
@@ -88,30 +88,38 @@ def getConfigurationFilePath(parent=None, filetypelist=None, message=None,
                     currentdir=currentdir,
                     mode="OPEN",            # input ignored
                     getfilter=getfilter,
-                    single=True,            # input ignored
+                    single=single,
                     currentfilter=currentfilter,
                     native=native)
     if not len(fileList):
         return None
     if getfilter:
-        filename, usedfilter = fileList[:2]
-    else:
-        filename = fileList[0]
+        fileList, usedfilter = fileList[:2]
 
-    if HAS_H5PY and is_hdf5(filename):
-        # we have to select a dataset
-        msg = 'Select the configuration dataset by a double click'
-        uri = getDatasetUri(parent=parent, filename=filename, message=msg)
-        if not uri:
-            return None
-        else:
-            filename = uri
-
+    if HAS_H5PY:
+        tmpFileList = []
+        path = None
+        for filename in fileList:
+            if is_hdf5(filename):
+                if path is None:
+                    # assume the path in the file is going to be the same
+                    # for all the selected files
+                    # we have to select a dataset
+                    msg = 'Select the configuration dataset by a double click'
+                    uri = getDatasetUri(parent=parent, filename=filename,
+                                        message=msg)
+                    if not uri:
+                        return None
+                    else:
+                        path = uri.split("::")[-1]
+                tmpFileList.append(filename + "::" + path)
+            else:
+                tmpFileList.append(filename)
+        fileList = tmpFileList
     if getfilter:
-        return filename, usedfilter
+        return fileList, usedfilter
     else:
-        return filename
-
+        return fileList
 
 def getFitConfigurationDict(*var, **kw):
     selection = getFitConfigurationFilePath(*var, **kw)
