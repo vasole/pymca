@@ -69,7 +69,7 @@ def getFitConfigurationFilePath(parent=None, filetypelist=None, message=None,
                                     mode=mode,
                                     getfilter=getfilter,
                                     single=single,
-                                    currentfilter=currentdir,
+                                    currentfilter=currentfilter,
                                     native=native)
 
 def getConfigurationFilePath(parent=None, filetypelist=None, message=None,
@@ -91,26 +91,24 @@ def getConfigurationFilePath(parent=None, filetypelist=None, message=None,
                     single=True,            # input ignored
                     currentfilter=currentfilter,
                     native=native)
-    if not len(fileList):
-        return None
     if getfilter:
-        filename, usedfilter = fileList[:2]
-    else:
-        filename = fileList[0]
-
-    if HAS_H5PY and is_hdf5(filename):
-        # we have to select a dataset
-        msg = 'Select the configuration dataset by a double click'
-        uri = getDatasetUri(parent=parent, filename=filename, message=msg)
-        if not uri:
-            return None
-        else:
-            filename = uri
-
+        fileList, usedfilter = fileList
+    if HAS_H5PY:
+        newList = []
+        for filename in fileList:
+            if is_hdf5(filename):
+                # we have to select a dataset
+                msg = 'Select the configuration dataset by a double click'
+                uri = getDatasetUri(parent=parent, filename=filename, message=msg)
+                if uri:
+                    newList.append(uri)
+            else:
+                newList.append(filename)
+        fileList = newList
     if getfilter:
-        return filename, usedfilter
+        return fileList, usedfilter
     else:
-        return filename
+        return fileList
 
 
 def getFitConfigurationDict(*var, **kw):

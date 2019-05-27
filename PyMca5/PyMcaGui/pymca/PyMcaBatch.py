@@ -57,6 +57,7 @@ from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaPhysics.xrf import McaAdvancedFitBatch
 from PyMca5.PyMcaGui.physics.xrf import QtMcaAdvancedFitReport
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
+from PyMca5.PyMcaGui.io import ReadConfigurationDialog
 from PyMca5.PyMcaCore import EdfFileLayer
 from PyMca5.PyMcaCore import SpecFileLayer
 from PyMca5.PyMcaGui import IconDict
@@ -1018,7 +1019,8 @@ class McaBatchGUI(qt.QWidget):
         msg.exec_()
 
     def setConfigFile(self,configfile=None):
-        if configfile is None:return
+        if configfile is None:
+            return
         if self.__goodConfigFile(configfile):
             self.configFile = configfile
             if type(configfile) == type([]):
@@ -1061,7 +1063,7 @@ class McaBatchGUI(qt.QWidget):
         else:
             configfileList = configfile0
         for configfile in configfileList:
-            if not os.path.exists(configfile):
+            if not os.path.exists(configfile.split('::')[0]):
                 qt.QMessageBox.critical(self,
                              "ERROR",'File %s\ndoes not exist' % configfile)
                 if QTVERSION < '4.0.0':
@@ -1141,7 +1143,7 @@ class McaBatchGUI(qt.QWidget):
                                                 single=False,
                                                 currentfilter=wfilter)
 
-        if len(filelist):
+        if filelist:
             self.setFileList(filelist)
             self.inputFilter = filefilter
         self.raise_()
@@ -1151,20 +1153,13 @@ class McaBatchGUI(qt.QWidget):
         if not os.path.exists(self.inputDir):
             self.inputDir =  os.getcwd()
         wdir = self.inputDir
-        filetypelist = ["Config Files (*.cfg)", "All files (*)"]
-        fileList, filefilter = PyMcaFileDialogs.getFileList(self,
-                                                filetypelist=filetypelist,
-                                                message="Open a new fit config file",
+        fileList = ReadConfigurationDialog.getFitConfigurationFilePath(self,
                                                 currentdir=wdir,
                                                 mode="OPEN",
-                                                getfilter=True,
-                                                single=False,
-                                                currentfilter=None)
+                                                single=True)
 
-        if len(fileList) == 1:
+        if fileList:
             self.setConfigFile(fileList[0])
-        elif len(fileList):
-            self.setConfigFile(fileList)
         if QTVERSION < '4.0.0':
             self.raiseW()
         else:
@@ -1175,11 +1170,11 @@ class McaBatchGUI(qt.QWidget):
         if not os.path.exists(self.outputDir):
             self.outputDir =  os.getcwd()
         wdir = self.outputDir
-        outdir =PyMcaFileDialogs.getExistingDirectory(self,
+        outdir = PyMcaFileDialogs.getExistingDirectory(self,
                                     message="Output Directory Selection",
                                     mode="SAVE",
                                     currentdir=wdir)
-        if len(outdir):
+        if outdir:
             self.setOutputDir(outdir)
         if QTVERSION < '4.0.0':
             self.raiseW()

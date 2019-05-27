@@ -278,17 +278,16 @@ def getFileList(parent=None, filetypelist=None, message=None, currentdir=None,
                     filelist[0] = txt
             fdialog.close()
             del fdialog
-    filelist = [qt.safe_str(x) for x in  filelist]
-    if not(len(filelist)):
-        return []
-    if mode == "OPEN":
-        PyMcaDirs.inputDir = os.path.dirname(filelist[0])
-        if PyMcaDirs.outputDir is None:
-            PyMcaDirs.outputDir = os.path.dirname(filelist[0])
-    else:
-        PyMcaDirs.outputDir = os.path.dirname(filelist[0])
-        if PyMcaDirs.inputDir is None:
+    filelist = [qt.safe_str(x) for x in filelist]
+    if filelist:
+        if mode == "OPEN":
             PyMcaDirs.inputDir = os.path.dirname(filelist[0])
+            if PyMcaDirs.outputDir is None:
+                PyMcaDirs.outputDir = os.path.dirname(filelist[0])
+        else:
+            PyMcaDirs.outputDir = os.path.dirname(filelist[0])
+            if PyMcaDirs.inputDir is None:
+                PyMcaDirs.inputDir = os.path.dirname(filelist[0])
     #do not sort file list in order to allow the user other choices
     #filelist.sort()
     if getfilter:

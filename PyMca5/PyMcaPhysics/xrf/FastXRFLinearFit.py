@@ -64,7 +64,7 @@ class FastXRFLinearFit(object):
         self._config = self._mcaTheory.getConfiguration()
 
     def setFitConfigurationFile(self, ffile):
-        if not os.path.exists(ffile):
+        if not os.path.exists(ffile.split('::')[0]):
             raise IOError("File <%s> does not exists" % ffile)
         configuration = ConfigDict.ConfigDict()
         configuration.read(ffile)

@@ -76,7 +76,7 @@ class McaTheory(object):
                 print("Cannot find file McaTheory.cfg")
                 raise IOError("File %s does not exist" % initdict)
         else:
-            if os.path.exists(initdict):
+            if os.path.exists(initdict.split('::')[0]):
                 self.config = ConfigDict.ConfigDict(filelist = initdict)
             else:
                 raise IOError("File %s does not exist" % initdict)
