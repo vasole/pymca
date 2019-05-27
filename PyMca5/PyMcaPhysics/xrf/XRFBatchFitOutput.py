@@ -569,14 +569,19 @@ class OutputBuffer(MutableMapping):
 
     @staticmethod
     def _labelsToPathStrings(labels, prefix='', separator='_', filename=False):
-        """Used for edf files names for example
+        """Used for EDF files names and CSV titles
+
+        :param list(tuple) labels:
+        :param str prefix: for decoration (e.g. `s(...)`, `w(...)`, ...)
+        :param str separator: to join the tuples (regular expression)
+        :param bool filename: file name or title
         """
         if not labels:
             return []
         out = []
         def replbrackets(matchobj):
             return matchobj.group(1)+separator
-        separators = {'-', ':', ';'}
+        separators = {'-', ':', ';', '_'}
         separators -= {separator}
         separators = '[' + ''.join(separators) + ']'
         for args in labels:
@@ -594,7 +599,7 @@ class OutputBuffer(MutableMapping):
                 label = re.sub('\((.+)\)', replbrackets, label)
                 label = re.sub('\[(.+)\]', replbrackets, label)
                 label = re.sub('\{(.+)\}', replbrackets, label)
-                # Remove non-alphanumeric characters (except . and _)
+                # Remove non-alphanumeric characters (except . and separator)
                 label = re.sub('[^0-9a-zA-Z\.'+separator+']+', '', label)
                 # Remove trailing/leading separators
                 label = re.sub('^'+separator+'+', '', label)

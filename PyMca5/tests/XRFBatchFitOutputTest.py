@@ -339,15 +339,14 @@ class testXRFBatchFitOutput(unittest.TestCase):
 
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()
-    auto = False
     if auto:
         testSuite.addTest(
             unittest.TestLoader().loadTestsFromTestCase(testXRFBatchFitOutput))
     else:
         # use a predefined order
         testSuite.addTest(testXRFBatchFitOutput('testOutputFormats'))
-        #testSuite.addTest(testXRFBatchFitOutput('testNoSave'))
-        #testSuite.addTest(testXRFBatchFitOutput('testOverwrite'))
+        testSuite.addTest(testXRFBatchFitOutput('testNoSave'))
+        testSuite.addTest(testXRFBatchFitOutput('testOverwrite'))
     return testSuite
 
 
