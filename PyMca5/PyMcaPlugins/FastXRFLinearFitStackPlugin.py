@@ -232,14 +232,20 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
 
         # Show results
         with result.bufferContext(update=True):
-            if 'massfractions' in result:
-                imageNames = result.parameter_names + result.massfraction_names
+            if 'molarconcentrations' in result:
+                imageNames = result.labels('parameters', labeltype='title') + \
+                             result.labels('molarconcentrations', labeltype='title')
+                images = numpy.concatenate((result['parameters'],
+                                            result['molarconcentrations']), axis=0)
+            elif 'massfractions' in result:
+                imageNames = result.labels('parameters', labeltype='title') + \
+                             result.labels('massfractions', labeltype='title')
                 images = numpy.concatenate((result['parameters'],
                                             result['massfractions']), axis=0)
             else:
-                imageNames = result.parameter_names
+                imageNames = result.labels('parameters', labeltype='title')
                 images = result['parameters']
-            nImages = images.shape[0]
+            nImages = len(imageNames)
             self._widget = StackPluginResultsWindow.StackPluginResultsWindow(\
                                             usetab=False)
             self._widget.buildAndConnectImageButtonBox(replace=True,
