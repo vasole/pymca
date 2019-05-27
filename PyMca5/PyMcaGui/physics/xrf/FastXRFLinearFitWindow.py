@@ -35,7 +35,7 @@ from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import PyMca_Icons
 IconDict = PyMca_Icons.IconDict
 from PyMca5.PyMcaGui import PyMcaFileDialogs
-from PyMca5.PyMcaGui import ReadConfigurationDialog
+from PyMca5.PyMcaGui import ConfigurationFileDialog
 try:
     import h5py
     hasH5py = True
@@ -243,7 +243,7 @@ class FastXRFLinearFitWindow(qt.QWidget):
                         qt.QWidget.sizeHint(self).height())
 
     def browseConfigurationFile(self):
-        fileList = ReadConfigurationDialog.getFitConfigurationFilePath(parent=self,
+        fileList = ConfigurationFileDialog.getFitConfigurationFilePath(parent=self,
                                      mode="OPEN",
                                      single=True)
         if fileList:

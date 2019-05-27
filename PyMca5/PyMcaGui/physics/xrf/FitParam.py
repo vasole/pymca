@@ -48,7 +48,7 @@ from . import ConcentrationsWidget
 from . import EnergyTable
 from PyMca5.PyMcaCore import PyMcaDirs
 from PyMca5.PyMcaGui import PyMcaFileDialogs
-from PyMca5.PyMcaGui.io import ReadConfigurationDialog
+from PyMca5.PyMcaGui.io import ConfigurationFileDialog
 XRFMC_FLAG = False
 _logger = logging.getLogger(__name__)
 try:
@@ -1332,7 +1332,7 @@ class FitParamDialog(qt.QDialog):
     def load(self):
         if self.initDir is None:
             self.initDir = PyMcaDirs.inputDir
-        fileList = ReadConfigurationDialog.getFitConfigurationFilePath(self,
+        fileList = ConfigurationFileDialog.getFitConfigurationFilePath(self,
                             mode="OPEN",
                             currentdir=self.initDir,
                             single=True)

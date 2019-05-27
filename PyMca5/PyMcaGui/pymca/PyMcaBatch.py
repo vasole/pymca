@@ -57,7 +57,7 @@ from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaPhysics.xrf import McaAdvancedFitBatch
 from PyMca5.PyMcaGui.physics.xrf import QtMcaAdvancedFitReport
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
-from PyMca5.PyMcaGui.io import ReadConfigurationDialog
+from PyMca5.PyMcaGui.io import ConfigurationFileDialog
 from PyMca5.PyMcaCore import EdfFileLayer
 from PyMca5.PyMcaCore import SpecFileLayer
 from PyMca5.PyMcaGui import IconDict
@@ -1153,7 +1153,7 @@ class McaBatchGUI(qt.QWidget):
         if not os.path.exists(self.inputDir):
             self.inputDir =  os.getcwd()
         wdir = self.inputDir
-        fileList = ReadConfigurationDialog.getFitConfigurationFilePath(self,
+        fileList = ConfigurationFileDialog.getFitConfigurationFilePath(self,
                                                 currentdir=wdir,
                                                 mode="OPEN",
                                                 single=True)
