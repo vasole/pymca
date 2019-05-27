@@ -1333,15 +1333,13 @@ class FitParamDialog(qt.QDialog):
     def load(self):
         if self.initDir is None:
             self.initDir = PyMcaDirs.inputDir
-        filename = ConfigurationFileDialogs.getFitConfigurationFilePath(self,
-                            filetypelist=None,
+        fileList = ConfigurationFileDialogs.getFitConfigurationFilePath(self,
                             mode="OPEN",
-                            message="Choose fit configuration file",
                             currentdir=self.initDir,
                             single=True)
-        if len(filename):
-            filename = qt.safe_str(filename[0])
-            if len(filename):
+        if fileList:
+            filename = qt.safe_str(fileList[0])
+            if filename:
                 self.loadParameters(filename, None)
                 self.initDir = os.path.dirname(filename)
 
@@ -1349,14 +1347,14 @@ class FitParamDialog(qt.QDialog):
         #diag= SectionFileDialog(self, "Save Parameters", FitParamSections, FitParamHeaders, qt.QFileDialog.AnyFile)
         if self.initDir is None:
             self.initDir = PyMcaDirs.outputDir
-        filename = PyMcaFileDialogs.getFileList(self,
+        fileList = PyMcaFileDialogs.getFileList(self,
                             filetypelist=["Fit configuration files (*.cfg)"],
                             mode="SAVE",
                             message="Enter output fit configuration file",
                             currentdir=self.initDir,
                             single=True)
-        if len(filename):
-            filename = qt.safe_str(filename[0])
+        if fileList:
+            filename = qt.safe_str(fileList[0])
             if len(filename):
                 if not filename.endswith(".cfg"):
                     filename += ".cfg"

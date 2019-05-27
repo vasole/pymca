@@ -35,6 +35,7 @@ from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import PyMca_Icons
 IconDict = PyMca_Icons.IconDict
 from PyMca5.PyMcaGui import PyMcaFileDialogs
+from PyMca5.PyMcaGui import ConfigurationFileDialogs
 try:
     import h5py
     hasH5py = True
@@ -242,20 +243,18 @@ class FastXRFLinearFitWindow(qt.QWidget):
                         qt.QWidget.sizeHint(self).height())
 
     def browseConfigurationFile(self):
-        f = PyMcaFileDialogs.getFileList(parent=self,
-                                     filetypelist=["Configuration files (*.cfg)"],
-                                     message="Open a fit configuration file",
+        fileList = ConfigurationFileDialogs.getFitConfigurationFilePath(parent=self,
                                      mode="OPEN",
                                      single=True)
-        if len(f):
-            self._configLine.setText(f[0])
+        if fileList:
+            self._configLine.setText(fileList[0])
 
     def browseOutputDir(self):
-        f = PyMcaFileDialogs.getExistingDirectory(parent=self,
+        fileList = PyMcaFileDialogs.getExistingDirectory(parent=self,
                                      message="Please select output directory",
                                      mode="OPEN")
-        if len(f):
-            self._outdirLine.setText(f)
+        if len(fileList):
+            self._outdirLine.setText(fileList)
 
     def toggleH5(self, state):
         h5Out = bool(state)

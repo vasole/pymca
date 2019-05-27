@@ -2222,9 +2222,7 @@ class McaAdvancedFit(qt.QWidget):
                                         getfilter=True,
                                         single=True,
                                         currentfilter=None)
-
-
-        if len(outputFile):
+        if outputFile:
             outputFile = outputFile[0]
             filterused = filterused.split()
             filedescription = filterused[0]
