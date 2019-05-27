@@ -569,10 +569,12 @@ class OutputBuffer(MutableMapping):
 
     @staticmethod
     def _labelsToPathStrings(labels, prefix='', separator='_', filename=False):
-        """Used for EDF files names and CSV titles
+        """
+        Used for EDF files names and CSV titles
+        For example: ('Fe-K', 'Layer1') -> `s(Fe-K)_Layer1`
 
         :param list(tuple) labels:
-        :param str prefix: for decoration (e.g. `s(...)`, `w(...)`, ...)
+        :param str prefix: for decoration (for example s(...), w(...), ...)
         :param str separator: to join the tuples (regular expression)
         :param bool filename: file name or title
         """
@@ -611,7 +613,9 @@ class OutputBuffer(MutableMapping):
 
     @staticmethod
     def _labelsToHdf5Strings(labels, separator='_', replace=('\s',)):
-        """Used for hdf5 dataset names
+        """
+        Used for hdf5 dataset names
+        For example: ('Fe K', 'Layer1') -> `Fe_K_Layer1`
 
         :param list(tuple) labels:
         :param str separator: to join the tuples (regular expression)
