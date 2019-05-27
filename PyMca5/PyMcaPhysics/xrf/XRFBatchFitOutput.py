@@ -568,43 +568,49 @@ class OutputBuffer(MutableMapping):
             return labels
 
     @staticmethod
-    def _labelsToPathStrings(labels, prefix='', filename=False):
+    def _labelsToPathStrings(labels, prefix='', separator='_', filename=False):
         """Used for edf files names for example
         """
         if not labels:
             return []
         out = []
         def replbrackets(matchobj):
-            return matchobj.group(1)+'_'
+            return matchobj.group(1)+separator
+        separators = {'-', ':', ';'}
+        separators -= {separator}
+        separators = '[' + ''.join(separators) + ']'
         for args in labels:
             if not isinstance(args, tuple):
                 args = (args,)
-            separator = '_'
             if prefix:
                 args = ('{}({})'.format(prefix, args[0]), ) + args[1:]
             label = separator.join(args)
-            # Replace spaces with underscores
-            label = re.sub('\s', '_', label)
+            # Replace spaces with separator
+            label = re.sub('\s', separator, label)
             if filename:
-                # Replace separators with underscores
-                label = re.sub('[-:;]', '_', label)
-                # Replace brackets with a trailing underscore
+                # Replace separators
+                label = re.sub(separators, separator, label)
+                # Replace brackets with a trailing separator
                 label = re.sub('\((.+)\)', replbrackets, label)
                 label = re.sub('\[(.+)\]', replbrackets, label)
                 label = re.sub('\{(.+)\}', replbrackets, label)
                 # Remove non-alphanumeric characters (except . and _)
-                label = re.sub('[^0-9a-zA-Z_\.]+', '', label)
-                # Remove trailing/leading underscores
-                label = re.sub('^_+', '', label)
-                label = re.sub('_+$', '', label)
-            # Remove repeated underscores
-            label = re.sub('_+', '_', label)
+                label = re.sub('[^0-9a-zA-Z\.'+separator+']+', '', label)
+                # Remove trailing/leading separators
+                label = re.sub('^'+separator+'+', '', label)
+                label = re.sub(separator+'+$', '', label)
+            # Remove repeated separators
+            label = re.sub(separator+'+', separator, label)
             out.append(label)
         return out
 
     @staticmethod
-    def _labelsToHdf5Strings(labels, separator=' '):
+    def _labelsToHdf5Strings(labels, separator='_', replace=('\s',)):
         """Used for hdf5 dataset names
+
+        :param list(tuple) labels:
+        :param str separator: to join the tuples (regular expression)
+        :param tuple(str) replace: to be replaced by the `separator` (regular expression)
         """
         if not labels:
             return []
@@ -612,6 +618,8 @@ class OutputBuffer(MutableMapping):
         for args in labels:
             if not isinstance(args, tuple):
                 args = (args,)
+            for srepl in replace:
+                args = tuple(re.sub(srepl, separator, s) for s in args)
             out.append(separator.join(args))
         return out
 
