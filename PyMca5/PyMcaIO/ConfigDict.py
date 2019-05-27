@@ -286,7 +286,8 @@ def getDictFromPathOrUri(path):
     Takes as input an ini-like file or an HDF5 URI
     """
     cfg = ConfigDict()
-    return cfg.read(path)
+    cfg.read(path)
+    return cfg
 
 def main():
     if len(sys.argv) > 1:
