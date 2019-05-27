@@ -1078,7 +1078,8 @@ class RGBCorrelatorWidget(qt.QWidget):
         labels = []
         for label in imageList:
             datalist.append(self._imageDict[label]['image'])
-            labels.append(label.replace(" ","_"))
+            # prevent problems when reading back the saved data
+            labels.append(label.replace(" ","_").replace(",", "_").replace(";","_"))
 
         fileRoot = os.path.splitext(filename)[0]
         fileExtension = os.path.splitext(filename)[-1].lower()
