@@ -212,6 +212,8 @@ class McaAdvancedFitBatch(object):
                                           nosave=self.nosave,
                                           suffix=self._outputSuffix(),
                                           **self.outbufferkwargs)
+        # Always save figures-of-merit (HDF5: all, EDF/CSV: chisq only)
+        self.outbuffer.saveFOM = True
         self.outbuffer['configuration'] = self.mcafit.getConfiguration()
 
     def _outputSuffix(self):
