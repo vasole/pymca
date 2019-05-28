@@ -694,7 +694,7 @@ class OutputBuffer(MutableMapping):
                     if update:
                         _logger.debug('edit {}'.format(path))
                     elif self.overwrite:
-                        _logger.warning('overwriting {}::{}'.format(fileName, path))
+                        _logger.info('overwriting {}::{}'.format(fileName, path))
                         del entry[procname]
                         existed[2] = False
                     else:
@@ -902,7 +902,7 @@ class OutputBuffer(MutableMapping):
     def _checkOverwrite(self, fileName):
         if os.path.exists(fileName):
             if self.overwrite:
-                _logger.warning('overwriting {}'.format(fileName))
+                _logger.info('overwriting {}'.format(fileName))
             else:
                 raise RuntimeError('{} already exists'.format(fileName))
 
