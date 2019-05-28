@@ -1196,7 +1196,7 @@ class QEdfFileWidget(qt.QWidget):
             ##self.graph.sety1axislimits(0, int(info["Dim_1"]))
             self._x1Limit = int(info["Dim_1"])
             self._y1Limit = int(info["Dim_2"])
-            self.graph.clear()
+            self.graph.clear(replot=False)
             finiteData = numpy.isfinite(data)
             if finiteData.any():
                 finiteData = data[finiteData]
@@ -1625,7 +1625,8 @@ class QEdfFileWidget(qt.QWidget):
     def __refreshSelection(self):
         _logger.debug("__refreshSelection(self) called")
         _logger.debug(self.selection)
-        _logger.debug("self.data.SourceName = %s", self.data.sourceName)
+        if self.data:
+            _logger.debug("self.data.SourceName = %s", self.data.sourceName)
         if self.selection is not None:
             if self.data is None:
                 return
