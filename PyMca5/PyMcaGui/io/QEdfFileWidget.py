@@ -1625,7 +1625,8 @@ class QEdfFileWidget(qt.QWidget):
     def __refreshSelection(self):
         _logger.debug("__refreshSelection(self) called")
         _logger.debug(self.selection)
-        _logger.debug("self.data.SourceName = %s", self.data.sourceName)
+        if self.data:
+            _logger.debug("self.data.SourceName = %s", self.data.sourceName)
         if self.selection is not None:
             if self.data is None:
                 return
