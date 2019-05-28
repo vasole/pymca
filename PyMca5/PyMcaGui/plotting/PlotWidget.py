@@ -99,7 +99,8 @@ class PlotWidget(qt.QMainWindow, Plot.Plot):
         # force update of the widget!!!
         # should this be made at the backend level?
         w = self.centralWidget()
-        qt.qApp.postEvent(w, qt.QResizeEvent(w.size(), w.size()))
+        qt.QApplication.instance().postEvent(w,
+                                             qt.QResizeEvent(w.size(), w.size()))
 
     def saveGraph(self, fileName, fileFormat=None, dpi=None, **kw):
         supportedFormats = ["png", "svg", "pdf", "ps", "eps",
