@@ -109,6 +109,7 @@ class EdfFileSimpleViewer(qt.QWidget):
 def main():
     import sys
     import getopt
+    import glob
     from PyMca5.PyMcaCore.LoggingLevel import getLoggingLevel
     app=qt.QApplication(sys.argv)
     winpalette = qt.QPalette(qt.QColor(230,240,249),qt.QColor(238,234,238))
@@ -119,9 +120,12 @@ def main():
                     sys.argv[1:],
                     options,
                     longoptions)
-
     logging.basicConfig(level=getLoggingLevel(opts))
+    _logger.setLevel(getLoggingLevel(opts))
     filelist = args
+    if len(filelist) == 1:
+        if sys.platform.startswith("win")  and '*' in filelist[0]:
+            filelist = glob.glob(filelist[0])
     app.lastWindowClosed.connect(app.quit)
     w=EdfFileSimpleViewer()
     if len(filelist):

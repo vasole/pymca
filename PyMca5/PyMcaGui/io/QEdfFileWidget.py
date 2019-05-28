@@ -1196,7 +1196,7 @@ class QEdfFileWidget(qt.QWidget):
             ##self.graph.sety1axislimits(0, int(info["Dim_1"]))
             self._x1Limit = int(info["Dim_1"])
             self._y1Limit = int(info["Dim_2"])
-            self.graph.clear()
+            self.graph.clear(replot=False)
             finiteData = numpy.isfinite(data)
             if finiteData.any():
                 finiteData = data[finiteData]
