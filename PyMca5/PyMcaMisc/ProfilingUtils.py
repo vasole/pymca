@@ -92,7 +92,7 @@ def print_malloc_snapshot(snapshot, key_type='lineno', limit=10, units='KiB'):
 @contextmanager
 def print_malloc_context(**kwargs):
     """
-    :param \**kwargs: see print_malloc_snapshot
+    :param **kwargs: see print_malloc_snapshot
     """
     if tracemalloc is None:
         logger.error('tracemalloc required')

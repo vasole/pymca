@@ -287,9 +287,9 @@ if __name__ == "__main__":
     app.lastWindowClosed.connect(app.quit)
     d = PCADialog()
     if len(sys.argv) < 2:
-        fileList = ["D:\DATA\ICA\mix1.edf",
-                    "D:\DATA\ICA\mix2.edf",
-                    "D:\DATA\ICA\mix3.edf"]
+        fileList = [r"D:\DATA\ICA\mix1.edf",
+                    r"D:\DATA\ICA\mix2.edf",
+                    r"D:\DATA\ICA\mix3.edf"]
     else:
         fileList = []
         for i in range(1, len(sys.argv)):

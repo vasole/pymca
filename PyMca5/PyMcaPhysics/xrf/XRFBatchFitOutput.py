@@ -362,7 +362,7 @@ class OutputBuffer(MutableMapping):
         :param str label:
         :param str group: group name of this dataset (in hdf5 this is the nxdata name)
         :param str memtype: ram or hdf5
-        :param \**kwargs: see _allocateRam or _allocateHdf5
+        :param **kwargs: see _allocateRam or _allocateHdf5
         """
         memtype = memtype.lower()
         if self._forcedtype is not None:
@@ -439,7 +439,7 @@ class OutputBuffer(MutableMapping):
         :param dtype: buffer type
         :param list labels: for stack of datasets
         :param dict groupAttrs: nxdata attributes (e.g. axes)
-        :param \**createkwargs: see h5py.Group.create_dataset
+        :param **createkwargs: see h5py.Group.create_dataset
         """
         if data is None and shape is None:
             raise ValueError("Provide 'data' or 'shape'")
@@ -568,43 +568,59 @@ class OutputBuffer(MutableMapping):
             return labels
 
     @staticmethod
-    def _labelsToPathStrings(labels, prefix='', filename=False):
-        """Used for edf files names for example
+    def _labelsToPathStrings(labels, prefix='', separator='_', filename=False):
+        """
+        Used for EDF files names and CSV titles
+        For example: ('Fe-K', 'Layer1') -> `s(Fe-K)_Layer1` (title)
+                                        -> `s(Fe_K)_Layer1` (filename)
+
+        :param list(tuple) labels:
+        :param str prefix: for decoration (for example s(...), w(...), ...)
+        :param str separator: to join the tuples (regular expression)
+        :param bool filename: file name or title
         """
         if not labels:
             return []
         out = []
         def replbrackets(matchobj):
-            return matchobj.group(1)+'_'
+            return matchobj.group(1)+separator
+        separators = {r'\-', ':', ';', '_'}
+        separators -= {separator}
+        separators = '[' + ''.join(separators) + ']+'
         for args in labels:
             if not isinstance(args, tuple):
                 args = (args,)
-            separator = '_'
             if prefix:
                 args = ('{}({})'.format(prefix, args[0]), ) + args[1:]
             label = separator.join(args)
-            # Replace spaces with underscores
-            label = re.sub('\s', '_', label)
+            # Replace spaces with separator
+            label = re.sub(r'\s+', separator, label)
             if filename:
-                # Replace separators with underscores
-                label = re.sub('[-:;]', '_', label)
-                # Replace brackets with a trailing underscore
-                label = re.sub('\((.+)\)', replbrackets, label)
-                label = re.sub('\[(.+)\]', replbrackets, label)
-                label = re.sub('\{(.+)\}', replbrackets, label)
-                # Remove non-alphanumeric characters (except . and _)
-                label = re.sub('[^0-9a-zA-Z_\.]+', '', label)
-                # Remove trailing/leading underscores
-                label = re.sub('^_+', '', label)
-                label = re.sub('_+$', '', label)
-            # Remove repeated underscores
-            label = re.sub('_+', '_', label)
+                # Replace separators
+                label = re.sub(separators, separator, label)
+                # Replace brackets with a trailing separator
+                label = re.sub(r'\((.+)\)', replbrackets, label)
+                label = re.sub(r'\[(.+)\]', replbrackets, label)
+                label = re.sub(r'\{(.+)\}', replbrackets, label)
+                # Remove non-alphanumeric characters (except . and separator)
+                label = re.sub(r'[^0-9a-zA-Z\.'+separator+']+', '', label)
+                # Remove trailing/leading separators
+                label = re.sub('^'+separator+'+', '', label)
+                label = re.sub(separator+'+$', '', label)
+            # Remove repeated separators
+            label = re.sub(separator+'+', separator, label)
             out.append(label)
         return out
 
     @staticmethod
-    def _labelsToHdf5Strings(labels, separator=' '):
-        """Used for hdf5 dataset names
+    def _labelsToHdf5Strings(labels, separator='_', replace=(r'\s+',)):
+        """
+        Used for hdf5 dataset names
+        For example: ('Fe-K', 'Layer1') -> `Fe-K_Layer1`
+
+        :param list(tuple) labels:
+        :param str separator: to join the tuples (regular expression)
+        :param tuple(str) replace: to be replaced by the `separator` (regular expressions)
         """
         if not labels:
             return []
@@ -612,6 +628,8 @@ class OutputBuffer(MutableMapping):
         for args in labels:
             if not isinstance(args, tuple):
                 args = (args,)
+            for srepl in replace:
+                args = tuple(re.sub(srepl, separator, s) for s in args)
             out.append(separator.join(args))
         return out
 

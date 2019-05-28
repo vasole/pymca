@@ -82,7 +82,7 @@ class OmnicMap(DataObject.DataObject):
             s = str(s)
         _logger.debug("firstByte = %d", firstByte)
         _logger.debug("s1 = %s ", s)
-        exp = re.compile('(-?[0-9]+\.?[0-9]*)')
+        exp = re.compile(r'(-?[0-9]+\.?[0-9]*)')
         tmpValues = exp.findall(s)
         spectrumIndex = int(tmpValues[0])
         self.nSpectra = int(tmpValues[1])
