@@ -707,7 +707,7 @@ class McaAdvancedFitBatch(object):
 
         # Extract/calculate + save concentrations
         if result:
-            # TODO: 'concentrations' in result, when does this happend and should we pop it????
+            # TODO: 'concentrations' in result, when does this happens and should we pop it????
             concentrationsInResult = 'concentrations' not in result
         else:
             concentrationsInResult = False

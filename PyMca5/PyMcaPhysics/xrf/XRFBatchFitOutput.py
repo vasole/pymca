@@ -822,14 +822,13 @@ class OutputBuffer(MutableMapping):
                 # Stack of datasets
                 mnames = self.labels(group, labeltype='title')
                 for name, mname, bufferi in zip(names, mnames, buffer):
-                    if bufferi.ndim <= 2:
-                        imageFileLabels.append(name)
-                        if not onlylabels:
-                            imageTitleLabels.append(mname)
-                            imageList.append(bufferi[()])
+                    imageFileLabels.append(name)
+                    if not onlylabels:
+                        imageTitleLabels.append(mname)
+                        imageList.append(bufferi[()])
             else:
                 # Single dataset
-                if buffer.ndim <= 2 and group.lower() in self._optionalimage:
+                if group.lower() in self._optionalimage:
                     name = self._labelsToStrings(group, [group], labeltype='filename')[0]
                     mname = self._labelsToStrings(group, [group], labeltype='title')[0]
                     imageFileLabels.append(name)
