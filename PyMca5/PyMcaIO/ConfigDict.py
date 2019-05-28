@@ -45,11 +45,6 @@ try:
 except ImportError:
     # do not use numpy, use lists
     USE_NUMPY = False
-try:
-    import h5py
-    HAS_H5PY = True
-except ImportError:
-    HAS_H5PY = False
 
 
 class ConfigDict(dict):
@@ -108,12 +103,16 @@ class ConfigDict(dict):
             return
 
         hdf5files = []
-        if HAS_H5PY:
-            for ffile in filelist:
-                if not os.path.exists(ffile) and ("::" in ffile):  
-                    # check if we have received a URI
-                    fname, path = ffile.split("::")
-                    if os.path.exists(fname) and h5py.is_hdf5(fname):
+        for ffile in filelist:
+            if not os.path.exists(ffile) and ("::" in ffile):  
+                # check if we have received a URI
+                fname, path = ffile.split("::")
+                if os.path.exists(fname):
+                    try:
+                        import h5py
+                    except ImportError:
+                        raise IOError("File <%s> does not exist" % ffile)
+                    if h5py.is_hdf5(fname):
                         with h5py.File(fname, "r") as h5:
                             config = StringIO(h5[path][()])
                             self.readfp(config, sections=sections)
