@@ -369,22 +369,21 @@ class OutputBuffer(MutableMapping):
             kwargs['dtype'] = self._forcedtype
         if not group:
             group = label
-        if memtype in ('hdf5', 'h5', 'nx', 'nexus'):
+        allocH5 = memtype in ('hdf5', 'h5', 'nx', 'nexus')
+        if allocH5:
+            allocH5 = False
             if self.nosave:
-                errmsg = 'saving is disabled'
+                _logger.info('Allocate in memory instead of Hdf5 (saving is disabled)')
             elif not self.h5:
-                errmsg = 'h5 format is disabled'
+                _logger.warning('Allocate in memory instead of Hdf5 (h5 format is disabled)')
             elif NexusUtils.h5py is None:
-                errmsg = 'h5py not installed'
+                _logger.warning('Allocate in memory instead of Hdf5 (h5py not installed)')
             elif not self.outputDir:
-                _logger.warning('no output directory specified')
+                _logger.warning('Allocate in memory instead of Hdf5 (no output directory specified)')
             else:
-                errmsg = None
-            if errmsg:
-                _logger.warning('Allocate in memory instead of Hdf5 ({})'.format(errmsg))
-                buffer = self._allocateRam(label, group=group, **kwargs)
-            else:
-                buffer = self._allocateHdf5(label, group=group, **kwargs)
+                allocH5 = True
+        if allocH5:
+            buffer = self._allocateHdf5(label, group=group, **kwargs)
         else:
             buffer = self._allocateRam(label, group=group, **kwargs)
         return buffer
@@ -781,15 +780,13 @@ class OutputBuffer(MutableMapping):
         """
         _logger.debug('Saving {}'.format(self))
         if self.nosave:
-            errmsg = 'saving is disabled'
+            _logger.info('Fit results are not saved (saving is disabled)')
+            return
         elif not (self.tif or self.edf or self.csv or self.dat or self.h5):
-            errmsg = 'all output formats disabled'
+            _logger.warning('Fit results are not saved (all output formats disabled)')
+            return
         elif not self.outputDir:
-            errmsg = 'no output directory specified'
-        else:
-            errmsg = ''
-        if errmsg:
-            _logger.warning('Fit results are not saved ({})'.format(errmsg))
+            _logger.warning('Fit results are not saved (no output directory specified)')
             return
         t0 = time.time()
         with self.bufferContext(update=True):
