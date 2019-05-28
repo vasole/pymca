@@ -196,6 +196,8 @@ def getSuite(auto=True):
         # use a predefined order
         testSuite.addTest(testConfigDict("testConfigDictImport"))
         testSuite.addTest(testConfigDict("testConfigDictIO"))
+        if HAS_H5PY:
+            testSuite.addTest(testConfigDict("testHdf5Uri"))
     return testSuite
 
 def test(auto=False):
