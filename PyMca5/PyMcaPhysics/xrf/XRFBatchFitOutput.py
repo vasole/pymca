@@ -118,7 +118,10 @@ class OutputBuffer(MutableMapping):
         self.saveFit = saveFit
         self.saveData = saveData
         self.saveFOM = saveFOM
-        self.diagnostics = diagnostics
+        if not self.diagnostics:
+            # None of the above diagnostics
+            # are enabled specifically
+            self.diagnostics = diagnostics
         self.overwrite = overwrite
         self.nosave = nosave
         self.suffix = suffix
@@ -272,6 +275,8 @@ class OutputBuffer(MutableMapping):
 
     @property
     def saveFOM(self):
+        # For all non-hdf5 formats: FOM needs to be in
+        # self._optionalimage to be saved
         return self._saveFOM
     
     @saveFOM.setter
