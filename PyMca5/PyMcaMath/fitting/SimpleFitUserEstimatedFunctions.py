@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -31,7 +31,7 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import numpy
-from PyMca5 import SpecfitFuns
+from PyMca5.PyMcaMath.fitting import SpecfitFuns
 arctan = numpy.arctan
 exp = numpy.exp
 pi = numpy.pi

@@ -244,18 +244,5 @@ if sys.platform.startswith("win"):
 # mandatory modules for backwards compatibility
 from .PyMcaCore import Plugin1DBase, StackPluginBase, PyMcaDirs, DataObject
 
-#convenience modules that could be directly imported
-# using from PyMca5.PyMca import
-try:
-    from .PyMcaIO import specfilewrapper, EdfFile, specfile, ConfigDict
-except:
-    _logger.info("WARNING importing IO directly")
-    from PyMcaIO import specfilewrapper, EdfFile, specfile, ConfigDict
-
-from .PyMcaMath.fitting import SpecfitFuns, Gefit, Specfit
-from .PyMcaMath.fitting import SpecfitFunctions
-
-from .PyMcaPhysics.xrf import Elements
-
 #all the rest can be imported using from PyMca5.PyMca import ...
 from . import PyMca
