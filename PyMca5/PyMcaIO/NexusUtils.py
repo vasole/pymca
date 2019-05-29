@@ -626,6 +626,29 @@ def nxDataAddErrors(data, errors):
             data[name+'_errors'] = h5py.SoftLink(dest.name)
 
 
+def getNdimDatasets(root, ndim=2):
+    """
+    :param h5py.Group or h5py.Dataset root:
+    :param int ndim: restrict dimensions
+    :returns list(h5py.Dataset):
+    """
+    datasets = []
+    if isinstance(root, h5py.Dataset):
+        if root.ndim == ndim:
+            datasets = [root]
+    else:
+        labels = nxDataGetSignals(root)
+        if not labels:
+            labels = root.keys()
+        for label in labels:
+            dset = root.get(label, None)
+            if dset is None:
+                continue
+            if dset.ndim == ndim:
+                datasets.append(dset)
+    return datasets
+
+
 def markDefault(h5group):
     """
     Mark HDF5 Dataset or Group as default (parents get notified as well)

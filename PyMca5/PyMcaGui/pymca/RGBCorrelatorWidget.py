@@ -85,12 +85,15 @@ except:
 try:
     import h5py
 except ImportError:
-    def isHdf5(filename):
-        return h5py.is_hdf5(filename)
-else:
+    h5py = None
     def isHdf5(filename):
         return os.path.splitext(filename)[-1].lower()\
             in ('.h5', '.nxs', '.hdf', '.hdf5')
+else:
+    def isHdf5(filename):
+        return h5py.is_hdf5(filename)
+    from PyMca5.PyMca import HDF5Widget
+    from PyMca5.PyMcaIO import NexusUtils
 
 
 def isEdf(filename):
@@ -956,7 +959,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         elif isEdf(filename):
             self._addEdfFile(filename, ignoreStDev=ignoreStDev)
         elif isHdf5(filename.split('::')[0]):
-            self._addHf5File(filename, ignoreStDev=ignoreStDev)
+            self._addHf5File(uri, ignoreStDev=ignoreStDev)
         elif filterused.upper().startswith("TEXTIMAGE"):
             self._addTxtFile(filename, ignoreStDev=ignoreStDev)
         else:
@@ -980,8 +983,40 @@ class RGBCorrelatorWidget(qt.QWidget):
             self.addImage(dataObject.data,
                 os.path.basename(filename)+" "+label)
 
-    def _addHf5File(self, filename, ignoreStDev=True):
-        raise NotImplementedError
+    def _addHf5File(self, uri, ignoreStDev=True):
+        tmp = uri.split('::')
+        if len(tmp) == 1:
+            tmp = uri, None
+        filename, h5path = tmp
+        if h5py is None:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Cannot read file %s (h5py is missing)" % filename)
+            msg.exec_()
+            return
+        # URI exists?
+        if h5path:
+            with HDF5Widget.h5open(filename) as hdf5File:
+                if not h5path in hdf5File:
+                    h5path = None
+        # Prompt for missing HDF5 path
+        if not h5path:
+            tmp = HDF5Widget.getUri(parent=self,
+                                    filename=filename,
+                                    message='Select Group or Dataset')
+            if not tmp:
+                return
+            tmp = tmp.split('::')
+            if len(tmp) == 2:
+                h5path = tmp[1]
+        if not h5path:
+            return
+        # Add images from HDF5 path
+        with HDF5Widget.h5open(filename) as hdf5File:
+            datasets = NexusUtils.getNdimDatasets(hdf5File[h5path], ndim=2)
+            for dset in datasets:
+                label = '/'.join(dset.name.split('/')[-2:])
+                self.addImage(dset[()], label)
 
     def _addQImageReadable(self, filename, ignoreStDev=True):
         if ignoreStDev and self._ignoreStDevFile(filename):
