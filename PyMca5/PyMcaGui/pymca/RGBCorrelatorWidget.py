@@ -1017,13 +1017,13 @@ class RGBCorrelatorWidget(qt.QWidget):
                 h5path = tmp[1]
         if not h5path:
             return
-        # Add images from HDF5 path
+        # Add datasets from HDF5 path
         with HDF5Widget.h5open(filename) as hdf5File:
             datasets = NexusUtils.selectDatasets(hdf5File[h5path])
             if not datasets:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
-                msg.setText("No 2D datasets were found in {}::{}".format(filename, h5path))
+                msg.setText("No datasets were found in {}::{}".format(filename, h5path))
                 msg.exec_()
             elif len({dset.ndim for dset in datasets}) > 1:
                 msg = qt.QMessageBox(self)
