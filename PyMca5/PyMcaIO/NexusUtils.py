@@ -629,6 +629,10 @@ def nxDataAddErrors(data, errors):
 
 def selectDatasets(root, match=None):
     """
+    Select datasets with given restrictions. In case of `root`
+    is an NXdata instance, an additional restriction is imposed:
+    the dataset must be specified as a signal (including auxilary signals).
+
     :param h5py.Group or h5py.Dataset root:
     :param match: restrict selection (callable, 'max_ndim', 'mostcommon_ndim')
     :returns list(h5py.Dataset):
@@ -654,7 +658,7 @@ def selectDatasets(root, match=None):
             dset = root.get(label, None)
             if not isinstance(dset, h5py.Dataset):
                 continue
-            if match(dset.ndim):
+            if match(dset):
                 datasets.append(dset)
         if post == 'max_ndim':
             ndimref = max(dset.ndim for dset in datasets)

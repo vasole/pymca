@@ -924,7 +924,6 @@ class RGBCorrelatorWidget(qt.QWidget):
             return
         if filterused is None:
             filterused = ''
-        self.outputDir = os.path.dirname(filelist[0])
         try:
             for uri in filelist:
                 self._addSingleFile(uri,
@@ -945,7 +944,10 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.addFileList([filename], ignoreStDev=ignoreStDev)
 
     def _addSingleFile(self, uri, filterused=None, ignoreStDev=True):
+        if not uri:
+            return
         filename = uri.split('::')[0]
+        self.outputDir = os.path.dirname(filename)
         if not os.path.isfile(filename):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
@@ -1019,16 +1021,26 @@ class RGBCorrelatorWidget(qt.QWidget):
             return
         # Add datasets from HDF5 path
         with HDF5Widget.h5open(filename) as hdf5File:
-            datasets = NexusUtils.selectDatasets(hdf5File[h5path])
+            if self.__imageLength:
+                # Select datasets with the same number of elements
+                def match(dset):
+                    return dset.size == self.__imageLength
+            else:
+                # Select only 1D or 2D datasets
+                def match(dset):
+                    return dset.ndim == 1 or dset.ndim == 2
+            # If `h5path` is an instance of NXdata, only the signals
+            # (including auxilary signals) are concidered for `match`.
+            datasets = NexusUtils.selectDatasets(hdf5File[h5path], match=match)
             if not datasets:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
-                msg.setText("No datasets were found in {}::{}".format(filename, h5path))
+                msg.setText("No (valid) datasets were found in '{}::{}'".format(filename, h5path))
                 msg.exec_()
-            elif len({dset.ndim for dset in datasets}) > 1:
+            elif len({dset.size for dset in datasets}) > 1:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
-                msg.setText("{}::{} contains datasets with different dimensions. Select datasets separately.".format(filename, h5path))
+                msg.setText("'{}::{}' contains datasets with different sizes. Select datasets separately.".format(filename, h5path))
                 msg.exec_()
                 self._addHf5File(filename, ignoreStDev=ignoreStDev)
             else:
