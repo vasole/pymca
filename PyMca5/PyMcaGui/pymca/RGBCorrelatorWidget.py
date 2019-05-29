@@ -1030,7 +1030,7 @@ class RGBCorrelatorWidget(qt.QWidget):
                 def match(dset):
                     return dset.ndim == 1 or dset.ndim == 2
             # If `h5path` is an instance of NXdata, only the signals
-            # (including auxilary signals) are concidered for `match`.
+            # (including auxilary signals) are considered for `match`.
             datasets = NexusUtils.selectDatasets(hdf5File[h5path], match=match)
             if not datasets:
                 msg = qt.QMessageBox(self)
