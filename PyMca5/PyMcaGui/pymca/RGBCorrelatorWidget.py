@@ -32,6 +32,8 @@ import os
 import numpy
 import traceback
 import logging
+import warnings
+import re
 from . import RGBCorrelatorSlider
 from . import RGBCorrelatorTable
 from PyMca5.PyMcaGui.pymca import RGBImageCalculator
@@ -74,11 +76,85 @@ try:
 except:
     TOMOGUI_FLAG = False
 
+# Use QDataSource for complete test but requires too many imports
+# TODO: then why have all format tests in the same module?
+#def isHdf5(filename):
+#    import QDataSource
+#    sourceType = QDataSource.getSourceType(filename).upper()
+#    return sourceType.startswith("HDF5")
+try:
+    import h5py
+except ImportError:
+    def isHdf5(filename):
+        return h5py.is_hdf5(filename)
+else:
+    def isHdf5(filename):
+        return os.path.splitext(filename)[-1].lower()\
+            in ('.h5', '.nxs', '.hdf', '.hdf5')
+
+
+def isEdf(filename):
+    # Complete Test but requires too many imports
+    # TODO: then why have have all format tests in the same module?
+    #import QDataSource
+    #sourceType = QDataSource.getSourceType(filename).upper()
+    #return sourceType.startswith("EDFFILE")
+    with open(filename, 'rb') as f:
+        twoBytes = f.read(2)
+    if sys.version < '3.0':
+        twoChar = twoBytes
+    else:
+        try:
+            twoChar = twoBytes.decode('utf-8')
+        except:
+            twoChar = "__dummy__"
+    filename = filename.lower()
+    return twoChar in ["II", "MM", "\n{"] or\
+        twoChar[0] in ["{"] or\
+        filename.endswith('cbf')or\
+        (filename.endswith('spe') and twoChar[0] not in ['$'])
+
+
+def isTif(filename):
+    return os.path.splitext(filename)[-1].lower()\
+        in ('.tif', '.tiff')
+
+
+def isQImageReadable(filename):
+    return os.path.splitext(filename)[-1].lower()\
+        in ('.jpg', '.jpeg', '.png', '.tif', '.tiff')
+
+
+def makeQimageBW(qimage):
+    height = qimage.height()
+    width  = qimage.width()
+    if qimage.format() == qt.QImage.Format_Indexed8:
+        pixmap0 = numpy.frombuffer(qimage.bits().asstring(width * height),
+                                    dtype=numpy.uint8)
+        pixmap = numpy.zeros((height * width, 4), numpy.uint8)
+        pixmap[:, 0] = pixmap0[:]
+        pixmap[:, 1] = pixmap0[:]
+        pixmap[:, 2] = pixmap0[:]
+        pixmap[:, 3] = 255
+        pixmap.shape = height, width, 4
+    else:
+        image = qimage.convertToFormat(qt.QImage.Format_ARGB32)
+        pixmap0 = numpy.frombuffer(image.bits().asstring(width * height * 4),
+                                    dtype=numpy.uint8)
+        pixmap = numpy.array(pixmap0, copy=True)
+    pixmap.shape = height, width, -1
+    return pixmap[:,:,0] * 0.114 +\
+        pixmap[:,:,1] * 0.587 +\
+        pixmap[:,:,2] * 0.299
+
+
 _logger = logging.getLogger(__name__)
 
 
 class RGBCorrelatorWidget(qt.QWidget):
+
     sigRGBCorrelatorWidgetSignal = qt.pyqtSignal(object)
+
     def __init__(self, parent = None, bgrx = False, replace = False):
         qt.QWidget.__init__(self, parent)
         self.replaceOption = replace
@@ -468,7 +544,6 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.colormapType = val
         self.__recolor()
 
-
     def getColorImage(self, image, colormap,
                       datamin=None, datamax=None,
                       arrayflag = 0):
@@ -714,6 +789,7 @@ class RGBCorrelatorWidget(qt.QWidget):
                       "Single TIFF(Mono) Files *.tif",
                       "Several TIFF(Float32 Mono) Files *.tif",
                       "Several TIFF(Mono) Files *.tif",
+                      "HDF5 Files *.h5 *.nxs *.hdf *.hdf5",
                       'CSV(, separated) Files *.csv',
                       'CSV(; separated) Files *.csv',
                       'CSV(tab separated) Files *.csv']
@@ -749,6 +825,7 @@ class RGBCorrelatorWidget(qt.QWidget):
                       "EDF(Float32) Files *.edf",
                       "TIFF(Float32 Mono) Files *.tif",
                       "TIFF(Mono) Files *.tif",
+                      "HDF5 Files *.h5 *.nxs *.hdf *.hdf5",
                       'CSV(, separated) Files *.csv',
                       'CSV(; separated) Files *.csv',
                       'CSV(tab separated) Files *.csv']
@@ -799,6 +876,7 @@ class RGBCorrelatorWidget(qt.QWidget):
                       "EDF Files *ccd",
                       "CSV Files *csv",
                       "TIFF Files *tiff *tif",
+                      "HDF5 Files *.h5 *.nxs *.hdf *.hdf5",
                       "TextImage Files *txt",
                       "All Files *"]
         strlist = QStringList()
@@ -836,100 +914,19 @@ class RGBCorrelatorWidget(qt.QWidget):
     def _addFileList(self):
         self.addFileList()
 
-    def addFileList(self, filelist = None, filterused=""):
+    def addFileList(self, filelist=None, filterused=None, ignoreStDev=True):
         if filelist is None:
             filelist, filterused = self.getInputFileName(getfilter=True)
-            if filterused is None:
-                filterused = ""
-        if not len(filelist[0]):
+        if not filelist:
             return
+        if filterused is None:
+            filterused = ''
         self.outputDir = os.path.dirname(filelist[0])
         try:
-            for fname in filelist:
-                if fname.lower().split(".")[-1] in ["jpg","jpeg",
-                                                      "tif","tiff",
-                                                      "png"]:
-                    if fname.lower().split(".")[-1] in ["tif", "tiff"]:
-                        #try the built in support
-                        try:
-                            tif = TiffIO.TiffIO(fname)
-                            nImages = tif.getNumberOfImages()
-                            if nImages > 0:
-                                for nImage in range(nImages):
-                                    info = tif.getInfo(nImage)['info']
-                                    imgData = tif.getImage(nImage)
-                                    title = "%04d/%d"  % (nImage+1, nImages)
-                                    if 'Title' in info:
-                                        title = info.get('Title')
-                                    elif nImages > 1:
-                                        title = "%04d/%d "  % (nImage+1, nImages)
-                                        title += os.path.basename(fname)
-                                    else:
-                                        title = os.path.basename(fname)
-                                    if len(imgData.shape) == 3:
-                                        #color image
-                                        colorIndex = 0
-                                        for component in ['R', 'G', 'B']:
-                                            self.addImage(imgData[:,:,colorIndex].astype(numpy.float), title + '_' + component)
-                                            colorIndex += 1
-                                        data = imgData[:,:,0] * 0.114 +\
-                                               imgData[:,:,1] * 0.587 +\
-                                               imgData[:,:,2] * 0.299
-                                        self.addImage(data, title)
-                                    else:
-                                        self.addImage(imgData, title)
-                                continue
-                        except:
-                            _logger.debug("Built-in tif support unsuccessful")
-                            pass
-                    #try a pure image format from PyQt
-                    qimage = qt.QImage(fname)
-                    if qimage.isNull():
-                        msg = qt.QMessageBox(self)
-                        msg.setIcon(qt.QMessageBox.Critical)
-                        msg.setText("Cannot read file %s as an image" % fname)
-                        msg.exec_()
-                        return
-                    #convert to black and white
-                    height = qimage.height()
-                    width  = qimage.width()
-                    if qimage.format() == qt.QImage.Format_Indexed8:
-                        pixmap0 = numpy.frombuffer(qimage.bits().asstring(width * height),
-                                                   dtype=numpy.uint8)
-                        pixmap = numpy.zeros((height * width, 4), numpy.uint8)
-                        pixmap[:, 0] = pixmap0[:]
-                        pixmap[:, 1] = pixmap0[:]
-                        pixmap[:, 2] = pixmap0[:]
-                        pixmap[:, 3] = 255
-                        pixmap.shape = height, width, 4
-                    else:
-                        image = qimage.convertToFormat(qt.QImage.Format_ARGB32)
-                        pixmap0 = numpy.frombuffer(image.bits().asstring(width * height * 4),
-                                                   dtype=numpy.uint8)
-                        pixmap = numpy.array(pixmap0, copy=True)
-
-                    pixmap.shape = height, width, -1
-                    data = pixmap[:,:,0] * 0.114 +\
-                                pixmap[:,:,1] * 0.587 +\
-                                pixmap[:,:,2] * 0.299
-                    self.addImage(data, os.path.basename(fname))
-                elif self._isEdf(fname):
-                    source = DataReader(fname)
-                    for key in source.getSourceInfo()['KeyList']:
-                        dataObject = source.getDataObject(key)
-                        title = dataObject.info.get("Title", key)
-                        self.addImage(dataObject.data,
-                                    os.path.basename(fname)+" "+title)
-                elif filterused.upper().startswith("TEXTIMAGE"):
-                    data = numpy.loadtxt(fname)
-                    self.addImage(data, os.path.basename(fname))
-                else:
-                    if len(fname) < 5:
-                        self.addBatchDatFile(fname, csv=False)
-                    elif fname[-4:].lower() == ".csv":
-                        self.addBatchDatFile(fname, csv=True)
-                    else:
-                        self.addBatchDatFile(fname, csv=False)
+            for uri in filelist:
+                self._addSingleFile(uri,
+                                    filterused=filterused,
+                                    ignoreStDev=ignoreStDev)
         except:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
@@ -940,103 +937,134 @@ class RGBCorrelatorWidget(qt.QWidget):
             if _logger.getEffectiveLevel() == logging.DEBUG:
                 raise
 
-    def addBatchDatFile(self, filename, ignoresigma=None, csv=False):
-        self.outputDir = os.path.dirname(filename)
-        if 1 or csv:
-            if 0:
-                #This works but is potentially slow
-                f = open("filename")
-                lines = f.readlines()
-                f.close()
-                for i in range(len(lines)):
-                    lines[i] = lines[i].replace('"','')
-                    lines[i] = lines[i].replace(",","  ")
-                    lines[i] = lines[i].replace(";","  ")
-                labels = lines[0].replace("\n","").split("  ")
-            else:
-                if sys.platform == "win32":
-                    f = open(filename, "rb")
-                else:
-                    f = open(filename, "r")
-                lines =f.read()
-                f.close()
-                if (sys.version_info > (3, 0)) and hasattr(lines, "decode"):
-                    lines = lines.decode()
-                lines = lines.replace("\r","\n")
-                lines = lines.replace("\n\n","\n")
-                lines = lines.replace(",","  ")
-                lines = lines.replace("\t","  ")
-                lines = lines.replace(";","  ")
-                lines = lines.replace('"','')
-                lines = lines.split("\n")
-                labels = lines[0].replace("\n","").split("  ")
+    def addBatchDatFile(self, filename, ignoreStDev=True):
+        warnings.warn("Use addFileList instead", DeprecationWarning)
+        self.addFileList([filename], ignoreStDev=ignoreStDev)
+
+    def _addSingleFile(self, uri, filterused=None, ignoreStDev=True):
+        filename = uri.split('::')[0]
+        if filterused is None:
+            filterused = ''
+        if isTif(filename):
+            try:
+                self._addTifFile(filename, ignoreStDev=ignoreStDev)
+            except:
+                _logger.debug("Built-in tif support unsuccessful")
+                self._addQImageReadable(filename, ignoreStDev=ignoreStDev)
+        elif isQImageReadable(filename):
+            self._addQImageReadable(filename, ignoreStDev=ignoreStDev)
+        elif isEdf(filename):
+            self._addEdfFile(filename, ignoreStDev=ignoreStDev)
+        elif isHdf5(filename.split('::')[0]):
+            self._addHf5File(filename, ignoreStDev=ignoreStDev)
+        elif filterused.upper().startswith("TEXTIMAGE"):
+            self._addTxtFile(filename, ignoreStDev=ignoreStDev)
         else:
-            # This does not work when opening under linux
-            # .dat files generated under windows (\r problem)
-            f = open(filename)
-            lines = f.readlines()
-            f.close()
-            labels = lines[0].replace("\n","").split("  ")
+            extension = os.path.splitext(filename)[-1].lower()
+            csv = extension == '.csv'
+            self._addBatchDatFile(filename, csv=csv, ignoreStDev=ignoreStDev)
+
+    def _ignoreStDevFile(self, filename):
+        return bool(re.search(r'_s[A-Z][a-z_]', filename))
+
+    def _ignoreStDevLabel(self, label):
+        return bool(re.match(r's\([A-Z][a-z_]', label))
+
+    def _addEdfFile(self, filename, ignoreStDev=True):
+        source = DataReader(filename)
+        for key in source.getSourceInfo()['KeyList']:
+            dataObject = source.getDataObject(key)
+            label = dataObject.info.get("Title", key)
+            if ignoreStDev and self._ignoreStDevLabel(label):
+                continue
+            self.addImage(dataObject.data,
+                os.path.basename(filename)+" "+label)
+
+    def _addHf5File(self, filename, ignoreStDev=True):
+        raise NotImplementedError
+
+    def _addQImageReadable(self, filename, ignoreStDev=True):
+        if ignoreStDev and self._ignoreStDevFile(filename):
+            return
+        qimage = qt.QImage(filename)
+        if qimage.isNull():
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Cannot read file %s as an image" % filename)
+            msg.exec_()
+        else:
+            #add as black and white
+            self.addImage(makeQimageBW(qimage), os.path.basename(filename))
+
+    def _addTifFile(self, filename, ignoreStDev=True):
+        tif = TiffIO.TiffIO(filename, mode='rb')
+        nImages = tif.getNumberOfImages()
+        for nImage in range(nImages):
+            info = tif.getInfo(nImage)['info']
+            imgData = tif.getImage(nImage)
+            title = os.path.basename(filename)
+            label = info.get('Title', "1.%d"  % (nImage))
+            if ignoreStDev and self._ignoreStDevLabel(label):
+                continue
+            title = os.path.basename(filename)+" "+label
+            if len(imgData.shape) == 3:
+                #color image
+                colorIndex = 0
+                for component in ['R', 'G', 'B']:
+                    self.addImage(imgData[:,:,colorIndex].astype(numpy.float), title + '_' + component)
+                    colorIndex += 1
+                data = imgData[:,:,0] * 0.114 +\
+                        imgData[:,:,1] * 0.587 +\
+                        imgData[:,:,2] * 0.299
+                self.addImage(data, title)
+            else:
+                self.addImage(imgData, title)
+
+    def _addTxtFile(self, filename, ignoreStDev=True):
+        if ignoreStDev and self._ignoreStDevFile(filename):
+            return
+        data = numpy.loadtxt(filename)
+        self.addImage(data, os.path.basename(filename))
+
+    def _addBatchDatFile(self, filename, csv=False, ignoreStDev=True):
+        self.outputDir = os.path.dirname(filename)
+        if sys.platform == "win32":
+            f = open(filename, "rb")
+        else:
+            f = open(filename, "r")
+        lines = f.read()
+        f.close()
+        if (sys.version_info > (3, 0)) and hasattr(lines, "decode"):
+            lines = lines.decode()
+        lines = lines.replace("\r","\n")
+        lines = lines.replace("\n\n","\n")
+        lines = lines.replace(",","  ")
+        lines = lines.replace("\t","  ")
+        lines = lines.replace(";","  ")
+        lines = lines.replace('"','')
+        lines = lines.split("\n")
+        labels = lines[0].replace("\n","").split("  ")
         i = 1
-        while (not len( lines[-i].replace("\n",""))):
-               i += 1
+        while (not len(lines[-i].replace("\n",""))):
+            i += 1
         nlabels = len(labels)
         nrows = len(lines) - i
-        if ignoresigma is None:
-            iterationList = [2]
-            if len(labels) > 4:
-                for i in range(3, len(labels)):
-                    if len(labels[i]) <= 5:
-                        iterationList.append(i)
-                    elif labels[i] == ("s("+labels[i-1]+")"):
-                        continue
-                    else:
-                        iterationList.append(i)
-            else:
-                iterationList = range(2, nlabels)
-        elif ignoresigma:
-            iterationList = [2]
-            if len(labels) > 4:
-                for i in range(3, len(labels)):
-                    if len(labels[i]) <= 5:
-                        iterationList.append(i)
-                    elif labels[i] == ("s("+labels[i-1]+")"):
-                        continue
-                    else:
-                        iterationList.append(i)
-            else:
-                iterationList = range(2, nlabels)
+        if ignoreStDev and len(labels) > 4:
+            iterationList = []
+            for i in range(2, len(labels)):
+                if not self._ignoreStDevLabel(labels[i]):
+                    iterationList.append(i)
         else:
             iterationList = range(2, nlabels)
         totalArray = numpy.zeros((nrows, nlabels), numpy.float)
         for i in range(nrows):
             totalArray[i, :] = [float(x) for x in lines[i+1].split()]
-
         nrows = int(max(totalArray[:,0]) + 1)
         ncols = int(max(totalArray[:,1]) + 1)
         singleArray = numpy.zeros((nrows* ncols, 1), numpy.float)
         for i in iterationList:
             singleArray[:, 0] = totalArray[:,i] * 1
             self.addImage(numpy.resize(singleArray, (nrows, ncols)), labels[i])
-
-    def _isEdf(self, filename):
-        f = open(filename, 'rb')
-        twoBytes = f.read(2)
-        f.close()
-        if sys.version < '3.0':
-            twoChar = twoBytes
-        else:
-            try:
-                twoChar = twoBytes.decode('utf-8')
-            except:
-                twoChar = "__dummy__"
-        if twoChar in ["II", "MM", "\n{"] or\
-           twoChar[0] in ["{"] or\
-           filename.lower().endswith('cbf')or\
-           (filename.lower().endswith('spe') and twoChar[0] not in ["$"]):
-            #very likely wrapped as EDF
-            return True
-        return False
 
     def saveButtonClicked(self):
         self._saveButtonMenu.exec_(self.cursor().pos())
@@ -1399,7 +1427,7 @@ class MyQLabel(qt.QLabel):
             qt.QLabel.drawContents(self,painter)
             painter.font().setBold(0)
 
-def test():
+def main():
     from PyMca5.PyMcaGui.plotting import RGBCorrelatorGraph
     app = qt.QApplication([])
     app.lastWindowClosed.connect(app.quit)
@@ -1423,7 +1451,7 @@ def test():
                     sys.argv[1:],
                     options,
                     longoptions)
-    for opt,arg in opts:
+    for opt, arg in opts:
         pass
     filelist=args
     if len(filelist):
@@ -1453,5 +1481,4 @@ def test():
     app.exec_()
 
 if __name__ == "__main__":
-    test()
-
+    main()
