@@ -391,6 +391,7 @@ class SceneGLWindow(SceneWindow.SceneWindow):
         if legend is None:
             legend = dataObject.info['legend']
 
+        nItemsBefore = len(self.getSceneWidget().getItems())
         # we need to remove existing items with the same legend
         to_be_removed = []
         for it in self.getSceneWidget().getItems():
@@ -420,7 +421,8 @@ class SceneGLWindow(SceneWindow.SceneWindow):
                 raise NotImplementedError("case dataObject.x is None and ndim not in [2, 3]")
                 # item3d = self.getSceneWidget().mesh(data)
             item3d.setLabel(legend)
-            if len(self.getSceneWidget().getItems()) == 1:
+            if (not nItemsBefore) or \
+               (len(self.getSceneWidget().getItems()) == 1):
                 self.getSceneWidget().centerScene()
             return
 
@@ -496,7 +498,8 @@ class SceneGLWindow(SceneWindow.SceneWindow):
                 # so it probably cannot happen
                 raise TypeError("Could not understand data dimensionality")
             item3d.setLabel(legend)
-            if len(self.getSceneWidget().getItems()) == 1:
+            if (not nItemsBefore) or \
+               (len(self.getSceneWidget().getItems()) == 1):
                 self.getSceneWidget().centerScene()
             return
         elif len(data.shape) == 3 and len(xDimList) == 2:
@@ -530,7 +533,8 @@ class SceneGLWindow(SceneWindow.SceneWindow):
             item3d.addIsosurface(mean_isolevel, "blue")
             for cp in item3d.getCutPlanes():
                 cp.setColormap(Colormap(name="temperature"))
-            if len(self.getSceneWidget().getItems()) == 1:
+            if (not nItemsBefore) or \
+               (len(self.getSceneWidget().getItems()) == 1):
                 self.getSceneWidget().centerScene()
             return
 
@@ -572,5 +576,6 @@ class SceneGLWindow(SceneWindow.SceneWindow):
                                                         value=data)
             item3d.setColormap(Colormap(name="temperature"))
         item3d.setLabel(legend)
-        if len(self.getSceneWidget().getItems()) == 1:
+        if (not nItemsBefore) or \
+           (len(self.getSceneWidget().getItems()) == 1):
             self.getSceneWidget().centerScene()
