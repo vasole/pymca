@@ -223,12 +223,13 @@ from PyMca5.PyMcaGui.pymca import McaWindow
 
 from PyMca5.PyMcaGui.pymca import PyMcaImageWindow
 from PyMca5.PyMcaGui.pymca import PyMcaHKLImageWindow
+
 try:
     #This is to make sure it is properly frozen
     #and that Object3D is fully supported
     import OpenGL.GL
     #import Object3D.SceneGLWindow as SceneGLWindow
-    import PyMca5.PyMcaGui.pymca.PyMcaGLWindow as SceneGLWindow
+    from PyMca5.PyMcaGui.pymca import PyMcaGLWindow
     OBJECT3D = False
     if ("PyQt4.QtOpenGL" in sys.modules) or \
        ("PySide.QtOpenGL") in sys.modules or \
@@ -236,7 +237,23 @@ try:
        ("PyQt5.QtOpenGL") in sys.modules:
         OBJECT3D = True
 except:
+    _logger.debug("pyopengl not installed")
     OBJECT3D = False
+
+
+# Silx OpenGL availability (former Object3D)
+try:
+    import PyMca5.PyMcaGui.pymca.SilxGLWindow
+    isSilxGLAvailable = True
+except ImportError:
+    isSilxGLAvailable = False
+
+if isSilxGLAvailable:
+    SceneGLWindow = PyMca5.PyMcaGui.pymca.SilxGLWindow
+elif OBJECT3D:
+    SceneGLWindow = PyMcaGLWindow
+
+_logger.debug("SilxGL availability: %s", isSilxGLAvailable)
 
 from PyMca5.PyMcaGui.pymca import QDispatcher
 from PyMca5.PyMcaGui import ElementsInfo
@@ -322,11 +339,11 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 self.scanWindow = ScanWindow.ScanWindow(info=True,
                                                         backend=backend)
                 self.scanWindow._togglePointsSignal()
-                if OBJECT3D:
+                if OBJECT3D or isSilxGLAvailable:
                     self.glWindow = SceneGLWindow.SceneGLWindow()
                 self.mainTabWidget.addTab(self.mcaWindow, "MCA")
                 self.mainTabWidget.addTab(self.scanWindow, "SCAN")
-                if OBJECT3D:
+                if OBJECT3D or isSilxGLAvailable:
                     self.mainTabWidget.addTab(self.glWindow, "OpenGL")
                 if QTVERSION < '5.0.0':
                     self.mdi.addWindow(self.mainTabWidget)
@@ -544,7 +561,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             widget.show()
             self._widgetDict[id(widget)] = widget
         else:
-            if OBJECT3D:
+            if OBJECT3D or isGLAvailable:
                 if ddict['dataobject'].info['selectiontype'] == "1D":
                     _logger.debug("1D selection")
                     self.mcaWindow._addSelection(dictOrList)
