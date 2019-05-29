@@ -1019,16 +1019,22 @@ class RGBCorrelatorWidget(qt.QWidget):
             return
         # Add images from HDF5 path
         with HDF5Widget.h5open(filename) as hdf5File:
-            datasets = NexusUtils.getNdimDatasets(hdf5File[h5path], ndim=2)
+            datasets = NexusUtils.selectDatasets(hdf5File[h5path])
             if not datasets:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("No 2D datasets were found in {}::{}".format(filename, h5path))
                 msg.exec_()
-                return
-            for dset in datasets:
-                label = '/'.join(dset.name.split('/')[-2:])
-                self.addImage(dset[()], label)
+            elif len({dset.ndim for dset in datasets}) > 1:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("{}::{} contains datasets with different dimensions. Select datasets separately.".format(filename, h5path))
+                msg.exec_()
+                self._addHf5File(filename, ignoreStDev=ignoreStDev)
+            else:
+                for dset in datasets:
+                    label = '/'.join(dset.name.split('/')[-2:])
+                    self.addImage(dset[()], label)
 
     def _addQImageReadable(self, filename, ignoreStDev=True):
         if ignoreStDev and self._ignoreStDevFile(filename):

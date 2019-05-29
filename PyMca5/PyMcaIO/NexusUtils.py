@@ -37,6 +37,7 @@ import datetime
 import numpy
 import os
 import errno
+from collections import Counter
 from contextlib import contextmanager
 from .. import version
 
@@ -626,15 +627,24 @@ def nxDataAddErrors(data, errors):
             data[name+'_errors'] = h5py.SoftLink(dest.name)
 
 
-def getNdimDatasets(root, ndim=2):
+def selectDatasets(root, match=None):
     """
     :param h5py.Group or h5py.Dataset root:
-    :param int ndim: restrict dimensions
+    :param match: restrict selection (callable, 'max_ndim', 'mostcommon_ndim')
     :returns list(h5py.Dataset):
     """
+    if match == 'max_ndim':
+        match, post = None, match
+    elif match == 'mostcommon_ndim':
+        match, post = None, match
+    else:
+        post = None
+    if not match:
+        def match(dset):
+            return True
     datasets = []
     if isinstance(root, h5py.Dataset):
-        if root.ndim == ndim:
+        if match(root):
             datasets = [root]
     else:
         labels = nxDataGetSignals(root)
@@ -644,8 +654,17 @@ def getNdimDatasets(root, ndim=2):
             dset = root.get(label, None)
             if not isinstance(dset, h5py.Dataset):
                 continue
-            if dset.ndim == ndim:
+            if match(dset.ndim):
                 datasets.append(dset)
+        if post == 'max_ndim':
+            ndimref = max(dset.ndim for dset in datasets)
+        elif post == 'mostcommon_ndim':
+            occurences = Counter(dset.ndim for dset in datasets)
+            ndimref = occurences.most_common(1)[0][0]
+        else:
+            ndimref = None
+        if ndimref is not None:
+            datasets = [dset.ndim == ndimref for dset in datasets]
     return datasets
 
 
