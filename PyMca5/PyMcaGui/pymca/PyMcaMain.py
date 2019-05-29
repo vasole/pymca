@@ -253,7 +253,7 @@ if isSilxGLAvailable:
 elif OBJECT3D:
     SceneGLWindow = PyMcaGLWindow
 
-_logger.debug("SilxGL availability: %s", isGLAvailable)
+_logger.debug("SilxGL availability: %s", isSilxGLAvailable)
 
 from PyMca5.PyMcaGui.pymca import QDispatcher
 from PyMca5.PyMcaGui import ElementsInfo
@@ -339,11 +339,11 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 self.scanWindow = ScanWindow.ScanWindow(info=True,
                                                         backend=backend)
                 self.scanWindow._togglePointsSignal()
-                if OBJECT3D or isGLAvailable:
+                if OBJECT3D or isSilxGLAvailable:
                     self.glWindow = SceneGLWindow.SceneGLWindow()
                 self.mainTabWidget.addTab(self.mcaWindow, "MCA")
                 self.mainTabWidget.addTab(self.scanWindow, "SCAN")
-                if OBJECT3D or isGLAvailable:
+                if OBJECT3D or isSilxGLAvailable:
                     self.mainTabWidget.addTab(self.glWindow, "OpenGL")
                 if QTVERSION < '5.0.0':
                     self.mdi.addWindow(self.mainTabWidget)
