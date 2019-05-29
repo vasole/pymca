@@ -946,6 +946,12 @@ class RGBCorrelatorWidget(qt.QWidget):
 
     def _addSingleFile(self, uri, filterused=None, ignoreStDev=True):
         filename = uri.split('::')[0]
+        if not os.path.isfile(filename):
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("%s does not exist" % filename)
+            msg.exec_()
+            return
         if filterused is None:
             filterused = ''
         if isTif(filename):
@@ -1014,6 +1020,12 @@ class RGBCorrelatorWidget(qt.QWidget):
         # Add images from HDF5 path
         with HDF5Widget.h5open(filename) as hdf5File:
             datasets = NexusUtils.getNdimDatasets(hdf5File[h5path], ndim=2)
+            if not datasets:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("No 2D datasets were found in {}::{}".format(filename, h5path))
+                msg.exec_()
+                return
             for dset in datasets:
                 label = '/'.join(dset.name.split('/')[-2:])
                 self.addImage(dset[()], label)

@@ -642,7 +642,7 @@ def getNdimDatasets(root, ndim=2):
             labels = root.keys()
         for label in labels:
             dset = root.get(label, None)
-            if dset is None:
+            if not isinstance(dset, h5py.Dataset):
                 continue
             if dset.ndim == ndim:
                 datasets.append(dset)
