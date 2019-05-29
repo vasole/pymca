@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2018 European Synchrotron Radiation Facility
+# Copyright (C) 2018-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -420,6 +420,8 @@ class SceneGLWindow(SceneWindow.SceneWindow):
                 raise NotImplementedError("case dataObject.x is None and ndim not in [2, 3]")
                 # item3d = self.getSceneWidget().mesh(data)
             item3d.setLabel(legend)
+            if len(self.getSceneWidget().getItems()) == 1:
+                self.getSceneWidget().centerScene()
             return
 
         ndata = numpy.prod(data.shape)
@@ -494,6 +496,8 @@ class SceneGLWindow(SceneWindow.SceneWindow):
                 # so it probably cannot happen
                 raise TypeError("Could not understand data dimensionality")
             item3d.setLabel(legend)
+            if len(self.getSceneWidget().getItems()) == 1:
+                self.getSceneWidget().centerScene()
             return
         elif len(data.shape) == 3 and len(xDimList) == 2:
             _logger.warning("Assuming last dimension")
@@ -526,6 +530,8 @@ class SceneGLWindow(SceneWindow.SceneWindow):
             item3d.addIsosurface(mean_isolevel, "blue")
             for cp in item3d.getCutPlanes():
                 cp.setColormap(Colormap(name="temperature"))
+            if len(self.getSceneWidget().getItems()) == 1:
+                self.getSceneWidget().centerScene()
             return
 
         # I have to assume all the x are of 1 element or of as many elements as data
@@ -566,3 +572,5 @@ class SceneGLWindow(SceneWindow.SceneWindow):
                                                         value=data)
             item3d.setColormap(Colormap(name="temperature"))
         item3d.setLabel(legend)
+        if len(self.getSceneWidget().getItems()) == 1:
+            self.getSceneWidget().centerScene()
