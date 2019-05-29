@@ -1037,6 +1037,7 @@ class RGBCorrelatorWidget(qt.QWidget):
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("No (valid) datasets were found in '{}::{}'".format(filename, h5path))
                 msg.exec_()
+                self._addHf5File(filename, ignoreStDev=ignoreStDev)
             elif len({dset.size for dset in datasets}) > 1:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
