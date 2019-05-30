@@ -163,7 +163,7 @@ class ExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
     def _createWidgetEdf(self, filenamelist):
         imagelist = []
         imagenames = []
-        shape = self.requiredShape
+        shape = tuple(sorted(self.requiredShape))
         for filename in filenamelist:
             edf = EDFStack.EdfFileDataSource.EdfFileDataSource(filename)
             keylist = edf.getSourceInfo()['KeyList']
@@ -176,9 +176,7 @@ class ExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
             for key in keylist:
                 dataObject = edf.getDataObject(key)
                 data = dataObject.data
-                if data.shape[0] not in shape:
-                    continue
-                if data.shape[1] not in shape:
+                if tuple(sorted(data.shape)) != shape:
                     continue
                 imagename = dataObject.info.get('Title', "")
                 if imagename != "":
@@ -197,9 +195,9 @@ class ExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
             return
         imagelist = []
         imagenames = []
-        shape = self.requiredShape
+        shape = tuple(sorted(self.requiredShape))
         def match(dset):
-            return dset.shape == shape
+            return tuple(sorted(dset.shape)) == shape
         for uri in filenamelist:
             tmp = uri.split('::')
             if len(tmp) == 1:
@@ -245,7 +243,7 @@ class ExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
                         imagelist.append(dset[()])
                         imagenames.append(imagename)
         self._createStackPluginResultsWindow(imagenames, imagelist)
-        
+
     def _createWidgetSpec(self, filenamelist):
         # what to do if more than one file selected ?
         from PyMca5.PyMca import specfilewrapper as Specfile
