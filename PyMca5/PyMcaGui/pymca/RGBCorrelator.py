@@ -46,7 +46,9 @@ if USE_MASK_WIDGET:
 MATPLOTLIB = True
 
 class RGBCorrelator(qt.QWidget):
+
     sigRGBCorrelatorSignal = qt.pyqtSignal(object)
+    
     def __init__(self, parent = None, graph = None, bgrx = True):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle("PyMca RGB Correlator")

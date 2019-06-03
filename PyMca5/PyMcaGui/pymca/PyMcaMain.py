@@ -1246,11 +1246,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             correlator.raise_()
         self.__correlator[-1].sigRGBCorrelatorSignal.connect( \
                 self._deleteCorrelator)
-
-        if len(filelist) == 1:
-            correlator.addBatchDatFile(filelist[0])
-        else:
-            correlator.addFileList(filelist)
+        correlator.addFileList(filelist)
 
     def __sumRules(self):
         if self.__correlator is None:

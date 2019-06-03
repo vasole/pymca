@@ -42,48 +42,10 @@ else:
     QStringList = list
 QTVERSION = qt.qVersion()
 
+
 class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
-    def addBatchDatFile(self, filename, ignoresigma=None):
-        #test if filename is an EDF ...
-        #this is a more complete test
-        #but it would rewire to import too many things
-        #import QDataSource
-        #sourceType = QDataSource.getSourceType(filename)
-        #if sourceType.upper().startswith("EDFFILE"):
-        #    return self.addFileList([filename])
-        f = open(filename, 'rb')
-        twoBytes = f.read(2)
-        f.close()
-        if sys.version < '3.0':
-            twoChar = twoBytes
-        else:
-            try:
-                twoChar = twoBytes.decode('utf-8')
-            except:
-                twoChar = "__dummy__"
-        if twoChar in ["II", "MM", "\n{"] or\
-           twoChar[0] in ["{"] or\
-           filename.lower().endswith('cbf')or\
-           (filename.lower().endswith('spe') and twoChar[0] not in ['$']):
-            #very likely wrapped as EDF
-            return self.addFileList([filename])
-
-        text = qt.safe_str(self.windowTitle())
-        text += ": " + qt.safe_str(os.path.basename(filename))
-
-        self.setWindowTitle(text)
-
-        if len(filename) > 4:
-            if filename[-4:] == ".csv":
-                csv = True
-            else:
-                csv = False
-        self.controller.addBatchDatFile(filename, ignoresigma, csv=csv)
 
     def addFileList(self, filelist):
-        """
-        Expected to work just with EDF files
-        """
         text = qt.safe_str(self.windowTitle())
         if len(filelist) == 1:
             text += ": " + qt.safe_str(os.path.basename(filelist[0]))
@@ -91,7 +53,6 @@ class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
             text += ": from " + qt.safe_str(os.path.basename(filelist[0])) + \
                     " to " + qt.safe_str(os.path.basename(filelist[-1]))
         self.setWindowTitle(text)
-
         self.controller.addFileList(filelist)
 
     def _getStackOfFiles(self):
@@ -103,19 +64,20 @@ class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
                         "Image Files (* jpg *jpeg *tif *tiff *png)",
                         "All Files (*)"]
         message = "Open ONE Batch result file or SEVERAL EDF files"
-
         filelist = PyMcaFileDialogs.getFileList(parent=self,
-                                filetypelist=fileTypeList,
-                                message=message,
-                                currentdir=wdir,
-                                mode="OPEN",
-                                single=False)
-        if not len(filelist):
+                                                filetypelist=fileTypeList,
+                                                message=message,
+                                                currentdir=wdir,
+                                                mode="OPEN",
+                                                single=False)
+        if filelist:
+            PyMcaDirs.inputDir = os.path.dirname(filelist[0])
+            return filelist
+        else:
             return []
-        PyMcaDirs.inputDir = os.path.dirname(filelist[0])
-        return filelist
 
-def test():
+
+def main():
     import logging
     from PyMca5.PyMcaCore.LoggingLevel import getLoggingLevel
     sys.excepthook = qt.exceptionHandler
@@ -123,53 +85,44 @@ def test():
     app.lastWindowClosed.connect(app.quit)
 
     import getopt
-    options=''
-    longoptions=["nativefiledialogs=", "transpose=", "fileindex=",
-                 "logging=", "debug="]
+    options = ''
+    longoptions = ["nativefiledialogs=", "transpose=", "fileindex=",
+                   "logging=", "debug="]
     opts, args = getopt.getopt(
                     sys.argv[1:],
                     options,
                     longoptions)
-    transpose=False
-    for opt,arg in opts:
+    transpose = False
+    for opt, arg in opts:
         if opt in '--nativefiledialogs':
             if int(arg):
-                PyMcaDirs.nativeFileDialogs=True
+                PyMcaDirs.nativeFileDialogs = True
             else:
-                PyMcaDirs.nativeFileDialogs=False
+                PyMcaDirs.nativeFileDialogs = False
         elif opt in '--transpose':
             if int(arg):
-                transpose=True
+                transpose = True
         elif opt in '--fileindex':
             if int(arg):
-                transpose=True
+                transpose = True
 
     logging.basicConfig(level=getLoggingLevel(opts))
 
-    filelist=args
+    filelist = args
     w = PyMcaPostBatch()
     w.layout().setContentsMargins(11, 11, 11, 11)
-    if not len(filelist):
+    if not filelist:
         filelist = w._getStackOfFiles()
-    if not len(filelist):
+    if not filelist:
         print("Usage:")
         print("python PyMcaPostBatch.py PyMCA_BATCH_RESULT_DOT_DAT_FILE")
         sys.exit(app.quit())
-    if len(filelist) == 1:
-        if filelist[0].lower().endswith("dat"):
-            try:
-                w.addBatchDatFile(filelist[0])
-            except ValueError:
-                w.addFileList(filelist)
-        else:
-            w.addFileList(filelist)
-    else:
-        w.addFileList(filelist)
+    w.addFileList(filelist)
     if transpose:
         w.transposeImages()
     w.show()
     app.exec_()
 
-if __name__ == "__main__":
-    test()
 
+if __name__ == "__main__":
+    main()
