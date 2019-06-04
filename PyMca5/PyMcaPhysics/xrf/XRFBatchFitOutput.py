@@ -349,8 +349,9 @@ class OutputBuffer(MutableMapping):
             raise RuntimeError('Buffer is locked')
 
     @property
-    def outroot_localfs(self):
-        return os.path.join(self.outputDir, self.outputRoot)
+    def outputDirLegacy(self):
+        #return os.path.join(self.outputDir, self.outputRoot)
+        return os.path.join(self.outputDir, 'IMAGES')
 
     def filename(self, ext, suffix=None):
         if not suffix:
@@ -360,7 +361,7 @@ class OutputBuffer(MutableMapping):
         if ext == '.h5':
             return os.path.join(self.outputDir, self.outputRoot+suffix+ext)
         else:
-            return os.path.join(self.outroot_localfs, self.fileEntry+suffix+ext)
+            return os.path.join(self.outputDirLegacy, self.fileEntry+suffix+ext)
 
     def allocateMemory(self, label, group=None, memtype='ram', **kwargs):
         """
@@ -854,7 +855,7 @@ class OutputBuffer(MutableMapping):
         if not imageFileLabels:
             return
 
-        NexusUtils.mkdir(self.outroot_localfs)
+        NexusUtils.mkdir(self.outputDirLegacy)
         if self.edf:
             if self.multipage:
                 fileName = self.filename('.edf')
