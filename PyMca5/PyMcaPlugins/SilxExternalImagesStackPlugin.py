@@ -49,8 +49,8 @@ __license__ = "MIT"
 import os
 import numpy
 
-from PyMca5.PyMcaPlugins import ExternalImagesStackPluginBase
-from PyMca5.PyMcaGui.pymca import SilxExternalImagesWindow
+from PyMca5.PyMcaGui import ExternalImagesStackPluginBase
+from PyMca5.PyMcaGui import SilxExternalImagesWindow
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import PyMca_Icons as PyMca_Icons
 

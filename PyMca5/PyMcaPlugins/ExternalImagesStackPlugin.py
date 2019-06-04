@@ -44,7 +44,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 import os
 import logging
-from PyMca5.PyMcaPlugins import ExternalImagesStackPluginBase
+from PyMca5.PyMcaGui import ExternalImagesStackPluginBase
 from PyMca5.PyMcaGui import StackPluginResultsWindow
 from PyMca5.PyMcaGui import ExternalImagesWindow
 from PyMca5.PyMcaGui import PyMcaQt as qt
