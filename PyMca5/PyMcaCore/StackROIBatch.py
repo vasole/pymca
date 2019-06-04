@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -131,6 +131,8 @@ class StackROIBatch(object):
                 roiList.append(roi)
             elif xLabel.lower() == roiType.lower():
                 roiList.append(roi)
+            else:
+                _logger.info("ROI <%s> ignored")
 
         # only usual spectra case supported
         if index != (len(data.shape) - 1):
@@ -188,7 +190,7 @@ class StackROIBatch(object):
                             iXMaxList[j] = data.shape[index]
                         else:
                             iXMinList[j] = numpy.nonzero(x <= roiFrom)[0][-1]
-                            iXMaxList[j] = numpy.nonzero(x >= roiTo)[0][0] + 1
+                            iXMaxList[j] = numpy.nonzero(x >= roiTo)[0][0]
                         names[j] = "ROI " + roiLine
                         names[j + nRois] = "ROI "+ roiLine + " Net"
                         if xAtMinMax:
@@ -197,8 +199,8 @@ class StackROIBatch(object):
                     iXMin = iXMinList[j]
                     iXMax = iXMaxList[j]
                     #if i == 0:
-                    #    print roi, " iXMin = ", iXMin, "iXMax = ", iXMax  
-                    tmpArray = chunk[:(jEnd - jStart), iXMin : iXMax]
+                    #    print roi, " iXMin = ", iXMin, "iXMax = ", iXMax
+                    tmpArray = chunk[:(jEnd - jStart), iXMin : iXMax + 1]
                     left = tmpArray[:, 0]
                     right = tmpArray[:, -1]
                     rawSum = tmpArray.sum(axis=-1, dtype=numpy.float)
@@ -208,11 +210,11 @@ class StackROIBatch(object):
                     if xAtMinMax:
                         # maxImage
                         results[j + 2 * nRois][i, :(jEnd - jStart)] = \
-                                 numpy.argmax(tmpArray, axis=1) + iXMin                        
+                                 numpy.argmax(tmpArray, axis=1) + iXMin
                         # minImage
                         results[j + 3 * nRois][i, :(jEnd - jStart)] = \
-                                 numpy.argmin(tmpArray, axis=1) + iXMin                            
-                    
+                                 numpy.argmin(tmpArray, axis=1) + iXMin
+
                 jStart = jEnd
         outputDict = {'images':results,
                       'names':names}
