@@ -110,16 +110,18 @@ class testROIBatch(unittest.TestCase):
                 netCounts = 0.0
             config["ROI"]["roidict"][roi]["rawcounts"] = rawCounts
             config["ROI"]["roidict"][roi]["netcounts"] = netCounts
-            print("names= ", names)
             rawName = "ROI " + roi + ""
             netName = "ROI " + roi + " Net"
             imageRaw = images[names.index(rawName)]
             imageNet = images[names.index(netName)]
-            print("ROI = ", roi)
-            print("rawCounts = ", rawCounts)
-            print("imageRawCounts = ", imageRaw[0, 0])
-            print("netCounts = ", netCounts)
-            print("imageNetCounts = ", imageNet[0, 0])
+            if (imageRaw[0, 0] != rawCounts) or \
+               (imageNet[0, 0] != netCounts):
+                print("ROI = ", roi)
+                print("rawCounts = ", rawCounts)
+                print("imageRawCounts = ", imageRaw[0, 0])
+                print("netCounts = ", netCounts)
+                print("imageNetCounts = ", imageNet[0, 0])
+                
             self.assertTrue(imageRaw[0, 0] == rawCounts,
                             "Incorrect calculation for raw roi %s" % roi)
             self.assertTrue(imageNet[0, 0] == netCounts,
