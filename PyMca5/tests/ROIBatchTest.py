@@ -57,7 +57,7 @@ class testROIBatch(unittest.TestCase):
     def testCalculation(self):
         from PyMca5.PyMcaCore.StackROIBatch import StackROIBatch
         x = numpy.arange(1000.)
-        y = x + numpy.exp(-0.5*(x-500)**2)
+        y = x + 200 * numpy.exp(-0.5*(x-500)**2)
         y.shape = 1, 1, -1
 
         config = {}
@@ -65,18 +65,18 @@ class testROIBatch(unittest.TestCase):
         config["ROI"]["roilist"] = ["roi1", "roi2", "roi3"]
         config["ROI"]["roidict"] = {}
         config["ROI"]["roidict"]["roi1"] = {}
-        config["ROI"]["roidict"]["roi1"]["from"] = 10
-        config["ROI"]["roidict"]["roi1"]["to"] = 20
+        config["ROI"]["roidict"]["roi1"]["from"] = 10.01
+        config["ROI"]["roidict"]["roi1"]["to"] = 20.01
         config["ROI"]["roidict"]["roi1"]["type"] = "Channel"
         config["ROI"]["roidict"]["roi2"] = {}
-        config["ROI"]["roidict"]["roi2"]["from"] = 200
-        config["ROI"]["roidict"]["roi2"]["to"] = 500
+        config["ROI"]["roidict"]["roi2"]["from"] = 400.01
+        config["ROI"]["roidict"]["roi2"]["to"] = 600.01
         config["ROI"]["roidict"]["roi2"]["type"] = "Channel"
         config["ROI"]["roidict"]["roi3"] = {}
-        config["ROI"]["roidict"]["roi3"]["from"] = 200
-        config["ROI"]["roidict"]["roi3"]["to"] = 500
+        config["ROI"]["roidict"]["roi3"]["from"] = 700.01
+        config["ROI"]["roidict"]["roi3"]["to"] = 800.01
         config["ROI"]["roidict"]["roi3"]["type"] = "Channel"
-        
+
         instance = StackROIBatch()
         outputDict = instance.batchROIMultipleSpectra(x=x,
                                                       y=y,
@@ -88,7 +88,82 @@ class testROIBatch(unittest.TestCase):
         # target values
         xproc = x
         yproc = y[0, 0, :]
-        for roi in config["ROI"]["roidict"]:        
+        for roi in config["ROI"]["roidict"]:
+            toData = config["ROI"]["roidict"][roi]["to"]
+            fromData = config["ROI"]["roidict"][roi]["from"]
+            idx = numpy.nonzero((fromData <= xproc) & (xproc <= toData))[0]
+            if len(idx):
+                xw = xproc[idx]
+                yw = yproc[idx]
+                rawCounts = yw.sum(dtype=numpy.float)
+                deltaX = xw[-1] - xw[0]
+                deltaY = yw[-1] - yw[0]
+                if abs(deltaX) > 0.0:
+                    slope = (deltaY/deltaX)
+                    background = yw[0] + slope * (xw - xw[0])
+                    netCounts = rawCounts -\
+                                background.sum(dtype=numpy.float)
+                else:
+                    netCounts = 0.0
+            else:
+                rawCounts = 0.0
+                netCounts = 0.0
+            config["ROI"]["roidict"][roi]["rawcounts"] = rawCounts
+            config["ROI"]["roidict"][roi]["netcounts"] = netCounts
+            rawName = "ROI " + roi + ""
+            netName = "ROI " + roi + " Net"
+            imageRaw = images[names.index(rawName)]
+            imageNet = images[names.index(netName)]
+            if (imageRaw[0, 0] != rawCounts) or \
+               (imageNet[0, 0] != netCounts):
+                print("ROI = ", roi)
+                print("rawCounts = ", rawCounts)
+                print("imageRawCounts = ", imageRaw[0, 0])
+                print("netCounts = ", netCounts)
+                print("imageNetCounts = ", imageNet[0, 0])
+
+            self.assertTrue(imageRaw[0, 0] == rawCounts,
+                            "Incorrect calculation for raw roi %s" % roi)
+            self.assertTrue(imageNet[0, 0] == netCounts,
+                            "Incorrect calculation for net roi %s delta = %f" % \
+                            (roi, imageNet[0, 0] - netCounts))
+
+    def testCalculationReversedX(self):
+        from PyMca5.PyMcaCore.StackROIBatch import StackROIBatch
+        x = numpy.arange(1000.)
+        y = x + 200.0 * numpy.exp(-0.5*(x-500)**2)
+        y.shape = 1, 1, -1
+        x = -x
+
+        config = {}
+        config["ROI"] = {}
+        config["ROI"]["roilist"] = ["roi1", "roi2", "roi3"]
+        config["ROI"]["roidict"] = {}
+        config["ROI"]["roidict"]["roi1"] = {}
+        config["ROI"]["roidict"]["roi1"]["to"] = -10.01
+        config["ROI"]["roidict"]["roi1"]["from"] = -20.01
+        config["ROI"]["roidict"]["roi1"]["type"] = "Channel"
+        config["ROI"]["roidict"]["roi2"] = {}
+        config["ROI"]["roidict"]["roi2"]["to"] = -400.01
+        config["ROI"]["roidict"]["roi2"]["from"] = -600.01
+        config["ROI"]["roidict"]["roi2"]["type"] = "Channel"
+        config["ROI"]["roidict"]["roi3"] = {}
+        config["ROI"]["roidict"]["roi3"]["to"] = -700.01
+        config["ROI"]["roidict"]["roi3"]["from"] = -800.01
+        config["ROI"]["roidict"]["roi3"]["type"] = "Channel"
+
+        instance = StackROIBatch()
+        outputDict = instance.batchROIMultipleSpectra(x=x,
+                                                      y=y,
+                                                      configuration=config,
+                                                      net=True)
+        images = outputDict["images"]
+        names = outputDict["names"]
+
+        # target values
+        xproc = x
+        yproc = y[0, 0, :]
+        for roi in config["ROI"]["roidict"]:
             toData = config["ROI"]["roidict"][roi]["to"]
             fromData = config["ROI"]["roidict"][roi]["from"]
             idx = numpy.nonzero((fromData <= xproc) & (xproc <= toData))[0]
@@ -98,7 +173,7 @@ class testROIBatch(unittest.TestCase):
                     rawCounts = yw.sum(dtype=numpy.float)
                     deltaX = xw[-1] - xw[0]
                     deltaY = yw[-1] - yw[0]
-                    if deltaX > 0.0:
+                    if abs(deltaX) > 0.0:
                         slope = (deltaY/deltaX)
                         background = yw[0] + slope * (xw - xw[0])
                         netCounts = rawCounts -\
@@ -121,7 +196,13 @@ class testROIBatch(unittest.TestCase):
                 print("imageRawCounts = ", imageRaw[0, 0])
                 print("netCounts = ", netCounts)
                 print("imageNetCounts = ", imageNet[0, 0])
-                
+
+            self.assertTrue(imageRaw[0, 0] > -1.0e-10,
+                    "Expected positive value for raw roi %s got %f" % \
+                            (roi, imageRaw[0, 0]))
+            self.assertTrue(imageNet[0, 0] > -1.0e-10,
+                    "Expected positive value for net roi %s got %f" % \
+                            (roi, imageNet[0, 0]))
             self.assertTrue(imageRaw[0, 0] == rawCounts,
                             "Incorrect calculation for raw roi %s" % roi)
             self.assertTrue(imageNet[0, 0] == netCounts,
@@ -137,6 +218,7 @@ def getSuite(auto=True):
         # use a predefined order
         testSuite.addTest(testROIBatch("testImport"))
         testSuite.addTest(testROIBatch("testCalculation"))
+        testSuite.addTest(testROIBatch("testCalculationReversedX"))
     return testSuite
 
 def test(auto=False):
