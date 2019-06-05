@@ -1,5 +1,5 @@
 # /*#########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -41,7 +41,7 @@ a tool to rotate the image.
 
 The mask of the plot widget is synchronized with the master stack widget."""
 
-__authors__ = ["V.A. Sole", "P. Knobel"]
+__authors__ = ["V.A. Sole", "P. Knobel", "W. De Nolf"]
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 
@@ -49,11 +49,9 @@ __license__ = "MIT"
 import os
 import numpy
 
-from PyMca5 import StackPluginBase
+from PyMca5.PyMcaGui import ExternalImagesStackPluginBase
+from PyMca5.PyMcaGui import SilxExternalImagesWindow
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.PyMcaIO import EDFStack
-from PyMca5.PyMcaGui.io import PyMcaFileDialogs
-from PyMca5.PyMcaGui.pymca import SilxExternalImagesWindow
 from PyMca5.PyMcaGui import PyMca_Icons as PyMca_Icons
 
 # temporarily disable logging when importing silx and fabio
@@ -88,9 +86,10 @@ def resize_image(original_image, new_shape):
     return interpolated_values
 
 
-class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
+class SilxExternalImagesStackPlugin(ExternalImagesStackPluginBase.ExternalImagesStackPluginBase):
+
     def __init__(self, stackWindow):
-        StackPluginBase.StackPluginBase.__init__(self, stackWindow)
+        ExternalImagesStackPluginBase.ExternalImagesStackPluginBase.__init__(self, stackWindow)
         self.methodDict = {'Load': [self._loadImageFiles,
                                     "Load Images",
                                     PyMca_Icons.fileopen],
@@ -160,142 +159,26 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
     def applyMethod(self, name):
         return self.methodDict[name][0]()
 
-    def _loadImageFiles(self):
-        if self.getStackDataObject() is None:
-            return
-        getfilter = True
-        fileTypeList = ["PNG Files (*png)",
-                        "JPEG Files (*jpg *jpeg)",
-                        "IMAGE Files (*)",
-                        "DAT Files (*dat)",
-                        "CSV Files (*csv)",
-                        "EDF Files (*edf)",
-                        "EDF Files (*ccd)",
-                        "EDF Files (*)"]
-        message = "Open image file"
-        filenamelist, filefilter = PyMcaFileDialogs.getFileList(
-                parent=None,
-                filetypelist=fileTypeList,
-                message=message,
-                getfilter=getfilter,
-                single=False,
-                currentfilter=None)
-        if not filenamelist:
-            return
-        imagelist = []
-        imagenames = []
-        mask = self.getStackSelectionMask()
-        if mask is None:
-            r, n = self.getStackROIImagesAndNames()
-            shape = r[0].shape
-        else:
-            shape = mask.shape
-        extension = qt.safe_str(os.path.splitext(filenamelist[0])[1])
-        if filefilter.startswith("EDF"):
-            for filename in filenamelist:
-                # read the edf file
-                edf = EDFStack.EdfFileDataSource.EdfFileDataSource(filename)
-
-                # the list of images
-                keylist = edf.getSourceInfo()['KeyList']
-                if len(keylist) < 1:
-                    msg = qt.QMessageBox(None)
-                    msg.setIcon(qt.QMessageBox.Critical)
-                    msg.setText("Cannot read image from file")
-                    msg.exec_()
-                    return
-
-                for key in keylist:
-                    #get the data
-                    dataObject = edf.getDataObject(key)
-                    data = dataObject.data
-                    if data.shape[0] not in shape or data.shape[1] not in shape:
-                        # print("Ignoring %s (inconsistent shape)" % key)
-                        continue
-                    imagename = dataObject.info.get('Title', "")
-                    if imagename != "":
-                        imagename += " "
-                    imagename += os.path.basename(filename) + " " + key
-                    imagelist.append(data)
-                    imagenames.append(imagename)
-            if not imagelist:
-                msg = qt.QMessageBox(None)
-                msg.setIcon(qt.QMessageBox.Critical)
-                msg.setText("Cannot read a valid image from the file")
-                msg.exec_()
-                return
-        elif extension.lower() in [".csv", ".dat"]:
-            # what to do if more than one file selected ?
-            from PyMca5.PyMca import specfilewrapper as Specfile
-            sf = Specfile.Specfile(filenamelist[0])
-            scan = sf[0]
-            labels = scan.alllabels()
-            data = scan.data()
-            scan = None
-            sf = None
-            if "column" in labels:
-                offset = labels.index("column")
-                ncols = int(data[offset].max() + 1)
-                offset += 1
-            else:
-                raise IOError("Only images exported as csv supported")
-            imagelist = []
-            imagenames= []
-            for i in range(offset, len(labels)):
-                if labels[i].startswith("s("):
-                    continue
-                tmpData = data[i]
-                tmpData.shape = -1, ncols
-                imagelist.append(tmpData)
-                imagenames.append(labels[i])
-        else:
-            # Try pure Image formats
-            for filename in filenamelist:
-                image = qt.QImage(filename)
-                if image.isNull():
-                    msg = qt.QMessageBox(self)
-                    msg.setIcon(qt.QMessageBox.Critical)
-                    msg.setText("Cannot read file %s as an image" % filename)
-                    msg.exec_()
-                    return
-                imagelist.append(image)
-                imagenames.append(os.path.basename(filename))
-
-            if not imagelist:
-                msg = qt.QMessageBox(None)
-                msg.setIcon(qt.QMessageBox.Critical)
-                msg.setText("Cannot read a valid image from the file")
-                msg.exec_()
-                return
-
-            for i, image in enumerate(imagelist):
-                imagelist[i] = self.qImageToRgba(image)
-
+    def _createStackPluginWindow(self, imagenames, imagelist):
         image_shape = self._getStackImageShape()
         origin, delta = self._getStackOriginDelta()
-
         h = delta[1] * image_shape[0]
         w = delta[0] * image_shape[1]
-
         stack_images, stack_names = self.getStackROIImagesAndNames()
-
         stack_info = self.getStackInfo()
         if "bgimages" not in stack_info:
             stack_info["bgimages"] = {}
-
         for bgimg, bglabel in zip(imagelist, imagenames):
             if bglabel not in self.windows:
                 self.windows[bglabel] = SilxExternalImagesWindow.SilxExternalImagesWindow()
                 self.windows[bglabel].sigMaskImageWidget.connect(
                         self.onWidgetSignal)
-
             self.windows[bglabel].show()
             # add the stack image for mask operation
             self.windows[bglabel].setImages([stack_images[0]],
                                             labels=[stack_names[0]],
                                             origin=origin, width=w, height=h)
             self.windows[bglabel].plot.getImage("current").setAlpha(0)
-
             # add the external image
             self.windows[bglabel].setBackgroundImages([bgimg],
                                                       labels=[bglabel],
@@ -303,14 +186,16 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
                                                       widths=[w],
                                                       heights=[h])
             self.windows[bglabel].plot.setGraphTitle(bglabel)
-
             # also store bg images as a stack info attribute
             stack_info["bgimages"][bglabel] = {"data": bgimg,
                                                "origin": origin,
                                                "width": w,
                                                "height": h}
-
             self._showWidget(bglabel)
+
+    def _createStackPluginWindowQImage(self, imagenames, imagelist):
+        imagelist = list(map(self.qImageToRgba, imagelist))
+        self._createStackPluginWindow(imagenames, imagelist)
 
     def _onBgImageChanged(self):
         """Update bg images in stack info dict"""
@@ -393,8 +278,14 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
             tmpBuffer = numpy.array(pixmap[:, :, 0], copy=True, dtype=pixmap.dtype)
             pixmap[:, :, 0] = pixmap[:, :, 2]
             pixmap[:, :, 2] = tmpBuffer
-
         return pixmap
+
+    @property
+    def _dialogParent(self):
+        if self.windows:
+            return next(iter(self.windows.values()))
+        else:
+            return None
 
 
 MENU_TEXT = "Silx External Images Tool"
