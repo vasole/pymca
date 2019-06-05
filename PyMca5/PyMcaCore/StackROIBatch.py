@@ -157,6 +157,8 @@ class StackROIBatch(object):
 
         jStep = min(1000, data.shape[1])
         nRois = len(roiList)
+        idx = [None] * nRois
+        xw = [None] * nRois
         iXMinList = [None] * nRois
         iXMaxList = [None] * nRois
         nRows = data.shape[0]
@@ -186,34 +188,49 @@ class StackROIBatch(object):
                         roiFrom = config["ROI"]["roidict"][roi]["from"]
                         roiTo = config["ROI"]["roidict"][roi]["to"]
                         if roiLine == "ICR":
-                            iXMinList[j] = 0
-                            iXMaxList[j] = data.shape[index]
+                            xw[j] = xData
+                            idx[j] = numpy.arange(len(xData))
                         else:
-                            iXMinList[j] = numpy.nonzero(x <= roiFrom)[0][-1]
-                            iXMaxList[j] = numpy.nonzero(x >= roiTo)[0][0]
+                            idx[j] = numpy.nonzero((roiFrom <= xData) & (xData <= roiTo))[0]
+                            if len(idx):
+                                xw[j] = xData[idx[j]]
+                                iXMinList[j] = idx[j].min()
+                                iXMaxList[j] = idx[j].max()
+                            else:
+                                xw[j] = None
                         names[j] = "ROI " + roiLine
                         names[j + nRois] = "ROI "+ roiLine + " Net"
                         if xAtMinMax:
                             names[j + 2 * nRois] = "ROI "+ roiLine + (" %s at Max." % roiType)
                             names[j + 3 * nRois] = "ROI "+ roiLine + (" %s at Min." % roiType)
-                    iXMin = iXMinList[j]
-                    iXMax = iXMaxList[j]
-                    #if i == 0:
-                    #    print roi, " iXMin = ", iXMin, "iXMax = ", iXMax
-                    tmpArray = chunk[:(jEnd - jStart), iXMin : iXMax + 1]
-                    left = tmpArray[:, 0]
-                    right = tmpArray[:, -1]
-                    rawSum = tmpArray.sum(axis=-1, dtype=numpy.float)
-                    netSum = rawSum - (0.5 * (left + right) * (iXMax - iXMin + 1))
+                    if xw[j] is None:
+                        # no points in the ROI            
+                        rawSum = 0.0
+                        netSum = 0.0
+                    else:
+                        tmpArray = chunk[:(jEnd - jStart), idx[j]]
+                        rawSum = tmpArray.sum(axis=-1, dtype=numpy.float)
+
+                        deltaX = xData[iXMaxList[j]] - xData[iXMinList[j]]
+                        left = tmpArray[:, 0]
+                        right = tmpArray[:, -1]
+                        deltaY = right - left
+                        if abs(deltaX) > 0.0:
+                            slope = deltaY / float(deltaX)
+                            background = left + slope * (xw[j] - xw[j][0])
+                            netSum = rawSum - \
+                                background.sum(dtype=numpy.float)
+                        else:
+                            netSum = 0.0
                     results[j][i,:(jEnd - jStart)] = rawSum
                     results[j + nRois][i,:(jEnd - jStart)] = netSum
                     if xAtMinMax:
                         # maxImage
                         results[j + 2 * nRois][i, :(jEnd - jStart)] = \
-                                 numpy.argmax(tmpArray, axis=1) + iXMin
+                                 numpy.argmax(tmpArray, axis=1) + xw[j][0]
                         # minImage
                         results[j + 3 * nRois][i, :(jEnd - jStart)] = \
-                                 numpy.argmin(tmpArray, axis=1) + iXMin
+                                 numpy.argmin(tmpArray, axis=1) + xw[j][0]
 
                 jStart = jEnd
         outputDict = {'images':results,
