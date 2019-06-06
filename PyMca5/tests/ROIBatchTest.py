@@ -78,9 +78,11 @@ class testROIBatch(unittest.TestCase):
         config["ROI"]["roidict"]["roi3"]["type"] = "Channel"
 
         instance = StackROIBatch()
+        xAtMinMax = True
         outputDict = instance.batchROIMultipleSpectra(x=x,
                                                       y=y,
                                                       configuration=config,
+                                                      xAtMinMax=xAtMinMax,
                                                       net=True)
         images = outputDict["images"]
         names = outputDict["names"]
@@ -128,6 +130,26 @@ class testROIBatch(unittest.TestCase):
                             "Incorrect calculation for net roi %s delta = %f" % \
                             (roi, imageNet[0, 0] - netCounts))
 
+            xAtMinName =  "ROI "+ roi + " Channel at Min."
+            xAtMaxName =  "ROI "+ roi + " Channel at Max."
+            if xAtMinMax:
+                self.assertTrue(xAtMinName in names,
+                                "xAtMin not calculated for roi %s" % roi)
+                self.assertTrue(xAtMaxName in names,
+                                "xAtMax not calculated for roi %s" % roi)
+
+                imageMin = images[names.index(xAtMinName)]
+                imageMax = images[names.index(xAtMaxName)]
+                if roi == "roi2":
+                    self.assertTrue(imageMax[0, 0] == 500,
+                                "Max expected at 500 got %f" % imageMax[0, 0])
+            else:
+                self.assertTrue(xAtMinName not in names,
+                                "xAtMin calculated for roi %s" % roi)
+                self.assertTrue(xAtMaxName not in names,
+                                "xAtMax calculated for roi %s" % roi)
+
+
     def testCalculationReversedX(self):
         from PyMca5.PyMcaCore.StackROIBatch import StackROIBatch
         x = numpy.arange(1000.)
@@ -153,9 +175,11 @@ class testROIBatch(unittest.TestCase):
         config["ROI"]["roidict"]["roi3"]["type"] = "Channel"
 
         instance = StackROIBatch()
+        xAtMinMax = True
         outputDict = instance.batchROIMultipleSpectra(x=x,
                                                       y=y,
                                                       configuration=config,
+                                                      xAtMinMax=xAtMinMax,
                                                       net=True)
         images = outputDict["images"]
         names = outputDict["names"]
@@ -208,6 +232,25 @@ class testROIBatch(unittest.TestCase):
             self.assertTrue(imageNet[0, 0] == netCounts,
                             "Incorrect calculation for net roi %s delta = %f" % \
                             (roi, imageNet[0, 0] - netCounts))
+            xAtMinName =  "ROI "+ roi + " Channel at Min."
+            xAtMaxName =  "ROI "+ roi + " Channel at Max."
+            if xAtMinMax:
+                self.assertTrue(xAtMinName in names,
+                                "xAtMin not calculated for roi %s" % roi)
+                self.assertTrue(xAtMaxName in names,
+                                "xAtMax not calculated for roi %s" % roi)
+
+                imageMin = images[names.index(xAtMinName)]
+                imageMax = images[names.index(xAtMaxName)]
+                if roi == "roi2":
+                    self.assertTrue(imageMax[0, 0] == -500,
+                                "Max expected at -500 got %f" % imageMax[0, 0])
+            else:
+                self.assertTrue(xAtMinName not in names,
+                                "xAtMin calculated for roi %s" % roi)
+                self.assertTrue(xAtMaxName not in names,
+                                "xAtMax calculated for roi %s" % roi)
+
 
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()
