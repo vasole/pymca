@@ -225,12 +225,16 @@ class StackROIBatch(object):
                     results[j][i,:(jEnd - jStart)] = rawSum
                     results[j + nRois][i,:(jEnd - jStart)] = netSum
                     if xAtMinMax:
-                        # maxImage
-                        results[j + 2 * nRois][i, :(jEnd - jStart)] = \
-                                 numpy.argmax(tmpArray, axis=1) + xw[j][0]
-                        # minImage
-                        results[j + 3 * nRois][i, :(jEnd - jStart)] = \
-                                 numpy.argmin(tmpArray, axis=1) + xw[j][0]
+                        if xw[j] is None:
+                            # what can be the Min and the Max when there is nothing in the ROI?
+                            _logger.warning("No Min. Max for ROI <%s>. Empty ROI" % roiLine)
+                        else:
+                            # maxImage
+                            results[j + 2 * nRois][i, :(jEnd - jStart)] = \
+                                     xw[j][numpy.argmax(tmpArray, axis=1)]
+                            # minImage
+                            results[j + 3 * nRois][i, :(jEnd - jStart)] = \
+                                     xw[j][numpy.argmin(tmpArray, axis=1)]
 
                 jStart = jEnd
         outputDict = {'images':results,
