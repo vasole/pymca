@@ -72,7 +72,8 @@ class testXRFBatchFitOutput(unittest.TestCase):
 
     def testOverwrite(self):
         h5name = os.path.join(self.path, self.saveall['outputRoot']+'.h5')
-        subdir = os.path.join(self.path, self.saveall['outputRoot'])
+        #subdir = os.path.join(self.path, self.saveall['outputRoot'])
+        subdir = os.path.join(self.path, 'IMAGES')
         outbuffer = self._initOutBuffer(**self.saveall)
         outdata, outlabels, outaxes = self._generateData(outbuffer, memtype='mix')
         expected = self._getFiles(self.path)
@@ -110,7 +111,8 @@ class testXRFBatchFitOutput(unittest.TestCase):
 
             # Make sure the expected files are saved
             h5name = os.path.join(outputDir, 'sample.h5')
-            subdir = os.path.join(outputDir, 'sample')
+            #subdir = os.path.join(outputDir, 'sample')
+            subdir = os.path.join(outputDir, 'IMAGES')
             expected = []
             if h5:
                 expected.append(h5name)

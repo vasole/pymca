@@ -76,6 +76,7 @@ class FastXRFLinearFitWindow(qt.QWidget):
         # output root
         outrootLabel = qt.QLabel(self)
         outrootLabel.setText("Output root:")
+        self._outrootLabel = outrootLabel
         self._outrootLine = qt.QLineEdit(self)
         self._outrootLine.setReadOnly(False)
         self._outrootLine.setText("IMAGES")
@@ -89,7 +90,7 @@ class FastXRFLinearFitWindow(qt.QWidget):
 
         # output process
         outnameLabel = qt.QLabel(self)
-        outnameLabel.setText("Output name:")
+        outnameLabel.setText("Output process:")
         self._outnameLabel = outnameLabel
         self._outnameLine = qt.QLineEdit(self)
         self._outnameLine.setText("fast_xrf_fit")
@@ -258,14 +259,16 @@ class FastXRFLinearFitWindow(qt.QWidget):
 
     def toggleH5(self, state):
         h5Out = bool(state)
-        self._outnameLine.setReadOnly(not h5Out)
-        self._outnameLine.setEnabled(h5Out)
+        self._outrootLabel.setEnabled(h5Out)
         self._outnameLabel.setEnabled(h5Out)
         self._diagnosticsBox.setEnabled(h5Out)
-        if h5Out:
-            self._outnameLine.setStyleSheet("")
-        else:
-            self._outnameLine.setStyleSheet("color: gray; background-color: darkGray")
+        for w in [self._outnameLine, self._outrootLine]:
+            w.setReadOnly(not h5Out)
+            w.setEnabled(h5Out)
+            if h5Out:
+                w.setStyleSheet("")
+            else:
+                w.setStyleSheet("color: gray; background-color: darkGray")
 
     def stateMultiPage(self, state=None):
         self._multipageBox.setEnabled(self._edfBox.isChecked() or self._tiffBox.isChecked())

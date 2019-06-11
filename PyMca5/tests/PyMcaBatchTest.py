@@ -374,7 +374,8 @@ class testPyMcaBatch(TestCaseQt):
             if legacy:
                 subdir = 'IMAGES'
             else:
-                subdir = rootname
+                #subdir = rootname
+                subdir = 'IMAGES'
         else:
             # Fast fit
             rootname = 'images'

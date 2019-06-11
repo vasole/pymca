@@ -1516,7 +1516,8 @@ class McaBatchGUI(qt.QWidget):
         delete = _logger.getEffectiveLevel() != logging.DEBUG
         basename = McaAdvancedFitBatch.getRootName(self.fileList)
         edfoutlist, datoutlist, h5outlist = work.buildOutput(basename=basename, delete=delete)
-        inputdir = os.path.join(self.outputDir, basename)
+        #inputdir = os.path.join(self.outputDir, basename)
+        inputdir = os.path.join(self.outputDir, 'IMAGES')
         edfoutlist2, datoutlist2, h5outlist2 = work.buildOutput(basename=basename, inputdir=inputdir, delete=delete)
         edfoutlist += edfoutlist2
         datoutlist += datoutlist2
