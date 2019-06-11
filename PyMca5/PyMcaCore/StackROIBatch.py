@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -131,6 +131,8 @@ class StackROIBatch(object):
                 roiList.append(roi)
             elif xLabel.lower() == roiType.lower():
                 roiList.append(roi)
+            else:
+                _logger.info("ROI <%s> ignored")
 
         # only usual spectra case supported
         if index != (len(data.shape) - 1):
@@ -155,6 +157,8 @@ class StackROIBatch(object):
 
         jStep = min(1000, data.shape[1])
         nRois = len(roiList)
+        idx = [None] * nRois
+        xw = [None] * nRois
         iXMinList = [None] * nRois
         iXMaxList = [None] * nRois
         nRows = data.shape[0]
@@ -165,9 +169,8 @@ class StackROIBatch(object):
         else:
             results = numpy.zeros((nRois * 2, nRows, nColumns), numpy.float)
             names = [None] * 2 * nRois
+
         for i in range(0, data.shape[0]):
-            #print(i)
-            #chunks of nColumns spectra
             if i == 0:
                 chunk = numpy.zeros((jStep,
                                      data.shape[index]),
@@ -184,35 +187,55 @@ class StackROIBatch(object):
                         roiFrom = config["ROI"]["roidict"][roi]["from"]
                         roiTo = config["ROI"]["roidict"][roi]["to"]
                         if roiLine == "ICR":
-                            iXMinList[j] = 0
-                            iXMaxList[j] = data.shape[index]
+                            xw[j] = xData
+                            idx[j] = numpy.arange(len(xData))
+                            iXMinList[j] = idx[j][0]
+                            iXMaxList[j] = idx[j][-1]
                         else:
-                            iXMinList[j] = numpy.nonzero(x <= roiFrom)[0][-1]
-                            iXMaxList[j] = numpy.nonzero(x >= roiTo)[0][0] + 1
+                            idx[j] = numpy.nonzero((roiFrom <= xData) & (xData <= roiTo))[0]
+                            if len(idx):
+                                xw[j] = xData[idx[j]]
+                                iXMinList[j] = numpy.argmin(xw[j])
+                                iXMaxList[j] = numpy.argmax(xw[j])
+                            else:
+                                xw[j] = None
                         names[j] = "ROI " + roiLine
                         names[j + nRois] = "ROI "+ roiLine + " Net"
                         if xAtMinMax:
                             names[j + 2 * nRois] = "ROI "+ roiLine + (" %s at Max." % roiType)
                             names[j + 3 * nRois] = "ROI "+ roiLine + (" %s at Min." % roiType)
-                    iXMin = iXMinList[j]
-                    iXMax = iXMaxList[j]
-                    #if i == 0:
-                    #    print roi, " iXMin = ", iXMin, "iXMax = ", iXMax  
-                    tmpArray = chunk[:(jEnd - jStart), iXMin : iXMax]
-                    left = tmpArray[:, 0]
-                    right = tmpArray[:, -1]
-                    rawSum = tmpArray.sum(axis=-1, dtype=numpy.float)
-                    netSum = rawSum - (0.5 * (left + right) * (iXMax - iXMin + 1))
+                    if xw[j] is None:
+                        # no points in the ROI            
+                        rawSum = 0.0
+                        netSum = 0.0
+                    else:
+                        tmpArray = chunk[:(jEnd - jStart), idx[j]]
+                        rawSum = tmpArray.sum(axis=-1, dtype=numpy.float)
+                        deltaX = xw[j][iXMaxList[j]] - xw[j][iXMinList[j]]
+                        left = tmpArray[:, iXMinList[j]]
+                        right = tmpArray[:, iXMaxList[j]]
+                        deltaY = right - left
+                        if abs(deltaX) > 0.0:
+                            slope = deltaY / float(deltaX)
+                            background = left * len(xw[j])+ slope * \
+                                         (xw[j] - xw[j][iXMinList[j]]).sum(dtype=numpy.float) 
+                            netSum = rawSum - background
+                        else:
+                            netSum = 0.0
                     results[j][i,:(jEnd - jStart)] = rawSum
                     results[j + nRois][i,:(jEnd - jStart)] = netSum
                     if xAtMinMax:
-                        # maxImage
-                        results[j + 2 * nRois][i, :(jEnd - jStart)] = \
-                                 numpy.argmax(tmpArray, axis=1) + iXMin                        
-                        # minImage
-                        results[j + 3 * nRois][i, :(jEnd - jStart)] = \
-                                 numpy.argmin(tmpArray, axis=1) + iXMin                            
-                    
+                        if xw[j] is None:
+                            # what can be the Min and the Max when there is nothing in the ROI?
+                            _logger.warning("No Min. Max for ROI <%s>. Empty ROI" % roiLine)
+                        else:
+                            # maxImage
+                            results[j + 2 * nRois][i, :(jEnd - jStart)] = \
+                                     xw[j][numpy.argmax(tmpArray, axis=1)]
+                            # minImage
+                            results[j + 3 * nRois][i, :(jEnd - jStart)] = \
+                                     xw[j][numpy.argmin(tmpArray, axis=1)]
+
                 jStart = jEnd
         outputDict = {'images':results,
                       'names':names}
