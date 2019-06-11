@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -782,11 +782,13 @@ class PlotWindow(PlotWidget.PlotWidget):
             self.roiDockWidget.setWindowTitle(self.windowTitle()+(" ROI"))
             # initialize with the ICR
             self._roiSignal({'event': "AddROI"})
-
-        if self.roiDockWidget.isHidden():
-            self.roiDockWidget.show()
+            self.roiDockWidget.raise_()
         else:
-            self.roiDockWidget.hide()
+            if self.roiDockWidget.isHidden():
+                self.roiDockWidget.show()
+                self.roiDockWidget.raise_()
+            else:
+                self.roiDockWidget.hide()
 
     def changeGridLevel(self):
         self.gridLevel += 1
@@ -1679,3 +1681,4 @@ if __name__ == "__main__":
     #plot.addCurve(x, 2 * y, "dummy 2")
     #print("All curves = ",   plot.getAllCurves())
     app.exec_()
+    app = None
