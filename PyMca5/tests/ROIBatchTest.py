@@ -56,8 +56,8 @@ class testROIBatch(unittest.TestCase):
 
     def testCalculation(self):
         from PyMca5.PyMcaCore.StackROIBatch import StackROIBatch
-        x = numpy.arange(1000.)
-        y = x + 200 * numpy.exp(-0.5*(x-500)**2)
+        x = numpy.arange(2000.) / 2.
+        y = 2*x + 200 * numpy.exp(-0.5*(x-500)**2)
         y.shape = 1, 1, -1
 
         config = {}
@@ -152,7 +152,7 @@ class testROIBatch(unittest.TestCase):
 
     def testCalculationReversedX(self):
         from PyMca5.PyMcaCore.StackROIBatch import StackROIBatch
-        x = numpy.arange(1000.)
+        x = numpy.arange(2000.) / 2 
         y = x + 200.0 * numpy.exp(-0.5*(x-500)**2)
         y.shape = 1, 1, -1
         x = -x
@@ -227,9 +227,9 @@ class testROIBatch(unittest.TestCase):
             self.assertTrue(imageNet[0, 0] > -1.0e-10,
                     "Expected positive value for net roi %s got %f" % \
                             (roi, imageNet[0, 0]))
-            self.assertTrue(imageRaw[0, 0] == rawCounts,
+            self.assertTrue(abs(imageRaw[0, 0] - rawCounts) < 1.0e-8,
                             "Incorrect calculation for raw roi %s" % roi)
-            self.assertTrue(imageNet[0, 0] == netCounts,
+            self.assertTrue(abs(imageNet[0, 0] - netCounts) < 1.0e-8,
                             "Incorrect calculation for net roi %s delta = %f" % \
                             (roi, imageNet[0, 0] - netCounts))
             xAtMinName =  "ROI "+ roi + " Channel at Min."

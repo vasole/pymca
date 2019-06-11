@@ -169,9 +169,8 @@ class StackROIBatch(object):
         else:
             results = numpy.zeros((nRois * 2, nRows, nColumns), numpy.float)
             names = [None] * 2 * nRois
+
         for i in range(0, data.shape[0]):
-            #print(i)
-            #chunks of nColumns spectra
             if i == 0:
                 chunk = numpy.zeros((jStep,
                                      data.shape[index]),
@@ -190,12 +189,14 @@ class StackROIBatch(object):
                         if roiLine == "ICR":
                             xw[j] = xData
                             idx[j] = numpy.arange(len(xData))
+                            iXMinList[j] = idx[j][0]
+                            iXMaxList[j] = idx[j][-1]
                         else:
                             idx[j] = numpy.nonzero((roiFrom <= xData) & (xData <= roiTo))[0]
                             if len(idx):
                                 xw[j] = xData[idx[j]]
-                                iXMinList[j] = idx[j].min()
-                                iXMaxList[j] = idx[j].max()
+                                iXMinList[j] = numpy.argmin(xw[j])
+                                iXMaxList[j] = numpy.argmax(xw[j])
                             else:
                                 xw[j] = None
                         names[j] = "ROI " + roiLine
@@ -210,16 +211,15 @@ class StackROIBatch(object):
                     else:
                         tmpArray = chunk[:(jEnd - jStart), idx[j]]
                         rawSum = tmpArray.sum(axis=-1, dtype=numpy.float)
-
-                        deltaX = xData[iXMaxList[j]] - xData[iXMinList[j]]
-                        left = tmpArray[:, 0]
-                        right = tmpArray[:, -1]
+                        deltaX = xw[j][iXMaxList[j]] - xw[j][iXMinList[j]]
+                        left = tmpArray[:, iXMinList[j]]
+                        right = tmpArray[:, iXMaxList[j]]
                         deltaY = right - left
                         if abs(deltaX) > 0.0:
                             slope = deltaY / float(deltaX)
-                            background = left + slope * (xw[j] - xw[j][0])
-                            netSum = rawSum - \
-                                background.sum(dtype=numpy.float)
+                            background = left * len(xw[j])+ slope * \
+                                         (xw[j] - xw[j][iXMinList[j]]).sum(dtype=numpy.float) 
+                            netSum = rawSum - background
                         else:
                             netSum = 0.0
                     results[j][i,:(jEnd - jStart)] = rawSum
