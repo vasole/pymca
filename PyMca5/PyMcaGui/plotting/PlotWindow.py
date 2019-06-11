@@ -782,9 +782,11 @@ class PlotWindow(PlotWidget.PlotWidget):
             self.roiDockWidget.setWindowTitle(self.windowTitle()+(" ROI"))
             # initialize with the ICR
             self._roiSignal({'event': "AddROI"})
+            self.roiDockWidget.raise_()
         else:
             if self.roiDockWidget.isHidden():
                 self.roiDockWidget.show()
+                self.roiDockWidget.raise_()
             else:
                 self.roiDockWidget.hide()
 
