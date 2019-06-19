@@ -505,7 +505,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             msg.exec_()
 
     def _dispatcherAddSelectionSlot(self, dictOrList):
-        print("self._dispatcherAddSelectionSlot(ddict), ddict = %s",
+        _logger.info("self._dispatcherAddSelectionSlot(ddict), ddict = %s",
                       dictOrList)
         if type(dictOrList) == type([]):
             ddict = dictOrList[0]
@@ -514,9 +514,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
 
         toadd = False
         is2DSelection = self._is2DSelection(ddict)
-        print("scatter", self._isScatterSelection(ddict))
         if self._isScatterSelection(ddict):
-            print("ScatterPlot selection")
+            _logger.info("ScatterPlot selection")
             legend = ddict['legend']
             if legend not in self.imageWindowDict.keys():
                 imageWindow = SilxScatterWindow.SilxScatterWindow()
@@ -536,7 +535,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 self.imageWindowDict[legend]._addSelection(ddict)
             return
         elif is2DSelection:
-            print("2D selection")
+            _logger.info("2D selection")
             if self.imageWindowCorrelator is None:
                 self.imageWindowCorrelator = RGBCorrelator.RGBCorrelator()
                 #toadd = True
