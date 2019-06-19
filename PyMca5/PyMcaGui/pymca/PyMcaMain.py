@@ -255,6 +255,8 @@ except ImportError:
 
 if isSilxGLAvailable:
     SceneGLWindow = PyMca5.PyMcaGui.pymca.SilxGLWindow
+    from PyMca5.PyMcaGui.pymca import SilxScatterWindow
+
 elif OBJECT3D:
     SceneGLWindow = PyMcaGLWindow
 
@@ -440,6 +442,19 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                     return True
         return False
 
+    def _isScatterSelection(self, ddict):
+        if 'imageselection' in ddict:
+            if ddict['imageselection']:
+                return False
+        if 'selection' in ddict:
+            if ddict['selection'] is None:
+                return False
+            if "x" in ddict['selection']:
+                if hasattr(ddict['selection']['x'], "__len__"):
+                    if len(ddict['selection']['x']) == 2:
+                        return True
+        return False
+
     def _is3DSelection(self, ddict):
         if self._is2DSelection(ddict):
             return False
@@ -452,7 +467,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                     return True
 
             if 'x' in ddict['selection']:
-                if ddict['selection']['x'] is not None:
+                if hasattr(ddict['selection']['x'], "__len__"):
                     if len(ddict['selection']['x']) > 1:
                         return True
         return False
@@ -490,7 +505,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             msg.exec_()
 
     def _dispatcherAddSelectionSlot(self, dictOrList):
-        _logger.debug("self._dispatcherAddSelectionSlot(ddict), ddict = %s",
+        print("self._dispatcherAddSelectionSlot(ddict), ddict = %s",
                       dictOrList)
         if type(dictOrList) == type([]):
             ddict = dictOrList[0]
@@ -498,8 +513,30 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             ddict = dictOrList
 
         toadd = False
-        if self._is2DSelection(ddict):
-            _logger.debug("2D selection")
+        is2DSelection = self._is2DSelection(ddict)
+        print("scatter", self._isScatterSelection(ddict))
+        if self._isScatterSelection(ddict):
+            print("ScatterPlot selection")
+            legend = ddict['legend']
+            if legend not in self.imageWindowDict.keys():
+                imageWindow = SilxScatterWindow.SilxScatterWindow()
+                self.imageWindowDict[legend] = imageWindow
+                self.imageWindowDict[legend].setPlotEnabled(False)
+                self.imageWindowDict[legend]._addSelection(ddict)
+                self.mainTabWidget.setCurrentWidget(imageWindow)
+                return
+            if self.mainTabWidget.indexOf(self.imageWindowDict[legend]) < 0:
+                self.mainTabWidget.addTab(self.imageWindowDict[legend],
+                                          legend)
+                self.imageWindowDict[legend].setPlotEnabled(False)
+                self.imageWindowDict[legend]._addSelection(ddict)
+                self.mainTabWidget.setCurrentWidget(self.imageWindowDict\
+                                                        [legend])
+            else:
+                self.imageWindowDict[legend]._addSelection(ddict)
+            return
+        elif is2DSelection:
+            print("2D selection")
             if self.imageWindowCorrelator is None:
                 self.imageWindowCorrelator = RGBCorrelator.RGBCorrelator()
                 #toadd = True
@@ -557,7 +594,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             else:
                 self.imageWindowDict[legend]._addSelection(ddict)
         elif self._isStackSelection(ddict):
-            _logger.debug("Stack selection")
+            _logger.info("Stack selection")
             legend = ddict['legend']
             widget = QStackWidget.QStackWidget()
             widget.notifyCloseEventToWidget(self)
@@ -568,15 +605,15 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         else:
             if OBJECT3D or isGLAvailable:
                 if ddict['dataobject'].info['selectiontype'] == "1D":
-                    _logger.debug("1D selection")
+                    _logger.info("1D selection")
                     self.mcaWindow._addSelection(dictOrList)
                     self.scanWindow._addSelection(dictOrList)
                 else:
-                    _logger.debug("3D selection")
+                    _logger.info("3D selection")
                     self.mainTabWidget.setCurrentWidget(self.glWindow)
                     self.glWindow._addSelection(dictOrList)
             else:
-                _logger.debug("1D selection")
+                _logger.info("1D selection")
                 self.mcaWindow._addSelection(dictOrList)
                 self.scanWindow._addSelection(dictOrList)
 
