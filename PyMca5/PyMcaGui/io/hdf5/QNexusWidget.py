@@ -954,16 +954,20 @@ class QNexusWidget(qt.QWidget):
                                 # at least twoD dataset
                                 selectionType= "2D"
                                 sel['scanselection'] = False
-                    n_axes = len(sel['selection']['x']) 
+                    n_axes = len(sel['selection']['x'])
                     if n_axes > 1:
                         selectionType = "%dD" % len(sel['selection']['x'])
                         if n_axes == 2:
-                            if "silx" in sys.modules:
+                            try:
+                                from silx import version_info as silx_version
+                            except ImportError:
+                                silx_version = (0, 0, 0)
+                            if silx_version < (0, 11):
+                                # we have to use the 3D visualization
+                                selectionType = "3D"
+                            else:
                                 # we can afford a scatter view
                                 selectionType = "2D"
-                            else:
-                                # we have to use the Object3D module
-                                selectionType = "3D"
                         else:
                             selectionType = "%dD" % n_axes
                         sel['scanselection'] = False
