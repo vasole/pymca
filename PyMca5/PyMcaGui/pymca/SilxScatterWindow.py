@@ -1,3 +1,28 @@
+#/*##########################################################################
+# Copyright (C) 2019 European Synchrotron Radiation Facility
+#
+# This file is part of the PyMca X-ray Fluorescence Toolkit developed at
+# the ESRF by the Software group.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
+#############################################################################*/
 import numpy
 from silx.gui import qt
 #from silx.gui.plot import Plot2D
@@ -10,11 +35,15 @@ class SilxScatterWindow(qt.QWidget):
     def __init__(self, parent=None, backend="gl"):
         super(SilxScatterWindow, self).__init__(parent)
         self.mainLayout = qt.QVBoxLayout(self)
+        self._defaultSymbol = "s"
+        self._defaultColormap = Colormap("temperature")
         self.plot = Plot2D(self, backend=backend)
-        self.plot.setColormap(Colormap("temperature"))
+        self.plot.setColormap(self._defaultColormap)
+        self.plot.getPlotWidget().setDataMargins(0.05, 0.05, 0.05, 0.05)
         self.mainLayout.addWidget(self.plot)
         self._plotEnabled = True
         self.dataObjectsList = []
+        self.dataObjectsDict = {}
 
     def _removeSelection(self, *var):
         print("_removeSelection to be implemented")
@@ -144,8 +173,9 @@ class SilxScatterWindow(qt.QWidget):
                 resetZoom = False
             else:
                 resetZoom = True
-            self.dataObjectsList = [legend]
-            self.dataObjectsDict = {legend:dataObject}
+            if legend not in self.dataObjectsList: 
+                self.dataObjectsList.append(legend)
+            self.dataObjectsDict[legend] = dataObject
         if self._plotEnabled:
             self.showData(0)
             if resetZoom:
@@ -163,8 +193,17 @@ class SilxScatterWindow(qt.QWidget):
         #y.shape = -1
         values = dataObject.data[index]
         #values.shape = -1
+        item = self.plot.getPlotWidget().getScatter(legend)
+        if item is None:
+            symbol = self._defaultSymbol
+            cmap = self._defaultColormap
+        else:
+            symbol = item.getSymbol()
+            cmap = item.getColormap()
         self.plot.getPlotWidget().remove(kind="scatter")
-        self.plot.getPlotWidget().addScatter(x, y, values, legend=legend, info=dataObject.info)
+        self.plot.getPlotWidget().addScatter(x, y, values,
+                            legend=legend, info=dataObject.info,
+                            symbol=symbol, colormap=cmap)
         txt = "%s %d" % (legend, index)
         #self.setName(txt)
         #if moveslider:
