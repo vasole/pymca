@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2018 E. Papillon, V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -557,7 +557,10 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                             # but I let the data source to rise it.
                             pass
                     elif len(sel['selection']['x']) == 2:
-                        sel['legend'] += " " + cnt_sel['cntlist'][cnt_sel['y'][0]]
+                        if not self.meshBox.isChecked():
+                            # no regular mesh attempted
+                            # try scatter or 3D
+                            sel['legend'] += " " + cnt_sel['cntlist'][cnt_sel['y'][0]]
 
                     sel_list.append(sel)
         if emit:
