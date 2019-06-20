@@ -2,6 +2,7 @@ import numpy
 from silx.gui import qt
 #from silx.gui.plot import Plot2D
 from silx.gui.plot import ScatterView as Plot2D
+from silx.gui.colors import Colormap
 
 DEBUG = 0
 
@@ -10,8 +11,10 @@ class SilxScatterWindow(qt.QWidget):
         super(SilxScatterWindow, self).__init__(parent)
         self.mainLayout = qt.QVBoxLayout(self)
         self.plot = Plot2D(self, backend=backend)
+        self.plot.setColormap(Colormap("temperature"))
         self.mainLayout.addWidget(self.plot)
         self._plotEnabled = True
+        self.dataObjectsList = []
 
     def _removeSelection(self, *var):
         print("_removeSelection to be implemented")
@@ -42,20 +45,26 @@ class SilxScatterWindow(qt.QWidget):
             for i in range(len(dataObject.x)):
                 if numpy.isscalar(dataObject.x[i]):
                     dataObject.x[i] = numpy.array([dataObject.x[i]])
-            if not hasattr(dataObject, "y"):
+            z = None
+            if hasattr(dataObject, "y"):
+                if dataObject.y not in [None, []]:
+                    z = dataObject.y
+            if z is None:
+                if hasattr(dataObject, "data"):
+                    if dataObject.data is not None:
+                        z = [dataObject.data]
+            if z is None:
                 raise TypeError("Not a scatter plot. No signal.")
-            elif dataObject.y is None:
+            elif not len(z):
                 raise TypeError("Not a scatter plot. No signal.")
-            elif not len(dataObject.y):
-                raise TypeError("Not a scatter plot. No signal.")
-            for i in range(len(dataObject.y)):
-                if numpy.isscalar(dataObject.y[i]):
-                    dataObject.y[i] = numpy.array([dataObject.y[i]])
+            for i in range(len(z)):
+                if numpy.isscalar(z[i]):
+                    z[i] = numpy.array([z[i]])
             # we only deal with one signal, if there are more, they should be separated
             # in different selections
             x = numpy.ascontiguousarray(dataObject.x[0])[:]
             y = numpy.ascontiguousarray(dataObject.x[1])[:]
-            data = numpy.ascontiguousarray(dataObject.y[0])[:]
+            data = numpy.ascontiguousarray(z[0])[:]
             if (data.size == x.size) and (data.size == y.size):
                 # standard scatter plot
                 data.shape = 1, -1
@@ -131,10 +140,10 @@ class SilxScatterWindow(qt.QWidget):
             x.shape = -1
             y.shape = -1
             dataObject.x = [x, y]
-            if not hasattr(self, "dataObjectsList"):
-                resetZoom = True
-            else:
+            if len(self.dataObjectsList):
                 resetZoom = False
+            else:
+                resetZoom = True
             self.dataObjectsList = [legend]
             self.dataObjectsDict = {legend:dataObject}
         if self._plotEnabled:
@@ -143,6 +152,8 @@ class SilxScatterWindow(qt.QWidget):
                 self.plot.getPlotWidget().resetZoom()
 
     def showData(self, index=0, moveslider=True):
+        if DEBUG:
+            print("showData called")
         legend = self.dataObjectsList[0]
         dataObject = self.dataObjectsDict[legend]
         shape = dataObject.data.shape

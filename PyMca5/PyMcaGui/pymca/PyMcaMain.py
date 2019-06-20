@@ -513,28 +513,30 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             ddict = dictOrList
 
         toadd = False
-        is2DSelection = self._is2DSelection(ddict)
         if self._isScatterSelection(ddict):
             _logger.info("ScatterPlot selection")
             legend = ddict['legend']
             if legend not in self.imageWindowDict.keys():
                 imageWindow = SilxScatterWindow.SilxScatterWindow()
                 self.imageWindowDict[legend] = imageWindow
-                self.imageWindowDict[legend].setPlotEnabled(False)
+                self.imageWindowDict[legend].setPlotEnabled(True)
+                if self.mainTabWidget.indexOf(self.imageWindowDict[legend]) < 0:
+                    self.mainTabWidget.addTab(self.imageWindowDict[legend],
+                                          legend)
                 self.imageWindowDict[legend]._addSelection(ddict)
                 self.mainTabWidget.setCurrentWidget(imageWindow)
                 return
             if self.mainTabWidget.indexOf(self.imageWindowDict[legend]) < 0:
                 self.mainTabWidget.addTab(self.imageWindowDict[legend],
                                           legend)
-                self.imageWindowDict[legend].setPlotEnabled(False)
+                #self.imageWindowDict[legend].setPlotEnabled(False)
                 self.imageWindowDict[legend]._addSelection(ddict)
                 self.mainTabWidget.setCurrentWidget(self.imageWindowDict\
                                                         [legend])
             else:
                 self.imageWindowDict[legend]._addSelection(ddict)
             return
-        elif is2DSelection:
+        elif self._is2DSelection(ddict):
             _logger.info("2D selection")
             if self.imageWindowCorrelator is None:
                 self.imageWindowCorrelator = RGBCorrelator.RGBCorrelator()
@@ -632,7 +634,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             ddict = dictOrList[0]
         else:
             ddict = dictOrList
-        if self._is2DSelection(ddict):
+        if self._isScatterSelection(ddict) or self._is2DSelection(ddict):
             legend = ddict['legend']
             if legend in self.imageWindowDict.keys():
                 index = self.mainTabWidget.indexOf(self.imageWindowDict[legend])
@@ -664,7 +666,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             ddict = dictOrList[0]
         else:
             ddict = dictOrList
-        if self._is2DSelection(ddict):
+        if self._isScatterSelection(ddict) or self._is2DSelection(ddict):
             legend = ddict['legend']
             for key in list(self.imageWindowDict.keys()):
                 index = self.mainTabWidget.indexOf(self.imageWindowDict[key])
