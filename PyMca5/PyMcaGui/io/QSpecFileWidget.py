@@ -542,13 +542,13 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                     else:
                         sel['scanselection']  = True
                     sel['selection']['x'] = cnt_sel['x']
-                    if len(sel['selection']['x']) == 2:
-                        if self.meshBox.isChecked():
-                            sel['selection']['selectiontype'] = "2D"
                     sel['selection']['y'] = cnt_sel['y']
                     sel['selection']['m'] = cnt_sel['m']
                     sel['selection']['cntlist'] = cnt_sel['cntlist']
                     sel['legend']    = os.path.basename(sel['SourceName'][0]) +" "+ sel['Key']
+                    if len(sel['selection']['x']) == 2:
+                        if self.meshBox.isChecked():
+                            sel['selection']['selectiontype'] = "2D"
                     if cnt_sel['y'][0] >= len(cnt_sel['cntlist']):
                         if 'mcalist' in cnt_sel:
                             sel['selection']['mcalist'] = cnt_sel['mcalist']
@@ -556,6 +556,9 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                             # I could rise the exception here
                             # but I let the data source to rise it.
                             pass
+                    elif len(sel['selection']['x']) == 2:
+                        sel['legend'] += " " + cnt_sel['cntlist'][cnt_sel['y'][0]]
+
                     sel_list.append(sel)
         if emit:
             if len(sel_list):
