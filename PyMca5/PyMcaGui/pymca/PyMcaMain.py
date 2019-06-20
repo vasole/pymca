@@ -147,9 +147,9 @@ if sys.platform == 'darwin':
             if hasattr(qt, 'QOpenGLWidget'):
                 print("Warning: OpenGL backend not fully supported")
 try:
+    import silx
     if (sys.version_info < (3,)) and ("PyQt4.QtCore" in sys.modules):
         # PyQt4 is the most reliable binding at the ESRF for python 2
-        import silx
         silxLogger = logging.getLogger("silx.DEPRECATION")
         silxLogger.setLevel(logging.CRITICAL)
     # try to import silx prior to importing matplotlib to prevent
@@ -255,7 +255,10 @@ except ImportError:
 
 if isSilxGLAvailable:
     SceneGLWindow = PyMca5.PyMcaGui.pymca.SilxGLWindow
-    from PyMca5.PyMcaGui.pymca import SilxScatterWindow
+    try:
+        from PyMca5.PyMcaGui.pymca import SilxScatterWindow
+    except:
+        _logger.info("Cannot import SilxScatterWindow")
 
 elif OBJECT3D:
     SceneGLWindow = PyMcaGLWindow
@@ -452,7 +455,9 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             if "x" in ddict['selection']:
                 if hasattr(ddict['selection']['x'], "__len__"):
                     if len(ddict['selection']['x']) == 2:
-                        return True
+                        if isSilxGLAvailable:
+                            if silx.version_info > (0, 10, 2):
+                                return True
         return False
 
     def _is3DSelection(self, ddict):
