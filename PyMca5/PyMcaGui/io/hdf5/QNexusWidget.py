@@ -853,7 +853,7 @@ class QNexusWidget(qt.QWidget):
                     self._replaceAction()
 
     def buttonsSlot(self, ddict, emit=True):
-        _logger.debug("buttonsSlot(self, %s,emit=%s)", ddict, emit)
+        print("buttonsSlot(self, %s,emit=%s)", ddict, emit)
         if self.data is None:
             return
         action, selectionType = ddict['action'].split()
@@ -954,6 +954,23 @@ class QNexusWidget(qt.QWidget):
                                 # at least twoD dataset
                                 selectionType= "2D"
                                 sel['scanselection'] = False
+                    n_axes = len(sel['selection']['x'])
+                    if n_axes > 1:
+                        selectionType = "%dD" % len(sel['selection']['x'])
+                        if n_axes == 2:
+                            try:
+                                from silx import version_info as silx_version
+                            except ImportError:
+                                silx_version = (0, 0, 0)
+                            if silx_version < (0, 11):
+                                # we have to use the 3D visualization
+                                selectionType = "3D"
+                            else:
+                                # we can afford a scatter view
+                                selectionType = "2D"
+                        else:
+                            selectionType = "%dD" % n_axes
+                        sel['scanselection'] = False
                     sel['mcaselection']  = False
                 elif selectionType.upper() == "MCA":
                     sel['scanselection'] = False
@@ -1052,6 +1069,7 @@ class QNexusWidget(qt.QWidget):
 
 if __name__ == "__main__":
     import sys
+    _logger.setLevel(logging.DEBUG)
     app = qt.QApplication(sys.argv)
     try:
         #this is to add the 3D buttons ...
