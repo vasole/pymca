@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2016 M. Rovezzi, V.A. Sole European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 M. Rovezzi, V.A. Sole European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -30,13 +30,18 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import numpy
 import logging
-from matplotlib.mlab import griddata
+_logger = logging.getLogger(__name__)
+
+try:
+    from matplotlib.mlab import griddata
+except ImportError:
+    # matplotlib 3.x got rid of griddata
+    _logger.info("matplotlib.mlab.griddata not available")
 
 from PyMca5 import Plugin1DBase
 from PyMca5.PyMcaGui import MaskImageWidget
 from PyMca5.PyMcaGui import PyMcaQt as qt
 
-_logger = logging.getLogger(__name__)
 
 
 class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
