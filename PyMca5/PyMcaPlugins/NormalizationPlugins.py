@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -66,6 +66,8 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
                 '(y-min(y))/sum(max(y)-min(y))':[self.offsetAndCounts,
                        "Subtract offset and normalize to counts",
                                        None]}
+        self._plotType = None
+
         if HAS_SPECFIT:
             self.methodDict['y/yactive'] = [self.divideByActiveCurve,
                        "Divide all curves by active curve",
@@ -79,6 +81,7 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
 
         Plot type can be "SCAN", "MCA", None, ...
         """
+        self._plotType = plottype
         names = list(self.methodDict.keys())
         names.sort()
         return names
@@ -118,7 +121,7 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
             except:
                 continue
             if i == 0:
-                replace = True
+                replace = (self._plotType != "MCA")
                 replot = True
                 i = 1
             else:
@@ -157,7 +160,7 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
                 print(sys.exc_info())
                 continue
             if i == 0:
-                replace = True
+                replace = (self._plotType != "MCA")
                 replot = True
                 i = 1
             else:
@@ -195,7 +198,7 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
                 print(sys.exc_info())
                 continue
             if i == 0:
-                replace = True
+                replace = (self._plotType != "MCA")
                 replot = True
                 i = 1
             else:
@@ -232,7 +235,7 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
                 print(sys.exc_info())
                 continue
             if i == 0:
-                replace = True
+                replace = (self._plotType != "MCA")
                 replot = True
                 i = 1
             else:
@@ -304,7 +307,7 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
             yw = SpecfitFuns.interpol([x], y, xi, yi.min())
             y = yw / yi
             if i == 0:
-                replace = True
+                replace = (self._plotType != "MCA")
                 replot = True
                 i = 1
             else:
