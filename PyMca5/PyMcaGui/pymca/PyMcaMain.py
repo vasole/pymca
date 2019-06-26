@@ -454,10 +454,19 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 return False
             if "x" in ddict['selection']:
                 if hasattr(ddict['selection']['x'], "__len__"):
-                    if len(ddict['selection']['x']) == 2:
-                        if isSilxGLAvailable:
-                            if silx.version_info > (0, 10, 2):
-                                return True
+                    if len(ddict['selection']['x']) != 2:
+                        return False
+                    size0 = ddict['dataobject'].x[0].size
+                    size1 = ddict['dataobject'].x[1].size
+                    if size0 != size1:
+                        return False
+                    if hasattr(ddict['dataobject'], "y"):
+                        if ddict['dataobject'].y:
+                            if ddict['dataobject'].y[0].size != size0 * size1:
+                                return False
+                    if isSilxGLAvailable:
+                        if silx.version_info > (0, 10, 2):
+                            return True
         return False
 
     def _is3DSelection(self, ddict):
