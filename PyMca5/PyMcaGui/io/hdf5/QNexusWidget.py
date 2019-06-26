@@ -957,7 +957,24 @@ class QNexusWidget(qt.QWidget):
                     n_axes = len(sel['selection']['x'])
                     if n_axes > 1:
                         selectionType = "%dD" % len(sel['selection']['x'])
-                        if n_axes == 2:
+                        selectionTypeDecided = False
+                        nAxesItems = 1
+                        if n_axes == len(actualDataset.shape):
+                            for xCnt in cntSelection['x']:
+                                if cntSelection['cntlist'][xCnt].startswith("/"):
+                                    xDatasetPath = posixpath.join(entry,
+                                                            cntSelection['cntlist'][xCnt][1:])
+                                else:
+                                    xDatasetPath = posixpath.join(entry,
+                                                            cntSelection['cntlist'][xCnt])
+                                nAxesItems *= phynxFile[xDatasetPath].size
+                            if nAxesItems == actualDataset.size:
+                                # we have an image with the associated dimensions
+                                selectionTypeDediced = True
+
+                        if selectionTypeDecided:
+                            pass
+                        elif n_axes == 2:
                             try:
                                 from silx import version_info as silx_version
                             except ImportError:
