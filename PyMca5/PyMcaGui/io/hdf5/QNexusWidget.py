@@ -853,7 +853,7 @@ class QNexusWidget(qt.QWidget):
                     self._replaceAction()
 
     def buttonsSlot(self, ddict, emit=True):
-        print("buttonsSlot(self, %s,emit=%s)", ddict, emit)
+        _logger.debug("buttonsSlot(self, %s,emit=%s)", ddict, emit)
         if self.data is None:
             return
         action, selectionType = ddict['action'].split()
