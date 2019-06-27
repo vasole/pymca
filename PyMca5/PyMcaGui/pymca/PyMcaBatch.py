@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -817,7 +817,7 @@ class McaBatchGUI(qt.QWidget):
         else:
             self.__roiSpin.setMinimum(10)
             self.__roiSpin.setMaximum(1000)
-        self.__roiSpin.setValue(roiwidth)
+        self.__roiSpin.setValue(int(roiwidth))
         box3.l.addWidget(label)
         box3.l.addWidget(self.__roiSpin)
 
@@ -2135,8 +2135,6 @@ def main():
     
     # Launch
     app=qt.QApplication(sys.argv)
-    winpalette = qt.QPalette(qt.QColor(230,240,249),qt.QColor(238,234,238))
-    app.setPalette(winpalette)
     if html:
         fitfiles=1
     if len(filelist) == 0 or gui:
