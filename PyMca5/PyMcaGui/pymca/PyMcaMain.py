@@ -196,10 +196,10 @@ if __name__ == "__main__":
     if mpath[-3:] == "exe":
         mpath = os.path.dirname(mpath)
 
-    fname = os.path.join(mpath,'PyMcaSplashImage.png')
+    fname = os.path.join(mpath, 'PyMcaSplashImage.png')
     if not os.path.exists(fname):
        while len(mpath) > 3:
-         fname = os.path.join(mpath,'PyMcaSplashImage.png')
+         fname = os.path.join(mpath, 'PyMcaSplashImage.png')
          if not os.path.exists(fname):
              mpath = os.path.dirname(mpath)
          else:
@@ -215,9 +215,18 @@ if __name__ == "__main__":
     font = splash.font()
     font.setBold(1)
     splash.setFont(font)
-    splash.showMessage( 'PyMca %s' % __version__,
-            qt.Qt.AlignLeft|qt.Qt.AlignBottom,
-            qt.Qt.white)
+    try:
+        # there is a deprecation warning in Python 3.8 when
+        # dealing with the alignement flags.
+        alignment = int(qt.Qt.AlignLeft|qt.Qt.AlignBottom)
+        splash.showMessage( 'PyMca %s' % __version__,
+                alignment,
+                qt.Qt.white)
+    except:
+        # fall back to original implementation in case of troubles
+        splash.showMessage( 'PyMca %s' % __version__,
+                qt.Qt.AlignLeft|qt.Qt.AlignBottom,
+                qt.Qt.white)
     if sys.platform == "darwin":
         qApp = qt.QApplication.instance()
         qApp.processEvents()
