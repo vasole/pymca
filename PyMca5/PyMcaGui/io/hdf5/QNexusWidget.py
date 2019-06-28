@@ -444,7 +444,7 @@ class QNexusWidget(qt.QWidget):
             fileIndex = self.data.sourceName.index(filename)
             phynxFile  = self.data._sourceObjectList[fileIndex]
         else:
-            phynxFile  = HDF5Widget.h5open(filename, 'r')
+            phynxFile  = HDF5Widget.h5open(filename)
         info = self.getInfo(phynxFile, name)
         widget = HDF5Info.HDF5InfoWidget()
         widget.notifyCloseEventToWidget(self)
@@ -611,7 +611,7 @@ class QNexusWidget(qt.QWidget):
             scanned = []
             mcaList = []
             if posixpath.dirname(entryName) != entryName:
-                h5file = HDF5Widget.h5open(ddict['file'], "r")
+                h5file = HDF5Widget.h5open(ddict['file'])
                 try:
                     measurement = NexusTools.getMeasurementGroup(h5file,
                                                                  ddict['name'])
