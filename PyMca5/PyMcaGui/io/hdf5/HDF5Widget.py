@@ -35,6 +35,7 @@ import gc
 import re
 from operator import itemgetter
 import logging
+_logger = logging.getLogger(__name__)
 
 import h5py
 import weakref
@@ -49,7 +50,14 @@ except ImportError:
         return isinstance(node, h5py.Group)
 
     def h5open(filename):
-        return h5py.File(filename, "r")
+        try:
+            return h5py.File(filename, "r")
+        except OSError:
+            if h5py.version.hdf5_version_tuple < (1, 10):
+                # no reason to try SWMR mode
+                raise
+            _logger.info("Cannot open %s. Trying in SWMR mode" % filename)
+            return h5py.File(filename, "r", libver='latest', swmr=True)
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 safe_str = qt.safe_str
@@ -61,7 +69,6 @@ else:
         return x
 
 
-_logger = logging.getLogger(__name__)
 
 QVERSION = qt.qVersion()
 
@@ -326,7 +333,7 @@ class H5NodeProxy(object):
                         if _type in ["NXdata"]:
                             self._color = qt.QColor(qt.Qt.blue)
                         elif ("default" in attrs):
-                            self._color = qt.QColor(qt.Qt.blue)                        
+                            self._color = qt.QColor(qt.Qt.blue)
                         #self._attrs = attrs
                         break
                         #self._type = _type[2].upper() + _type[3:]

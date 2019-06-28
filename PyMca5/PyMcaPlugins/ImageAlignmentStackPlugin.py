@@ -55,7 +55,7 @@ from PyMca5.PyMcaGui import HDF5Widget
 _logger = logging.getLogger(__name__)
 
 try:
-    from PyMca5.PyMcaGui import SIFTAlignmentWindow
+    from PyMca5.PyMcaGui.math import SIFTAlignmentWindow
     sift = SIFTAlignmentWindow.sift
     ocl = SIFTAlignmentWindow.silx.opencl.ocl
     SIFT = True
