@@ -444,7 +444,7 @@ class QNexusWidget(qt.QWidget):
             fileIndex = self.data.sourceName.index(filename)
             phynxFile  = self.data._sourceObjectList[fileIndex]
         else:
-            phynxFile  = h5py.File(filename, 'r')
+            phynxFile  = HDF5Widget.h5open(filename, 'r')
         info = self.getInfo(phynxFile, name)
         widget = HDF5Info.HDF5InfoWidget()
         widget.notifyCloseEventToWidget(self)
@@ -611,7 +611,8 @@ class QNexusWidget(qt.QWidget):
             scanned = []
             mcaList = []
             if posixpath.dirname(entryName) != entryName:
-                with h5py.File(ddict['file'], "r") as h5file:
+                h5file = HDF5Widget.h5open(ddict['file'], "r")
+                try:
                     measurement = NexusTools.getMeasurementGroup(h5file,
                                                                  ddict['name'])
                     scanned = NexusTools.getScannedPositioners(h5file,
@@ -621,6 +622,10 @@ class QNexusWidget(qt.QWidget):
                                        if self._isNumeric(item)]
                     if self._mca:
                         mcaList = NexusTools.getMcaList(h5file, entryName)
+                finally:
+                    h5file.close()
+                    h5file = None
+                    del h5file
             for i in range(len(scanned)):
                 key = scanned[i]
                 cntList.append(key)
