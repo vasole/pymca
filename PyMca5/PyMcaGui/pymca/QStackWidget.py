@@ -881,7 +881,8 @@ class QStackWidget(StackBase.StackBase,
             self.mcaWidget = McaWindow.McaWindow() #vertical=False
             #self.mcaWidget.graph.setMinimumWidth(0.5 * \
             #                            qt.QWidget.sizeHint(self).width())
-            self.tab.setMaximumHeight(1.3 * qt.QWidget.sizeHint(self).height())
+            self.tab.setMaximumHeight(int(1.3 * \
+                                          qt.QWidget.sizeHint(self).height()))
             self.mcaWidget.setWindowTitle("PyMCA - Mca Window")
             self.tab.addTab(self.mcaWidget, "MCA")
             self.rgbWidget = RGBCorrelator.RGBCorrelator()
