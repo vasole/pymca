@@ -10,7 +10,8 @@ export PYMCA_DOC_DIR=$(PYMCA_DATA_DIR)/doc
 export PYMCA_DISTUTILS=1
 
 export PYBUILD_NAME=pymca5
-export PYBUILD_AFTER_INSTALL=rm -rf {destdir}/usr/bin/ {destdir}/usr/share/man {destdir}$(PYMCA_DATA_DIR)
+#export PYBUILD_AFTER_INSTALL=rm -rf {destdir}/usr/bin/ {destdir}/usr/share/man {destdir}$(PYMCA_DATA_DIR)
+export PYBUILD_AFTER_INSTALL=rm -rf {destdir}/usr/share/man {destdir}$(PYMCA_DATA_DIR)
 
 %:
 	dh $@ --with python2,python3,sphinxdoc --buildsystem=pybuild
@@ -34,8 +35,7 @@ override_dh_install:
 
 	# pymca
 	#python setup.py install_scripts -d debian/pymca/usr/bin
-	#python setup.py install_scripts -d debian/pymca/usr/bin
-	dh_install -p pymca ./build/scripts-3.5/* /usr/bin
+	dh_install -p pymca debian/python3-pymca5/usr/bin /usr/bin
 	python setup.py install_man -d debian/pymca/usr/share/man
 
 	dh_install -p pymca package/desktop/*.desktop usr/share/applications
@@ -53,6 +53,8 @@ override_dh_install:
 
 	dh_numpy
 	dh_numpy3
+	rm -rf debian/python3-pymca5/bin
+	rm -rf debian/python-pymca5/bin
 
 override_dh_auto_test:
 	echo "Remember to run tests after installing the packages"
