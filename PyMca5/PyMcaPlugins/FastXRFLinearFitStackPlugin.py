@@ -245,7 +245,6 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
             else:
                 imageNames = result.labels('parameters', labeltype='title')
                 images = result['parameters']
-            nImages = len(imageNames)
             self._widget = StackPluginResultsWindow.StackPluginResultsWindow(\
                                             usetab=False)
             self._widget.buildAndConnectImageButtonBox(replace=True,

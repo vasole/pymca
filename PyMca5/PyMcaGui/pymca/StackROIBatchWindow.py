@@ -36,6 +36,11 @@ from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import PyMca_Icons
 IconDict = PyMca_Icons.IconDict
 from PyMca5.PyMcaGui import PyMcaFileDialogs
+try:
+    import h5py
+    hasH5py = True
+except ImportError:
+    hasH5py = False
 
 DEBUG = 0
 
@@ -59,66 +64,151 @@ class StackROIBatchWindow(qt.QWidget):
         self._configButton.clicked.connect(self.browseConfigurationFile)
 
         # output directory
-        outLabel   = qt.QLabel(self)
-        outLabel.setText("Output dir:")
-        self._outLine = qt.QLineEdit(self)
-        self._outLine.setReadOnly(True)
+        outdirLabel = qt.QLabel(self)
+        outdirLabel.setText("Output dir:")
+        self._outdirLine = qt.QLineEdit(self)
+        self._outdirLine.setReadOnly(True)
 
-        self._outButton = qt.QPushButton(self)
-        self._outButton.setText('Browse')
-        self._outButton.setAutoDefault(False)
-        self._outButton.clicked.connect(self.browseOutputDir)
+        self._outdirButton = qt.QPushButton(self)
+        self._outdirButton.setText('Browse')
+        self._outdirButton.setAutoDefault(False)
+        self._outdirButton.clicked.connect(self.browseOutputDir)
 
-        # output file name
-        fileLabel   = qt.QLabel(self)
-        fileLabel.setText("Output file root:")
-        self._fileLine = qt.QLineEdit(self)
-        self._fileLine.setReadOnly(False)
-        self._fileLine.setText("ROI_images")
+        # output root
+        outrootLabel = qt.QLabel(self)
+        outrootLabel.setText("Output root:")
+        self._outrootLabel = outrootLabel
+        self._outrootLine = qt.QLineEdit(self)
+        self._outrootLine.setReadOnly(False)
+        self._outrootLine.setText("IMAGES")
 
+        # output entry
+        outentryLabel = qt.QLabel(self)
+        outentryLabel.setText("Output entry:")
+        self._outentryLine = qt.QLineEdit(self)
+        self._outentryLine.setReadOnly(False)
+        self._outentryLine.setText("ROI_images")
 
-        boxLabel   = qt.QLabel(self)
-        boxLabel.setText("Options:")
+        # output process
+        outnameLabel = qt.QLabel(self)
+        outnameLabel.setText("Output process:")
+        self._outnameLabel = outnameLabel
+        self._outnameLine = qt.QLineEdit(self)
+        self._outnameLine.setText("roi_sum")
 
-        self._boxContainer = qt.QWidget(self) 
-        self._boxContainerLayout = qt.QHBoxLayout(self._boxContainer)
-        self._boxContainerLayout.setContentsMargins(0, 0, 0, 0)
-        self._boxContainerLayout.setSpacing(0)
+        # process options
+        boxLabel1 = qt.QLabel(self)
+        boxLabel1.setText("Process options:")
+        self._boxContainer1 = qt.QWidget(self) 
+        self._boxContainerLayout1 = qt.QHBoxLayout(self._boxContainer1)
+        self._boxContainerLayout1.setContentsMargins(0, 0, 0, 0)
+        self._boxContainerLayout1.setSpacing(0)
+        
+        # save options
+        boxLabel2 = qt.QLabel(self)
+        boxLabel2.setText("Save options:")
+        self._boxContainer2 = qt.QWidget(self) 
+        self._boxContainerLayout2 = qt.QHBoxLayout(self._boxContainer2)
+        self._boxContainerLayout2.setContentsMargins(0, 0, 0, 0)
+        self._boxContainerLayout2.setSpacing(0)
+
         # Net ROI
-        self._netBox = qt.QCheckBox(self._boxContainer)
+        self._netBox = qt.QCheckBox(self._boxContainer1)
         self._netBox.setText("Calculate Net ROI")
         self._netBox.setChecked(True)
         self._netBox.setEnabled(False)
 
         # xAtMax
-        self._xAtMaxBox = qt.QCheckBox(self._boxContainer)
+        self._xAtMaxBox = qt.QCheckBox(self._boxContainer1)
         self._xAtMaxBox.setText("Image X at Min/Max. Y")
         self._xAtMaxBox.setChecked(False)
         self._xAtMaxBox.setEnabled(True)
-        text  = "Calculate the channel of the maximum and\n"
+        text = "Calculate the channel of the maximum and\n"
         text += "the minimum value in the region.\n"
         self._xAtMaxBox.setToolTip(text)
 
+
         # generate tiff files
-        self._tiffBox = qt.QCheckBox(self._boxContainer)
-        self._tiffBox.setText("generate TIFF files")
+        self._tiffBox = qt.QCheckBox(self._boxContainer2)
+        self._tiffBox.setText("TIFF")
         self._tiffBox.setChecked(False)
         self._tiffBox.setEnabled(True)
-
-        self._boxContainerLayout.addWidget(self._netBox)
-        self._boxContainerLayout.addWidget(self._xAtMaxBox)
-        self._boxContainerLayout.addWidget(self._tiffBox)
         
-        self.mainLayout.addWidget(configLabel, 0, 0)
-        self.mainLayout.addWidget(self._configLine, 0, 1)
-        self.mainLayout.addWidget(self._configButton, 0, 2)
-        self.mainLayout.addWidget(outLabel, 1, 0)
-        self.mainLayout.addWidget(self._outLine, 1, 1)
-        self.mainLayout.addWidget(self._outButton, 1, 2)
-        self.mainLayout.addWidget(fileLabel, 2, 0)
-        self.mainLayout.addWidget(self._fileLine, 2, 1)
-        self.mainLayout.addWidget(boxLabel, 3, 0)
-        self.mainLayout.addWidget(self._boxContainer, 3, 1, 1, 1)
+        # generate csv file
+        self._csvBox = qt.QCheckBox(self._boxContainer2)
+        self._csvBox.setText("CSV")
+        self._csvBox.setChecked(False)
+        self._csvBox.setEnabled(True)
+
+        # generate dat file
+        self._datBox = qt.QCheckBox(self._boxContainer2)
+        self._datBox.setText("DAT")
+        self._datBox.setChecked(False)
+        self._datBox.setEnabled(True)
+        
+        # generate edf file
+        self._edfBox = qt.QCheckBox(self._boxContainer2)
+        self._edfBox.setText("EDF")
+        self._edfBox.setChecked(True)
+        self._edfBox.setEnabled(True)
+        
+        # generate hdf5 file
+        self._h5Box = qt.QCheckBox(self._boxContainer2)
+        self._h5Box.setText("HDF5")
+        self._h5Box.setChecked(hasH5py)
+        self._h5Box.setEnabled(hasH5py)
+        self._h5Box.stateChanged.connect(self.toggleH5)
+        self.toggleH5(hasH5py)
+
+        # overwrite output
+        self._overwriteBox = qt.QCheckBox(self._boxContainer2)
+        self._overwriteBox.setText("Overwrite")
+        self._overwriteBox.setChecked(True)
+        self._overwriteBox.setEnabled(True)
+        
+        # generate mutipage file
+        self._multipageBox = qt.QCheckBox(self._boxContainer2)
+        self._multipageBox.setText("Multipage")
+        self._multipageBox.setChecked(False)
+        self._multipageBox.setEnabled(True)
+
+        self._edfBox.stateChanged.connect(self.stateMultiPage)
+        self._tiffBox.stateChanged.connect(self.stateMultiPage)
+        self.stateMultiPage()
+
+        self._boxContainerLayout1.addWidget(self._netBox)
+        self._boxContainerLayout1.addWidget(self._xAtMaxBox)
+        self._boxContainerLayout2.addWidget(self._h5Box)
+        self._boxContainerLayout2.addWidget(self._edfBox)
+        self._boxContainerLayout2.addWidget(self._csvBox)
+        self._boxContainerLayout2.addWidget(self._datBox)
+        self._boxContainerLayout2.addWidget(self._tiffBox)
+        self._boxContainerLayout2.addWidget(self._overwriteBox)
+        self._boxContainerLayout2.addWidget(self._multipageBox)
+
+        i = 0
+        self.mainLayout.addWidget(configLabel, i, 0)
+        self.mainLayout.addWidget(self._configLine, i, 1)
+        self.mainLayout.addWidget(self._configButton, i, 2)
+        i += 1
+        self.mainLayout.addWidget(outdirLabel, i, 0)
+        self.mainLayout.addWidget(self._outdirLine, i, 1)
+        self.mainLayout.addWidget(self._outdirButton, i, 2)
+        i += 1
+        self.mainLayout.addWidget(outrootLabel, i, 0)
+        self.mainLayout.addWidget(self._outrootLine, i, 1)
+        i += 1
+        self.mainLayout.addWidget(outentryLabel, i, 0)
+        self.mainLayout.addWidget(self._outentryLine, i, 1)
+        i += 1
+        self.mainLayout.addWidget(outnameLabel, i, 0)
+        self.mainLayout.addWidget(self._outnameLine, i, 1)
+        i += 1
+        self.mainLayout.addWidget(boxLabel1, i, 0)
+        self.mainLayout.addWidget(self._boxContainer1, i, 1, 1, 1)
+        i += 1
+        self.mainLayout.addWidget(boxLabel2, i, 0)
+        self.mainLayout.addWidget(self._boxContainer2, i, 1, 1, 1)
 
     def sizeHint(self):
         return qt.QSize(int(1.8 * qt.QWidget.sizeHint(self).width()),
@@ -138,26 +228,46 @@ class StackROIBatchWindow(qt.QWidget):
                                      message="Please select output directory",
                                      mode="OPEN")
         if len(f):
-            self._outLine.setText(f)
+            self._outdirLine.setText(f)
+
+    def toggleH5(self, state):
+        h5Out = bool(state)
+        self._outrootLabel.setEnabled(h5Out)
+        self._outnameLabel.setEnabled(h5Out)
+        for w in [self._outnameLine, self._outrootLine]:
+            w.setReadOnly(not h5Out)
+            w.setEnabled(h5Out)
+            if h5Out:
+                w.setStyleSheet("")
+            else:
+                w.setStyleSheet("color: gray; background-color: darkGray")
+
+    def stateMultiPage(self, state=None):
+        self._multipageBox.setEnabled(self._edfBox.isChecked() or 
+                                      self._tiffBox.isChecked())
 
     def getParameters(self):
         ddict = {}
-        ddict['configuration'] = qt.safe_str(self._configLine.text())
-        ddict['output_dir'] = qt.safe_str(self._outLine.text())
-        ddict['file_root'] = qt.safe_str(self._fileLine.text())
-        if self._netBox.isChecked():
-            ddict['net'] = 1
-        else:
-            ddict['net'] = 0
-        if self._xAtMaxBox.isChecked():
-            ddict['xAtMinMax'] = 1
-        else:
-            ddict['xAtMinMax'] = 0
-        if self._tiffBox.isChecked():
-            ddict['tiff'] = 1
-        else:
-            ddict['tiff'] = 0
+        process = {}
+        ddict['process'] = process
+        process['configuration'] = qt.safe_str(self._configLine.text())
+        process['net'] = int(self._netBox.isChecked())
+        process['xAtMinMax'] = int(self._xAtMaxBox.isChecked())
+        output = {}
+        ddict['output'] = output
+        output['outputDir'] = qt.safe_str(self._outdirLine.text()).replace(" ", "")
+        output['outputRoot'] = qt.safe_str(self._outrootLine.text()).replace(" ", "")
+        output['fileEntry'] = qt.safe_str(self._outentryLine.text()).replace(" ", "")
+        output['fileProcess'] = qt.safe_str(self._outnameLine.text()).replace(" ", "")
+        output['tif'] = int(self._tiffBox.isChecked())
+        output['csv'] = int(self._csvBox.isChecked())
+        output['dat'] = int(self._datBox.isChecked())
+        output['edf'] = int(self._edfBox.isChecked())
+        output['h5'] = int(self._h5Box.isChecked())
+        output['overwrite'] = int(self._overwriteBox.isChecked())
+        output['multipage'] = int(self._multipageBox.isChecked())
         return ddict
+
 
 class StackROIBatchDialog(qt.QDialog):
     def __init__(self, parent=None):
@@ -185,6 +295,7 @@ class StackROIBatchDialog(qt.QDialog):
 
     def getParameters(self):
         return self.parametersWidget.getParameters()
+
 
 if __name__ == "__main__":
     app = qt.QApplication([])

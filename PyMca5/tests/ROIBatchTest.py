@@ -41,7 +41,7 @@ DEBUG = 0
 
 try:
     from PyMca5.PyMcaCore import LegacyStackROIBatch
-    #from PyMca5.PyMcaCore import StackROIBatch
+    from PyMca5.PyMcaCore import StackROIBatch
 except ImportError:
     LegacyStackROIBatch = StackROIBatch = None
 
@@ -101,25 +101,43 @@ class testROIBatch(unittest.TestCase):
     @unittest.skipIf(StackROIBatch is None,
                      "cannot import PyMca5.PyMcaCore.StackROIBatch")
     def testPeakPositiveX(self):
-        self.assertROIsum(generatePeakDataPositiveX,
-                          LegacyStackROIBatch,
-                          xAtMinMax=True, net=True)
+        self.assertROIsumWithLegacy(generatePeakDataPositiveX,
+                                    xAtMinMax=True, net=True)
 
     @unittest.skipIf(StackROIBatch is None,
                      "cannot import PyMca5.PyMcaCore.StackROIBatch")
     def testPeakNegativeX(self):
-        self.assertROIsum(generatePeakDataNegativeX,
-                          LegacyStackROIBatch,
-                          xAtMinMax=True, net=True)
+        self.assertROIsumWithLegacy(generatePeakDataNegativeX,
+                                    xAtMinMax=True, net=True)
 
-    def assertROIsum(self, datagen, module, **parameters):
+    def assertROIsumWithLegacy(self, datagen, **parameters):
+        result1 = self.assertROIsum(datagen, legacy=False, **parameters)
+        result2 = self.assertROIsum(datagen, legacy=True, **parameters)
+        self.assertEqual(set(result1.keys()), set(result2.keys()))
+        for k1, v1 in result1.items():
+            v2 = result2[k1]
+            numpy.testing.assert_array_equal(v1, v2)
+
+    def assertROIsum(self, datagen, legacy=False, **parameters):
         x, y, config, peakpos = datagen()
-        instance = module.StackROIBatch()
-        outputDict = instance.batchROIMultipleSpectra(x=x,
-                                                      y=y,
-                                                      configuration=config,
-                                                      **parameters)
-        outputDict = dict(zip(outputDict["names"], outputDict["images"]))
+        if legacy:
+            instance = LegacyStackROIBatch.StackROIBatch()
+            outputDict = instance.batchROIMultipleSpectra(x=x,
+                                                          y=y,
+                                                          configuration=config,
+                                                          **parameters)
+            names = outputDict["names"]
+            images = outputDict["images"]
+        else:
+            instance = StackROIBatch.StackROIBatch()
+            outputDict = instance.batchROIMultipleSpectra(x=x,
+                                                          y=y,
+                                                          configuration=config,
+                                                          save=False,
+                                                          **parameters)
+            names = outputDict.labels('roi')
+            images = outputDict['roi']
+        outputDict = dict(zip(names, images))
         self.assertResult(x, y, peakpos, outputDict,
                           config["ROI"]["roidict"],
                           **parameters)
