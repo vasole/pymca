@@ -273,10 +273,10 @@ def updateDataset(parent, name, data):
     :param str name:
     :param data:
     """
-    try:
-        parent[name] = data
-    except RuntimeError:
+    if name in parent:
         parent[name][()] = data
+    else:
+        parent[name] = data
 
 
 def nxClassInit(parent, name, nxclass, parentclasses=None):
