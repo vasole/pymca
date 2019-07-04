@@ -33,7 +33,9 @@ override_dh_install:
 	dh_install -O--buildsystem=pybuild
 
 	# pymca
-	python setup.py install_scripts -d debian/pymca/usr/bin
+	#python setup.py install_scripts -d debian/pymca/usr/bin
+	#python setup.py install_scripts -d debian/pymca/usr/bin
+	dh_install -p pymca ./build/scripts-3.5/* /usr/bin
 	python setup.py install_man -d debian/pymca/usr/share/man
 
 	dh_install -p pymca package/desktop/*.desktop usr/share/applications
