@@ -1,3 +1,9 @@
+pymca (5.5.0-1) unstable; urgency=low
+
+  * New release 5.5.0
+
+ -- V. Armando Sole <sole@esrf.fr>  Thu, 4 Jul 2019 14:30:17 +0100
+
 pymca (5.4.3-1) unstable; urgency=low
 
   * New release 5.4.3
