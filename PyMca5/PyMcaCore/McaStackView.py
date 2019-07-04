@@ -552,11 +552,13 @@ class MaskedView(ChunkedView):
         chunkIndexGenerator, chunkAxes, axesOrder, nMca
         """
         # Use requested nMca and axesOrder, return final ones
-        return maskedChunkIndex(self.shapeOrg, self._nMca,
+        nMca = super(MaskedView, self).nMca
+        axesOrder = self._axesOrder
+        return maskedChunkIndex(self.shapeOrg, nMca,
                                 mask=self._mask,
                                 chunkAxes=(self.mcaAxis,),
                                 chunkAxesSlice=(self.mcaSlice,),
-                                axesOrder=self._axesOrder)
+                                axesOrder=axesOrder)
 
     @property
     def axesOrder(self):
