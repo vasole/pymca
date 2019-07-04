@@ -59,7 +59,7 @@ test_script:
     # Install the generated wheel package to test it
     - "pip install numpy"
     - "pip install fisx"
-    - pip install "matplotlib<=3.0.3"
+    - "pip install matplotlib"
     - "pip install silx"
     - "pip install h5py"
     - "pip install PyQt5"
