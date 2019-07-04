@@ -49,14 +49,14 @@ from contextlib import contextmanager
 logger = logging.getLogger(__name__)
 
 
-def print_malloc_snapshot(snapshot, key_type='lineno', limit=10, units='KiB'):
+def print_malloc_snapshot(snapshot, key_type='lineno', limit=10, units='KB'):
     """
     :param tracemalloc.Snapshot snapshot:
     :param str key_type:
     :param int limit: limit number of lines
-    :param str units: B, KiB, MiB, GiB
+    :param str units: B, KB, MB, GB
     """
-    n = ['B', 'KiB', 'MiB', 'GiB'].index(units)
+    n = ['b', 'kb', 'mb', 'gb'].index(unit.lower())
     sunits, units = units, 1024**n
 
     snapshot = snapshot.filter_traces((
