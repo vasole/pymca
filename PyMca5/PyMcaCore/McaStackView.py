@@ -526,6 +526,9 @@ def h5pyMultiListSet(data, value, idx, axesList):
 
 
 class MaskedView(ChunkedView):
+    """
+    View of MCA stack with mask and MCA channel slice, which allows iteration over chunks of spectra
+    """
 
     def __init__(self, data, mask=None, axesOrder=None, **kwargs):
         """
@@ -668,6 +671,9 @@ class MaskedView(ChunkedView):
 
 
 class FullView(MaskedView):
+    """
+    View of MCA stack with MCA channel slice which allows iteration over chunks of spectra
+    """
 
     def __init__(self, data, **kwargs):
         """
