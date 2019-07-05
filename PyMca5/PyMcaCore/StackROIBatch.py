@@ -124,6 +124,10 @@ class StackROIBatch(object):
         xw = [None] * nRois  # x-values for each ROI
         iXMinList = [None] * nRois  # min(xw) for each ROI
         iXMaxList = [None] * nRois  # max(xw) for each ROI
+        def idxraw(i): return i
+        def idxnet(i): return i + nRois
+        def idxmax(i): return i + 2 * nRois
+        def idxmin(i): return i + 3 * nRois
         for j, roi in enumerate(roiList):
             if roi == "ICR":
                 xw[j] = x
@@ -140,16 +144,12 @@ class StackROIBatch(object):
                     iXMaxList[j] = numpy.argmax(xw[j])
                 else:
                     xw[j] = None
-            names[j] = "ROI " + roi
-            names[j + nRois] = "ROI " + roi + " Net"
+            names[idxraw(j)] = "ROI " + roi
+            names[idxnet(j)] = "ROI " + roi + " Net"
             if xAtMinMax:
                 roiType = roiDict[roi]["type"]
-                names[j + 2 * nRois] = "ROI " + roi + (" %s at Max." % roiType)
-                names[j + 3 * nRois] = "ROI " + roi + (" %s at Min." % roiType)
-        def idxraw(i): return i
-        def idxnet(i): return i + nRois
-        def idxmax(i): return i + 2 * nRois
-        def idxmin(i): return i + 3 * nRois
+                names[idxmax(j)] = "ROI " + roi + (" %s at Max." % roiType)
+                names[idxmin(j)] = "ROI " + roi + (" %s at Min." % roiType)
 
         # Allocate memory for result
         roidtype = numpy.float
