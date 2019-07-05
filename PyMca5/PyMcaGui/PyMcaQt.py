@@ -97,20 +97,29 @@ if BINDING is None: # Try the different bindings
         if "PyQt5" in sys.modules:
             del sys.modules["PyQt5"]
         try:
+            import sip
+            sip.setapi('QString', 2)
+            sip.setapi('QVariant', 2)
+            sip.setapi('QDate', 2)
+            sip.setapi('QDateTime', 2)
+            sip.setapi('QTextStream', 2)
+            sip.setapi('QTime', 2)
+            sip.setapi('QUrl', 2)
             import PyQt4.QtCore
             BINDING = "PyQt4"
         except ImportError:
             if "PyQt4" in sys.modules:
+                del sys.modules["sip"]
                 del sys.modules["PyQt4"]
             try:
-                import PySide.QtCore
-                BINDING = "PySide"
+                import PySide2.QtCore
+                BINDING = "PySide2"
             except ImportError:
-                if "PySide" in sys.modules:
-                    del sys.modules["PySide"]
+                if "PySide2" in sys.modules:
+                    del sys.modules["PySide2"]
                 try:
-                    import PySide2.QtCore
-                    BINDING = "PySide2"
+                    import PySide.QtCore
+                    BINDING = "PySide"
                 except ImportError:
                     raise ImportError(
                         'No Qt wrapper found. Install PyQt5, PyQt4, PySide or PySide2.')
