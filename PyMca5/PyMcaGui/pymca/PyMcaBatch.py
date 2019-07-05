@@ -270,10 +270,11 @@ def noProcesses():
     return forzenDarwin
 
 
-def launchThread(thread, window, qApp=None):
+def launchThread(thread, window):
     """Launch thread with control window
     """
     def cleanup():
+        window.close()
         thread.pleasePause = 0
         thread.pleaseBreak = 1
         thread.wait()
@@ -287,13 +288,10 @@ def launchThread(thread, window, qApp=None):
             thread.pleasePause=1
             window.pauseButton.setText("Continue")
     window.pauseButton.clicked.connect(pause)
-    window.abortButton.clicked.connect(window.close)
-    if qApp is None:
-        qApp = qt.QApplication.instance()
-    qApp.aboutToQuit[()].connect(cleanup)
+    window.abortButton.clicked.connect(cleanup)
+    #qApp.aboutToQuit[()].connect(cleanup)
     window.show()
     thread.start()
-    return qApp
 
 
 def addToSignal(onSignal, signalNumber):
@@ -2134,7 +2132,7 @@ def main():
             cfg[i]=cfg[i].decode(sys.getfilesystemencoding()).replace('\n','')
     
     # Launch
-    app=qt.QApplication(sys.argv)
+    app = qt.QApplication([])
     if html:
         fitfiles=1
     if len(filelist) == 0 or gui:
@@ -2176,7 +2174,7 @@ def main():
                 return
 
         window._rootname = "%s"% thread._rootname
-        launchThread(thread, window, qApp=app)
+        launchThread(thread, window)
         
     app.exec_()
 

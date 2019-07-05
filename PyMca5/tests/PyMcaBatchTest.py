@@ -688,5 +688,7 @@ if __name__ == '__main__':
         auto = False
     else:
         auto = True
+    app = qt.QApplication([])
     result = test(auto)
     sys.exit(not result.wasSuccessful())
+    app.quit()
