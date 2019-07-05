@@ -62,6 +62,8 @@ class testPyMcaBatch(TestCaseQt):
 
     def tearDown(self):
         shutil.rmtree(self.path)
+        from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
+        PyMcaPrintPreview.resetSingletonPrintPreview()        
         super(testPyMcaBatch, self).tearDown()
 
     def testCommand(self):
