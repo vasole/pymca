@@ -100,16 +100,14 @@ class StackROIBatch(object):
             outbuffer = OutputBuffer(**outbufferinitargs)
         with outbuffer.Context(save=save):
             outbuffer['configuration'] = config
-
             self._extractRois(data, x, index,
                               roiList=roiList,
                               roiDict=config["ROI"]["roidict"],
                               outbuffer=outbuffer,
                               xAtMinMax=xAtMinMax)
-
         return outbuffer
 
-    def _extractRois(self, data, x, index, roiList=None, roiDict=None,
+    def _extractRois(self, data, x, mcaAxis, roiList=None, roiDict=None,
                      outbuffer=None, xAtMinMax=False):
         nRois = len(roiList)
         nRows = data.shape[0]
@@ -148,6 +146,10 @@ class StackROIBatch(object):
                 roiType = roiDict[roi]["type"]
                 names[j + 2 * nRois] = "ROI " + roi + (" %s at Max." % roiType)
                 names[j + 3 * nRois] = "ROI " + roi + (" %s at Min." % roiType)
+        def idxraw(i): return i
+        def idxnet(i): return i + nRois
+        def idxmax(i): return i + 2 * nRois
+        def idxmin(i): return i + 3 * nRois
 
         # Allocate memory for result
         roidtype = numpy.float
@@ -160,46 +162,47 @@ class StackROIBatch(object):
                                            memtype='ram')
 
         # Allocate memory of partial result
-        jStep = min(1000, data.shape[1])
-        chunk = numpy.zeros((jStep, data.shape[index]), roidtype)
-        for i in range(0, data.shape[0]):
-            jStart = 0
-            while jStart < data.shape[1]:
-                jEnd = min(jStart + jStep, data.shape[1])
-                chunk[:(jEnd - jStart)] = data[i, jStart: jEnd]
-                for j, roi in enumerate(roiList):
-                    if xw[j] is None:
-                        # no points in the ROI            
-                        rawSum = 0.0
-                        netSum = 0.0
+        nMca = 2, 'MB'
+        _logger.debug('Process spectra in chunks of {}'.format(nMca))
+        datastack = McaStackView.FullView(data, mcaAxis=mcaAxis, nMca=nMca)
+        for (resultidx, resultshape), chunk in datastack.items(keyType='select'):
+            for j, roi in enumerate(roiList):
+                # Calculate ROI sum
+                if xw[j] is None:
+                    # no points in the ROI       
+                    rawSum = 0.0
+                    netSum = 0.0
+                else:
+                    roichunk = chunk[:, idx[j]]
+                    rawSum = roichunk.sum(axis=1, dtype=numpy.float)
+                    deltaX = xw[j][iXMaxList[j]] - xw[j][iXMinList[j]]
+                    left = roichunk[:, iXMinList[j]]
+                    right = roichunk[:, iXMaxList[j]]
+                    deltaY = right - left
+                    if abs(deltaX) > 0.0:
+                        slope = deltaY / float(deltaX)
+                        background = left * len(xw[j]) + slope * \
+                                    (xw[j] - xw[j][iXMinList[j]]).sum(dtype=numpy.float)
+                        netSum = rawSum - background
                     else:
-                        tmpArray = chunk[:(jEnd - jStart), idx[j]]
-                        rawSum = tmpArray.sum(axis=-1, dtype=numpy.float)
-                        deltaX = xw[j][iXMaxList[j]] - xw[j][iXMinList[j]]
-                        left = tmpArray[:, iXMinList[j]]
-                        right = tmpArray[:, iXMaxList[j]]
-                        deltaY = right - left
-                        if abs(deltaX) > 0.0:
-                            slope = deltaY / float(deltaX)
-                            background = left * len(xw[j])+ slope * \
-                                        (xw[j] - xw[j][iXMinList[j]]).sum(dtype=numpy.float) 
-                            netSum = rawSum - background
-                        else:
-                            netSum = 0.0
-                    results[j][i, :(jEnd - jStart)] = rawSum
-                    results[j + nRois][i, :(jEnd - jStart)] = netSum
-                    if xAtMinMax:
-                        if xw[j] is None:
-                            # what can be the Min and the Max when there is nothing in the ROI?
-                            _logger.warning("No Min. Max for ROI <%s>. Empty ROI" % roiLine)
-                        else:
-                            # maxImage
-                            results[j + 2 * nRois][i, :(jEnd - jStart)] = \
-                                    xw[j][numpy.argmax(tmpArray, axis=1)]
-                            # minImage
-                            results[j + 3 * nRois][i, :(jEnd - jStart)] = \
-                                    xw[j][numpy.argmin(tmpArray, axis=1)]
-                jStart = jEnd
+                        netSum = 0.0
+                    rawSum = rawSum.reshape(resultshape)
+                    netSum = netSum.reshape(resultshape)
+                results[idxraw(j)][resultidx] = rawSum  # ROI sum
+                results[idxnet(j)][resultidx] = netSum  # ROI sum minus linear background
+
+                # Calculate x-value of the minimum and maximum within the ROI
+                if xAtMinMax:
+                    if xw[j] is None:
+                        # what can be the Min and the Max when there is nothing in the ROI?
+                        _logger.warning("No Min. Max for ROI <%s>. Empty ROI" % roi)
+                    else:
+                        # maxImage
+                        results[idxmax(j)][resultidx] = \
+                            xw[j][numpy.argmax(roichunk, axis=1)]
+                        # minImage
+                        results[idxmin(j)][resultidx] = \
+                            xw[j][numpy.argmin(roichunk, axis=1)]
 
     def _parseData(self, x=None, y=None, index=None):
         if y is None:
@@ -250,6 +253,7 @@ class StackROIBatch(object):
             x = numpy.arange(data.shape[index]).astype(numpy.float32)
         elif x.size != data.shape[index]:
             raise NotImplementedError("All the spectra should share same X axis")
+        #data = numpy.transpose(data, (1,0,2))
         return data, x, index
 
     def _prepareRoiList(self, configuration=None, xLabel=None):
