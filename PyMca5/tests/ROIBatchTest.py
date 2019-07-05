@@ -135,8 +135,8 @@ class testROIBatch(unittest.TestCase):
                                                           configuration=config,
                                                           save=False,
                                                           **parameters)
-            names = outputDict.labels('roi')
-            images = outputDict['roi']
+            names = outputDict.labels('roisum')
+            images = outputDict['roisum']
         outputDict = dict(zip(names, images))
         self.assertResult(x, y, peakpos, outputDict,
                           config["ROI"]["roidict"],

@@ -1147,14 +1147,14 @@ def main():
     print("Main configuring Elapsed = % s " % (time.time() - t0))
 
     outbuffer = OutputBuffer(outputDir=outputDir,
-                        outputRoot=outputRoot,
-                        fileEntry=fileEntry,
-                        fileProcess=fileProcess,
-                        diagnostics=diagnostics,
-                        tif=tif, edf=edf, csv=csv,
-                        h5=h5, dat=dat,
-                        multipage=multipage,
-                        overwrite=overwrite)
+                             outputRoot=outputRoot,
+                             fileEntry=fileEntry,
+                             fileProcess=fileProcess,
+                             diagnostics=diagnostics,
+                             tif=tif, edf=edf, csv=csv,
+                             h5=h5, dat=dat,
+                             multipage=multipage,
+                             overwrite=overwrite)
 
     from PyMca5.PyMcaMisc import ProfilingUtils
     with ProfilingUtils.profile(memory=debug, time=debug):

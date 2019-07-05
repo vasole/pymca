@@ -69,7 +69,6 @@ from PyMca5.PyMcaGui import StackPluginResultsWindow
 from PyMca5.PyMcaGui import StackROIBatchWindow
 from PyMca5.PyMcaGui import PyMca_Icons as PyMca_Icons
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.PyMcaIO.OutputBuffer import OutputBuffer
 
 _logger = logging.getLogger(__name__)
 
@@ -187,7 +186,7 @@ class StackROIBatchPlugin(StackPluginBase.StackPluginBase):
         procparams['xLabel'] = self.getGraphXLabel()
 
         outparams = self._parameters['output']
-        outbuffer = OutputBuffer(**outparams)
+        outbuffer = StackROIBatch.OutputBuffer(**outparams)
         outbuffer = self.workerInstance.batchROIMultipleSpectra(x=x,
                                                                 y=stack,
                                                                 outbuffer=outbuffer,
@@ -218,8 +217,8 @@ class StackROIBatchPlugin(StackPluginBase.StackPluginBase):
 
         # Show results
         with result.bufferContext(update=True):
-            imageNames = result.labels('roi')
-            images = result['roi']
+            imageNames = result.labels('roisum', labeltype='title')
+            images = result['roisum']
             self._widget = StackPluginResultsWindow.StackPluginResultsWindow(\
                                             usetab=False)
             self._widget.buildAndConnectImageButtonBox(replace=True,

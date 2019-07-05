@@ -39,11 +39,19 @@ import time
 import logging
 import copy
 from PyMca5.PyMcaIO import ConfigDict
-from PyMca5.PyMcaIO.OutputBuffer import OutputBuffer
+from PyMca5.PyMcaIO.OutputBuffer import OutputBuffer as OutputBufferBase
 from PyMca5.PyMcaCore import McaStackView
 
 
 _logger = logging.getLogger(__name__)
+
+
+class OutputBuffer(OutputBufferBase):
+
+    def __init__(self, saveResiduals=False, saveFit=False, saveData=False,
+                 diagnostics=False, saveFOM=False, **kwargs):
+        super(OutputBuffer, self).__init__(**kwargs)
+        self.fileProcessDefault = 'roi_sum'
 
 
 class StackROIBatch(object):
@@ -51,16 +59,12 @@ class StackROIBatch(object):
     def __init__(self):
         self.config = ConfigDict.ConfigDict()
 
-    def configure(self, newdict=None):
-        if newdict:
-            self.config.update(newdict)
-        return copy.deepcopy(self.config)
-
     def setConfiguration(self, configuration):
-        self.configure(configuration)
+        self.config = ConfigDict.ConfigDict()
+        self.config.update(configuration)
 
     def getConfiguration(self):
-        return self.configure()
+        return copy.deepcopy(self.config)
 
     def setConfigurationFile(self, ffile):
         if not os.path.exists(ffile):
@@ -147,7 +151,7 @@ class StackROIBatch(object):
 
         # Allocate memory for result
         roidtype = numpy.float
-        results = outbuffer.allocateMemory('roi',
+        results = outbuffer.allocateMemory('roisum',
                                            shape=roiShape,
                                            dtype=roidtype,
                                            labels=names,
@@ -261,11 +265,12 @@ class StackROIBatch(object):
 
         # operate only on compatible ROIs
         roiList = []
+        roiDict = config["ROI"]["roidict"]
         for roi in roiList0:
-            if roi.upper() == "ICR":
-                roiList.append(roi)
-            roiType = config["ROI"]["roidict"][roi]["type"]
+            roiType = roiDict[roi]["type"]
             if xLabel is None:
+                roiList.append(roi)
+            elif roi.upper() == "ICR":
                 roiList.append(roi)
             elif xLabel.lower() == roiType.lower():
                 roiList.append(roi)
@@ -308,18 +313,53 @@ def getFileListFromPattern(pattern, begin, end, increment=None):
     return fileList
 
 
-if __name__ == "__main__":
+def prepareDataStack(fileList):
+    if (not os.path.exists(fileList[0])) and \
+        os.path.exists(fileList[0].split("::")[0]):
+        # odo convention to get a dataset form an HDF5
+        fname, dataPath = fileList[0].split("::")
+        # compared to the ROI imaging tool, this way of reading puts data
+        # into memory while with the ROI imaging tool, there is a check.
+        if 0:
+            import h5py
+            h5 = h5py.File(fname, "r")
+            dataStack = h5[dataPath][:]
+            h5.close()
+        else:
+            from PyMca5.PyMcaIO import HDF5Stack1D
+            # this way reads information associated to the dataset (if present)
+            if dataPath.startswith("/"):
+                pathItems = dataPath[1:].split("/")
+            else:
+                pathItems = dataPath.split("/")
+            if len(pathItems) > 1:
+                scanlist = ["/" + pathItems[0]]
+                selection = {"y":"/" + "/".join(pathItems[1:])}
+            else:
+                selection = {"y":dataPath}
+                scanlist = None
+            print(selection)
+            print("scanlist = ", scanlist)
+            dataStack = HDF5Stack1D.HDF5Stack1D([fname],
+                                                selection,
+                                                scanlist=scanlist)
+    else:
+        from PyMca5.PyMca import EDFStack
+        dataStack = EDFStack.EDFStack(fileList, dtype=numpy.float32)
+    return dataStack
+
+
+def main():
     import glob
     import sys
-    from PyMca5.PyMca import EDFStack
-    from PyMca5.PyMca import ArraySave
     import getopt
     _logger.setLevel(logging.DEBUG)
-    options     = ''
+    options = ''
     longoptions = ['cfg=', 'outdir=',
-                   'tif=', #'listfile=',
+                   'tif=', 'edf=', 'csv=', 'h5=', 'dat=',
                    'filepattern=', 'begin=', 'end=', 'increment=',
-                   "outfileroot="]
+                   'outroot=', 'outentry=', 'outprocess=',
+                   'overwrite=', 'multipage=']
     try:
         opts, args = getopt.getopt(
                      sys.argv[1:],
@@ -328,14 +368,21 @@ if __name__ == "__main__":
     except:
         _logger.error(sys.exc_info()[1])
         sys.exit(1)
-    fileRoot = ""
     outputDir = None
-    fileindex = 0
+    outputRoot = ""
+    fileEntry = ""
+    fileProcess = ""
     filepattern = None
     begin = None
     end = None
     increment = None
     tif = 0
+    edf = 0
+    csv = 0
+    h5 = 1
+    dat = 0
+    overwrite = 1
+    multipage = 0
     for opt, arg in opts:
         if opt in ('--cfg'):
             configurationFile = arg
@@ -359,10 +406,26 @@ if __name__ == "__main__":
             filepattern = filepattern.replace("'", "")
         elif opt in '--outdir':
             outputDir = arg
-        elif opt in '--outfileroot':
-            fileRoot = arg
-        elif opt in ['--tif', '--tiff']:
+        elif opt == '--outroot':
+            outputRoot = arg
+        elif opt == '--outentry':
+            fileEntry = arg
+        elif opt == '--outprocess':
+            fileProcess = arg
+        elif opt in ('--tif', '--tiff'):
             tif = int(arg)
+        elif opt == '--edf':
+            edf = int(arg)
+        elif opt == '--csv':
+            csv = int(arg)
+        elif opt == '--h5':
+            h5 = int(arg)
+        elif opt == '--dat':
+            dat = int(arg)
+        elif opt == '--overwrite':
+            overwrite = int(arg)
+        elif opt == '--multipage':
+            multipage = int(arg)
     if filepattern is not None:
         if (begin is None) or (end is None):
             raise ValueError(
@@ -373,7 +436,7 @@ if __name__ == "__main__":
     else:
         fileList = args
     if len(fileList):
-        dataStack = EDFStack.EDFStack(fileList, dtype=numpy.float32)
+        dataStack = prepareDataStack(fileList)
     else:
         print("OPTIONS:", longoptions)
         sys.exit(0)
@@ -383,8 +446,17 @@ if __name__ == "__main__":
     worker = StackROIBatch()
     worker.setConfigurationFile(configurationFile)
     outbuffer = OutputBuffer(outputDir=outputDir,
-                             fileEntry=fileRoot,
-                             edf=1, tif=tif)
+                             outputRoot=outputRoot,
+                             fileEntry=fileEntry,
+                             fileProcess=fileProcess,
+                             tif=tif, edf=edf, csv=csv,
+                             h5=h5, dat=dat,
+                             multipage=multipage,
+                             overwrite=overwrite)
     with outbuffer.saveContext():
         worker.batchROIMultipleSpectra(y=dataStack,
                                        outbuffer=outbuffer)
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    main()
