@@ -359,7 +359,7 @@ def launchProcess(cmd, blocking=False, independent=False):
     # Launch arguments:
     kwargs = {}
     kwargs['cwd'] = os.getcwd()
-    kwargs['env'] = os.environ
+    kwargs['env'] = {k:str(v) for k,v in os.environ.items()}
     kwargs['close_fds'] = True
     kwargs['shell'] = True
 
