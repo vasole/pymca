@@ -62,6 +62,8 @@ class testPyMcaBatch(TestCaseQt):
 
     def tearDown(self):
         shutil.rmtree(self.path)
+        from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
+        PyMcaPrintPreview.resetSingletonPrintPreview()
         super(testPyMcaBatch, self).tearDown()
 
     def testCommand(self):
@@ -359,6 +361,9 @@ class testPyMcaBatch(TestCaseQt):
         self.qapp.processEvents()
         widget.start(**startargs)
         self._waitForFitResult(result)
+        # See McaBatchGUI.close: McaBatchWindow cannot be closed automatically
+        # Try closing manually (does not work)
+        self.mouseClick(widget._McaBatchGUI__window.abortButton, qt.Qt.LeftButton)
         widget.close()
         self.qapp.processEvents()
         #self.qapp.exec_()  # block for debugging

@@ -359,7 +359,7 @@ def launchProcess(cmd, blocking=False, independent=False):
     # Launch arguments:
     kwargs = {}
     kwargs['cwd'] = os.getcwd()
-    kwargs['env'] = os.environ
+    kwargs['env'] = {k:str(v) for k,v in os.environ.items()}
     kwargs['close_fds'] = True
     kwargs['shell'] = True
 
@@ -476,6 +476,8 @@ class McaBatchGUI(qt.QWidget):
         self._layout.setContentsMargins(0, 0, 0, 0)
         self._layout.setSpacing(0)
         self._edfSimpleViewer = None
+        self.__window = None
+        self.__thread = None
         self._showResult = showresult
         self._timer = None
         self._processList = []
@@ -905,6 +907,13 @@ class McaBatchGUI(qt.QWidget):
         if self._edfSimpleViewer is not None:
             self._edfSimpleViewer.close()
             self._edfSimpleViewer = None
+        if self.__window is not None:
+            pass
+            # None of these work:
+            #self.__window.close()
+            #qt.QWidget.close(self.__window)
+            #self.__window.destroy()
+            #self.__window = None
         qt.QWidget.close(self)
 
     def setFileList(self, filelist=None, selection=None):
