@@ -279,8 +279,8 @@ _logger.debug("SilxGL availability: %s", isSilxGLAvailable)
 OPENGL_DRIVERS_OK = True
 if sys.platform.startswith("linux"):
     import subprocess
-    if subprocess.call("which glxinfo") == 0:
-        if subprocess.call("glxinfo > /dev/null"):
+    if subprocess.call("which glxinfo > /dev/null", shell=True) == 0:
+        if subprocess.call("glxinfo > /dev/null", shell=True):
             OPENGL_DRIVERS_OK = False
             isSilxGLAvailable = False
             OBJECT3D = False
