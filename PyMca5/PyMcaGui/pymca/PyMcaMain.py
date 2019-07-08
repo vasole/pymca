@@ -35,6 +35,7 @@ import logging
 if sys.platform == 'win32':
     import ctypes
     from ctypes.wintypes import MAX_PATH
+
 nativeFileDialogs = None
 _logger = logging.getLogger(__name__)
 backend=None
@@ -134,7 +135,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=getLoggingLevel(opts))
     if "HDF5_USE_FILE_LOCKING" not in os.environ:
         if "h5py" in sys.modules:
-             _logger.warning("h5py already imported")            
+             _logger.warning("h5py already imported")
         os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
         _logger.info("%s set to %s" % ("HDF5_USE_FILE_LOCKING",
                                        os.environ["HDF5_USE_FILE_LOCKING"]))
@@ -273,6 +274,17 @@ elif OBJECT3D:
     SceneGLWindow = PyMcaGLWindow
 
 _logger.debug("SilxGL availability: %s", isSilxGLAvailable)
+
+# check that OpenGL is actually supported (ESRF rnice problems)
+OPENGL_DRIVERS_OK = True
+if sys.platform.startswith("linux"):
+    import subprocess
+    if subprocess.call("which glxinfo > /dev/null", shell=True) == 0:
+        if subprocess.call("glxinfo > /dev/null", shell=True):
+            OPENGL_DRIVERS_OK = False
+            isSilxGLAvailable = False
+            OBJECT3D = False
+            _logger.warning("OpenGL disabled. Errors using glxinfo command")
 
 from PyMca5.PyMcaGui.pymca import QDispatcher
 from PyMca5.PyMcaGui import ElementsInfo
@@ -473,7 +485,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                         if ddict['dataobject'].y:
                             if ddict['dataobject'].y[0].size != size0 * size1:
                                 return False
-                    if isSilxGLAvailable:
+                    if "PyMca5.PyMcaGui.pymca.SilxScatterWindow" in sys.modules:
                         if silx.version_info > (0, 10, 2):
                             return True
         return False
@@ -540,7 +552,11 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             _logger.info("ScatterPlot selection")
             legend = ddict['legend']
             if legend not in self.imageWindowDict.keys():
-                imageWindow = SilxScatterWindow.SilxScatterWindow()
+                if OPENGL_DRIVERS_OK:
+                    scatter_backend = "gl"
+                else:
+                    scatter_backend = "mpl"
+                imageWindow = SilxScatterWindow.SilxScatterWindow(backend=backend)
                 self.imageWindowDict[legend] = imageWindow
                 self.imageWindowDict[legend].setPlotEnabled(True)
                 if self.mainTabWidget.indexOf(self.imageWindowDict[legend]) < 0:
@@ -627,7 +643,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             widget.show()
             self._widgetDict[id(widget)] = widget
         else:
-            if OBJECT3D or isGLAvailable:
+            if OBJECT3D or isSilxGLAvailable:
                 if ddict['dataobject'].info['selectiontype'] == "1D":
                     _logger.info("1D selection")
                     self.mcaWindow._addSelection(dictOrList)

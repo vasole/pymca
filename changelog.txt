@@ -1,9 +1,35 @@
+VERSION 5.5.0
+-------------
+
+- XRF: Include full-analysis provenance in HDF5 output files.
+
+- Improved support of HDF5
+
+- Improved testing suite.
+
+- ROI Imaging: Improved memory handling when reading multiple HDF5 detectors as input.
+
+- ROI Imaging: Support PerkinElmer FSM file format
+
+- ROI Imaging: Correct reading OMNIC files under Python 3 in non-windows
+platforms.
+
+- Support PySide2
+
+- Support Matplotlib 3.1.x
+
+- Preliminary support of Python 3.8
+
+- Drop silx as hard dependency. Keep it as optional dependency.
+
+- Default to silx (if present) for 3D and scatter plots.
+
 VERSION 5.4.3
 -------------
 
 - Fix SPEC shared memory update during scans bug introduced in 5.4.0
 
-- Make default binding PyQt4 under Pythonn 2
+- Make default binding PyQt4 under Python 2
 
 VERSION 5.4.2
 -------------

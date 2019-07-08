@@ -62,6 +62,8 @@ class testPyMcaBatch(TestCaseQt):
 
     def tearDown(self):
         shutil.rmtree(self.path)
+        from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
+        PyMcaPrintPreview.resetSingletonPrintPreview()        
         super(testPyMcaBatch, self).tearDown()
 
     def testCommand(self):
@@ -686,5 +688,7 @@ if __name__ == '__main__':
         auto = False
     else:
         auto = True
+    app = qt.QApplication([])
     result = test(auto)
     sys.exit(not result.wasSuccessful())
+    app.quit()

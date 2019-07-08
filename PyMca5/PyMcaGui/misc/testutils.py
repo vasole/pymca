@@ -232,8 +232,15 @@ class TestCaseQt(unittest.TestCase):
                                                          len(widgets)))
 
         if len(widgets) > allowedLeakingWidgets:
+            txt = "[ "
+            for w in widgets:
+                if hasattr(w, "text"):
+                    txt += "%s text=%s, " % (w, w.text())
+                else:
+                    txt += "%s, " % w
+            txt += "]"
             raise RuntimeError(
-                "Test ended with widgets alive: %s" % str(widgets))
+                "Test ended with widgets alive: %s" % txt)
 
     def tearDown(self):
         if len(self.__class__._exceptions) > 0:
