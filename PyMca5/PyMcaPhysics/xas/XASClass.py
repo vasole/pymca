@@ -679,9 +679,6 @@ def getFT(k, exafs, npoints=2048, rrange=(0.0, 7.0),
         set3[:, 0] = k
         set3[:, 1] = exafs * wweights
         setFT = exex.fastftr(set3,npoint=npoints,rrange=[0.,7.],kstep=0.02)
-    npoint2 = k.size
-    xmin = k[0]
-    xmax = k[-1]
 
 
     # ;
