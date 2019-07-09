@@ -39,7 +39,7 @@ Routines for nonnegative matrix approximation (nnma)
 import sys
 import os
 try:
-   from nnma import *
+   from .nnma import *
 except ImportError:
    if sys.version > '2.6':
       sys.path.append(os.path.dirname(__file__))
