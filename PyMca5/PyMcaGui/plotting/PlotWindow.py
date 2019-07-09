@@ -1187,6 +1187,8 @@ class PlotWindow(PlotWidget.PlotWidget):
             todata   = ddict['roi']['to']
             self.removeMarker('ROI min')
             self.removeMarker('ROI max')
+            if self._middleROIMarkerFlag:
+                self.removeMarker('ROI middle')
             if ddict['key'] == 'ICR':
                 draggable = False
                 color = 'black'
