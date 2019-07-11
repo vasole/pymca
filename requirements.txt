@@ -1,10 +1,10 @@
-# List all dependencies of PyMca for complete functionality and not just
+# List all dependencies of PyMca for GUI functionality and not just
 # command line XRF analysis
 # Requires pip >= 8.0
 
 --trusted-host www.silx.org
 --find-links http://www.silx.org/pub/wheelhouse/
---only-binary numpy,h5py,scipy,PyQt4,PyQt5,PySide
+--only-binary numpy,h5py,PyQt4,PyQt5,PySide
 
 numpy >= 1.8
 fisx >= 1.1.5
@@ -12,7 +12,6 @@ PyOpenGL                  # For PyMca5.Object3D module
 h5py                      # For HDF5 file format support
 matplotlib > 1.0          # For visualization
 qtconsole                 # For interactive console plugin
-silx >= 0.8               # For NeXus NXdata support and nicer icons  
 
 # PyQt4, PyQt5 or PySide  # For PyMca5.PyMcaGui
 # Try to install a Qt binding from a wheel
