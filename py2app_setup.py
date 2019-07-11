@@ -81,6 +81,12 @@ PACKAGES.append("silx")
 SILX = True
 
 try:
+   import pygments
+   PACKAGES.append("pygments")
+except:
+   pass
+
+try:
     import fabio
     PACKAGES.append("fabio")
 except:
