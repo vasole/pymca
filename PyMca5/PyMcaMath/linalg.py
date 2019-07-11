@@ -284,7 +284,9 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
             U, s, V = numpy.linalg.svd(a, full_matrices=False)
 
         if rcond is None:
-            s_cutoff = n * numpy.finfo(numpy.float).eps
+            s_cutoff = max(m, n) * numpy.finfo(numpy.float).eps
+        elif rcond == -1:
+            s_cutoff = n * numpy.finfo(numpy.float).eps            
         else:
             s_cutoff = rcond * s[0]
         s[s < s_cutoff] = numpy.inf
