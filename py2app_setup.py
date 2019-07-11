@@ -81,7 +81,9 @@ PACKAGES.append("silx")
 SILX = True
 
 try:
+   import IPython
    import pygments
+   PACKAGES.append("IPython")
    PACKAGES.append("pygments")
 except:
    pass
