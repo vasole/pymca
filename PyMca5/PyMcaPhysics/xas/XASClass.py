@@ -1385,8 +1385,15 @@ class XASClass(object):
             else:
                 raise ValueError("Unhandled %s polynomial <%s> " % \
                                  (key, config[key]["Polynomial"]))
-            parameters[key] = linalg.lstsq(modelMatrix, y,
-                                           uncertainties=False, weight=False)[0]
+            # if only one point has been picked from region
+            if len(y) == 1:
+                if methodLower != 'constant':
+                    _logger.warning('Only one data point in region, '
+                                    'assuming constant function.')
+                parameters[key] = y
+            else:
+                parameters[key] = linalg.lstsq(modelMatrix, y,
+                                               uncertainties=False, weight=False)[0]
             fun = self._polynomDict[method]["function"]
             if key == "PreEdge":
                 funPre = fun
