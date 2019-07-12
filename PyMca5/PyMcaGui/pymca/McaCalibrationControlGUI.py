@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -39,6 +39,7 @@ else:
     QString = qt.safe_str
 
 from PyMca5 import PyMcaDirs
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 
 _logger = logging.getLogger(__name__)
 
@@ -113,43 +114,20 @@ class McaCalibrationControlGUI(qt.QWidget):
             if not os.path.exists(self.lastInputDir):
                 self.lastInputDir = None
         self.lastInputFilter = "Calibration files (*.calib)\n"
-        if sys.platform == "win32":
-            windir = self.lastInputDir
-            if windir is None:
-                windir = os.getcwd()
-            filename = qt.safe_str(qt.QFileDialog.getOpenFileName(self,
-                          "Load existing calibration file",
-                          windir,
-                          self.lastInputFilter))
-        else:
-            windir = self.lastInputDir
-            if windir is None:windir = os.getcwd()
-            filename = qt.QFileDialog(self)
-            filename.setWindowTitle("Load existing calibration file")
-            filename.setModal(1)
-            if hasattr(qt, "QStringList"):
-                strlist = qt.QStringList()
-            else:
-                strlist = []
-            tmp = [self.lastInputFilter.replace("\n","")]
-            for filetype in tmp:
-                strlist.append(filetype.replace("(","").replace(")",""))
-            if hasattr(filename, "setFilters"):
-                filename.setFilters(strlist)
-            else:
-                filename.setNameFilters(strlist)
-            filename.setFileMode(qt.QFileDialog.ExistingFile)
-            filename.setDirectory(windir)
-            ret = filename.exec_()
-            if ret:
-                if len(filename.selectedFiles()):
-                    filename = qt.safe_str(filename.selectedFiles()[0])
-                else:
-                    return
-            else:
-                return
-        if not len(filename):
+        windir = self.lastInputDir
+        if windir is None:
+            windir = os.getcwd()
+        filelist, filefilter = PyMcaFileDialogs.getFileList(self,
+                                 filetypelist=["Calibration files (*.calib)"],
+                                 message="Load existing calibration file",
+                                 currentdir=windir,
+                                 mode="OPEN",
+                                 single=True,
+                                 getfilter=True,
+                                 currentfilter=self.lastInputFilter)
+        if not len(filelist):
             return
+        filename = qt.safe_str(filelist[0])
         if len(filename) < 6:
             filename = filename + ".calib"
         elif filename[-6:] != ".calib":
@@ -168,44 +146,20 @@ class McaCalibrationControlGUI(qt.QWidget):
             if not os.path.exists(self.lastInputDir):
                 self.lastInputDir = None
         self.lastInputFilter = "Calibration files (*.calib)\n"
-        if sys.platform == "win32":
-            windir = self.lastInputDir
-            if windir is None:
-                windir = ""
-            filename= qt.safe_str(qt.QFileDialog.getSaveFileName(self,
-                          "Save a new calibration file",
-                          windir,
-                          self.lastInputFilter))
-        else:
-            windir = self.lastInputDir
-            if windir is None:windir = os.getcwd()
-            filename = qt.QFileDialog(self)
-            filename.setWindowTitle("Save a new calibration file")
-            filename.setModal(1)
-            if hasattr(qt, "QStringList"):
-                strlist = qt.QStringList()
-            else:
-                strlist = []
-            tmp = [self.lastInputFilter.replace("\n","")]
-            for filetype in tmp:
-                strlist.append(filetype.replace("(","").replace(")",""))
-            if hasattr(filename, "setFilters"):
-                filename.setFilters(strlist)
-            else:
-                filename.setNameFilters(strlist)
-            filename.setFileMode(qt.QFileDialog.AnyFile)
-            filename.setDirectory(windir)
-            ret = filename.exec_()
-            if ret:
-                if len(filename.selectedFiles()):
-                    filename = qt.safe_str(filename.selectedFiles()[0])
-                else:
-                    return
-            else:
-                return
-
-        if not len(filename):
+        windir = self.lastInputDir
+        if windir is None:
+            windir = ""
+        filelist, filefilter = PyMcaFileDialogs.getFileList(self,
+                                 filetypelist=["Calibration files (*.calib)"],
+                                 message="Save a new calibration file",
+                                 currentdir=windir,
+                                 mode="SAVE",
+                                 single=True,
+                                 getfilter=True,
+                                 currentfilter=self.lastInputFilter)
+        if not len(filelist):
             return
+        filename = qt.safe_str(filelist[0])
         if len(filename) < 6:
             filename = filename + ".calib"
         elif filename[-6:] != ".calib":
