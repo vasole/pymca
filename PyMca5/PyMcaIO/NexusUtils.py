@@ -91,7 +91,7 @@ class LocalTZinfo(datetime.tzinfo):
     """
     Local timezone
     """
-    _offset = datetime.timedelta(seconds=-time.timezone)
+    _offset = datetime.timedelta(seconds=-time.altzone)
     _dst = datetime.timedelta(0)
     _name = time.tzname[time.daylight]
 
