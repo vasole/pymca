@@ -549,12 +549,12 @@ def nxDataGetSignals(data):
     signal = data.attrs.get('signal', None)
     auxsignals = data.attrs.get('auxiliary_signals', None)
     if signal is None:
-        if auxsignals is None:
-            return []
-        else:
-            return auxsignals.tolist()
+        lst = []
     else:
-        return [signal] + auxsignals.tolist()
+        lst = [signal]
+    if auxsignals is not None:
+        lst += auxsignals.tolist()
+    return lst
 
 
 def nxDataSetSignals(data, signals):
