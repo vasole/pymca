@@ -597,7 +597,7 @@ class McaAdvancedFitBatch(object):
         if createdirs:
             if not os.path.exists(fitdir):
                 try:
-                    os.mkdir(fitdir)
+                    os.makedirs(fitdir)
                 except:
                     _logger.error("I could not create directory %s" % fitdir)
                     return
@@ -605,7 +605,7 @@ class McaAdvancedFitBatch(object):
         if createdirs:
             if not os.path.exists(fitdir):
                 try:
-                    os.mkdir(fitdir)
+                    os.makedirs(fitdir)
                 except:
                     _logger.error("I could not create directory %s" % fitdir)
                     return
@@ -622,7 +622,7 @@ class McaAdvancedFitBatch(object):
         else:
             con_extension = "_concentrations.txt"
         if not os.path.exists(self.outputdir):
-            os.mkdir(self.outputdir)
+            os.makedirs(self.outputdir)
         cfitfilename = self.os_path_join(self.outputdir,
                                 self._rootname + con_extension)
         if self.counter == 0:

@@ -1840,14 +1840,14 @@ class McaBatchWindow(qt.QWidget):
         fitdir = os.path.join(outputdir,"HTML")
         if not os.path.exists(fitdir):
             try:
-                os.mkdir(fitdir)
+                os.makedirs(fitdir)
             except:
                 _logger.warning("I could not create directory %s", fitdir)
                 return
         fitdir = os.path.join(fitdir, filename+"_HTMLDIR")
         if not os.path.exists(fitdir):
             try:
-                os.mkdir(fitdir)
+                os.makedirs(fitdir)
             except:
                 _logger.warning("I could not create directory %s", fitdir)
                 return
