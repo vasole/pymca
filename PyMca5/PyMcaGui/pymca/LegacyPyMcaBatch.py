@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -798,6 +798,7 @@ class McaBatchGUI(qt.QWidget):
                 b.wait()
                 qApp = qt.QApplication.instance()
                 qApp.processEvents()
+                qApp = None
 
             def pause():
                 if b.pleasePause:
@@ -808,8 +809,9 @@ class McaBatchGUI(qt.QWidget):
                     window.pauseButton.setText("Continue")
             window.pauseButton.clicked.connect(pause)
             window.abortButton.clicked.connect(window.close)
-            qApp = qt.QApplication.instance()
-            qApp.aboutToQuit[()].connect(cleanup)
+            window.abortButton.clicked.connect(cleanup)
+            #qApp = qt.QApplication.instance()
+            #qApp.aboutToQuit[()].connect(cleanup)
             self.__window = window
             self.__b      = b
             window.show()
@@ -840,8 +842,9 @@ class McaBatchGUI(qt.QWidget):
                     window.pauseButton.setText("Continue")
             window.pauseButton.clicked.connect(pause)
             window.abortButton.clicked.connect(window.close)
-            qApp = qt.QApplication.instance()
-            qApp.aboutToQuit[()].connect(cleanup)
+            window.abortButton.clicked.connect(cleanup)
+            #qApp = qt.QApplication.instance()
+            #qApp.aboutToQuit[()].connect(cleanup)
             window._rootname = "%s"% b._rootname
             self.__window = window
             self.__b      = b
