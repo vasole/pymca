@@ -339,3 +339,13 @@ if sys.version_info < (3,):
         return x
 else:
     safe_str = str
+
+
+class CLocaleQDoubleValidator(QDoubleValidator):
+    """
+    A QDoubleValidator using C locale
+    """
+    def __init__(self, *var):
+        QDoubleValidator.__init__(self, *var)
+        self._localeHolder = QLocale("C")
+        self.setLocale(self._localeHolder)
