@@ -457,7 +457,7 @@ class SumRulesWindow(qt.QMainWindow):
                 # electron occupation number
                 self.electronOccupation = qt.QLineEdit('e.g. 3.14')
                 self.electronOccupation.setMaximumWidth(120)
-                electronOccupationValidator = qt.QDoubleValidator(self.electronOccupation)
+                electronOccupationValidator = qt.CLocaleQDoubleValidator(self.electronOccupation)
                 electronOccupationValidator.setBottom(0.)
                 electronOccupationValidator.setTop(14.)
                 self.electronOccupation.setValidator(electronOccupationValidator)

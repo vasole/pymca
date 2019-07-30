@@ -119,7 +119,7 @@ class SceneAxesVectorsWidget(qt.QGroupBox):
             self.mainLayout.addWidget(l, i, 0)
             for c in range(3):
                 l = qt.QLineEdit(self)
-                l._v = qt.QDoubleValidator(l)
+                l._v = qt.CLocaleQDoubleValidator(l)
                 l.setValidator(l._v)
                 self._entryDict[t].append(l)
                 self.mainLayout.addWidget(l, i, c + 1)
@@ -206,7 +206,7 @@ class SceneLimitsWidget(qt.QGroupBox):
             self.mainLayout.addWidget(l, i, 0)
 
             l = qt.QLineEdit(self)
-            l._v = qt.QDoubleValidator(l)
+            l._v = qt.CLocaleQDoubleValidator(l)
             l.setValidator(l._v)
             self._entryList.append(l)
             self.mainLayout.addWidget(l, i, 1)
@@ -217,7 +217,7 @@ class SceneLimitsWidget(qt.QGroupBox):
             self.mainLayout.addWidget(l, i, 2)
 
             l = qt.QLineEdit(self)
-            l._v = qt.QDoubleValidator(l)
+            l._v = qt.CLocaleQDoubleValidator(l)
             l.setValidator(l._v)
             self._entryList.append(l)
             self.mainLayout.addWidget(l, i, 3)
@@ -228,7 +228,7 @@ class SceneLimitsWidget(qt.QGroupBox):
             self.mainLayout.addWidget(l, i, 4)
 
             l = qt.QLineEdit(self)
-            l._v = qt.QDoubleValidator(l)
+            l._v = qt.CLocaleQDoubleValidator(l)
             l.setValidator(l._v)
             self._centerList.append(l)
             self.mainLayout.addWidget(l, i, 5)
@@ -245,7 +245,7 @@ class SceneLimitsWidget(qt.QGroupBox):
             self.mainLayout.addWidget(l, i, 6)
 
             l = qt.QLineEdit(self)
-            l._v = qt.QDoubleValidator(l)
+            l._v = qt.CLocaleQDoubleValidator(l)
             l.setValidator(l._v)
             self._deltaList.append(l)
             if i == 0:
@@ -397,7 +397,7 @@ class ViewOrientationWidget(qt.QGroupBox):
             for j in range(4):
                 l = qt.QLineEdit(self)
                 l.setReadOnly(True)
-                l._v = qt.QDoubleValidator(l)
+                l._v = qt.CLocaleQDoubleValidator(l)
                 l.setValidator(l._v)
                 self._entryList.append(l)
                 self.mainLayout.addWidget(l, i, j)
@@ -409,7 +409,7 @@ class ViewOrientationWidget(qt.QGroupBox):
         self.mainLayout.addWidget(l, i, 0)
         l = qt.QLineEdit(self)
         l.setReadOnly(True)
-        l._v = qt.QDoubleValidator(l)
+        l._v = qt.CLocaleQDoubleValidator(l)
         l.setValidator(l._v)
         self._theta = l
         self.mainLayout.addWidget(l, i, 1)
@@ -420,7 +420,7 @@ class ViewOrientationWidget(qt.QGroupBox):
         self.mainLayout.addWidget(l, i, 2)
         l = qt.QLineEdit(self)
         l.setReadOnly(True)
-        l._v = qt.QDoubleValidator(l)
+        l._v = qt.CLocaleQDoubleValidator(l)
         l.setValidator(l._v)
         self._phi = l
         self.mainLayout.addWidget(l, i, 3)
@@ -476,7 +476,7 @@ class ObserverPositionWidget(qt.QGroupBox):
             self.mainLayout.addWidget(l, i, 0)
 
             l = qt.QLineEdit(self)
-            l._v = qt.QDoubleValidator(l)
+            l._v = qt.CLocaleQDoubleValidator(l)
             l.setValidator(l._v)
             self._entryList.append(l)
             self.mainLayout.addWidget(l, i, 1)

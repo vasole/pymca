@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -399,7 +399,7 @@ class RightWidget(qt.QWidget):
                 line = SimpleComboBox(self, options)
             else:
                 line = MyLineEdit(self)
-                validator = qt.QDoubleValidator(line)
+                validator = qt.CLocaleQDoubleValidator(line)
                 line.setValidator(validator)
                 if 'Zoom' in self.labelList[i]:
                     tip  = "This zoom is in physical units.\n"

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -149,7 +149,7 @@ class FitFunctionDefinition(qt.QGroupBox):
         self.stripAnchorsList = []
         for i in range(4):
             anchor = qt.QLineEdit(self.anchorsContainer)
-            anchor._v = qt.QDoubleValidator(anchor)
+            anchor._v = qt.CLocaleQDoubleValidator(anchor)
             anchor.setValidator(anchor._v)
             anchor.setText("0.0")
             anchorsContainerLayout.addWidget(anchor)
@@ -310,7 +310,7 @@ class FitControl(qt.QGroupBox):
         self.chi2Label.setText(str("Minimum chi^2 difference (%)"))
         if 0:
             self.chi2Value = qt.QLineEdit(self)
-            self.chi2Value._v = qt.QDoubleValidator(self.chi2Value)
+            self.chi2Value._v = qt.CLocaleQDoubleValidator(self.chi2Value)
             self.chi2Value.setValidator(self.chi2Value._v)
             self.chi2Value.setText(str("0.001"))
         else:
@@ -343,7 +343,7 @@ class FitControl(qt.QGroupBox):
         self.firstLabel.setText(str("First X Value "))
         self.firstLabel.setAlignment(qt.Qt.AlignVCenter | qt.Qt.AlignRight)
         self.firstValue = qt.QLineEdit(self)
-        self.firstValue._v = qt.QDoubleValidator(self.firstValue)
+        self.firstValue._v = qt.CLocaleQDoubleValidator(self.firstValue)
         self.firstValue.setValidator(self.firstValue._v)
         self.firstValue.setText(str("0."))
 
@@ -354,7 +354,7 @@ class FitControl(qt.QGroupBox):
         self.lastLabel.setText(str("Last X Value "))
         self.lastLabel.setAlignment(qt.Qt.AlignVCenter | qt.Qt.AlignRight)
         self.lastValue = qt.QLineEdit(self)
-        self.lastValue._v = qt.QDoubleValidator(self.lastValue)
+        self.lastValue._v = qt.CLocaleQDoubleValidator(self.lastValue)
         self.lastValue.setValidator(self.lastValue._v)
         self.lastValue.setText(str("1000."))
 

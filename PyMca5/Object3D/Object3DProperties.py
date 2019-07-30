@@ -269,7 +269,7 @@ class Object3DScale(qt.QGroupBox):
         for axis in ['x', 'y', 'z']:
             label = qt.QLabel("%s Scale" % axis)
             lineEdit = qt.QLineEdit(self)
-            v = qt.QDoubleValidator(lineEdit)
+            v = qt.CLocaleQDoubleValidator(lineEdit)
             lineEdit.setValidator(v)
 
             self.validatorList.append(v)

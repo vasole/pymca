@@ -70,7 +70,7 @@ class ClippingPlaneConfiguration(qt.QGroupBox):
                 line.setFixedWidth(line.fontMetrics().width('########'))
                 line.setText('0.0')
                 line.setReadOnly(True)
-                v = qt.QDoubleValidator(line)
+                v = qt.CLocaleQDoubleValidator(line)
                 line.setValidator(v)
                 self.validatorList.append(v)
                 vector.append(line)

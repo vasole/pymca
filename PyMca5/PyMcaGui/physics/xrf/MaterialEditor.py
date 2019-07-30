@@ -506,7 +506,7 @@ class MaterialGUI(qt.QWidget):
             densityLabel.setText("Default Density (g/cm3):")
             densityLabel.setAlignment(qt.Qt.AlignVCenter)
             self.__densityLine  = qt.QLineEdit(grid)
-            validator = qt.QDoubleValidator(self.__densityLine)
+            validator = qt.CLocaleQDoubleValidator(self.__densityLine)
             self.__densityLine.setValidator(validator)
 
             self.__densityLine.setReadOnly(False)
@@ -517,7 +517,7 @@ class MaterialGUI(qt.QWidget):
             thicknessLabel.setText("Default  Thickness  (cm):")
             thicknessLabel.setAlignment(qt.Qt.AlignVCenter)
             self.__thicknessLine  = qt.QLineEdit(grid)
-            validator = qt.QDoubleValidator(self.__thicknessLine)
+            validator = qt.CLocaleQDoubleValidator(self.__thicknessLine)
             self.__thicknessLine.setValidator(validator)
 
             gridLayout.addWidget(self.__thicknessLine, 1, 1)
@@ -608,7 +608,7 @@ class MaterialGUI(qt.QWidget):
         densityLabel.setAlignment(qt.Qt.AlignVCenter)
         self.__densityLine  = qt.QLineEdit(grid)
         self.__densityLine.setText("1.0")
-        validator = qt.QDoubleValidator(self.__densityLine)
+        validator = qt.CLocaleQDoubleValidator(self.__densityLine)
         self.__densityLine.setValidator(validator)
         self.__densityLine.setReadOnly(False)
 
@@ -617,7 +617,7 @@ class MaterialGUI(qt.QWidget):
         thicknessLabel.setAlignment(qt.Qt.AlignVCenter)
         self.__thicknessLine  = qt.QLineEdit(grid)
         self.__thicknessLine.setText("0.1")
-        validator = qt.QDoubleValidator(self.__thicknessLine)
+        validator = qt.CLocaleQDoubleValidator(self.__thicknessLine)
         self.__thicknessLine.setValidator(validator)
         self.__thicknessLine.setReadOnly(False)
 

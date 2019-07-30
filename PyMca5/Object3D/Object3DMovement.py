@@ -238,7 +238,7 @@ class Object3DRotationWidget(qt.QGroupBox):
             self.spinList.append(slider)
             slider.valueChanged[int].connect(self._slot)
             lineEdit = qt.QLineEdit(self)
-            v = qt.QDoubleValidator(lineEdit)
+            v = qt.CLocaleQDoubleValidator(lineEdit)
             lineEdit.setValidator(v)
             self.validatorList.append(v)
             self.l.addWidget(lineEdit, i+1, j)

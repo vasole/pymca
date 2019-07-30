@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -357,7 +357,7 @@ class RegionsWidget(qt.QGroupBox):
         label.setText("From:")
         self.fromLine = qt.QLineEdit(self)
         self.fromLine.setText("%f" % limits[0])
-        self.fromLine._v = qt.QDoubleValidator(self.fromLine)
+        self.fromLine._v = qt.CLocaleQDoubleValidator(self.fromLine)
         self.fromLine.setValidator(self.fromLine._v)
         self.mainLayout.addWidget(label, 0, 4)
         self.mainLayout.addWidget(self.fromLine, 0, 5)
@@ -367,7 +367,7 @@ class RegionsWidget(qt.QGroupBox):
         label.setText("To:")
         self.toLine = qt.QLineEdit(self)
         self.toLine.setText("%f" % limits[1])
-        self.toLine._v = qt.QDoubleValidator(self.toLine)
+        self.toLine._v = qt.CLocaleQDoubleValidator(self.toLine)
         self.toLine.setValidator(self.toLine._v)
         self.mainLayout.addWidget(label, 0, 6)
         self.mainLayout.addWidget(self.toLine, 0, 7)
