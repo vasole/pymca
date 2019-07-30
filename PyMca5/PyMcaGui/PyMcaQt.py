@@ -69,26 +69,6 @@ elif hasattr(sys, 'argv') and ('--binding=PySide' in sys.argv):
     # argv might not be defined for embedded python (e.g., in Qt designer)
     BINDING = 'PySide'
 
-elif sys.version_info < (3,):
-    # give priority to PyQt4 because of all the issues with
-    # old PyQt5 versions at ESRF
-    try:
-        try:
-            import sip
-            sip.setapi('QString', 2)
-            sip.setapi('QVariant', 2)
-            sip.setapi('QDate', 2)
-            sip.setapi('QDateTime', 2)
-            sip.setapi('QTextStream', 2)
-            sip.setapi('QTime', 2)
-            sip.setapi('QUrl', 2)
-        except:
-            _logger.info("Cannot set sip API") # Console widget not available
-        import PyQt4.QtCore
-        BINDING = "PyQt4"
-    except:
-        pass
-
 if BINDING is None: # Try the different bindings
     try:
         import PyQt5.QtCore
