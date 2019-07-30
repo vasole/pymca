@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -953,7 +953,7 @@ class PeakSearchParameters(qt.QWidget):
         text += "follow a normal distribution."
         self.yscalingText.setToolTip(text)
         for w in [self.sensitivityText, self.fwhmText, self.yscalingText]:
-            validator = qt.QDoubleValidator(w)
+            validator = qt.CLocaleQDoubleValidator(w)
             w.setValidator(validator)
 
     def setParameters(self, pars):
@@ -1259,7 +1259,7 @@ class DoubleDialog(qt.QDialog):
             text = ""
         label.setText(text)
         self.lineEdit = qt.QLineEdit(self)
-        validator = qt.QDoubleValidator(self.lineEdit)
+        validator = qt.CLocaleQDoubleValidator(self.lineEdit)
         self.lineEdit.setValidator(validator)
         if value is not None:
             self.lineEdit.setValue('%g' % value)

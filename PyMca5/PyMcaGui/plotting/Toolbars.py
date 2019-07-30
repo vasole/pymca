@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2016 European Synchrotron Radiation Facility
+# Copyright (c) 2016-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -306,7 +306,7 @@ class LimitsToolBar(qt.QToolBar):
         """Field to edit a float value."""
         def __init__(self, value=None, *args, **kwargs):
             qt.QLineEdit.__init__(self, *args, **kwargs)
-            self.setValidator(qt.QDoubleValidator())
+            self.setValidator(qt.CLocaleQDoubleValidator(None))
             self.setFixedWidth(100)
             self.setAlignment(qt.Qt.AlignLeft)
             if value is not None:

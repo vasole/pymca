@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -69,7 +69,7 @@ class PeakIdentifier(qt.QWidget):
         hbox.layout.addWidget(l1)
         self.energy=MyQLineEdit(hbox)
         self.energy.setText("%.3f" % energy)
-        self.energy._validator = qt.QDoubleValidator(self.energy)
+        self.energy._validator = qt.CLocaleQDoubleValidator(self.energy)
         self.energy.setValidator(self.energy._validator)
         self.energy.setToolTip('Press enter to validate your energy')
         hbox.layout.addWidget(self.energy)

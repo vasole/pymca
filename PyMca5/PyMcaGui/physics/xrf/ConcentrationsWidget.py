@@ -608,10 +608,10 @@ class FundamentalWidget(qt.QWidget):
         c1.layout.setSpacing(spacing)
 
         self.flux = MyQLineEdit(c1)
-        self.flux.setValidator(qt.QDoubleValidator(self.flux))
+        self.flux.setValidator(qt.CLocaleQDoubleValidator(self.flux))
 
         self.area = MyQLineEdit(c1)
-        self.area.setValidator(qt.QDoubleValidator(self.area))
+        self.area.setValidator(qt.CLocaleQDoubleValidator(self.area))
 
         c1.layout.addWidget(self.flux)
         c1.layout.addWidget(self.area)
@@ -638,7 +638,7 @@ class FundamentalWidget(qt.QWidget):
         c3.layout.setSpacing(spacing)
 
         self.time = MyQLineEdit(c3)
-        self.time.setValidator(qt.QDoubleValidator(self.time))
+        self.time.setValidator(qt.CLocaleQDoubleValidator(self.time))
 
         self.autoTimeCheckBox = qt.QCheckBox(c3)
         self.autoTimeCheckBox.setText("Use Automatic Factor")
@@ -646,7 +646,7 @@ class FundamentalWidget(qt.QWidget):
         self.autoTimeCheckBox.setToolTip("Attempt to read from the incoming data generating an error if factor not present")
 
         self.distance = MyQLineEdit(c3)
-        self.distance.setValidator(qt.QDoubleValidator(self.distance))
+        self.distance.setValidator(qt.CLocaleQDoubleValidator(self.distance))
 
         c3.layout.addWidget(self.time, 0, 0)
         c3.layout.addWidget(self.autoTimeCheckBox, 0, 1)

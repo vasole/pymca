@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -205,7 +205,7 @@ class _DialogBox(qt.QDialog):
         self.pollTimeoutLineEdit = qt.QLineEdit(str(self._plugin.pollTimeout))
         # Bounds timeout to avoid to small timeout
         self.pollTimeoutLineEdit.setValidator(
-            qt.QDoubleValidator(0.02, 1000.0, 2))
+            qt.CLocaleQDoubleValidator(0.02, 1000.0, 2))
         pollLayout.addRow(pollTimeoutLabel, self.pollTimeoutLineEdit)
 
         self.pollLoadBtn = qt.QPushButton(self.LOAD)

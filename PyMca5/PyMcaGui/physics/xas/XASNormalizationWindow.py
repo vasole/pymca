@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -92,7 +92,7 @@ class XASNormalizationParametersWidget(qt.QWidget):
         buttonGroup.setExclusive(True)
         userEnergy = qt.QLineEdit(edgeGroupBox)
         userEnergy.setEnabled(False)
-        validator = qt.QDoubleValidator(userEnergy)
+        validator = qt.CLocaleQDoubleValidator(userEnergy)
         userEnergy.setValidator(validator)
         edgeGroupBoxLayout.addWidget(autoButton, 0, 0)
         edgeGroupBoxLayout.addWidget(userButton, 1, 0)
@@ -140,7 +140,7 @@ class XASNormalizationParametersWidget(qt.QWidget):
                 self.widgetDict[key][text] = qt.QLineEdit(regionsGroupBox)
                 self.widgetDict[key][text].editingFinished.connect( \
                              self._regionParameterChanged)
-                validator = qt.QDoubleValidator(self.widgetDict[key][text])
+                validator = qt.CLocaleQDoubleValidator(self.widgetDict[key][text])
                 self.widgetDict[key][text].setValidator(validator)
                 regionsGroupBoxLayout.addWidget(label, i, c)
                 regionsGroupBoxLayout.addWidget(self.widgetDict[key][text], i, c + 1)

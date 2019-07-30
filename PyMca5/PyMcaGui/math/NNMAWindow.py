@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -79,7 +79,7 @@ class NNMAParametersDialog(qt.QDialog):
         label = qt.QLabel(self.nnmaConfiguration)
         label.setText('Tolerance (0<eps<1000:')
         self._tolerance = qt.QLineEdit(self.nnmaConfiguration)
-        validator = qt.QDoubleValidator(self._tolerance)
+        validator = qt.CLocaleQDoubleValidator(self._tolerance)
         self._tolerance.setValidator(validator)
         self._tolerance._validator = validator
         self._tolerance.setText("0.001")

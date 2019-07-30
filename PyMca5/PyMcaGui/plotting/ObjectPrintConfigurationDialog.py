@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -71,7 +71,7 @@ class ObjectPrintConfigurationWidget(qt.QWidget):
         label.setText("X Offset:")
         self.mainLayout.addWidget(label, 2, 0)
         self._xOffset = qt.QLineEdit(self)
-        validator = qt.QDoubleValidator(None)
+        validator = qt.CLocaleQDoubleValidator(None)
         self._xOffset.setValidator(validator)
         self._xOffset.setText("0.0")
         self.mainLayout.addWidget(self._xOffset, 2, 1)
@@ -81,7 +81,7 @@ class ObjectPrintConfigurationWidget(qt.QWidget):
         label.setText("Y Offset:")
         self.mainLayout.addWidget(label, 2, 2)
         self._yOffset = qt.QLineEdit(self)
-        validator = qt.QDoubleValidator(None)
+        validator = qt.CLocaleQDoubleValidator(None)
         self._yOffset.setValidator(validator)
         self._yOffset.setText("0.0")
         self.mainLayout.addWidget(self._yOffset, 2, 3)
@@ -91,7 +91,7 @@ class ObjectPrintConfigurationWidget(qt.QWidget):
         label.setText("Width:")
         self.mainLayout.addWidget(label, 3, 0)
         self._width = qt.QLineEdit(self)
-        validator = qt.QDoubleValidator(None)
+        validator = qt.CLocaleQDoubleValidator(None)
         self._width.setValidator(validator)
         self._width.setText("0.5")
         self.mainLayout.addWidget(self._width, 3, 1)
@@ -101,7 +101,7 @@ class ObjectPrintConfigurationWidget(qt.QWidget):
         label.setText("Height:")
         self.mainLayout.addWidget(label, 3, 2)
         self._height = qt.QLineEdit(self)
-        validator = qt.QDoubleValidator(None)
+        validator = qt.CLocaleQDoubleValidator(None)
         self._height.setValidator(validator)
         self._height.setText("0.5")
         self.mainLayout.addWidget(self._height, 3, 3)
