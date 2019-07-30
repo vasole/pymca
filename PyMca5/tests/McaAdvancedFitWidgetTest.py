@@ -39,7 +39,7 @@ import unittest
 import PyMca5.PyMcaGui.PyMcaQt as qt
 from PyMca5.PyMcaGui.misc.testutils import TestCaseQt
 
-if os.environ.get('WITH_OPENGL_TEST', 'True') == 'False':
+if os.environ.get('WITH_OPENGL_TEST', 'True') in ['False', '0', 0, 'FALSE']:
     OPENGL = False
 else:
     try:
@@ -203,8 +203,8 @@ def getSuite(auto=True):
     else:
         # use a predefined order
         testSuite.addTest(TestMcaAdvancedFitWidget("testInteractionMpl"))
-        testSuite.addTest(TestMcaAdvancedFitWidget("testInteractionOpenGL"))
         testSuite.addTest(TestMcaAdvancedFitWidget("testInteractionSilxMpl"))
+        testSuite.addTest(TestMcaAdvancedFitWidget("testInteractionOpenGL"))
         testSuite.addTest(TestMcaAdvancedFitWidget("testInteractionSilxGL"))
     return testSuite
 
