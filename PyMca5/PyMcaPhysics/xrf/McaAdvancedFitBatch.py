@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -671,8 +671,16 @@ class McaAdvancedFitBatch(object):
             if bOutput and result is not None:
                 result['ydata0'] = y
                 if not self.outbuffer.hasAllocatedMemory():
-                    self._allocateMemoryFit(result, concentrations)
-                self._storeFitResult(result, concentrations)
+                    if self._concentrations and (concentrations is None):
+                        # if concentrations were requested but unsuccessful on the first MCA
+                        # the memory allocation crashes the program
+                        _logger.error("Cannot allocate memory due to error on concentrations")
+                    else:
+                        self._allocateMemoryFit(result, concentrations)
+                        self._storeFitResult(result, concentrations)
+                        _logger.info("Memory allocated")
+                else:
+                    self._storeFitResult(result, concentrations)
         self.counter += 1
 
     def __fitOneMca(self,x,y,filename,key,info=None):
@@ -827,6 +835,7 @@ class McaAdvancedFitBatch(object):
         except:
             _logger.error("error in concentrations")
             _logger.error(str(sys.exc_info()[0:-1]))
+            concentrations = None
         return result, concentrations
 
     def _updateFitFile(self, concentrations, outfile):
