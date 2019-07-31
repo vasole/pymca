@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -262,8 +262,9 @@ class ConcentrationsTool(object):
             elif attenuator.upper() == "DETECTOR":
                 detectoratt = fitresult['result']['config']['attenuators'][attenuator][1:]
             else:
-                if len(fitresult['result']['config']['attenuators'][attenuator][1:]) == 4:
-                   fitresult['result']['config']['attenuators'][attenuator].append(1.0)
+                if len(fitresult['result']['config']['attenuators'][attenuator]) == 4:
+                    # using an old fit configuration file without funny filters
+                    fitresult['result']['config']['attenuators'][attenuator].append(1.0)
                 if abs(fitresult['result']['config']['attenuators'][attenuator][4]-1.0) > 1.0e-10:
                     #funny attenuator
                     funnyfilters.append(fitresult['result']['config']['attenuators']\
