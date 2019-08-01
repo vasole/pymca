@@ -1,3 +1,10 @@
+VERSION 5.5.1
+-------------
+
+- Qt binding selection tries PyQt5, PySide2, PyQt4 and PySide in that order.
+
+- PyMcaBatch: Correct HTML report generation.
+
 VERSION 5.5.0
 -------------
 
