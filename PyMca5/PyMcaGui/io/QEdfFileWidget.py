@@ -417,6 +417,7 @@ class QEdfFileWidget(qt.QWidget):
         if flag:
             self.aspectButton.setIcon(self.solidEllipseIcon)
             self.aspectButton.setToolTip("Set free data aspect ratio")
+            self._keepDataAspectRatioFlag = True
         else:
             self._keepDataAspectRatioFlag = False
             self.aspectButton.setIcon(self.solidCircleIcon)
