@@ -48,6 +48,15 @@ else:
     except:
         OPENGL = False
 
+# Debian packaging for armhf does not support OpenGL extensions in the
+# implementation of the packaging machine. Disable the OpenGL tests.
+ARM32 = False
+if OPENGL:
+    import platform
+    if platform.machine().startswith("arm"):
+        if platform.architecture()[0].startswith('32'):
+            ARM32 = True
+
 try:
     import silx.gui
     SILX = True
@@ -68,7 +77,7 @@ class TestMcaAdvancedFitWidget(TestCaseQt):
 
         # read the data
         from PyMca5 import PyMcaDataDir
-        dataDir = PyMcaDataDir.PYMCA_DATA_DIR        
+        dataDir = PyMcaDataDir.PYMCA_DATA_DIR
         from PyMca5.PyMcaIO import specfilewrapper as specfile
         from PyMca5.PyMcaPhysics.xrf import ClassMcaTheory
         from PyMca5.PyMcaPhysics.xrf import ConcentrationsTool
@@ -164,6 +173,7 @@ class TestMcaAdvancedFitWidget(TestCaseQt):
     def testInteractionSilxMpl(self, backend="silx-mpl"):
         return self._workOnBackend(backend)
 
+    @unittest.skipIf(ARM32, "OpenGL tests disabled on ARM-32 bit")
     @unittest.skipUnless(SILX and OPENGL, "silx and/or OpenGL disabled")
     def testInteractionSilxGL(self, backend="silx-gl"):
         return self._workOnBackend(backend)
@@ -171,6 +181,7 @@ class TestMcaAdvancedFitWidget(TestCaseQt):
     def testInteractionMpl(self, backend="mpl"):
         return self._workOnBackend(backend)
 
+    @unittest.skipIf(ARM32, "OpenGL tests disabled on ARM-32 bit")
     @unittest.skipUnless(OPENGL, "OpenGL not imported or disabled")
     def testInteractionOpenGL(self, backend="gl"):
         return self._workOnBackend(backend)
@@ -183,7 +194,7 @@ def getSuite(auto=True):
         skip_msg = 'Widgets tests disabled (DISPLAY env. variable not set)'
         with_qt_test = False
 
-    elif os.environ.get('WITH_QT_TEST', 'True') == 'False':
+    elif os.environ.get('WITH_QT_TEST', 'True') in ['False', 'FALSE', 0, "0"]:
         skip_msg = "Widgets tests skipped by WITH_QT_TEST env var"
         with_qt_test = False
 
@@ -216,5 +227,8 @@ if __name__ == '__main__':
         auto = False
     else:
         auto = True
+    if os.environ.get('WITH_QT_TEST', 'True') not in ['False', 'FALSE', 0, "0"]:
+        app = qt.QApplication([])
     result = test(auto)
+    app = None
     sys.exit(not result.wasSuccessful())
