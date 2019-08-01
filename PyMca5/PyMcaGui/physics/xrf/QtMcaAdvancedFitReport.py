@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -90,7 +90,7 @@ class QtMcaAdvancedFitReport:
             htmltext={}
         self.otherhtmltext=htmltext
         if plotdict is None:
-            self.plotDict = {'logy':True,
+            self.plotDict = {'logy':None,
                              'xmin':None,
                              'xmax':None,
                              'ymin':None,
@@ -589,6 +589,13 @@ class QtMcaAdvancedFitReport:
             ax = fig.add_axes([.15, .15, .8, .8])
             ax.set_axisbelow(True)
             logplot = self.plotDict.get('logy', True)
+            if logplot is None:
+                if (ddict['result']['ydata'].max() - ddict['result']['ydata'].min()) < 200:
+                    logplot = False
+                elif ddict['result']['yfit'].min() < 0.01:
+                    logplot = False
+                else:
+                    logplot = True
             if logplot:
                 axplot = ax.semilogy
             else:
@@ -612,6 +619,8 @@ class QtMcaAdvancedFitReport:
                 legend = ax.legend(legendlist, loc=0,
                                    prop = fontproperties, labelspacing=0.02)
         except ValueError:
+            # It seems this error is not caught with matplotlib 2.2.4 and the
+            # report crashes instead of switching to a linear plot
             fig = Figure(figsize=(6,3)) # in inches
             canvas = FigureCanvas(fig)
             ax = fig.add_axes([.15, .15, .8, .8])
