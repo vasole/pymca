@@ -1,4 +1,4 @@
-dist: xenial
+dist: bionic
 
 language: python
 
@@ -10,7 +10,7 @@ matrix:
               - BUILD_COMMAND=sdist
               - QT_BINDING=PySide2
 
-        - python: 3.7
+        - python: 3.8-dev
           os: linux
           env:
               - BUILD_COMMAND=sdist
@@ -82,7 +82,7 @@ script:
     - pip install matplotlib
     - pip install fisx
     - pip install h5py
-    - pip install silx --pre --find-links https://silx.gitlab-pages.esrf.fr/bob/silx/
+    # - pip install silx --pre --find-links https://silx.gitlab-pages.esrf.fr/bob/silx/
     - if [[ ! -z $QT_BINDING ]];
       then
           pip install $QT_BINDING;
