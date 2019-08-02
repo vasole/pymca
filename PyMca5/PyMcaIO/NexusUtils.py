@@ -91,7 +91,7 @@ class LocalTZinfo(datetime.tzinfo):
     """
     Local timezone
     """
-    _offset = datetime.timedelta(seconds=-time.timezone)
+    _offset = datetime.timedelta(seconds=-time.altzone)
     _dst = datetime.timedelta(0)
     _name = time.tzname[time.daylight]
 
@@ -549,12 +549,12 @@ def nxDataGetSignals(data):
     signal = data.attrs.get('signal', None)
     auxsignals = data.attrs.get('auxiliary_signals', None)
     if signal is None:
-        if auxsignals is None:
-            return []
-        else:
-            return auxsignals.tolist()
+        lst = []
     else:
-        return [signal] + auxsignals.tolist()
+        lst = [signal]
+    if auxsignals is not None:
+        lst += auxsignals.tolist()
+    return lst
 
 
 def nxDataSetSignals(data, signals):
@@ -672,18 +672,20 @@ def selectDatasets(root, match=None):
     return datasets
 
 
-def markDefault(h5group):
+def markDefault(h5node, nxentrylink=True):
     """
     Mark HDF5 Dataset or Group as default (parents get notified as well)
 
-    :param h5py.Group h5group:
+    :param h5py.Group or h5py.Dataset h5node:
+    :param bool nxentrylink: Use a direct link for the default of an NXentry instance
     """
-    path = h5group
+    path = h5node
     nxclass = nxClass(path)
     nxdata = None
     for parent in iterup(path.parent):
         parentnxclass = nxClass(parent)
         if parentnxclass == u'NXdata':
+            # path becomes default signal of parent
             signals = nxDataGetSignals(parent)
             signal = h5Name(path)
             if signal in signals:
@@ -691,18 +693,38 @@ def markDefault(h5group):
             nxDataSetSignals(parent, [signal]+signals)
             updated(parent)
         elif nxclass == u'NXentry':
+            # Set this entry as default of root
             parent.attrs['default'] = h5Name(path)
             updated(parent)
         elif parentnxclass is not None:
             if nxclass == u'NXdata':
+                # Select the NXdata for plotting
                 nxdata = path
             if nxdata:
-                if parentnxclass == u'NXentry':
-                    if isLink(parent, DEFAULT_PLOT_NAME):
-                        del parent[DEFAULT_PLOT_NAME]
-                    parent[DEFAULT_PLOT_NAME] = h5py.SoftLink(nxdata.name)
-                    parent.attrs['default'] = DEFAULT_PLOT_NAME
+                if parentnxclass == u'NXentry' and nxentrylink:
+                    # Instead of setting the default of parent to the selected NXdata,
+                    # create a direct link to the select NXData and set that link as
+                    # default of the parent
+                    plotname = DEFAULT_PLOT_NAME
+                    if isLink(parent, plotname):
+                        # parent already has plotname: delete because its merely a link
+                        del parent[plotname]
+                    if plotname in parent:
+                        # parent already has plotname: find non-existent plotname
+                        # unless plotname is the selected NXdata, in which case
+                        # nothing has to be done
+                        if parent[plotname].name != nxdata.name:
+                            fmt = plotname + '{}'
+                            i = 0
+                            while fmt.format(i) in parent:
+                                i += 1
+                            plotname = fmt.format(i)
+                            parent[plotname] = h5py.SoftLink(nxdata.name)
+                    else:
+                        parent[plotname] = h5py.SoftLink(nxdata.name)
+                    parent.attrs['default'] = plotname
                 else:
+                    # Set default of parent to the selected NXdata
                     parent.attrs['default'] = nxdata.name[len(parent.name)+1:]
                 updated(parent)
             if parentnxclass == u'NXroot':
