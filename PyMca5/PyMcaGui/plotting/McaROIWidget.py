@@ -406,8 +406,9 @@ class McaROITable(qt.QTableWidget):
         for label in self.labels:
             self.resizeColumnToContents(i)
             i=i+1
-        self.sortByColumn(2, qt.Qt.AscendingOrder)
         self.setSortingEnabled(True)
+        self.sortByColumn(2, qt.Qt.AscendingOrder)
+        self.setSortingEnabled(False)
         for i in range(len(self.roilist)):
             key = str(self.item(i, 0).text())
             self.roilist[i] = key
@@ -464,8 +465,9 @@ class McaROITable(qt.QTableWidget):
                     key=qttable.QTableItem(self,qttable.QTableItem.Never,field)
             self.setItem(line,col,key)
             col=col+1
-        self.sortByColumn(2, qt.Qt.AscendingOrder)
         self.setSortingEnabled(True)
+        self.sortByColumn(2, qt.Qt.AscendingOrder)
+        self.setSortingEnabled(False)
         for i in range(len(self.roilist)):
             nkey = str(self.text(i,0))
             self.roilist[i] = nkey
