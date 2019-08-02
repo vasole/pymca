@@ -341,6 +341,9 @@ class McaROITable(qt.QTableWidget):
         self.cellChanged[(int, int)].connect(self._cellChangedSlot)
         verticalHeader = self.verticalHeader()
         verticalHeader.sectionClicked[int].connect(self._rowChangedSlot)
+        horizontalHeader = self.horizontalHeader()
+        if hasattr(horizontalHeader, "sectionPressed"):
+            horizontalHeader.sectionPressed[int].connect(self._sortColumnSlot)
 
     def build(self):
         self.fillFromROIDict(roilist=self.roilist,roidict=self.roidict)
@@ -512,6 +515,15 @@ class McaROITable(qt.QTableWidget):
     def _rowChangedSlot(self, row):
         self._emitSelectionChangedSignal(row, 0)
 
+    def _sortColumnSlot(self, col):
+        if col not in [0, 2]:
+            _logger.info("Sorting on column %d disabled" % col)
+        try:
+            self.setSortingEnabled(True)
+            self.sortByColumn(col, qt.Qt.AscendingOrder)
+        finally:
+            self.setSortingEnabled(False)
+
     def _cellChangedSlot(self, row, col):
         _logger.debug("_cellChangedSlot(%d, %d)", row, col)
         if self.building:
@@ -531,6 +543,18 @@ class McaROITable(qt.QTableWidget):
         try:
             value = float(text)
         except:
+            # recover old value
+            oldItem = self.item(row, 0)
+            if oldItem is None:
+                return
+            text = str(oldItem.text())
+            if text in self.roidict:
+                if col == 2:
+                    key = 'from'
+                elif col == 3:
+                    key = 'to'
+                if key in self.roidict[text]:
+                    item.setText("%6g" % self.roidict[text][key])
             return
         if row >= len(self.roilist):
             _logger.debug("deleting???")
