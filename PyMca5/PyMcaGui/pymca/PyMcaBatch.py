@@ -2177,6 +2177,7 @@ def main():
         launchThread(thread, window)
         
     app.exec_()
+    app = None
 
 if __name__ == "__main__":
     main()
