@@ -341,6 +341,11 @@ class McaROITable(qt.QTableWidget):
         self.cellChanged[(int, int)].connect(self._cellChangedSlot)
         verticalHeader = self.verticalHeader()
         verticalHeader.sectionClicked[int].connect(self._rowChangedSlot)
+        horizontalHeader = self.horizontalHeader()
+        if hasattr(horizontalHeader, "sectionPressed"):
+            if hasattr(horizontalHeader, "setToolTip"):
+                horizontalHeader.setToolTip("Click ROI or From to sort table")
+            horizontalHeader.sectionPressed[int].connect(self._sortColumnSlot)
 
     def build(self):
         self.fillFromROIDict(roilist=self.roilist,roidict=self.roidict)
@@ -350,6 +355,7 @@ class McaROITable(qt.QTableWidget):
         line0  = 0
         self.roilist = []
         self.roidict = {}
+        self.setSortingEnabled(False)
         for key in roilist:
             if key in roidict.keys():
                 roi = roidict[key]
@@ -379,7 +385,11 @@ class McaROITable(qt.QTableWidget):
                 for field in fields:
                     key2 = self.item(line, col)
                     if key2 is None:
-                        key2 = qt.QTableWidgetItem(field,
+                        if col == 2:
+                            key2 = MyQTableWidgetItem(field,
+                                                   qt.QTableWidgetItem.Type)
+                        else:
+                            key2 = qt.QTableWidgetItem(field,
                                                    qt.QTableWidgetItem.Type)
                         self.setItem(line,col,key2)
                     else:
@@ -401,7 +411,9 @@ class McaROITable(qt.QTableWidget):
         for label in self.labels:
             self.resizeColumnToContents(i)
             i=i+1
+        self.setSortingEnabled(True)
         self.sortByColumn(2, qt.Qt.AscendingOrder)
+        self.setSortingEnabled(False)
         for i in range(len(self.roilist)):
             key = str(self.item(i, 0).text())
             self.roilist[i] = key
@@ -410,11 +422,18 @@ class McaROITable(qt.QTableWidget):
             self.selectRow(0)
         else:
             if currentroi in self.roidict.keys():
-                self.selectRow(self.roidict[currentroi]['line'])
-                _logger.debug("Qt4 ensureCellVisible to be implemented")
+                line = self.roidict[currentroi]['line']
+                self.selectRow(line)
+                if hasattr(self, "ensureCellVisible"):
+                    self.ensureCellVisible(line, 0)
+                elif hasattr(self, "scrollToItem"):
+                    item = self.item(line, 0)
+                    if item:
+                        self.scrollToItem(item)
         self.building = False
 
     def addROI(self, roi, key=None):
+        self.setSortingEnabled(False)
         nlines = self.numRows()
         self.setNumRows(nlines+1)
         line = nlines
@@ -451,16 +470,23 @@ class McaROITable(qt.QTableWidget):
                     key=qttable.QTableItem(self,qttable.QTableItem.Never,field)
             self.setItem(line,col,key)
             col=col+1
+        self.setSortingEnabled(True)
         self.sortByColumn(2, qt.Qt.AscendingOrder)
+        self.setSortingEnabled(False)
         for i in range(len(self.roilist)):
             nkey = str(self.text(i,0))
             self.roilist[i] = nkey
             self.roidict[nkey]['line'] = i
         self.selectRow(self.roidict[key]['line'])
-        self.ensureCellVisible(self.roidict[key]['line'],0)
+        if hasattr(self, "ensureCellVisible"):
+            self.ensureCellVisible(self.roidict[key]['line'],0)
+        elif hasattr(self, "scrollToItem"):
+            item = self.item(self.roidict[key]['line'], 0)
+            if item:
+                self.scrollToItem(item)
 
     def getROIListAndDict(self):
-        return self.roilist,self.roidict
+        return self.roilist, self.roidict
 
     def _mySlot(self, *var, **kw):
         #selection changed event
@@ -491,6 +517,16 @@ class McaROITable(qt.QTableWidget):
     def _rowChangedSlot(self, row):
         self._emitSelectionChangedSignal(row, 0)
 
+    def _sortColumnSlot(self, col):
+        if col not in [0, 2]:
+            _logger.info("Sorting on column %d disabled" % col)
+            return
+        try:
+            self.setSortingEnabled(True)
+            self.sortByColumn(col, qt.Qt.AscendingOrder)
+        finally:
+            self.setSortingEnabled(False)
+
     def _cellChangedSlot(self, row, col):
         _logger.debug("_cellChangedSlot(%d, %d)", row, col)
         if self.building:
@@ -510,6 +546,18 @@ class McaROITable(qt.QTableWidget):
         try:
             value = float(text)
         except:
+            # recover old value
+            oldItem = self.item(row, 0)
+            if oldItem is None:
+                return
+            text = str(oldItem.text())
+            if text in self.roidict:
+                if col == 2:
+                    key = 'from'
+                elif col == 3:
+                    key = 'to'
+                if key in self.roidict[text]:
+                    item.setText("%6g" % self.roidict[text][key])
             return
         if row >= len(self.roilist):
             _logger.debug("deleting???")
@@ -614,6 +662,13 @@ class SimpleComboBox(qt.QComboBox):
 
         def getCurrent(self):
             return   self.currentItem(),str(self.currentText())
+
+class MyQTableWidgetItem(qt.QTableWidgetItem):
+    def __lt__(self, other):
+        try:
+            return float(self.text()) < float(other.text())
+        except:
+            return self.text() < other.text()
 
 if __name__ == '__main__':
     app = qt.QApplication([])
