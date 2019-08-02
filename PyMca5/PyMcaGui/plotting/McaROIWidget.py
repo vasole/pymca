@@ -343,6 +343,8 @@ class McaROITable(qt.QTableWidget):
         verticalHeader.sectionClicked[int].connect(self._rowChangedSlot)
         horizontalHeader = self.horizontalHeader()
         if hasattr(horizontalHeader, "sectionPressed"):
+            if hasattr(horizontalHeader, "setToolTip"):
+                horizontalHeader.setToolTip("Click ROI or From to sort table")
             horizontalHeader.sectionPressed[int].connect(self._sortColumnSlot)
 
     def build(self):
@@ -518,6 +520,7 @@ class McaROITable(qt.QTableWidget):
     def _sortColumnSlot(self, col):
         if col not in [0, 2]:
             _logger.info("Sorting on column %d disabled" % col)
+            return
         try:
             self.setSortingEnabled(True)
             self.sortByColumn(col, qt.Qt.AscendingOrder)
