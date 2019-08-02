@@ -367,6 +367,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 self.mainTabWidget = qt.QTabWidget(self.mdi)
                 self.mainTabWidget.setWindowTitle("Main Window")
                 self.mcaWindow = McaWindow.McaWindow(backend=backend)
+                self.mcaWindow.showRoiWidget(qt.Qt.BottomDockWidgetArea)
+
                 self.scanWindow = ScanWindow.ScanWindow(info=True,
                                                         backend=backend)
                 self.scanWindow._togglePointsSignal()
