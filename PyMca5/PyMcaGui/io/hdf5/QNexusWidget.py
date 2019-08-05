@@ -423,6 +423,10 @@ class QNexusWidget(qt.QWidget):
         self.hdf5Widget.setModel(model)
         for source in self.data._sourceObjectList:
             self.hdf5Widget.model().appendPhynxFile(source, weakreference=True)
+        if len(self.data._sourceObjectList) == 1:
+            # only one file, expand by default
+            if hasattr(self.hdf5Widget, "expandToDepth"):
+                self.hdf5Widget.expandToDepth(0)
 
     def setFile(self, filename):
         self._data = self.hdf5Widget.model().openFile(filename, weakreference=True)
