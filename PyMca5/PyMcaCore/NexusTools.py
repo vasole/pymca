@@ -133,7 +133,6 @@ def getTitle(h5file, path):
     It returns an emptry string of not title is found
     """
     entry = h5file[getEntryName(path)]
-    titlePath = posixpath.join(entryName, "title")
     title = ''
     if "title" in entry:
         title = entry["title"][()]

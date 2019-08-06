@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -86,32 +86,42 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
         x, y, legend, info = self.getActiveCurve()
         self._x = x[:]
         self._y = y[:]
-        if 'Header' not in info:
+        if 'Header' in info:
+            # SPEC
+            command = info['Header'][0]
+        elif "title" in info:
+            command = info["title"]
+        else:
+            raise ValueError("Active curve does not seem to be a mesh scan")
+        if "mesh" not in command:
             raise ValueError("Active curve does not seem to be a mesh scan")
 
-        header = info['Header'][0]
-
-        item = header.split()
-        if item[2] not in ['mesh', 'hklmesh']:
-            raise ValueError("Active curve does not seem to be a mesh scan")
-
+        idx = command.index("mesh")
+        item = command[idx:].split()
         self._xLabel = self.getGraphXLabel()
         self._yLabel = self.getGraphYLabel()
 
-        self._motor0Mne = item[3]
-        self._motor1Mne = item[7]
+        m0idx = 1
+        m1idx = 5
+        self._motor0Mne = item[m0idx]
+        self._motor1Mne = item[m1idx]
 
-        #print("Scanned motors are %s and %s" % (motor0Mne, motor1Mne))
+        print("Scanned motors are %s and %s" % (self._motor0Mne, self._motor1Mne))
 
         #Assume an EXACTLY regular mesh for both motors
-        self._motor0 = numpy.linspace(float(item[4]), float(item[5]), int(item[6])+1)
-        self._motor1 = numpy.linspace(float(item[8]), float(item[9]), int(item[10])+1)
-
+        self._motor0 = numpy.linspace(float(item[m0idx + 1]),
+                                      float(item[m0idx + 2]),
+                                      int(item[m0idx + 3])+1)
+        self._motor1 = numpy.linspace(float(item[m1idx + 1]),
+                                      float(item[m1idx + 2]),
+                                      int(item[m1idx + 3])+1)
         #Didier's contribution: Try to do something if scan has been interrupted
-        if y.size < (int(item[6])+1) * (int(item[10])+1):
+        if y.size < (int(item[m0idx + 3])+1) * (int(item[m1idx + 3])+1):
             _logger.warning("WARNING: Incomplete mesh scan")
-            self._motor1 = numpy.resize(self._motor1,(y.size/(int(item[6])+1),1))
-            y = numpy.resize(y,((y.size/(int(item[6])+1)*(int(item[6])+1)),1))
+            self._motor1 = numpy.resize(self._motor1,
+                                        (y.size // (int(item[m0idx + 3])+1),1))
+            y = numpy.resize(y,((y.size // (int(item[m0idx + 3])+1) * \
+                                 (int(item[m0idx + 3])+1)),1))
 
         try:
             if xLabel.upper() == motor0Mne.upper():
