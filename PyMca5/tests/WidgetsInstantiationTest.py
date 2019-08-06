@@ -124,6 +124,20 @@ class TestMcaAdvancedFit(TestCaseQt):
         from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
         PyMcaPrintPreview.resetSingletonPrintPreview()
 
+
+class TestPyMcaMain(TestCaseQt):
+    def setUp(self):
+        super(TestPyMcaMain, self).setUp()
+
+    def testShow(self):
+        from PyMca5.PyMcaGui.pymca import PyMcaMain
+        widget = PyMcaMain.PyMcaMain()
+        widget.show()
+        self.qapp.processEvents()
+        from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
+        PyMcaPrintPreview.resetSingletonPrintPreview()
+
+
 def getSuite(auto=True):
     test_suite = unittest.TestSuite()
 
@@ -154,6 +168,7 @@ def getSuite(auto=True):
                         TestScanWindow,
                         TestMcaWindow,
                         TestMcaAdvancedFit,
+                        TestPyMcaMain,
                         ):
         test_suite.addTest(
             unittest.defaultTestLoader.loadTestsFromTestCase(TestCaseCls))
@@ -167,5 +182,7 @@ if __name__ == '__main__':
         auto = False
     else:
         auto = True
+    app = qt.QApplication([])
     result = test(auto)
+    app = None
     sys.exit(not result.wasSuccessful())
