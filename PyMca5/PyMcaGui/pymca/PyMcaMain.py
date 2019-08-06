@@ -252,7 +252,7 @@ try:
        ("PyQt5.QtOpenGL") in sys.modules:
         OBJECT3D = True
 except:
-    _logger.debug("pyopengl not installed")
+    _logger.info("pyopengl not installed")
     OBJECT3D = False
 
 
@@ -265,15 +265,15 @@ except ImportError:
 
 if isSilxGLAvailable:
     SceneGLWindow = PyMca5.PyMcaGui.pymca.SilxGLWindow
-    try:
-        from PyMca5.PyMcaGui.pymca import SilxScatterWindow
-    except:
-        _logger.info("Cannot import SilxScatterWindow")
-
 elif OBJECT3D:
     SceneGLWindow = PyMcaGLWindow
 
-_logger.debug("SilxGL availability: %s", isSilxGLAvailable)
+try:
+    from PyMca5.PyMcaGui.pymca import SilxScatterWindow
+except:
+    _logger.info("Cannot import SilxScatterWindow")
+
+_logger.info("SilxGL availability: %s", isSilxGLAvailable)
 
 # check that OpenGL is actually supported (ESRF rnice problems)
 OPENGL_DRIVERS_OK = True
