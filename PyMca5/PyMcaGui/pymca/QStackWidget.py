@@ -37,6 +37,12 @@ import logging
 _logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
+    if "HDF5_USE_FILE_LOCKING" not in os.environ:
+        if "h5py" in sys.modules:
+             _logger.warning("h5py already imported")
+        os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
+        _logger.info("%s set to %s" % ("HDF5_USE_FILE_LOCKING",
+                                       os.environ["HDF5_USE_FILE_LOCKING"]))
     # we have to get the Qt binding prior to import PyMcaQt
     import getopt
     options = ''
