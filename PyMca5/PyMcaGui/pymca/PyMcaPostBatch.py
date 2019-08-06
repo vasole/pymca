@@ -30,6 +30,8 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
+import logging
+_logger = logging.getLogger(__name__)
 from PyMca5 import PyMcaDirs
 from PyMca5.PyMcaGui import PyMcaFileDialogs
 from PyMca5.PyMcaGui import RGBCorrelator
@@ -78,7 +80,6 @@ class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
 
 
 def main():
-    import logging
     from PyMca5.PyMcaCore.LoggingLevel import getLoggingLevel
     sys.excepthook = qt.exceptionHandler
     app = qt.QApplication([])
@@ -125,4 +126,10 @@ def main():
 
 
 if __name__ == "__main__":
+    if "HDF5_USE_FILE_LOCKING" not in os.environ:
+        if "h5py" in sys.modules:
+             _logger.warning("h5py already imported")
+        os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
+        _logger.info("%s set to %s" % ("HDF5_USE_FILE_LOCKING",
+                                       os.environ["HDF5_USE_FILE_LOCKING"]))
     main()
