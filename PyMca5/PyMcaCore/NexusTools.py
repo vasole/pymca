@@ -127,6 +127,25 @@ def getEntryName(path):
         candidate = posixpath.dirname(entry)
     return entry
 
+def getTitle(h5file, path):
+    """
+    Retrieve the title associated to the entry asoociated to the provided path
+    It returns an emptry string of not title is found
+    """
+    entry = h5file[getEntryName(path)]
+    titlePath = posixpath.join(entryName, "title")
+    title = ''
+    if "title" in entry:
+        title = entry["title"][()]
+        if hasattr(title, "dtype"):
+            _logger.warning("entry title should be a string not an array")
+            if hasattr(title, "__len__"):
+                if len(title) == 1:
+                    title = title[0]
+        if hasattr(title, "decode"):
+            title = title.decode("utf-8")
+    return title
+
 def getNXdataList(h5file, path, objects=False):
     """
     Retrieve the hdf5 group names down a given path where the NXclass attribute
