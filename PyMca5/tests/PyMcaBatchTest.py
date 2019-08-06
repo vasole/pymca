@@ -153,6 +153,7 @@ class testPyMcaBatch(TestCaseQt):
         self._assertSlowFitMap('edf', roiwidth=100, outputdir='fitresulta')
         self._assertSlowGuiFitMap('edf', roiwidth=100, outputdir='fitresultb')
 
+    @unittest.skipIf(numpy.version.version == '1.17.0', "skipped numpy issue 13715")
     def testSlowMultiFitEdfMap(self):
         self._assertSlowMultiFitMap('edf')
 
