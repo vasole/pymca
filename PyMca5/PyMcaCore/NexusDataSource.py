@@ -308,6 +308,12 @@ class NexusDataSource(object):
         output.m = None
         output.data = None
         output.info = self.__getKeyInfo(actual_key)
+        try:
+            output.info["title"] = NexusTools.getTitle(phynxFile, entry)
+        except:
+            txt = "Error reading title for path <%s>"
+            _logger.warning(txt)
+            output.info["title"] = ""
         output.info['selection'] = selection
         if "mca" in selection:
             # this should go somewhere else
