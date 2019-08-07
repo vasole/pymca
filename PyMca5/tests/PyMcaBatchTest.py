@@ -167,6 +167,7 @@ class testPyMcaBatch(TestCaseQt):
         self._assertSlowFitMap('specmesh', roiwidth=100, outputdir='fitresulta')
         self._assertSlowGuiFitMap('specmesh', roiwidth=100, outputdir='fitresultb')
 
+    @unittest.skipIf(numpy.version.version == '1.17.0', "skipped numpy issue 13715")
     def testSlowMultiFitSpecMap(self):
         self._assertSlowMultiFitMap('specmesh')
 
