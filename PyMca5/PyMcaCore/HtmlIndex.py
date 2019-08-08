@@ -158,7 +158,7 @@ class HtmlIndex(object):
                 try:
                     os.remove(index)
                 except:
-                    _logger.error("cannot delete file %s", index)
+                    _logger.error("getBody cannot delete file %s", index)
                     continue
 
     def _getHtmlFileList(self, directory):
@@ -175,7 +175,7 @@ class HtmlIndex(object):
             try:
                 os.remove(index)
             except:
-                _logger.error("cannot delete file %s", index)
+                _logger.error("buildindex cannot delete file %s", index)
                 return
         filelist = self._getHtmlFileList(directory)
         text = ""
