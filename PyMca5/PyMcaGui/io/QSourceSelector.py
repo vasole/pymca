@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -30,6 +30,8 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
 import logging
+_logger = logging.getLogger(__name__)
+
 from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 from PyMca5.PyMcaGui import PyMca_Icons as icons
@@ -37,7 +39,13 @@ from PyMca5.PyMcaIO import spswrap as sps
 from PyMca5 import PyMcaDirs
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 
-_logger = logging.getLogger(__name__)
+try:
+    from PyMca5.PyMcaCore import RedisTools
+    BLISS = True
+except ImportError:
+    _logger.info("Bliss data file direct support not available")
+    BLISS = False
+
 
 class QSourceSelector(qt.QWidget):
     sigSourceSelectorSignal = qt.pyqtSignal(object)
@@ -99,7 +107,7 @@ class QSourceSelector(qt.QWidget):
         closeButton.clicked.connect(self.closeFile)
         refreshButton.clicked.connect(self._reload)
 
-        specButton.clicked.connect(self.openSpec)
+        specButton.clicked.connect(self.openBlissOrSpec)
         self.fileCombo.activated[str].connect(self._fileSelection)
 
         fileWidgetLayout.addWidget(self.fileCombo)
@@ -136,13 +144,32 @@ class QSourceSelector(qt.QWidget):
         if specsession is None:
             if sourcename in sps.getspeclist():
                 specsession=True
+            elif BLISS and sourcename in RedisTools.get_sessions_list():
+                specsession = "bliss"
             else:
                 specsession=False
         self.openFile(sourcename, specsession=specsession)
 
-    def openFile(self, filename=None, justloaded=None, specsession = False):
+    def openFile(self, filename=None, justloaded=None, specsession=False):
         _logger.debug("openfile = %s", filename)
         staticDialog = False
+        if specsession == "bliss":
+            specsession = False
+            session = filename
+            node = RedisTools.get_node(session)
+            if not node:
+                txt = "No REDIS information retrieved from session %s"  % \
+                        session
+                raise IOError(txt)
+            filename = RedisTools.get_session_filename(node)
+            if not len(filename):
+                txt = "Cannot retrieve last output filename from session %s"  % \
+                        session
+                raise IOError(txt)
+            if not os.path.exists(filename):         
+                txt = "Last output file <%s>  does not exist"  % filename
+                raise IOError(txt)
+            filename = [filename]
         if not specsession:
             if justloaded is None:
                 justloaded = True
@@ -235,11 +262,38 @@ class QSourceSelector(qt.QWidget):
         del self.mapCombo[key]
         self.sigSourceSelectorSignal.emit(ddict)
 
+    def openBlissOrSpec(self):
+        if not BLISS:
+            return self.openSpec()
+        sessionList = RedisTools.get_sessions_list()
+        if not len(sessionList):
+            return self.openSpec()
+        activeList = []
+        for session in sessionList:
+            node = RedisTools.get_node(session)
+            if node:
+                activeList.append(session)
+        if not len(activeList):
+            _logger.info("Bliss sessions found but no info in REDIS")
+            return self.openSpec()
+        sessionList = activeList
+
+        menu = qt.QMenu()
+        for session in sessionList:
+            if hasattr(qt, "QString"):
+                menu.addAction(qt.QString(session),
+                        lambda i=session:self.openFile(i, specsession="bliss"))
+            else:
+                menu.addAction(session,
+                        lambda i=session:self.openFile(i, specsession="bliss"))
+        menu.exec_(self.cursor().pos())
+        
+
     def openSpec(self):
         speclist = sps.getspeclist()
         if not len(speclist):
             qt.QMessageBox.information(self,
-                    "No SPEC Shared Memory Found",
+                    "No SPEC Shared Memory or Bliss session in REDIS Found",
                     "No shared memory source available")
             return
 
@@ -252,6 +306,7 @@ class QSourceSelector(qt.QWidget):
                 menu.addAction(spec,
                         lambda i=spec:self.openFile(i, specsession=True))
         menu.exec_(self.cursor().pos())
+
 
     def _fileSelection(self, qstring):
         _logger.debug("file selected %s", qstring)
