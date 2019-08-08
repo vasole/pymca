@@ -106,22 +106,33 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
         self._motor0Mne = item[m0idx]
         self._motor1Mne = item[m1idx]
 
-        print("Scanned motors are %s and %s" % (self._motor0Mne, self._motor1Mne))
+        #print("Scanned motors are %s and %s" % (self._motor0Mne, self._motor1Mne))
+        #print("MOTOR 0 ", float(item[m0idx + 1]),
+        #                              float(item[m0idx + 2]),
+        #                              int(item[m0idx + 3]))
+        #print("MOTOR 1 ", float(item[m1idx + 1]),
+        #                              float(item[m1idx + 2]),
+        #                              int(item[m1idx + 3]))
+
+        if ("dmesh" in command) or ("amesh" in command):
+            plusOne = 0
+        else:
+            plusOne = 1
 
         #Assume an EXACTLY regular mesh for both motors
         self._motor0 = numpy.linspace(float(item[m0idx + 1]),
                                       float(item[m0idx + 2]),
-                                      int(item[m0idx + 3])+1)
+                                      int(item[m0idx + 3]) + plusOne)
         self._motor1 = numpy.linspace(float(item[m1idx + 1]),
                                       float(item[m1idx + 2]),
-                                      int(item[m1idx + 3])+1)
+                                      int(item[m1idx + 3]) + plusOne)
         #Didier's contribution: Try to do something if scan has been interrupted
-        if y.size < (int(item[m0idx + 3])+1) * (int(item[m1idx + 3])+1):
+        if y.size < (int(item[m0idx + 3])+plusOne) * (int(item[m1idx + 3])+plusOne):
             _logger.warning("WARNING: Incomplete mesh scan")
             self._motor1 = numpy.resize(self._motor1,
-                                        (y.size // (int(item[m0idx + 3])+1),1))
-            y = numpy.resize(y,((y.size // (int(item[m0idx + 3])+1) * \
-                                 (int(item[m0idx + 3])+1)),1))
+                                (y.size // (int(item[m0idx + 3])+plusOne),1))
+            y = numpy.resize(y,((y.size // (int(item[m0idx + 3])+plusOne) * \
+                                 (int(item[m0idx + 3])+plusOne)),1))
 
         try:
             if xLabel.upper() == motor0Mne.upper():
@@ -138,6 +149,10 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
                 self._motor1Mne = self._xLabel
         except:
             _logger.debug("XLabel should be one of the scanned motors")
+
+        if "dmesh" in command:
+            # relative positions, we have to provide an offset
+            _logger.warning("Using relative positions")
 
         self._legend = legend
         self._info = info
