@@ -178,7 +178,18 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
 
         if "dmesh" in command:
             # relative positions, we have to provide an offset
-            _logger.warning("Using relative positions")
+            # the offset should be in the positioners if present
+            offsets = []
+            if ["MotorNames" in info] and ["MotorValues" in info]:
+                for key in [self._motor0Mne, self._motor1Mne]:
+                    if key in info["MotorNames"]:
+                        idx = info["MotorNames"].index(key)
+                        offsets.append(info["MotorValues"][idx])
+            if len(offsets) == 2:
+                self._motor0 += offsets[0]
+                self._motor1 += offsets[1]
+            else:
+                _logger.warning("Using relative positions")
 
         self._legend = legend
         self._info = info
