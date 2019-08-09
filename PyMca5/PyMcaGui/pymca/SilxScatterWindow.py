@@ -44,6 +44,8 @@ class SilxScatterWindow(qt.QWidget):
         self._plotEnabled = True
         self.dataObjectsList = []
         self.dataObjectsDict = {}
+        self._xLabel = "X"
+        self._yLabel = "Y"
 
     def _removeSelection(self, *var):
         print("_removeSelection to be implemented")
@@ -138,7 +140,7 @@ class SilxScatterWindow(qt.QWidget):
                                 # the monitor was unidimensional.
                                 # that implies normalization "per acquisition point"
                                 for i in range(m.size):
-                                    data[i] /= m[i]                                
+                                    data[i] /= m[i]
                         elif m.size == data.shape[0]:
                             for i in range(m.size):
                                 data[i] /= m[i]
@@ -150,7 +152,7 @@ class SilxScatterWindow(qt.QWidget):
                             data /= m.reshape(data.shape)
                         else:
                             raise ValueError("Incompatible monitor data")
-                            
+
                         if hasattr(m, "size"):
                             if m.size == self._imageData.size:
                                 tmpView = m[:]
@@ -173,13 +175,26 @@ class SilxScatterWindow(qt.QWidget):
                 resetZoom = False
             else:
                 resetZoom = True
-            if legend not in self.dataObjectsList: 
+            if legend not in self.dataObjectsList:
                 self.dataObjectsList.append(legend)
             self.dataObjectsDict[legend] = dataObject
+            try:
+                self._xLabel, self._yLabel = self._getXYLabels(dataObject.info)
+            except:
+                self._xLabel, self._yLabel = "X", "Y"
+
         if self._plotEnabled:
             self.showData(0)
             if resetZoom:
                 self.plot.getPlotWidget().resetZoom()
+
+    def _getXYLabels(self, info):
+        xLabel = "X"
+        yLabel = "Y"
+        if ("LabelNames" in info) and ("selection") in info:
+            xLabel = info["LabelNames"][info["selection"]["x"][0]]
+            yLabel = info["LabelNames"][info["selection"]["x"][1]]
+        return xLabel, yLabel
 
     def showData(self, index=0, moveslider=True):
         if DEBUG:
@@ -204,6 +219,8 @@ class SilxScatterWindow(qt.QWidget):
         self.plot.getPlotWidget().addScatter(x, y, values,
                             legend=legend, info=dataObject.info,
                             symbol=symbol, colormap=cmap)
+        self.plot.getPlotWidget().setGraphXLabel(self._xLabel)
+        self.plot.getPlotWidget().setGraphYLabel(self._yLabel)
         txt = "%s %d" % (legend, index)
         #self.setName(txt)
         #if moveslider:
@@ -214,7 +231,7 @@ class SilxScatterWindow(qt.QWidget):
         if value:
             if len(self.dataObjectsList):
                 self.showData()
-        
+
 
 class TimerLoop:
     def __init__(self, function = None, period = 1000):
