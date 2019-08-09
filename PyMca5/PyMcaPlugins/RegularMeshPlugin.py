@@ -200,6 +200,7 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
                                         imageicons=False,
                                         selection=False,
                                         profileselection=True,
+                                        aspect=True,
                                         scanwindow=self)
         deltaX = self._motor0[1] - self._motor0[0]
         deltaY = self._motor1[1] - self._motor1[0]
