@@ -98,30 +98,67 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
 
         idx = command.index("mesh")
         item = command[idx:].split()
-        self._xLabel = self.getGraphXLabel()
-        self._yLabel = self.getGraphYLabel()
+        xLabel = self.getGraphXLabel()
+        yLabel = self.getGraphYLabel()
 
         m0idx = 1
         m1idx = 5
         self._motor0Mne = item[m0idx]
         self._motor1Mne = item[m1idx]
 
-        print("Scanned motors are %s and %s" % (self._motor0Mne, self._motor1Mne))
+        #print("Scanned motors are %s and %s" % (self._motor0Mne, self._motor1Mne))
+        #print("MOTOR 0 ", float(item[m0idx + 1]),
+        #                              float(item[m0idx + 2]),
+        #                              int(item[m0idx + 3]))
+        #print("MOTOR 1 ", float(item[m1idx + 1]),
+        #                              float(item[m1idx + 2]),
+        #                              int(item[m1idx + 3]))
+        plusOne = 1
+        if ("dmesh" in command) or ("amesh" in command):
+            # following bliss version it may follow SPEC convention or not
+            # let's hope we have more than one complete row, it not we are
+            # lost in any case
+            if len(x) > 2:
+                if xLabel.upper() == self._motor0Mne.upper():
+                    idx = m0idx
+                else:
+                    idx = m1idx
+                first = x[0]
+                maxNpoints = int(item[idx + 3]) + 1
+                deltaX = 0.1 * \
+                           abs(float(item[m0idx + 1]) - float(item[m0idx + 2]))
+                if abs(x[1] - x[0]) < deltaX:
+                    # repeating the first point
+                    if numpy.sum(abs(x - x[0]) < deltaX) == maxNpoints:
+                        plusOne = 1
+                    else:
+                        plusOne = 0
+                else:
+                    # changing the first point
+                    idx = 0
+                    while idx < len(x):
+                        idx += 1
+                        if abs(x[idx] - x[0]) < deltaX:
+                            break
+                    if idx == maxNpoints:
+                        plusOne = 1
+                    else:
+                        plusOne = 0
 
         #Assume an EXACTLY regular mesh for both motors
         self._motor0 = numpy.linspace(float(item[m0idx + 1]),
                                       float(item[m0idx + 2]),
-                                      int(item[m0idx + 3])+1)
+                                      int(item[m0idx + 3]) + plusOne)
         self._motor1 = numpy.linspace(float(item[m1idx + 1]),
                                       float(item[m1idx + 2]),
-                                      int(item[m1idx + 3])+1)
+                                      int(item[m1idx + 3]) + plusOne)
         #Didier's contribution: Try to do something if scan has been interrupted
-        if y.size < (int(item[m0idx + 3])+1) * (int(item[m1idx + 3])+1):
+        if y.size < (int(item[m0idx + 3])+plusOne) * (int(item[m1idx + 3])+plusOne):
             _logger.warning("WARNING: Incomplete mesh scan")
             self._motor1 = numpy.resize(self._motor1,
-                                        (y.size // (int(item[m0idx + 3])+1),1))
-            y = numpy.resize(y,((y.size // (int(item[m0idx + 3])+1) * \
-                                 (int(item[m0idx + 3])+1)),1))
+                                (y.size // (int(item[m0idx + 3])+plusOne),1))
+            y = numpy.resize(y,((y.size // (int(item[m0idx + 3])+plusOne) * \
+                                 (int(item[m0idx + 3])+plusOne)),1))
 
         try:
             if xLabel.upper() == motor0Mne.upper():
@@ -138,6 +175,10 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
                 self._motor1Mne = self._xLabel
         except:
             _logger.debug("XLabel should be one of the scanned motors")
+
+        if "dmesh" in command:
+            # relative positions, we have to provide an offset
+            _logger.warning("Using relative positions")
 
         self._legend = legend
         self._info = info
