@@ -35,7 +35,6 @@ Module to calculate a set of ROIs on a stack of data.
 """
 import os
 import numpy
-import time
 import logging
 import copy
 from PyMca5.PyMcaIO import ConfigDict
@@ -190,19 +189,16 @@ class StackROIBatch(object):
                     netSum = netSum.reshape(resultshape)
                 results[idxraw(j)][resultidx] = rawSum  # ROI sum
                 results[idxnet(j)][resultidx] = netSum  # ROI sum minus linear background
-
                 # Calculate x-value of the minimum and maximum within the ROI
                 if xAtMinMax:
                     if xw[j] is None:
                         # what can be the Min and the Max when there is nothing in the ROI?
                         _logger.warning("No Min. Max for ROI <%s>. Empty ROI" % roi)
                     else:
-                        # maxImage
-                        results[idxmax(j)][resultidx] = \
-                            xw[j][numpy.argmax(roichunk, axis=1)]
-                        # minImage
-                        results[idxmin(j)][resultidx] = \
-                            xw[j][numpy.argmin(roichunk, axis=1)]
+                        maxImage = xw[j][numpy.argmax(roichunk, axis=1)]
+                        results[idxmax(j)][resultidx] = maxImage.reshape(resultshape)
+                        minImage = xw[j][numpy.argmin(roichunk, axis=1)]
+                        results[idxmin(j)][resultidx] = minImage.reshape(resultshape)
 
     def _parseData(self, x=None, y=None, index=None):
         if y is None:
@@ -446,7 +442,6 @@ def main():
         sys.exit(0)
     if outputDir is None:
         print("RESULTS WILL NOT BE SAVED: No output directory specified")
-    t0 = time.time()
     worker = StackROIBatch()
     worker.setConfigurationFile(configurationFile)
     outbuffer = OutputBuffer(outputDir=outputDir,
