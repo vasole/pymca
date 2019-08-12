@@ -33,8 +33,6 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 import os
 import logging
-from abc import ABCMeta, abstractmethod, abstractproperty
-from six import with_metaclass
 from PyMca5 import StackPluginBase
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaIO import EDFStack
@@ -51,7 +49,7 @@ else:
 _logger = logging.getLogger(__name__)
 
 
-class ExternalImagesStackPluginBase(with_metaclass(ABCMeta, StackPluginBase.StackPluginBase)):
+class ExternalImagesStackPluginBase(StackPluginBase.StackPluginBase)):
 
     def __init__(self, stackWindow, **kw):
         if _logger.getEffectiveLevel() == logging.DEBUG:
@@ -109,13 +107,13 @@ class ExternalImagesStackPluginBase(with_metaclass(ABCMeta, StackPluginBase.Stac
                 except AttributeError:
                     self._createStackPluginWindow(imagenames, imagelist)
 
-    @abstractmethod
     def _createStackPluginWindow(self, imagenames, imagelist):
-        pass
+        raise NotImplemented(\
+            "_createStackPluginWindow(self, imagenames, imagelist)")
 
-    @abstractproperty
+    @property
     def _dialogParent(self):
-        pass
+        raise NotImplemented("_dialogParent(self) not implemented")
 
     @property
     def _requiredShape(self):
