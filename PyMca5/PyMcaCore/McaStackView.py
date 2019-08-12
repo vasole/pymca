@@ -33,8 +33,6 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 import numpy
 import logging
-from abc import ABCMeta, abstractmethod
-from six import with_metaclass
 import numbers
 import itertools
 
@@ -400,7 +398,7 @@ def chunks_in_memory(shape, dtype, axis=-1, margin=0.01, maximal=None):
         return n_chunks
 
 
-class ChunkedView(with_metaclass(ABCMeta, object)):
+class ChunkedView(object):
 
     def __init__(self, data, nMca=None, mcaAxis=None, mcaSlice=None,
                  dtype=None, readonly=True):
@@ -495,9 +493,8 @@ class ChunkedView(with_metaclass(ABCMeta, object)):
             self._buffer = numpy.empty(self.shape, self.dtype)
         return post_copy
 
-    @abstractmethod
     def items(self):
-        pass
+        raise NotImplemented("items method not implemented")
 
 
 def h5pyMultiListGet(data, value, idx, axesList):
