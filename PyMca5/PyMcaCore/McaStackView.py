@@ -33,7 +33,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 import numpy
 import logging
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABCMeta, abstractmethod
 from six import with_metaclass
 import numbers
 import itertools
