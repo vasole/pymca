@@ -38,7 +38,7 @@ import numpy
 import itertools
 from contextlib import contextmanager
 try:
-    from PyMca5.PyMcaPhysics.xrf import McaStackView
+    from PyMca5.PyMcaCore import McaStackView
 except ImportError:
     McaStackView = None
 try:
@@ -56,7 +56,7 @@ class testMcaStackView(unittest.TestCase):
         shutil.rmtree(self.path)
 
     @unittest.skipIf(McaStackView is None,
-                     'PyMca5.PyMcaPhysics.xrf.McaStackView cannot be imported')
+                     'PyMca5.PyMcaCore.McaStackView cannot be imported')
     def testViewUtils(self):
         n = 20
         slices = [slice(None), slice(1, -2),
@@ -85,7 +85,7 @@ class testMcaStackView(unittest.TestCase):
             self.assertEqual(lst1, lst2)
 
     @unittest.skipIf(McaStackView is None,
-                     'PyMca5.PyMcaPhysics.xrf.McaStackView cannot be imported')
+                     'PyMca5.PyMcaCore.McaStackView cannot be imported')
     def testfullChunkIndex(self):
         for ndim in [2, 3, 4]:
             shape = tuple(range(3, 3+ndim))
@@ -98,10 +98,7 @@ class testMcaStackView(unittest.TestCase):
                                                          axesOrder=axesOrder)
                     chunkIndex, chunkAxes, axesOrder, nChunksMax2 = result
                     self.assertTrue(nChunksMax2 <= max(nChunksMax, 1))
-                    it = McaStackView.chunkIndexProduct(chunkIndex,
-                                                        chunkAxes,
-                                                        axesOrder)
-                    for i, (idxChunk, idxShape, nChunks) in enumerate(it, 1):
+                    for i, (idxChunk, idxShape, nChunks) in enumerate(chunkIndex, 1):
                         data[idxChunk] += i
                         self.assertEqual(data[idxChunk].shape, idxShape)
                         self.assertTrue(nChunks <= nChunksMax2)
@@ -129,7 +126,7 @@ class testMcaStackView(unittest.TestCase):
                     yield chunkAxes, axesOrder, nChunksTot
 
     @unittest.skipIf(McaStackView is None,
-                     'PyMca5.PyMcaPhysics.xrf.McaStackView cannot be imported')
+                     'PyMca5.PyMcaCore.McaStackView cannot be imported')
     def testMaskedChunkIndex(self):
         for ndim in [2, 3, 4]:
             shape = tuple(range(3, 3+ndim))
@@ -203,7 +200,7 @@ class testMcaStackView(unittest.TestCase):
         return mask, indices, nmask
 
     @unittest.skipIf(McaStackView is None,
-                     'PyMca5.PyMcaPhysics.xrf.McaStackView cannot be imported')
+                     'PyMca5.PyMcaCore.McaStackView cannot be imported')
     def testFullViewNumpy(self):
         for ndim in [2, 3, 4]:
             shape = range(6, 6+ndim)
@@ -211,7 +208,7 @@ class testMcaStackView(unittest.TestCase):
             self._assertFullView(data)
     
     @unittest.skipIf(McaStackView is None,
-                     'PyMca5.PyMcaPhysics.xrf.McaStackView cannot be imported')
+                     'PyMca5.PyMcaCore.McaStackView cannot be imported')
     @unittest.skipIf(h5py is None,
                      'h5py cannot be imported')
     def testFullViewH5py(self):
@@ -224,7 +221,7 @@ class testMcaStackView(unittest.TestCase):
                 self._assertFullView(f[name])
 
     @unittest.skipIf(McaStackView is None,
-                     'PyMca5.PyMcaPhysics.xrf.McaStackView cannot be imported')
+                     'PyMca5.PyMcaCore.McaStackView cannot be imported')
     def testMaskedViewNumpy(self):
         for ndim in [2, 3, 4]:
             shape = range(6, 6+ndim)
@@ -232,7 +229,7 @@ class testMcaStackView(unittest.TestCase):
             self._assertMaskedView(data)
 
     @unittest.skipIf(McaStackView is None,
-                     'PyMca5.PyMcaPhysics.xrf.McaStackView cannot be imported')
+                     'PyMca5.PyMcaCore.McaStackView cannot be imported')
     @unittest.skipIf(h5py is None,
                      'h5py cannot be imported')
     def testMaskedViewH5py(self):

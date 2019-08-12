@@ -271,7 +271,8 @@ class FastXRFLinearFitWindow(qt.QWidget):
                 w.setStyleSheet("color: gray; background-color: darkGray")
 
     def stateMultiPage(self, state=None):
-        self._multipageBox.setEnabled(self._edfBox.isChecked() or self._tiffBox.isChecked())
+        self._multipageBox.setEnabled(self._edfBox.isChecked() or
+                                      self._tiffBox.isChecked())
 
     def getParameters(self):
         ddict = {}
@@ -296,6 +297,7 @@ class FastXRFLinearFitWindow(qt.QWidget):
         output['multipage'] = int(self._multipageBox.isChecked())
         output['diagnostics'] = int(self._diagnosticsBox.isChecked())
         return ddict
+
 
 class FastXRFLinearFitDialog(qt.QDialog):
     def __init__(self, parent=None):

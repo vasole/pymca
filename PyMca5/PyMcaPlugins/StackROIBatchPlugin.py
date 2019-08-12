@@ -69,13 +69,12 @@ from PyMca5.PyMcaGui import StackPluginResultsWindow
 from PyMca5.PyMcaGui import StackROIBatchWindow
 from PyMca5.PyMcaGui import PyMca_Icons as PyMca_Icons
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.PyMcaIO import ArraySave
 
 _logger = logging.getLogger(__name__)
 
 
-
 class StackROIBatchPlugin(StackPluginBase.StackPluginBase):
+
     def __init__(self, stackWindow, **kw):
         if _logger.getEffectiveLevel() == logging.DEBUG:
             StackPluginBase.pluginBaseLogger.setLevel(logging.DEBUG)
@@ -180,17 +179,20 @@ class StackROIBatchPlugin(StackPluginBase.StackPluginBase):
             x = None
             spectrum = None
         stack = self.getStackDataObject()
-        configurationFile = self._parameters['configuration']
-        net = self._parameters['net']
+
+        procparams = self._parameters['process'].copy()
+        configurationFile = procparams.pop('configuration')
         self.workerInstance.setConfigurationFile(configurationFile)
-        xAtMinMax = self._parameters['xAtMinMax']
-        xLabel = self.getGraphXLabel()
-        result = self.workerInstance.batchROIMultipleSpectra(x=x,
-                                                        y=stack,
-                                                        net=net,
-                                                        xAtMinMax=xAtMinMax,
-                                                        xLabel=xLabel)
-        return result
+        procparams['xLabel'] = self.getGraphXLabel()
+
+        outparams = self._parameters['output']
+        outbuffer = StackROIBatch.OutputBuffer(**outparams)
+        outbuffer = self.workerInstance.batchROIMultipleSpectra(x=x,
+                                                                y=stack,
+                                                                outbuffer=outbuffer,
+                                                                save=False, # do it later
+                                                                **procparams)
+        return outbuffer
 
     def threadFinished(self):
         try:
@@ -212,62 +214,23 @@ class StackROIBatchPlugin(StackPluginBase.StackPluginBase):
                     # somehow this exception is not caught
                     raise Exception(result[1], result[2])#, result[3])
                     return
-        imageNames = result['names']
-        images = result["images"]
-        nImages = images.shape[0]
-        self._widget = StackPluginResultsWindow.StackPluginResultsWindow(\
-                                        usetab=False)
-        self._widget.buildAndConnectImageButtonBox(replace=True,
-                                                  multiple=True)
-        qt = StackPluginResultsWindow.qt
-        self._widget.sigMaskImageWidgetSignal.connect(self.mySlot)
-        self._widget.setStackPluginResults(images,
-                                          image_names=imageNames)
-        self._showWidget()
 
-        # save to output directory
-        parameters = self.configurationWidget.getParameters()
-        outputDir = parameters["output_dir"]
-        if outputDir in [None, ""]:
-            _logger.debug("Nothing to be saved")
-            if _logger.getEffectiveLevel() == logging.DEBUG:
-                return
-        if parameters["file_root"] is None:
-            fileRoot = ""
-        else:
-            fileRoot = parameters["file_root"].replace(" ", "")
-        if fileRoot in [None, ""]:
-            fileRoot = "images"
-        if not os.path.exists(outputDir):
-            os.mkdir(outputDir)
-        imagesDir = os.path.join(outputDir, "IMAGES")
-        if not os.path.exists(imagesDir):
-            os.mkdir(imagesDir)
-        imageList = [None] * (nImages)
-        fileImageNames = [None] * (nImages)
-        j = 0
-        for i in range(nImages):
-            name = imageNames[i].replace(" ","-")
-            fileImageNames[j] = name
-            imageList[j] = images[i]
-            j += 1
-        fileName = os.path.join(imagesDir, fileRoot+".edf")
-        ArraySave.save2DArrayListAsEDF(imageList, fileName,
-                                       labels=fileImageNames)
-        fileName = os.path.join(imagesDir, fileRoot+".csv")
-        ArraySave.save2DArrayListAsASCII(imageList, fileName, csv=True,
-                                         labels=fileImageNames)
-        if parameters["tiff"]:
-            i = 0
-            for i in range(len(fileImageNames)):
-                label = fileImageNames[i]
-                mass_fraction  = "_" + label
-                fileName = os.path.join(imagesDir,
-                                        fileRoot + mass_fraction + ".tif")
-                ArraySave.save2DArrayListAsMonochromaticTiff([imageList[i]],
-                                        fileName,
-                                        labels=[label],
-                                        dtype=numpy.float32)
+        # Show results
+        with result.bufferContext(update=True):
+            imageNames = result.labels('roisum', labeltype='title')
+            images = result['roisum']
+            self._widget = StackPluginResultsWindow.StackPluginResultsWindow(\
+                                            usetab=False)
+            self._widget.buildAndConnectImageButtonBox(replace=True,
+                                                       multiple=True)
+            qt = StackPluginResultsWindow.qt
+            self._widget.sigMaskImageWidgetSignal.connect(self.mySlot)
+            self._widget.setStackPluginResults(images,
+                                               image_names=imageNames)
+            self._showWidget()
+
+            # Save results
+            result.save()
 
     def _showWidget(self):
         if self._widget is None:

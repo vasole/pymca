@@ -295,7 +295,7 @@ class PyMcaBatchBuildOutput(object):
     def getPartialFileList(filename, begin=None, end=None, skip=None):
         # Decempose filename, for example "/tmp/base_000000_partial.ext"
         name, ext = os.path.splitext(os.path.basename(filename))
-        m = re.search("^(.+?)(\d+)([^\d]+)$", name)
+        m = re.search(r"^(.+?)(\d+)([^\d]+)$", name)
         if not m:
             return [filename]
         prefix, number, suffix = m.groups()

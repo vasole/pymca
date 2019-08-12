@@ -35,22 +35,35 @@ Module to calculate a set of ROIs on a stack of data.
 """
 import os
 import numpy
-from PyMca5.PyMcaIO import ConfigDict
-import time
 import logging
+import copy
+from PyMca5.PyMcaIO import ConfigDict
+from PyMca5.PyMcaIO.OutputBuffer import OutputBuffer as OutputBufferBase
+from PyMca5.PyMcaCore import McaStackView
+
 
 _logger = logging.getLogger(__name__)
 
 
+class OutputBuffer(OutputBufferBase):
+
+    def __init__(self, saveResiduals=False, saveFit=False, saveData=False,
+                 diagnostics=False, saveFOM=False, **kwargs):
+        super(OutputBuffer, self).__init__(**kwargs)
+        self.fileProcessDefault = 'roi_sum'
+
+
 class StackROIBatch(object):
+
     def __init__(self):
-        self._config = {}
+        self.config = ConfigDict.ConfigDict()
 
     def setConfiguration(self, configuration):
-        self._config["ROI"] = configuration["ROI"]
+        self.config = ConfigDict.ConfigDict()
+        self.config.update(configuration)
 
     def getConfiguration(self):
-        return self._config
+        return copy.deepcopy(self.config)
 
     def setConfigurationFile(self, ffile):
         if not os.path.exists(ffile):
@@ -59,10 +72,10 @@ class StackROIBatch(object):
         configuration.read(ffile)
         self.setConfiguration(configuration)
 
-    def batchROIMultipleSpectra(self, x=None, y=None,
-                           configuration=None, net=True,
-                           xAtMinMax=False, index=None,
-                           xLabel=None):
+    def batchROIMultipleSpectra(self, x=None, y=None, configuration=None,
+                                net=True, xAtMinMax=False, index=None,
+                                xLabel=None, outbuffer=None, save=True,
+                                **outbufferinitargs):
         """
         This method performs the actual fit. The y keyword is the only mandatory input argument.
 
@@ -70,11 +83,124 @@ class StackROIBatch(object):
         :param y: 3D array containing the data, usually [nrows, ncolumns, nchannels]
         :param weight: 0 Means no weight, 1 Use an average weight, 2 Individual weights (slow)
         :param net: 0 Means no subtraction, 1 Calculate
-        :param xAtMinMax: if True, calculate X at maximum and minimum Y . Default is false.
+        :param xAtMinMax: if True, calculate X at maximum and minimum Y. Default is false.
         :param index: Index of dimension where to apply the ROIs.
         :param xLabel: Type of ROI to be used.
-        :return: A dictionnary with the images and the image names as keys.
+        :param outbuffer:
+        :param save: set to False to postpone saving the in-memory buffers
+        :return OutputBuffer:
         """
+        data, x, index = self._parseData(x=x, y=y, index=index)
+        roiList, config = self._prepareRoiList(configuration=configuration,
+                                               xLabel=xLabel)
+
+        # Calculation needs buffer for memory allocation (memory or H5)
+        if outbuffer is None:
+            outbuffer = OutputBuffer(**outbufferinitargs)
+        with outbuffer.Context(save=save):
+            outbuffer['configuration'] = config
+            self._extractRois(data, x, index,
+                              roiList=roiList,
+                              roiDict=config["ROI"]["roidict"],
+                              outbuffer=outbuffer,
+                              xAtMinMax=xAtMinMax)
+        return outbuffer
+
+    def _extractRois(self, data, x, mcaAxis, roiList=None, roiDict=None,
+                     outbuffer=None, xAtMinMax=False):
+        nRois = len(roiList)
+        nRows = data.shape[0]
+        nColumns = data.shape[1]
+        if xAtMinMax:
+            roiShape = (nRois * 4, nRows, nColumns)
+            names = [None] * 4 * nRois
+        else:
+            roiShape = (nRois * 2, nRows, nColumns)
+            names = [None] * 2 * nRois
+
+        # Helper variables for roi calculation
+        idx = [None] * nRois  # indices along axis=index for each ROI
+        xw = [None] * nRois  # x-values for each ROI
+        iXMinList = [None] * nRois  # min(xw) for each ROI
+        iXMaxList = [None] * nRois  # max(xw) for each ROI
+        def idxraw(i): return i
+        def idxnet(i): return i + nRois
+        def idxmax(i): return i + 2 * nRois
+        def idxmin(i): return i + 3 * nRois
+        for j, roi in enumerate(roiList):
+            if roi == "ICR":
+                xw[j] = x
+                idx[j] = numpy.arange(len(x))
+                iXMinList[j] = idx[j][0]
+                iXMaxList[j] = idx[j][-1]
+            else:
+                roiFrom = roiDict[roi]["from"]
+                roiTo = roiDict[roi]["to"]
+                idx[j] = numpy.nonzero((roiFrom <= x) & (x <= roiTo))[0]
+                if len(idx[j]):
+                    xw[j] = x[idx[j]]
+                    iXMinList[j] = numpy.argmin(xw[j])
+                    iXMaxList[j] = numpy.argmax(xw[j])
+                else:
+                    xw[j] = None
+            names[idxraw(j)] = "ROI " + roi
+            names[idxnet(j)] = "ROI " + roi + " Net"
+            if xAtMinMax:
+                roiType = roiDict[roi]["type"]
+                names[idxmax(j)] = "ROI " + roi + (" %s at Max." % roiType)
+                names[idxmin(j)] = "ROI " + roi + (" %s at Min." % roiType)
+
+        # Allocate memory for result
+        roidtype = numpy.float
+        results = outbuffer.allocateMemory('roisum',
+                                           shape=roiShape,
+                                           dtype=roidtype,
+                                           labels=names,
+                                           dataAttrs=None,
+                                           groupAttrs={'default': True},
+                                           memtype='ram')
+
+        # Allocate memory of partial result
+        nMca = 2, 'MB'
+        _logger.debug('Process spectra in chunks of {}'.format(nMca))
+        datastack = McaStackView.FullView(data, mcaAxis=mcaAxis, nMca=nMca)
+        for (resultidx, resultshape), chunk in datastack.items(keyType='select'):
+            for j, roi in enumerate(roiList):
+                # Calculate ROI sum
+                if xw[j] is None:
+                    # no points in the ROI       
+                    rawSum = 0.0
+                    netSum = 0.0
+                else:
+                    roichunk = chunk[:, idx[j]]
+                    rawSum = roichunk.sum(axis=1, dtype=numpy.float)
+                    deltaX = xw[j][iXMaxList[j]] - xw[j][iXMinList[j]]
+                    left = roichunk[:, iXMinList[j]]
+                    right = roichunk[:, iXMaxList[j]]
+                    deltaY = right - left
+                    if abs(deltaX) > 0.0:
+                        slope = deltaY / float(deltaX)
+                        background = left * len(xw[j]) + slope * \
+                                    (xw[j] - xw[j][iXMinList[j]]).sum(dtype=numpy.float)
+                        netSum = rawSum - background
+                    else:
+                        netSum = 0.0
+                    rawSum = rawSum.reshape(resultshape)
+                    netSum = netSum.reshape(resultshape)
+                results[idxraw(j)][resultidx] = rawSum  # ROI sum
+                results[idxnet(j)][resultidx] = netSum  # ROI sum minus linear background
+                # Calculate x-value of the minimum and maximum within the ROI
+                if xAtMinMax:
+                    if xw[j] is None:
+                        # what can be the Min and the Max when there is nothing in the ROI?
+                        _logger.warning("No Min. Max for ROI <%s>. Empty ROI" % roi)
+                    else:
+                        maxImage = xw[j][numpy.argmax(roichunk, axis=1)]
+                        results[idxmax(j)][resultidx] = maxImage.reshape(resultshape)
+                        minImage = xw[j][numpy.argmin(roichunk, axis=1)]
+                        results[idxmin(j)][resultidx] = minImage.reshape(resultshape)
+
+    def _parseData(self, x=None, y=None, index=None):
         if y is None:
             raise RuntimeError("y keyword argument is mandatory!")
         if hasattr(y, "info") and hasattr(y, "data"):
@@ -94,9 +220,9 @@ class StackROIBatch(object):
                 testException = data[0:1]
             else:
                 if len(data.shape) == 2:
-                    testException = data[0:1,-1]
+                    testException = data[0:1, -1]
                 elif len(data.shape) == 3:
-                    testException = data[0:1,0:1,-1]
+                    testException = data[0:1, 0:1, -1]
         except AttributeError:
             txt = "%s" % type(data)
             if 'h5py' in txt:
@@ -106,140 +232,52 @@ class StackROIBatch(object):
             else:
                 raise
 
+        # only usual spectra case supported
+        if index != (len(data.shape) - 1):
+            raise IndexError("Only stacks of spectra supported")
+        if len(data.shape) != 3:
+            txt = "For the time being only "
+            txt += "three dimensional arrays supported"
+            raise NotImplementedError(txt)
+        if len(data.shape) != 3:
+            txt = "For the time being only "
+            txt += "three dimensional arrays supported"
+            raise NotImplementedError(txt)
+
         # make sure to get x data
         if x is None:
             x = numpy.arange(data.shape[index]).astype(numpy.float32)
+        elif x.size != data.shape[index]:
+            raise NotImplementedError("All the spectra should share same X axis")
+        #data = numpy.transpose(data, (1,0,2))
+        return data, x, index
 
+    def _prepareRoiList(self, configuration=None, xLabel=None):
+        # read the current configuration
         if configuration is not None:
             self.setConfiguration(configuration)
-
-        # read the current configuration
         config = self.getConfiguration()
 
-        # start the work
+        # prepare roi list
         roiList0 = config["ROI"]["roilist"]
         if type(roiList0) not in [type([]), type((1,))]:
             roiList0 = [roiList0]
 
         # operate only on compatible ROIs
         roiList = []
+        roiDict = config["ROI"]["roidict"]
         for roi in roiList0:
-            if roi.upper() == "ICR":
-                roiList.append(roi)
-            roiType = config["ROI"]["roidict"][roi]["type"]
+            roiType = roiDict[roi]["type"]
             if xLabel is None:
+                roiList.append(roi)
+            elif roi.upper() == "ICR":
                 roiList.append(roi)
             elif xLabel.lower() == roiType.lower():
                 roiList.append(roi)
             else:
                 _logger.info("ROI <%s> ignored")
+        return roiList, config
 
-        # only usual spectra case supported
-        if index != (len(data.shape) - 1):
-            raise IndexError("Only stacks of spectra supported")
-
-        if len(data.shape) != 3:
-            txt  = "For the time being only "
-            txt += "three dimensional arrays supported"
-            raise NotImplemented(txt)
-
-        if len(data.shape) != 3:
-            txt  = "For the time being only "
-            txt += "three dimensional arrays supported"
-            raise NotImplemented(txt)
-        totalSpectra = 1
-        for i in range(len(data.shape)):
-            if i != index:
-                totalSpectra *= data.shape[i]
-
-        if x.size != data.shape[index]:
-            raise NotImplemented("All the spectra should share same X axis")
-
-        jStep = min(1000, data.shape[1])
-        nRois = len(roiList)
-        idx = [None] * nRois
-        xw = [None] * nRois
-        iXMinList = [None] * nRois
-        iXMaxList = [None] * nRois
-        nRows = data.shape[0]
-        nColumns = data.shape[1]
-        if xAtMinMax:
-            results = numpy.zeros((nRois * 4, nRows, nColumns), numpy.float)
-            names = [None] * 4 * nRois
-        else:
-            results = numpy.zeros((nRois * 2, nRows, nColumns), numpy.float)
-            names = [None] * 2 * nRois
-
-        for i in range(0, data.shape[0]):
-            if i == 0:
-                chunk = numpy.zeros((jStep,
-                                     data.shape[index]),
-                                     numpy.float)
-                xData = x
-            jStart = 0
-            while jStart < data.shape[1]:
-                jEnd = min(jStart + jStep, data.shape[1])
-                chunk[:(jEnd - jStart)] = data[i, jStart: jEnd]
-                for j, roi in enumerate(roiList):
-                    if i == 0:
-                        roiType = config["ROI"]["roidict"][roi]["type"]
-                        roiLine = roi
-                        roiFrom = config["ROI"]["roidict"][roi]["from"]
-                        roiTo = config["ROI"]["roidict"][roi]["to"]
-                        if roiLine == "ICR":
-                            xw[j] = xData
-                            idx[j] = numpy.arange(len(xData))
-                            iXMinList[j] = idx[j][0]
-                            iXMaxList[j] = idx[j][-1]
-                        else:
-                            idx[j] = numpy.nonzero((roiFrom <= xData) & (xData <= roiTo))[0]
-                            if len(idx):
-                                xw[j] = xData[idx[j]]
-                                iXMinList[j] = numpy.argmin(xw[j])
-                                iXMaxList[j] = numpy.argmax(xw[j])
-                            else:
-                                xw[j] = None
-                        names[j] = "ROI " + roiLine
-                        names[j + nRois] = "ROI "+ roiLine + " Net"
-                        if xAtMinMax:
-                            names[j + 2 * nRois] = "ROI "+ roiLine + (" %s at Max." % roiType)
-                            names[j + 3 * nRois] = "ROI "+ roiLine + (" %s at Min." % roiType)
-                    if xw[j] is None:
-                        # no points in the ROI            
-                        rawSum = 0.0
-                        netSum = 0.0
-                    else:
-                        tmpArray = chunk[:(jEnd - jStart), idx[j]]
-                        rawSum = tmpArray.sum(axis=-1, dtype=numpy.float)
-                        deltaX = xw[j][iXMaxList[j]] - xw[j][iXMinList[j]]
-                        left = tmpArray[:, iXMinList[j]]
-                        right = tmpArray[:, iXMaxList[j]]
-                        deltaY = right - left
-                        if abs(deltaX) > 0.0:
-                            slope = deltaY / float(deltaX)
-                            background = left * len(xw[j])+ slope * \
-                                         (xw[j] - xw[j][iXMinList[j]]).sum(dtype=numpy.float) 
-                            netSum = rawSum - background
-                        else:
-                            netSum = 0.0
-                    results[j][i,:(jEnd - jStart)] = rawSum
-                    results[j + nRois][i,:(jEnd - jStart)] = netSum
-                    if xAtMinMax:
-                        if xw[j] is None:
-                            # what can be the Min and the Max when there is nothing in the ROI?
-                            _logger.warning("No Min. Max for ROI <%s>. Empty ROI" % roiLine)
-                        else:
-                            # maxImage
-                            results[j + 2 * nRois][i, :(jEnd - jStart)] = \
-                                     xw[j][numpy.argmax(tmpArray, axis=1)]
-                            # minImage
-                            results[j + 3 * nRois][i, :(jEnd - jStart)] = \
-                                     xw[j][numpy.argmin(tmpArray, axis=1)]
-
-                jStart = jEnd
-        outputDict = {'images':results,
-                      'names':names}
-        return outputDict
 
 def getFileListFromPattern(pattern, begin, end, increment=None):
     if type(begin) == type(1):
@@ -274,18 +312,54 @@ def getFileListFromPattern(pattern, begin, end, increment=None):
         raise ValueError("Cannot handle more than three indices.")
     return fileList
 
-if __name__ == "__main__":
+
+def prepareDataStack(fileList):
+    if (not os.path.exists(fileList[0])) and \
+        os.path.exists(fileList[0].split("::")[0]):
+        # odo convention to get a dataset form an HDF5
+        fname, dataPath = fileList[0].split("::")
+        # compared to the ROI imaging tool, this way of reading puts data
+        # into memory while with the ROI imaging tool, there is a check.
+        if 0:
+            import h5py
+            h5 = h5py.File(fname, "r")
+            dataStack = h5[dataPath][:]
+            h5.close()
+        else:
+            from PyMca5.PyMcaIO import HDF5Stack1D
+            # this way reads information associated to the dataset (if present)
+            if dataPath.startswith("/"):
+                pathItems = dataPath[1:].split("/")
+            else:
+                pathItems = dataPath.split("/")
+            if len(pathItems) > 1:
+                scanlist = ["/" + pathItems[0]]
+                selection = {"y":"/" + "/".join(pathItems[1:])}
+            else:
+                selection = {"y":dataPath}
+                scanlist = None
+            print(selection)
+            print("scanlist = ", scanlist)
+            dataStack = HDF5Stack1D.HDF5Stack1D([fname],
+                                                selection,
+                                                scanlist=scanlist)
+    else:
+        from PyMca5.PyMca import EDFStack
+        dataStack = EDFStack.EDFStack(fileList, dtype=numpy.float32)
+    return dataStack
+
+
+def main():
     import glob
     import sys
-    from PyMca5.PyMca import EDFStack
-    from PyMca5.PyMca import ArraySave
     import getopt
     _logger.setLevel(logging.DEBUG)
-    options     = ''
+    options = ''
     longoptions = ['cfg=', 'outdir=',
-                   'tif=', #'listfile=',
+                   'tif=', 'edf=', 'csv=', 'h5=', 'dat=',
                    'filepattern=', 'begin=', 'end=', 'increment=',
-                   "outfileroot="]
+                   'outroot=', 'outentry=', 'outprocess=',
+                   'overwrite=', 'multipage=']
     try:
         opts, args = getopt.getopt(
                      sys.argv[1:],
@@ -294,14 +368,21 @@ if __name__ == "__main__":
     except:
         _logger.error(sys.exc_info()[1])
         sys.exit(1)
-    fileRoot = ""
     outputDir = None
-    fileindex = 0
-    filepattern=None
+    outputRoot = ""
+    fileEntry = ""
+    fileProcess = ""
+    filepattern = None
     begin = None
     end = None
-    increment=None
-    tif=0
+    increment = None
+    tif = 0
+    edf = 0
+    csv = 0
+    h5 = 1
+    dat = 0
+    overwrite = 1
+    multipage = 0
     for opt, arg in opts:
         if opt in ('--cfg'):
             configurationFile = arg
@@ -325,62 +406,56 @@ if __name__ == "__main__":
             filepattern = filepattern.replace("'", "")
         elif opt in '--outdir':
             outputDir = arg
-        elif opt in '--outfileroot':
-            fileRoot = arg
-        elif opt in ['--tif', '--tiff']:
+        elif opt == '--outroot':
+            outputRoot = arg
+        elif opt == '--outentry':
+            fileEntry = arg
+        elif opt == '--outprocess':
+            fileProcess = arg
+        elif opt in ('--tif', '--tiff'):
             tif = int(arg)
+        elif opt == '--edf':
+            edf = int(arg)
+        elif opt == '--csv':
+            csv = int(arg)
+        elif opt == '--h5':
+            h5 = int(arg)
+        elif opt == '--dat':
+            dat = int(arg)
+        elif opt == '--overwrite':
+            overwrite = int(arg)
+        elif opt == '--multipage':
+            multipage = int(arg)
     if filepattern is not None:
         if (begin is None) or (end is None):
-            raise ValueError(\
+            raise ValueError(
                 "A file pattern needs at least a set of begin and end indices")
     if filepattern is not None:
-        fileList = getFileListFromPattern(filepattern, begin, end, increment=increment)
+        fileList = getFileListFromPattern(filepattern, begin, end,
+                                          increment=increment)
     else:
         fileList = args
     if len(fileList):
-        dataStack = EDFStack.EDFStack(fileList, dtype=numpy.float32)
+        dataStack = prepareDataStack(fileList)
     else:
         print("OPTIONS:", longoptions)
         sys.exit(0)
     if outputDir is None:
         print("RESULTS WILL NOT BE SAVED: No output directory specified")
-    t0 = time.time()
     worker = StackROIBatch()
     worker.setConfigurationFile(configurationFile)
-    result = worker.batchROIMultipleSpectra(y=dataStack)
-    if outputDir is not None:
-        imageNames = result['names']
-        images = result['images']
-        nImages = images.shape[0]
+    outbuffer = OutputBuffer(outputDir=outputDir,
+                             outputRoot=outputRoot,
+                             fileEntry=fileEntry,
+                             fileProcess=fileProcess,
+                             tif=tif, edf=edf, csv=csv,
+                             h5=h5, dat=dat,
+                             multipage=multipage,
+                             overwrite=overwrite)
+    with outbuffer.saveContext():
+        worker.batchROIMultipleSpectra(y=dataStack,
+                                       outbuffer=outbuffer)
 
-        if fileRoot in [None, ""]:
-            fileRoot = "images"
-        if not os.path.exists(outputDir):
-            os.mkdir(outputDir)
-        imagesDir = os.path.join(outputDir, "IMAGES")
-        if not os.path.exists(imagesDir):
-            os.mkdir(imagesDir)
-        imageList = [None] * (nImages)
-        fileImageNames = [None] * (nImages)
-        j = 0
-        for i in range(nImages):
-            name = imageNames[i].replace(" ", "-")
-            fileImageNames[j] = name
-            imageList[j] = images[i]
-            j += 1
-        fileName = os.path.join(imagesDir, fileRoot+".edf")
-        ArraySave.save2DArrayListAsEDF(imageList, fileName,
-                                       labels=fileImageNames)
-        fileName = os.path.join(imagesDir, fileRoot+".csv")
-        ArraySave.save2DArrayListAsASCII(imageList, fileName, csv=True,
-                                         labels=fileImageNames)
-        if tif:
-            i = 0
-            for i in range(len(fileImageNames)):
-                label = fileImageNames[i]
-                fileName = os.path.join(imagesDir,
-                                        fileRoot + fileImageNames[i] + ".tif")
-                ArraySave.save2DArrayListAsMonochromaticTiff([imageList[i]],
-                                        fileName,
-                                        labels=[label],
-                                        dtype=numpy.float32)
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    main()

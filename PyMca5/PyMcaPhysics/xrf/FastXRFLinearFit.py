@@ -46,7 +46,7 @@ from PyMca5.PyMcaMath.fitting import Gefit
 from PyMca5.PyMcaMath.fitting import SpecfitFuns
 from PyMca5.PyMcaIO import ConfigDict
 from .XRFBatchFitOutput import OutputBuffer
-from . import McaStackView
+from PyMca5.PyMcaCore import McaStackView
 
 _logger = logging.getLogger(__name__)
 
@@ -90,7 +90,7 @@ class FastXRFLinearFit(object):
                          automatic time. The default is None.
         :param outbuffer:
         :param save: set to False to postpone saving the in-memory buffers
-        :return dict: outbuffer
+        :return OutputBuffer: works like a dict
         """
         # Parse data
         x, data, mcaIndex, livetime = self._fitParseData(x=x, y=y,
@@ -348,7 +348,7 @@ class FastXRFLinearFit(object):
         return x, data, mcaIndex, livetime
 
     def _fitConfigure(self, configuration=None, concentrations=False,
-                       livetime=None, weight=None, nSpectra=None):
+                      livetime=None, weight=None, nSpectra=None):
         """Prepare configuration for fitting
         """
         if configuration is not None:
@@ -461,7 +461,7 @@ class FastXRFLinearFit(object):
         """
         dtype = self._fitDtypeCalculation(data)
         if sumover == 'all':
-            nMca = self._numberOfSpectra(20, 'MiB', data=data, mcaIndex=mcaIndex)
+            nMca = 20, 'MB'
             _logger.debug('Add spectra in chunks of {}'.format(nMca))
             datastack = McaStackView.FullView(data, mcaAxis=mcaIndex, nMca=nMca)
             yref = numpy.zeros((data.shape[mcaIndex],), dtype)
@@ -601,8 +601,7 @@ class FastXRFLinearFit(object):
         nChan, nFree = derivatives.shape
         bkgsub = bool(config['fit']['stripflag'])
 
-        nMca = self._numberOfSpectra(1, 'MiB', data=data, mcaIndex=mcaIndex,
-                                     sliceChan=sliceChan)
+        nMca = 1, 'MB'
         _logger.debug('Fit spectra in chunks of {}'.format(nMca))
         chunkItems = self._dataChunkIter(McaStackView.FullView,
                                          data=data,
@@ -651,8 +650,7 @@ class FastXRFLinearFit(object):
         Fit reduced number of spectra (mask) with a reduced model (skipped parameters will be set to zero)
         """
         npixels = int(mask.sum())
-        nMca = self._numberOfSpectra(1, 'MiB', data=data, mcaIndex=mcaIndex,
-                                     sliceChan=sliceChan)
+        nMca = 1, 'MB'
         if npixels < nmin:
             _logger.debug("Not worth refitting #%d pixels", npixels)
             for iFree, name in zip(skipParams, skipNames):
@@ -733,15 +731,6 @@ class FastXRFLinearFit(object):
     def _fitDtypeCalculation(data):
         # TODO: always 64bit?
         return numpy.float
-
-    def _numberOfSpectra(self, n, unit, data=None, mcaIndex=None, sliceChan=None):
-        p = ['b', 'kib', 'mib', 'gib'].index(unit.lower())
-        dtype = self._fitDtypeCalculation(data)
-        nChan = data.shape[mcaIndex]
-        if sliceChan is not None:
-            nChan = McaStackView.sliceLen(sliceChan, nChan)
-        nByteMca = numpy.array([0], dtype).itemsize*nChan
-        return max((n*1024**p)//nByteMca, 1)
 
     @staticmethod
     def _fitBkgSubtract(spectra, config=None, anchorslist=None, fitmodel=None):
@@ -1158,14 +1147,14 @@ def main():
     print("Main configuring Elapsed = % s " % (time.time() - t0))
 
     outbuffer = OutputBuffer(outputDir=outputDir,
-                        outputRoot=outputRoot,
-                        fileEntry=fileEntry,
-                        fileProcess=fileProcess,
-                        diagnostics=diagnostics,
-                        tif=tif, edf=edf, csv=csv,
-                        h5=h5, dat=dat,
-                        multipage=multipage,
-                        overwrite=overwrite)
+                             outputRoot=outputRoot,
+                             fileEntry=fileEntry,
+                             fileProcess=fileProcess,
+                             diagnostics=diagnostics,
+                             tif=tif, edf=edf, csv=csv,
+                             h5=h5, dat=dat,
+                             multipage=multipage,
+                             overwrite=overwrite)
 
     from PyMca5.PyMcaMisc import ProfilingUtils
     with ProfilingUtils.profile(memory=debug, time=debug):
