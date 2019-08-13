@@ -78,10 +78,13 @@ class QSourceSelector(qt.QWidget):
         self.mapCombo= {}
         openButton= qt.QPushButton(self.fileWidget)
 
-        self.openIcon   = qt.QIcon(qt.QPixmap(icons.fileopen))
-        self.closeIcon  = qt.QIcon(qt.QPixmap(icons.close))
-        self.reloadIcon = qt.QIcon(qt.QPixmap(icons.reload_))
-        self.specIcon   = qt.QIcon(qt.QPixmap(icons.spec))
+        self.openIcon   = qt.QIcon(qt.QPixmap(icons.IconDict["fileopen"]))
+        self.closeIcon  = qt.QIcon(qt.QPixmap(icons.IconDict["close"]))
+        self.reloadIcon = qt.QIcon(qt.QPixmap(icons.IconDict["reload"]))
+        if BLISS:
+            self.specIcon   = qt.QIcon(qt.QPixmap(icons.IconDict["bliss"]))
+        else:
+            self.specIcon   = qt.QIcon(qt.QPixmap(icons.IconDict["spec"]))
 
         openButton.setIcon(self.openIcon)
         openButton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Minimum))
@@ -122,8 +125,9 @@ class QSourceSelector(qt.QWidget):
         self.specButton = specButton
         if pluginsIcon:
             self.pluginsButton = qt.QPushButton(self.fileWidget)
-            self.pluginsButton.setIcon(qt.QIcon(qt.QPixmap(icons.plugin)))
+            self.pluginsButton.setIcon(qt.QIcon(qt.QPixmap(icons.IconDict["plugin"])))
             self.pluginsButton.setToolTip("Plugin handling")
+            self.pluginsButton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Minimum))
             fileWidgetLayout.addWidget(self.pluginsButton)
         self.mainLayout.addWidget(self.fileWidget)
 
