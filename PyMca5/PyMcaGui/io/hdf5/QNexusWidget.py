@@ -124,6 +124,7 @@ class QNexusWidget(qt.QWidget):
 
     def build(self):
         self.mainLayout = qt.QVBoxLayout(self)
+        self.mainLayout.setContentsMargins(5, 5, 5, 0)
         self.splitter = qt.QSplitter(self)
         self.splitter.setOrientation(qt.Qt.Vertical)
         self.hdf5Widget = HDF5Widget.HDF5Widget(self._defaultModel,
