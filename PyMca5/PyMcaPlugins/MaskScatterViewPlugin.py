@@ -45,6 +45,7 @@ from PyMca5 import StackPluginBase
 
 from silx.gui.plot.ScatterView import ScatterView
 from silx.gui.widgets.BoxLayoutDockWidget import BoxLayoutDockWidget
+from silx.gui.colors import Colormap
 
 _logger = logging.getLogger(__name__)
 # _logger.setLevel(logging.DEBUG)
@@ -148,6 +149,7 @@ class MaskScatterViewWidget(qt.QMainWindow):
     def __init__(self, parent=None, backend="mpl"):
         qt.QMainWindow.__init__(self, parent)
         self._scatterView = ScatterView(parent=self, backend=backend)
+        self._scatterView.setColormap(Colormap("temperature"))
 
         self._axesSelector = AxesPositionersSelector(parent=self._scatterView)
         self._axesSelector.sigSelectionChanged.connect(self._setAxesData)
