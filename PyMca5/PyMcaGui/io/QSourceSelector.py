@@ -97,7 +97,10 @@ class QSourceSelector(qt.QWidget):
 
         specButton= qt.QPushButton(self.fileWidget)
         specButton.setIcon(self.specIcon)
-        specButton.setToolTip("Open new shared memory source")
+        if BLISS:
+            specButton.setToolTip("Open data acquisition source")
+        else:
+            specButton.setToolTip("Open new shared memory source")
 
         closeButton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Minimum))
         specButton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Minimum))
