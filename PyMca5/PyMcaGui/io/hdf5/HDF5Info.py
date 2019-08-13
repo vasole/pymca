@@ -316,7 +316,7 @@ class HDF5InfoWidget(qt.QTabWidget):
 
     def sizeHint(self):
         return qt.QSize(2 * qt.QTabWidget.sizeHint(self).width(),
-                        qt.QTabWidget.sizeHint(self).height())
+                        int(1.5 * qt.QTabWidget.sizeHint(self).height()))
 
     def _build(self):
         self.generalInfoWidget = HDF5GeneralInfoWidget(self)
