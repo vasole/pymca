@@ -1402,10 +1402,11 @@ class McaBatchGUI(qt.QWidget):
             self.raise_()
             return False
         cmd.setCommand(myself)
-        self._rgb = toolPath('PyMcaPostBatch')
-        # REMARK: viewer is currently not launched
-        #         as an independent process (see _showProcessResults)
-        #viewer = toolPath('EdfFileSimpleViewer')
+        if QTVERSION < '4.0.0':
+            self._datviewer_path = None
+        else:
+            self._datviewer_path = toolPath('PyMcaPostBatch')
+        self._edfviewer_path = toolPath('EdfFileSimpleViewer')
         return True
 
     def _runInProcessMonitored(self, cmd):
@@ -1524,26 +1525,30 @@ class McaBatchGUI(qt.QWidget):
 
     def _fetchProcessResults(self):
         basename = McaAdvancedFitBatch.getRootName(self.fileList)
-        inputdir = os.path.join(self.outputDir, basename)
+        #inputdir = os.path.join(self.outputDir, basename)
+        inputdir = os.path.join(self.outputDir, 'IMAGES')
         edfoutlist = glob(os.path.join(inputdir, basename+'*.edf'))
         datoutlist = glob(os.path.join(inputdir, basename+'*.dat'))
         return edfoutlist, datoutlist
 
     def _showProcessResults(self, edfoutlist, datoutlist):
-        # Load in EDF viewer
-        if edfoutlist:
-            if self._edfSimpleViewer is None:
-                self._edfSimpleViewer = EdfFileSimpleViewer.EdfFileSimpleViewer()
-            self._edfSimpleViewer.setFileList(edfoutlist)
-            self._edfSimpleViewer.show()
+        # Load in EDF viewer (this process)
+        #if edfoutlist:
+        #    if self._edfSimpleViewer is None:
+        #        self._edfSimpleViewer = EdfFileSimpleViewer.EdfFileSimpleViewer()
+        #    # REMARK: this call takes a long time to finish and blocks everything:
+        #    self._edfSimpleViewer.setFileList(edfoutlist)
+        #    self._edfSimpleViewer.show()
 
-        # Load in RGB correlator
-        if QTVERSION < '4.0.0':
-            rgb = None
-        else:
-            rgb = self._rgb
-        if datoutlist and rgb is not None:
-            cmd = '%s "%s"' % (rgb, datoutlist[0])
+        # Load in EDF viewer (independent process)
+        if edfoutlist and self._edfviewer_path:
+            edfoutlist = ' '.join('"%s"' % filename for filename in edfoutlist)
+            cmd = '%s %s' % (self._edfviewer_path, edfoutlist)
+            launchProcess(cmd, independent=True)
+
+        # Load in RGB correlator (independent process)
+        if datoutlist and self._datviewer_path:
+            cmd = '%s "%s"' % (self._datviewer_path, datoutlist[0])
             launchProcess(cmd, independent=True)
 
 
@@ -1967,16 +1972,16 @@ class McaBatchWindow(qt.QWidget):
                 # Do not start because we exit anyway
                 return
             self.__viewer = EdfFileSimpleViewer.EdfFileSimpleViewer()
+            # REMARK: this call takes a long time to finish:
             self.__viewer.setFileList(imagelist)
             self.__viewer.show()
         else:
-            filelist = " "
-            for ffile in imagelist:
-                filelist+=" %s" % ffile
-            viewer = toolPath('EdfFileSimpleViewer')
-            cmd = "%s %s" % (viewer, filelist)
-            launchProcess(cmd, independent=True)
-            
+            edfviewer_path = toolPath('EdfFileSimpleViewer')
+            if edfviewer_path:
+                filelist = ' '.join('"%s"' % filename for filename in imagelist)
+                cmd = '%s %s' % (edfviewer_path, filelist)
+                launchProcess(cmd, independent=True)
+
 
 def main():
     sys.excepthook = qt.exceptionHandler
