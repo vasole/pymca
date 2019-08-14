@@ -150,6 +150,7 @@ class MaskScatterViewWidget(qt.QMainWindow):
         qt.QMainWindow.__init__(self, parent)
         self._scatterView = ScatterView(parent=self, backend=backend)
         self._scatterView.setColormap(Colormap("temperature"))
+        self._scatterView.getScatterItem().setSymbol("s")
 
         self._axesSelector = AxesPositionersSelector(parent=self._scatterView)
         self._axesSelector.sigSelectionChanged.connect(self._setAxesData)
