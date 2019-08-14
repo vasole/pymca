@@ -110,6 +110,9 @@ class OmnicMap(DataObject.DataObject):
         oldXPosition = xPosition
         oldYPosition = yPosition
         self.nRows = 0
+        xPositions = numpy.zeros(self.nSpectra)
+        yPositions = numpy.zeros(self.nSpectra)
+        calculating = True
         for i in range(self.nSpectra):
             offset = int(firstByte + i * (100 + self.nChannels * 4))
             if sys.version < '3.0':
@@ -123,17 +126,30 @@ class OmnicMap(DataObject.DataObject):
                 yPosition = float(tmpValues[3])
             else:
                 #I have to calculate them from the scan
-                xPosition, yPosition = self.getPositionFromIndexAndInfo(i, omnicInfo)
-            if (abs(yPosition - oldYPosition) > 1.0e-6) and\
-               (abs(xPosition - oldXPosition) < 1.0e-6):
-                break
-            self.nRows += 1
+                xPosition, yPosition = self.getPositionFromIndexAndInfo(i,
+                                                                    omnicInfo)
+            xPositions[i] = xPosition
+            yPositions[i] = yPosition
+            if calculating:
+                if (abs(yPosition - oldYPosition) > 1.0e-6) and\
+                   (abs(xPosition - oldXPosition) < 1.0e-6):
+                    calculating = False
+                    continue
+                self.nRows += 1
+
         _logger.debug("DIMENSIONS X = %f Y=%d",
                       self.nSpectra * 1.0 / self.nRows, self.nRows)
 
         #arrange as an EDF Stack
         self.info = {}
         self.__nFiles = int(self.nSpectra / self.nRows)
+        try:
+            deltaX = (xPositions[-1] - xPositions[0]) / (self.nRows - 1)
+            deltaY = (yPositions[-1] - yPositions[0]) / (self.__nFiles - 1)
+        except:
+            deltaX = None
+            deltaY = None
+            _logger.warning("Cannot calculate scales")
         self.data = numpy.zeros((self.__nFiles, self.nRows, self.nChannels),
                                  dtype=numpy.float32)
 
@@ -169,6 +185,11 @@ class OmnicMap(DataObject.DataObject):
         else:
             self.info["McaCalib"] = [0.0, 1.0, 0.0]
         self.info['OmnicInfo'] = omnicInfo
+        if deltaX and deltaY:
+            if (deltaX > 0.0) and (deltaY > 0.0):
+                self.info["xScale"] = [oldXPosition, deltaX] 
+                self.info["yScale"] = [oldYPosition, deltaY]
+        self.info["positioners"] = {"X":xPositions, "Y":yPositions}
 
     def _getOmnicInfo(self, data):
         '''
