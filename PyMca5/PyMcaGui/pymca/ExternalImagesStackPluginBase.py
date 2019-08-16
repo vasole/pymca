@@ -49,7 +49,7 @@ else:
 _logger = logging.getLogger(__name__)
 
 
-class ExternalImagesStackPluginBase(StackPluginBase.StackPluginBase)):
+class ExternalImagesStackPluginBase(StackPluginBase.StackPluginBase):
 
     def __init__(self, stackWindow, **kw):
         if _logger.getEffectiveLevel() == logging.DEBUG:
