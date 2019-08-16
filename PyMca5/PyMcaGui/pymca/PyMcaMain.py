@@ -1752,7 +1752,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         self.changeLog.show()
 
     def onDebug(self):
-        _logger.debug("Module name PyQt  %s", qt.PYQT_VERSION_STR)
+        if "PyQt5.QtCore" in sys.modules:
+            _logger.debug("Module name PyQt  %s", qt.PYQT_VERSION_STR)
         for module in sys.modules.values():
             try:
                 if 'Revision' in module.__revision__:
