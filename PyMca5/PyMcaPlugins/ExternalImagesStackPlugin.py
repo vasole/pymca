@@ -44,16 +44,16 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 import os
 import logging
-from PyMca5.PyMcaGui import ExternalImagesStackPluginBase
-from PyMca5.PyMcaGui import StackPluginResultsWindow
-from PyMca5.PyMcaGui import ExternalImagesWindow
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.PyMcaGui import PyMca_Icons as PyMca_Icons
+from PyMca5.PyMcaGui.pymca import ExternalImagesWindow
+from PyMca5.PyMcaGui.pymca import ExternalImagesStackPluginBase
+from PyMca5.PyMcaGui.pymca import StackPluginResultsWindow
+from PyMca5.PyMcaGui.plotting import PyMca_Icons as PyMca_Icons
 
 _logger = logging.getLogger(__name__)
 
-
-class ExternalImagesStackPlugin(ExternalImagesStackPluginBase.ExternalImagesStackPluginBase):
+class ExternalImagesStackPlugin( \
+    ExternalImagesStackPluginBase.ExternalImagesStackPluginBase):
 
     def __init__(self, stackWindow, **kw):
         ExternalImagesStackPluginBase.ExternalImagesStackPluginBase.__init__(self, stackWindow, **kw)
@@ -146,8 +146,6 @@ class ExternalImagesStackPlugin(ExternalImagesStackPluginBase.ExternalImagesStac
 
 
 MENU_TEXT = "External Images Tool"
-
-
 def getStackPluginInstance(stackWindow, **kw):
     ob = ExternalImagesStackPlugin(stackWindow)
     return ob
