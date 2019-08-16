@@ -480,7 +480,7 @@ class ScanWindow(PlotWindow.PlotWindow):
     def _replaceSelection(self, selectionlist):
         """Delete existing curves and data objects, then add new selection.
         """
-        _logger.debug("_replaceSelection(self, selectionlist) ", selectionlist)
+        _logger.debug("_replaceSelection(self, selectionlist) %s" % selectionlist)
         if type(selectionlist) == type([]):
             sellist = selectionlist
         else:

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -323,11 +323,13 @@ class CheckBoxItem(qt.QCheckBox):
         qt.QCheckBox.__init__(self, parent)
         self.__row = row
         self.__col = col
-        self.clicked.connect(self._mySignal)
+        self.clicked[bool].connect(self._mySignal)
 
-    def _mySignal(self, value):
+    def _mySignal(self, value=None):
         ddict = {}
         ddict["event"] = "clicked"
+        if value is None:
+            value = self.isChecked()
         ddict["state"] = value
         ddict["row"] = self.__row * 1
         ddict["col"] = self.__col * 1
