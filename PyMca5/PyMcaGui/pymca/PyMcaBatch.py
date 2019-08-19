@@ -1361,9 +1361,15 @@ class McaBatchGUI(qt.QWidget):
         if isinstance(self.configFile, list):
             cfglistfile = os.path.join(self.outputDir, "tmpfile.cfg")
             self.genListFile(cfglistfile, config=True)
-            cmd.addOption("cfglistfile", value=cfglistfile)
+            if sys.platform.startswith("win"):
+                cmd.addOption("cfglistfile", value='"%s"' % cfglistfile)
+            else:
+                cmd.addOption("cfglistfile", value=cfglistfile)
         else:
-            cmd.addOption("cfg", value=self.configFile)
+            if sys.platform.startswith("win"):
+                cmd.addOption("cfg", value='"%s"' % self.configFile)
+            else:
+                cmd.addOption("cfg", value=self.configFile)
 
         # Launch process(es)
         monitored = self._runAsMultiProcess or not blocking
