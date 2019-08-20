@@ -816,7 +816,8 @@ class SumRulesWindow(qt.QMainWindow):
            +'Depending on the tab, estimate either the pre/post\n'
            +'edge regions and edge positions or the positions of\n'
            +'the p, q and r markers.')
-        self.buttonEstimate.setShortcut(qt.Qt.CTRL+qt.Qt.Key_E)
+        self.buttonEstimate.setShortcut(\
+                    qt.QKeySequence(qt.Qt.CTRL+qt.Qt.Key_E))
         self.buttonEstimate.clicked.connect(self.estimate)
         self.buttonEstimate.setEnabled(False)
         self.plotWindow.toolBar.addSeparator()
@@ -868,37 +869,39 @@ class SumRulesWindow(qt.QMainWindow):
         ffile = menu.addMenu('&File')
 
         openAction = qt.QAction('&Open Spec File', self)
-        openAction.setShortcut(qt.Qt.CTRL+qt.Qt.Key_O)
+        openAction.setShortcut(qt.QKeySequence(qt.Qt.CTRL+qt.Qt.Key_O))
         openAction.setStatusTip('Opened file')
         openAction.setToolTip('Opens a data file (*.spec)')
         openAction.triggered.connect(self.loadData)
 
         loadAction = qt.QAction('&Load Configuration', self)
-        loadAction.setShortcut(qt.Qt.CTRL+qt.Qt.Key_L)
+        loadAction.setShortcut(qt.QKeySequence(qt.Qt.CTRL+qt.Qt.Key_L))
         loadAction.setStatusTip('Loaded analysis file')
         loadAction.setToolTip('Loads an existing analysis file (*.sra)')
         loadAction.triggered.connect(self.loadConfiguration)
 
         saveConfAction = qt.QAction('&Save Configuration', self)
-        saveConfAction.setShortcut(qt.Qt.CTRL+qt.Qt.Key_S)
+        saveConfAction.setShortcut(qt.QKeySequence(qt.Qt.CTRL+qt.Qt.Key_S))
         saveConfAction.setStatusTip('Saved analysis file')
         saveConfAction.setToolTip('Save analysis in file (*.sra)')
         saveConfAction.triggered.connect(self.saveConfiguration)
 
         saveConfAsAction = qt.QAction('Save &Configuration as', self)
-        saveConfAsAction.setShortcut(qt.Qt.SHIFT+qt.Qt.CTRL+qt.Qt.Key_S)
+        saveConfAsAction.setShortcut(\
+                    qt.QKeySequence(qt.Qt.SHIFT+qt.Qt.CTRL+qt.Qt.Key_S))
         saveConfAsAction.setStatusTip('Saved analysis file')
         saveConfAsAction.setToolTip('Save analysis in file (*.sra)')
         saveConfAsAction.triggered.connect(self.saveConfigurationAs)
 
         saveDataAction = qt.QAction('Save &Data', self)
-        saveDataAction.setShortcut(qt.Qt.CTRL+qt.Qt.Key_D)
+        saveDataAction.setShortcut(qt.QKeySequence(qt.Qt.CTRL+qt.Qt.Key_D))
         saveDataAction.setStatusTip('Saved analysis file')
         saveDataAction.setToolTip('Save analysis in file (*.sra)')
         saveDataAction.triggered.connect(self.saveData)
 
         saveDataAsAction = qt.QAction('Save D&ata as', self)
-        saveDataAsAction.setShortcut(qt.Qt.SHIFT+qt.Qt.CTRL+qt.Qt.Key_D)
+        saveDataAsAction.setShortcut(\
+                    qt.QKeySequence(qt.Qt.SHIFT+qt.Qt.CTRL+qt.Qt.Key_D))
         saveDataAsAction.setStatusTip('Saved analysis file')
         saveDataAsAction.setToolTip('Save analysis in file (*.sra)')
         saveDataAsAction.triggered.connect(self.saveDataAs)
@@ -925,7 +928,7 @@ class SumRulesWindow(qt.QMainWindow):
         hhelp = menu.addMenu('&Help')
 
         showHelpFileAction = qt.QAction('Show &documentation', self)
-        showHelpFileAction.setShortcut(qt.Qt.Key_F1)
+        showHelpFileAction.setShortcut(qt.QKeySequence(qt.Qt.Key_F1))
         showHelpFileAction.setStatusTip('')
         showHelpFileAction.setToolTip('Opens the documentation (html-file) in the systems native web browser')
         showHelpFileAction.triggered.connect(self.showInfoWindow)

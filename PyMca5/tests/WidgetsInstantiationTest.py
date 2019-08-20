@@ -124,7 +124,6 @@ class TestMcaAdvancedFit(TestCaseQt):
         from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
         PyMcaPrintPreview.resetSingletonPrintPreview()
 
-"""
 class TestPyMcaMain(TestCaseQt):
     def setUp(self):
         super(TestPyMcaMain, self).setUp()
@@ -136,7 +135,6 @@ class TestPyMcaMain(TestCaseQt):
         self.qapp.processEvents()
         from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
         PyMcaPrintPreview.resetSingletonPrintPreview()
-"""
 
 def getSuite(auto=True):
     test_suite = unittest.TestSuite()
@@ -168,7 +166,7 @@ def getSuite(auto=True):
                         TestScanWindow,
                         TestMcaWindow,
                         TestMcaAdvancedFit,
-                        #TestPyMcaMain,
+                        TestPyMcaMain,
                         ):
         test_suite.addTest(
             unittest.defaultTestLoader.loadTestsFromTestCase(TestCaseCls))
