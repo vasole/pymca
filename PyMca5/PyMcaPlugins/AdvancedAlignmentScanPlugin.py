@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2018 T. Rueter, V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 T. Rueter, V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -173,26 +173,26 @@ class AlignmentWidget(qt.QDialog):
         buttonSave = qt.QPushButton('Save')
         buttonSave.setToolTip('Shortcut: CTRL+S\n'
                              +'Save shifts to file')
-        buttonSave.setShortcut(qt.Qt.CTRL + qt.Qt.Key_S)
+        buttonSave.setShortcut(qt.QKeySequence(qt.Qt.CTRL + qt.Qt.Key_S))
         buttonLoad = qt.QPushButton('Load')
         buttonLoad.setToolTip('Shortcut: CTRL+O\n'
                              +'Load shifts from file')
-        buttonLoad.setShortcut(qt.Qt.CTRL + qt.Qt.Key_O)
+        buttonLoad.setShortcut(qt.QKeySequence(qt.Qt.CTRL + qt.Qt.Key_O))
         buttonStore = qt.QPushButton('Store')
         buttonStore.setToolTip('Shortcut: ALT+S\n'
                               +'Store shifts in memory.\n')
-        buttonStore.setShortcut(qt.Qt.ALT + qt.Qt.Key_S)
+        buttonStore.setShortcut(qt.QKeySequence(qt.Qt.ALT + qt.Qt.Key_S))
         buttonApply = qt.QPushButton('Apply')
         buttonApply.setToolTip('Shortcut: CTRL+Return\n'
                               +'Apply shift to curves present'
                               +' in the plot window')
-        buttonApply.setShortcut(qt.Qt.CTRL + qt.Qt.Key_Return)
+        buttonApply.setShortcut(qt.QKeySequence(qt.Qt.CTRL + qt.Qt.Key_Return))
         buttonCancel = qt.QPushButton('Cancel')
         buttonCancel.setToolTip('Shortcut: ESC\n'
                                +'Closes the window')
         buttonCalc = qt.QPushButton('Calculate')
         buttonCalc.setToolTip('Shortcut: F5')
-        buttonCalc.setShortcut(qt.Qt.Key_F5)
+        buttonCalc.setShortcut(qt.QKeySequence(qt.Qt.Key_F5))
 
         # Table
         self.shiftTab = qt.QTableWidget(nRows, nCols)
