@@ -327,9 +327,9 @@ class OutputBuffer(MutableMapping):
             if self.nosave:
                 _logger.info('Allocate in memory instead of Hdf5 (saving is disabled)')
             elif not self.h5:
-                _logger.warning('Allocate in memory instead of Hdf5 (h5 format is disabled)')
+                _logger.info('Allocate in memory instead of Hdf5 (h5 format is disabled)')
             elif NexusUtils.h5py is None:
-                _logger.warning('Allocate in memory instead of Hdf5 (h5py not installed)')
+                _logger.info('Allocate in memory instead of Hdf5 (h5py not installed)')
             elif not self.outputDir:
                 _logger.warning('Allocate in memory instead of Hdf5 (no output directory specified)')
             else:
@@ -731,7 +731,7 @@ class OutputBuffer(MutableMapping):
         """
         _logger.debug('Saving {}'.format(self))
         if self.nosave:
-            _logger.warning('Fit results are not saved (saving is disabled)')
+            _logger.info('Fit results are not saved (saving is disabled)')
             return
         elif not (self.tif or self.edf or self.csv or self.dat or self.h5):
             _logger.warning('Fit results are not saved (all output formats disabled)')
