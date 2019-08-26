@@ -1657,10 +1657,10 @@ if __name__ == "__main__":
     backend = None
     if ("opengl" in sys.argv) or ("gl" in sys.argv) or ("OpenGL" in sys.argv):
         backend = "opengl"
-    elif "pyqtgraph" in sys.argv:
-        backend = "pyqtgraph"
     elif "silx" in sys.argv:
         backend = "silx"
+    elif "silx-gl" in sys.argv:
+        backend = "silx-gl"
     else:
         backend = "matplotlib"
     plot = PlotWindow(backend=backend, roi=True, control=True,

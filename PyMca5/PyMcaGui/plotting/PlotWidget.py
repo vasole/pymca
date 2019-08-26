@@ -301,10 +301,6 @@ if __name__ == "__main__":
         backend = "silx"
         print("USING silx")
         time.sleep(1)
-    elif ("pyqtgraph" in sys.argv):
-        backend = "pyqtgraph"
-        print("USING PyQtGraph")
-        time.sleep(1)
     elif ("OpenGL" in sys.argv) or ("opengl" in sys.argv) or ("gl" in sys.argv):
         backend = "opengl"
         print("USING OpenGL")

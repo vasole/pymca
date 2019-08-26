@@ -76,7 +76,6 @@ _COLORLIST = [_COLORDICT['black'],
               _COLORDICT['darkYellow'],
               _COLORDICT['darkBrown']]
 
-#PyQtGraph symbols ['o', 's', 't', 'd', '+', 'x']
 #
 #Matplotlib symbols:
 #"." 	point
@@ -137,8 +136,6 @@ class Plot(PlotBase.PlotBase):
                 from .backends.MatplotlibBackend import MatplotlibBackend as be
             elif lowerCaseString in ["gl", "opengl"]:
                 from .backends.OpenGLBackend import OpenGLBackend as be
-            elif lowerCaseString in ["pyqtgraph"]:
-                from .backends.PyQtGraphBackend import PyQtGraphBackend as be
             elif lowerCaseString in ["glut"]:
                 from .backends.GLUTOpenGLBackend import GLUTOpenGLBackend as be
             elif lowerCaseString in ["osmesa", "mesa"]:
@@ -873,8 +870,6 @@ class Plot(PlotBase.PlotBase):
         if self._activeCurve == oldActiveCurve:
             # the labels may need to be updated!!!!
             return self._activeCurve
-        # this was giving troubles in the PyQtGraph binding
-        #if self._activeCurve != oldActiveCurve:
         self._plot.setActiveCurve(self._activeCurve, replot=replot)
         return self._activeCurve
 
