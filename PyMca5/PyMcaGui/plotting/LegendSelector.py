@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2015-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2015-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -53,7 +53,7 @@ def convertToPyObject(x):
 DEBUG = 0
 
 # Build all symbols
-# Courtesy of the pyqtgraph project
+# Courtesy of Luke Campagnola's graph project
 Symbols = dict([(name, qt.QPainterPath()) for name in ['o', 's', 't', 'd', '+', 'x', '.', ',']])
 Symbols['o'].addEllipse(qt.QRectF(.1, .1, .8, .8))
 Symbols['.'].addEllipse(qt.QRectF(.3, .3, .4, .4))
