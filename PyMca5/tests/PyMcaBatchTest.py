@@ -489,7 +489,10 @@ class testPyMcaBatch(TestCaseQt):
         excluded_labels = 'row', 'column', 'point'
         included = [label.lower() not in excluded_labels for label in labels]
         if not all(included):
-            data = data[included, ...]
+            # woraround numpy issue https://github.com/numpy/numpy/pull/13715
+            # by creating an intermediate array
+            # data = data[included, ...]
+            data = data[numpy.array(included, copy=True), ...]
             labels = [label for label, b in zip(labels, included) if b]
         return labels, data
 
@@ -689,5 +692,5 @@ if __name__ == '__main__':
         auto = True
     app = qt.QApplication([])
     result = test(auto)
+    app = None
     sys.exit(not result.wasSuccessful())
-    app.quit()
