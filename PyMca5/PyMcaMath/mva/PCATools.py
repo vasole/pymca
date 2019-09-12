@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -85,17 +85,17 @@ def getCovarianceMatrix(stack,
     :type spatial_mask: Numpy array of unsigned bytes (numpy.uint8) or None (default).
     :returns: The covMatrix, the average spectrum and the number of used pixels.
     """
-    #the 1D mask = weights should correspond to the values, before or after
-    #sampling?  it could be handled as weigths to be applied to the
-    #spectra. That would allow two uses, as mask and as weights, at
-    #the cost of a multiplication.
+    # the 1D mask = weights should correspond to the values, before or after
+    # sampling?  it could be handled as weights to be applied to the
+    # spectra. That would allow two uses, as mask and as weights, at
+    # the cost of a multiplication.
 
-    #the spatial_mask accounts for pixels to be considered. It allows
-    #to calculate the covariance matrix of a subset or to deal with
-    #non finite data (NaN, +inf, -inf, ...). The calling program
-    #should set the mask.
+    # the spatial_mask accounts for pixels to be considered. It allows
+    # to calculate the covariance matrix of a subset or to deal with
+    # non finite data (NaN, +inf, -inf, ...). The calling program
+    # should set the mask.
 
-    #recover the actual data to work with
+    # recover the actual data to work with
     if hasattr(stack, "info") and hasattr(stack, "data"):
         #we are dealing with a PyMca data object
         data = stack.data
@@ -117,18 +117,18 @@ def getCovarianceMatrix(stack,
     else:
         actualIndex = index
 
-    #the number of spatial pixels
+    # the number of spatial pixels
     nPixels = 1
     for i in range(len(oldShape)):
         if i != actualIndex:
             nPixels *= oldShape[i]
 
-    #remove inf or nan
+    # remove inf or nan
     #image_data = data.sum(axis=actualIndex)
     #spatial_mask = numpy.isfinite(image_data)
     #
 
-    #the starting number of channels or of images
+    # the starting number of channels or of images
     N = oldShape[actualIndex]
 
     # our binning (better said sampling) is spectral, in order not to
@@ -156,7 +156,7 @@ def getCovarianceMatrix(stack,
     else:
         cleanWeights = weights[::binning]
         
-    #end of checking part
+    # end of checking part
     eigenvectorLength = nChannels
 
     if (not force)and isinstance(data, numpy.ndarray):
@@ -198,7 +198,7 @@ def getCovarianceMatrix(stack,
             averageMatrix = None
         return covMatrix, sumSpectrum / usedPixels, usedPixels
 
-    #we are dealing with dynamically loaded data
+    # we are dealing with dynamically loaded data
     _logger.debug("DYNAMICALLY LOADED DATA")
     #create the needed storage space for the covariance matrix
     try:
@@ -213,15 +213,15 @@ def getCovarianceMatrix(stack,
         data = None
         raise
 
-    #workaround a problem with h5py
+    # workaround a problem with h5py
     try:
         if actualIndex in [0]:
             testException = data[0:1]
         else:
             if len(data.shape) == 2:
-                testException = data[0:1,-1]
+                testException = data[0:1, -1]
             elif len(data.shape) == 3:
-                testException = data[0:1,0:1,-1]
+                testException = data[0:1, 0:1, -1]
     except AttributeError:
         txt = "%s" % type(data)
         if 'h5py' in txt:
@@ -232,13 +232,13 @@ def getCovarianceMatrix(stack,
             raise
 
     if actualIndex in [0]:
-        #divider is used to decide the fraction of images to keep in memory
-        #in order to limit file access on dynamically loaded data.
-        #Since two chunks of the same size are used, the amount of memory
-        #needed is twice the data size divided by the divider.
-        #For instance, divider = 10 implies the data to be read 5.5 times
-        #from disk while having a memory footprint of about one fifth of
-        #the dataset size.
+        # divider is used to decide the fraction of images to keep in memory
+        # in order to limit file access on dynamically loaded data.
+        # Since two chunks of the same size are used, the amount of memory
+        # needed is twice the data size divided by the divider.
+        # For instance, divider = 10 implies the data to be read 5.5 times
+        # from disk while having a memory footprint of about one fifth of
+        # the dataset size.
         step = 0
         divider = 10
         while step < 1:
@@ -284,12 +284,12 @@ def getCovarianceMatrix(stack,
                         #get step images for the second chunk
                         jToRead = min(step, nChannels - j)
 
-                        #with loop:
+                        # with loop:
                         #for k in range(0, jToRead):
                         #    chunk2[:,k] = data[(j+k):(j+k+1)].reshape(1,-1)
                         #    if spatial_mask is not None:
                         #        chunk2[badMask[(j+k):(j+k+1),k]] = 0
-                        #equivalent without loop:
+                        # equivalent without loop:
                         chunk2[:, 0:jToRead] =\
                             data[j:(j + jToRead)].reshape(jToRead, -1).T
                         if spatial_mask is not None:
@@ -303,7 +303,7 @@ def getCovarianceMatrix(stack,
                             if spatial_mask is not None:
                                 chunk2[badMask, 0:jToRead] = 0
 
-                    #dot product
+                    # dot product
                     if (iToRead != step) or (jToRead != step):
                         covMatrix[i: (i + iToRead), j: (j + jToRead)] =\
                                         dotblas.dot(chunk1[:iToRead, :nPixels],
@@ -316,7 +316,7 @@ def getCovarianceMatrix(stack,
                         covMatrix[j: (j + jToRead), i: (i + iToRead)] =\
                                 covMatrix[i: (i + iToRead), j: (j + jToRead)].T
 
-                    #increment j
+                    # increment j
                     j += jToRead
                 i += iToRead
             chunk1 = None
@@ -331,7 +331,7 @@ def getCovarianceMatrix(stack,
             spectrumIndex = 0
             nImagesRead = 0
             while i < N:
-                #fill chunk1
+                # fill chunk1
                 jj = 0
                 for iToRead in range(0, int(min(step * binning, N - i)),
                                      binning):
@@ -349,12 +349,12 @@ def getCovarianceMatrix(stack,
                 iToRead = jj
                 j = 0
                 while j <= i:
-                    #get step images for the second chunk
+                    # get step images for the second chunk
                     if j == i:
                         jToRead = iToRead
                         chunk2[:, 0:jToRead] = chunk1[0:jToRead, :].T
                     else:
-                        #get step images for the second chunk
+                        # get step images for the second chunk
                         jj = 0
                         for jToRead in range(0,
                                              int(min(step * binning, N - j)),
@@ -369,7 +369,7 @@ def getCovarianceMatrix(stack,
                             average.shape = 1, jj
                             chunk2 -= average
                         jToRead = jj
-                    #dot product
+                    # dot product
                     if (iToRead != step) or (jToRead != step):
                         covMatrix[i:(i + iToRead), j:(j + jToRead)] =\
                                 dotblas.dot(chunk1[:iToRead, :nPixels],
@@ -382,7 +382,7 @@ def getCovarianceMatrix(stack,
                         covMatrix[j:(j + jToRead), i:(i + iToRead)] =\
                                 covMatrix[i:(i + iToRead), j:(j + jToRead)].T
 
-                    #increment j
+                    # increment j
                     j += jToRead * step
                 i += iToRead * step
             chunk1 = None
@@ -390,17 +390,17 @@ def getCovarianceMatrix(stack,
         else:
             raise ValueError("PCATools.getCovarianceMatrix: Unhandled case")
 
-        #should one divide by N or by N-1 ??  if we use images, we
-        #assume the observables are the images, not the spectra!!!
-        #so, covMatrix /= nChannels is wrong and one has to use:
+        # should one divide by N or by N-1 ??  if we use images, we
+        # assume the observables are the images, not the spectra!!!
+        # so, covMatrix /= nChannels is wrong and one has to use:
         covMatrix /= usedPixels
     else:
-        #the data are already arranged as (nPixels, nChannels) and we
-        #basically have to return data.T * data to get back the covariance
-        #matrix as (nChannels, nChannels)
-        #if someone had the bad idea to store the data in HDF5 with a chunk
-        #size based on the pixels and not on the spectra a loop based on
-        #reading spectrum per spectrum can be very slow
+        # the data are already arranged as (nPixels, nChannels) and we
+        # basically have to return data.T * data to get back the covariance
+        # matrix as (nChannels, nChannels)
+        # if someone had the bad idea to store the data in HDF5 with a chunk
+        # size based on the pixels and not on the spectra a loop based on
+        # reading spectrum per spectrum can be very slow
         step = 0
         divider = 10
         while step < 1:
@@ -450,7 +450,7 @@ def getCovarianceMatrix(stack,
                         k += kToRead
                 tmpData = None
             elif oldShape[1] == 1:
-                #almost identical to the previous case
+                # almost identical to the previous case
                 tmpData = numpy.zeros((step, nChannels), numpy.float64)
                 if cleanMask is not None:
                     badMask.shape = data.shape[0], data.shape[1]
@@ -489,16 +489,16 @@ def getCovarianceMatrix(stack,
                         k += kToRead
                 tmpData = None
             else:
-                #I should choose the sizes in terms of the size
-                #of the dataset
+                # I should choose the sizes in terms of the size
+                # of the dataset
                 if oldShape[0] < 41:
-                    #divide by 10
+                    # divide by 10
                     deltaRow = 4
                 elif oldShape[0] < 101:
-                    #divide by 10
+                    # divide by 10
                     deltaRow = 10
                 else:
-                    #take pieces of one tenth
+                    # take pieces of one tenth
                     deltaRow = int(oldShape[0] / 10)
                 deltaCol = oldShape[1]
                 tmpData = numpy.zeros((deltaRow, deltaCol, nChannels),
@@ -522,10 +522,10 @@ def getCovarianceMatrix(stack,
                     covMatrix += dotblas.dot(a.T, a)
                     a = None
                     i += iToRead
-        #should one divide by N or by N-1 ??
+        # should one divide by N or by N-1 ??
         covMatrix /= usedPixels - 1
         if center:
-            #the n-1 appears again here
+            # the n-1 appears again here
             averageMatrix = numpy.outer(sumSpectrum, sumSpectrum)\
                             / (usedPixels * (usedPixels - 1))
             covMatrix -= averageMatrix
@@ -539,7 +539,7 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
     _logger.debug("index = %d", index)
     _logger.debug("center = %s", center)
     _logger.debug("scale = %s", scale)
-    #recover the actual data to work with
+    # recover the actual data to work with
     if hasattr(stack, "info") and hasattr(stack, "data"):
         #we are dealing with a PyMca data object
         data = stack.data
@@ -558,7 +558,7 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
     else:
         actualIndex = index
 
-    #workaround a problem with h5py
+    # workaround a problem with h5py
     try:
         if actualIndex in [0]:
             testException = data[0:1]
@@ -576,13 +576,13 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
         else:
             raise
 
-    #the number of spatial pixels
+    # the number of spatial pixels
     nPixels = 1
     for i in range(len(oldShape)):
         if i != actualIndex:
             nPixels *= oldShape[i]
 
-    #the number of channels
+    # the number of channels
     nChannels = oldShape[actualIndex]
     if binning is None:
         binning = 1
@@ -602,7 +602,7 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
                                                              spatial_mask=mask,
                                                              weights=spectral_mask)
 
-    #the total variance is the sum of the elements of the diagonal
+    # the total variance is the sum of the elements of the diagonal
     totalVariance = numpy.diag(cov)
     standardDeviation = numpy.sqrt(totalVariance)
     standardDeviation = standardDeviation + (standardDeviation == 0)
@@ -635,7 +635,7 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
     images = numpy.zeros((ncomponents, nPixels), dtype)
     eigenvectors = numpy.zeros((ncomponents, N), dtype)
     eigenvalues = numpy.zeros((ncomponents,), dtype)
-    #sort eigenvalues
+    # sort eigenvalues
     if 1:
         a = [(evalues[i], i) for i in range(len(evalues))]
         a.sort()
@@ -658,7 +658,7 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
         eigenvalues[:]  = evalues[idx]
         eigenvectors[:, :] = evectors[:, idx].T
 
-    #calculate the projections
+    # calculate the projections
     # Subtracting the average and normalizing to standard deviation gives worse results.
     # Versions 5.0.0 to 5.1.0 implemented that behavior as default.
     # When dealing with the CH1777 test dataset the Sb signal was less contrasted against
@@ -675,13 +675,12 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
             for j in range(ncomponents):
                 images[j:j + 1, :] += tmpData * eigenvectors[j, i]
         if len(oldShape) == 3:
-            #reshape the images
+            # reshape the images
             images.shape = ncomponents, oldShape[1], oldShape[2]
     else:
-        #array of spectra
+        # array of spectra
         if len(oldShape) == 2:
             for i in range(nPixels):
-                #print i
                 tmpData = data[i, :]
                 tmpData.shape = 1, nChannels
                 if subtractAndNormalize:
@@ -690,13 +689,12 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
                     tmpData = tmpData[:, ::binning]
                 for j in range(ncomponents):
                     images[j, i] = numpy.dot(tmpData, eigenvectors[j])
-            #reshape the images
+            # reshape the images
             images.shape = ncomponents, nPixels
         elif len(oldShape) == 3:
             i = 0
             for r in range(oldShape[0]):
                 for c in range(oldShape[1]):
-                    #print i
                     tmpData = data[r, c, :]
                     tmpData.shape = 1, nChannels
                     if subtractAndNormalize:
@@ -706,7 +704,7 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
                     for j in range(ncomponents):
                         images[j, i] = numpy.dot(tmpData, eigenvectors[j])
                     i += 1
-            #reshape the images
+            # reshape the images
             images.shape = ncomponents, oldShape[0], oldShape[1]
     if legacy:
         return images, eigenvalues, eigenvectors
