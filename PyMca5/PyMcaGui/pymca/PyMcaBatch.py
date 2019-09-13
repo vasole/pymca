@@ -289,7 +289,7 @@ def launchThread(thread, window):
             window.pauseButton.setText("Continue")
     window.pauseButton.clicked.connect(pause)
     window.abortButton.clicked.connect(cleanup)
-    #qApp.aboutToQuit[()].connect(cleanup)
+    qt.QApplication.instance().aboutToQuit[()].connect(cleanup)
     window.show()
     thread.start()
 
