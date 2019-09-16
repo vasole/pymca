@@ -490,7 +490,7 @@ def nxDetector(parent, name):
     :param str name:
     :returns h5py.Group:
     """
-    nxClassInit(parent, name, u'nxDetector', parentclasses=(u'NXinstrument',))
+    nxClassInit(parent, name, u'NXdetector', parentclasses=(u'NXinstrument',))
     return parent[name]
 
 
