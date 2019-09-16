@@ -555,9 +555,9 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             legend = ddict['legend']
             if legend not in self.imageWindowDict.keys():
                 if OPENGL_DRIVERS_OK:
-                    scatter_backend = "gl"
+                    backend = "gl"
                 else:
-                    scatter_backend = "mpl"
+                    backend = "mpl"
                 imageWindow = SilxScatterWindow.SilxScatterWindow(backend=backend)
                 self.imageWindowDict[legend] = imageWindow
                 self.imageWindowDict[legend].setPlotEnabled(True)
