@@ -54,7 +54,7 @@ class DataObject(object):
 
     def __init__(self):
         '''
-        Defaut Constructor
+        Default Constructor
         '''
         self.info = {}
         self.data = numpy.array([])
