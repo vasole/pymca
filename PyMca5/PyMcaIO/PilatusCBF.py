@@ -493,7 +493,7 @@ class CIF(dict):
         @param iStart: the starting index corresponding to the "loop_" key
         @type iStart: integer
         @return: the list of loop dictionaries, the length of the data extracted from the lFields and the list of all the keys of the loop.
-        @rtype: tupple
+        @rtype: tuple
         """
     #    in earch loop we first search the length of the loop
     #    print lFields

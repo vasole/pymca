@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -75,7 +75,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
     - There are some fields in the header that are required for this implementation. If any of
       these is missing, or inconsistent, it will be generated an error:
         Size: Represents size of data block
-        Dim_1: size of x coordinates (Dim_2 for 2-dimentional images, and also Dim_3 for 3d)
+        Dim_1: size of x coordinates (Dim_2 for 2-dimensional images, and also Dim_3 for 3d)
         DataType
         ByteOrder
     - For the written images, these fields are automatically genereted:
@@ -905,7 +905,7 @@ class  EdfFile(object):
                                      self.__GetSizeNumpyType__(Data.dtype))
             self.Images[Index].NumDim = 3
         elif len(Data.shape) > 3:
-            raise TypeError("EdfFile: Data dimension not suported")
+            raise TypeError("EdfFile: Data dimension not supported")
 
 
         if DataType == "":
