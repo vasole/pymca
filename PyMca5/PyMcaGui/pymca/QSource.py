@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -125,7 +125,7 @@ class QSource(qt.QObject):
         #print "RUN"
         while len(self.surveyDict) > 0:
             #for key in self.surveyDict is dangerous
-            # runtime error: dictionnary changed during iteration
+            # runtime error: dictionary changed during iteration
             # a mutex is needed
             _logger.debug("In loop")
             dummy = list(self.surveyDict.keys())

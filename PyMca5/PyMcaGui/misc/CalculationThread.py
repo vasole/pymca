@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -214,7 +214,7 @@ def waitingMessageDialog(thread, message=None, parent=None,
     parent  - The parent QWidget. It is used just to provide a convenient localtion
     modal   - Default is True. The dialog will prevent user from using other widgets
     update_callback - The function to be called to provide progress feedback. It is expected
-             to return a dictionnary. The recognized key words are:
+             to return a dictionary. The recognized key words are:
              message: The updated message to be displayed.
              title: The title of the window title.
              progress: A number between 0 and 100 indicating the progress of the task.
