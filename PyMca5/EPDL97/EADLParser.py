@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -746,8 +746,8 @@ def getFluorescenceYields(z, lines=None):
 def getCosterKronigYields(z, shell='L1', lines=None):
     """
     getCosterKronigYields(z, shell='L1')
-    Returns the non-zero Coster-Kronig yields as keys of a dictionnary
-    or just an empty dictionnary.
+    Returns the non-zero Coster-Kronig yields as keys of a dictionary
+    or just an empty dictionary.
     """
     if lines is None:
         lines = EADL97_DATA
@@ -773,7 +773,7 @@ def getLShellCosterKronigYields(z, lines=None):
     """
     getLShellCosterKronigYields(z)
     Returns the L-shell Coster-Kronig yields of an element as keys of a
-    dictionnary
+    dictionary
     """
     ddict = {}
     ddict['f12'] = 0.0
@@ -791,7 +791,7 @@ def getMShellCosterKronigYields(z, lines=None):
     """
     getMShellCosterKronigYields(z)
     Returns the M-shell Coster-Kronig yields of an element as keys of a
-    dictionnary. It does not check for physical meaning. So, it will give
+    dictionary. It does not check for physical meaning. So, it will give
     zeroes when needed.
     """
     ddict = {}

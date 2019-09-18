@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -83,7 +83,7 @@ class FastXRFLinearFit(object):
         :livetime: It will be used if not different from None and concentrations
                    are to be calculated by using fundamental parameters with
                    automatic time. The default is None.
-        :return: A dictionnary with the parameters, uncertainties, concentrations and names as keys.
+        :return: A dictionary with the parameters, uncertainties, concentrations and names as keys.
         """
         if y is None:
             raise RuntimeError("y keyword argument is mandatory!")

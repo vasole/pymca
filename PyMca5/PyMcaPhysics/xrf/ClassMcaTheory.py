@@ -2259,7 +2259,7 @@ class McaTheory(object):
 
     def imagingDigestResult(self):
         """
-        minimalist dictionnary for imaging purposes
+        minimalist dictionary for imaging purposes
         """
         i = 0
         result = {}

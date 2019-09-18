@@ -73,7 +73,7 @@ if PYMCA_DOC_DIR_ENV is not None:
         raise IOError('%s directory set from environent not found' % \
                           PYMCA_DATA_DIR)
     else:
-        txt = "WARNING: Taking PYMCA_DOC_DIR from environement.\n"
+        txt = "WARNING: Taking PYMCA_DOC_DIR from environment.\n"
         txt += "Use it at your own risk."
         print(txt)
 

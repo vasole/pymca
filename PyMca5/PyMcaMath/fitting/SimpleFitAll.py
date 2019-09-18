@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2017-2018 European Synchrotron Radiation Facility
+# Copyright (c) 2017-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -97,7 +97,7 @@ class SimpleFitAll(object):
 
     def progressUpdate(self):
         """
-        This method returns a dictionnary with the keys
+        This method returns a dictionary with the keys
         progress: A number between 0 and 100 indicating the fit progress
         status: Status of the calculation thread.
         """

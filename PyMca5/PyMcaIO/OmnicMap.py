@@ -199,7 +199,7 @@ class OmnicMap(DataObject.DataObject):
 
         Returns:
         --------
-        A dictionnary with acquisition information
+        A dictionary with acquisition information
         '''
         #additional information
         fmt = "I"  # unsigned long in 32-bit
@@ -245,7 +245,7 @@ class OmnicMap(DataObject.DataObject):
 
         Returns:
         --------
-            Dictionnary with map gemoetrical acquisition parameters
+            Dictionary with map gemoetrical acquisition parameters
         '''
         #look for the chain 'Position'
         if sys.version < '3.0':
@@ -279,7 +279,7 @@ class OmnicMap(DataObject.DataObject):
 
     def getOmnicInfo(self):
         """
-        Returns a dictionnary with the parsed OMNIC information
+        Returns a dictionary with the parsed OMNIC information
         """
         return copy.deepcopy(self.info['OmnicInfo'])
 
@@ -291,7 +291,7 @@ class OmnicMap(DataObject.DataObject):
         -----------
         index : int
             Index of spectrum
-        info : Dictionnary
+        info : Dictionary
             Information recovered with _getOmnicInfo
         Returns:
         --------

@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -179,7 +179,7 @@ ElementBinding = BindingEnergies.ElementBinding
 from . import KShell
 from . import LShell
 from . import MShell
-#Scofield's photoelectric dictionnary
+#Scofield's photoelectric dictionary
 from . import Scofield1973
 
 ElementShellTransitions = [KShell.ElementKShellTransitions,
@@ -754,7 +754,7 @@ def getEscape(matrix, energy, ethreshold=None, ithreshold=None, nthreshold = Non
         #get material elements and concentrations
         eleDict = getMaterialMassFractions([matrix[0]], [1.0])
         if eleDict == {}: return {}
-        #sort the elements according to atomic number (not needed because the output will be a dictionnary)
+        #sort the elements according to atomic number (not needed because the output will be a dictionary)
         keys = eleDict.keys()
         elementsList = [[getz(x),x] for x in keys]
         elementsList.sort()
@@ -763,7 +763,7 @@ def getEscape(matrix, energy, ethreshold=None, ithreshold=None, nthreshold = Non
     outputDict = {}
     shelllist = ['K', 'L1', 'L2', 'L3','M1', 'M2', 'M3', 'M4', 'M5']
     for z,ele in elementsList:
-        #use own unfiltered dictionnary
+        #use own unfiltered dictionary
         elementDict = _getUnfilteredElementDict(ele, energy)
         outputDict[ele] ={}
         outputDict[ele]['mass fraction'] = eleDict[ele]
@@ -1296,7 +1296,7 @@ def getMultilayerFluorescence(multilayer0,
                 result.append({})
                 continue
 
-        #here I could recalculate the dictionnary
+        #here I could recalculate the dictionary
         if optimized:
             userElementDict = _getAttFilteredElementDict(newelementsList,
                                attenuators= origattenuators,
@@ -1606,7 +1606,7 @@ def getScattering(matrix, energy, attenuators = None, alphain = None, alphaout =
         #get material elements and concentrations
         eleDict = getMaterialMassFractions([matrix[0]], [1.0])
         if eleDict == {}: return {}
-        #sort the elements according to atomic number (not needed because the output will be a dictionnary)
+        #sort the elements according to atomic number (not needed because the output will be a dictionary)
         keys = eleDict.keys()
         elementsList = [[getz(x),x] for x in keys]
         elementsList.sort()
@@ -1791,7 +1791,7 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
         eleDict = getMaterialMassFractions([matrix[0]], [1.0])
         if eleDict == {}: return {}
         #sort the elements according to atomic number
-        #(not needed because the output will be a dictionnary)
+        #(not needed because the output will be a dictionary)
         keys = eleDict.keys()
         elementsList = [[getz(x),x] for x in keys]
         elementsList.sort()
@@ -1818,7 +1818,7 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
     outputDict = {}
     shelllist = ['K', 'L1', 'L2', 'L3','M1', 'M2', 'M3', 'M4', 'M5']
     for z,ele in elementsList:
-        #use own unfiltered dictionnary
+        #use own unfiltered dictionary
         if ele in userElementDict:
             elementDict = userElementDict[ele]
         else:
@@ -2880,7 +2880,7 @@ def _getUnfilteredElementDict(symbol, energy, photoweights=None):
         ele = symbol[0].upper() + symbol[1].lower()
     else:
         ele = symbol.upper()
-    #fill the dictionnary
+    #fill the dictionary
     ddict['rays']=[]
     z = getz(ele)
     for n in range(len(ElementXrays)):
@@ -2930,7 +2930,7 @@ def _updateElementDict(symbol, dict, energy=None, minenergy=MINENERGY, minrate=0
         ele = symbol[0].upper() + symbol[1].lower()
     else:
         ele = symbol[0].upper()
-    #reset existing dictionnary
+    #reset existing dictionary
     if 'rays' in dict:
         for rays in dict['rays']:
             for transition in dict[rays]:
@@ -2938,7 +2938,7 @@ def _updateElementDict(symbol, dict, energy=None, minenergy=MINENERGY, minrate=0
                 del dict[transition]
             #print "rays deleted = ",rays
             del dict[rays]
-    #fill the dictionnary
+    #fill the dictionary
     dict['rays']=[]
     z = getz(ele)
     for n in range(len(ElementXrays)):

@@ -251,7 +251,7 @@ class PilatusCBF(object):
 
 class CIF(dict):
     """
-    This is the CIF class, it represents the CIF dictionnary as a a python dictionnary thus inherits from the dict built in class.
+    This is the CIF class, it represents the CIF dictionary as a a python dictionary thus inherits from the dict built in class.
     """
     if sys.version < '3.0':
         EOL = ["\r", "\n", "\r\n", "\n\r"]
@@ -282,7 +282,7 @@ class CIF(dict):
     def readCIF(self, _strFilename):
         """
         Just call loadCIF:
-        Load the CIF file and sets the CIF dictionnary into the object
+        Load the CIF file and sets the CIF dictionary into the object
 
         @param _strFilename: the name of the file to open
         @type  _strFilename: string
@@ -290,7 +290,7 @@ class CIF(dict):
         self.loadCIF(_strFilename)
 
     def loadCIF(self, _strFilename, _bKeepComment=False):
-        """Load the CIF file and returns the CIF dictionnary into the object
+        """Load the CIF file and returns the CIF dictionary into the object
         @param _strFilename: the name of the file to open
         @type  _strFilename: string
         @param _strFilename: the name of the file to open
@@ -365,8 +365,8 @@ class CIF(dict):
 
         @param sText: the content of the CIF-file
         @type sText: string
-        @return: Nothing, the data are incorporated at the CIF object dictionnary
-        @rtype: dictionnary
+        @return: Nothing, the data are incorporated at the CIF object dictionary
+        @rtype: dictionary
         """
         loopidx = []
         looplen = []
@@ -492,7 +492,7 @@ class CIF(dict):
         @type lFields: list
         @param iStart: the starting index corresponding to the "loop_" key
         @type iStart: integer
-        @return: the list of loop dictionnaries, the length of the data extracted from the lFields and the list of all the keys of the loop.
+        @return: the list of loop dictionaries, the length of the data extracted from the lFields and the list of all the keys of the loop.
         @rtype: tupple
         """
     #    in earch loop we first search the length of the loop
@@ -580,7 +580,7 @@ class CIF(dict):
 
 
     def _cif2str(self, _strFilename):
-        """converts a cif dictionnary to a string according to the CIF syntax
+        """converts a cif dictionary to a string according to the CIF syntax
         @param _strFilename: the name of the filename to be apppended in the header of the CIF file
         @type _strFilename: string
         @return : a sting that corresponds to the content of the CIF-file.
@@ -647,8 +647,8 @@ class CIF(dict):
         Check if the key exists in the CIF and is non empty.
         @param sKey: CIF key
         @type sKey: string
-        @param cif: CIF dictionnary
-        @return: True if the key exists in the CIF dictionnary and is non empty
+        @param cif: CIF dictionary
+        @return: True if the key exists in the CIF dictionary and is non empty
         @rtype: boolean
         """
         bExists = False
@@ -660,11 +660,11 @@ class CIF(dict):
 
     def existsInLoop(self, sKey):
         """
-        Check if the key exists in the CIF dictionnary.
+        Check if the key exists in the CIF dictionary.
         @param sKey: CIF key
         @type sKey: string
-        @param cif: CIF dictionnary
-        @return: True if the key exists in the CIF dictionnary and is non empty
+        @param cif: CIF dictionary
+        @return: True if the key exists in the CIF dictionary and is non empty
         @rtype: boolean
         """
         if not self.exists("loop_"):
@@ -678,11 +678,11 @@ class CIF(dict):
         return bExists
 
     def loadCHIPLOT(self, _strFilename):
-        """Load the powder diffraction CHIPLOT file and returns the pd_CIF dictionnary in the object
+        """Load the powder diffraction CHIPLOT file and returns the pd_CIF dictionary in the object
         @param _strFilename: the name of the file to open
         @type  _strFilename: string
         @return: the CIF object corresponding to the powder diffraction
-        @rtype: dictionnary
+        @rtype: dictionary
         """
         if not os.path.isfile(_strFilename):
             _logger.error("I cannot find the file %s", _strFilename)

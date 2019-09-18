@@ -67,7 +67,7 @@ class ConfigDict(dict):
         self.update(self.default)
 
     def clear(self):
-        """ Clear dictionnary
+        """ Clear dictionary
         """
         dict.clear(self)
         self.filelist = []

@@ -3,7 +3,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -137,7 +137,7 @@ class LuciaMap(DataObject.DataObject):
 
     def _getInfo(self, filename):
         '''
-        This dictionnary is to be internally normalized for the time
+        This dictionary is to be internally normalized for the time
         being no I0 nor dead time
         '''
         exp = re.compile('(-?[0-9]+\.?[0-9]*)')

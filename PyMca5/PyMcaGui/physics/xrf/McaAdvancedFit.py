@@ -1848,7 +1848,7 @@ class McaAdvancedFit(qt.QWidget):
 
         Interactive use
 
-        It returns a dictionnary containing the fit results or None in case of
+        It returns a dictionary containing the fit results or None in case of
         unsuccessfull fit.
 
         Embedded use

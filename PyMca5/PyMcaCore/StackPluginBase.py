@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -189,7 +189,7 @@ class StackPluginBase(object):
 
             xvalues, yvalues, legend, dict
 
-        where dict is a dictionnary containing curve info.
+        where dict is a dictionary containing curve info.
 
         For the time being, only the plot labels associated to the
         curve are warranted to be present under the keys xlabel, ylabel.

@@ -96,7 +96,7 @@ class SimpleInfoGroupBox(qt.QGroupBox):
                               ddict[actualKeys[dictKeys.index(l)]])
 
     def _getMappedDict(self, ddict):
-        #Default implementation returns a copy of the input dictionnary
+        #Default implementation returns a copy of the input dictionary
         return copy.deepcopy(ddict)
 
     def _fillKey(self, key, value):
