@@ -268,7 +268,7 @@ class NexusDataSource(object):
         """
         key:  a string of the form %d.%d indicating the file and the entry
               starting by 1.
-        selection: a dictionnary generated via QNexusWidget
+        selection: a dictionary generated via QNexusWidget
         """
         _logger.debug("getDataObject selection = %s", selection)
         if selection is not None:

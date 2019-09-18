@@ -73,7 +73,7 @@ class StackROIBatch(object):
         :param xAtMinMax: if True, calculate X at maximum and minimum Y . Default is false.
         :param index: Index of dimension where to apply the ROIs.
         :param xLabel: Type of ROI to be used.
-        :return: A dictionnary with the images and the image names as keys.
+        :return: A dictionary with the images and the image names as keys.
         """
         if y is None:
             raise RuntimeError("y keyword argument is mandatory!")
