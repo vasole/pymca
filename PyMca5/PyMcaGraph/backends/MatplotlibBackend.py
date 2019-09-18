@@ -2547,7 +2547,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         :param draggable: Flag to indicate if the image can be moved
         :type draggable: boolean, default False
         :param colormap: Dictionary describing the colormap to use (or None)
-        :type colormap: Dictionnary or None (default). Ignored if data is RGB(A)
+        :type colormap: Dictionary or None (default). Ignored if data is RGB(A)
         :returns: The legend/handle used by the backend to univocally access it.
         """
         # Non-uniform image

@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -93,7 +93,7 @@ PlotBackend "signals/events"
 
 All the events pass via the callback_function supplied.
 
-They consist on a dictionnary in which the 'event' key is mandatory.
+They consist on a dictionary in which the 'event' key is mandatory.
 
 The following keys will be present or not depending on the type of event, but
 if present, their meaning should be:
@@ -181,7 +181,7 @@ class PlotBackend(object):
 
     COLORDICT = Colors.COLORDICT
     """
-    Dictionnary of predefined colors
+    Dictionary of predefined colors
     """
 
     def __init__(self, parent=None):
@@ -287,7 +287,7 @@ class PlotBackend(object):
         :param draggable: Flag to indicate if the image can be moved
         :type draggable: boolean, default False
         :param colormap: Dictionary describing the colormap to use (or None)
-        :type colormap: Dictionnary or None (default). Ignored if data is RGB(A)
+        :type colormap: Dictionary or None (default). Ignored if data is RGB(A)
         :returns: The legend/handle used by the backend to univocally access it.
         """
         print("PlotBackend addImage not implemented")
@@ -386,7 +386,7 @@ class PlotBackend(object):
         Return the colormap that will be applied by the backend to an image
         if no colormap is applied to it.
 
-        A colormap is a dictionnary with the keys:
+        A colormap is a dictionary with the keys:
 
         - name: string
         - normalization: string (linear, log)
@@ -402,7 +402,7 @@ class PlotBackend(object):
 
     def getDrawMode(self):
         """
-        Return a dictionnary (or None) with the parameters passed when setting
+        Return a dictionary (or None) with the parameters passed when setting
         the draw mode.
 
         - shape: The shape being drawn
@@ -763,7 +763,7 @@ class PlotBackend(object):
 
     def setCallback(self, callback_function):
         """
-        :param callback_function: function accepting a dictionnary as input to handle the graph events
+        :param callback_function: function accepting a dictionary as input to handle the graph events
         :type callback_function: callable
         """
         self._callback = callback_function
@@ -798,7 +798,7 @@ class PlotBackend(object):
         Sets the colormap that will be applied by the backend to an image
         if no colormap is applied to it.
 
-        A colormap is a dictionnary with the keys:
+        A colormap is a dictionary with the keys:
 
         :type name: string
         :type normalization: string (linear, log)

@@ -237,7 +237,7 @@ class Plot(PlotBase.PlotBase):
     def graphCallback(self, ddict=None):
         """
         This callback is foing to receive all the events from the plot.
-        Those events will consist on a dictionnary and among the dictionnary
+        Those events will consist on a dictionary and among the dictionary
         keys the key 'event' is mandatory to describe the type of event.
         This default implementation only handles setting the active curve.
         """
@@ -370,7 +370,7 @@ class Plot(PlotBase.PlotBase):
 
     def getDrawMode(self):
         """
-        Return a dictionnary (or None) with the parameters passed when setting
+        Return a dictionary (or None) with the parameters passed when setting
         the draw mode.
         :key shape: The shape being drawn
         :key label: Associated text (or None)
@@ -441,7 +441,7 @@ class Plot(PlotBase.PlotBase):
                                         'plot_linestyle', linestyle)
         else:
             self._curveList.append(key)
-        #print("TODO: Here we can add properties to the info dictionnary")
+        #print("TODO: Here we can add properties to the info dictionary")
         #print("For instance, color, symbol, style and width if not present")
         #print("They could come in **kw")
         #print("The actual plotting stuff should only take care of handling")
@@ -571,7 +571,7 @@ class Plot(PlotBase.PlotBase):
         :param draggable: Flag to indicate if the image can be moved
         :type draggable: boolean, default False
         :param colormap: Dictionary describing the colormap to use (or None)
-        :type colormap: Dictionnary or None (default). Ignored if data is RGB(A)
+        :type colormap: Dictionary or None (default). Ignored if data is RGB(A)
         :param pixmap: Pixmap representation of the data (if any)
         :type pixmap: (nrows, ncolumns, RGBA) ubyte array or None (default)
         :returns: The legend/handle used by the backend to univocally access it.
@@ -690,7 +690,7 @@ class Plot(PlotBase.PlotBase):
 
         Default output has the form:
             xvalues, yvalues, legend, dict
-            where dict is a dictionnary containing curve info.
+            where dict is a dictionary containing curve info.
             For the time being, only the plot labels associated to the
             curve are warranted to be present under the keys xlabel, ylabel.
 
@@ -715,7 +715,7 @@ class Plot(PlotBase.PlotBase):
 
         Default output has the form:
             data, legend, dict, pixmap
-            where dict is a dictionnary containing image info.
+            where dict is a dictionary containing image info.
             For the time being, only the plot labels associated to the
             image are warranted to be present under the keys xlabel, ylabel.
 
@@ -780,7 +780,7 @@ class Plot(PlotBase.PlotBase):
 
         Default output has the form:
             xvalues, yvalues, legend, info
-            where info is a dictionnary containing curve info.
+            where info is a dictionary containing curve info.
             For the time being, only the plot labels associated to the
             curve are warranted to be present under the keys xlabel, ylabel.
         """
@@ -801,7 +801,7 @@ class Plot(PlotBase.PlotBase):
 
         Default output has the form:
             image, legend, info, pixmap
-            where info is a dictionnary containing image information.
+            where info is a dictionary containing image information.
         """
         if legend in self._imageDict:
             return self._imageDict[legend] * 1
@@ -1335,7 +1335,7 @@ class Plot(PlotBase.PlotBase):
         """
         Return the colormap that will be applied by the backend to an image
         if no colormap is applied to it.
-        A colormap is a dictionnary with the keys:
+        A colormap is a dictionary with the keys:
         :type name: string
         :type normalization: string (linear, log)
         :type autoscale: boolean
@@ -1349,7 +1349,7 @@ class Plot(PlotBase.PlotBase):
         """
         Sets the colormap that will be applied by the backend to an image
         if no colormap is applied to it.
-        A colormap is a dictionnary with the keys:
+        A colormap is a dictionary with the keys:
         :type name: string
         :type normalization: string (linear, log)
         :type autoscale: boolean

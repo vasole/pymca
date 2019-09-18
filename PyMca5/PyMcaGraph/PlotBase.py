@@ -90,7 +90,7 @@ class PlotBase(PlotBackend.PlotBackend, PluginLoader.PluginLoader):
 
         Default output has the form:
             xvalues, yvalues, legend, dict
-            where dict is a dictionnary containing curve info.
+            where dict is a dictionary containing curve info.
             For the time being, only the plot labels associated to the
             curve are warranted to be present under the keys xlabel, ylabel.
 
@@ -141,7 +141,7 @@ class PlotBase(PlotBackend.PlotBackend, PluginLoader.PluginLoader):
 
         Default output has the form:
             xvalues, yvalues, legend, info
-            where info is a dictionnary containing curve info.
+            where info is a dictionary containing curve info.
             For the time being, only the plot labels associated to the
             curve are warranted to be present under the keys xlabel, ylabel.
         """
@@ -159,7 +159,7 @@ class PlotBase(PlotBackend.PlotBackend, PluginLoader.PluginLoader):
 
         Default output has the form:
             image, legend, info, pixmap
-            where info is a dictionnary containing image information.
+            where info is a dictionary containing image information.
         """
         print("PlotBase getImage not implemented")
         return []
