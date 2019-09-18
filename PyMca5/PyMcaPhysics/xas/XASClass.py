@@ -1264,7 +1264,7 @@ class XASClass(object):
         else:
             raise ValueError("Method <%s> not implemented" % method)
 
-        # Returning dictionnary can contain:
+        # Returning dictionary can contain:
         # The edge energy (mandatory)
         # The interpolated spectrum (if any)
         # The derivative spectrum (if any)

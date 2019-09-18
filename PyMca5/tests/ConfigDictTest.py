@@ -72,7 +72,7 @@ class testConfigDict(unittest.TestCase):
                         "Unsuccessful PyMca.ConfigDict import")
 
     def testConfigDictIO(self):
-        # create a dictionnary
+        # create a dictionary
         from PyMca5.PyMcaIO import ConfigDict
         testDict = {}
         testDict['simple_types'] = {}
@@ -124,7 +124,7 @@ class testConfigDict(unittest.TestCase):
 
     @unittest.skipIf(not HAS_H5PY, "skipped h5py missing")
     def testHdf5Uri(self):
-        # create a dictionnary
+        # create a dictionary
         from PyMca5.PyMcaIO import ConfigDict
         testDict = {}
         testDict['simple_types'] = {}

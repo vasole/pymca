@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -228,7 +228,7 @@ def _getDataAndDescriptionFileName(filename):
 
 def _parseHeaderFile(headerFile):
     """
-    Given the input header file describing the data, returns a dictionnary
+    Given the input header file describing the data, returns a dictionary
     with the description of the binary data:
 
     key         value

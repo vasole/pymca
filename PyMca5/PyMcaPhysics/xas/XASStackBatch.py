@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -81,7 +81,7 @@ class XASStackBatch(object):
         :param x: 1D array containing the x axis (usually the channels) of the spectra.
         :param y: 3D array containing the spectra as [nrows, ncolumns, nchannels]
         :param weight: 0 Means no weight, 1 Use an average weight, 2 Individual weights (slow)
-        :return: A dictionnary with the results as keys.
+        :return: A dictionary with the results as keys.
         """
 
         t0 = time.time()

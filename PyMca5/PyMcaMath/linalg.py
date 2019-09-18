@@ -184,7 +184,7 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
 
     covariances: If True, an array of covariance matrix/matrices will be returned.
 
-    digested_output: If True, returns a dictionnary with explicit keys
+    digested_output: If True, returns a dictionary with explicit keys
 
     Returns
     -------
