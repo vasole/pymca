@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -32,7 +32,7 @@ PyMca5.PyMcaPlugins contains plugins associated to PyMca.
 
 They import either from Plugin1DBase (for instances of classes
 respecting the Plot1DBase interface) or from StackPluginBase (for
-instances repecting the StackBase interface)
+instances respecting the StackBase interface)
 
 See :mod:`PyMca5.PyMcaCore.Plugin1DBase` for more information about 1D plugins
 and :mod:`PyMca5.PyMcaCore.StackPluginBase` for information about stack plugins.
