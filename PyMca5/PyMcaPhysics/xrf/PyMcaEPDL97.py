@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -61,7 +61,7 @@ EPDL97_DICT = {}
 for element in ElementList:
     EPDL97_DICT[element] = {}
 
-#initialize the dictionnary, for the time being compatible with PyMca 4.3.0
+#initialize the dictionary, for the time being compatible with PyMca 4.3.0
 EPDL97_DICT = {}
 for element in ElementList:
     EPDL97_DICT[element] = {}
@@ -69,7 +69,7 @@ for element in ElementList:
     EPDL97_DICT[element]['EPDL97']  = {}
     EPDL97_DICT[element]['original'] = True
 
-#fill the dictionnary with the binding energies
+#fill the dictionary with the binding energies
 def _initializeBindingEnergies():
     #read the specfile data
     sf = specfile.Specfile(EADL97_FILE)
@@ -114,7 +114,7 @@ def _initializeElement(element):
     _initializeElement(element)
     Supposed to be of internal use.
     Reads the file and loads all the relevant element information contained
-    int the EPDL97 file into the internal dictionnary.
+    int the EPDL97 file into the internal dictionary.
     """
     #read the specfile data
     sf = specfile.Specfile(EPDL97_FILE)
@@ -128,7 +128,7 @@ def _initializeElement(element):
     data = scan.data()
     scan = None
 
-    #fill the information into the dictionnary
+    #fill the information into the dictionary
     i = -1
     for label0 in labels:
         i += 1
@@ -328,7 +328,7 @@ def getPhotoelectricWeights(element, shelllist, energy, normalize = None, totals
         'K', 'L1', 'L2', 'L3', 'M1', 'M2', 'M3', 'M4', 'M5', 'all other'
     For instance, for the K shell, it is the equivalent of (Jk-1)/Jk where Jk is the k jump.
     If normalize is None or True, normalizes the output to the shells given in shelllist.
-    If totals is True, gives back the a dictionnary with all the mass attenuation coefficients
+    If totals is True, gives back the dictionary with all the mass attenuation coefficients
     used in the calculations.
     """
     if normalize is None:
