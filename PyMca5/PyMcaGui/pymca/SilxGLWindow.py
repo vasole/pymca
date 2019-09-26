@@ -153,7 +153,7 @@ def getChimeraStack():
     if not fileList:
         return None, None
     filename = fileList[0]
-    with h5py.File(filename) as f:
+    with h5py.File(filename, mode='r') as f:
         stack = f['Image/data'][...]
     if not isinstance(stack, numpy.ndarray) or stack.ndim != 3:
         raise IOError("Problem reading stack.")

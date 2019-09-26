@@ -131,13 +131,13 @@ class PyMcaBatchBuildOutput(object):
 
     def _mergeH5(self, parts, outfilename):
         shutil.copy(parts[0], outfilename)
-        with h5py.File(outfilename) as fout:
+        with h5py.File(outfilename, mode='a') as fout:
             for entry in NexusTools.getNXClassGroups(fout, '/', [u'NXentry']):
                 for process in NexusTools.getNXClassGroups(fout, entry.name, [u'NXprocess']):
                     for results in NexusTools.getNXClassGroups(fout, process.name, [u'NXcollection']):
                         for dataout in NexusTools.getNXClassGroups(fout, results.name, [u'NXdata']):
                             for part in parts[1:]:
-                                with h5py.File(part) as fin:
+                                with h5py.File(part, mode='r') as fin:
                                     try:
                                         datain = fin[dataout.name]
                                     except KeyError:
