@@ -166,7 +166,7 @@ class testXRFBatchFitOutput(unittest.TestCase):
 
     def _verifyHdf5(self, filename, outdata, outlabels, outaxes):
         outlabels = outlabels['h5']
-        with h5py.File(filename) as f:
+        with h5py.File(filename, mode='a') as f:
             nxprocess = f['sample_dataset']['test']
             self.assertEqual(set(nxprocess.keys()),
                              {'configuration', 'date', 'program', 'version', 'results'})

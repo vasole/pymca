@@ -69,9 +69,8 @@ def getObject3DInstance(config=None):
     #file index is irrelevant in case of an actual 3D stack.
     filename = fileList[0]
     legend = os.path.basename(filename)
-    f = h5py.File(filename)
-    stack = f['Image']['data'].value
-    f = None
+    with h5py.File(filename, mode='r') as f
+        stack = f['Image']['data'][()]
     if stack is None:
         raise IOError("Problem reading stack.")
     object3D = ChimeraStack(name=legend)
@@ -121,8 +120,8 @@ if __name__ == "__main__":
         if not os.path.exists(filename):
             print("File does not exists")
             sys.exit(1)
-        f = h5py.File(filename)
-        stack = f['Image']['data'].value
+        with h5py.File(filename, mode='r') as f
+            stack = f['Image']['data'][()]
         if stack is None:
             raise IOError("Problem reading stack.")
         object3D = ChimeraStack(name=os.path.basename(filename))
