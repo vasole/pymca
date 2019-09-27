@@ -63,6 +63,8 @@ class PyMcaNexusWidget(QNexusWidget.QNexusWidget):
             # handle a right click on a group or on a dataset of string type
             _hdf5WidgetDatasetMenu.addAction(QString("Show Information"),
                                              self._showInfoWidgetSlot)
+            _hdf5WidgetDatasetMenu.addAction(QString("Copy Path to Clipboard"),
+                                             self._copyPathSlot)
         else:
             # handle a right click on a numeric dataset
             _hdf5WidgetDatasetMenu.addAction(QString("Add to selection table"),
@@ -70,6 +72,9 @@ class PyMcaNexusWidget(QNexusWidget.QNexusWidget):
 
             _hdf5WidgetDatasetMenu.addAction(QString("Show Information"),
                                              self._showInfoWidgetSlot)
+
+            _hdf5WidgetDatasetMenu.addAction(QString("Copy Path to Clipboard"),
+                                             self._copyPathSlot)
 
             info = self.getInfo(phynxFile, ddict['name'])
             interpretation = info.get('interpretation', "")

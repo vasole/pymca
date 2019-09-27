@@ -505,6 +505,8 @@ class QNexusWidget(qt.QWidget):
             # handle a right click on a group or a dataset of string type
             _hdf5WidgetDatasetMenu.addAction(QString("Show Information"),
                                              self._showInfoWidgetSlot)
+            _hdf5WidgetDatasetMenu.addAction(QString("Copy Path to Clipboard"),
+                                             self._copyPathSlot)
             _hdf5WidgetDatasetMenu.exec_(qt.QCursor.pos())
         else:
             #handle a right click on a numeric dataset
@@ -520,6 +522,8 @@ class QNexusWidget(qt.QWidget):
             else:
                 _hdf5WidgetDatasetMenu.addAction(QString("Show Information"),
                                                  self._showInfoWidgetSlot)
+                _hdf5WidgetDatasetMenu.addAction(QString("Copy Path to Clipboard"),
+                                             self._copyPathSlot)
                 _hdf5WidgetDatasetMenu.exec_(qt.QCursor.pos())
         self._lastItemDict = None
         return
@@ -541,6 +545,15 @@ class QNexusWidget(qt.QWidget):
         return self.showInfoWidget(ddict['file'],
                                    ddict['name'],
                                    dset=is_numeric_dataset)
+
+    def _copyPathSlot(self, ddict=None):
+        if ddict is None:
+            ddict = self._lastItemDict
+        try:
+            clipboard = qt.QApplication.clipboard()
+            clipboard.setText(ddict["name"])
+        except:
+            _logger.warning("Unsuccessful copy to clipboard")
 
     def _openDataset(self, ddict=None):
         if ddict is None:
