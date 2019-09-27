@@ -56,22 +56,27 @@ except:
 
 def h5open(filename):
     try:
+        # try to open as usual using h5py
         return h5py.File(filename, "r")
-    except OSError:
-        if h5py.version.hdf5_version_tuple < (1, 10):
-            # no reason to try SWMR mode
-            raise
-        _logger.info("Cannot open %s. Trying in SWMR mode" % filename)
-        return h5py.File(filename, "r", libver='latest', swmr=True)
     except:
-        if silxh5open:
-            try:
-                return silxh5open(filename)
-            except:
-                _logger.info("Cannot open %s using silx" % filename)
-                pass
-        # give back the original error
-        return h5py.File(filename, "r")
+        try:
+            if h5py.version.hdf5_version_tuple < (1, 10):
+                # no reason to try SWMR mode
+                raise
+            elif h5py.is_hdf5(filename):
+                _logger.info("Cannot open %s. Trying in SWMR mode" % filename)
+                return h5py.File(filename, "r", libver='latest', swmr=True)
+            else:
+                raise
+        except:
+            if silxh5open:
+                try:
+                    _logger.info("Trying to open %s using silx" % filename)
+                    return silxh5open(filename)
+                except:
+                    _logger.info("Cannot open %s using silx" % filename)
+            # give back the original error
+            return h5py.File(filename, "r")
 
 _logger = logging.getLogger(__name__)
 
