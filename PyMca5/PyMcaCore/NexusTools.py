@@ -35,6 +35,15 @@ from operator import itemgetter
 import re
 import posixpath
 from h5py import File, Dataset, Group
+try:
+    from silx.io import is_dataset, is_group
+except:
+    def is_dataset(something):
+        return False
+
+    def is_group(something):
+        return False
+
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -106,11 +115,15 @@ def isGroup(item):
         return True
     elif hasattr(item, "keys"):
         return True
+    elif is_group(item):
+        return True
     else:
         return False
 
 def isDataset(item):
     if isinstance(item, Dataset):
+        return True
+    elif is_dataset(item):
         return True
     else:
         return False
@@ -216,7 +229,7 @@ def getMcaList(h5file, path, dataset=False, ignore=None):
                   "energy"]
     datasetList =[]
     def visit_function(name, obj):
-        if isDataset(obj):
+        if is_dataset(obj):
             append = False
             forget = False
             namebased = False
@@ -548,7 +561,11 @@ if __name__ == "__main__":
     except:
         print("Usage: NexusTools <file> <key>")
         sys.exit()
-    h5 = h5py.File(sourcename, 'r')
+    try:
+        from silx.io import open as h5open
+        h5 = h5open(sourcename)
+    except:
+        h5 = h5py.File(sourcename, 'r')
     entries = getNXClassGroups(h5, "/", ["NXentry", b"NXentry"], single=False)
     if not len(entries):
         entries = [item for name, item in h5["/"].items() if isGroup(item)]

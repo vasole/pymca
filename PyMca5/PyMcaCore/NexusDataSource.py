@@ -48,6 +48,36 @@ from . import NexusTools
 
 SOURCE_TYPE = "HDF5"
 
+try:
+    from silx.io import open as silxh5open
+    logging.getLogger("silx.io.fabioh5").setLevel(logging.CRITICAL)
+except:
+    silxh5open = None
+
+def h5open(filename):
+    try:
+        # try to open as usual using h5py
+        return h5py.File(filename, "r")
+    except:
+        try:
+            if h5py.version.hdf5_version_tuple < (1, 10):
+                # no reason to try SWMR mode
+                raise
+            elif h5py.is_hdf5(filename):
+                _logger.info("Cannot open %s. Trying in SWMR mode" % filename)
+                return h5py.File(filename, "r", libver='latest', swmr=True)
+            else:
+                raise
+        except:
+            if silxh5open:
+                try:
+                    _logger.info("Trying to open %s using silx" % filename)
+                    return silxh5open(filename)
+                except:
+                    _logger.info("Cannot open %s using silx" % filename)
+            # give back the original error
+            return h5py.File(filename, "r")
+
 _logger = logging.getLogger(__name__)
 
 #sorting method
@@ -152,7 +182,7 @@ class NexusDataSource(object):
         self.sourceName = []
         for name in nameList:
             if not isinstance(name, basestring):
-                if not isinstance(name, phynx.File):
+                if not isinstance(name, h5py.File):
                     text = "Constructor needs string as first argument"
                     raise TypeError(text)
                 else:
@@ -170,17 +200,17 @@ class NexusDataSource(object):
         self._sourceObjectList=[]
         FAMILY = False
         for name in self.__sourceNameList:
-            if isinstance(name, phynx.File):
+            if isinstance(name, h5py.File):
                 self._sourceObjectList.append(name)
                 continue
             if not os.path.exists(name):
                 if '%' in name:
-                   phynxInstance = phynx.File(name, 'r',
+                   phynxInstance = h5py.File(name, 'r',
                                               driver='family')
                 else:
                     raise IOError("File %s does not exists" % name)
             try:
-                phynxInstance = phynx.File(name, 'r')
+                phynxInstance = h5open(name)
             except IOError:
                 if 'FAMILY DRIVER' in sys.exc_info()[1].args[0].upper():
                     FAMILY = True
@@ -188,7 +218,7 @@ class NexusDataSource(object):
                     raise
             except TypeError:
                 try:
-                    phynxInstance = phynx.File(name, 'r')
+                    phynxInstance = h5open(name)
                 except IOError:
                     if 'FAMILY DRIVER' in sys.exc_info()[1].args[0].upper():
                         FAMILY = True
@@ -204,7 +234,7 @@ class NexusDataSource(object):
         if FAMILY:
             pattern = get_family_pattern(self.__sourceNameList)
             if '%' in pattern:
-                phynxInstance = phynx.File(pattern, 'r',
+                phynxInstance = h5py.File(pattern, 'r',
                                             driver='family')
             else:
                 raise IOError("Cannot read set of HDF5 files")
@@ -333,7 +363,7 @@ class NexusDataSource(object):
                     elif "::" in mcaDatasetObjectPath:
                         fileName, path = mcaDatasetObjectPath.split()
                         if os.path.exists(fileName):
-                            with h5py.File(fileName, "r") as h5:
+                            with h5open(fileName) as h5:
                                 if path in h5:
                                     dataset = h5[path][()]
                     if dataset is None:
@@ -384,7 +414,7 @@ class NexusDataSource(object):
                             output.info["McaLiveTime"] = \
                                     output.info["McaLiveTime"].sum()
                         if selection['mcaselectiontype'].lower() != "sum":
-                            output.info["McaLiveTime"] /= divider                        
+                            output.info["McaLiveTime"] /= divider
             except:
                 # import traceback
                 _logger.error("%s", sys.exc_info())
@@ -460,7 +490,7 @@ class NexusDataSource(object):
                         # calculate the average
                         _logger.debug("AVERAGE")
                         data /= nSpectra
-                    else:                        
+                    else:
                         _logger.warning("Unsupported selection type %s",
                                         mcaselectiontype)
                         _logger.warning("Calculating average")
