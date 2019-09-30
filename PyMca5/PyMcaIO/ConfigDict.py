@@ -135,9 +135,16 @@ class ConfigDict(dict):
         """
         cfg = ConfigParser.ConfigParser()
         cfg.optionxform = self.__convert
-        cfg.readfp(filelike)
+        #readfp was deprecated in Python 3.2 
+        if hasattr(cfg, "read_file"):
+            cfg.read_file(filelike)
+        else:
+            cfg.readfp(filelike)
         self.__read(cfg, sections)
         self._check()
+
+    def read_file(self, *var, **kw):
+        return self.readfp(*var, **kw)
 
     def __read(self, cfg, sections=None):
         cfgsect = cfg.sections()
