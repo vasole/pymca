@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -69,7 +69,7 @@ def getObject3DInstance(config=None):
     #file index is irrelevant in case of an actual 3D stack.
     filename = fileList[0]
     legend = os.path.basename(filename)
-    with h5py.File(filename, mode='r') as f
+    with h5py.File(filename, mode='r') as f:
         stack = f['Image']['data'][()]
     if stack is None:
         raise IOError("Problem reading stack.")
@@ -120,7 +120,7 @@ if __name__ == "__main__":
         if not os.path.exists(filename):
             print("File does not exists")
             sys.exit(1)
-        with h5py.File(filename, mode='r') as f
+        with h5py.File(filename, mode='r') as f:
             stack = f['Image']['data'][()]
         if stack is None:
             raise IOError("Problem reading stack.")
