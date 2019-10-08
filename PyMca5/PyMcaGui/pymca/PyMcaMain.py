@@ -111,6 +111,15 @@ if __name__ == '__main__':
                 import PySide.QtCore
             else:
                 raise ValueError("Unknown Qt binding <%s>" % binding)
+
+    from PyMca5.PyMcaCore.LoggingLevel import getLoggingLevel
+    logging.basicConfig(level=getLoggingLevel(opts))
+    if "HDF5_USE_FILE_LOCKING" not in os.environ:
+        if "h5py" in sys.modules:
+             _logger.warning("h5py already imported")
+        os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
+        _logger.info("%s set to %s" % ("HDF5_USE_FILE_LOCKING",
+                                       os.environ["HDF5_USE_FILE_LOCKING"]))
     if binding is None:
         if qtversion == '3':
             raise NotImplementedError("Qt3 is no longer supported")
@@ -130,15 +139,6 @@ if __name__ == '__main__':
             import PyQt4.QtCore
         elif qtversion == '5':
             import PyQt5.QtCore
-
-    from PyMca5.PyMcaCore.LoggingLevel import getLoggingLevel
-    logging.basicConfig(level=getLoggingLevel(opts))
-    if "HDF5_USE_FILE_LOCKING" not in os.environ:
-        if "h5py" in sys.modules:
-             _logger.warning("h5py already imported")
-        os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
-        _logger.info("%s set to %s" % ("HDF5_USE_FILE_LOCKING",
-                                       os.environ["HDF5_USE_FILE_LOCKING"]))
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
