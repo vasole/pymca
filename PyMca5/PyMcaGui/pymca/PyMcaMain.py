@@ -904,7 +904,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 if key in ddict['Geometry'].keys():
                     r = qt.QRect(*ddict['Geometry']['McaGraph'])
                     self.mcaWindow.graph.setGeometry(r)
-                self.show()
+            self.show()
             qApp = qt.QApplication.instance()
             qApp.processEvents()
             qApp.postEvent(self, qt.QResizeEvent(qt.QSize(ddict['Geometry']['MainWindow'][2]+1,
