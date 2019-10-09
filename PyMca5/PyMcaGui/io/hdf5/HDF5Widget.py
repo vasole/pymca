@@ -36,7 +36,12 @@ import re
 from operator import itemgetter
 import logging
 _logger = logging.getLogger(__name__)
-
+try:
+    # try to import hdf5plugins
+    import hdf5plugin
+except:
+    # but do not crash just because of it
+    pass
 import h5py
 import weakref
 
