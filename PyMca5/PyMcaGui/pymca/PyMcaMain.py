@@ -140,6 +140,12 @@ if __name__ == '__main__':
         elif qtversion == '5':
             import PyQt5.QtCore
 
+    try:
+        # make sure hdf5plugins are imported
+        import hdf5plugin
+    except:
+        _logger.info("Failed to import hdf5plugin")
+
 from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 if sys.platform == 'darwin':
