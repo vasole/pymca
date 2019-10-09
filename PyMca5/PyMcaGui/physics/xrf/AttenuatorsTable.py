@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -68,9 +68,8 @@ class AttenuatorsTab(qt.QWidget):
         layout = qt.QVBoxLayout(self)
 
         maxheight = qt.QDesktopWidget().height()
-        if maxheight < 800:
-            layout.setContentsMargins(0, 0, 0, 0)
-            layout.setSpacing(2)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
 
         self.table  = AttenuatorsTableWidget(self, name, attenuators,
                                              funnyfilters=True)
@@ -86,7 +85,13 @@ class AttenuatorsTab(qt.QWidget):
         else:
             spacer = qt.VerticalSpacer(self)
             layout.addWidget(spacer)
-            self.editor = MaterialEditor.MaterialEditor(graph=graph)
+            if rheight > 30:
+                # when using big letters we run into troubles
+                # for instance windowx 1920x1080 but with a 150% scale
+                self.editor = MaterialEditor.MaterialEditor(height=5,
+                                                            graph=graph)
+            else:
+                self.editor = MaterialEditor.MaterialEditor(graph=graph)
             self.table.setMinimumHeight(13*rheight)
             self.table.setMaximumHeight(13*rheight)
         self.mainTab.addTab(self.editor, "Material Editor")
