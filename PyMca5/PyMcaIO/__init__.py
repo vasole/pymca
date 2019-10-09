@@ -31,10 +31,10 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 try:
-    # make sure hdf5plugins are imported when using PyMca
+    # try to import hdf5plugin
     import hdf5plugin
 except:
-    # but at the same time do not disturb other people
+    # but do not crash just because of it
     pass
 
 # expose h5py (already imported by hdf5plugin since version 2.0.0)
