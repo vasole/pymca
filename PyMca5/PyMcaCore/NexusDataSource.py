@@ -33,6 +33,12 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
 import numpy
+try:
+    # try to import hdf5plugin
+    import hdf5plugin
+except:
+    # but do not crash just because of it
+    pass
 import h5py
 from operator import itemgetter
 import re

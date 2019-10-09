@@ -34,6 +34,12 @@ import os
 from operator import itemgetter
 import re
 import posixpath
+try:
+    # try to import hdf5plugin
+    import hdf5plugin
+except:
+    # but do not crash just because of it
+    pass
 from h5py import File, Dataset, Group
 try:
     from silx.io import is_dataset, is_group

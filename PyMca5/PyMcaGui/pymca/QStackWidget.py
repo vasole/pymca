@@ -43,6 +43,11 @@ if __name__ == "__main__":
         os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
         _logger.info("%s set to %s" % ("HDF5_USE_FILE_LOCKING",
                                        os.environ["HDF5_USE_FILE_LOCKING"]))
+    try:
+        # make sure hdf5plugins are imported
+        import hdf5plugin
+    except:
+        _logger.info("Failed to import hdf5plugin")
     # we have to get the Qt binding prior to import PyMcaQt
     import getopt
     options = ''
