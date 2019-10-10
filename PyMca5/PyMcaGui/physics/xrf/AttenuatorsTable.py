@@ -85,14 +85,18 @@ class AttenuatorsTab(qt.QWidget):
         else:
             spacer = qt.VerticalSpacer(self)
             layout.addWidget(spacer)
-            if rheight > 30:
+            if rheight > 32:
                 # when using big letters we run into troubles
                 # for instance windowx 1920x1080 but with a 150% scale
                 self.editor = MaterialEditor.MaterialEditor(height=5,
                                                             graph=graph)
+                if rheight > 40:
+                    self.table.setMinimumHeight(10*rheight)
+                else:
+                    self.table.setMinimumHeight(13*rheight)
             else:
                 self.editor = MaterialEditor.MaterialEditor(graph=graph)
-            self.table.setMinimumHeight(13*rheight)
+                self.table.setMinimumHeight(13*rheight)
             self.table.setMaximumHeight(13*rheight)
         self.mainTab.addTab(self.editor, "Material Editor")
 

@@ -416,10 +416,12 @@ class MaterialValidator(qt.QValidator):
 class MaterialGUI(qt.QWidget):
     sigMaterialMassAttenuationSignal = qt.pyqtSignal(object)
     sigMaterialTransmissionSignal = qt.pyqtSignal(object)
-    def __init__(self, parent=None, name="New Material",default={},
+    def __init__(self, parent=None, name="New Material",default=None,
                  comments=True, height=10, toolmode=False):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle(name)
+        if default is None:
+            default = {}
         self._default = default
         self._setCurrentDefault()
         for key in default.keys():
@@ -678,6 +680,10 @@ class MaterialGUI(qt.QWidget):
     def setCurrent(self, matkey0):
         _logger.debug("setCurrent(self, matkey0=%s)", matkey0)
         matkey = Elements.getMaterialKey(matkey0)
+        if self._default == {}:
+            firstTime = True
+        else:
+            firstTime = False
         if matkey is not None:
             if self.__toolMode:
                 #make sure the material CANNOT be modified
@@ -698,6 +704,8 @@ class MaterialGUI(qt.QWidget):
             if self.__toolMode:
                 self.__nameLine.setText("%s" % matkey)
             self.__fillingValues = False
+        if firstTime:
+            self.__table.resizeColumnToContents(0)
 
     def _fillValues(self):
         _logger.debug("fillValues(self)")
