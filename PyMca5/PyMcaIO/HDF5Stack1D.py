@@ -94,8 +94,11 @@ class HDF5Stack1D(DataObject.DataObject):
         tmpHdf = hdfStack._sourceObjectList[0]
         entryNames = []
         for key in tmpHdf["/"].keys():
-            if isinstance(tmpHdf["/"+key], h5py.Group):
-                entryNames.append(key)
+            try:
+                if isinstance(tmpHdf["/"+key], h5py.Group):
+                    entryNames.append(key)
+            except KeyError:
+                pass
 
         # built the selection in terms of HDF terms
         # for the time being, only the first item in x selection used
@@ -438,8 +441,11 @@ class HDF5Stack1D(DataObject.DataObject):
                 goodEntryNames = []
                 for entry in entryNames:
                     tmpPath = "/" + entry
-                    if hasattr(hdf[tmpPath], "keys"):
-                        goodEntryNames.append(entry)
+                    try:
+                        if hasattr(hdf[tmpPath], "keys"):
+                            goodEntryNames.append(entry)
+                    except KeyError:
+                        pass
                 for scan in scanlist:
                     IN_MEMORY = None
                     nStart = n
