@@ -1,3 +1,10 @@
+VERSION 5.5.3
+-------------
+
+- HDF5. Handle broken toplevel external links
+
+- XRF. The fit configuration window was too high when using large font scaling.
+
 VERSION 5.5.2
 -------------
 
