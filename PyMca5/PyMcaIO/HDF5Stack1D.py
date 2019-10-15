@@ -98,7 +98,7 @@ class HDF5Stack1D(DataObject.DataObject):
                 if isinstance(tmpHdf["/"+key], h5py.Group):
                     entryNames.append(key)
             except KeyError:
-                pass
+                _logger.info("Broken link with key? <%s>" % key)
 
         # built the selection in terms of HDF terms
         # for the time being, only the first item in x selection used
@@ -445,7 +445,8 @@ class HDF5Stack1D(DataObject.DataObject):
                         if hasattr(hdf[tmpPath], "keys"):
                             goodEntryNames.append(entry)
                     except KeyError:
-                        pass
+                        _logger.info("Broken link with key? <%s>" % tmpPath)
+
                 for scan in scanlist:
                     IN_MEMORY = None
                     nStart = n
