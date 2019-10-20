@@ -5,6 +5,8 @@ VERSION 5.5.3
 
 - XRF. The fit configuration window was too high when using large font scaling.
 
+- Enable ICA calculations on HDF5 stacks.
+
 VERSION 5.5.2
 -------------
 
