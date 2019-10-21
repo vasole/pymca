@@ -36,6 +36,3 @@ try:
 except:
     # but do not crash just because of it
     pass
-
-# expose h5py (already imported by hdf5plugin since version 2.0.0)
-import h5py
