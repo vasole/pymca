@@ -117,10 +117,10 @@ def getScriptFile(pathToExecutable=None, args=None, name=None):
     if sys.platform == "win32":
         binDir = os.path.join(xmimsim_directory, "bin")
         libDir = os.path.join(xmimsim_directory, "lib")
-        gtk2Dir = os.path.join(xmimsim_directory, "GTK2")
+        gtkDir = os.path.join(xmimsim_directory, "GTK")
         path = os.getenv("PATH")
         txt = "echo off\n"
-        txt += "set PATH=%s;%s;%s;%s\n" % (binDir, libDir, gtk2Dir, os.getenv("PATH"))
+        txt += "set PATH=%s;%s;%s;%s\n" % (binDir, libDir, gtkDir, os.getenv("PATH"))
         txt += "%s " % executable
         if len(args):
             for arg in args:
