@@ -79,8 +79,8 @@ class testConfigDict(unittest.TestCase):
         testDict['simple_types']['float'] = 1.0
         testDict['simple_types']['int'] = 1
         testDict['simple_types']['string'] = "Hello World"
-        testDict['simple_types']['string_with_%'] = "Hello World %"
-        testDict['simple_types']['string_with_2%%'] = "Hello World %%"
+        testDict['simple_types']['string_with_1'] = "Hello World %"
+        testDict['simple_types']['string_with_2'] = "Hello World %%"
         testDict['containers'] = {}
         testDict['containers']['list'] = [-1, 'string', 3.0]
         if ConfigDict.USE_NUMPY:
