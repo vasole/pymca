@@ -246,7 +246,12 @@ class ConfigDict(dict):
                              ' '.join([str(val) for val in ddict[key]]) +
                              ' ]\n')
                     continue
-            fp.write('%s = %s\n' % (key, ddict[key]))
+            txt = '%s = %s\n' % (key, ddict[key])
+            if "%" in txt:
+                # when reading configparser needs to see % characters in pairs
+                fp.write(txt.replace("%", "%%"))
+            else:
+                fp.write(txt)
 
         for key in listkey:
             fp.write('%s = ' % key)
