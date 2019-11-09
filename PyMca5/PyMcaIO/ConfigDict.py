@@ -247,7 +247,7 @@ class ConfigDict(dict):
                              ' ]\n')
                     continue
             txt = '%s = %s\n' % (key, ddict[key])
-            if "%" in txt:
+            if sys.version_info > (2, 9) and ("%" in txt):
                 # when reading configparser needs to see % characters in pairs
                 fp.write(txt.replace("%", "%%"))
             else:
