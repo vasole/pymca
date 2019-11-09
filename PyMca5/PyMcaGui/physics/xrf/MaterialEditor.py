@@ -304,7 +304,14 @@ class MaterialComboBox(qt.QComboBox):
             (result, index) = self.ownValidator.validate(qstring,0)
         if result != self.ownValidator.Valid:
             text = str(qstring)
-            if text.endswith(" "):
+            if "%" in text:
+                msg =  qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Invalid Material Name '%s'\n" % text + \
+                            "It contains a % character.\n")
+                msg.exec_()
+                msg = qt.QMessageBox.No
+            elif text.endswith(" "):
                 msg =  qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Invalid Material Name '%s'\n" % text + \
@@ -396,6 +403,8 @@ class MaterialValidator(qt.QValidator):
 
     def validate(self, qstring, pos):
         text = str(qstring)
+        if "%" in text:
+            return (self.Invalid, pos)
         if text == '-':
             return (self.Valid, pos)
         try:
