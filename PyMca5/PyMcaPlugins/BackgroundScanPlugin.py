@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -112,7 +112,7 @@ class BackgroundScanPlugin(Plugin1DBase.Plugin1DBase):
         activeCurve = self.getActiveCurve()
         if activeCurve is None:
             return
-        x, spectrum, legend, info = activeCurve
+        x, spectrum, legend, info = activeCurve[:4]
         snipWindow = SGWindow.SGDialog(None,
                                            spectrum, x=x)
         snipWindow.graph.setGraphXLabel(info['xlabel'])
@@ -132,7 +132,7 @@ class BackgroundScanPlugin(Plugin1DBase.Plugin1DBase):
         activeCurve = self.getActiveCurve()
         if activeCurve is None:
             return
-        x, spectrum, legend, info = activeCurve
+        x, spectrum, legend, info = activeCurve[:4]
         snipWindow = SNIPWindow.SNIPDialog(None,
                                            spectrum, x=x, smooth=False)
         if self.subtract1DSnipParameters is not None:
@@ -148,15 +148,19 @@ class BackgroundScanPlugin(Plugin1DBase.Plugin1DBase):
             operations = info.get("operations", [])
             operations.append("SNIP Background Removal")
             info['operations'] = operations
-            self.removeCurve(legend, replot=False)
-            self.addCurve(xdata, ydata, legend=legend +" Net", info=info, replot=True)
+            # we cannot aford to change the name of the curve in order to properly
+            # handle the calibration in an MCA window
+            if "McaCalib" not in info:
+                self.removeCurve(legend, replot=False)
+                legend = legend + " Net"
+            self.addCurve(xdata, ydata, legend=legend, info=info, replot=True)
             self.subtract1DSnipParameters = snipWindow.getParameters()
 
     def deglitchActiveCurveWith1DSnipBackground(self):
         activeCurve = self.getActiveCurve()
         if activeCurve is None:
             return
-        x, spectrum, legend, info = activeCurve
+        x, spectrum, legend, info = activeCurve[:4]
         snipWindow = SNIPWindow.SNIPDialog(None,
                                            spectrum, x=x, smooth=True)
         if self.deglitch1DSnipParameters is not None:
