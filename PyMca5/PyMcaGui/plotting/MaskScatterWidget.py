@@ -482,8 +482,7 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
             self.setZoomModeEnabled(True)
 
     def _rectSelectionIconSignal(self):
-        if DEBUG:
-            print("_rectSelectionIconSignal")
+        _logger.debug("_rectSelectionIconSignal")
         if self.rectSelectionToolButton.isChecked():
             self.setRectangularSelectionMode()
         else:
@@ -648,8 +647,7 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         self._brushMenu.exec_(self.cursor().pos())
 
     def _brushSelectionIconSignal(self):
-        if DEBUG:
-            print("_setBrushSelectionMode")
+        _logger.debug("_setBrushSelectionMode")
         if hasattr(self, "polygonSelectionToolButton"):
             self.polygonSelectionToolButton.setChecked(False)
             self.setDrawModeEnabled(False)
