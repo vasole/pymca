@@ -113,37 +113,8 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
         #print("MOTOR 1 ", float(item[m1idx + 1]),
         #                              float(item[m1idx + 2]),
         #                              int(item[m1idx + 3]))
+        _logger.info("Assuming scans written in terms of number of intervals")
         plusOne = 1
-        if ("dmesh" in command) or ("amesh" in command):
-            # following bliss version it may follow SPEC convention or not
-            # let's hope we have more than one complete row, it not we are
-            # lost in any case
-            if len(x) > 2:
-                if xLabel.upper() == self._motor0Mne.upper():
-                    idx = m0idx
-                else:
-                    idx = m1idx
-                first = x[0]
-                maxNpoints = int(item[idx + 3]) + 1
-                deltaX = 0.1 * \
-                           abs(float(item[m0idx + 1]) - float(item[m0idx + 2]))
-                if abs(x[1] - x[0]) < deltaX:
-                    # repeating the first point
-                    if numpy.sum(abs(x - x[0]) < deltaX) == maxNpoints:
-                        plusOne = 1
-                    else:
-                        plusOne = 0
-                else:
-                    # changing the first point
-                    idx = 0
-                    while idx < len(x):
-                        idx += 1
-                        if abs(x[idx] - x[0]) < deltaX:
-                            break
-                    if idx == maxNpoints:
-                        plusOne = 1
-                    else:
-                        plusOne = 0
 
         #Assume an EXACTLY regular mesh for both motors
         self._motor0 = numpy.linspace(float(item[m0idx + 1]),
