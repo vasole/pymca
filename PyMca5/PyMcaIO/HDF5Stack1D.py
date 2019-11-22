@@ -35,20 +35,11 @@ import numpy
 import h5py
 import logging
 _logger = logging.getLogger(__name__)
-try:
-    from PyMca5.PyMcaCore import DataObject
-    from PyMca5.PyMcaMisc import PhysicalMemory
-except ImportError:
-    _logger.info("HDF5Stack1D importing DataObject from local directory!")
-    import DataObject
-    import PhysicalMemory
-try:
-    from PyMca5.PyMcaCore import NexusDataSource
-    from PyMca5.PyMcaCore import NexusTools
-except ImportError:
-    _logger.info("HDF5Stack1D importing NexusDataSource from local directory!")
-    import NexusDataSource
-    import NexusDataSource
+
+from PyMca5.PyMcaCore import DataObject
+from PyMca5.PyMcaMisc import PhysicalMemory
+from PyMca5.PyMcaCore import NexusDataSource
+from PyMca5.PyMcaCore import NexusTools
 
 SOURCE_TYPE = "HDF5Stack1D"
 
@@ -81,11 +72,11 @@ class HDF5Stack1D(DataObject.DataObject):
                  Example: The actual path has the form:
                  /whatever1/whatever2/counts
                  That means scanlist = ["/whatever1"]
-                 and               selection['y'] = "/whatever2/counts"
+                 and selection['y'] = "/whatever2/counts"
         """
-        _logger.debug("filelist = %s", filelist)
-        _logger.debug("selection = %s", selection)
-        _logger.debug("scanlist = %s", scanlist)
+        _logger.info("filelist = %s", filelist)
+        _logger.info("selection = %s", selection)
+        _logger.info("scanlist = %s", scanlist)
         # all the files in the same source
         hdfStack = NexusDataSource.NexusDataSource(filelist)
 
@@ -356,6 +347,16 @@ class HDF5Stack1D(DataObject.DataObject):
             else:
                 # what to do if the number of dimensions is only 2?
                 raise
+
+        # get the positioners information associated to the path
+        positioners = {}
+        try:
+            positionersGroup = NexusTools.getPositionersGroup(tmpHdf, path)
+            for motorName, motorValues in positionersGroup.items():
+                positioners[motorName] = motorValues[()]
+        except:
+            positionersGroup = None
+            positioners = {}
 
         # get the mca information associated to the path
         mcaObjectPaths = NexusTools.getMcaObjectPaths(tmpHdf, path)
@@ -751,9 +752,11 @@ class HDF5Stack1D(DataObject.DataObject):
             self.x = [_channels]
         if _time is not None:
             self.info["McaLiveTime"] = _time
+        if positionersGroup:
+            self.info["positioners"] = positioners
 
     def getDimensions(self, nFiles, nScans, shape, index=None):
-        #some body may want to overwrite this
+        #somebody may want to overwrite this
         """
         Returns the shape of the final stack as (Dim0, Dim1, Nchannels)
         """
