@@ -245,9 +245,9 @@ class StackBase(object):
         self._stack.info['McaIndex'] = mcaIndex
         self._stack.info['FileIndex'] = fileIndex
         self._stack.info['OtherIndex'] = otherIndex
-        self.stackUpdated()
+        self.stackUpdated(info.get("positioners", None))
 
-    def stackUpdated(self):
+    def stackUpdated(self, positioners=None):
         """
         Recalculates the different images associated to the stack
         """
@@ -366,6 +366,12 @@ class StackBase(object):
                          'to': dataObject.x[0][-1]}
 
         self.updateROIImages()
+        if positioners is not None:
+            try:
+                self.setPositioners(positioners)
+            except:
+                logging.error("Error setting positioners. Ignoring them")
+                self._clearPositioners()
         for key in self.pluginInstanceDict.keys():
             self.pluginInstanceDict[key].stackUpdated()
 
@@ -1092,7 +1098,7 @@ class StackBase(object):
             is not a scalar, list or numpy array.
         :raise: RuntimeError if any positioner is a list and copy=False
         """
-        if not isinstance(positioners, dict):
+        if not hasattr(positioners, "items"):
             raise TypeError("Dictionary expected for positioners")
 
         npixels = self.getStackOriginalImage().size
@@ -1103,17 +1109,17 @@ class StackBase(object):
                     (hasattr(motorValues, "ndim") and
                      motorValues.ndim == 0):
                 stackPositioners[motorName] = motorValues
-            elif hasattr(motorValues, "__len__") and numpy.isscalar(motorValues[0]):
-                # list: convert to numpy array before storing in info
-                numMotorValues = len(motorValues)
-                if numMotorValues == npixels:
-                    stackPositioners[motorName] = numpy.array(motorValues)
             elif hasattr(motorValues, "size"):
                 # numpy array
                 numMotorValues = motorValues.size
                 if numMotorValues == npixels:
                     stackPositioners[motorName] = numpy.array(motorValues,
                                                               copy=copy)
+            elif hasattr(motorValues, "__len__") and numpy.isscalar(motorValues[0]):
+                # list: convert to numpy array before storing in info
+                numMotorValues = len(motorValues)
+                if numMotorValues == npixels:
+                    stackPositioners[motorName] = numpy.array(motorValues)
             else:
                 raise TypeError(
                         "Wrong type for positioner %s. " % motorName +
