@@ -210,15 +210,18 @@ class SilxScatterWindow(qt.QWidget):
         #values.shape = -1
         item = self.plot.getPlotWidget().getScatter(legend)
         if item is None:
+            # only one scatter there
+            self.plot.getPlotWidget().remove(kind="scatter")
             symbol = self._defaultSymbol
             cmap = self._defaultColormap
-        else:
-            symbol = item.getSymbol()
-            cmap = item.getColormap()
-        self.plot.getPlotWidget().remove(kind="scatter")
-        self.plot.getPlotWidget().addScatter(x, y, values,
+            self.plot.getPlotWidget().addScatter(x, y, values,
                             legend=legend, info=dataObject.info,
                             symbol=symbol, colormap=cmap)
+        else:
+            # by using the OO API symbol and colormap are kept
+            item.setData(x, y, values)
+            item.setInfo(dataObject.info)
+
         self.plot.getPlotWidget().setGraphXLabel(self._xLabel)
         self.plot.getPlotWidget().setGraphYLabel(self._yLabel)
         txt = "%s %d" % (legend, index)
