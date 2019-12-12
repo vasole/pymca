@@ -207,7 +207,6 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
         ddict.update(nnmaParameters['kw'])
         ddict['ncomponents'] = nnmaParameters['npc']
         ddict['binning'] = nnmaParameters['binning']
-        ddict['regions'] = nnmaParameters['regions']
         ddict['spectral_mask'] = nnmaParameters['spectral_mask']
         #ddict['kmeans'] = False
         if not self.isStackFinite():
