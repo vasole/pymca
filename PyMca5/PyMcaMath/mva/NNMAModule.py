@@ -267,61 +267,62 @@ def nnma(stack, ncomponents, binning=None,
                 data = numpy.sum(dataView , axis=-1, dtype=numpy.float32)
                 N = N // binning
     else:
+        # we have to build the data dynamically
         oldData = data
         N = int(N/binning)
         try:
-            data = numpy.zeros((r, c, N), oldData.dtype)
+            data = numpy.zeros((r, c, N), numpy.float32)
         except MemoryError:
-            try:
-                data = numpy.zeros((r, c, N), numpy.float32)
-            except MemoryError:
-                text  = "NNMAModule only works properly on numpy arrays.\n"
-                text += "Memory Error: Higher binning may help."
-                raise TypeError(text)
+            text  = "NNMAModule only works properly on numpy arrays.\n"
+            text += "Memory Error: Higher binning may help."
+            raise TypeError(text)
+
         if binning == 1:
-            if len(oldShape) == 3:
-                if spectral_mask is not None:
-                    idx = spectral_mask > 0
-                    for i in range(r):
+            if spectral_mask is None:
+                if len(oldShape) == 3:
+                    for i in range(data.shape[0]):
+                        data[i] = oldData[i]
+                else:
+                    data.shape = r * c, N
+                    for i in range(data.shape[0]):
+                        data[i] = oldData[i]
+            else:
+                idx = spectral_mask > 0
+                if len(oldShape) == 3:
+                    for i in range(data.shape[0]):
                         data[i, :, idx] = oldData[i, :, idx]
                 else:
                     data.shape = r * c, N
-            else:
-                data.shape = r * c, N
-                if spectral_mask is not None:
-                    idx = spectral_mask > 0
-                    for i in range(r*c):
+                    for i in range(data.shape[0]):
                         data[i, idx] = oldData[i, idx]
-                else:
-                    for i in range(r*c):
-                        data[i, :] = oldData[i, :]
+            data.shape = r * c, N
         else:
-            if len(oldShape) == 3:
-                if spectral_mask is not None:
-                    idx = spectral_mask > 0
-                    for i in range(r):
-                        tmpData = oldData[i,:,:]
+            if spectral_mask is None:
+                if len(oldShape) == 3:
+                    for i in range(data.shape[0]):
+                        tmpData = oldData[i, :, :]
                         tmpData.shape = c, N, binning
-                        data[i, :, idx] = numpy.sum(tmpData, axis=-1)[idx]
+                        data[i, :] = numpy.sum(tmpData, axis=-1, dtype=numpy.float32)
                 else:
-                    for i in range(r):
-                        tmpData = oldData[i,:,:]
-                        tmpData.shape = c, N, binning
-                        data[i,:,:] = numpy.sum(tmpData, axis=-1)
-                data.shape = r * c, N
+                    data.shape = r * c, N
+                    for i in range(data.shape[0]):
+                        tmpData = oldData[i]
+                        tmpData.shape = N, binning
+                        data[i] = numpy.sum(tmpData, axis=-1, dtype=numpy.float32)
             else:
-                data.shape = r * c, N
-                if spectral_mask is not None:
-                    idx = spectral_mask > 0
-                    for i in range(r*c):
-                        tmpData = oldData[i,:]
-                        tmpData.shape = N, binning
-                        data[i, idx] =  numpy.sum(tmpData, axis=-1)[idx]
+                idx = spectral_mask > 0
+                if len(oldShape) == 3:
+                    for i in range(data.shape[0]):
+                        tmpData = oldData[i, :, :]
+                        tmpData.shape = 1, -1, N, binning
+                        data[i, :, idx] = numpy.sum(tmpData, axis=-1, dtype=numpy.float32)[0, :, idx]
                 else:
-                    for i in range(r*c):
-                        tmpData = oldData[i,:]
-                        tmpData.shape = N, binning
-                        data[i,:] =  numpy.sum(tmpData, axis=-1)
+                    data.shape = r * c, N
+                    for i in range(data.shape[0]):
+                        tmpData = oldData[i]
+                        tmpData.shape = 1, N, binning
+                        data[i, idx] = numpy.sum(tmpData, axis=-1, dtype=numpy.float32)[0, idx]
+            data.shape = r * c, N
 
     #mindata = data.min()
     #numpy.add(data, -mindata+1, data)
