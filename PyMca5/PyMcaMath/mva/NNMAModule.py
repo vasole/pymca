@@ -242,17 +242,30 @@ def nnma(stack, ncomponents, binning=None,
 
     if len(data.shape) == 3:
         r, c, N = data.shape
-        if isinstance(data, numpy.ndarray):
-            data.shape = r*c, N
     else:
         r, N = data.shape
         c = 1
 
     if isinstance(data, numpy.ndarray):
-        if binning > 1:
-            data = numpy.reshape(data,[data.shape[0], data.shape[1]//binning, binning])
-            data = numpy.sum(data , axis=-1)
-            N = N // binning
+        dataView = data[:]
+        dataView.shape = r * c, N
+        if spectral_mask is not None:
+            if binning > 1:
+                dataView.shape = r * c, N // binning, binning
+                dataView = numpy.sum(dataView, axis=-1, dtype=numpy.float32)
+                N = N // binning
+            try:
+                data = numpy.zeros((r*c, N), numpy.float32)
+            except MemoryError:
+                text = "Memory Error: Higher binning may help."
+                raise TypeError(text)
+            idx = spectral_mask > 0
+            data[:, idx] = dataView[:, idx]            
+        else:
+            if binning > 1:
+                dataView.shape = r * c, N // binning, binning
+                data = numpy.sum(dataView , axis=-1, dtype=numpy.float32)
+                N = N // binning
     else:
         oldData = data
         N = int(N/binning)
@@ -267,26 +280,48 @@ def nnma(stack, ncomponents, binning=None,
                 raise TypeError(text)
         if binning == 1:
             if len(oldShape) == 3:
-                for i in range(r):
-                    data[i,:,:] = oldData[i,:,:]
-                data.shape = r * c, N
+                if spectral_mask is not None:
+                    idx = spectral_mask > 0
+                    for i in range(r):
+                        data[i, :, idx] = oldData[i, :, idx]
+                else:
+                    data.shape = r * c, N
             else:
                 data.shape = r * c, N
-                for i in range(r*c):
-                    data[i,:] = oldData[i,:]
+                if spectral_mask is not None:
+                    idx = spectral_mask > 0
+                    for i in range(r*c):
+                        data[i, idx] = oldData[i, idx]
+                else:
+                    for i in range(r*c):
+                        data[i, :] = oldData[i, :]
         else:
             if len(oldShape) == 3:
-                for i in range(r):
-                    tmpData = oldData[i,:,:]
-                    tmpData.shape = c, N, binning
-                    data[i,:,:] = numpy.sum(tmpData, axis=-1)
+                if spectral_mask is not None:
+                    idx = spectral_mask > 0
+                    for i in range(r):
+                        tmpData = oldData[i,:,:]
+                        tmpData.shape = c, N, binning
+                        data[i, :, idx] = numpy.sum(tmpData, axis=-1)[idx]
+                else:
+                    for i in range(r):
+                        tmpData = oldData[i,:,:]
+                        tmpData.shape = c, N, binning
+                        data[i,:,:] = numpy.sum(tmpData, axis=-1)
                 data.shape = r * c, N
             else:
                 data.shape = r * c, N
-                for i in range(r*c):
-                    tmpData = oldData[i,:]
-                    tmpData.shape = N, binning
-                    data[i,:] =  numpy.sum(tmpData, axis=-1)
+                if spectral_mask is not None:
+                    idx = spectral_mask > 0
+                    for i in range(r*c):
+                        tmpData = oldData[i,:]
+                        tmpData.shape = N, binning
+                        data[i, idx] =  numpy.sum(tmpData, axis=-1)[idx]
+                else:
+                    for i in range(r*c):
+                        tmpData = oldData[i,:]
+                        tmpData.shape = N, binning
+                        data[i,:] =  numpy.sum(tmpData, axis=-1)
 
     #mindata = data.min()
     #numpy.add(data, -mindata+1, data)
