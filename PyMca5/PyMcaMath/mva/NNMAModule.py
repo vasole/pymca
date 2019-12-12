@@ -220,6 +220,7 @@ VERBOSE = _logger.getEffectiveLevel() == logging.DEBUG
 
 
 def nnma(stack, ncomponents, binning=None,
+         mask=None, spectral_mask=None,
          function=None, eps=5e-5, verbose=VERBOSE,
          maxcount=1000, kmeans=False):
     if kmeans and (not MDP):
@@ -237,7 +238,6 @@ def nnma(stack, ncomponents, binning=None,
     else:
         data = stack[:]
 
-
     oldShape = data.shape
 
     if len(data.shape) == 3:
@@ -250,9 +250,9 @@ def nnma(stack, ncomponents, binning=None,
 
     if isinstance(data, numpy.ndarray):
         if binning > 1:
-            data=numpy.reshape(data,[data.shape[0], data.shape[1]/binning, binning])
-            data=numpy.sum(data , axis=-1)
-            N=N/binning
+            data = numpy.reshape(data,[data.shape[0], data.shape[1]//binning, binning])
+            data = numpy.sum(data , axis=-1)
+            N = N // binning
     else:
         oldData = data
         N = int(N/binning)

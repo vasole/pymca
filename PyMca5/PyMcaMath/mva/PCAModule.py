@@ -536,10 +536,10 @@ def mdpPCA(stack, ncomponents=10, binning=None, dtype='float64', svd='True',
 
     if binning > 1:
         if isinstance(data, numpy.ndarray):
-            data = numpy.reshape(data, [data.shape[0], data.shape[1] / binning,
+            data = numpy.reshape(data, [data.shape[0], data.shape[1] // binning,
                                         binning])
             data = numpy.sum(data, axis=-1)
-        N /= binning
+        N = int(N / binning)
 
     if ncomponents > N:
         if binning == 1:
@@ -562,7 +562,7 @@ def mdpPCA(stack, ncomponents=10, binning=None, dtype='float64', svd='True',
                 tmpData = data[i:(i + step), :, :]
                 if binning > 1:
                     tmpData.shape = (step * shape[1],
-                                     shape[2] / binning,
+                                     shape[2] // binning,
                                      binning)
                     tmpData = numpy.sum(tmpData, axis=-1)
                 else:
@@ -579,7 +579,7 @@ def mdpPCA(stack, ncomponents=10, binning=None, dtype='float64', svd='True',
             for i in range(last, r):
                 print("Training data %d out of %d" % (i + 1, r))
                 tmpData = data[i, :, :]
-                tmpData.shape = shape[1], shape[2] / binning, binning
+                tmpData.shape = shape[1], shape[2] // binning, binning
                 tmpData = numpy.sum(tmpData, axis=-1)
                 if spectral_mask is None:
                     pca.train(tmpData)
@@ -646,7 +646,7 @@ def mdpPCA(stack, ncomponents=10, binning=None, dtype='float64', svd='True',
                     tmpData = data[i, :, :]
                 else:
                     tmpData = data[i, :, spectral_mask > 0]
-                tmpData.shape = data.shape[1], data.shape[2] / binning, binning
+                tmpData.shape = data.shape[1], data.shape[2] // binning, binning
                 tmpData = numpy.sum(tmpData, axis=-1)
                 images[:, i, :] = numpy.dot(proj.astype(data.dtype), tmpData.T)
             else:
@@ -660,7 +660,8 @@ def mdpPCA(stack, ncomponents=10, binning=None, dtype='float64', svd='True',
         if spectral_mask is None:
             images = numpy.dot(proj.astype(data.dtype), data.T)
         else:
-            images = numpy.dot(proj.astype(data.dtype), data[:, spectral_mask > 0].T)
+            images = numpy.dot(proj.astype(data.dtype),
+                               data[:, spectral_mask > 0].T)
 
     #make sure the shape of the original data is not modified
     if hasattr(stack, "info") and hasattr(stack, "data"):
@@ -714,10 +715,10 @@ def mdpICA(stack, ncomponents=10, binning=None, dtype='float64',
     if binning > 1:
         if isinstance(data, numpy.ndarray):
             data = numpy.reshape(data,
-                                 [data.shape[0], data.shape[1] / binning,
+                                 [data.shape[0], data.shape[1] // binning,
                                   binning])
             data = numpy.sum(data, axis=-1)
-        N /= binning
+        N = N // binning
 
     if ncomponents > N:
         if binning == 1:
@@ -744,7 +745,7 @@ def mdpICA(stack, ncomponents=10, binning=None, dtype='float64',
                         tmpData = data[i:(i + step), :, :]
                         if binning > 1:
                             tmpData.shape = (step * shape[1],
-                                             shape[2] / binning,
+                                             shape[2] // binning,
                                              binning)
                             tmpData = numpy.sum(tmpData, axis=-1)
                         else:
@@ -761,7 +762,7 @@ def mdpICA(stack, ncomponents=10, binning=None, dtype='float64',
                     for i in range(last, r):
                         print("Training data %d out of %d" % (i + 1, r))
                         tmpData = data[i, :, :]
-                        tmpData.shape = shape[1], shape[2] / binning, binning
+                        tmpData.shape = shape[1], shape[2] // binning, binning
                         tmpData = numpy.sum(tmpData, axis=-1)
                         if spectral_mask is None:
                             ica.train(tmpData)
@@ -857,7 +858,7 @@ def mdpICA(stack, ncomponents=10, binning=None, dtype='float64',
                     else:
                         tmpData = data[i, :, spectral_mask > 0]
                     tmpData.shape = (data.shape[1],
-                                     data.shape[2] / binning,
+                                     data.shape[2] // binning,
                                      binning)
                     tmpData = numpy.sum(tmpData, axis=-1)
                     tmpData = ica.white.execute(tmpData)
