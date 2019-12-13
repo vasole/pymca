@@ -33,7 +33,7 @@ from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaMath.mva import NNMAModule
 
 class NNMAParametersDialog(qt.QDialog):
-    def __init__(self, parent = None, options=[1, 2, 3, 4, 5, 10]):
+    def __init__(self, parent=None, options=[1, 2, 3, 4, 5, 10], regions=False):
         qt.QDialog.__init__(self, parent)
         self.setWindowTitle("NNMA Configuration Dialog")
         self.mainLayout = qt.QVBoxLayout(self)
@@ -123,6 +123,14 @@ class NNMAParametersDialog(qt.QDialog):
         self.binningCombo.activated[int].connect( \
                      self._updatePlotFromBinningCombo)
 
+        if regions:
+            self.__regions = True
+            self.__addRegionsWidget()
+        else:
+            self.__regions = False
+            #the optional plot
+            self.graph = None
+
         #the OK button
         hbox = qt.QWidget(self)
         hboxLayout = qt.QHBoxLayout(hbox)
@@ -140,7 +148,12 @@ class NNMAParametersDialog(qt.QDialog):
         hboxLayout.addWidget(self.dismissButton)
         hboxLayout.addWidget(qt.HorizontalSpacer(hbox))
         self.mainLayout.addWidget(self.speedOptions)
+        if regions:
+            self.mainLayout.addWidget(self.regionsWidget)
         self.mainLayout.addWidget(hbox)
+        if self.graph is not None:
+            self.mainLayout.addWidget(self.graph)
+
         self.okButton.clicked.connect(self.accept)
         self.dismissButton.clicked.connect(self.reject)
 
@@ -154,6 +167,56 @@ class NNMAParametersDialog(qt.QDialog):
     def _showInfo(self):
         self._infoDocument.show()
 
+    def __addRegionsWidget(self):
+        #Region handling
+        self.regionsWidget = PCAWindow.RegionsWidget(self)
+        self.regionsWidget.setEnabled(True)
+        self.regionsWidget.sigRegionsWidgetSignal.connect( \
+            self.regionsWidgetSlot)
+        #the plot
+        self.graph = PCAWindow.ScanWindow.ScanWindow(self)
+        self.graph.setEnabled(False)
+        self.graph.sigPlotSignal.connect(self._graphSlot)
+        if not self.__regions:
+            #I am adding after instantiation
+            self.mainLayout.insertWidget(2, self.regionsWidget)
+            self.mainLayout.addWidget(self.graph)
+        self.__regions = True
+
+    def regionsWidgetSlot(self, ddict):
+        if ddict["nRegions"] > 0:
+            fromValue = ddict['from']
+            toValue   = ddict['to']
+            self.graph.setEnabled(True)
+            self.graph.clearMarkers()
+            self.graph.insertXMarker(fromValue,
+                                      'From',
+                                       text='From',
+                                       color='blue',
+                                       draggable=True)
+            self.graph.insertXMarker(toValue,
+                                     'To',
+                                      text= 'To',
+                                      color='blue',
+                                      draggable=True)
+            self.graph.replot()
+        else:
+            self.graph.clearMarkers()
+            self.graph.setEnabled(False)
+
+    def _graphSlot(self, ddict):
+        if ddict['event'] == "markerMoved":
+            marker = ddict['label']
+            value = ddict['x']
+            signal = False
+            if marker == "From":
+                self.regionsWidget.fromLine.setText("%f" % value)
+            elif marker == "To":
+                self.regionsWidget.toLine.setText("%f" % value)
+            else:
+                signal = True
+            self.regionsWidget._editingSlot(signal=signal)
+
     def _slot(self, index):
         button = self.buttonGroup.button(index)
         button.setChecked(True)
@@ -165,8 +228,8 @@ class NNMAParametersDialog(qt.QDialog):
         return
 
     def setSpectrum(self, x, y, legend=None, info=None):
-        #if self.graph is None:
-        #    self.__addRegionsWidget()
+        if self.graph is None:
+            self.__addRegionsWidget()
         if legend is None:
             legend = "Current Active Spectrum"
         if info is None:
@@ -177,7 +240,7 @@ class NNMAParametersDialog(qt.QDialog):
 
         self._x = x
         self._y = y
-        #self.regionsWidget.setLimits(x.min(), x.max())
+        self.regionsWidget.setLimits(x.min(), x.max())
         self._legend = legend
         self._info = info
         self.updatePlot()
@@ -190,8 +253,8 @@ class NNMAParametersDialog(qt.QDialog):
 
     # value unused, but received with the Qt signal
     def _updatePlotFromBinningCombo(self, value):
-        #if self.graph is None:
-        #    return
+        if self.graph is None:
+            return
         self.updatePlot()
 
     def updatePlot(self):
@@ -209,7 +272,8 @@ class NNMAParametersDialog(qt.QDialog):
         y.shape = -1
         self._binnedX = x
         self._binnedY = y
-        #self.graph.addCurve(x, y, legend=self._legend, replace=True)
+        if self.graph:
+            self.graph.addCurve(x, y, legend=self._legend, replace=True)
 
     def setParameters(self, ddict):
         if 'options' in ddict:
@@ -225,6 +289,8 @@ class NNMAParametersDialog(qt.QDialog):
             self.nPC.setValue(ddict['npc'])
         if 'method' in ddict:
             self.buttonGroup.buttons()[ddict['method']].setChecked(True)
+        if 'regions' in ddict:
+            self.regionsWidget.setRegions(regions)
         return
 
     def getParameters(self):
@@ -238,6 +304,25 @@ class NNMAParametersDialog(qt.QDialog):
         ddict['npc']     = self.nPC.value()
         ddict['kw']   = {'eps':eps,
                          'maxcount':maxcount}
+        mask = None
+        if self.__regions:
+            regions = self.regionsWidget.getRegions()
+            if not len(regions):
+                mask = None
+            else:
+                mask = numpy.zeros(self._binnedX.shape, dtype=numpy.uint8)
+                for region in regions:
+                    mask[(self._binnedX >= region[0]) *\
+                         (self._binnedX <= region[1])] = 1
+            ddict['regions'] = regions
+            # try to simplify life to the caller but can be hard if
+            # spectral_binning has been applied because of the ambiguity
+            # about if the spectral_mask is to be applied before or after
+            # binning. The use of the 'regions' should be less prone to errors
+            ddict['spectral_mask'] = mask
+        else:
+            ddict['regions'] = []
+            ddict['spectral_mask'] = mask
         return ddict
 
 class NNMAWindow(PCAWindow.PCAWindow):
@@ -291,7 +376,7 @@ class NNMAWindow(PCAWindow.PCAWindow):
 def test2():
     app = qt.QApplication([])
     app.lastWindowClosed.connect(app.quit)
-    dialog = NNMAParametersDialog()
+    dialog = NNMAParametersDialog(regions=True)
     #dialog.setParameters({'options':[1,3,5,7,9],'method':1, 'npc':8,'binning':3})
     dialog.setModal(True)
     ret = dialog.exec_()

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -142,7 +142,7 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
             raise IndexError("NNMA does not support stacks of images yet")
             return
         if self.configurationWidget is None:
-            self.configurationWidget = NNMAParametersDialog(None)
+            self.configurationWidget = NNMAParametersDialog(None, regions=True)
             self._status = qt.QLabel(self.configurationWidget)
             self._status.setAlignment(qt.Qt.AlignHCenter)
             font = qt.QFont(self._status.font())
@@ -164,12 +164,14 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
         for number in [2, 3, 4, 5, 7, 9, 10, 11, 13, 15, 17, 19]:
             if (spectrumLength % number) == 0:
                 binningOptions.append(number)
+        # TODO: Should inform the configuration widget about the possibility
+        #       to encounter non-finite data?
         ddict = {'options': binningOptions,
                  'binning': 1,
                  'method': 0}
         self.configurationWidget.setParameters(ddict)
         y = spectrum
-        self.configurationWidget.setSpectrum(x, y)
+        self.configurationWidget.setSpectrum(x, y, legend=legend, info=info)
         self.configurationWidget.show()
         self.configurationWidget.raise_()
         ret = self.configurationWidget.exec_()
@@ -205,7 +207,14 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
         ddict.update(nnmaParameters['kw'])
         ddict['ncomponents'] = nnmaParameters['npc']
         ddict['binning'] = nnmaParameters['binning']
+        ddict['spectral_mask'] = nnmaParameters['spectral_mask']
         #ddict['kmeans'] = False
+        if not self.isStackFinite():
+            # one has to check for NaNs in the used region(s)
+            # for the time being only in the global image
+            # spatial_mask = numpy.isfinite(image_data)
+            spatial_mask = numpy.isfinite(self.getStackOriginalImage())
+            ddictParameters['mask'] = spatial_mask
         del nnmaParameters
         stack = self.getStackDataObject()
         if isinstance(stack, numpy.ndarray):

@@ -161,6 +161,7 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
         self.configurationWidget.setParameters(ddict)
         y = spectrum
         self.configurationWidget.setSpectrum(x, y, legend=legend, info=info)
+        self.configurationWidget.show()
         ret = self.configurationWidget.exec_()
         if ret:
             self._executeFunctionAndParameters()
