@@ -50,8 +50,16 @@ except:
         return all_sessions
         
 from bliss.data.node import get_node, DataNode, DataNodeContainer
-from bliss.data.scan import Scan
-from bliss.data.channel import ChannelDataNode
+
+try:
+    from bliss.data.scan import Scan
+except:
+    from bliss.data.nodes.scan import Scan
+
+try:
+    from bliss.data.channel import ChannelDataNode
+except:
+    from bliss.data.nodes.channel import ChannelDataNode
 
 NODE_TYPE = {}
 NODE_TYPE["Scan"] = Scan
