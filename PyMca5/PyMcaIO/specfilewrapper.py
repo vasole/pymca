@@ -95,6 +95,10 @@ def Specfile(filename):
                 except:
                     #try to read in other way
                     pass
+
+    # this piece of code checks if we deal with a SPEC file
+    # Prior to any data, all lines have to be either empty or starting
+    # by the hash character.
     line = line0
     while(len(line)):
         if len(line) > 1:
@@ -103,12 +107,16 @@ def Specfile(filename):
                    ('#SPECTRUM' in line):
                     line = ""
                 break
+            elif line[0] not in ['#', ' ', '\r']:
+                line = ""
+                break
         try:
             line = f.readline()
         except:
             line = ""
             break
     f.close()
+    # end of specfile identification
     amptek = False
     qxas   = False
     if len(line):
