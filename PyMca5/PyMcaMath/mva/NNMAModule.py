@@ -266,6 +266,8 @@ def nnma(stack, ncomponents, binning=None,
                 dataView.shape = r * c, N // binning, binning
                 data = numpy.sum(dataView , axis=-1, dtype=numpy.float32)
                 N = N // binning
+            else:
+                data.shape = r * c, N
     else:
         # we have to build the data dynamically
         oldData = data
