@@ -36,6 +36,7 @@ Silx Plot Backend.
 
 from silx.gui import qt
 from silx.gui.plot import PlotWidget
+import numpy
 import logging
 _logger = logging.getLogger(__name__)
 
@@ -152,6 +153,9 @@ class SilxBackend(PlotWidget):
         if color is None:
             color = 'black'
 
+        if isinstance(color, numpy.ndarray):
+            color = tuple(color)
+
         if flag:
             self.setInteractiveMode('draw', shape=shape,
                                     label=label, color=color)
@@ -168,6 +172,8 @@ class SilxBackend(PlotWidget):
     def setZoomModeEnabled(self, flag=True, color=None):
         if color is None:
             color = 'black'
+        if isinstance(color, numpy.ndarray):
+            color = tuple(color)
         if flag:
             self.setInteractiveMode('zoom', color=color)
         elif self.getInteractiveMode()['mode'] == 'zoom':
