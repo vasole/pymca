@@ -593,7 +593,6 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
         msg = "Requested %d components for a maximum of %d" % (ncomponents, N)
         raise ValueError(msg)
 
-    # avgSpectrum is unused, but it makes the code readable
     cov, avgSpectrum, calculatedPixels = getCovarianceMatrix(stack,
                                                              index=index,
                                                              binning=binning,
@@ -658,6 +657,13 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
         eigenvalues[:]  = evalues[idx]
         eigenvectors[:, :] = evectors[:, idx].T
 
+    # figure out if eigenvectors are to be multiplied by -1
+    if avgSpectrum.sum() > 0:
+        for i0 in range(ncomponents):
+            if eigenvectors[i0].sum() < 0.0:
+                _logger.info("PC%02d multiplied by -1" % i0)
+                eigenvectors[i0] *= -1
+
     # calculate the projections
     # Subtracting the average and normalizing to standard deviation gives worse results.
     # Versions 5.0.0 to 5.1.0 implemented that behavior as default.
@@ -714,7 +720,8 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
                 "eigenvectors": eigenvectors,
                 "average": avgSpectrum,
                 "pixels": calculatedPixels,
-                "variance": calculatedTotalVariance}
+                "variance": calculatedTotalVariance,
+                "covariance":cov}
 
 
 def test():
