@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -111,25 +111,43 @@ class testPCATools(unittest.TestCase):
 
         # now use PyMca
         # centering has to be false to obtain the same results
+        ncomp = x.shape[1]
         for force in [True, False]:
             images, eigenvalues, eigenvectors = numpyPCA(x,
-                                                         ncomponents=x.shape[1],
+                                                         ncomponents=ncomp,
                                                          force=force,
                                                          center=False,
                                                          scale=False)
             self.assertTrue(numpy.allclose(eigenvalues, numpyEigenvalues))
-            self.assertTrue(numpy.allclose(eigenvectors, numpyEigenvectors))
+            for i in range(ncomp):
+                if (eigenvectors[i,0] >= 0 and numpyEigenvectors[i,0] >=0) or\
+                   (eigenvectors[i,0] <= 0 and numpyEigenvectors[i,0] <=0):
+                    # both same sign
+                    self.assertTrue(numpy.allclose(eigenvectors[i],
+                                                   numpyEigenvectors[i]))
+                else:
+                    self.assertTrue(numpy.allclose(-eigenvectors[i],
+                                                   numpyEigenvectors[i]))
 
         # test with a different shape
         x.shape = 2, 2, -1
+        ncomp = 3
         for force in [True, False]:
             images, eigenvalues, eigenvectors = numpyPCA(x,
-                                                         ncomponents=3,
+                                                         ncomponents=ncomp,
                                                          force=force,
                                                          center=False,
                                                          scale=False)
             self.assertTrue(numpy.allclose(eigenvalues, numpyEigenvalues))
-            self.assertTrue(numpy.allclose(eigenvectors, numpyEigenvectors))
+            for i in range(ncomp):
+                if (eigenvectors[i,0] >= 0 and numpyEigenvectors[i,0] >=0) or\
+                   (eigenvectors[i,0] <= 0 and numpyEigenvectors[i,0] <=0):
+                    # both same sign
+                    self.assertTrue(numpy.allclose(eigenvectors[i],
+                                                   numpyEigenvectors[i]))
+                else:
+                    self.assertTrue(numpy.allclose(-eigenvectors[i],
+                                                   numpyEigenvectors[i]))
 
     if MDP:
         def testPCAToolsMDP(self):
@@ -146,9 +164,10 @@ class testPCATools(unittest.TestCase):
             pcaEigenvectors = pcaNode.v.T
 
             # and compare with PyMca
+            ncomp = x.shape[1]
             for force in [True, False]:
                 images, eigenvalues, eigenvectors = numpyPCA(x,
-                                                        ncomponents=x.shape[1],
+                                                        ncomponents=ncomp,
                                                         force=force,
                                                         center=True,
                                                         scale=False)
@@ -156,7 +175,7 @@ class testPCATools(unittest.TestCase):
                 # the eigenvalues must be the same
                 self.assertTrue(numpy.allclose(eigenvalues, pcaNode.d))
                 # the eigenvectors can be multiplied by -1
-                for i in range(x.shape[1]):
+                for i in range(ncomp):
                     if (eigenvectors[i,0] >= 0 and pcaEigenvectors[i,0] >=0) or\
                        (eigenvectors[i,0] <= 0 and pcaEigenvectors[i,0] <=0):
                         # both same sign
