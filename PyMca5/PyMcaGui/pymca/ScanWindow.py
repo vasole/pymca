@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -671,7 +671,10 @@ class ScanWindow(PlotWindow.PlotWindow):
 
     def _saveIconSignal(self):
         _logger.debug("_saveIconSignal")
-        self._QSimpleOperation("save")
+        if self._ownSave:
+            self._QSimpleOperation("save")
+        else:
+            self.emitIconSignal("save")
 
     def _averageIconSignal(self):
         _logger.debug("_averageIconSignal")
