@@ -147,10 +147,10 @@ def save2DArrayListAsMultipleASCII(datalist, fileroot,
             ext = "txt"
 
     n = int(numpy.log10(len(datalist))) + 1
-    fmt = "_%" + "0%d" % n + "%s."
-    for item in datalist:
-        filename = os.path.join(root, fmt % ext)
-        save2DArrayListAsASCII(datalist, filename,
+    fmt = "_%" + "0%dd" % n + ".%s"
+    for i in range(len(datalist)):
+        filename = os.path.join(dirname, root +  fmt % (i, ext))
+        save2DArrayListAsASCII(datalist[i], filename,
                            labels=labels, csv=csv, csvseparator=csvseparator)
 
 def save2DArrayListAsASCII(datalist, filename,
@@ -203,7 +203,6 @@ def save2DArrayListAsASCII(datalist, filename,
                 fileline = ""
     filehandle.write("\n")
     filehandle.close()
-
 
 def save2DArrayListAsEDF(datalist, filename, labels=None, dtype=None):
     if type(datalist) != type([]):
