@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -27,6 +27,7 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+import os
 import sys
 import numpy
 from PyMca5.PyMcaGui import PyMcaQt as qt
@@ -38,6 +39,8 @@ from PyMca5.PyMcaGui.plotting.PyMca_Icons import IconDict
 from PyMca5.PyMcaGui.plotting import MaskImageWidget
 from PyMca5.PyMcaGui.plotting import ScatterPlotCorrelatorWidget
 from PyMca5.PyMcaGui.pymca import ScanWindow
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
+from PyMca5.PyMcaIO import ArraySave
 
 class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
     def __init__(self, *var, **kw):
@@ -52,10 +55,17 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
         self.slider.setOrientation(qt.Qt.Horizontal)
         self.slider.setMinimum(0)
         self.slider.setMaximum(0)
-
         if ddict['usetab']:
             # The 1D graph
             self.spectrumGraph = ScanWindow.ScanWindow(self)
+            self.spectrumGraph.enableOwnSave(False)
+            self.spectrumGraph.sigIconSignal.connect( \
+                                    self._spectrumGraphIconSlot)
+            self.spectrumGraph.saveMenu = qt.QMenu()
+            self.spectrumGraph.saveMenu.addAction(QString("Save From Current"),
+                                                  self.saveCurrentSpectrum)
+            self.spectrumGraph.saveMenu.addAction(QString("Save From All"),
+                                                  self.saveAllSpectra)
             self.mainTab.addTab(self.spectrumGraph, "VECTORS")
 
         self.mainLayout.addWidget(self.slider)
@@ -267,6 +277,75 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
         return MaskImageWidget.MaskImageWidget.saveImageList(self,
                                                              imagelist=self.imageList,
                                                              labels=labels)
+
+    def _spectrumGraphIconSlot(self, ddict):
+        print("Called ", ddict)
+        if ddict["event"] == "iconClicked" and ddict["key"] == "save":
+            self.spectrumGraph.saveMenu.exec_(qt.QCursor.pos())
+
+    def saveCurrentSpectrum(self):
+        return self.spectrumGraph._QSimpleOperation("save")
+
+    def saveAllSpectra(self):
+        fltrs = ['Raw ASCII *.txt',
+                 '","-separated CSV *.csv',
+                 '";"-separated CSV *.csv',
+                 '"tab"-separated CSV *.csv',
+                 'OMNIC CSV *.csv']
+        message = "Enter file name to be used as root"
+        fileList, fileFilter = PyMcaFileDialogs.getFileList(parent=self,
+                                                            filetypelist=fltrs,
+                                                            message=message,
+                                                            currentdir=None,
+                                                            mode="SAVE",
+                                                            getfilter=True,
+                                                            single=True,
+                                                            currentfilter=None,
+                                                            native=None)
+        if not len(fileList):
+            return
+
+        fileroot = fileList[0]
+        dirname = os.path.dirname(fileroot)
+        root, ext = os.path.splitext(os.path.basename(fileroot))
+        if ext not in [".txt", ".csv"]:
+            root = root + ext
+            ext = ""
+
+        # get appropriate extensions and separators
+        filterused = fileFilter.split()
+        if filterused[0].startswith("Raw"):
+            csv = False
+            ext = "txt"
+            csvseparator = "  "
+        elif filterused[0].startswith("OMNIC"):
+            # extension is csv but saved as ASCII
+            csv = False
+            ext = "csv"
+            csvseparator = ","        
+        else:
+            csv = True
+            ext = "csv"
+            if "," in filterused[0]:
+                csvseparator = ","
+            elif ";" in filterused[0]:
+                csvseparator = ";"
+            elif "OMNIC" in filterused[0]:
+                csvseparator = ","
+            else:
+                csvseparator = "\t"
+
+        nSpectra = len(self.spectrumList)
+        n = int(numpy.log10(nSpectra)) + 1
+        fmt = "_%" + "0%dd" % n + ".%s"
+        for index in range(nSpectra):
+            legend = self.spectrumNames[index]
+            x = self.xValues[index]
+            y = self.spectrumList[index]
+            filename = os.path.join(dirname, root + fmt % (index, ext))
+            ArraySave.saveXY(x, y, filename, ylabel=legend,
+                             csv=csv, csvseparator=csvseparator)
+
     def setImageList(self, imagelist):
         self.imageList = imagelist
         self.spectrumList = None

@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -89,6 +89,69 @@ def getDate():
     return u"%4d-%02d-%02dT%02d:%02d:%02d%+02d:00" % (year, month, day, hour,
                                                       minute, second, delta)
 
+def saveXY(x, y, filename, xlabel=None, ylabel=None,
+                     csv=False, csvseparator=None):
+    """
+    Convenience function to save two 1D arrays to file as pure ASCII (no header)
+    or as CSV.
+
+    - To save in EXCEL compatible format, csv=True and csvseparator=","
+
+    - To save in OMNIC compatible format, csv=False and csvseparator=","
+    """
+    if xlabel is None:
+        xlabel = "x"
+    if ylabel is None:
+        ylabel = "y"
+    root, ext = os.path.splitext(os.path.basename(filename))
+    if ext == '':
+        if csv:
+            filename += ".csv"
+        else:
+            filename += ".txt"
+    if csvseparator is None:
+        if csv:
+            # CSV default separator set to colon
+            csvseparator = ","
+        else:
+            # ASCII default separator set to double space
+            csvseparator = "  "
+    fmt = "%.7E%s%.7E\n"
+    if os.path.exists(filename):
+        try:
+            os.remove(filename)
+        except OSError:
+            _logger.critical("Cannot delete output file <%s>" % filename)
+            raise
+    with open(filename, mode="wb") as ffile:
+        if csv:
+            # we write the header line
+            ffile.write(('"%s"%s"%s"\n' % \
+                         (xlabel, csvseparator, ylabel)).encode("utf-8"))
+        for i in range(len(y)):
+            ffile.write((fmt % (x[i], csvseparator, y[i])).encode("utf-8"))
+
+def save2DArrayListAsMultipleASCII(datalist, fileroot,
+                           labels=None, csv=False, csvseparator=";"):
+    if type(datalist) != type([]):
+        datalist = [datalist]
+    if labels is not None:
+        if len(labels) != len(datalist):
+            raise ValueError("Incorrect number of labels")
+    dirname = os.path.dirname(fileroot)
+    root, ext = os.path.splitext(os.path.basename(fileroot))
+    if ext == '':
+        if csv:
+            ext = "csv"
+        else:
+            ext = "txt"
+
+    n = int(numpy.log10(len(datalist))) + 1
+    fmt = "_%" + "0%dd" % n + ".%s"
+    for i in range(len(datalist)):
+        filename = os.path.join(dirname, root +  fmt % (i, ext))
+        save2DArrayListAsASCII(datalist[i], filename,
+                           labels=labels, csv=csv, csvseparator=csvseparator)
 
 def save2DArrayListAsASCII(datalist, filename,
                            labels=None, csv=False, csvseparator=";"):
@@ -100,7 +163,7 @@ def save2DArrayListAsASCII(datalist, filename,
         try:
             os.remove(filename)
         except OSError:
-            pass
+            _logger.critical("Cannot delete file <%s>" % filename)
     if labels is None:
         labels = []
         for i in range(len(datalist)):
@@ -140,7 +203,6 @@ def save2DArrayListAsASCII(datalist, filename,
                 fileline = ""
     filehandle.write("\n")
     filehandle.close()
-
 
 def save2DArrayListAsEDF(datalist, filename, labels=None, dtype=None):
     if type(datalist) != type([]):

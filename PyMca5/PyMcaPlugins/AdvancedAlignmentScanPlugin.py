@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 T. Rueter, V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 T. Rueter, V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -136,7 +136,7 @@ import sys
 import traceback
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5 import PyMcaDataDir, PyMcaDirs
-from PyMca5.PyMcaGui import PyMcaFileDialogs
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaMath.fitting import SpecfitFunctions as SF
 from PyMca5.PyMcaMath import SNIPModule as snip
