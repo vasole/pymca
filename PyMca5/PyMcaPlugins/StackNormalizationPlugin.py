@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -59,7 +59,7 @@ import numpy
 import logging
 from PyMca5 import StackPluginBase
 # Add support for normalization by data
-from PyMca5.PyMca import PyMcaFileDialogs
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from PyMca5.PyMca import EdfFile
 from PyMca5.PyMca import specfilewrapper
 from PyMca5.PyMca import HDF5Widget
