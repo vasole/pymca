@@ -1,3 +1,15 @@
+VERSION 5.5.4
+-------------
+
+- XRF. Make PyMca compatible with recent XMI-MSIM versions
+
+- XRF. Handle the use of the % character when defining materials
+
+- ROI Imaging. Add action to export all PCA and NNMA vectors.
+
+- ROI Imaging. Support the use of regions with NNMA.
+
+
 VERSION 5.5.3
 -------------
 
