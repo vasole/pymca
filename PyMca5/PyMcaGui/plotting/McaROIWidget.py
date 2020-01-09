@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -41,6 +41,7 @@ QTVERSION = qt.qVersion()
 
 from PyMca5.PyMcaCore import PyMcaDirs
 from PyMca5.PyMcaIO import ConfigDict
+from PyMca5.PyMcaGui.io import ConfigurationFileDialogs
 
 _logger = logging.getLogger(__name__)
 
@@ -179,24 +180,17 @@ class McaROIWidget(qt.QWidget):
             self.roiDir = PyMcaDirs.inputDir
         elif not os.path.isdir(self.roiDir):
             self.roiDir = PyMcaDirs.inputDir
-        outfile = qt.QFileDialog(self)
-        if hasattr(outfile, "setFilters"):
-            outfile.setFilter('PyMca  *.ini')
-        else:
-            outfile.setNameFilters(['PyMca  *.ini', 'All *'])
-        outfile.setFileMode(outfile.ExistingFile)
-        outfile.setDirectory(self.roiDir)
-        ret = outfile.exec_()
-        if not ret:
-            outfile.close()
-            del outfile
-            return
-        # pyflakes bug http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=666494
-        outputFile = qt.safe_str(outfile.selectedFiles()[0])
-        outfile.close()
-        del outfile
-        self.roiDir = os.path.dirname(outputFile)
-        self.load(outputFile)
+
+        fileList = ConfigurationFileDialogs.getConfigurationFilePath(parent=self,
+                                     message="Select a ROI configuration",
+                                     currentdir=self.roiDir,
+                                     mode="OPEN",
+                                     single=True)
+        if len(fileList):
+            outputFile = qt.safe_str(fileList[0])
+            if os.path.exists(outputFile):
+                self.roiDir = os.path.dirname(outputFile)
+            self.load(outputFile)
 
     def load(self, filename):
         d = ConfigDict.ConfigDict()
