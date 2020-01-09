@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -104,19 +104,22 @@ class ConfigDict(dict):
 
         hdf5files = []
         for ffile in filelist:
-            if not os.path.exists(ffile) and ("::" in ffile):  
-                # check if we have received a URI
-                fname, path = ffile.split("::")
-                if os.path.exists(fname):
-                    try:
-                        import h5py
-                    except ImportError:
-                        raise IOError("File <%s> does not exist" % ffile)
-                    if h5py.is_hdf5(fname):
-                        with h5py.File(fname, "r") as h5:
-                            config = StringIO(h5[path][()])
-                            self.readfp(config, sections=sections)
-                        hdf5files.append(ffile)
+            if not os.path.exists(ffile):
+                if "::" in ffile:
+                    # check if we have received a URI
+                    fname, path = ffile.split("::")
+                    if os.path.exists(fname):
+                        try:
+                            import h5py
+                        except ImportError:
+                            raise IOError("File <%s> does not exist" % ffile)
+                        if h5py.is_hdf5(fname):
+                            with h5py.File(fname, "r") as h5:
+                                config = StringIO(h5[path][()])
+                                self.readfp(config, sections=sections)
+                            hdf5files.append(ffile)
+                else:
+                    raise IOError("File <%s> does not exist" % ffile)
 
         cleanlist = [fname for fname in filelist if fname not in hdf5files]
         
