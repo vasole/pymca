@@ -31,6 +31,10 @@ matrix:
               - PYTHON_VERSION=3
               - QT_BINDING=PyQt5
 
+branches:
+    only:
+        - master
+
 cache:
     apt: true
 
