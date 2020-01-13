@@ -279,7 +279,6 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
                                                              labels=labels)
 
     def _spectrumGraphIconSlot(self, ddict):
-        print("Called ", ddict)
         if ddict["event"] == "iconClicked" and ddict["key"] == "save":
             self.spectrumGraph.saveMenu.exec_(qt.QCursor.pos())
 
