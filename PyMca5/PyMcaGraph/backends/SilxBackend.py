@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2019 European Synchrotron Radiation Facility
+# Copyright (c) 2019-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -52,6 +52,27 @@ class SilxBackend(PlotWidget):
         plotArea = self.getWidgetHandle()
         plotArea.setContextMenuPolicy(qt.Qt.CustomContextMenu)
         plotArea.customContextMenuRequested.connect(self._zoomBack)
+        self.addShape = self.addItem
+
+    def addItem(self, xList, yList, legend=None, info=None,
+                replace=False, replot=True,
+                shape="polygon", fill=True, **kw):
+        if hasattr(PlotWidget, "addShape"):
+            m = PlotWidget.addShape
+        else:
+            m = PlotWidget.addItem
+        overlay = kw.get("overlay", False)
+        z = kw.get("z", None)
+        color = kw.get("color", "black")
+        linestyle = kw.get("linestyle", "-")
+        linewidth = kw.get("linewidth", 1.0)
+        linebgcolor = kw.get("linebgcolor", None)
+        return m(self, xdata, ydata, legend=legend,
+                 replace=replace,
+                 shape=shape, color=color, fill=fill,
+                 overlay=overlay, z=z, linestyle=linestyle,
+                 linewidth=linewidth,
+                 linebgcolor=linebgcolor):
 
     def _zoomBack(self, pos):
         self.getLimitsHistory().pop()
