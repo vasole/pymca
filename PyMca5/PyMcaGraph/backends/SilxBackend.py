@@ -72,7 +72,7 @@ class SilxBackend(PlotWidget):
                  shape=shape, color=color, fill=fill,
                  overlay=overlay, z=z, linestyle=linestyle,
                  linewidth=linewidth,
-                 linebgcolor=linebgcolor):
+                 linebgcolor=linebgcolor)
 
     def _zoomBack(self, pos):
         self.getLimitsHistory().pop()
@@ -83,7 +83,7 @@ class SilxBackend(PlotWidget):
                 kw["resetzoom"] = True
             del kw["replot"]
         result = PlotWidget.addCurve(self, *var, **kw)
-        allCurves = self.getAllCurves(just_legend=True) 
+        allCurves = self.getAllCurves(just_legend=True)
         if len(allCurves) == 1:
             self.setActiveCurve(allCurves[0])
         return result
