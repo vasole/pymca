@@ -63,9 +63,11 @@ class PCAParametersDialog(qt.QDialog):
                         'Cov. Multiple Arrays',
                         'Corr. Multiple Arrays']
         self._multipleIndex = [3, 4]
-        self.functions = [PCAModule.numpyPCA,
+        self.functions = [PCAModule.numpyCovariancePCA,
+                          PCAModule.numpyCorrelationPCA,
                           PCAModule.expectationMaximizationPCA,
-                          PCAModule.multipleArrayPCA]
+                          PCAModule.multipleArrayCovariancePCA,
+                          PCAModule.multipleArrayCorrelationPCA]
         self.methodOptions.mainLayout = qt.QGridLayout(self.methodOptions)
         self.methodOptions.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.methodOptions.mainLayout.setSpacing(2)

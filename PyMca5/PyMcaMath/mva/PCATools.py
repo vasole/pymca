@@ -534,7 +534,7 @@ def getCovarianceMatrix(stack,
 
 
 def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
-                center=True, scale=True, mask=None, spectral_mask=None, legacy=True, **kw):
+                center=True, scale=True, mask=None, spectral_mask=None, legacy=True, force=True):
     _logger.debug("PCATools.numpyPCA")
     _logger.debug("index = %d", index)
     _logger.debug("center = %s", center)
@@ -546,7 +546,6 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
     else:
         data = stack
 
-    force = kw.get("force", True)
     oldShape = data.shape
     if index not in [0, -1, len(oldShape) - 1]:
         data = None
@@ -608,13 +607,12 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
     _logger.info("Total Variance = %s", totalVariance.sum())
 
     normalizeToUnitStandardDeviation = scale
-    if 0:
-        #option to normalize to unit standard deviation
-        if normalizeToUnitStandardDeviation:
-            for i in range(cov.shape[0]):
-                if totalVariance[i] > 0:
-                    cov[i, :] /= numpy.sqrt(totalVariance[i])
-                    cov[:, i] /= numpy.sqrt(totalVariance[i])
+    #option to normalize to unit standard deviation
+    if normalizeToUnitStandardDeviation:
+        for i in range(cov.shape[0]):
+            if totalVariance[i] > 0:
+                cov[i, :] /= numpy.sqrt(totalVariance[i])
+                cov[:, i] /= numpy.sqrt(totalVariance[i])
 
     t0 = time.time()
 
@@ -671,7 +669,7 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
     # the Ca signal.
     # Clearly the user should have control about subtracting the average or not and
     # normalizing to the standard deviation or not.
-    subtractAndNormalize = False
+    subtractAndNormalize = scale
     if actualIndex in [0]:
         for i in range(oldShape[actualIndex]):
             if subtractAndNormalize:

@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -245,7 +245,13 @@ def lanczosPCA2(stack, ncomponents=10, binning=None, legacy=True, **kw):
                 #"variance": ???????,
                 }
 
-def multipleArrayPCA(stackList0, ncomponents=10, binning=None, legacy=True, **kw):
+def multipleArrayCovariancePCA(stackList0, **kw):
+    return multipleArrayPCA(stackList0, scale=False, **kw)
+
+def multipleArrayCorrelationPCA(stackList0, **kw):
+    return multipleArrayPCA(stackList0, scale=True, **kw)
+
+def multipleArrayPCA(stackList0, ncomponents=10, binning=None, legacy=True, scale=False, **kw):
     """
     Given a list of arrays, calculate the requested principal components from
     the matrix resulting from their column concatenation. Therefore, all the
@@ -464,7 +470,36 @@ def expectationMaximizationPCA(stack, ncomponents=10, binning=None, legacy=True,
                 }
 
 
-def numpyPCA(stack, ncomponents=10, binning=None, legacy=True, **kw):
+def numpyCovariancePCA(stack, ncomponents=10, binning=None, legacy=True, **kw):
+    mask = kw.get("mask", None)
+    spectral_mask = kw.get("spectral_mask", None)
+    force = kw.get("force", True)
+    return numpyPCA(stack,
+                    ncomponents=10,
+                    binning=binning,
+                    legacy=legacy,
+                    center=True,
+                    scale=False,
+                    mask=mask,
+                    spectral_mask=spectral_mask,
+                    force=force)
+
+def numpyCorrelationPCA(stack, ncomponents=10, binning=None, legacy=True, **kw):
+    mask = kw.get("mask", None)
+    spectral_mask = kw.get("spectral_mask", None)
+    force = kw.get("force", True)
+    return numpyPCA(stack,
+                    ncomponents=10,
+                    binning=binning,
+                    legacy=legacy,
+                    center=True,
+                    scale=True,
+                    mask=mask,
+                    spectral_mask=spectral_mask,
+                    force=force)
+
+def numpyPCA(stack, ncomponents=10, binning=None, legacy=True,
+                     center=True, scale=False, mask=None, spectral_mask=None, force=True):
     """
     This is a covariance method using numpy
     """
@@ -481,7 +516,11 @@ def numpyPCA(stack, ncomponents=10, binning=None, legacy=True, **kw):
                              ncomponents=ncomponents,
                              binning=binning,
                              legacy=legacy,
-                             **kw)
+                             center=center,
+                             scale=scale,
+                             mask=mask,
+                             spectral_mask=spectral_mask,
+                             force=force)
 
 def mdpPCASVDFloat32(stack, ncomponents=10, binning=None,
                      mask=None, spectral_mask=None, legacy=True, **kw):
