@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -213,6 +213,8 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
             spatial_mask = numpy.isfinite(self.getStackOriginalImage())
             pcaParameters['mask'] = spatial_mask
         pcaParameters["legacy"] = False
+        _logger.info("PCA function %s" % function.__name__)
+        _logger.info("PCA parameters %s" % pcaParameters)
         if "Multiple" in self.__methodlabel:
             stackList = self.getStackDataObjectList()
             oldShapes = []
