@@ -669,7 +669,7 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
     # the Ca signal.
     # Clearly the user should have control about subtracting the average or not and
     # normalizing to the standard deviation or not.
-    subtractAndNormalize = scale
+    subtractAndNormalize = False
     if actualIndex in [0]:
         for i in range(oldShape[actualIndex]):
             if subtractAndNormalize:
