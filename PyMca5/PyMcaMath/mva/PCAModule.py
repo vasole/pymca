@@ -489,7 +489,7 @@ def numpyCorrelationPCA(stack, ncomponents=10, binning=None, legacy=True, **kw):
     spectral_mask = kw.get("spectral_mask", None)
     force = kw.get("force", True)
     return numpyPCA(stack,
-                    ncomponents=10,
+                    ncomponents=ncomponents,
                     binning=binning,
                     legacy=legacy,
                     center=True,
