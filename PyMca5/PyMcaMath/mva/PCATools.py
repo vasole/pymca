@@ -601,7 +601,7 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
                                                              weights=spectral_mask)
 
     # the total variance is the sum of the elements of the diagonal
-    totalVariance = numpy.diag(cov)
+    totalVariance = numpy.array(numpy.diag(cov), copy=True)
     standardDeviation = numpy.sqrt(totalVariance)
     standardDeviation = standardDeviation + (standardDeviation == 0)
     _logger.info("Total Variance = %s", totalVariance.sum())
@@ -615,14 +615,15 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
                 cov[:, i] /= numpy.sqrt(totalVariance[i])
 
     t0 = time.time()
-
+    totalVariance = numpy.diag(cov).sum()
     evalues, evectors = numpy.linalg.eigh(cov)
     # The total variance should also be the sum of all the eigenvalues
     calculatedTotalVariance = evalues.sum()
-    if abs(totalVariance.sum() - evalues.sum()) > 0.0001:
+    if abs(totalVariance - calculatedTotalVariance) > \
+           (0.0001 * calculatedTotalVariance):
         _logger.info("WARNING: Discrepancy on total variance")
         _logger.info("Variance from covariance matrix = %s",
-                     totalVariance.sum())
+                     totalVariance)
         _logger.info("Variance from sum of eigenvalues = %s",
                      calculatedTotalVariance)
     _logger.debug("Eig elapsed = %s", time.time() - t0)
