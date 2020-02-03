@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -58,18 +58,19 @@ class PCAParametersDialog(qt.QDialog):
 
         self.methodOptions = qt.QGroupBox(self)
         self.methodOptions.setTitle('PCA Method to use')
-        self.methods = ['Covariance', 'Expectation Max.',
-                        'Cov. Multiple Arrays']
-        self.functions = [PCAModule.numpyPCA,
+        self.methods = ['Covariance', 'Correlation',
+                        'Expectation Max.',
+                        'Cov. Multiple Arrays',
+                        'Corr. Multiple Arrays']
+        self._multipleIndex = [3, 4]
+        self.functions = [PCAModule.numpyCovariancePCA,
+                          PCAModule.numpyCorrelationPCA,
                           PCAModule.expectationMaximizationPCA,
-                          PCAModule.multipleArrayPCA]
+                          PCAModule.multipleArrayCovariancePCA,
+                          PCAModule.multipleArrayCorrelationPCA]
         self.methodOptions.mainLayout = qt.QGridLayout(self.methodOptions)
         self.methodOptions.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.methodOptions.mainLayout.setSpacing(2)
-        #this does not seem to bring any advantage
-        if 0:
-            self.methods.append("Covariance Numpy")
-            self.functions.append(PCAModule.numpyPCA)
         if MDP and (index != 0):
             #self.methods.append("MDP (PCA + ICA)")
             self.methods.append("MDP (SVD float32)")
@@ -84,7 +85,9 @@ class PCAParametersDialog(qt.QDialog):
         i = 0
         for item in self.methods:
             rButton = qt.QRadioButton(self.methodOptions)
-            self.methodOptions.mainLayout.addWidget(rButton, 0, i)
+            row = int(i / 5)
+            col = i % 5
+            self.methodOptions.mainLayout.addWidget(rButton, row, col)
             #self.l.setAlignment(rButton, qt.Qt.AlignHCenter)
             if i == 1:
                 rButton.setChecked(True)
@@ -119,7 +122,6 @@ class PCAParametersDialog(qt.QDialog):
         #self.speedOptions.mainLayout.addWidget(qt.HorizontalSpacer(self), 0, 2)
         self.speedOptions.mainLayout.addWidget(self.binningLabel, 1, 0)
         self.speedOptions.mainLayout.addWidget(self.binningCombo, 1, 1)
-        self.binningCombo.setEnabled(False)
         self.binningCombo.activated[int].connect( \
                      self._updatePlotFromBinningCombo)
         if regions:
@@ -204,12 +206,12 @@ class PCAParametersDialog(qt.QDialog):
         button = self.buttonGroup.button(index)
         button.setChecked(True)
         self.binningLabel.setText("Spectral Binning:")
-        if index != 2:
+        if index not in self._multipleIndex:
             self.binningCombo.setEnabled(True)
         else:
             self.binningCombo.setEnabled(False)
         if self.__regions:
-            if index != 2:
+            if index not in self._multipleIndex:
                 self.regionsWidget.setEnabled(True)
                 self.graph.setEnabled(True)
             else:
@@ -278,7 +280,7 @@ class PCAParametersDialog(qt.QDialog):
             self.nPC.setValue(ddict['npc'])
         if 'method' in ddict:
             self.buttonGroup.buttons()[ddict['method']].setChecked(True)
-            if ddict['method'] != 2:
+            if ddict['method'] not in self._multipleIndex:
                 self.binningCombo.setEnabled(True)
             else:
                 self.binningCombo.setEnabled(False)

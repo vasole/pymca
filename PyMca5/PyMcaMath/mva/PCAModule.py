@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -245,7 +245,13 @@ def lanczosPCA2(stack, ncomponents=10, binning=None, legacy=True, **kw):
                 #"variance": ???????,
                 }
 
-def multipleArrayPCA(stackList0, ncomponents=10, binning=None, legacy=True, **kw):
+def multipleArrayCovariancePCA(stackList0, **kw):
+    return multipleArrayPCA(stackList0, scale=False, **kw)
+
+def multipleArrayCorrelationPCA(stackList0, **kw):
+    return multipleArrayPCA(stackList0, scale=True, **kw)
+
+def multipleArrayPCA(stackList0, ncomponents=10, binning=None, legacy=True, scale=False, **kw):
     """
     Given a list of arrays, calculate the requested principal components from
     the matrix resulting from their column concatenation. Therefore, all the
@@ -306,7 +312,7 @@ def multipleArrayPCA(stackList0, ncomponents=10, binning=None, legacy=True, **kw
             if i <= j:
                 covMatrix[rowOffset:(rowOffset + iVectorLength),
                           colOffset:(colOffset + jVectorLength)] =\
-                          dotblas.dot(stackList[i].T, stackList[j])
+                          dotblas.dot(stackList[i].T, stackList[j])/(npixels-1)
                 if i < j:
                     key = "%02d%02d" % (i, j)
                     indexDict[key] = (rowOffset, rowOffset + iVectorLength,
@@ -322,10 +328,28 @@ def multipleArrayPCA(stackList0, ncomponents=10, binning=None, legacy=True, **kw
     indexDict = None
 
     #I have the covariance matrix, calculate the eigenvectors and eigenvalues
+    totalVariance = numpy.array(numpy.diag(covMatrix), copy=True)
+    # use the correlation matrix if required
+    normalizeToUnitStandardDeviation = scale
+    #option to normalize to unit standard deviation
+    if normalizeToUnitStandardDeviation:
+        for i in range(covMatrix.shape[0]):
+            if totalVariance[i] > 0:
+                covMatrix[i, :] /= numpy.sqrt(totalVariance[i])
+                covMatrix[:, i] /= numpy.sqrt(totalVariance[i])
     totalVariance = numpy.diag(covMatrix).sum()
     evalues, evectors = numpy.linalg.eigh(covMatrix)
     covMatrix = None
-    _logger.info("Total Variance = %s", totalVariance.sum())
+    _logger.info("Total Variance = %s", totalVariance)
+    # The total variance should also be the sum of all the eigenvalues
+    calculatedTotalVariance = evalues.sum()
+    if abs(totalVariance - calculatedTotalVariance) > \
+           (0.0001 * calculatedTotalVariance):
+        _logger.warning("Discrepancy on total variance")
+        _logger.warning("Variance from matrix = %s",
+                     totalVariance)
+        _logger.warning("Variance from sum of eigenvalues = %s",
+                     calculatedTotalVariance)
 
     images = numpy.zeros((ncomponents, npixels), numpy.float32)
     eigenvectors = numpy.zeros((ncomponents, eigenvectorLength), numpy.float32)
@@ -339,13 +363,19 @@ def multipleArrayPCA(stackList0, ncomponents=10, binning=None, legacy=True, **kw
         i = a[i0][1]
         eigenvalues[i0] = evalues[i]
         partialExplainedVariance = 100. * evalues[i] / \
-                                   totalVariance
-        print("PC%02d  Explained variance %.5f %% " %\
+                                   calculatedTotalVariance
+        _logger.info("PC%02d  Explained variance %.5f %% " %\
                                     (i0 + 1, partialExplainedVariance))
         totalExplainedVariance += partialExplainedVariance
         eigenvectors[i0, :] = evectors[:, i]
         #print("NORMA = ", numpy.dot(evectors[:, i].T, evectors[:, i]))
-    print("Total explained variance = %.2f %% " % totalExplainedVariance)
+    _logger.info("Total explained variance = %.2f %% " % totalExplainedVariance)
+
+    # figure out if eigenvectors are to be multiplied by -1
+    for i0 in range(ncomponents):
+        if eigenvectors[i0].sum() < 0.0:
+            _logger.info("PC%02d multiplied by -1" % i0)
+            eigenvectors[i0] *= -1
 
     for i in range(ncomponents):
         colOffset = 0
@@ -374,7 +404,7 @@ def multipleArrayPCA(stackList0, ncomponents=10, binning=None, legacy=True, **kw
                 "eigenvectors": eigenvectors,
                 "average": avgList,
                 "pixels": npixels,
-                "variance": totalVariance}
+                "variance": calculatedTotalVariance}
 
 def expectationMaximizationPCA(stack, ncomponents=10, binning=None, legacy=True, **kw):
     """
@@ -464,7 +494,36 @@ def expectationMaximizationPCA(stack, ncomponents=10, binning=None, legacy=True,
                 }
 
 
-def numpyPCA(stack, ncomponents=10, binning=None, legacy=True, **kw):
+def numpyCovariancePCA(stack, ncomponents=10, binning=None, legacy=True, **kw):
+    mask = kw.get("mask", None)
+    spectral_mask = kw.get("spectral_mask", None)
+    force = kw.get("force", True)
+    return numpyPCA(stack,
+                    ncomponents=ncomponents,
+                    binning=binning,
+                    legacy=legacy,
+                    center=True,
+                    scale=False,
+                    mask=mask,
+                    spectral_mask=spectral_mask,
+                    force=force)
+
+def numpyCorrelationPCA(stack, ncomponents=10, binning=None, legacy=True, **kw):
+    mask = kw.get("mask", None)
+    spectral_mask = kw.get("spectral_mask", None)
+    force = kw.get("force", True)
+    return numpyPCA(stack,
+                    ncomponents=ncomponents,
+                    binning=binning,
+                    legacy=legacy,
+                    center=True,
+                    scale=True,
+                    mask=mask,
+                    spectral_mask=spectral_mask,
+                    force=force)
+
+def numpyPCA(stack, ncomponents=10, binning=None, legacy=True,
+                     center=True, scale=False, mask=None, spectral_mask=None, force=True):
     """
     This is a covariance method using numpy
     """
@@ -481,7 +540,11 @@ def numpyPCA(stack, ncomponents=10, binning=None, legacy=True, **kw):
                              ncomponents=ncomponents,
                              binning=binning,
                              legacy=legacy,
-                             **kw)
+                             center=center,
+                             scale=scale,
+                             mask=mask,
+                             spectral_mask=spectral_mask,
+                             force=force)
 
 def mdpPCASVDFloat32(stack, ncomponents=10, binning=None,
                      mask=None, spectral_mask=None, legacy=True, **kw):
