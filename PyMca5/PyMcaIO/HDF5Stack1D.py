@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -92,14 +92,13 @@ class HDF5Stack1D(DataObject.DataObject):
                 _logger.info("Broken link with key? <%s>" % key)
 
         # built the selection in terms of HDF terms
-        # for the time being, only the first item in x selection used
-        xSelection = selection.get('x', None)
-        if xSelection is not None:
-            if type(xSelection) != type([]):
-                xSelection = [xSelection]
-        if type(xSelection) == type([]):
-            if len(xSelection):
-                xSelection = xSelection[0]
+        # for the time being
+        xSelectionList = selection.get('x', None)
+        if xSelectionList is not None:
+            if type(xSelectionList) != type([]):
+                xSelectionList = [xSelectionList]
+            if len(xSelectionList):
+                xSelection = xSelectionList[0]
             else:
                 xSelection = None
         else:
@@ -234,14 +233,20 @@ class HDF5Stack1D(DataObject.DataObject):
             path = "/" + entryNames[int(scanlist[0].split(".")[-1])-1] + ySelection
             if mSelection is not None:
                 mpath = "/" + entryNames[int(scanlist[0].split(".")[-1])-1] + mSelection
-            if xSelection is not None:
-                xpath = "/" + entryNames[int(scanlist[0].split(".")[-1])-1] + xSelection
+            if xSelectionList is not None:
+                xpathList = []
+                for xSelection in xSelectionList:
+                    xpath = "/" + entryNames[int(scanlist[0].split(".")[-1])-1] + xSelection
+                    xpathList.append(xpath)
         else:
             path = scanlist[0] +  ySelection
             if mSelection is not None:
                 mpath = scanlist[0] + mSelection
-            if xSelection is not None:
-                xpath = scanlist[0] + xSelection
+            if xSelectionList is not None:
+                xpathList = []
+                for xSelection in xSelectionList:
+                    xpath = scanlist[0] + xSelection
+                    xpathList.append(xpath)
 
         yDataset = tmpHdf[path]
         if (self.__dtype is None) or (mSelection is not None):
@@ -336,9 +341,11 @@ class HDF5Stack1D(DataObject.DataObject):
                         mdtype = numpy.float64
                     mDataset = numpy.asarray(tmpHdf[mpath], dtype=mdtype)
                     self.monitor = [mDataset]
-                if xSelection is not None:
-                    xDataset = tmpHdf[xpath][()]
-                    self.x = [xDataset]
+                if xSelectionList is not None:
+                    if len(xpathList) == 1:
+                        xpath = xpathList[0]
+                        xDataset = tmpHdf[xpath][()]
+                        self.x = [xDataset]
                 if h5py.version.version < '2.0':
                     #prevent automatic closing keeping a reference
                     #to the open file
@@ -462,9 +469,12 @@ class HDF5Stack1D(DataObject.DataObject):
                                 if mdtype not in [numpy.float64, numpy.float32]:
                                     mdtype = numpy.float64
                                 mDataset = numpy.asarray(hdf[mpath], dtype=mdtype)
-                            if xSelection is not None:
-                                xpath = entryName + xSelection
-                                xDataset = hdf[xpath][()]
+                            if xSelectionList is not None:
+                                xDatasetList = []
+                                for xSelection in xSelectionList:
+                                    xpath = entryName + xSelection
+                                    xDataset = hdf[xpath][()]
+                                    xDatasetList.append(xDataset)
                         else:
                             path = scan + ySelection
                             if mSelection is not None:
@@ -473,9 +483,12 @@ class HDF5Stack1D(DataObject.DataObject):
                                 if mdtype not in [numpy.float64, numpy.float32]:
                                     mdtype = numpy.float64
                                 mDataset = numpy.asarray(hdf[mpath], dtype=mdtype)
-                            if xSelection is not None:
-                                xpath = scan + xSelection
-                                xDataset = hdf[xpath][()]
+                            if xSelectionList is not None:
+                                xDatasetList = []
+                                for xSelection in xSelectionList:
+                                    xpath = scan + xSelection
+                                    xDataset = hdf[xpath][()]
+                                    xDatasetList.append(xDataset)
                         try:
                             yDataset = hdf[path]
                             tmpShape = yDataset.shape
@@ -673,9 +686,12 @@ class HDF5Stack1D(DataObject.DataObject):
                             if mSelection is not None:
                                 mpath = entryName + mSelection
                                 mDataset.shape
-                            if xSelection is not None:
-                                xpath = entryName + xSelection
-                                xDataset = hdf[xpath][()]
+                            if xSelectionList is not None:
+                                xDatasetList = []
+                                for xSelection in xSelectionList:
+                                    xpath = entryName + xSelection
+                                    xDataset = hdf[xpath][()]
+                                    xDatasetList.append(xDataset)
                         else:
                             path = scan + ySelection
                             if mSelection is not None:
@@ -684,9 +700,12 @@ class HDF5Stack1D(DataObject.DataObject):
                                 if mdtype not in [numpy.float64, numpy.float32]:
                                     mdtype = numpy.float64
                                 mDataset = numpy.asarray(hdf[mpath], dtype=mdtype)
-                            if xSelection is not None:
-                                xpath = scan + xSelection
-                                xDataset = hdf[xpath][()]
+                            if xSelectionList is not None:
+                                xDatasetList = []
+                                for xSelection in xSelectionList:
+                                    xpath = scan + xSelection
+                                    xDataset = hdf[xpath][()]
+                                    xDatasetList.append(xDataset)
                         if mSelection is not None:
                             nMonitorData = mDataset.size
                             case = -1
@@ -738,15 +757,74 @@ class HDF5Stack1D(DataObject.DataObject):
         else:
             self.info['McaCalib'] = [ 0.0, 1.0, 0.0]
         shape = self.data.shape
+        nSpectra = 1
         for i in range(len(shape)):
             key = 'Dim_%d' % (i+1,)
             self.info[key] = shape[i]
+            if i != self.info['McaIndex']:
+                nSpectra *= shape[i]
         self.info['Channel0'] = 0
-        if xSelection is not None:
-            if xDataset.size == shape[self.info['McaIndex']]:
-                self.x = [xDataset.reshape(-1)]
+        if xSelectionList is not None:
+            if len(xDatasetList) == 1:
+                xDataset = xDatasetList[0]
+                if xDataset.size == shape[self.info['McaIndex']]:
+                    # assuming providing channels
+                    self.x = [xDataset.reshape(-1)]
+                else:
+                    _logger.warning("Ignoring channels selection %s" % xSelectionList)
+            elif len(xDatasetList) == len(self.data.shape):
+                # assuming providing spatial coordinates and channels
+                goodScale = 0
+                for i in range(len(self.data.shape)):
+                    dataset = xDatasetList[i] 
+                    datasize = self.data.shape[i]
+                    if dataset.size == datasize:
+                        goodScale += 1
+                    else:
+                        _logger.warning("Dimensions do not match %d != %d"  % \
+                                        (dataset.size, datasize))
+                if goodScale == len(self.data.shape):
+                    scaleList = []
+                    for i in range(len(self.data.shape)):
+                        dataset = xDatasetList[i].reshape(-1)
+                        datasize = self.data.shape[i]
+                        if i == mcaIndex:
+                            self.x = [dataset]
+                        else:
+                            origin = dataset[0]
+                            if dataset.size > 1:
+                                delta = numpy.mean(dataset[1:] - dataset[:-1],
+                                                   dtype=numpy.float32)
+                            else:
+                                delta = 1.0
+                            scaleList.append([origin. delta])
+                    if goodScale == 3:
+                        xScale = scaleList[1] 
+                        yScale = scaleList[0]
+                    else:
+                        _logger.warning("Spatial dimensions ignored")
+                else:
+                    _logger.warning("Ignoring dimension selections %s" % xSelectionList)
+            elif len(xDatasetList) == (len(self.data.shape) - 1):
+                n = 1
+                for dataset in xDatasetList:
+                    n *= dataset.size
+                if n == nSpectra:
+                    # assuming regular spatial coordinates
+                    xScale = [0.0, 1.0]
+                    yScale = [0.0, 1.0]
+                    dataset = xDatasetList[0].reshape(-1)
+                    xScale[0] = dataset[0]
+                    if dataset.size > 1:
+                        xScale[1] = numpy.mean(dataset[1:] - dataset[:-1]) * 100.
+                    if len(xDatasetList) > 1:
+                        dataset = xDatasetList[1].reshape(-1)
+                        yScale[0] = dataset[0]
+                        yScale[1] = numpy.mean(dataset[1:] - dataset[:-1]) * 0.01
+                    self.info["xScale"] = xScale
+                    self.info["yScale"] = yScale
             else:
-                _logger.warning("Ignoring xSelection")
+                _logger.warning("Ignoring axes selection %s" % xSelectionList)
         elif _channels is not None:
             _channels.shape = -1
             self.x = [_channels]
