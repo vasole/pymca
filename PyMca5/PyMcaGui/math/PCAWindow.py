@@ -126,7 +126,6 @@ class PCAParametersDialog(qt.QDialog):
         #self.speedOptions.mainLayout.addWidget(qt.HorizontalSpacer(self), 0, 2)
         self.speedOptions.mainLayout.addWidget(self.binningLabel, 1, 0)
         self.speedOptions.mainLayout.addWidget(self.binningCombo, 1, 1)
-        self.binningCombo.setEnabled(False)
         self.binningCombo.activated[int].connect( \
                      self._updatePlotFromBinningCombo)
         if regions:
@@ -211,12 +210,12 @@ class PCAParametersDialog(qt.QDialog):
         button = self.buttonGroup.button(index)
         button.setChecked(True)
         self.binningLabel.setText("Spectral Binning:")
-        if index not in [self._multipleIndex]:
+        if index not in self._multipleIndex:
             self.binningCombo.setEnabled(True)
         else:
             self.binningCombo.setEnabled(False)
         if self.__regions:
-            if index not in [self._multipleIndex]:
+            if index not in self._multipleIndex:
                 self.regionsWidget.setEnabled(True)
                 self.graph.setEnabled(True)
             else:
@@ -285,7 +284,7 @@ class PCAParametersDialog(qt.QDialog):
             self.nPC.setValue(ddict['npc'])
         if 'method' in ddict:
             self.buttonGroup.buttons()[ddict['method']].setChecked(True)
-            if ddict['method'] not in [self._multipleIndex]:
+            if ddict['method'] not in self._multipleIndex:
                 self.binningCombo.setEnabled(True)
             else:
                 self.binningCombo.setEnabled(False)
