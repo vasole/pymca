@@ -797,7 +797,7 @@ class HDF5Stack1D(DataObject.DataObject):
                                                    dtype=numpy.float32)
                             else:
                                 delta = 1.0
-                            scaleList.append([origin. delta])
+                            scaleList.append([origin, delta])
                     if goodScale == 3:
                         xScale = scaleList[1] 
                         yScale = scaleList[0]
@@ -819,7 +819,7 @@ class HDF5Stack1D(DataObject.DataObject):
                                                dtype=numpy.float32)
                         else:
                             delta = 1.0
-                        scaleList.append([origin. delta])
+                        scaleList.append([origin, delta])
                     else:
                         _logger.warning("Dimensions do not match %d != %d"  % \
                                         (dataset.size, datasize))
