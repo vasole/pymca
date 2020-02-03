@@ -806,23 +806,29 @@ class HDF5Stack1D(DataObject.DataObject):
                 else:
                     _logger.warning("Ignoring dimension selections %s" % xSelectionList)
             elif len(xDatasetList) == (len(self.data.shape) - 1):
-                n = 1
-                for dataset in xDatasetList:
-                    n *= dataset.size
-                if n == nSpectra:
-                    # assuming regular spatial coordinates
-                    xScale = [0.0, 1.0]
-                    yScale = [0.0, 1.0]
-                    dataset = xDatasetList[0].reshape(-1)
-                    xScale[0] = dataset[0]
-                    if dataset.size > 1:
-                        xScale[1] = numpy.mean(dataset[1:] - dataset[:-1]) * 100.
-                    if len(xDatasetList) > 1:
-                        dataset = xDatasetList[1].reshape(-1)
-                        yScale[0] = dataset[0]
-                        yScale[1] = numpy.mean(dataset[1:] - dataset[:-1]) * 0.01
-                    self.info["xScale"] = xScale
-                    self.info["yScale"] = yScale
+                scaleList = []
+                for i in range(len(self.data.shape)):
+                    if i == mcaIndex:
+                        continue
+                    dataset = xDatasetList[i].reshape(-1)
+                    datasize = self.data.shape[i]
+                    if dataset.size == datasize:
+                        origin = dataset[0]
+                        if dataset.size > 1:
+                            delta = numpy.mean(dataset[1:] - dataset[:-1],
+                                               dtype=numpy.float32)
+                        else:
+                            delta = 1.0
+                        scaleList.append([origin. delta])
+                    else:
+                        _logger.warning("Dimensions do not match %d != %d"  % \
+                                        (dataset.size, datasize))
+
+                if len(scaleList) == 2:
+                    xScale = scaleList[1]
+                    yScale = scaleList[0]
+                else:
+                    _logger.warning("Ignoring dimension selections %s" % xSelectionList)
             else:
                 _logger.warning("Ignoring axes selection %s" % xSelectionList)
         elif _channels is not None:
