@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -333,9 +333,10 @@ class MatplotlibGraph(FigureCanvas):
             self.ax2.set_autoscaley_on(True)
             self.ax.set_zorder(1)
             #this works but the figure color is left
-            if matplotlib.__version__[0] > "1":
+            if hasattr(self.ax, "set_facecolor"):
                 self.ax.set_facecolor('none')
             else:
+                # this was deprecated in 2.0
                 self.ax.set_axis_bgcolor('none')
             self.fig.sca(self.ax)
             try:
@@ -358,9 +359,10 @@ class MatplotlibGraph(FigureCanvas):
             self.ax2.xaxis.set_visible(False)
             self.ax2.yaxis.set_label_position('right')
             self.ax2.yaxis.set_offset_position('right')
-            if matplotlib.__version__[0] > "1":
+            if hasattr(self.ax, "set_facecolor"):
                 self.ax.set_facecolor('none')
             else:
+                # this was deprecated in 2.0
                 self.ax.set_axis_bgcolor('none')
 
         # this respects aspect size
