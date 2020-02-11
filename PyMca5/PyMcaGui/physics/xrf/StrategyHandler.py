@@ -430,16 +430,22 @@ class IterationTable(qt.QTableWidget):
                 item.sigMaterialComboBoxSignal.connect(self._comboSlot)
 
     def setMaterialOptions(self, options):
-        for idx in range(10):
-            row = idx % 5
-            c = 3 * (idx // self.rowCount())
+        nRows = self.rowCount()
+        nColumns = self.columnCount()
+        nItems = (nRows * nColumns) // 3
+        for idx in range(nItems):
+            row = idx % nRows
+            c = 3 * (idx // nRows)
             item = self.cellWidget(row, 2 + c)
             item.setOptions(options)
 
     def setLayerPeakFamilies(self, layerPeaks):
-        for idx in range(10):
-            row = idx % 5
-            c = 3 * (idx // self.rowCount())
+        nRows = self.rowCount()
+        nColumns = self.columnCount()
+        nItems = (nRows * nColumns) // 3
+        for idx in range(nItems):
+            row = idx % nRows
+            c = 3 * (idx // nRows)
             item = self.cellWidget(row, 1 + c)
             item.setOptions(["-"] + layerPeaks)
             # reset material form
@@ -505,9 +511,11 @@ class IterationTable(qt.QTableWidget):
         ddict["flags"] = []
         ddict["peaks"] = []
         ddict["materials"] = []
-        for idx in range(10):
-            row = idx % 5
-            c = 3 * (idx // self.rowCount())
+        nRows = self.rowCount()
+        nColumns = self.columnCount()
+        for idx in range((nRows * nColumns) // 3):
+            row = idx % nRows
+            c = 3 * (idx // nRows)
             item = self.cellWidget(row, 0 + c)
             if item.isChecked():
                 peak = str(self.cellWidget(row, 1 + c).currentText())
@@ -683,6 +691,7 @@ def main(fileName=None):
 
 
 if __name__ == "__main__":
+    sys.excepthook = qt.exceptionHandler
     if len(sys.argv) < 2:
         print("Usage: python StrategyHandler FitConfigurationFile")
         main()
