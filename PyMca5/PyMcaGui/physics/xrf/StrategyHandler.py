@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -333,9 +333,12 @@ class IterationTable(qt.QTableWidget):
     def __init__(self, parent=None):
         qt.QTableWidget.__init__(self, parent)
         self.verticalHeader().hide()
-        self.setRowCount(5)
-        self.setColumnCount(6)
-        labels = ["Use", "Peak Family", "Material Form"] * 2
+        nMaxEntries = 15
+        nRows = 5
+        nColumns = 3 * (nMaxEntries // nRows)
+        self.setRowCount(nRows)
+        self.setColumnCount(nColumns)
+        labels = ["Use", "Peak Family", "Material Form"] * (nColumns // 3)
         for i in range(len(labels)):
             item = self.horizontalHeaderItem(i)
             if item is None:
@@ -343,12 +346,12 @@ class IterationTable(qt.QTableWidget):
                                            qt.QTableWidgetItem.Type)
             self.setHorizontalHeaderItem(i,item)
         self.build()
-        self.resizeColumnToContents(0)
-        self.resizeColumnToContents(3)
+        for i in range(0, nColumns, 3):
+            self.resizeColumnToContents(i)
         self.cellChanged[int, int].connect(self.mySlot)
 
     def setData(self, idx, use, peak, material="-"):
-        row = idx % 5
+        row = idx % self.rowCount()
         c = 3 * (idx // self.rowCount())
         item = self.cellWidget(row, 0 + c)
         if use:
@@ -376,8 +379,10 @@ class IterationTable(qt.QTableWidget):
         row = ddict['row']
         col = ddict['col']
         target = str(self.cellWidget(row, 1 + col).currentText()).split()[0]
-        for idx in range(10):
-            r = idx % 5
+        nRows = self.rowCount()
+        nColumns = self.columnCount() 
+        for idx in range((nRows*nColumns) // 3):
+            r = idx % nRows
             c = 3 * (idx // self.rowCount())
             if r == row:
                 if c  == col:
@@ -400,9 +405,11 @@ class IterationTable(qt.QTableWidget):
         a = ["-"]
         for key in materialList:
             a.append(key)
-        for idx in range(10):
-            row = idx % 5
-            c = 3 * (idx // self.rowCount())
+        nRows = self.rowCount()
+        nColumns = self.columnCount()
+        for idx in range((nRows*nColumns) // 3):
+            row = idx % nRows
+            c = 3 * (idx // nRows)
             item = self.cellWidget(row, 0 + c)
             if item is None:
                 item = MyCheckBox(self, row, 0 + c)
@@ -423,16 +430,22 @@ class IterationTable(qt.QTableWidget):
                 item.sigMaterialComboBoxSignal.connect(self._comboSlot)
 
     def setMaterialOptions(self, options):
-        for idx in range(10):
-            row = idx % 5
-            c = 3 * (idx // self.rowCount())
+        nRows = self.rowCount()
+        nColumns = self.columnCount()
+        nItems = (nRows * nColumns) // 3
+        for idx in range(nItems):
+            row = idx % nRows
+            c = 3 * (idx // nRows)
             item = self.cellWidget(row, 2 + c)
             item.setOptions(options)
 
     def setLayerPeakFamilies(self, layerPeaks):
-        for idx in range(10):
-            row = idx % 5
-            c = 3 * (idx // self.rowCount())
+        nRows = self.rowCount()
+        nColumns = self.columnCount()
+        nItems = (nRows * nColumns) // 3
+        for idx in range(nItems):
+            row = idx % nRows
+            c = 3 * (idx // nRows)
             item = self.cellWidget(row, 1 + c)
             item.setOptions(["-"] + layerPeaks)
             # reset material form
@@ -498,9 +511,11 @@ class IterationTable(qt.QTableWidget):
         ddict["flags"] = []
         ddict["peaks"] = []
         ddict["materials"] = []
-        for idx in range(10):
-            row = idx % 5
-            c = 3 * (idx // self.rowCount())
+        nRows = self.rowCount()
+        nColumns = self.columnCount()
+        for idx in range((nRows * nColumns) // 3):
+            row = idx % nRows
+            c = 3 * (idx // nRows)
             item = self.cellWidget(row, 0 + c)
             if item.isChecked():
                 peak = str(self.cellWidget(row, 1 + c).currentText())
@@ -676,6 +691,7 @@ def main(fileName=None):
 
 
 if __name__ == "__main__":
+    sys.excepthook = qt.exceptionHandler
     if len(sys.argv) < 2:
         print("Usage: python StrategyHandler FitConfigurationFile")
         main()
