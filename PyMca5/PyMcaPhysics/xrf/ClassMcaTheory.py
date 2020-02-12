@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -2204,38 +2204,44 @@ class McaTheory(object):
 
         self.__toBeConfigured = False
         if callStrategy:
-            # get the strategy to be applied
-            strategyKey = self.config['fit']["strategy"]
-            if strategyKey not in self.strategyInstances:
-                self.strategyInstances[strategyKey] = STRATEGIES[strategyKey]()
-            strategyInstance = self.strategyInstances[strategyKey]
-            # digestresult takes about 0.1 seconds per iteration
-            import time
-            t0 = time.time()
-            newConfig, iteration = strategyInstance.applyStrategy( \
-                                            self.digestresult(),
-                                            self._fluoRates,
-                                            currentIteration=currentIteration)
-            #print("Strategy elapsed = ", time.time() - t0)
-            if (iteration >= 0) and (len(newConfig.keys())):
-                print("RECONFIGURING")
+            try:
+                # get the strategy to be applied
+                strategyKey = self.config['fit']["strategy"]
+                if strategyKey not in self.strategyInstances:
+                    self.strategyInstances[strategyKey] = STRATEGIES[strategyKey]()
+                strategyInstance = self.strategyInstances[strategyKey]
+                # digestresult takes about 0.1 seconds per iteration
+                import time
                 t0 = time.time()
-                self.configure(newConfig)
-                print("RECONFIGURING elapsed = ", time.time() - t0)
-                self.estimate()
-                if digest:
-                    fitresult = self.startfit(digest=digest,
-                                          linear=linear,
-                                          currentIteration=iteration)[0]
-                else:
-                    fitresult = self.startfit(digest=digest,
-                                          linear=linear,
-                                          currentIteration=iteration)
-                self.fittedpar=fitresult[0]
-                self.chisq    =fitresult[1]
-                self.sigmapar =fitresult[2]
-                self.__niter  =fitresult[3]
-                self.__lastdeltachi = fitresult[4]
+                newConfig, iteration = strategyInstance.applyStrategy( \
+                                                self.digestresult(),
+                                                self._fluoRates,
+                                                currentIteration=currentIteration)
+                #print("Strategy elapsed = ", time.time() - t0)
+                if (iteration >= 0) and (len(newConfig.keys())):
+                    print("RECONFIGURING")
+                    t0 = time.time()
+                    self.configure(newConfig)
+                    print("RECONFIGURING elapsed = ", time.time() - t0)
+                    self.estimate()
+                    if digest:
+                        fitresult = self.startfit(digest=digest,
+                                              linear=linear,
+                                              currentIteration=iteration)[0]
+                    else:
+                        fitresult = self.startfit(digest=digest,
+                                              linear=linear,
+                                              currentIteration=iteration)
+                    self.fittedpar=fitresult[0]
+                    self.chisq    =fitresult[1]
+                    self.sigmapar =fitresult[2]
+                    self.__niter  =fitresult[3]
+                    self.__lastdeltachi = fitresult[4]
+            except:
+                _logger.error( \
+                    "Exception during strategy. Restoring configuration")
+                self.configure(self.__originalConfiguration)
+                raise
 
         self.digest = digest
         if digest:
