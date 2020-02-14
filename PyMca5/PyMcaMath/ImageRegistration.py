@@ -3,7 +3,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -211,10 +211,10 @@ def get_crop_indices(shape, shifts0, shifts1):
     shifts1_min = numpy.min(shifts1)
     shifts1_max = numpy.max(shifts1)
 
-    d0_start = numpy.ceil(shifts0_max)
-    d0_end = min(shape[0], numpy.floor(shape[0] + shifts0_min))
+    d0_start = int(numpy.ceil(shifts0_max))
+    d0_end = int(min(shape[0], numpy.floor(shape[0] + shifts0_min)))
 
-    d1_start = numpy.ceil(shifts1_max)
-    d1_end = min(shape[1], numpy.floor(shape[1] + shifts1_min))
+    d1_start = int(numpy.ceil(shifts1_max))
+    d1_end = int(min(shape[1], numpy.floor(shape[1] + shifts1_min)))
     return d0_start, d0_end, d1_start, d1_end
 
