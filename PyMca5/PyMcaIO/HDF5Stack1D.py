@@ -94,6 +94,8 @@ class HDF5Stack1D(DataObject.DataObject):
         # built the selection in terms of HDF terms
         # for the time being
         xSelectionList = selection.get('x', None)
+        if xSelectionList == []:
+            xSelectionList = None
         if xSelectionList is not None:
             if type(xSelectionList) != type([]):
                 xSelectionList = [xSelectionList]
