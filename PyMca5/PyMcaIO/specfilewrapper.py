@@ -75,7 +75,10 @@ else:
         return var[0]
 
 def Specfile(filename):
-    f = open(filename, 'r', errors="ignore")
+    if sys.version_info < (3, 0):
+        f = open(filename)
+    else:
+        f = open(filename, 'r', errors="ignore")
     line0  = f.readline()
     if filename.upper().endswith('DTA'):
         #TwinMic single column file
