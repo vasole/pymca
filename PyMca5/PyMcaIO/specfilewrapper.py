@@ -75,15 +75,15 @@ else:
         return var[0]
 
 def Specfile(filename):
-    f = open(filename)
+    f = open(filename, "rb")
     line0  = f.readline()
     if filename.upper().endswith('DTA'):
         #TwinMic single column file
         line = line0 * 1
-        line = line.replace('\r','')
-        line = line.replace('\n','')
-        line = line.replace('\t',' ')
-        s = line.split(' ')
+        line = line.replace(b'\r', b'')
+        line = line.replace(b'\n', b'')
+        line = line.replace(b'\t', b' ')
+        s = line.split(b' ')
         if len(s) == 2:
             if len(s[-1]) == 0:
                 try:
@@ -102,18 +102,18 @@ def Specfile(filename):
     line = line0
     while(len(line)):
         if len(line) > 1:
-            if line[0:2] == '#S':
-                if ('#SIGNALTYPE' in line) or \
-                   ('#SPECTRUM' in line):
-                    line = ""
+            if line[0:2] == b'#S':
+                if (b'#SIGNALTYPE' in line) or \
+                   (b'#SPECTRUM' in line):
+                    line = b""
                 break
-            elif line[0] not in ['#', ' ', '\r']:
-                line = ""
+            elif line[0] not in [b'#', b' ', b'\r']:
+                line = b""
                 break
         try:
             line = f.readline()
         except:
-            line = ""
+            line = b""
             break
     f.close()
     # end of specfile identification
@@ -129,13 +129,13 @@ def Specfile(filename):
     else:
         _logger.debug("this does not look as a specfile")
         if len(line0) > 7:
-            if line0.startswith('$SPEC_ID') or\
-               line0.startswith('$DATE_MEA') or\
-               line0.startswith('$MEAS_TIM') or\
-               line0.startswith('$Core_ID') or\
-               line0.startswith('$Section_ID'):
+            if line0.startswith(b'$SPEC_ID') or\
+               line0.startswith(b'$DATE_MEA') or\
+               line0.startswith(b'$MEAS_TIM') or\
+               line0.startswith(b'$Core_ID') or\
+               line0.startswith(b'$Section_ID'):
                 qxas = True
-        if (not qxas) and line0.startswith('<<'):
+        if (not qxas) and line0.startswith(b'<<'):
                 amptek = True
         if (not qxas) and (not amptek) and Fit2DChiFileParser.isFit2DChiFile(filename):
             return Fit2DChiFileParser.Fit2DChiFileParser(filename)
