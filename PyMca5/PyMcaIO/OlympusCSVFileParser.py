@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -40,19 +40,23 @@ _logger = logging.getLogger(__name__)
 
 class BufferedFile(object):
     def __init__(self, filename):
-        f = open(filename, 'r')
+        f = open(filename, 'rb')
         self.__buffer = f.read()
         f.close()
-        self.__buffer = self.__buffer.replace("\x00", "")
-        self.__buffer = self.__buffer.replace("\r", "\n")
-        self.__buffer = self.__buffer.replace("\n\n", "\n")
-        self.__buffer = self.__buffer.split("\n")
+        self.__buffer = self.__buffer.replace(b"\x00", b"")
+        self.__buffer = self.__buffer.replace(b"\r", b"\n")
+        self.__buffer = self.__buffer.replace(b"\n\n", b"\n")
+        self.__buffer = self.__buffer.split(b"\n")
         self.__currentLine = 0
 
     def readline(self):
         if self.__currentLine >= len(self.__buffer):
             return ""
-        line = self.__buffer[self.__currentLine]
+        if self.__currentLine == 0:
+            # if we try to decode the first two characters we get an error
+            line = "TT" + self.__buffer[self.__currentLine][2:].decode("utf-8")
+        else:
+            line = self.__buffer[self.__currentLine].decode("utf-8")
         self.__currentLine += 1
         return line
 
@@ -71,7 +75,7 @@ class OlympusCSVFileParser(object):
         #Several measurement per file
         ddict = {}
         line = _fileObject.readline()
-        if not line.startswith("\xff\xfeTestID"):
+        if not line.startswith("TTTestID"):
             raise IOError("This does not look an Olympus CSV file")
         splitLine = line[2:].split("\t")
         nSpectra = len(splitLine) - 1
@@ -214,17 +218,18 @@ class OlympusCSVScan(object):
         return 0
 
 def isOlympusCSVFile(filename):
-    f = open(filename, 'r')
+    f = open(filename, 'rb')
     try:
-        line = f.readline()
+        line = f.read(14)
     except:
         f.close()
         return False
     f.close()
-    line = line.replace("\x00","")
+    line = line.replace(b"\x00", b"")
     try:
         if filename.lower().endswith(".csv"):
-            if line[2:].startswith("TestID"):
+            # expected chain b"\xff\xfeTestID"
+            if line[2:].startswith(b"TestID"):
                 return True
     except:
         pass
