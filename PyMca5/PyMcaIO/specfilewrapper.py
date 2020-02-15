@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -75,7 +75,10 @@ else:
         return var[0]
 
 def Specfile(filename):
-    f = open(filename)
+    if sys.version_info < (3, 0):
+        f = open(filename)
+    else:
+        f = open(filename, 'r', errors="ignore")
     line0  = f.readline()
     if filename.upper().endswith('DTA'):
         #TwinMic single column file
