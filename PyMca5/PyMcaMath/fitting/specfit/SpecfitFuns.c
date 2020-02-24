@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -3173,9 +3173,9 @@ SpecfitFuns_seek(PyObject *self, PyObject *args)
     PyArrayObject    *yspec, *result;
     long        i;
     long        nchannels;
-    long        NMAX_PEAKS = 100;
-    double      peaks[100];
-    double      relevances[100];
+    long        NMAX_PEAKS = 150;
+    double      peaks[150];
+    double      relevances[150];
     long        seek_result;
     double      *pvalues;
     long        nd;
