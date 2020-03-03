@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -912,7 +912,7 @@ class QNexusWidget(qt.QWidget):
                 phynxFile  = self.data._sourceObjectList[fileIndex]
                 entryIndex = list(phynxFile["/"].keys()).index(entry[1:])
                 sel['Key']        = "%d.%d" % (fileIndex+1, entryIndex+1)
-                sel['legend']     = os.path.basename(sel['SourceName'][0])+\
+                sel['legend']     = os.path.basename(filename)+\
                                     " " + posixpath.basename(entry) #it was sel['Key']
                 sel['selection'] = {}
                 sel['selection']['sourcename'] = filename
@@ -943,7 +943,7 @@ class QNexusWidget(qt.QWidget):
                 else:
                     entryIndex = list(phynxFile["/"].keys()).index(entry[1:])
                 sel['Key']        = "%d.%d" % (fileIndex+1, entryIndex+1)
-                sel['legend']     = os.path.basename(sel['SourceName'][0])+\
+                sel['legend']     = os.path.basename(filename)+\
                                     " " + posixpath.basename(entry) #it was sel['Key']
                 sel['selection'] = {}
                 sel['selection']['sourcename'] = filename

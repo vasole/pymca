@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, ESRF - D. Dale CHESS
+# Copyright (C) 2004-2020 V.A. Sole, ESRF - D. Dale CHESS
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -729,16 +729,18 @@ class HDF5Widget(FileView):
         analyzedPaths = []
         for modelIndex in modelIndexList:
             item = self.model().getProxyFromIndex(modelIndex)
-            path = item.name * 1
-            if path in analyzedPaths:
-                continue
-            else:
-                analyzedPaths.append(path)
             if item.type in ["weakproxy", "File"]:
                 continue
+            filename = item.file.filename 
+            path = item.name * 1
+            if (path, filename) in analyzedPaths:
+                continue
+            else:
+                analyzedPaths.append((path, filename))
             entry = "/" + path.split("/")[1]
-            if entry not in entryList:
-                entryList.append((entry, item.file.filename))
+            if (entry, filename) not in entryList:
+                entryList.append((entry, filename))
+        _logger.info("Returned entryList %s" % entryList)
         return entryList
 
 
