@@ -728,6 +728,7 @@ class QStackWidget(StackBase.StackBase,
         self.addSlave(slave)
 
     def addSlave(self, slave):
+        _logger.info("Adding slave with id %d" % id(slave))
         if self._slaveList is None:
             self._slaveList = []
         slave.setSelectionMask(self.getSelectionMask())
@@ -1278,7 +1279,7 @@ class QStackWidget(StackBase.StackBase,
         for key in self.pluginInstanceDict.keys():
             self.pluginInstanceDict[key].stackClosed()
         CloseEventNotifyingWidget.CloseEventNotifyingWidget.closeEvent(self, event)
-        if __name__ == "__main__":
+        if (self._masterStack is None) and __name__ == "__main__":
             app = qt.QApplication.instance()
             allWidgets = app.allWidgets()
             for widget in allWidgets:
