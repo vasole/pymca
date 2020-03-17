@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -604,7 +604,11 @@ class QStackWidget(StackBase.StackBase,
 
     def loadSlaveStack(self):
         if self._slaveList is not None:
-            actionList = ['Add Slave', 'Load Slaves', 'Show Slaves', 'Merge Slaves', 'Delete Slaves']
+            actionList = ['Replace Slaves',
+                          'Load Slaves',
+                          'Show Slaves',
+                          'Merge Slaves',
+                          'Delete Slaves']
             menu = qt.QMenu(self)
             for action in actionList:
                 text = QString(action)
@@ -612,9 +616,14 @@ class QStackWidget(StackBase.StackBase,
             a = menu.exec_(qt.QCursor.pos())
             if a is None:
                 return None
-            if qt.safe_str(a.text()).startswith("Load"):
+            if qt.safe_str(a.text()).startswith("Replace"):
+                _logger.info("Replacing slave stacks")
                 self._closeSlave()
+            elif qt.safe_str(a.text()).startswith("Load"):
+                _logger.info("Loading an additional slave stack")
+                #self._closeSlave()
             elif qt.safe_str(a.text()).startswith("Show"):
+                _logger.info("Showing all the slaves")
                 for slave in self._slaveList:
                     slave.show()
                     slave.raise_()
@@ -622,9 +631,10 @@ class QStackWidget(StackBase.StackBase,
             elif qt.safe_str(a.text()).startswith("Merge"):
                 masterStackDataObject = self.getStackDataObject()
                 try:
-                    # Use views to ensure no casting is done in case of different dtype
-                    # to save memory.
-                    # This is risky when the original stack is integers (overflow).
+                    # Use views to ensure no casting is done in case of
+                    # different dtype to save memory.
+                    # This is risky when the original stack is integers
+                    # due to the possibility to overflow.
                     for slave in self._slaveList:
                         masterStackDataObject.data[:] = \
                                             masterStackDataObject.data[:] + \
@@ -643,7 +653,7 @@ class QStackWidget(StackBase.StackBase,
                             info = slave.getStackInfo()
                             if "McaLiveTime" in info:
                                 info["McaLiveTime"].shape = \
-                                   masterStackDataObject.info["McaLiveTime"].shape                                
+                                   masterStackDataObject.info["McaLiveTime"].shape
                                 masterStackDataObject.info["McaLiveTime"] += \
                                         info["McaLiveTime"]
                             else:
@@ -654,7 +664,7 @@ class QStackWidget(StackBase.StackBase,
                         msg.setWindowTitle("Stack Time Summing Error")
                         txt = "An error has occurred cumulating the master and slave times\n"
                         txt += "Time information is lost"
-                        del masterStackDataObject.info["McaLiveTime"] 
+                        del masterStackDataObject.info["McaLiveTime"]
                         msg.setText(txt)
                         msg.setInformativeText(qt.safe_str(sys.exc_info()[1]))
                         msg.setDetailedText(traceback.format_exc())
@@ -663,6 +673,7 @@ class QStackWidget(StackBase.StackBase,
                 self.setStack(masterStackDataObject)
                 return
             else:
+                _logger.info("Deleting all the slaves")
                 self._closeSlave()
                 return
         if self.stackSelector is None:
@@ -683,7 +694,7 @@ class QStackWidget(StackBase.StackBase,
         if stack is None:
             return
         if (type(stack) == type([])) or (isinstance(stack, list)):
-            self._closeSlave()
+            #self._closeSlave()
             for i in range(len(stack)):
                 if stack[i] is not None:
                     slave = QStackWidget(master=False,
@@ -695,7 +706,7 @@ class QStackWidget(StackBase.StackBase,
             slave = QStackWidget(rgbwidget=self.rgbWidget,
                                  master=False)
             slave.setStack(stack)
-            self.setSlave(slave)
+            self.addSlave(slave)
 
     def _closeSlave(self):
         if self._slaveList is None:
