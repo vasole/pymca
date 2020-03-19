@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -671,9 +671,10 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         except:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
-            msg.setText("Error: %s" % sys.exc_info()[1])
+            txt = "Error: %s" % sys.exc_info()[1]
+            msg.setInformativeText(txt)
+            msg.setDetailedText(traceback.format_exc())
             msg.exec_()
-
 
     def _dispatcherRemoveSelectionSlot(self, dictOrList):
         _logger.debug("self.dispatcherRemoveSelectionSlot(ddict), ddict = %s", dictOrList)
@@ -681,7 +682,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             ddict = dictOrList[0]
         else:
             ddict = dictOrList
-        if self._isScatterSelection(ddict) or self._is2DSelection(ddict):
+        if self._is2DSelection(ddict) or self._isScatterSelection(ddict):
             legend = ddict['legend']
             if legend in self.imageWindowDict.keys():
                 index = self.mainTabWidget.indexOf(self.imageWindowDict[legend])
@@ -703,7 +704,9 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         except:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
-            msg.setText("Error: %s" % sys.exc_info()[1])
+            txt = "Error: %s" % sys.exc_info()[1]
+            msg.setInformativeText(txt)
+            msg.setDetailedText(traceback.format_exc())
             msg.exec_()
 
     def _dispatcherReplaceSelectionSlot(self, dictOrList):
