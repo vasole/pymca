@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2019 European Synchrotron Radiation Facility
+# Copyright (C) 2019-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -149,20 +149,12 @@ class SilxScatterWindow(qt.QWidget):
                                 data[i] /= m.reshape(data[i].shape)
                         elif m.size == data.size:
                             # potentially can take a lot of memory, numexpr?
-                            data /= m.reshape(data.shape)
+                            tmpView = m[:]
+                            tmpView.shape = data.shape
+                            # data /= tmpView.astype(numpy.float)
+                            data /= tmpView
                         else:
                             raise ValueError("Incompatible monitor data")
-
-                        if hasattr(m, "size"):
-                            if m.size == self._imageData.size:
-                                tmpView = m[:]
-                                tmpView.shape = shape
-                                self._imageData = self._imageData / tmpView.astype(numpy.float)
-                            else:
-                                #let numpy raise the appropriate error
-                                self._imageData = self._imageData / numpy.float(m)
-                        else:
-                            self._imageData = self._imageData / numpy.float(m)
 
             while len(data.shape) > 2:
                 # collapse any additional dimension by summing
