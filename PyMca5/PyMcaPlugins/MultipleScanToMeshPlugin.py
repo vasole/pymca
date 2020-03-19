@@ -54,9 +54,12 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
     def __init__(self, plotWindow, **kw):
         Plugin1DBase.Plugin1DBase.__init__(self, plotWindow, **kw)
         self.methodDict = {}
-        self.methodDict['Show RIXS Image'] = [self._rixsID26,
-                                              "Show curves as RIXS image",
-                                              None]
+        self.methodDict['RIXS Eout'] = [self._energyAnalyzer,
+                                        "Show RIXS E out image",
+                                        None]
+        self.methodDict['RIXS Etransfer'] = [self._energyTransfer,
+                                             "Show RIXS E transfer image",
+                                             None]
 
         self._rixsWidget = None
 
@@ -94,7 +97,10 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
             _logger.error(sys.exc_info())
             raise
 
-    def _rixsID26(self):
+    def _energyAnalyzer(self):
+        return self._energyTransfer(etransfer=False)
+
+    def _energyTransfer(self, etransfer=True):
         allCurves = self.getAllCurves()
 
         nCurves = len(allCurves)
@@ -246,7 +252,10 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
             self._rixsWidget.setYLabel("Energy Transfer (eV)")
             self._rixsWidget.show()
         elif 1:
-            etData = xData - yData
+            if etransfer:
+                etData = xData - yData
+            else:
+                etData = yData
             grid3 = numpy.linspace(etData.min(), etData.max(), n)
             # create the meshgrid
             xx, yy = numpy.meshgrid(grid0, grid3)
@@ -281,8 +290,12 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
                                           xScale=xScale,
                                           yScale=yScale)
             self._rixsWidget.setXLabel("Incident Energy (eV)")
-            self._rixsWidget.setYLabel("Energy Transfer (eV)")
+            if etransfer:
+                self._rixsWidget.setYLabel("Energy Transfer (eV)")
+            else:
+                self._rixsWidget.setYLabel("Spectrometer Energy(eV)")
             self._rixsWidget.show()
+            self._rixsWidget.raise_()
         return
 
 MENU_TEXT = "MultipleScanToMeshPlugin"
