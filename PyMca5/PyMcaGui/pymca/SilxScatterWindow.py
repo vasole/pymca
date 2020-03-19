@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2019 European Synchrotron Radiation Facility
+# Copyright (C) 2019-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -48,10 +48,12 @@ class SilxScatterWindow(qt.QWidget):
         self._yLabel = "Y"
 
     def _removeSelection(self, *var):
-        print("_removeSelection to be implemented")
+        if DEBUG:
+            print("_removeSelection to be implemented")
 
     def _replaceSelection(self, *var):
-        print("_removeSelection to be implemented")
+        if DEBUG:
+            print("_removeSelection to be implemented")
 
     def _addSelection(self, selectionlist):
         if DEBUG:
@@ -90,12 +92,12 @@ class SilxScatterWindow(qt.QWidget):
                 raise TypeError("Not a scatter plot. No signal.")
             for i in range(len(z)):
                 if numpy.isscalar(z[i]):
-                    z[i] = numpy.array([z[i]])
+                    z[i] = numpy.array([z[i]], dtype=numpy.float32)
             # we only deal with one signal, if there are more, they should be separated
             # in different selections
             x = numpy.ascontiguousarray(dataObject.x[0])[:]
             y = numpy.ascontiguousarray(dataObject.x[1])[:]
-            data = numpy.ascontiguousarray(z[0])[:]
+            data = numpy.ascontiguousarray(z[0], dtype=numpy.float32)[:]
             if (data.size == x.size) and (data.size == y.size):
                 # standard scatter plot
                 data.shape = 1, -1
@@ -149,20 +151,11 @@ class SilxScatterWindow(qt.QWidget):
                                 data[i] /= m.reshape(data[i].shape)
                         elif m.size == data.size:
                             # potentially can take a lot of memory, numexpr?
-                            data /= m.reshape(data.shape)
+                            tmpView = m[:]
+                            tmpView.shape = data.shape
+                            data /= tmpView
                         else:
                             raise ValueError("Incompatible monitor data")
-
-                        if hasattr(m, "size"):
-                            if m.size == self._imageData.size:
-                                tmpView = m[:]
-                                tmpView.shape = shape
-                                self._imageData = self._imageData / tmpView.astype(numpy.float)
-                            else:
-                                #let numpy raise the appropriate error
-                                self._imageData = self._imageData / numpy.float(m)
-                        else:
-                            self._imageData = self._imageData / numpy.float(m)
 
             while len(data.shape) > 2:
                 # collapse any additional dimension by summing
