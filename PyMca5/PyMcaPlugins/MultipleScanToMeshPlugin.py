@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 M. Rovezzi, V.A. Sole European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 M. Rovezzi, V.A. Sole European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -99,20 +99,26 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
 
         nCurves = len(allCurves)
         if  nCurves < 2:
-            msg = "ID26 RIXS scans are built combining several single scans"
+            msg = "RIXS scans are built combining several single scans"
             raise ValueError(msg)
 
         self._xLabel = self.getGraphXLabel()
         self._yLabel = self.getGraphYLabel()
 
-        if self._xLabel not in ["energy", "Spec.Energy", "arr_hdh_ene", "Mono.Energy"]:
-            msg = "X axis does not correspond to a BM20 or ID26 RIXS scan"
+        if self._xLabel not in \
+           ["energy", "Energy", "Spec.Energy", "arr_hdh_ene", "Mono.Energy"]:
+            msg = "X axis does not correspond to a BM20, ID26 or CHESS RIXS scan"
             raise ValueError(msg)
 
         motorNames = allCurves[0][3]["MotorNames"]
+        CHESS = False
         if self._xLabel == "Spec.Energy":
             # ID26
             fixedMotorMne = "Mono.Energy"
+        elif (self._xLabel == "Energy") and ("xes_dn_ana" in motorNames):
+            # CHESS
+            fixedMotorMne = "xes_dn_ana"
+            CHESS = True
         elif (self._xLabel == "energy") and ("xes_en" in motorNames):
             # BM20 case
             fixedMotorMne = "xes_en"
@@ -127,25 +133,7 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
 
 
         #get the min and max values of the curves
-        if fixedMotorMne == "Mono.Energy":
-            info = allCurves[0][3]
-            xMin = info["MotorValues"][fixedMotorIndex]
-            xMax = xMin
-            nData = 0
-            i = 0
-            minValues = numpy.zeros((nCurves,), numpy.float64)
-            for curve in allCurves:
-                info = curve[3]
-                tmpMin = info['MotorValues'][fixedMotorIndex]
-                tmpMax = info['MotorValues'][fixedMotorIndex]
-                minValues[i] = tmpMin
-                if tmpMin < xMin:
-                    xMin = tmpMin
-                if tmpMax > xMax:
-                    xMax =tmpMax
-                nData += len(curve[0])
-                i += 1
-        else:
+        if fixedMotorMne != "Mono.Energy":
             xMin = allCurves[0][0][0] # ID26 data are already ordered
             xMax = allCurves[0][0][-1]
 
@@ -163,6 +151,24 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
                 if tmpMax > xMax:
                     xMax =tmpMax
                 nData += len(curve[0])
+        else:
+            info = allCurves[0][3]
+            xMin = info["MotorValues"][fixedMotorIndex]
+            xMax = xMin
+            nData = 0
+            i = 0
+            minValues = numpy.zeros((nCurves,), numpy.float64)
+            for curve in allCurves:
+                info = curve[3]
+                tmpMin = info['MotorValues'][fixedMotorIndex]
+                tmpMax = info['MotorValues'][fixedMotorIndex]
+                minValues[i] = tmpMin
+                if tmpMin < xMin:
+                    xMin = tmpMin
+                if tmpMax > xMax:
+                    xMax =tmpMax
+                nData += len(curve[0])
+                i += 1
 
         #sort the curves
         orderIndex = minValues.argsort()
@@ -193,6 +199,11 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
             if fixedMotorMne == "Mono.Energy":
                 xData[start:end] = info["MotorValues"][fixedMotorIndex] * factor
                 yData[start:end] = x * factor
+            elif CHESS:
+                xData[start:end] = x * factor
+                #yData[start:end] = info["MotorValues"][fixedMotorIndex]
+                thetaDeg = 78.1119 + 0.5 * (info["MotorValues"][fixedMotorIndex] + 5.25)
+                yData[start:end] = 12398.4 / (1.656446 * numpy.sin(numpy.pi*thetaDeg/180.))
             else:
                 xData[start:end] = x * factor
                 yData[start:end] = info["MotorValues"][fixedMotorIndex] * factor
@@ -210,10 +221,13 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
 
         if 0:
             # get the interpolated values
+            etData = xData - yData
+            grid3 = numpy.linspace(etData.min(), etData.max(), n)
+            xx, yy = numpy.meshgrid(grid0, grid3)
             try:
-                zz = griddata(xData, yData, zData, xx, yy)
+                zz = griddata(xData, etData, zData, xx, yy)
             except RuntimeError:
-                zz = griddata(xData, yData, zData, xx, yy, interp='linear')
+                zz = griddata(xData, etData, zData, xx, yy, interp='linear')
 
             # show them
             if self._rixsWidget is None:
@@ -222,9 +236,14 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
                                             selection=False,
                                             profileselection=True,
                                             scanwindow=self)
+            shape = zz.shape
+            xScale = (xx.min(), (xx.max() - xx.min())/float(zz.shape[1]))
+            yScale = (yy.min(), (yy.max() - yy.min())/float(zz.shape[0]))
             self._rixsWidget.setImageData(zz,
-                                          xScale=(xx.min(), xx.max()),
-                                          yScale=(yy.min(), yy.max()))
+                                          xScale=xScale,
+                                          yScale=yScale)
+            self._rixsWidget.setXLabel("Incident Energy (eV)")
+            self._rixsWidget.setYLabel("Energy Transfer (eV)")
             self._rixsWidget.show()
         elif 1:
             etData = xData - yData
