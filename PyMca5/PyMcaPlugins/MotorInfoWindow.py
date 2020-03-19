@@ -154,7 +154,7 @@ class MotorInfoTable(TableWidget):
         self.header = MotorInfoHeader(self)
         self.setHorizontalHeader(self.header)
         self.setHorizontalHeaderItem(0, qt.QTableWidgetItem('Legend'))
-        self.setSortingEnabled(True)
+        #self.setSortingEnabled(True)
         self.verticalHeader().hide()
         self.setSelectionBehavior(qt.QAbstractItemView.SelectRows)
         self.setShowGrid(False)
@@ -164,7 +164,7 @@ class MotorInfoTable(TableWidget):
             self.setItem(idx, 0, curveLegend )
             for jdx in range(1, self.columnCount()):
                 self.setItem(0, jdx, '')
-        self.sortByColumn(0, qt.Qt.AscendingOrder)
+        #self.sortByColumn(0, qt.Qt.AscendingOrder)
 
     def addColumn(self):
         currentColumn = self.columnCount()
