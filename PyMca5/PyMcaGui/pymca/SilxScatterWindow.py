@@ -90,12 +90,12 @@ class SilxScatterWindow(qt.QWidget):
                 raise TypeError("Not a scatter plot. No signal.")
             for i in range(len(z)):
                 if numpy.isscalar(z[i]):
-                    z[i] = numpy.array([z[i]])
+                    z[i] = numpy.array([z[i]], dtype=numpy.float32)
             # we only deal with one signal, if there are more, they should be separated
             # in different selections
             x = numpy.ascontiguousarray(dataObject.x[0])[:]
             y = numpy.ascontiguousarray(dataObject.x[1])[:]
-            data = numpy.ascontiguousarray(z[0])[:]
+            data = numpy.ascontiguousarray(z[0], dtype=numpy.float32)[:]
             if (data.size == x.size) and (data.size == y.size):
                 # standard scatter plot
                 data.shape = 1, -1
@@ -151,7 +151,6 @@ class SilxScatterWindow(qt.QWidget):
                             # potentially can take a lot of memory, numexpr?
                             tmpView = m[:]
                             tmpView.shape = data.shape
-                            # data /= tmpView.astype(numpy.float)
                             data /= tmpView
                         else:
                             raise ValueError("Incompatible monitor data")
