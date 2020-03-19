@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2017 T. Rueter, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 T. Rueter, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -30,11 +30,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import IconDict
-
-try:
-    from silx.gui.widgets.TableWidget import TableWidget
-except ImportError:
-    from PyMca5.PyMcaGui.misc.TableWidget import TableWidget
+from PyMca5.PyMcaGui.misc.TableWidget import TableWidget
 
 if hasattr(qt, 'QString'):
     QString = qt.QString
