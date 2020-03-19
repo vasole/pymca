@@ -48,10 +48,12 @@ class SilxScatterWindow(qt.QWidget):
         self._yLabel = "Y"
 
     def _removeSelection(self, *var):
-        print("_removeSelection to be implemented")
+        if DEBUG:
+            print("_removeSelection to be implemented")
 
     def _replaceSelection(self, *var):
-        print("_removeSelection to be implemented")
+        if DEBUG:
+            print("_removeSelection to be implemented")
 
     def _addSelection(self, selectionlist):
         if DEBUG:
