@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2017-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2017-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -154,6 +154,9 @@ class SimpleFitAll(object):
         # get the total number of fits to be performed
         self._nSpectra = len(data)
 
+        # a watcher to verify if a table can be generated
+        self._referenceParameters = None
+
         # optimization
         self.__estimationPolicy = "always"
         backgroundPolicy = self.fit._fitConfiguration['fit']['background_estimation_policy']
@@ -256,6 +259,16 @@ class SimpleFitAll(object):
         fitOutput = self.fit.getResult(configuration=False)
         result = fitOutput['result']
         idx = self._currentFitIndex
+        parNames = [x["name"] for x in self.fit.paramlist]
+        if idx == 0:
+            self._referenceParameters = parNames
+        if self._referenceParameters is not None:
+            if self._referenceParameters == parNames:
+                _logger.info("Fit of spectrum %d has same parameters" % idx)
+            else:
+                _logger.info("Fit of spectrum %d has different parameters" % idx)
+                self._referenceParameters = None
+
         if result is None:
             _logger.warning("result not valid for index %d", idx)
             return
@@ -278,8 +291,9 @@ class SimpleFitAll(object):
         filename = self.getOutputFileName()
 
         # Write the data to file (append)
+        self._entryNameFormat = "fit_%d"
         with h5py.File(filename, mode="r+") as h5f:
-            entry = h5f.create_group("fit_curve_%d" % idx)
+            entry = h5f.create_group(self._entryNameFormat % idx)
             entry.attrs["NX_class"] = to_h5py_utf8("NXentry")
             entry.attrs["default"] = to_h5py_utf8("fit_process/results/plot")
             entry.create_dataset("start_time",
@@ -364,6 +378,63 @@ class SimpleFitAll(object):
         return os.path.join(self.outputDir,
                             self.outputFileName)
 
+    def _isSummaryEntryAcceptable(self):
+        if self._referenceParameters is not None:
+            if self._nSpectra > 1:
+                return True
+
+    def _createSummaryEntry(self):
+        filename = self.getOutputFileName()
+        with h5py.File(filename, mode="r+") as h5f:
+            for idx in range(self._nSpectra):
+                inputEntryName = os.path.join("/", self._entryNameFormat % idx)
+                inputEntry = h5f[inputEntryName]
+                start_time = inputEntry["start_time"]
+                end_time = inputEntry["end_time"]
+                chisq = inputEntry["fit_process/results/chisq"]
+                parameterValues = inputEntry["fit_process/results/parameter_values"]
+                parameterErrors = inputEntry["fit_process/results/parameter_sigmas"]
+                parameterNames = inputEntry["fit_process/results/parameter_names"]
+                if idx == 0:
+                    entry = h5f.create_group("fit_summary")
+                    entry.attrs["NX_class"] = u"NXentry"
+                    entry.attrs["default"] = u"result"
+                    entry["start_time"] = to_h5py_utf8(datetime.datetime.now().isoformat())
+                    result = entry.create_group("result")
+                    result.attrs["NX_class"] = u"NXdata"
+                    result.attrs["axes"] = to_h5py_utf8(["index"])
+                    result.attrs["signal"] = to_h5py_utf8("chisq")
+                    result["index"] = numpy.arange(self._nSpectra)
+                    result.create_dataset("chisq",
+                                          shape=(self._nSpectra,),
+                                          dtype=numpy.float32)
+                    for parameter in parameterNames:
+                        result.create_dataset(parameter,
+                                              shape=(self._nSpectra,),
+                                              dtype=numpy.float32)
+                        result.create_dataset(parameter + "_errors",
+                                              shape=(self._nSpectra,),
+                                              dtype=numpy.float32)
+                        result.create_dataset(parameter + "_estimation",
+                                              shape=(self._nSpectra,),
+                                              dtype=numpy.float32)
+                result["chisq"][idx] = chisq
+                for par in range(len(parameterNames)):
+                    parameter = parameterNames[par]
+                    estimationName = "fit_process/results/estimation/%s/estimation" % \
+                                     parameter
+                    estimation = inputEntry[estimationName]
+                    result[parameter][idx] = parameterValues[par]
+                    result[parameter + "_errors"][idx] = parameterErrors[par]
+                    result[parameter + "_estimation"][idx] = estimation
+            
+            entry["end_time"] = to_h5py_utf8(datetime.datetime.now().isoformat())
+            first = self._entryNameFormat % 0
+            last = self._entryNameFormat % (self._nSpectra - 1)
+            entry["title"] = "Summary of %s to %s" % (first, last)
+            
     def onProcessSpectraFinished(self):
         _logger.debug("All curves processed")
         self._status = "Curves Fitting finished"
+        if self._isSummaryEntryAcceptable():
+            self._createSummaryEntry()
