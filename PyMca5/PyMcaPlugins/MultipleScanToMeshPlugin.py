@@ -54,12 +54,15 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
     def __init__(self, plotWindow, **kw):
         Plugin1DBase.Plugin1DBase.__init__(self, plotWindow, **kw)
         self.methodDict = {}
-        self.methodDict['RIXS Eout'] = [self._energyAnalyzer,
-                                        "Show RIXS E out image",
-                                        None]
         self.methodDict['RIXS Etransfer'] = [self._energyTransfer,
                                              "Show RIXS E transfer image",
                                              None]
+        self.methodDict['RIXS Eout'] = [self._energyAnalyzer,
+                                        "Show RIXS E out image",
+                                        None]
+        self.methodDict['Mesh'] = [self._mesh,
+                                   "Show mesh image",
+                                   None]
 
         self._rixsWidget = None
 
@@ -97,10 +100,13 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
             _logger.error(sys.exc_info())
             raise
 
-    def _energyAnalyzer(self):
-        return self._energyTransfer(etransfer=False)
+    def _mesh(self):
+        return self._energyTransfer(mode="mesh")
 
-    def _energyTransfer(self, etransfer=True):
+    def _energyAnalyzer(self):
+        return self._energyTransfer(mode="energyout")
+
+    def _energyTransfer(self, mode="energytransfer"):
         allCurves = self.getAllCurves()
 
         nCurves = len(allCurves)
@@ -252,10 +258,10 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
             self._rixsWidget.setYLabel("Energy Transfer (eV)")
             self._rixsWidget.show()
         elif 1:
-            if etransfer:
-                etData = xData - yData
-            else:
+            if mode == "mesh":
                 etData = yData
+            else:
+                etData = xData - yData
             grid3 = numpy.linspace(etData.min(), etData.max(), n)
             # create the meshgrid
             xx, yy = numpy.meshgrid(grid0, grid3)
@@ -285,15 +291,21 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
             #zz = numpy.where(numpy.isfinite(zz), zz, actualMax)
             shape = zz.shape
             xScale = (xx.min(), (xx.max() - xx.min())/float(zz.shape[1]))
-            yScale = (yy.min(), (yy.max() - yy.min())/float(zz.shape[0]))
+            if mode == "energyout":
+                yScale = (yy.min() + yData.min(), (yy.max() - yy.min())/float(zz.shape[0]))
+            else:
+                yScale = (yy.min(), (yy.max() - yy.min())/float(zz.shape[0]))
+            self._rixsWidget.setXLabel("Incident Energy (eV)")
+            if mode == "mesh":
+                self._rixsWidget.setYLabel("Emitted Energy (eV)")
+            elif mode == "energyout":
+                self._rixsWidget.setYLabel("Emitted Energy (eV)")
+            else:
+                self._rixsWidget.setYLabel("Energy Transfer (eV)")
             self._rixsWidget.setImageData(zz,
                                           xScale=xScale,
                                           yScale=yScale)
-            self._rixsWidget.setXLabel("Incident Energy (eV)")
-            if etransfer:
-                self._rixsWidget.setYLabel("Energy Transfer (eV)")
-            else:
-                self._rixsWidget.setYLabel("Spectrometer Energy (eV)")
+            # self._rixsWidget.graph.replot()
             self._rixsWidget.show()
             self._rixsWidget.raise_()
         return
