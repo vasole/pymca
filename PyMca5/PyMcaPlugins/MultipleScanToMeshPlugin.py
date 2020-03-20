@@ -293,7 +293,7 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
             if etransfer:
                 self._rixsWidget.setYLabel("Energy Transfer (eV)")
             else:
-                self._rixsWidget.setYLabel("Spectrometer Energy(eV)")
+                self._rixsWidget.setYLabel("Spectrometer Energy (eV)")
             self._rixsWidget.show()
             self._rixsWidget.raise_()
         return
