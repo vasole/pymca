@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 T.Rueter, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 T.Rueter, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -171,13 +171,15 @@ class MedianFilterScanDeglitchPlugin(Plugin1DBase.Plugin1DBase):
             if not active:
                 return
             else:
-                x, y, legend, info = active
+                x, y, legend, info = active[:4]
                 self.removeCurve(legend)
                 spectra = [active]
         else:
             spectra = self.getAllCurves()
         for (idx, spec) in enumerate(spectra):
-            x, y, legend, info = spec
+            x, y, legend, info = spec[:4]
+            xlabel=info.get("xlabel", None)
+            ylabel=info.get("ylabel", None)
             filtered = medfilt1d(y, length)
             diff = filtered-y
             mean = diff.mean()
@@ -186,11 +188,20 @@ class MedianFilterScanDeglitchPlugin(Plugin1DBase.Plugin1DBase):
             ynew = numpy.where(abs(diff) > threshold * sigma, filtered, y)
             legend = info.get('selectionlegend',legend) + ' SR'
             if (idx==0) and (len(spectra)!=1):
-                self.addCurve(x,ynew,legend,info, replace=True, replot=False)
+                self.addCurve(x, ynew, legend, info,
+                              xlabel=xlabel,
+                              ylabel=ylabel,
+                              replace=True, replot=False)
             elif idx == (len(spectra)- 1):
-                self.addCurve(x,ynew,legend,info, replace=False, replot=True)
+                self.addCurve(x, ynew, legend, info,
+                              xlabel=xlabel,
+                              ylabel=ylabel,
+                              replace=False, replot=True)
             else:
-                self.addCurve(x,ynew,legend,info, replace=False, replot=False)
+                self.addCurve(x, ynew, legend, info,
+                              xlabel=xlabel,
+                              ylabel=ylabel,
+                              replace=False, replot=False)
         #self._plotWindow.replot()
 
 

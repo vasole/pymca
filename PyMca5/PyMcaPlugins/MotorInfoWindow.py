@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2017 T. Rueter, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 T. Rueter, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -30,11 +30,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import IconDict
-
-try:
-    from silx.gui.widgets.TableWidget import TableWidget
-except ImportError:
-    from PyMca5.PyMcaGui.misc.TableWidget import TableWidget
+from PyMca5.PyMcaGui.misc.TableWidget import TableWidget
 
 if hasattr(qt, 'QString'):
     QString = qt.QString
@@ -158,7 +154,7 @@ class MotorInfoTable(TableWidget):
         self.header = MotorInfoHeader(self)
         self.setHorizontalHeader(self.header)
         self.setHorizontalHeaderItem(0, qt.QTableWidgetItem('Legend'))
-        self.setSortingEnabled(True)
+        #self.setSortingEnabled(True)
         self.verticalHeader().hide()
         self.setSelectionBehavior(qt.QAbstractItemView.SelectRows)
         self.setShowGrid(False)
@@ -168,7 +164,7 @@ class MotorInfoTable(TableWidget):
             self.setItem(idx, 0, curveLegend )
             for jdx in range(1, self.columnCount()):
                 self.setItem(0, jdx, '')
-        self.sortByColumn(0, qt.Qt.AscendingOrder)
+        #self.sortByColumn(0, qt.Qt.AscendingOrder)
 
     def addColumn(self):
         currentColumn = self.columnCount()
