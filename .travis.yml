@@ -4,17 +4,23 @@ language: python
 
 matrix:
     include:
-        - python: 2.7
+        #- python: 2.7
+        #  os: linux
+        #  env:
+        #      - BUILD_COMMAND=sdist
+        #      - QT_BINDING=PySide2
+
+        - python: 3.8
           os: linux
           env:
-              - BUILD_COMMAND=sdist
-              - QT_BINDING=PySide2
+              - BUILD_COMMAND=bdist_wheel
+              - QT_BINDING=PyQt5
 
         - python: 3.6
           os: linux
           env:
               - BUILD_COMMAND=sdist
-              - QT_BINDING=PyQt5
+              - QT_BINDING=PySide2
 
         # No particular need to test Python 2 on OSX
         #- language: generic
@@ -68,6 +74,7 @@ install:
     # Install build dependencies
     - pip install --upgrade wheel
     - pip install --upgrade numpy
+    - pip install --upgrade cython
 
     # Print Python info
     - python ./ci/info_platform.py

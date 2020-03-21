@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -277,6 +277,7 @@ def launchThread(thread, window):
         window.close()
         thread.pleasePause = 0
         thread.pleaseBreak = 1
+        thread.quit()
         thread.wait()
         app = qt.QApplication.instance()
         app.processEvents()
