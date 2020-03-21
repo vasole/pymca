@@ -27,7 +27,7 @@ I do not use the ESRF data format nor the SPEC file format. Do I have to convert
 
 Probably not. Most common formats are wrapped by PyMca as SPEC file format. That includes multicolumn ASCII, Canberra's .TK, AmpTek, and QXAS. If your format is not supported but you know how to read it, it should not be a big problem to implement it.
 
-Starting with version 4.4.0, PyMca supports the HDF5 format. Due to its versatility, this format will progresively become the preferred input format of PyMca.
+Starting with version 4.4.0, PyMca supports the HDF5 format. Due to its versatility, this format will progresively become the preferred input and output format of PyMca.
 
 I use an X-ray tube, how can I make quantitative analysis?
 ----------------------------------------------------------
@@ -46,15 +46,7 @@ Because they are fitted as simple gaussians and that is not correct. The reason?
 I am on windows, what program version should I use?
 ---------------------------------------------------
 
-The most recent.
-
-From the program point of view I would say that the bugs introduced when switching from PyQt to PyQt4 have been already fixed. In any case, if you make any batch fitting or imaging, you certainly want the latest version. Among other features you can easily find a 10 fold speed improvement ...
-
-Does PyMca work on Windows 7 and Windows 10?
---------------------------------------------
-
-Windows 7 and windows 10 users have not reported any particular problem when using the code.
-Recent frozen binary versions are only supplied for 64-bit versions of the operating systems.
+Always the most recent. If you encounter any problem using a previous version, please verify the problem is still present when using the latest release.
 
 I have a Mac, the program seems to hang or to do nothing, how can I report what's happening?
 --------------------------------------------------------------------------------------------
