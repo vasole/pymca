@@ -48,13 +48,13 @@ addons:
     apt:
         packages:
             - libgl1-mesa-dev  # For OpenGL
-            - libgl1-mesa-glx  # For OpenGL
-            - xserver-xorg-video-dummy  # For OpenGL
             - libegl1-mesa  # Required by Qt xcb platform plugin
             - libxkbcommon-x11-0  # needed for Qt plugins
             - libxkbcommon0  # needed for Qt plugins
             - libxkbcommon-dev  # needed for Qt plugins
 
+services:
+    - xvfb
 
 before_install:
     # On MacOS: install python3 if needed
@@ -64,8 +64,6 @@ before_install:
     - if [ "$TRAVIS_OS_NAME" == "linux" ];
       then
           export DISPLAY=:99.0;
-          Xorg -noreset +extension GLX +extension RANDR +extension RENDER -logfile ./99.log -config ./ci/travis-xorg.conf :99 &
-          sleep 3;
       fi
 
 install:
