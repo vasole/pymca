@@ -47,9 +47,6 @@ addons:
             - libxkbcommon0  # needed for Qt plugins
             - libxkbcommon-dev  # needed for Qt plugins
 
-services:
-    - xvfb
-
 before_install:
     # On MacOS: install python3 if needed
     - source ./ci/travis_osx.sh
