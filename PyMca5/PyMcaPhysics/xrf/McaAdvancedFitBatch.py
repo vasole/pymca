@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -401,19 +401,16 @@ class McaAdvancedFitBatch(object):
             return None
 
     def __tryLucia(self, inputfile):
-        f = open(inputfile)
-        line = f.readline()
+        f = open(inputfile, "rb")
+        line = f.read(10)
         f.close()
         ffile = None
-        if line.startswith('#\tDate:'):
+        if line.startswith(b'#\tDate:'):
             ffile = LuciaMap.LuciaMap(inputfile)
         return ffile
 
     def __tryAifira(self, inputfile):
-        if sys.platform == "win32":
-            f = open(inputfile,"rb")
-        else:
-            f = open(inputfile,"r")
+        f = open(inputfile,"rb")
         line = f.read(3)
         f.close()
         if '#' in line:
