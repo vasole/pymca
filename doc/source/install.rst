@@ -115,9 +115,9 @@ It is exactly like with windows, perhaps you may need to replace pip by pip3 as 
 
 .. code-block:: bash 
 
-    pip3 uninstall pymca
-    pip3 uninstall PyMca5
-    pip3 install pymca
+    pip uninstall pymca
+    pip uninstall PyMca5
+    pip install pymca
 
 or 
 

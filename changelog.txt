@@ -1,3 +1,18 @@
+VERSION 5.5.5
+-------------
+
+- XRF. Allow to use up to 15 elements to refine the sample matrix. 
+
+- IO. Correct issues reading ARTAX and Olympus files in MacOS.
+
+- ROI Imaging. Allow to choose to perform PCA on standardized data.
+
+- ROI Imaging. Do not close application when deleting slave stacks.
+
+- Plugins. Correct MotorInfo problem of table containing duplicates. 
+
+- Plugins. MultipleScanToMesh Support RIXS maps from CHESS.
+
 VERSION 5.5.4
 -------------
 
