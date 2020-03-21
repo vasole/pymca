@@ -277,6 +277,7 @@ def launchThread(thread, window):
         window.close()
         thread.pleasePause = 0
         thread.pleaseBreak = 1
+        thead.quit()
         thread.wait()
         app = qt.QApplication.instance()
         app.processEvents()
