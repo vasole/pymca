@@ -1957,7 +1957,10 @@ class McaBatchWindow(qt.QWidget):
                 sys.exit(0)
             else:
                 #this seems to work properly
+                _logger.info("onEnd Closing")
                 self.close()
+        else:
+            _logger.info("onEnd not Closing")
         if self.actions:
             if hasattr(self.abortButton, "animateClick"):
                 if self.abortButton.text() == "OK":
@@ -1965,7 +1968,9 @@ class McaBatchWindow(qt.QWidget):
                     self.abortButton.animateClick(100)
         if self.exitonend:
             app = qt.QApplication.instance()
+            _logger.info("onEnd quit")
             app.quit()
+        _logger.info("onEnd returning")
 
     def onReportWritten(self):
         if self.__ended:
