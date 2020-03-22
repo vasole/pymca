@@ -1965,11 +1965,13 @@ class McaBatchWindow(qt.QWidget):
             if hasattr(self.abortButton, "animateClick"):
                 if self.abortButton.text() == "OK":
                     # click for 100 milliseconds
+                    _logger.info("onEnd clicking button")
                     self.abortButton.animateClick(100)
         if self.exitonend:
-            app = qt.QApplication.instance()
-            _logger.info("onEnd quit")
-            app.quit()
+            #app = qt.QApplication.instance()
+            _logger.info("onEnd close and not quit")
+            #app.quit()
+            sel.close()
         _logger.info("onEnd returning")
 
     def onReportWritten(self):
