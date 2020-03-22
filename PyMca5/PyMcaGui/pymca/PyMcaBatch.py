@@ -1925,6 +1925,7 @@ class McaBatchWindow(qt.QWidget):
             self.onReportWritten()
 
     def onEnd(self,dict):
+        _logger.info("Batch finished")
         self.__ended = True
         if QTVERSION < '4.0.0':
             n = self.progressBar.progress()
@@ -1957,6 +1958,11 @@ class McaBatchWindow(qt.QWidget):
             else:
                 #this seems to work properly
                 self.close()
+        if self.actions:
+            if hasattr(self.abortButton, "animateClick"):
+                if self.abortButton.text() == "OK":
+                    # click for 100 milliseconds
+                    self.abortButton.animateClic(100)
         if self.exitonend:
             app = qt.QApplication.instance()
             app.quit()
