@@ -1962,7 +1962,7 @@ class McaBatchWindow(qt.QWidget):
             if hasattr(self.abortButton, "animateClick"):
                 if self.abortButton.text() == "OK":
                     # click for 100 milliseconds
-                    self.abortButton.animateClic(100)
+                    self.abortButton.animateClick(100)
         if self.exitonend:
             app = qt.QApplication.instance()
             app.quit()
