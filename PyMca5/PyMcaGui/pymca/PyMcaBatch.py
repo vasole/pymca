@@ -1971,7 +1971,7 @@ class McaBatchWindow(qt.QWidget):
             #app = qt.QApplication.instance()
             _logger.info("onEnd close and not quit")
             #app.quit()
-            sel.close()
+            self.close()
         _logger.info("onEnd returning")
 
     def onReportWritten(self):
