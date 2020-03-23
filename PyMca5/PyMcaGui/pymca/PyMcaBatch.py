@@ -1924,18 +1924,19 @@ class McaBatchWindow(qt.QWidget):
             #qt.QApplication.postEvent(self, McaCustomEvent.McaCustomEvent({'event':'reportWritten'}))
             self.onReportWritten()
 
-    def onEnd(self,dict):
+    def onEnd(self, dict):
+        _logger.debug("Batch finished")
         self.__ended = True
         if QTVERSION < '4.0.0':
             n = self.progressBar.progress()
-            self.progressBar.setProgress(n+dict['filestep'])
+            self.progressBar.setProgress(n + dict['filestep'])
             n = self.mcaBar.progress()
-            self.mcaBar.setProgress(n+dict['mcastep'])
+            self.mcaBar.setProgress(n + dict['mcastep'])
         else:
             n = self.progressBar.value()
-            self.progressBar.setValue(n+dict['filestep'])
+            self.progressBar.setValue(n + dict['filestep'])
             n = self.mcaBar.value()
-            self.mcaBar.setValue(n+dict['mcastep'])
+            self.mcaBar.setValue(n + dict['mcastep'])
         self.status.setText  ("Batch Finished")
         self.timeLeft.setText("Estimated time left = 0 sec")
         if self.actions:
@@ -1951,15 +1952,19 @@ class McaBatchWindow(qt.QWidget):
                 a = HtmlIndex.HtmlIndex(directory)
                 a.buildRecursiveIndex()
         if dict['chunk'] is not None:
-            if 0:
-                #this was giving troubles using HDF5 files as input
-                sys.exit(0)
-            else:
-                #this seems to work properly
-                self.close()
+            #this seems to work properly
+            _logger.debug("onEnd Closing after processing a chunk")
+            self.close()
+        if self.actions:
+            if hasattr(self.abortButton, "animateClick"):
+                if self.abortButton.text() == "OK":
+                    # click for 100 milliseconds
+                    _logger.debug("onEnd automatically clicking button")
+                    self.abortButton.animateClick(100)
         if self.exitonend:
-            app = qt.QApplication.instance()
-            app.quit()
+            _logger.debug("onEnd close and not quit")
+            self.close()
+        _logger.debug("onEnd returning")
 
     def onReportWritten(self):
         if self.__ended:
