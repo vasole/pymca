@@ -1925,7 +1925,7 @@ class McaBatchWindow(qt.QWidget):
             self.onReportWritten()
 
     def onEnd(self, dict):
-        _logger.info("Batch finished")
+        _logger.debug("Batch finished")
         self.__ended = True
         if QTVERSION < '4.0.0':
             n = self.progressBar.progress()
@@ -1953,18 +1953,18 @@ class McaBatchWindow(qt.QWidget):
                 a.buildRecursiveIndex()
         if dict['chunk'] is not None:
             #this seems to work properly
-            _logger.info("onEnd Closing after processing a chunk")
+            _logger.debug("onEnd Closing after processing a chunk")
             self.close()
         if self.actions:
             if hasattr(self.abortButton, "animateClick"):
                 if self.abortButton.text() == "OK":
                     # click for 100 milliseconds
-                    _logger.info("onEnd automatically clicking button")
+                    _logger.debug("onEnd automatically clicking button")
                     self.abortButton.animateClick(100)
         if self.exitonend:
-            _logger.info("onEnd close and not quit")
+            _logger.debug("onEnd close and not quit")
             self.close()
-        _logger.info("onEnd returning")
+        _logger.debug("onEnd returning")
 
     def onReportWritten(self):
         if self.__ended:
