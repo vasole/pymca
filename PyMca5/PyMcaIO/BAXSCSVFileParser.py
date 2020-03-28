@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -75,11 +75,27 @@ class BAXSCSVFileParser(object):
         if not (line.startswith("Bruker AXS") or \
                (("KTI" in line) and ("Spectrum" in line))):
             raise IOError("This does look as a Bruker AXS Handheld CSV file")
-        while not line.startswith("Channel#"):
+        _logger.info(line)
+        if line.endswith("Simple CSV"):
+            _logger.info("Simple CSV")
+            while not line.startswith("1,") and len(line):
+                header.append(line)
+                line = _fileObject.readline()
+            line = "1,0"
+        elif line.endswith("Complete CSV"):
+            _logger.info("Complete CSV")
+            while not line.startswith("Spectrum:") and len(line):
+                header.append(line)
+                line = _fileObject.readline()
+            line = _fileObject.readline()
+        else:
+            _logger.info("AXS Version < 5")
+            while not line.startswith("Channel#") and len(line):
+                header.append(line)
+                line = _fileObject.readline()
             header.append(line)
             line = _fileObject.readline()
-        header.append(line)
-        line = _fileObject.readline()
+        _logger.info("First data line = <%s>" % line) 
         line = line.replace('"',"")
         splitLine = line.split(",")
         data = []
@@ -160,18 +176,23 @@ class BAXSCSVScan(SpecFileAbstractClass.SpecFileAbstractScan):
             gain = 1.0
             offset = 0.0
             for item in self.scanheader:
-                if item.startswith("eV per channel,"):
-                    gain = 0.001 * float(item.split(",")[-1])
+                if item.startswith("eV per channel,") or \
+                   item.startswith("eVPerChannel,"):
+                    gain = 0.001 * float(item.split(",")[1])
+                elif item.startswith("StartingKeV,"):
+                    offset = float(item.split(",")[1])
             return ["#@CALIB %f %f %f" % (offset, gain, 0.0)] 
         elif key == "@CTIME":
             preset = -1
             live = -1
             duration = -1
             for item in self.scanheader:
-                if item.startswith("Duration Time,"):
-                    duration = float(item.split(",")[-1])
-                elif item.startswith("Live Time,"):
-                    live = float(item.split(",")[-1])
+                if item.startswith("Duration Time,") or\
+                   item.startswith("TotalElapsedTimeInSeconds"):
+                    duration = float(item.split(",")[1])
+                elif item.startswith("Live Time,") or \
+                     item.startswith("LiveTimeInSeconds"):
+                    live = float(item.split(",")[1])
             if self._data.shape[1] == 3:
                 # counts are already corrected
                 live = duration
@@ -192,10 +213,10 @@ def isBAXSCSVFile(filename):
     f = open(filename, 'r')
     try:
         line = f.readline()
+        f.close()
     except:
         f.close()
         return False
-    f.close()
     try:
         if filename.lower().endswith(".csv"):
             if line.startswith("Bruker AXS") or \
@@ -207,6 +228,7 @@ def isBAXSCSVFile(filename):
 
 def test(filename):
     if isBAXSCSVFile(filename):
+        print("Bruker AXS File")
         sf=BAXSCSVFileParser(filename)
     else:
         print("Not a Bruker AXS File")
