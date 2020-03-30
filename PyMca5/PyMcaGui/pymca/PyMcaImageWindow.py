@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -64,7 +64,8 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
             self.slider = qt.QSlider(self)
             self.slider.setOrientation(qt.Qt.Horizontal)
         self.slider.setRange(0, 0)
-
+        self._xLabel = "Column"
+        self._yLabel = "Row"
         self.mainLayout.addWidget(self.slider)
         self.slider.valueChanged[int].connect(self._showImageSliderSlot)
         self.slider.hide()
@@ -108,6 +109,8 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
         for sel in sellist:
             self._xScale = None
             self._yScale = None
+            xLabel = "Column"
+            yLabel = "Row"
             source = sel['SourceName']
             key    = sel['Key']
             legend = sel['legend'] #expected form sourcename + scan key
@@ -165,6 +168,10 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                     else:
                         _logger.info("Nothing to plot")
             elif hasattr(dataObject, "x") and (dataObject.x is not None):
+                if "selection"  in sel:
+                    axesLabels = self._getAxesLabelsFromSelection(sel["selection"])
+                else:
+                    axesLabels = []
                 shape = dataObject.data.shape
                 if len(dataObject.x) == 2:
                     x0 = dataObject.x[0][:]
@@ -194,12 +201,22 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                     elif (len(x0) == shape[-2]) and (len(x1) == shape[-1]):
                         self._xScale = x1[0], x1[1] - x1[0]
                         self._yScale = x0[0], x0[1] - x0[0]
+                        if len(axesLabels) == 2:
+                            xLabel = axesLabels[1]
+                            yLabel = axesLabels[0]
                     elif (len(x0) == shape[-1]) and (len(x1) == shape[-2]):
                         self._yScale = x1[0], x1[1] - x1[0]
                         self._xScale = x0[0], x0[1] - x0[0]
+                        if len(axesLabels) == 2:
+                            xLabel = axesLabels[0]
+                            yLabel = axesLabels[1]
                     else:
                         raise TypeError("2D Selection is not a regular mesh")
 
+            self._xLabel = xLabel
+            self._yLabel = yLabel
+            dataObject.info['xlabel'] = xLabel
+            dataObject.info['ylabel'] = yLabel
             self.dataObjectsList = [legend]
             self.dataObjectsDict = {legend:dataObject}
             shape = dataObject.data.shape
@@ -234,6 +251,15 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                 self.setName(legend+" 0")
             if self._plotEnabled:
                 self.plotImage(True)
+
+    def _getAxesLabelsFromSelection(self, selection):
+        labels = []
+        if "x" in selection:
+            if "LabelNames" in selection:
+                if selection["x"]:
+                    for idx in selection["x"]:
+                        labels.append(selection["LabelNames"][idx])
+        return labels
 
     def _getImageDataFromSingleIndex(self, index):
         legend = self.dataObjectsList[0]
@@ -338,12 +364,24 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
         self.plotImage(True)
         txt = "%s %d" % (legend, index)
         self.setName(txt)
+        if "xlabel" in dataObject.info:
+            self._xLabel = dataObject.info["xlabel"]
+        else:
+            self._xLabel = "Column"
+        if "ylabel" in dataObject.info:
+            self._yLabel = dataObject.info["ylabel"]
+        else:
+            self._yLabel = "Row"
 
         if moveslider:
             self.slider.setValue(index)
 
     def plotImage(self, update=True):
-        self.graphWidget.setImageData(self._imageData, xScale=self._xScale, yScale=self._yScale)
+        self.graphWidget.graph.setGraphYLabel(self._yLabel)
+        self.graphWidget.graph.setGraphXLabel(self._xLabel)
+        self.graphWidget.setImageData(self._imageData,
+                                      xScale=self._xScale,
+                                      yScale=self._yScale)
         return self.graphWidget.plotImage(update=update)
 
 class TimerLoop:
