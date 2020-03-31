@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -237,7 +237,7 @@ class PilatusCBF(object):
             raise Exception(IOError, "CBF file %s is corrupt, no dimensions in it" % fname)
         try:
             bytecode = DATA_TYPES[self.__header['X-Binary-Element-Type']]
-            self.bpp = len(np.array(0, bytecode).tostring())
+            self.bpp = len(np.array(0, bytecode).tobytes())
         except KeyError:
             bytecode = np.int32
             self.bpp = 32
