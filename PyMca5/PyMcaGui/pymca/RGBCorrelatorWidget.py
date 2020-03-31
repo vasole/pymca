@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -480,7 +480,7 @@ class RGBCorrelatorWidget(qt.QWidget):
                                      valmin,
                                      valmax, 1)
                 self.__redImage = red
-                ddict['red'] = red.tostring()
+                ddict['red'] = red.tobytes()
 
             ddict['size']= size
         if 'g' in colorlist:
@@ -508,7 +508,7 @@ class RGBCorrelatorWidget(qt.QWidget):
                                      valmin,
                                      valmax,1)
                 self.__greenImage = green
-                ddict['green'] = green.tostring()
+                ddict['green'] = green.tobytes()
             ddict['size']= size
 
         if 'b' in colorlist:
@@ -537,7 +537,7 @@ class RGBCorrelatorWidget(qt.QWidget):
                                          valmin,
                                          valmax,1)
                 self.__blueImage = blue
-                ddict['blue'] = blue.tostring()
+                ddict['blue'] = blue.tobytes()
             ddict['size'] = size
         image = self.__redImage + self.__greenImage + self.__blueImage
         ddict['image'] = image

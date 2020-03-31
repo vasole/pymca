@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -76,7 +76,7 @@ def convertRGBDataToPNG(data):
     pngData.append(struct.pack(">I", zlib.crc32(IHDRdata) & 0xffffffff))  # CRC
 
     # Add filter 'None' before each scanline
-    preparedData = b'\x00' + b'\x00'.join(line.tostring() for line in data)
+    preparedData = b'\x00' + b'\x00'.join(line.tobytes() for line in data)
     compressedData = zlib.compress(preparedData, 8)
 
     # IDAT chunk: Payload
@@ -142,7 +142,7 @@ def saveImageToFile(data, fileNameOrObj, fileFormat):
         fileObj.write('P6\n')
         fileObj.write('%d %d\n' % (width, height))
         fileObj.write('255\n')
-        fileObj.write(data.tostring())
+        fileObj.write(data.tobytes())
 
     elif fileFormat == 'png':
         fileObj.write(convertRGBDataToPNG(data))
