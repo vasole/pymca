@@ -98,6 +98,12 @@ script:
           pip install $QT_BINDING;
       fi
 
+    - if [ "$TRAVIS_OS_NAME" == "osx"];
+      then
+         pip uninstall $QT_BINDING
+         conda install -c conda-forge qt pyqt
+      fi
+
     # Install from source package
     - pip install --pre --find-links dist/ --no-cache-dir --no-index PyMca5 $PIP_INSTALL_EXTRA_ARGS
 
