@@ -78,18 +78,21 @@ class BAXSCSVFileParser(object):
         _logger.info(line)
         if line.endswith("Simple CSV"):
             _logger.info("Simple CSV")
+            version = "Simple CSV"
             while not line.startswith("1,") and len(line):
                 header.append(line)
                 line = _fileObject.readline()
             line = "1,0"
         elif line.endswith("Complete CSV"):
             _logger.info("Complete CSV")
+            version = "Complete CSV"
             while not line.startswith("Spectrum:") and len(line):
                 header.append(line)
                 line = _fileObject.readline()
             line = _fileObject.readline()
         else:
             _logger.info("AXS Version < 5")
+            version = None
             while not line.startswith("Channel#") and len(line):
                 header.append(line)
                 line = _fileObject.readline()
@@ -122,7 +125,8 @@ class BAXSCSVFileParser(object):
                               scanheader=header,
                               #labels=labels,
                               #motor_values=self.motorValues,
-                              point=False)]
+                              point=False,
+                              version=version)]
 
     def __getitem__(self, item):
         return self._scan[item]
@@ -151,11 +155,12 @@ class BAXSCSVFileParser(object):
 class BAXSCSVScan(SpecFileAbstractClass.SpecFileAbstractScan):
     def __init__(self, data, scantype='MCA',
                  identification="1.1", scanheader=None, labels=None,
-                 motor_values=None, point=False):
+                 motor_values=None, point=False, version=None):
         SpecFileAbstractClass.SpecFileAbstractScan.__init__(self,
                     data, scantype=scantype, identification=identification,
                     scanheader=scanheader, labels=labels, point=point)
         self._data = data
+        self._version = version
 
     def nbmca(self):
         return 1
@@ -193,17 +198,18 @@ class BAXSCSVScan(SpecFileAbstractClass.SpecFileAbstractScan):
                 elif item.startswith("Live Time,") or \
                      item.startswith("LiveTimeInSeconds"):
                     live = float(item.split(",")[1])
-            if self._data.shape[1] == 3:
-                # counts are already corrected
-                live = duration
+            if self._version not in ["Simple CSV", "Complete CSV"]:
+                if self._data.shape[1] == 3:
+                    # counts are already corrected
+                    live = duration
             if (preset > 0) and (duration > 0) and (live > 0):
-                return ["#CTIME %f %f %f" % (preset, live, duration)]
+                return ["#@CTIME %f %f %f" % (preset, live, duration)]
             elif (duration > 0) and (live > 0):
-                return ["#CTIME %f %f %f" % (duration, live, duration)]
+                return ["#@CTIME %f %f %f" % (duration, live, duration)]
             elif (live > 0):
-                return ["#CTIME %f %f %f" % (live, live, live)]
+                return ["#@CTIME %f %f %f" % (live, live, live)]
             elif (duration > 0):
-                return ["#CTIME %f %f %f" % (duration, duration, duration)]
+                return ["#@CTIME %f %f %f" % (duration, duration, duration)]
             else:
                 return []
         else:
@@ -234,6 +240,8 @@ def test(filename):
         print("Not a Bruker AXS File")
     print(sf[0].header('S'))
     print(sf[0].header('D'))
+    print(sf[0].header('@CALIB'))
+    print(sf[0].header('@CTIME'))
     print(sf[0].alllabels())
     #print(sf[0].allmotorsvalues())
     print(sf[0].nbmca())
