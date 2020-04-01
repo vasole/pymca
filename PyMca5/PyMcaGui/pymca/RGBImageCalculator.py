@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -210,8 +210,8 @@ class RGBImageCalculator(qt.QWidget):
             text += "%s" % error[1]
             qt.QMessageBox.critical(self,"%s" % error[0], text)
             return 1
-        self.plotImage()
         self.setName("(%s)" % name)
+        self.plotImage()
 
     def setName(self, name):
         self.name.setText(name)
