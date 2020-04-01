@@ -576,7 +576,7 @@ class RGBCorrelatorWidget(qt.QWidget):
 
         return image_buffer, size, minmax
 
-    def addImage(self, image0, label = None):
+    def addImage(self, image0, label=None):
         image = numpy.array(image0).astype(numpy.float)
         if label is None:
             label = "Unnamed 00"
@@ -584,7 +584,8 @@ class RGBCorrelatorWidget(qt.QWidget):
             while(label in self._imageList):
                 i += 1
                 label = "Unnamed %02d" % i
-        if not len(image): return
+        if not len(image):
+            return
         firstTime = False
         if self.__imageLength is None:
             if not len(image.shape): return
