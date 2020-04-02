@@ -737,7 +737,7 @@ class McaBatchGUI(qt.QWidget):
             qt.QMessageBox.critical(self, "ERROR",'Invalid output directory')
             self.raise_()
             return
-        name = "Batch from %s to %s " % (os.path.basename(self.fileList[ 0]),
+        name = "LegacyBatch from %s to %s " % (os.path.basename(self.fileList[ 0]),
                                           os.path.basename(self.fileList[-1]))
         roifit  = self.__roiBox.isChecked()
         html    = self.__htmlBox.isChecked()
@@ -1601,9 +1601,16 @@ class McaBatchWindow(qt.QWidget):
             else:
                 #this seems to work properly
                 self.close()
+        if self.actions:
+            if hasattr(self.abortButton, "animateClick"):
+                if self.abortButton.text() == "OK":
+                    # click for 100 milliseconds
+                    _logger.debug("onEnd automatically clicking button")
+                    self.abortButton.animateClick(100)
         if self.exitonend:
-            app = qt.QApplication.instance()
-            app.quit()
+            _logger.debug("onEnd close and not quit")
+            self.close()
+        _logger.debug("onEnd returning")
 
     def onReportWritten(self):
         if self.__ended:
@@ -1783,7 +1790,7 @@ def main():
         app.exec_()
     else:
         app.lastWindowClosed.connect(app.quit)
-        text = "Batch from %s to %s" % (os.path.basename(filelist[0]), os.path.basename(filelist[-1]))
+        text = "LegacyBatch from %s to %s" % (os.path.basename(filelist[0]), os.path.basename(filelist[-1]))
         window =  McaBatchWindow(name=text,actions=1,
                                 outputdir=outdir,html=html, htmlindex=htmlindex, table=table,
                                 chunk=chunk, exitonend=exitonend, showresult=showresult)
