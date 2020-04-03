@@ -3,7 +3,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -35,6 +35,9 @@ import sys
 import os
 import numpy
 import types
+import logging
+
+_logger = logging.getLogger(__name__)
 
 #spx file format is based on XML
 import xml.etree.ElementTree as ElementTree
@@ -57,44 +60,129 @@ def myFloat(x):
         else:
             raise
 
-class SPXFileParser(SpecFileAbstractClass.SpecFileAbstractClass):
+class ArtaxFileParser(object):
+    '''
+    Class to read ARTAX .spx or .rtx files
+    '''
     def __init__(self, filename):
-        SpecFileAbstractClass.SpecFileAbstractClass.__init__(self, filename)
+        '''
+        Parameters:
+        -----------
+        filename : str
+            Name of the .rtx file.
+        '''
+
         if not os.path.exists(filename):
             raise IOError("File %s does not exists"  % filename)
+
+        if not isArtaxFile(filename):
+            raise IOError("This does not look as an Artax file")
+
         f = ElementTree.parse(filename)
         root = f.getroot()
+        self._classDict = {}
+        for classType in ['TRTProject',
+                          'TRTBase',
+                          'TScanInfo',
+                          'TRTImageData',
+                          'TRTSpectrum']:
+            content = root.findall(".//ClassInstance[@Type='%s']" % classType)
+            self._classDict[classType] = content
+
+        self._cacheScan = None
+        self._file = os.path.abspath(filename)
+        if self.scanno():
+            self._cacheScan = ArtaxScan(self._classDict["TRTSpectrum"][0], 0, self._file)
+
+    def scanno(self):
+        return len(self._classDict["TRTSpectrum"])
+
+    def __getitem__(self, item):
+        if item == 0 and self._cacheScan:
+            return self._cacheScan
+        else:
+            return ArtaxScan(self._classDict["TRTSpectrum"][item], item, self._file)
+
+    def list(self):
+        return "1:%d" % self.scanno()
+
+    def select(self, key):
+        """
+        key is of the from s.o
+        scan number, scan order
+        """
+        n = key.split(".")
+        return self.__getitem__(int(n[0])-1)
+
+    def allmotors(self):
+        if self.scanno():
+            return self._cacheScan._motorNames * 1
+        else:
+            return []
+
+class ArtaxScan(object):
+    def __init__(self, spectrumNode, number, filename):
+        self._node = spectrumNode
+        self._number = number
+        self.__data = None
+        command = ""
+        if "Type" in spectrumNode.keys():
+            command += "%s" % self._node.attrib["Type"]
+        else:
+            command = "TRTSpectrum"
+        if "Name" in spectrumNode.keys():
+            command += " %s" % self._node.attrib["Name"]
+
+        # we expect only one spectrum (if not we would use findall)
+        self._spectra = [self._node.find(".//Channels")]
+
+        # get the position(s) at which the spectrum was collected
+        keyToSearch = ".//ClassInstance[@Type='TRTAxesHeader']//AxesParameter"
+        self._positions = [self._node.find(keyToSearch)]
+        self._motorNames = []
+        self._motorValues = []
+        for child in self._positions[0]:
+            if "AxisName" in child.attrib:
+                motorName = child.attrib["AxisName"]
+                if "AxisPosition" in child.attrib:
+                    motorValue = myFloat(child.attrib["AxisPosition"])
+                    self._motorNames.append(motorName)
+                    self._motorValues.append(motorValue)
+
+        # get the additional information
         info = {}
-        #I do not use find all, providing support for only one spectrum
         infoKeys = ['HighVoltage', 'TubeCurrent',
                     'RealTime', 'LifeTime', 'DeadTime',
                     'ZeroPeakPosition', 'ZeroPeakFrequency', 'PulseDensity',
                     'Amplification', 'ShapingTime',
                     'Date','Time',
                     'ChannelCount','CalibAbs', 'CalibLin']
+        classTypeList = ['TRTSpectrumHeader',
+                         'TRTGeneratorHeader',
+                         'TRTSpectrumHardwareHeader']
+        for classType in classTypeList:
+            nodeToSearch = ".//ClassInstance[@Type='%s']" % classType
+            target = self._node.find(nodeToSearch)
+            if target is None:
+                print("Unused class = ", classType)
+                continue
+            for child in target:
+                if child.tag in ["Date", "Time"]:
+                    info[child.tag] = child.text
+                elif child.tag in infoKeys:
+                    info[child.tag] = myFloat(child.text)
 
         for key in infoKeys:
-            keyToSearch = './/ClassInstance/%s' % key
-            content = root.find(keyToSearch)
-            if content is not None:
-                info[key] = content.text
-        axes = root.find('.//ClassInstance/AxesParameter')
-        data = numpy.array([float(x) for x in root.find('.//Channels').text.split(',')])
-        data.shape = len(data), 1
+            if key not in info:
+                print("key not found %s" % key)
 
-        scanheader = ['#S 1  ' + info.get('name', "Unknown name")]
+        self._command = command
+        scanheader = []
+        scanheader.append("#S %d %s" % (self._number + 1, self.command()))
         i = 0
-        if axes is not None:
-            for axis in axes:
-                scanheader.append("#U%d %s  %f  %s" % (i,
-                                                 axis.attrib['AxisName'],
-                                                 myFloat(axis.attrib['AxisPosition']),
-                                                 axis.attrib['AxisUnit']))
-                i += 1
         for key in infoKeys:
             scanheader.append("#U%d %s %s" % (i, key, info.get(key, "Unknown")))
             i += 1
-
         liveTime = info.get('LifeTime', None)
         realTime = info.get('RealTime', liveTime)
         if liveTime is not None:
@@ -104,13 +192,101 @@ class SPXFileParser(SpecFileAbstractClass.SpecFileAbstractClass):
 
         scanheader.append("#@CALIB %f %f 0" % (myFloat(info.get('CalibAbs', 0.0)),
                                                myFloat(info.get('CalibLin', 1.0))))
+        self._scanHeader = scanheader
 
-        self.scandata = [SpecFileAbstractClass.SpecFileAbstractScan(data,
-                                scantype="MCA",
-                                scanheader=scanheader)]
+        self._fileHeader = ["#F %s" % filename]
+        if len(self._motorNames):
+            spacing = " " * 4
+            motorsLine = "#O0%s" % spacing
+            for mne in self._motorNames:
+                motorsLine += "%s%s" % (spacing, mne)
+            self._fileHeader.append(motorsLine)
+
+    def _readSpectrum(self, channelsNode):
+        if self.__data is None:
+            self.__data = numpy.array([myFloat(x) for x in channelsNode.text.split(',')],
+                                      dtype=numpy.float32)
+        return self.__data
+
+    def nbmca(self):
+        return len(self._spectra)
+
+    def mca(self, number):
+        return self._readSpectrum(self._spectra[number - 1])
+
+    def alllabels(self):
+        return []
+
+    def allmotorpos(self):
+        return self._motorValues
+
+    def command(self):
+        return self._command
+
+    def date(self):
+        return self._data["TimeStamp"][self._number]
+
+    def fileheader(self): 
+        return self._fileHeader
+
+    def header(self, key):
+        _logger.debug("Requested key = %s", key)
+        _logger.debug("Requested key = %s", key)
+        if key in ['S', '#S']:
+            return self.fileheader()[0]
+        elif key == 'N':
+            return []
+        elif key == 'L':
+            return []
+        elif key in ['D', '@CTIME', '@CALIB', '@CHANN']:
+            for item in self._scanHeader:
+                if item.startswith("#" + key):
+                    return [item]
+            return []
+        elif key == "" or key == " ":
+            return self._scanHeader
+        else:
+            return []
+
+    def order(self):
+        return 1
+
+    def number(self):
+        return self._number + 1
+
+    def lines(self):
+        return 0
+
+def isArtaxFile(filename):
+    try:
+        if filename[-3:].lower() not in ["rtx", "spx"]:
+            return False
+        with open(filename, 'rb') as f:
+            # expected to read an xml file
+            someChar = f.read(20).decode()
+        if someChar[0] == "<" and "xml version" in someChar:
+            return True
+    except:
+        pass
+    return False
 
 def test(filename):
-    SPXFileParser(filename)
+    if isArtaxFile(filename):
+        sf=ArtaxFileParser(filename)
+    else:
+        print("Not an Artax .spx or .rtx File")
+        return
+    sf = ArtaxFileParser(filename)
+    print(sf[0].nbmca())
+    print(sf[0].mca(1))
+    print(sf[0].header('S'))
+    #print(sf[0].header('D'))
+    #print(sf[0].alllabels())
+    print(sf.allmotors())
+    print(sf[0].allmotorpos())
+    print(sf[0].header('@CTIME'))
+    print(sf[0].header('@CALIB'))
+    print(sf[0].header(''))
 
 if __name__ == "__main__":
     test(sys.argv[1])
