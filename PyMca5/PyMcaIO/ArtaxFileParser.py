@@ -39,7 +39,7 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
-#spx file format is based on XML
+#spx and rtx file formats based on XML
 import xml.etree.ElementTree as ElementTree
 from PyMca5.PyMcaIO import SpecFileAbstractClass
 
@@ -69,7 +69,7 @@ class ArtaxFileParser(object):
         Parameters:
         -----------
         filename : str
-            Name of the .rtx file.
+            Name of the .spx or .rtx file.
         '''
 
         if not os.path.exists(filename):
@@ -126,28 +126,27 @@ class ArtaxScan(object):
         self._number = number
         self.__data = None
         command = ""
-        if "Type" in spectrumNode.keys():
-            command += "%s" % self._node.attrib["Type"]
-        else:
-            command = "TRTSpectrum"
         if "Name" in spectrumNode.keys():
-            command += " %s" % self._node.attrib["Name"]
+            command = "%s" % self._node.attrib["Name"]
+        else:
+            command = "TRTSpectrum %d" % number
 
         # we expect only one spectrum (if not we would use findall)
         self._spectra = [self._node.find(".//Channels")]
 
         # get the position(s) at which the spectrum was collected
-        keyToSearch = ".//ClassInstance[@Type='TRTAxesHeader']//AxesParameter"
-        self._positions = [self._node.find(keyToSearch)]
         self._motorNames = []
         self._motorValues = []
-        for child in self._positions[0]:
-            if "AxisName" in child.attrib:
-                motorName = child.attrib["AxisName"]
-                if "AxisPosition" in child.attrib:
-                    motorValue = myFloat(child.attrib["AxisPosition"])
-                    self._motorNames.append(motorName)
-                    self._motorValues.append(motorValue)
+        keyToSearch = ".//ClassInstance[@Type='TRTAxesHeader']//AxesParameter"
+        positionsNode = self._node.find(keyToSearch)
+        if positionsNode:
+            for child in positionsNode:
+                if "AxisName" in child.attrib:
+                    motorName = child.attrib["AxisName"]
+                    if "AxisPosition" in child.attrib:
+                        motorValue = myFloat(child.attrib["AxisPosition"])
+                        self._motorNames.append(motorName)
+                        self._motorValues.append(motorValue)
 
         # get the additional information
         info = {}
@@ -164,7 +163,7 @@ class ArtaxScan(object):
             nodeToSearch = ".//ClassInstance[@Type='%s']" % classType
             target = self._node.find(nodeToSearch)
             if target is None:
-                print("Unused class = ", classType)
+                _logger.debug("Unused class <%s>" % classType)
                 continue
             for child in target:
                 if child.tag in ["Date", "Time"]:
@@ -174,7 +173,7 @@ class ArtaxScan(object):
 
         for key in infoKeys:
             if key not in info:
-                print("key not found %s" % key)
+                _logger.debug("key not found %s" % key)
 
         self._command = command
         scanheader = []
@@ -226,7 +225,7 @@ class ArtaxScan(object):
     def date(self):
         return self._data["TimeStamp"][self._number]
 
-    def fileheader(self): 
+    def fileheader(self):
         return self._fileHeader
 
     def header(self, key):
@@ -264,7 +263,7 @@ def isArtaxFile(filename):
         with open(filename, 'rb') as f:
             # expected to read an xml file
             someChar = f.read(20).decode()
-        if someChar[0] == "<" and "xml version" in someChar:
+        if "xml version" in someChar:
             return True
     except:
         pass
@@ -290,4 +289,3 @@ def test(filename):
 
 if __name__ == "__main__":
     test(sys.argv[1])
-
