@@ -122,6 +122,14 @@ class SpecFileStack(DataObject.DataObject):
                     nTimes = self.nbFiles * (nmca // numberofdetectors)
                     self.info[key] = numpy.zeros((nTimes,), numpy.float32)
 
+            # positioners
+            key = "MotorNames"
+            positioners = None
+            if key in dataObject.info:
+                positioners = {}
+                for mne in dataObject.info[key]:
+                    positioners[mne] = numpy.zeros((nTimes,), numpy.float32)
+
             nTimes = -1
             for tempFileName in filelist:
                 tempInstance = SpecFileDataSource.SpecFileDataSource(tempFileName)
@@ -131,6 +139,8 @@ class SpecFileStack(DataObject.DataObject):
                     numberofmca = info['NbMca']
                     if numberofmca <= 0:
                         continue
+                    # the positioners are for all the mca in the scan
+
                     # only the last mca is read
                     key = "%s.1.%s" % (keyindex, numberofmca)
                     dataObject = tempInstance._getMcaData(key)
@@ -146,9 +156,19 @@ class SpecFileStack(DataObject.DataObject):
                         for timeKey in ["McaElapsedTime", "McaLiveTime"]:
                             if timeKey in dataObject.info:
                                 self.info[timeKey][nTimes] = \
-                                    dataObject.info[timeKey] 
+                                    dataObject.info[timeKey]
+
+                        if positioners and  "MotorNames" in dataObject.info:
+                            for mne in positioners:
+                                if mne in dataObject.info["MotorNames"]:
+                                    mneIdx = \
+                                           dataObject.info["MotorNames"].index(mne)
+                                    positioners[mne][nTimes] = \
+                                             dataObject.info["MotorValues"][mneIdx]
                         self.onProgress(self.incrProgressBar)
                 filecounter += 1
+            if positioners:
+                self.info["positioners"] = positioners
         elif shape is None and (self.nbFiles == 1) and (iterlist == [1]):
             # it can only be here if there is one file
             # it can only be here if there is only one scan
