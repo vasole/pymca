@@ -3,7 +3,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
+# Copyright (c) 2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -147,6 +147,20 @@ class ArtaxScan(object):
                         motorValue = myFloat(child.attrib["AxisPosition"])
                         self._motorNames.append(motorName)
                         self._motorValues.append(motorValue)
+        elif "PDHID" in command and "(X " in command and " Y " in command:
+            # Aaron's approximation to Artax files
+            # we should not crash because of it
+            try:
+                import re
+                expr = r"(?:[XY] \d+(?:[.]\d*)?|[.]\d+)"
+                XY = re.findall(expr, command)
+                if len(XY) == 2:
+                    X, Y = XY
+                    self._motorNames = ["x", "y"]
+                    self._motorValues = [myFloat(X.split(" ")[-1]),
+                                         myFloat(Y.split(" ")[-1])]
+            except:
+                _logger.warning("Could not extract positions from %s" % command)
 
         # get the additional information
         info = {}
