@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -94,7 +94,7 @@ class SpecFileStack(DataObject.DataObject):
         if numberofdetectors == 0:
             raise ValueError("No MCA found in file %s" % filelist[0])
 
-        if (nscans > 1) and ((nmca / numberofdetectors) == nscans):
+        if (nscans > 1) and ((nmca // numberofdetectors) == nscans):
             SLOW_METHOD = True
         else:
             SLOW_METHOD = False
@@ -103,7 +103,7 @@ class SpecFileStack(DataObject.DataObject):
         dataObject = tempInstance._getMcaData(key)
         self.info.update(dataObject.info)
         arrRet = dataObject.data
-        self.onBegin(self.nbFiles * nmca / numberofdetectors)
+        self.onBegin(self.nbFiles * nmca // numberofdetectors)
 
         self.incrProgressBar = 0
         if info['NbMcaDet'] > 1:
@@ -116,15 +116,20 @@ class SpecFileStack(DataObject.DataObject):
                                      nmca // numberofdetectors,
                                      arrRet.shape[0]),
                                      arrRet.dtype.char)
+            nTimes = self.nbFiles * (nmca // numberofdetectors)
             filecounter = 0
-            if "McaLiveTime" in info:
-                nTimes = self.nbFiles * (nmca // numberofdetectors)
-                self.info["McaLiveTime"] = numpy.zeros((nTimes,),
-                                                        numpy.float32)
-            if "McaElapsedTime" in info:
-                nTimes = self.nbFiles * (nmca // numberofdetectors)
-                self.info["McaElapsedTime"] = numpy.zeros((nTimes,),
-                                                        numpy.float32)
+            for key in ["McaLiveTime", "McaElapsedTime"]:
+                if key in dataObject.info:
+                    self.info[key] = numpy.zeros((nTimes,), numpy.float32)
+
+            # positioners
+            key = "MotorNames"
+            positioners = None
+            if key in dataObject.info:
+                positioners = {}
+                for mne in dataObject.info[key]:
+                    positioners[mne] = numpy.zeros((nTimes,), numpy.float32)
+
             nTimes = -1
             for tempFileName in filelist:
                 tempInstance = SpecFileDataSource.SpecFileDataSource(tempFileName)
@@ -134,6 +139,8 @@ class SpecFileStack(DataObject.DataObject):
                     numberofmca = info['NbMca']
                     if numberofmca <= 0:
                         continue
+                    # the positioners are for all the mca in the scan
+
                     # only the last mca is read
                     key = "%s.1.%s" % (keyindex, numberofmca)
                     dataObject = tempInstance._getMcaData(key)
@@ -149,9 +156,19 @@ class SpecFileStack(DataObject.DataObject):
                         for timeKey in ["McaElapsedTime", "McaLiveTime"]:
                             if timeKey in dataObject.info:
                                 self.info[timeKey][nTimes] = \
-                                    dataObject.info[timeKey] 
+                                    dataObject.info[timeKey]
+
+                        if positioners and  "MotorNames" in dataObject.info:
+                            for mne in positioners:
+                                if mne in dataObject.info["MotorNames"]:
+                                    mneIdx = \
+                                           dataObject.info["MotorNames"].index(mne)
+                                    positioners[mne][nTimes] = \
+                                             dataObject.info["MotorValues"][mneIdx]
                         self.onProgress(self.incrProgressBar)
                 filecounter += 1
+            if positioners:
+                self.info["positioners"] = positioners
         elif shape is None and (self.nbFiles == 1) and (iterlist == [1]):
             # it can only be here if there is one file
             # it can only be here if there is only one scan

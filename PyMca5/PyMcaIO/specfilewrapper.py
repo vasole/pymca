@@ -47,10 +47,10 @@ from PyMca5.PyMcaIO import JcampFileParser
 _logger = logging.getLogger(__name__)
 
 try:
-    from PyMca5.PyMcaIO import SPXFileParser
+    from PyMca5.PyMcaIO import ArtaxFileParser
     SPX = True
 except:
-    _logger.info("specfilewrapper cannot import SPXFileParser")
+    _logger.info("specfilewrapper cannot import ArtaxFileParser")
     SPX = False
 
 
@@ -126,9 +126,9 @@ def Specfile(filename):
         #it is a Specfile
         _logger.debug("This looks as a specfile")
         output=specfile.Specfile(filename)
-    elif SPX and filename.upper().endswith("SPX"):
-        _logger.debug("This looks as an SPX file")
-        output = SPXFileParser.SPXFileParser(filename)
+    elif SPX and ArtaxFileParser.isArtaxFile(filename):
+        _logger.debug("This looks as an Artax file")
+        output = ArtaxFileParser.ArtaxFileParser(filename)
     else:
         _logger.debug("this does not look as a specfile")
         if len(line0) > 7:
