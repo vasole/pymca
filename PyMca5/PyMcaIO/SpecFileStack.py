@@ -116,10 +116,10 @@ class SpecFileStack(DataObject.DataObject):
                                      nmca // numberofdetectors,
                                      arrRet.shape[0]),
                                      arrRet.dtype.char)
+            nTimes = self.nbFiles * (nmca // numberofdetectors)
             filecounter = 0
             for key in ["McaLiveTime", "McaElapsedTime"]:
                 if key in dataObject.info:
-                    nTimes = self.nbFiles * (nmca // numberofdetectors)
                     self.info[key] = numpy.zeros((nTimes,), numpy.float32)
 
             # positioners
