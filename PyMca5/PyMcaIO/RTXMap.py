@@ -88,14 +88,16 @@ class RTXMap(DataObject.DataObject):
             for mne in motorNames:
                 positioners[mne] = numpy.zeros((nScans,),
                                                dtype=numpy.float32)
-        liveTime = numpy.zeros((nScans,), dtype=numpy.float32)
+        if ctime:
+            liveTime = numpy.zeros((nScans,), dtype=numpy.float32)
         spectrum = sf[0].mca(1)
         data = numpy.zeros((1, nScans, len(spectrum)),
                             dtype=numpy.float32)
         for i in range(nScans):
             scan = sf[i]
-            ctime = scan.header("@CTIME")[0]
-            liveTime[i] = myFloat(ctime.split()[-2])
+            if ctime:
+                ctime = scan.header("@CTIME")[0]
+                liveTime[i] = myFloat(ctime.split()[-2])
             if positioners:
                 motorPos = scan.allmotorpos()
                 for mneIdx in range(len(motorNames)):
@@ -106,7 +108,8 @@ class RTXMap(DataObject.DataObject):
         self.data = data
         if positioners:
             self.info["positioners"] = positioners
-        self.info["McaLiveTime"] = liveTime
+        if ctime:
+            self.info["McaLiveTime"] = liveTime
         self.info["McaCalib"] = [myFloat(x) for x in calib0[0].split()[1:]]
         self.info["SourceName"] = os.path.abspath(filename)
         
@@ -137,6 +140,7 @@ class RTXMap(DataObject.DataObject):
              numpy.isnan(tScanInfo["ZFirst"]) and \
              numpy.isnan(tScanInfo["ZLast"]):
             _logger.info("XY scan if X and Y are finite")
+            meshType = "XY"
         else:
             meshType = None
 
@@ -191,8 +195,6 @@ class RTXMap(DataObject.DataObject):
             while (i < len(x)) and (numpy.abs(x[i] - x[0]) < reasonableDeltaX):
                 i += 1
             nColumns = i
-        # the scan can be in zig-zag
-        # it is safer to rely on the scatter view
         if nScans % nColumns == 0:
             nRows = nScans // nColumns
             self.data.shape = nRows, nColumns, -1
