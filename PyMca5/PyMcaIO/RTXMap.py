@@ -195,6 +195,8 @@ class RTXMap(DataObject.DataObject):
             while (i < len(x)) and (numpy.abs(x[i] - x[0]) < reasonableDeltaX):
                 i += 1
             nColumns = i
+        # the scan can be in zig-zag
+        # it is safer to rely on the scatter view
         if nScans % nColumns == 0:
             nRows = nScans // nColumns
             self.data.shape = nRows, nColumns, -1
