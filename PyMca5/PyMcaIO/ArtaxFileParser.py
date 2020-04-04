@@ -81,13 +81,15 @@ class ArtaxFileParser(object):
         f = ElementTree.parse(filename)
         root = f.getroot()
         self._classDict = {}
-        for classType in ['TRTProject',
-                          'TRTBase',
-                          'TScanInfo',
-                          'TRTImageData',
+        for classType in [#'TRTProject',
+                          #'TRTBase',
+                          #'TScanInfo',
+                          #'TRTImageData',
                           'TRTSpectrum']:
             content = root.findall(".//ClassInstance[@Type='%s']" % classType)
             self._classDict[classType] = content
+
+        self.__artaxTScanInfo = self.__getArtaxTScanInfo(root)
 
         self._cacheScan = None
         self._file = os.path.abspath(filename)
@@ -95,6 +97,44 @@ class ArtaxFileParser(object):
             self._cacheScan = ArtaxScan(self._classDict["TRTSpectrum"][0], 0, self._file)
             self._lastScan = 0
 
+    @property
+    def artaxTScanInfo(self):
+        return self.__artaxTScanInfo
+
+    def __getArtaxTScanInfo(self, root):
+        # obtain some Artax Map specific information
+        node = root.find(".//ClassInstance[@Type='TScanInfo']")
+        scanInfoKeys = ["XFirst",
+                        "YFirst",
+                        "ZFirst",
+                        "XLast",
+                        "YLast",
+                        "ZLast",
+                        "MeasNo", # number of spectra
+                        "Mapping"]
+        scanInfo = {}
+        if node:
+            for child in node:
+                if child.tag in scanInfoKeys:
+                    key = child.tag
+                    if key == "Mapping":
+                        if child.text.upper() == "TRUE":
+                            scanInfo[key] = True
+                        else:
+                            scanInfo[key] = False
+                    else:
+                        scanInfo[key] = myFloat(child.text)
+
+        for key in scanInfoKeys:
+            if key in scanInfo:
+                continue
+            if key == "Mapping":
+                scanInfo[key] = False
+            else:
+                scanInfo[key] = numpy.nan
+        # done with the Artax map specific information
+        return scanInfo
+        
     def scanno(self):
         return len(self._classDict["TRTSpectrum"])
 
