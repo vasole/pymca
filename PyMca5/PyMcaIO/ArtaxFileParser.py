@@ -93,15 +93,19 @@ class ArtaxFileParser(object):
         self._file = os.path.abspath(filename)
         if self.scanno():
             self._cacheScan = ArtaxScan(self._classDict["TRTSpectrum"][0], 0, self._file)
+            self._lastScan = 0
 
     def scanno(self):
         return len(self._classDict["TRTSpectrum"])
 
     def __getitem__(self, item):
-        if item == 0 and self._cacheScan:
-            return self._cacheScan
+        if item == self._lastScan and self._cacheScan:
+            scan = self._cacheScan
         else:
-            return ArtaxScan(self._classDict["TRTSpectrum"][item], item, self._file)
+            scan = ArtaxScan(self._classDict["TRTSpectrum"][item], item, self._file)
+            self._lastScan = item
+            self._cacheScan = scan
+        return scan
 
     def list(self):
         return "1:%d" % self.scanno()
