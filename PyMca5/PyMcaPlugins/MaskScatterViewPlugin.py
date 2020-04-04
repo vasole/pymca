@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -281,8 +281,25 @@ class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
         scatterView.getMaskToolsWidget().sigMaskChanged.connect(
                 callback)
 
-        scatterView.setNumPoints(self._getNumStackPoints())
-        scatterView.fillPositioners(self._getStackPositioners())
+        nPoints = self._getNumStackPoints()
+        scatterView.setNumPoints(nPoints)
+        positioners = self._getStackPositioners()
+        scatterView.fillPositioners(positioners)
+
+        # try to figure out if there are good X and Y candidates
+        X = None
+        Y = None
+        for key in positioners:
+            if key.lower() == "x":
+                if len(positioners[key]) == nPoints: 
+                    X = key
+            elif key.lower() == "y":
+                if len(positioners[key]) == nPoints: 
+                    Y = key
+        if X:
+            scatterView._axesSelector.xPositioner.setCurrentText(X)
+        if Y:
+            scatterView._axesSelector.yPositioner.setCurrentText(Y)
 
     def _showWidgetMpl(self):
         self._showWidget(backend="mpl")
