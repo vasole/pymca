@@ -48,7 +48,6 @@ from PyMca5 import Plugin1DBase
 from PyMca5.PyMcaGui import MaskImageWidget
 from PyMca5.PyMcaGui import PyMcaQt as qt
 
-
 class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
     def __init__(self, plotWindow, **kw):
         Plugin1DBase.Plugin1DBase.__init__(self, plotWindow, **kw)
@@ -131,7 +130,7 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
             fixedMotorMne = "xes_dn_ana"
             CHESS = True
             msg = "Please use CHESS provided plugin. Contact beamline staff"
-            raise NotImplemented(msg)
+            raise RuntimeError(msg)
         elif (self._xLabel == "energy") and ("xes_en" in motorNames):
             # BM20 case
             fixedMotorMne = "xes_en"
