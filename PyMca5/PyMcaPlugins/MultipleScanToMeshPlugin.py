@@ -48,8 +48,6 @@ from PyMca5 import Plugin1DBase
 from PyMca5.PyMcaGui import MaskImageWidget
 from PyMca5.PyMcaGui import PyMcaQt as qt
 
-
-
 class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
     def __init__(self, plotWindow, **kw):
         Plugin1DBase.Plugin1DBase.__init__(self, plotWindow, **kw)
@@ -119,7 +117,7 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
 
         if self._xLabel not in \
            ["energy", "Energy", "Spec.Energy", "arr_hdh_ene", "Mono.Energy"]:
-            msg = "X axis does not correspond to a BM20, ID26 or CHESS RIXS scan"
+            msg = "X axis does not correspond to a supported RIXS scan"
             raise ValueError(msg)
 
         motorNames = allCurves[0][3]["MotorNames"]
@@ -131,6 +129,8 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
             # CHESS
             fixedMotorMne = "xes_dn_ana"
             CHESS = True
+            msg = "Please use CHESS provided plugin. Contact beamline staff"
+            raise RuntimeError(msg)
         elif (self._xLabel == "energy") and ("xes_en" in motorNames):
             # BM20 case
             fixedMotorMne = "xes_en"
