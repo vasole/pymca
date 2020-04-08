@@ -14,12 +14,12 @@ then
     #$PYTHON_EXE -m venv $VENV_DIR
     #source $VENV_DIR/bin/activate
 # Alternative python3 installation using miniconda
-    curl -o miniconda_installer.sh "https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh"
+    curl -o miniconda_installer.sh "https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh"
     bash miniconda_installer.sh -b -p miniconda
     export PATH="`pwd`/miniconda/bin":$PATH
 else
 # Alternative python2 installation using miniconda
-    curl -o miniconda_installer.sh "https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh"
+    curl -o miniconda_installer.sh "https://repo.anaconda.com/miniconda/Miniconda2-latest-MacOSX-x86_64.sh"
     bash miniconda_installer.sh -b -p miniconda
     export PATH="`pwd`/miniconda/bin":$PATH
 fi
