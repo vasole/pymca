@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -188,7 +188,7 @@ class TomoRecons(qt.QWidget):
                     duplicated[I0] = ['i0', 'it']
             elif self._giveItCheckBox.isChecked() and It in fluoSinograms:
                 duplicated[It] = ['it', 'sinogram to reconstruct']
-            return None if len(duplicated) is 0 else duplicated
+            return None if len(duplicated) == 0 else duplicated
 
     def sizeHint(self):
         return qt.QSize(400, 600)
@@ -280,9 +280,9 @@ class FluoSinoReconsSelectionTable(SelectionTable):
 
     def getItSelection(self):
         nSelection = len(self.getSelection()['it'])
-        if nSelection is 0:
+        if nSelection == 0:
             return None
-        elif nSelection is 1:
+        elif nSelection == 1:
             index = self.getSelection()['it']
             assert(len(index) is 1)
             return self.getSelection()['name'][index[0]]
@@ -291,11 +291,11 @@ class FluoSinoReconsSelectionTable(SelectionTable):
 
     def getI0Selection(self):
         nSelection = len(self.getSelection()['i0'])
-        if nSelection is 0:
+        if nSelection == 0:
             return None
-        elif nSelection is 1:
+        elif nSelection == 1:
             index = self.getSelection()['i0']
-            assert(len(index) is 1)
+            assert(len(index) == 1)
             return self.getSelection()['name'][index[0]]
         else:
             raise ValueError('multiple sinogram set as I0, shouldn\'t happen')
@@ -326,11 +326,11 @@ class TxSinoReconsSelectionTable(SelectionTable):
 
     def getI0Selection(self):
         nSelection = len(self.getSelection()['i0'])
-        if nSelection is 0:
+        if nSelection == 0:
             return None
-        elif nSelection is 1:
+        elif nSelection == 1:
             index = self.getSelection()['i0']
-            assert(len(index) is 1)
+            assert(len(index) == 1)
             return self.getSelection()['name'][index[0]]
         else:
             raise ValueError('multiple sinogram set as I0, shouldn\'t happen')
