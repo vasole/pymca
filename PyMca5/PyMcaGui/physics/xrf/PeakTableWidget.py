@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -351,13 +351,13 @@ class PeakTableWidget(QTable):
         if name in self.peaks:
             row=self.peaks[name]['line']
             for key in keylist:
-              if key is not 'name':
+              if key != 'name':
                 if key in self.peaks[name]['fields']:
                     col=self.peaks[name]['fields'].index(key)
                     oldvalue=self.peaks[name][key]
-                    if key is 'code':
+                    if key == 'code':
                         newvalue = QString(str(kw[key]))
-                    elif key is 'element':
+                    elif key == 'element':
                         newvalue = str(kw[key]).split()[0]
                         if newvalue == "-":
                             self.peaks[name][key+"_item"].setCurrentIndex(0)
@@ -367,13 +367,13 @@ class PeakTableWidget(QTable):
                             self.myslot(row,col)
                         except:
                             _logger.warning("Error setting element")
-                    elif key is 'elementline':
+                    elif key == 'elementline':
                         try:
                             iv = self.peaks[name][key+"_item"].findText(QString(kw[key]))
                             self.peaks[name][key+"_item"].setCurrentIndex(iv)
                         except:
                             _logger.warning("Error setting elementline")
-                    elif key is 'use':
+                    elif key == 'use':
                         if kw[key]:
                             self.peaks[name][key] = 1
                         else:
@@ -429,7 +429,7 @@ class PeakTableWidget(QTable):
                     else:
                         if len(str(kw[key])):
                             newvalue=float(str(kw[key]))
-                            if key is 'sigma':
+                            if key == 'sigma':
                                 newvalue= "%6.3g" % newvalue
                             else:
                                 newvalue= "%8g" % newvalue

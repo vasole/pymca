@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -615,10 +615,10 @@ class Parameters(QTable):
             return 1
         if name in self.parameters:
             for key in kw.keys():
-                if key is not 'name':
+                if key != 'name':
                     if key in self.parameters[name]['fields']:
                         oldvalue = self.parameters[name][key]
-                        if key is 'code':
+                        if key == 'code':
                             newvalue = QString(str(kw[key]))
                         else:
                             if len(str(kw[key])):
@@ -630,7 +630,7 @@ class Parameters(QTable):
                                         keyDone = True
                                 if not keyDone:
                                     newvalue = float(str(kw[key]))
-                                    if key is 'sigma':
+                                    if key == 'sigma':
                                         newvalue = "%6.3g" % newvalue
                                     else:
                                         newvalue = "%8g" % newvalue
@@ -638,7 +638,7 @@ class Parameters(QTable):
                                 newvalue = ""
                             newvalue = QString(newvalue)
                         #avoid endless recursivity
-                        if key is not 'code':
+                        if key != 'code':
                             if self.validate(name, key, oldvalue, newvalue):
                                 self.parameters[name][key] = newvalue
                             else:
@@ -648,7 +648,7 @@ class Parameters(QTable):
                         newvalue = QString(str(kw[key]))
                         self.parameters[name][key] = newvalue
             _logger.debug("error = %s", error)
-            if 'code' in kw.keys():
+            if 'code' in kw:
                 newvalue = QString(kw['code'])
                 self.parameters[name]['code'] = newvalue
                 if QTVERSION < '4.0.0':
@@ -659,36 +659,36 @@ class Parameters(QTable):
                             self.parameters[name]['code_item'].setCurrentIndex(i)
                             break
                 if str(self.parameters[name]['code']) == 'QUOTED':
-                    if 'val1' in kw.keys():
+                    if 'val1' in kw:
                         self.parameters[name]['vmin'] = self.parameters[name]['val1']
-                    if 'val2' in kw.keys():
+                    if 'val2' in kw:
                         self.parameters[name]['vmax'] = self.parameters[name]['val2']
                 if str(self.parameters[name]['code']) == 'DELTA':
-                    if 'val1'in kw.keys():
+                    if 'val1'in kw:
                         if kw['val1'] in self.paramlist:
                             self.parameters[name]['relatedto'] = kw['val1']
                         else:
                             self.parameters[name]['relatedto'] =\
                                  self.paramlist[int(float(str(kw['val1'])))]
-                    if 'val2'in kw.keys():
+                    if 'val2'in kw:
                         self.parameters[name]['delta'] = self.parameters[name]['val2']
                 if str(self.parameters[name]['code']) == 'SUM':
-                    if 'val1' in kw.keys():
+                    if 'val1' in kw:
                         if kw['val1'] in self.paramlist:
                             self.parameters[name]['relatedto'] = kw['val1']
                         else:
                             self.parameters[name]['relatedto'] =\
                                  self.paramlist[int(float(str(kw['val1'])))]
-                    if 'val2' in kw.keys():
+                    if 'val2' in kw:
                         self.parameters[name]['sum'] = self.parameters[name]['val2']
                 if str(self.parameters[name]['code']) == 'FACTOR':
-                    if 'val1'in kw.keys():
+                    if 'val1'in kw:
                         if kw['val1'] in self.paramlist:
                             self.parameters[name]['relatedto'] = kw['val1']
                         else:
                             self.parameters[name]['relatedto'] =\
                                  self.paramlist[int(float(str(kw['val1'])))]
-                    if 'val2'in kw.keys():
+                    if 'val2'in kw:
                         self.parameters[name]['factor'] = self.parameters[name]['val2']
             else:
                 #Update the proper parameter in case of change in val1 and val2
