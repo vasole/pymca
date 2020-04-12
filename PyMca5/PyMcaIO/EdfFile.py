@@ -967,6 +967,10 @@ class  EdfFile(object):
         elif self.File.closed:
             _logger.debug("Reopening closed file")
             accessMode = self.File.mode
+            if accessMode == "w":
+                accessMode = "a"
+            elif accessMode == "wb":
+                accessMode = "ab"
             fileName = self.File.name
             newFile = open(fileName, accessMode)
             self.File  = newFile
