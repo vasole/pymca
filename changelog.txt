@@ -3,15 +3,20 @@ VERSION 5.5.5
 
 - XRF. Allow to use up to 15 elements to refine the sample matrix. 
 
+- IO. Support ARTAX files in PyMca Main window.
+
+- IO. Read motor positions from ARTAX files.
+
 - IO. Correct issues reading ARTAX and Olympus files in MacOS.
 
 - ROI Imaging. Allow to choose to perform PCA on standardized data.
+
+- ROI Imaging. Allow multiple slaves.
 
 - ROI Imaging. Do not close application when deleting slave stacks.
 
 - Plugins. Correct MotorInfo problem of table containing duplicates. 
 
-- Plugins. MultipleScanToMesh Support RIXS maps from CHESS.
 
 VERSION 5.5.4
 -------------
