@@ -51,10 +51,12 @@ import numpy
 import logging
 
 from PyMca5 import StackPluginBase
+from PyMca5.PyMcaMath.mva import KMeans
 from PyMca5.PyMcaGui import CalculationThread
 
 from PyMca5.PyMcaGui.math.PCAWindow import PCAParametersDialog
 from PyMca5.PyMcaGui import StackPluginResultsWindow
+from PyMca5.PyMcaGui import MaskImageWidget
 from PyMca5.PyMcaGui import PyMca_Icons
 
 qt = StackPluginResultsWindow.qt
@@ -71,22 +73,34 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
                                     "Show last results",
                                     PyMca_Icons.brushselect]}
         self.__methodKeys = ['Calculate', 'Show']
+        if KMeans.KMEANS:
+            self.methodDict['KMeans'] = [self._showKMeansWidget,
+                                         "KMeans",
+                                         None]
+            self.__methodKeys.append('KMeans')
         self.configurationWidget = None
         self.widget = None
+        self._kMeansWidget = None
         self.thread = None
 
     def stackUpdated(self):
         _logger.debug("PCAStackPlugin.stackUpdated() called")
         self.configurationWidget = None
         self.widget = None
+        self._kMeansWidget = None
 
     def selectionMaskUpdated(self):
         if self.widget is None:
             return
         if self.widget.isHidden():
-            return
+            if self._kMeansWidget is None:
+                return
+            elif self._kMeansWidget.isHidden():
+                return
         mask = self.getStackSelectionMask()
         self.widget.setSelectionMask(mask)
+        if self._kMeansWidget:
+            self._kMeansWidget.setSelectionMask(mask)
 
     def mySlot(self, ddict):
         _logger.debug("mySlot %s %s", ddict['event'], ddict.keys())
@@ -316,9 +330,36 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
         #update
         self.selectionMaskUpdated()
 
+    def _showKMeansWidget(self):
+        imageList = self.widget.imageList
+        if hasattr(imageList, "shape"):
+            nImages = imageList.shape[0]
+        else:
+            nImages = len(imageList)
+        nRows, nColumns = imageList[0].shape
+        data = numpy.zeros((nRows, nColumns, nImages), numpy.float32)
+        for i in range(nImages):
+            data[:, :, i] = imageList[i] 
+        view = data[:]
+        view.shape = -1, nImages
+        if self._kMeansWidget is None:
+            self._kMeansWidget = MaskImageWidget.MaskImageWidget()
+            print(view.shape)
+            labels = KMeans.label(view, k=int(min(nImages, 4)))
+            labels.shape = nRows, nColumns
+            print(labels.shape)
+            print(type(labels), )
+            self._kMeansWidget.sigMaskImageWidgetSignal.connect(self.mySlot)
+            self._kMeansWidget.setImageData(labels)
+
+        #Show
+        self._kMeansWidget.show()
+        self._kMeansWidget.raise_()
+
+        #update
+        self.selectionMaskUpdated()
+
 MENU_TEXT = "PyMca PCA"
-
-
 def getStackPluginInstance(stackWindow, **kw):
     ob = PCAStackPlugin(stackWindow)
     return ob
