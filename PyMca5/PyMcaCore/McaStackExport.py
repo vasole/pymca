@@ -31,21 +31,32 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
+import numpy
 import posixpath
 import h5py
 import logging
 _logger = logging.getLogger(__name__)
 
-def exportStackList(filename, stackList, channels=None, calibration=None):
-    if isinstance(filename, h5py.File):
-        h5 = filename
-        ownFile = False
-    else:
-        h5 = h5py.File(filename, "w-")
-        ownFile = True
+def exportStackList(stackList, filename, channels=None, calibration=None):
     if hasattr(stackList, "data") and hasattr(stackList, "info"):
         stackList = [stackList]
+    if isinstance(filename, h5py.File):
+        h5 = filename
+        _exportStackList(stackList,
+                         h5,
+                         channels=channels,
+                         calibration=calibration)
+    else:
+        h5 = h5py.File(filename, "w-")
+        try:
+            _exportStackList(stackList,
+                             h5,
+                             channels=channels,
+                             calibration=calibration)
+        finally:
+            h5.close()
 
+def _exportStackList(stackList, h5, channels=None, calibration=None):
     # initialize the entry
     entryName = "stack"
     entry = h5.require_group(entryName)
@@ -60,15 +71,16 @@ def exportStackList(filename, stackList, channels=None, calibration=None):
     for stack in stackList:
         detectorName = "detector_%02d" % i
         detector = instrument.require_group(detectorName)
-        detector.attrs["NX_class"] = u"detector"
-        detectorPath = posixpath.join(entryName,instrumentName,detectorName)
+        detector.attrs["NX_class"] = u"NXdetector"
+        detectorPath = posixpath.join("/",
+                                      entryName,
+                                      instrumentName,
+                                      detectorName)
         exportStack(stack,
                     h5,
                     detectorPath,
                     channels=channels,
                     calibration=calibration)
-        if ownFile:
-            h5.flush()
         dataPath = posixpath.join(detectorPath, "data")
         dataTargets.append(dataPath)
         i += 1
@@ -81,7 +93,7 @@ def exportStackList(filename, stackList, channels=None, calibration=None):
     auxiliary = []
     for target in dataTargets:
         name = posixpath.basename(posixpath.dirname(target))
-        measurement[name] = h5py.SoftLink[target]
+        measurement[name] = h5py.SoftLink(target)
         if i == 0:
             measurement.attrs["signal"] = name
         else:
@@ -93,16 +105,12 @@ def exportStackList(filename, stackList, channels=None, calibration=None):
             dtype = h5py.special_dtype(vlen=str)
         measurement.attrs["auxiliary_signals"] = numpy.array(auxiliary,
                                                              dtype=dtype)
-    if ownFile:
-        h5.flush()
-        h5.close()
+    h5.flush()
 
 def exportStack(stack, h5object, path, channels=None, calibration=None):
     """
     Exports the stack to the given HDF5 file object and path
     """
-    if not H5PY:
-        raise ImportError("h5py not available")
     h5g = h5object.require_group(path)
 
     # destination should be an NXdetector group
@@ -127,9 +135,9 @@ def exportStack(stack, h5object, path, channels=None, calibration=None):
     if len(data.shape) > 1:
         if mcaIndex == 0:
             if len(data.shape) == 3:
-                data.attrs["interpretation"] = u"image"
+                dataset.attrs["interpretation"] = u"image"
         else:
-            data.attrs["interpretation"] = u"spectrum"
+            dataset.attrs["interpretation"] = u"spectrum"
 
     # get the calibration
     if calibration is None:
@@ -138,12 +146,12 @@ def exportStack(stack, h5object, path, channels=None, calibration=None):
 
     # get the time
     for key in ["McaLiveTime", "live_time"]:
-        if info.get(key, None):
+        if key in info and info[key] is not None:
             # TODO: live time can actually be elapsed time!!!
             h5g["live_time"] =  numpy.array(info[key], copy=False)
 
     for key in ["preset_time", "elapsed_time"]:
-        if info.get(key, None):
+        if key in info and info[key] is not None:
             h5g[key] =  numpy.array(info[key], copy=False)
 
     # get the channels
@@ -153,17 +161,17 @@ def exportStack(stack, h5object, path, channels=None, calibration=None):
                 if len(stack.x):
                     channels = stack.x[0]
 
-    if channels:
+    if channels is not None:
         h5g["channels"] = numpy.array(channels, copy=False)
 
     # the positioners
-    if info.get("positioners", None):
-        posGroupPath = posixpath.join(posixpath.dirname(path),
-                                      "positioners")
+    posKey = "positioners"
+    if posKey in info and info[posKey] is not None:
+        posGroupPath = posixpath.join(posixpath.dirname(path), posKey)
         posGroup = h5object.require_group(posGroupPath)
         att = "NX_class"
         if att not in posGroup.attrs:
             posGroup.attrs[att] = u"NXcollection"
-        for key in info["positioners"]:
+        for key in info[posKey]:
             if key not in posGroup:
-                posGroup[key] = numpy.array(info[key], copy=False)
+                posGroup[key] = numpy.array(info[posKey][key], copy=False)
