@@ -1,4 +1,4 @@
-#!python
+#!c:\program files\python36\python.exe
 
 import os
 import sys
@@ -11,7 +11,7 @@ else:
     f = open(fname, "rb")
     code_txt = f.read()
     f.close()
-    if sys.version_info < (3, 7):
+    if sys.version_info < (3, 6):
         code = compile(code_txt, fname, 'exec')
     else:
         code = code_txt
