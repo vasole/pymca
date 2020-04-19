@@ -9,6 +9,10 @@ if sys.version < '3.0':
     execfile(fname)
 else:
     f = open(fname, "rb")
-    code = f.read()
+    code_txt = f.read()
     f.close()
+    if sys.version_info < (3, 6):
+        code = compile(code_txt, fname, 'exec')
+    else:
+        code = code_txt
     exec(code)
