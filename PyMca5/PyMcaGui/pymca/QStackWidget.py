@@ -481,16 +481,26 @@ class QStackWidget(StackBase.StackBase,
             view = self._stack.data[row0:row1+1, col0:col1+1, :]
         return view
 
-    def exportStackList(self):
-        filename = self._getOutputHDF5Filename()
-        if not len(filename):
-            return
+    def exportStackList(self, filename=None):
+        if filename is None:
+            filename = self._getOutputHDF5Filename()
+            if not len(filename):
+                return
+            # the user already confirmed overwriting and McaStackExport does not
+            # delete an existing file
+            if os.path.exists(filename):
+                os.remove(filename)
         McaStackExport.exportStackList(self.getStackDataObjectList(), filename)
 
-    def exportStack(self):
-        filename = self._getOutputHDF5Filename()
-        if not len(filename):
-            return
+    def exportStack(self, filename=None):
+        if filename is None:
+            filename = self._getOutputHDF5Filename()
+            if not len(filename):
+                return
+            # the user already confirmed overwriting and McaStackExport does not
+            # delete an existing file
+            if os.path.exists(filename):
+                os.remove(filename)
         McaStackExport.exportStackList([self.getStackDataObject()], filename)
 
     def saveStackAsNeXus(self, dtype=None, interpretation=None, compression=False):
