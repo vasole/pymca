@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2019 European Synchrotron Radiation Facility
+# Copyright (c) 2019-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -138,6 +138,10 @@ def chunkIndexGen(start, stop, step):
 
 
 def possitive_index(i, n):
+    _logger.warning("Use positive_index")
+    return positive_index(i, n)
+
+def positive_index(i, n):
     """
     :param int i:
     :param int n:
@@ -162,7 +166,7 @@ def chunkIndexParameters(shape, nChunksMax, chunkAxes=None, axesOrder=None,
     ndim = len(shape)
     if chunkAxes is None:
         chunkAxes = tuple()
-    chunkAxes = tuple(possitive_index(i, ndim) for i in chunkAxes)
+    chunkAxes = tuple(positive_index(i, ndim) for i in chunkAxes)
     if chunkAxesSlice is None:
         chunkAxesSlice = (slice(None),)*len(chunkAxes)
     else:
@@ -175,7 +179,7 @@ def chunkIndexParameters(shape, nChunksMax, chunkAxes=None, axesOrder=None,
     if axesOrder is None:
         axesOrder = aAxesOrder
     else:
-        axesOrder = tuple(possitive_index(i, ndim) for i in axesOrder)
+        axesOrder = tuple(positive_index(i, ndim) for i in axesOrder)
         if list(sorted((axesOrder))) != list(sorted((aAxesOrder))):
             raise ValueError('axesOrder and chunkAxes do not correspond')
     nChunksMax = max(nChunksMax, 1)

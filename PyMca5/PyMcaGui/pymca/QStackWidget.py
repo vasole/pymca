@@ -114,6 +114,7 @@ from PyMca5.PyMcaGui import PyMcaFileDialogs
 from PyMca5.PyMcaCore import DataObject
 from PyMca5.PyMcaGui.pymca import McaWindow
 from PyMca5.PyMcaCore import StackBase
+from PyMca5.PyMcaCore import McaStackExport
 from PyMca5.PyMcaGui import CloseEventNotifyingWidget
 from PyMca5.PyMcaGui import MaskImageWidget
 convertToRowAndColumn = MaskImageWidget.convertToRowAndColumn
@@ -190,6 +191,11 @@ class QStackWidget(StackBase.StackBase,
                                                     aspect=True)
         self._stackSaveMenu = qt.QMenu()
         if HDF5:
+            if self.master:
+                self._stackSaveMenu.addAction(QString("Export All Stacks Workspace"),
+                                                         self.exportStackList)
+            self._stackSaveMenu.addAction(QString("Export Stack Workspace"),
+                                                         self.exportStack)
             self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Spectra"),
                                              self.saveStackAsNeXusSpectra)
             self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Images"),
@@ -474,6 +480,28 @@ class QStackWidget(StackBase.StackBase,
             col1 = int(min([col1+0.5, self._stack.data.shape[1]]))
             view = self._stack.data[row0:row1+1, col0:col1+1, :]
         return view
+
+    def exportStackList(self, filename=None):
+        if filename is None:
+            filename = self._getOutputHDF5Filename()
+            if not len(filename):
+                return
+            # the user already confirmed overwriting and McaStackExport does not
+            # delete an existing file
+            if os.path.exists(filename):
+                os.remove(filename)
+        McaStackExport.exportStackList(self.getStackDataObjectList(), filename)
+
+    def exportStack(self, filename=None):
+        if filename is None:
+            filename = self._getOutputHDF5Filename()
+            if not len(filename):
+                return
+            # the user already confirmed overwriting and McaStackExport does not
+            # delete an existing file
+            if os.path.exists(filename):
+                os.remove(filename)
+        McaStackExport.exportStackList([self.getStackDataObject()], filename)
 
     def saveStackAsNeXus(self, dtype=None, interpretation=None, compression=False):
         mcaIndex = self._stack.info.get('McaIndex', -1)

@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -336,10 +336,8 @@ class StackBase(object):
         if self._stack.x in [None, []]:
             self._stack.x = [numpy.arange(len(mcaData0)).astype(numpy.float)+\
                                 self._stack.info.get('Channel0', 0.0)]
-            dataObject.x = [self._stack.x[0]]
-        else:
-            # for the time being it can only contain one axis
-            dataObject.x = [self._stack.x[0]]
+        # for the time being it can only contain one axis
+        dataObject.x = [self._stack.x[0]]
 
         dataObject.y = [mcaData0]
 
