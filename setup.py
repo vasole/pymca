@@ -615,32 +615,27 @@ class smart_install_scripts(install_scripts):
             if os.path.exists(filedest):
                 os.remove(filedest)
             moddir = os.path.join(PYMCA_INSTALL_DIR, "PyMca5", "PyMcaGui")
-            if 0:
-                f = open(filein, 'r')
-                modfile = f.readline().replace("\n", "")
-                f.close()
+            basename = os.path.basename(filein)
+            if basename.startswith('pymcabatch'):
+                modfile = os.path.join("pymca", 'PyMcaBatch.py')
+            elif basename.startswith('pymcapostbatch') or\
+                 basename.startswith('rgbcorrelator'):
+                modfile = os.path.join("pymca", 'PyMcaPostBatch.py')
+            elif basename.startswith('pymcaroitool'):
+                modfile = os.path.join("pymca", 'QStackWidget.py')
+            elif basename.startswith('mca2edf'):
+                modfile = os.path.join("pymca", 'Mca2Edf.py')
+            elif basename.startswith('edfviewer'):
+                modfile = os.path.join("pymca", 'EdfFileSimpleViewer.py')
+            elif basename.startswith('peakidentifier'):
+                modfile = os.path.join("physics", "xrf", 'PeakIdentifier.py')
+            elif basename.startswith('elementsinfo'):
+                modfile = os.path.join("physics", "xrf", 'ElementsInfo.py')
+            elif basename.startswith('pymca'):
+                modfile = os.path.join("pymca", 'PyMcaMain.py')
             else:
-                basename = os.path.basename(filein)
-                if basename.startswith('pymcabatch'):
-                    modfile = os.path.join("pymca", 'PyMcaBatch.py')
-                elif basename.startswith('pymcapostbatch') or\
-                     basename.startswith('rgbcorrelator'):
-                    modfile = os.path.join("pymca", 'PyMcaPostBatch.py')
-                elif basename.startswith('pymcaroitool'):
-                    modfile = os.path.join("pymca", 'QStackWidget.py')
-                elif basename.startswith('mca2edf'):
-                    modfile = os.path.join("pymca", 'Mca2Edf.py')
-                elif basename.startswith('edfviewer'):
-                    modfile = os.path.join("pymca", 'EdfFileSimpleViewer.py')
-                elif basename.startswith('peakidentifier'):
-                    modfile = os.path.join("physics", "xrf", 'PeakIdentifier.py')
-                elif basename.startswith('elementsinfo'):
-                    modfile = os.path.join("physics", "xrf", 'ElementsInfo.py')
-                elif basename.startswith('pymca'):
-                    modfile = os.path.join("pymca", 'PyMcaMain.py')
-                else:
-                    print("ignored %s" % filein)
-                    continue
+                print("ignored %s" % filein)
+                continue
             text = "#!/bin/bash\n"
             text += "export PYTHONPATH=%s:${PYTHONPATH}\n" % PYMCA_INSTALL_DIR
             # deal with sys.executables not named python
