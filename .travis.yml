@@ -10,13 +10,6 @@ matrix:
         #      - BUILD_COMMAND=sdist
         #      - QT_BINDING=PySide2
 
-        - language: generic
-          os: osx
-          env: 
-              - BUILD_COMMAND=bdist_wheel
-              - PYTHON_VERSION=3
-              - QT_BINDING=PyQt5
-
         - python: 3.8
           os: linux
           env:
@@ -36,6 +29,13 @@ matrix:
         #      - BUILD_COMMAND=bdist_wheel
         #      - PYTHON_VERSION=2
         #      - QT_BINDING=PySide2
+
+        - language: generic
+          os: osx
+          env: 
+              - BUILD_COMMAND=bdist_wheel
+              - PYTHON_VERSION=3
+              - QT_BINDING=PyQt5
 
 branches:
     only:
