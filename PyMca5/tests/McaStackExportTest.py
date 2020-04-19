@@ -62,14 +62,14 @@ class testMcaStackExport(unittest.TestCase):
 
     def tearDown(self):
         gc.collect()
+        if self._h5File is not None:
+            fileName = self._h5File
+            if os.path.exists(fileName):
+                os.remove(fileName)
         if self._outputDir is not None:
             shutil.rmtree(self._outputDir, ignore_errors=True)
             if os.path.exists(self._outputDir):
                 raise IOError("Directory <%s> not deleted" % self._outputDir)
-        if self._h5File is not None:
-            fileName = self._h5File
-            #if os.path.exists(fileName):
-            #    os.remove(fileName)
 
     @unittest.skipIf(not HAS_H5PY, "skipped h5py missing")
     def testSingleStackExport(self):
@@ -122,7 +122,8 @@ class testMcaStackExport(unittest.TestCase):
         stack.info["positioners"] = {"x": xpos,
                                      "y": ypos}
 
-        self._h5File = os.path.join(tempfile.gettempdir(), "SteelStack.h5")
+        tmpDir = tempfile.gettempdir()
+        self._h5File = os.path.join(tmpDir, "SteelStack.h5")
         if os.path.exists(self._h5File):
             os.remove(self._h5File)
         McaStackExport.exportStackList(stack, self._h5File)
@@ -160,6 +161,26 @@ class testMcaStackExport(unittest.TestCase):
         self.assertTrue(abs(live_time.sum() - readLiveTime) < 1.0e-5,
                 "Incorrect sum of live time data")
 
+    @unittest.skipIf(not HAS_H5PY, "skipped h5py missing")
+    def testSingleArrayExport(self):
+        from PyMca5.PyMcaCore import StackBase
+        from PyMca5.PyMcaCore import McaStackExport
+        tmpDir = tempfile.gettempdir()
+        self._h5File = os.path.join(tmpDir, "Array.h5")
+        data = numpy.arange(3*1024).reshape(3, 1024)
+        McaStackExport.exportStackList([data], self._h5File)
+        # read back the stack
+        from PyMca5.PyMcaIO import HDF5Stack1D
+        stackRead = HDF5Stack1D.HDF5Stack1D([self._h5File],
+                                            {"y":"/measurement/detector_00"})
+        # let's play
+        sb = StackBase.StackBase()
+        sb.setStack(stackRead)
+
+        # check the data
+        self.assertTrue(numpy.allclose(data, stackRead.data),
+                "Incorrect data readout")
+
 
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()
@@ -169,6 +190,7 @@ def getSuite(auto=True):
     else:
         # use a predefined order
         testSuite.addTest(testMcaStackExport("testSingleStackExport"))
+        testSuite.addTest(testMcaStackExport("testSingleArrayExport"))
     return testSuite
 
 def test(auto=False):

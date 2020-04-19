@@ -56,9 +56,12 @@ def exportStackList(stackList, filename, channels=None, calibration=None):
         finally:
             h5.close()
 
-def _exportStackList(stackList, h5, channels=None, calibration=None):
-    # initialize the entry
-    entryName = "stack"
+def _exportStackList(stackList, h5, path=None, channels=None, calibration=None):
+    if path is None:
+        # initialize the entry
+        entryName = "stack"
+    else:
+        entryName = path
     entry = h5.require_group(entryName)
     entry.attrs["NX_class"] = u"NXentry"
     instrumentName = "instrument"
@@ -106,6 +109,7 @@ def _exportStackList(stackList, h5, channels=None, calibration=None):
         measurement.attrs["auxiliary_signals"] = numpy.array(auxiliary,
                                                              dtype=dtype)
     h5.flush()
+    return entryName
 
 def exportStack(stack, h5object, path, channels=None, calibration=None):
     """
@@ -121,14 +125,26 @@ def exportStack(stack, h5object, path, channels=None, calibration=None):
         _logger.warning("Invalid destination NXclass %s" % h5g.attrs[att])
 
     # put the data themselves
-    data = stack.data
+    if hasattr(stack, "data") and hasattr(stack, "info"):
+        data = stack.data
+    elif hasattr(stack, "shape") and hasattr(stack, "dtype"):
+        # numpy like object received
+        data = stack
+    else:
+        raise TypeError("Unrecognized stack object received")
+
     dataset = h5g.require_dataset("data",
                                   shape=data.shape,
                                   dtype=data.dtype)
     dataset[:] = data
 
+    # support a simple array of data
+    if hasattr(stack, "info"):
+        info = stack.info
+    else:
+        info = {}
+
     # provide a hint for the data type
-    info = stack.info
     mcaIndex = info.get('McaIndex', -1)
     if mcaIndex < 0:
         mcaIndex = len(data.shape) + mcaIndex
