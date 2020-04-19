@@ -1,4 +1,4 @@
-#!c:\program files\python36\python.exe
+#!python
 
 import os
 import sys
