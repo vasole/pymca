@@ -37,6 +37,14 @@ import h5py
 import logging
 _logger = logging.getLogger(__name__)
 
+try:
+    from PyMca5.PyMcaIO import NexusUtils
+    HAS_NEXUS_UTILS = True
+except:
+    # this should only happen if somebody uses this module out of the distribution
+    HAS_NEXUS_UTILS = False
+    _logger.info("PyMca5.PyMcaIO.NexusUtils could not be imported")
+
 def exportStackList(stackList, filename, channels=None, calibration=None):
     if hasattr(stackList, "data") and hasattr(stackList, "info"):
         stackList = [stackList]
@@ -49,6 +57,8 @@ def exportStackList(stackList, filename, channels=None, calibration=None):
     else:
         h5 = h5py.File(filename, "w-")
         try:
+            if HAS_NEXUS_UTILS:
+                NexusUtils.nxRootInit(h5)
             _exportStackList(stackList,
                              h5,
                              channels=channels,
@@ -62,11 +72,16 @@ def _exportStackList(stackList, h5, path=None, channels=None, calibration=None):
         entryName = "stack"
     else:
         entryName = path
+    if entryName not in h5 and HAS_NEXUS_UTILS:
+        NexusUtils.nxEntryInit(h5, entryName)
     entry = h5.require_group(entryName)
-    entry.attrs["NX_class"] = u"NXentry"
+    att = "NX_class"
+    if att not in entry.attrs:
+        entry.attrs[att] = u"NXentry"
     instrumentName = "instrument"
     instrument = entry.require_group(instrumentName)
-    instrument.attrs["NX_class"] = u"NXinstrument"
+    if att not in instrument.attrs:
+        instrument.attrs[att] = u"NXinstrument"
 
     # save all the stacks
     dataTargets = []
@@ -74,7 +89,8 @@ def _exportStackList(stackList, h5, path=None, channels=None, calibration=None):
     for stack in stackList:
         detectorName = "detector_%02d" % i
         detector = instrument.require_group(detectorName)
-        detector.attrs["NX_class"] = u"NXdetector"
+        if att not in detector.attrs:
+            detector.attrs[att] = u"NXdetector"
         detectorPath = posixpath.join("/",
                                       entryName,
                                       instrumentName,
@@ -90,8 +106,11 @@ def _exportStackList(stackList, h5, path=None, channels=None, calibration=None):
 
     # create NXdata
     measurement = entry.require_group("measurement")
-    measurement.attrs["NX_class"] = u"NXdata"
-    entry.attrs["default"] = u"measurement"
+    if att not in measurement.attrs:
+        measurement.attrs[att] = u"NXdata"
+    att = "default"
+    if "default" not in entry.attrs:
+        entry.attrs["default"] = u"measurement"
     i = 0
     auxiliary = []
     for target in dataTargets:
