@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -145,7 +145,7 @@ def getSourceType(sourceName0):
                 ishdf5 = False
                 try:
                     ishdf5 = h5py.is_hdf5(sourceName)
-                except TypeError:
+                except:
                     if sys.version > '2.9':
                         if sourceName.endswith('.h5') or\
                            sourceName.endswith('.hdf') or\
