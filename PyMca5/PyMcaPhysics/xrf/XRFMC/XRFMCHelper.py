@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -164,7 +164,7 @@ def getScriptFile(pathToExecutable=None, args=None, name=None):
             fullPath = name
             if not fullPath.endswith(".sh"):
                 fullPath = name + ".sh"
-            f = open(fullPath, "wb")
+            f = open(fullPath, "w")
             f.write(txt)
             f.close()
         os.system("chmod +x %s"  % fullPath)
@@ -189,7 +189,7 @@ def getScriptFile(pathToExecutable=None, args=None, name=None):
             fullPath = name
             if not fullPath.endswith(".sh"):
                 fullPath = name + ".sh"
-            f = open(fullPath, "wb")
+            f = open(fullPath, "w")
             f.write(txt)
             f.close()
         os.system("chmod +x %s"  % fullPath)
