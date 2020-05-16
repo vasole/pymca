@@ -109,8 +109,8 @@ def _exportStackList(stackList, h5, path=None, channels=None, calibration=None):
     if att not in measurement.attrs:
         measurement.attrs[att] = u"NXdata"
     att = "default"
-    if "default" not in entry.attrs:
-        entry.attrs["default"] = u"measurement"
+    if att not in entry.attrs:
+        entry.attrs[att] = u"measurement"
     i = 0
     auxiliary = []
     for target in dataTargets:
@@ -210,3 +210,45 @@ def exportStack(stack, h5object, path, channels=None, calibration=None):
         for key in info[posKey]:
             if key not in posGroup:
                 posGroup[key] = numpy.array(info[posKey][key], copy=False)
+
+    # the scales for the common regular mesh case
+    if "xScale" in info and "yScale" in info:
+        xScale = info["xScale"]
+        yScale = info["yScale"]
+        if len(data.shape) == 3 and (mcaIndex in [0, 2, -1]):
+            # TODO: Possibility to label the X and Y axes
+            # associate the scales to the dimension using standard HDF5
+            # the labels should come from the plot
+            if mcaIndex == 0:
+                # image stack -> n_frame, n_rows, n_columns
+                dataset.dims[0].label = "channels"
+                dataset.dims[1].label = "Y"
+                dataset.dims[2].label = "X"
+                dim1 = h5g.require_dataset("dim1",
+                                  shape=(data.shape[1],),
+                                  dtype=numpy.float32)
+                dim2 = h5g.require_dataset("dim2",
+                                  shape=(data.shape[2],),
+                                  dtype=numpy.float32)   
+                h5g["dim0"] = h5g["channels"]
+                dim0 = h5g["dim0"]
+                dim1[:] = yScale[0] + yScale[1] * len(dim1)
+                dim2[:] = xScale[0] + xScale[1] * len(dim2)
+            else:
+                # spectrum stack -> n_rows, n_columns, n_channels
+                dataset.dims[0].label = "Y" 
+                dataset.dims[1].label = "X"
+                dataset.dims[2].label = "channels"
+                dim1 = h5g.require_dataset("dim1",
+                                  shape=(data.shape[1],),
+                                  dtype=numpy.float32)   
+                dim0 = h5g.require_dataset("dim0",
+                                  shape=(data.shape[0],),
+                                  dtype=numpy.float32)
+                dim0[:] = xScale[0] + xScale[1] * len(dim0)
+                dim1[:] = yScale[0] + yScale[1] * len(dim1)
+                h5g["dim2"] = h5g["channels"]
+                dim2 = h5g["dim2"]
+            dataset.dims[0].attach_scale(dim0)
+            dataset.dims[1].attach_scale(dim1)
+            dataset.dims[2].attach_scale(dim2)
