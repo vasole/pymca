@@ -244,8 +244,8 @@ def exportStack(stack, h5object, path, channels=None, calibration=None):
                                   dtype=numpy.float32)
                 map_[dim0_name] = h5py.SoftLink(h5g["channels"].name)
                 dim0 = map_[dim0_name]
-                dim1[:] = yScale[0] + yScale[1] * len(dim1)
-                dim2[:] = xScale[0] + xScale[1] * len(dim2)
+                dim1[:] = yScale[0] + yScale[1] * numpy.arange(len(dim1))
+                dim2[:] = xScale[0] + xScale[1] * numpy.arange(len(dim2))
                 dim1.attrs["long_name"] = dim1_long_name
                 dim2.attrs["long_name"] = dim2_long_name
             else:
@@ -259,8 +259,8 @@ def exportStack(stack, h5object, path, channels=None, calibration=None):
                 dim0 = map_.require_dataset(dim0_name,
                                   shape=(data.shape[0],),
                                   dtype=numpy.float32)
-                dim0[:] = xScale[0] + xScale[1] * len(dim0)
-                dim1[:] = yScale[0] + yScale[1] * len(dim1)
+                dim0[:] = yScale[0] + yScale[1] * numpy.arange(len(dim0))
+                dim1[:] = xScale[0] + xScale[1] * numpy.arange(len(dim1))
                 map_[dim2_name] = h5py.SoftLink(h5g["channels"].name)
                 dim2 = map_[dim2_name]
                 dim0.attrs["long_name"] = dim0_long_name
