@@ -219,7 +219,8 @@ def exportStack(stack, h5object, path, channels=None, calibration=None):
         ndims = len(data.shape)
         if ndims == 3 and (mcaIndex in [0, 2, -1]):
             # TODO: Possibility to label the X and Y axes
-            # the labels should come from the plot
+            # TODO: Possibility to set the title
+            # labels and title should be provided
             map_ = h5g.require_group("map")
             att = "NX_class"
             if att not in map_.attrs:
@@ -240,7 +241,7 @@ def exportStack(stack, h5object, path, channels=None, calibration=None):
                                   dtype=numpy.float32)
                 dim2 = map_.require_dataset(dim2_name,
                                   shape=(data.shape[2],),
-                                  dtype=numpy.float32)   
+                                  dtype=numpy.float32)
                 map_[dim0_name] = h5py.SoftLink(h5g["channels"].name)
                 dim0 = map_[dim0_name]
                 dim1[:] = yScale[0] + yScale[1] * len(dim1)
@@ -249,7 +250,7 @@ def exportStack(stack, h5object, path, channels=None, calibration=None):
                 dim2.attrs["long_name"] = dim2_long_name
             else:
                 # spectrum stack -> n_rows, n_columns, n_channels
-                dim0_long_name = "y" 
+                dim0_long_name = "y"
                 dim1_long_name = "x"
                 dim2_long_name = "channels"
                 dim1 = map_.require_dataset(dim1_name,
@@ -271,7 +272,7 @@ def exportStack(stack, h5object, path, channels=None, calibration=None):
             att = "default"
             if att not in h5g.attrs:
                 h5g.attrs[att] = u"map"
-    
+
             # should make use of standard HDF5 scales and labeling
             # instead of (or in addition to) the NeXus approach?
             USE_HDF5_SCALES = False
