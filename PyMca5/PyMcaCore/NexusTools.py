@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2018-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2018-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -315,6 +315,7 @@ def getMcaObjectPaths(h5file, mcaPath):
         mcaPath = "/" + mcaPath
     mca = {}
     mca["counts"] = mcaPath
+    mca["target"] = mcaPath
     mcaKeys = ["channels",
                "calibration",
                "live_time",
@@ -364,7 +365,7 @@ def getMcaObjectPaths(h5file, mcaPath):
                 if baseKey not in mca:
                     mca[baseKey] = item.name
 
-    if len(mca) == 1:
+    if len(mca) == 2:
         # we found nothing
         # check if we are dealing with a soft link
         basename = posixpath.basename(mcaPath)
