@@ -45,6 +45,11 @@ except:
     HAS_NEXUS_UTILS = False
     _logger.info("PyMca5.PyMcaIO.NexusUtils could not be imported")
 
+if sys.version_info < (3,):
+    strdtype = h5py.special_dtype(vlen=unicode)
+else:
+    strdtype = h5py.special_dtype(vlen=str)
+
 def exportStackList(stackList, filename, channels=None, calibration=None):
     if hasattr(stackList, "data") and hasattr(stackList, "info"):
         stackList = [stackList]
@@ -121,12 +126,8 @@ def _exportStackList(stackList, h5, path=None, channels=None, calibration=None):
         else:
             auxiliary.append(name)
     if len(auxiliary):
-        if sys.version_info < (3,):
-            dtype = h5py.special_dtype(vlen=unicode)
-        else:
-            dtype = h5py.special_dtype(vlen=str)
         measurement.attrs["auxiliary_signals"] = numpy.array(auxiliary,
-                                                             dtype=dtype)
+                                                             dtype=strdtype)
     h5.flush()
     return entryName
 
@@ -211,44 +212,76 @@ def exportStack(stack, h5object, path, channels=None, calibration=None):
             if key not in posGroup:
                 posGroup[key] = numpy.array(info[posKey][key], copy=False)
 
-    # the scales for the common regular mesh case
+    # the scales for the common rectangular map case
     if "xScale" in info and "yScale" in info:
         xScale = info["xScale"]
         yScale = info["yScale"]
-        if len(data.shape) == 3 and (mcaIndex in [0, 2, -1]):
+        ndims = len(data.shape)
+        if ndims == 3 and (mcaIndex in [0, 2, -1]):
             # TODO: Possibility to label the X and Y axes
-            # associate the scales to the dimension using standard HDF5
             # the labels should come from the plot
+            map_ = h5g.require_group("map")
+            att = "NX_class"
+            if att not in map_.attrs:
+                map_.attrs[att] = u"NXdata"
+            map_.attrs["signal"] = u"data"
+            map_["data"] = h5py.SoftLink(dataset.name)
+            map_.attrs["signal"] = u"data"
+            dim0_name = "dim0"
+            dim1_name = "dim1"
+            dim2_name = "dim2"
             if mcaIndex == 0:
                 # image stack -> n_frame, n_rows, n_columns
-                dataset.dims[0].label = "channels"
-                dataset.dims[1].label = "Y"
-                dataset.dims[2].label = "X"
-                dim1 = h5g.require_dataset("dim1",
+                dim0_long_name = "channels"
+                dim1_long_name = "y"
+                dim2_long_name = "x"
+                dim1 = map_.require_dataset(dim1_name,
                                   shape=(data.shape[1],),
                                   dtype=numpy.float32)
-                dim2 = h5g.require_dataset("dim2",
+                dim2 = map_.require_dataset(dim2_name,
                                   shape=(data.shape[2],),
                                   dtype=numpy.float32)   
-                h5g["dim0"] = h5g["channels"]
-                dim0 = h5g["dim0"]
+                map_[dim0_name] = h5py.SoftLink(h5g["channels"].name)
+                dim0 = map_[dim0_name]
                 dim1[:] = yScale[0] + yScale[1] * len(dim1)
                 dim2[:] = xScale[0] + xScale[1] * len(dim2)
+                dim1.attrs["long_name"] = dim1_long_name
+                dim2.attrs["long_name"] = dim2_long_name
             else:
                 # spectrum stack -> n_rows, n_columns, n_channels
-                dataset.dims[0].label = "Y" 
-                dataset.dims[1].label = "X"
-                dataset.dims[2].label = "channels"
-                dim1 = h5g.require_dataset("dim1",
+                dim0_long_name = "y" 
+                dim1_long_name = "x"
+                dim2_long_name = "channels"
+                dim1 = map_.require_dataset(dim1_name,
                                   shape=(data.shape[1],),
-                                  dtype=numpy.float32)   
-                dim0 = h5g.require_dataset("dim0",
+                                  dtype=numpy.float32)
+                dim0 = map_.require_dataset(dim0_name,
                                   shape=(data.shape[0],),
                                   dtype=numpy.float32)
                 dim0[:] = xScale[0] + xScale[1] * len(dim0)
                 dim1[:] = yScale[0] + yScale[1] * len(dim1)
-                h5g["dim2"] = h5g["channels"]
-                dim2 = h5g["dim2"]
-            dataset.dims[0].attach_scale(dim0)
-            dataset.dims[1].attach_scale(dim1)
-            dataset.dims[2].attach_scale(dim2)
+                map_[dim2_name] = h5py.SoftLink(h5g["channels"].name)
+                dim2 = map_[dim2_name]
+                dim0.attrs["long_name"] = dim0_long_name
+                dim1.attrs["long_name"] = dim1_long_name
+            axes = [dim0_name, dim1_name, dim2_name]
+            map_.attrs["axes"] = numpy.array(axes, dtype=strdtype)
+
+            # set the default detector plot
+            att = "default"
+            if att not in h5g.attrs:
+                h5g.attrs[att] = u"map"
+    
+            # should make use of standard HDF5 scales and labeling
+            # instead of (or in addition to) the NeXus approach?
+            USE_HDF5_SCALES = False
+            if USE_HDF5_SCALES:
+                dim0.make_scale(dim0_long_name)
+                dim1.make_scale(dim1_long_name)
+                dim2.make_scale(dim2_long_name)
+                #dataset.dims[0].label = dim0_name
+                #dataset.dims[1].label = dim1_name
+                #dataset.dims[2].label = dim2_name
+                dataset.dims[0].attach_scale(dim0)
+                dataset.dims[1].attach_scale(dim1)
+                dataset.dims[2].attach_scale(dim2)
