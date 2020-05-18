@@ -375,7 +375,11 @@ class HDF5Stack1D(DataObject.DataObject):
         if considerAsImages:
             self._pathHasRelevantInfo = False
         else:
-            if len(list(mcaObjectPaths.keys())) > 1: # not just "counts"
+            numberOfRelevantInfoKeys = 0
+            for objectPath in mcaObjectPaths:
+                if objectPath not in ["counts", "target"]:
+                    numberOfRelevantInfoKeys += 1
+            if numberOfRelevantInfoKeys: # not just "counts" or "target"
                 self._pathHasRelevantInfo = True
                 if "live_time" in mcaObjectPaths:
                     if DONE:
@@ -766,6 +770,9 @@ class HDF5Stack1D(DataObject.DataObject):
             if i != self.info['McaIndex']:
                 nSpectra *= shape[i]
         self.info['Channel0'] = 0
+
+        # try to get scales
+        scaleList = []
         if xSelectionList is not None:
             if len(xDatasetList) == 1:
                 xDataset = xDatasetList[0]
@@ -778,7 +785,7 @@ class HDF5Stack1D(DataObject.DataObject):
                 # assuming providing spatial coordinates and channels
                 goodScale = 0
                 for i in range(len(self.data.shape)):
-                    dataset = xDatasetList[i] 
+                    dataset = xDatasetList[i]
                     datasize = self.data.shape[i]
                     if dataset.size == datasize:
                         goodScale += 1
@@ -801,7 +808,7 @@ class HDF5Stack1D(DataObject.DataObject):
                                 delta = 1.0
                             scaleList.append([origin, delta])
                     if goodScale == 3:
-                        xScale = scaleList[1] 
+                        xScale = scaleList[1]
                         yScale = scaleList[0]
                     else:
                         _logger.warning("Spatial dimensions ignored")
@@ -840,6 +847,53 @@ class HDF5Stack1D(DataObject.DataObject):
             self.info["McaLiveTime"] = _time
         if positionersGroup:
             self.info["positioners"] = positioners
+        if (len(scaleList) == 0) and (nFiles == 1) and (nScans == 1) \
+           and (len(self.data.shape) == 3):
+            # try to figure out the scales from the data layout
+            originalDir = posixpath.dirname(mcaObjectPaths["counts"])
+            targetDir = posixpath.dirname(mcaObjectPaths["target"])
+            for countsDir in [originalDir,
+                              posixpath.join(originalDir, "map"),
+                              targetDir,
+                              posixpath.join(targetDir, "map")]:
+                dims = []
+                for i in range(3):
+                    dimPath = posixpath.join(countsDir, "dim%d" % i)
+                    if dimPath in tmpHdf:
+                        item = tmpHdf[dimPath]
+                    elif "::" in tmpHdf:
+                        tmpFileName, tmpDatasetPath = dimPath.split("::")
+                        with h5py.File(tmpFileName, "r") as tmpH5:
+                            item = tmpH5[tmpDatasetPath][()]
+                    else:
+                        continue
+                    if hasattr(item, "shape") and hasattr(item, "size"):
+                        if item.size == self.data.shape[i]:
+                            dims.append(item[()].reshape(-1))
+                if len(dims) == len(self.data.shape):
+                    break
+            if len(dims) == len(self.data.shape):
+                scaleList = []
+                for i in range(len(self.data.shape)):
+                    if i == mcaIndex:
+                        continue
+                    dataset = dims[i]
+                    origin = dataset[0]
+                    if dataset.size > 1:
+                        delta = numpy.mean(dataset[1:] - dataset[:-1],
+                                               dtype=numpy.float32)
+                    else:
+                        delta = 1.0
+                    scaleList.append([origin, delta])
+
+                if len(scaleList) == 2:
+                    xScale = scaleList[1]
+                    yScale = scaleList[0]
+
+        if len(self.data.shape) == 3:
+            if len(scaleList) == 2:
+                self.info["xScale"] = xScale
+                self.info["yScale"] = yScale
 
     def getDimensions(self, nFiles, nScans, shape, index=None):
         #somebody may want to overwrite this
