@@ -56,7 +56,10 @@ class SilxBackend(PlotWidget):
 
     def addItem(self, *var, **kw):
         if len(var) < 2:
-            return PlotWidget.addItem(self, *var, **kw)
+            if len(var) == 0:
+                return PlotWidget.addItem(self, **kw)
+            else:
+                return PlotWidget.addItem(self, *var, **kw)
         else:
             return self.__addItem(*var, **kw)
 
