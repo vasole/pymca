@@ -47,11 +47,8 @@ cache:
 addons:
     apt:
         packages:
-            - mesa-common-dev  # For OpenGL headers
+            - libgl1-mesa-dev  # For OpenGL headers
             - libegl1-mesa  # Required by Qt xcb platform plugin
-            - ocl-icd-opencl-dev  # OpenCL headers, lib and icd loader
-            - libgl1-mesa-glx  # For OpenGL
-            - xserver-xorg-video-dummy  # For OpenGL
             - libxkbcommon-x11-0 # needed for Qt plugins
             - libxkbcommon0
             - libxkbcommon-dev
@@ -68,6 +65,9 @@ addons:
             - libxcb-xinerama0
             - libxcb-xkb1
             - libxcb1
+
+services:
+    - xvfb
 
 before_install:
     # On MacOS: install python3 if needed
