@@ -47,11 +47,24 @@ cache:
 addons:
     apt:
         packages:
-            - libgl1-mesa-dev  # For OpenGL
+            - libgl1-mesa-dev  # For OpenGL headers
             - libegl1-mesa  # Required by Qt xcb platform plugin
-            - libxkbcommon-x11-0  # needed for Qt plugins
-            - libxkbcommon0  # needed for Qt plugins
-            - libxkbcommon-dev  # needed for Qt plugins
+            - libxkbcommon-x11-0 # needed for Qt plugins
+            - libxkbcommon0
+            - libxkbcommon-dev
+            - libxcb-icccm4
+            - libxcb-image0
+            - libxcb-shm0
+            - libxcb-keysyms1
+            - libxcb-randr0
+            - libxcb-render-util0
+            - libxcb-render0
+            - libxcb-shape0
+            - libxcb-sync1
+            - libxcb-xfixes0
+            - libxcb-xinerama0
+            - libxcb-xkb1
+            - libxcb1
 
 services:
     - xvfb

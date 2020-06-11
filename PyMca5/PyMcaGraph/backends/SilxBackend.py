@@ -54,7 +54,16 @@ class SilxBackend(PlotWidget):
         plotArea.customContextMenuRequested.connect(self._zoomBack)
         self.addShape = self.addItem
 
-    def addItem(self, xList, yList, legend=None, info=None,
+    def addItem(self, *var, **kw):
+        if len(var) < 2:
+            if len(var) == 0:
+                return PlotWidget.addItem(self, **kw)
+            else:
+                return PlotWidget.addItem(self, *var, **kw)
+        else:
+            return self.__addItem(*var, **kw)
+
+    def __addItem(self, xdata, ydata, legend=None, info=None,
                 replace=False, replot=True,
                 shape="polygon", fill=True, **kw):
         if hasattr(PlotWidget, "addShape"):
@@ -114,12 +123,18 @@ class SilxBackend(PlotWidget):
         return PlotWidget.setActiveImage(self, *var, **kw)
 
     def insertXMarker(self, *var, **kw):
+        if "replot" in kw:
+            del kw["replot"]
         return self.addXMarker(*var, **kw)
 
     def insertYMarker(self, *var, **kw):
+        if "replot" in kw:
+            del kw["replot"]
         return self.addYMarker(*var, **kw)
 
     def insertMarker(self, *var, **kw):
+        if "replot" in kw:
+            del kw["replot"]
         return self.addMarker(*var, **kw)
 
     def removeCurve(self, *var, **kw):
