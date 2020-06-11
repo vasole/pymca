@@ -47,7 +47,7 @@ cache:
 addons:
     apt:
         packages:
-            - libgl1-mesa-dev  # For OpenGL headers
+            - mesa-common-dev  # For OpenGL headers
             - libegl1-mesa  # Required by Qt xcb platform plugin
             - ocl-icd-opencl-dev  # OpenCL headers, lib and icd loader
             - libgl1-mesa-glx  # For OpenGL
