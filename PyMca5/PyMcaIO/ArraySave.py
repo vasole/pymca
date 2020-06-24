@@ -669,7 +669,8 @@ def save3DArrayAsHDF5(data, filename, axes=None, labels=None, dtype=None, mode='
         nxEntry['end_time'] = getDate()
         if mode.lower() == 'nexus+':
             # create link
-            g = h5py.h5g.open(hdf.fid, '/')
+            # Deprecated: g = h5py.h5g.open(hdf.fid, '/')
+            g = h5py.h5g.open(hdf.id, '/')
             g.link('/data/NXdata/data',
                    '/data/data',
                    h5py.h5g.LINK_HARD)
