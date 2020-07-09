@@ -1703,8 +1703,9 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                 self.enableAxis(axisId, True)
         else:
             axes = self.ax
+        pickradius = 3
         if selectable:
-            picker = 3
+            picker = True
         else:
             picker = None
         scatterPlot = False
@@ -1721,7 +1722,8 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                                       label=legend,
                                       color=actualColor,
                                       marker=symbol,
-                                      picker=picker)
+                                      picker=picker,
+                                      pickradius=pickradius)
 
             if style not in [" ", None]:
                 # scatter plot with an actual line ...
@@ -1732,6 +1734,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                                       linewidth=linewidth,
                                       picker=picker,
                                       marker=None,
+                                      pickradius=pickradius,
                                       **kw)
                 curveList[-1]._plot_info = {'color':actualColor,
                                               'linewidth':linewidth,
@@ -1758,6 +1761,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                                           color=color,
                                           linewidth=linewidth,
                                           picker=picker,
+                                          pickradius=pickradius,
                                           **kw)
         else:
             curveList = axes.plot( x, y, label=legend,
@@ -1765,6 +1769,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                                   color=color,
                                   linewidth=linewidth,
                                   picker=picker,
+                                  pickradius=pickradius,
                                   **kw)
 
         # errorbar is a container?
