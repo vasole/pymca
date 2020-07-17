@@ -63,6 +63,8 @@ You will need the following dependencies installed:
 -  `numpy <https://www.numpy.org/>`_
 -  `fisx <https://github.com/vasole/fisx>`_
 -  `h5py <https://github.com/h5py/h5py>`_
+-  `OpenGL  <https://mesa3d.org/>`_ available via
+   :bash:`sudo apt-get install mesa-common-dev`
 
 If you want to use the graphical interface provided, you will need a
 running python installation with one of the following combinations:

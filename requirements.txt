@@ -8,7 +8,7 @@
 
 numpy >= 1.8
 fisx >= 1.1.5
-PyOpenGL                  # For PyMca5.Object3D module 
+PyOpenGL                  # For PyMca5.Object3D module
 h5py                      # For HDF5 file format support
 matplotlib > 1.0          # For visualization
 qtconsole                 # For interactive console plugin
@@ -21,3 +21,5 @@ qtconsole                 # For interactive console plugin
 PyQt5; python_version >= '3.5'
 PyQt4; sys_platform == 'win32' and python_version == '2.7'  # From silx.org
 PyQt4; sys_platform == 'darwin' and python_version == '2.7'  # From silx.org
+
+# OpenGL, which can be installed via sudo apt-get install mesa-common-dev
