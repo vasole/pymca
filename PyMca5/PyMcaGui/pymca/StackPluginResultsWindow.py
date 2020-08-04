@@ -138,9 +138,10 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
             legend = self.spectrumNames[index]
             x = self.xValues[index]
             y = self.spectrumList[index]
-            self.spectrumGraph.addCurve(x, y, legend, replace=True)
+            self.spectrumGraph.addCurve(x, y, legend, replace=True, replot=False)
             if self.spectrumGraphTitles is not None:
                 self.spectrumGraph.setGraphTitle(self.spectrumGraphTitles[index])
+            self.spectrumGraph.replot()
 
     def buildAndConnectImageButtonBox(self, replace=True, multiple=False):
         super(StackPluginResultsWindow, self).\
