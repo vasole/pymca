@@ -284,7 +284,7 @@ class FluoSinoReconsSelectionTable(SelectionTable):
             return None
         elif nSelection == 1:
             index = self.getSelection()['it']
-            assert(len(index) is 1)
+            assert(len(index) == 1)
             return self.getSelection()['name'][index[0]]
         else:
             raise ValueError('multiple sinogram set as I0, shouldn\'t happen')
