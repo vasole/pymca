@@ -202,6 +202,22 @@ class FastXRFLinearFit(object):
                 dataAxes.append(('channels', xdata.astype(numpy.int32), {}))
                 fitAttrs['axes'] = dataAxes
                 fitAttrs['axesused'] = dataAxesNames
+
+            if outbuffer.saveDataDiagnostics:
+                derivAttrs = {}
+                derivAttrs['axes'] = [('energy', xenergy.astype(dtypeResult), {'units': 'keV'}),
+                                      ('channels', xdata.astype(numpy.int32), {})]
+                derivAttrs['axesused'] = ["energy"]
+                _derivatives = outbuffer.allocateMemory('derivatives',
+                                        shape=(nFree, xdata.size),
+                                        dtype=derivatives.dtype,
+                                        fill_value=numpy.nan,
+                                        labels=freeNames,
+                                        dataAttrs=dataAttrs,
+                                        groupAttrs=derivAttrs,
+                                        memtype='ram')
+                _derivatives[:, iXMin:iXMax] = derivatives.T
+
             dataAttrs = {}
             if outbuffer.saveFOM:
                 nFreeParameters = outbuffer.allocateMemory('nFreeParameters',
@@ -484,7 +500,7 @@ class FastXRFLinearFit(object):
             # First spectrum
             idx = [0]*data.ndim
             idx[mcaIndex] = slice(None)
-            yref = data[idx].astype(dtype)
+            yref = data[tuple(idx)].astype(dtype)
         return yref
 
     def _fitCreateModel(self, dtype=None):
