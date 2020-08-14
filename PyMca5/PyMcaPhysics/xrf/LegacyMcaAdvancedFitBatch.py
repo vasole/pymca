@@ -33,7 +33,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
 import numpy
-from . import ClassMcaTheory
+from . import LegacyMcaTheory
 from PyMca5.PyMcaCore import SpecFileLayer
 from PyMca5.PyMcaCore import EdfFileLayer
 from PyMca5.PyMcaIO import EdfFile
@@ -71,13 +71,13 @@ class McaAdvancedFitBatch(object):
         self.fitFiles = fitfiles
         self._concentrations = concentrations
         if type(initdict) == type([]):
-            self.mcafit = ClassMcaTheory.McaTheory(initdict[mcaoffset])
+            self.mcafit = LegacyMcaTheory.McaTheory(initdict[mcaoffset])
             self.__configList = initdict
             self.__currentConfig = mcaoffset
         else:
             self.__configList = [initdict]
             self.__currentConfig = 0
-            self.mcafit = ClassMcaTheory.McaTheory(initdict)
+            self.mcafit = LegacyMcaTheory.McaTheory(initdict)
         self.__concentrationsKeys = []
         if self._concentrations:
             self._tool = ConcentrationsTool.ConcentrationsTool()
@@ -172,7 +172,7 @@ class McaAdvancedFitBatch(object):
             if not self.roiFit:
                 if len(self.__configList) > 1:
                     if i != 0:
-                        self.mcafit = ClassMcaTheory.McaTheory(self.__configList[i])
+                        self.mcafit = LegacyMcaTheory.McaTheory(self.__configList[i])
                         self.__currentConfig = i
             self.mcafit.enableOptimizedLinearFit()
             
@@ -574,7 +574,7 @@ class McaAdvancedFitBatch(object):
                     if self.mcafit.config['fit'].get("strategyflag", False):
                         config = self.__configList[self.__currentConfig]
                         print("Restoring fitconfiguration")
-                        self.mcafit = ClassMcaTheory.McaTheory(config)
+                        self.mcafit = LegacyMcaTheory.McaTheory(config)
                         self.mcafit.enableOptimizedLinearFit()
                     return
                 try:
@@ -614,7 +614,7 @@ class McaAdvancedFitBatch(object):
                     if self.mcafit.config['fit'].get("strategyflag", False):
                         config = self.__configList[self.__currentConfig]
                         print("Restoring fitconfiguration")
-                        self.mcafit = ClassMcaTheory.McaTheory(config)
+                        self.mcafit = LegacyMcaTheory.McaTheory(config)
                         self.mcafit.enableOptimizedLinearFit()
                     return
             if self._concentrations:

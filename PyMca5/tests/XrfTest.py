@@ -269,7 +269,7 @@ class testXrf(unittest.TestCase):
 
     def testTrainingDataFit(self):
         from PyMca5.PyMcaIO import specfilewrapper as specfile
-        from PyMca5.PyMcaPhysics.xrf import ClassMcaTheory
+        from PyMca5.PyMcaPhysics.xrf import LegacyMcaTheory
         from PyMca5.PyMcaPhysics.xrf import ConcentrationsTool
         from PyMca5.PyMcaIO import ConfigDict
         trainingDataFile = os.path.join(self.dataDir, "XRFSpectrum.mca")
@@ -289,7 +289,7 @@ class testXrf(unittest.TestCase):
         # perform the actual XRF analysis
         configuration = ConfigDict.ConfigDict()
         configuration.readfp(StringIO(cfg))
-        mcaFit = ClassMcaTheory.ClassMcaTheory()
+        mcaFit = LegacyMcaTheory.LegacyMcaTheory()
         configuration=mcaFit.configure(configuration)
         x = numpy.arange(y.size).astype(numpy.float64)
         mcaFit.setData(x, y,
@@ -351,7 +351,7 @@ class testXrf(unittest.TestCase):
 
     def testStainlessSteelDataFit(self):
         from PyMca5.PyMcaIO import specfilewrapper as specfile
-        from PyMca5.PyMcaPhysics.xrf import ClassMcaTheory
+        from PyMca5.PyMcaPhysics.xrf import LegacyMcaTheory
         from PyMca5.PyMcaPhysics.xrf import ConcentrationsTool
         from PyMca5.PyMcaIO import ConfigDict
 
@@ -376,7 +376,7 @@ class testXrf(unittest.TestCase):
         # configure the fit
         # make sure no secondary excitations are used
         configuration["concentrations"]["usemultilayersecondary"] = 0
-        mcaFit = ClassMcaTheory.ClassMcaTheory()
+        mcaFit = LegacyMcaTheory.LegacyMcaTheory()
         configuration=mcaFit.configure(configuration)
         mcaFit.setData(x, y,
                        xmin=configuration["fit"]["xmin"],
@@ -510,7 +510,7 @@ class testXrf(unittest.TestCase):
                                                          "Mn", "Fe",
                                                          "Ni", "-", "-",
                                                          "-","-","-"]
-        mcaFit = ClassMcaTheory.ClassMcaTheory()
+        mcaFit = LegacyMcaTheory.LegacyMcaTheory()
         configuration=mcaFit.configure(configuration)
         mcaFit.setData(x, y,
                        xmin=configuration["fit"]["xmin"],
