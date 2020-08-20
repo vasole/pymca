@@ -1393,7 +1393,14 @@ class MatplotlibGraph(FigureCanvas):
         self._callback(eventDict)
 
     def setLimits(self, xmin, xmax, ymin, ymax, y2min=None, y2max=None):
+        delta = 0.044
+        if xmin == xmax:
+            xmax += delta
+            xmin -= delta
         self.ax.set_xlim(xmin, xmax)
+        if ymin == ymax:
+            ymax += delta
+            ymin -= delta
         if ymax < ymin:
             ymin, ymax = ymax, ymin
         current = self.ax.get_ylim()
@@ -2465,6 +2472,10 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         self.ax.set_xlabel(label)
 
     def setGraphXLimits(self, xmin, xmax):
+        if xmin == xmax:
+            delta = 0.044
+            xmax += delta
+            xmin -= delta
         self.ax.set_xlim(xmin, xmax)
         self.graph.emitLimitsChangedSignal()
 
@@ -2472,6 +2483,10 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         self.ax.set_ylabel(label)
 
     def setGraphYLimits(self, ymin, ymax):
+        if ymin == ymax:
+            delta = 0.044
+            ymax += delta
+            ymin -= delta
         if self.ax.yaxis_inverted():
             self.ax.set_ylim(ymax, ymin)
         else:
