@@ -2077,13 +2077,15 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             line = self.ax.plot(x, y, label=legend,
                                       linestyle=" ",
                                       color=color,
-                                      picker=5,
+                                      picker=True,
+                                      pickradius=5,
                                       marker=symbol,
                                       markersize=markersize)[-1]
         else:
             line = self.ax.plot(x, y, label=legend,
                                       linestyle=" ",
                                       color=color,
+                                      picker=None,
                                       marker=symbol,
                                       markersize=markersize)[-1]
         if text is not None:
@@ -2138,7 +2140,8 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         self.removeMarker(legend, replot=False)
         legend = "__MARKER__" + legend
         if selectable or draggable:
-            line = self.ax.axvline(x, label=legend, color=color, picker=5)
+            line = self.ax.axvline(x, label=legend, color=color,
+                                   picker=True, pickradius=5)
         else:
             line = self.ax.axvline(x, label=legend, color=color)
         if text is not None:
@@ -2190,7 +2193,8 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                 print("Deprecation warning: use 'text' instead of 'label'")
         legend = "__MARKER__" + legend
         if selectable or draggable:
-            line = self.ax.axhline(y, label=legend, color=color, picker=5)
+            line = self.ax.axhline(y, label=legend, color=color,
+                                   picker=True, pickradius=5)
         else:
             line = self.ax.axhline(y, label=legend, color=color)
         if text is not None:
