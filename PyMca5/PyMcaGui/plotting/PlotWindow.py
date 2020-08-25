@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -1283,8 +1283,8 @@ class PlotWindow(PlotWidget.PlotWidget):
                 idx = nonzero((fromData <= xproc) &\
                                    (xproc <= toData))[0]
                 if len(idx):
-                    xw = xproc[idx]
-                    yw = yproc[idx]
+                    xw = xproc[idx].astype(numpy.float)
+                    yw = yproc[idx].astype(numpy.float)
                     rawCounts = yw.sum(dtype=numpy.float)
                     deltaX = xw[-1] - xw[0]
                     deltaY = yw[-1] - yw[0]
