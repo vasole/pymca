@@ -1393,7 +1393,14 @@ class MatplotlibGraph(FigureCanvas):
         self._callback(eventDict)
 
     def setLimits(self, xmin, xmax, ymin, ymax, y2min=None, y2max=None):
+        delta = 0.044
+        if xmin == xmax:
+            xmax += delta
+            xmin -= delta
         self.ax.set_xlim(xmin, xmax)
+        if ymin == ymax:
+            ymax += delta
+            ymin -= delta
         if ymax < ymin:
             ymin, ymax = ymax, ymin
         current = self.ax.get_ylim()
@@ -2077,13 +2084,15 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             line = self.ax.plot(x, y, label=legend,
                                       linestyle=" ",
                                       color=color,
-                                      picker=5,
+                                      picker=True,
+                                      pickradius=5,
                                       marker=symbol,
                                       markersize=markersize)[-1]
         else:
             line = self.ax.plot(x, y, label=legend,
                                       linestyle=" ",
                                       color=color,
+                                      picker=None,
                                       marker=symbol,
                                       markersize=markersize)[-1]
         if text is not None:
@@ -2138,7 +2147,8 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         self.removeMarker(legend, replot=False)
         legend = "__MARKER__" + legend
         if selectable or draggable:
-            line = self.ax.axvline(x, label=legend, color=color, picker=5)
+            line = self.ax.axvline(x, label=legend, color=color,
+                                   picker=True, pickradius=5)
         else:
             line = self.ax.axvline(x, label=legend, color=color)
         if text is not None:
@@ -2190,7 +2200,8 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                 print("Deprecation warning: use 'text' instead of 'label'")
         legend = "__MARKER__" + legend
         if selectable or draggable:
-            line = self.ax.axhline(y, label=legend, color=color, picker=5)
+            line = self.ax.axhline(y, label=legend, color=color,
+                                   picker=True, pickradius=5)
         else:
             line = self.ax.axhline(y, label=legend, color=color)
         if text is not None:
@@ -2461,6 +2472,10 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         self.ax.set_xlabel(label)
 
     def setGraphXLimits(self, xmin, xmax):
+        if xmin == xmax:
+            delta = 0.044
+            xmax += delta
+            xmin -= delta
         self.ax.set_xlim(xmin, xmax)
         self.graph.emitLimitsChangedSignal()
 
@@ -2468,6 +2483,10 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         self.ax.set_ylabel(label)
 
     def setGraphYLimits(self, ymin, ymax):
+        if ymin == ymax:
+            delta = 0.044
+            ymax += delta
+            ymin -= delta
         if self.ax.yaxis_inverted():
             self.ax.set_ylim(ymax, ymin)
         else:
