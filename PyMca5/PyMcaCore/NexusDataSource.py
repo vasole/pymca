@@ -528,6 +528,34 @@ class NexusDataSource(object):
             elif cnt == 'm':
                 #only one monitor
                 output.m = [data]
+
+        # SCAN specific to handle asynchronous writing
+        if output.info['selectiontype'] in ["1D"]:
+            if output.y:
+                length = ylength = output.y[0].size
+                delta = 0
+                if output.x:
+                    xlength = output.x[0].size
+                    delta = abs(ylength - xlength)
+                    length = min(length, xlength)
+                if output.m:
+                    mlength = output.m[0].size
+                    delta = max(delta, ylength - mlength)
+                    length = min(length, mlength)
+                if delta > 1:
+                    _logger.warning("Stripping last %d points" % delta)
+                elif delta == 1:
+                    _logger.info("Stripping last point of selection")
+                if delta > 0:
+                    for i in range(len(output.y)):
+                        output.y[i] = output.y[i][:length]
+                    if output.x:
+                        for i in range(len(output.x)):
+                            output.x[i] = output.x[i][:length]
+                    if output.m:
+                        for i in range(len(output.m)):
+                            output.m[i] = output.m[i][:length]
+
         # MCA specific
         if selection['selectiontype'].upper() == "MCA":
             if not 'Channel0' in output.info:
