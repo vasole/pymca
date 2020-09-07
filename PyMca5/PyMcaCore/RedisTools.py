@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2019 European Synchrotron Radiation Facility
+# Copyright (C) 2019-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -67,8 +67,15 @@ NODE_TYPE["DataNode"] = DataNode
 NODE_TYPE["DataNodeContainer"] = DataNodeContainer
 NODE_TYPE["ChannelDataNode"] = ChannelDataNode
 
-def get_node_list(input_node, node_type=None, name=None, db_name=None, dimension=None,
+def get_node_list(node, node_type=None, name=None, db_name=None, dimension=None,
                   filter=None, unique=False):
+    """
+    Return list of nodes matching the given filter
+    """
+    if not has_attr(node, "name"):
+        input_node = get_node(node)
+    else:
+        input_node = node
     if node_type in NODE_TYPE.keys():
         node_type = NODE_TYPE[node_type]
     output_list = []
@@ -97,6 +104,44 @@ def get_node_list(input_node, node_type=None, name=None, db_name=None, dimension
                 break
     return output_list
 
+def get_session_scans(session):
+    """
+    Returns a sorted list of actual scans. Last scan is last.
+    """
+    nodes = list(_get_session_scans(session))
+    nodes = sorted(nodes, key=lambda k: k.info["start_timestamp"])
+    return nodes
+
+def _get_session_scans(session):
+    if hasattr(session, "name"):
+        session_node = session
+        session_name = session.name
+    else:
+        session_node =  get_node(session)
+        session_name = session
+    db_names = rdsscan( f"{session_name}:*_children_list",
+                        count=1000000,
+                        connection=session_node.db_connection,
+                      )
+    # we are interested on actual scans, therefore we do not take scans
+    # whose name starts by underscore
+    return ( node
+             for node in get_nodes(
+                *(db_name.replace("_children_list", "") for db_name in db_names)
+             )
+             if node is not None and node.type == "scan" and not node.name.startswith("_")
+            )
+
+def get_session_last_scan(session):
+    return get_session_scans(session)[-1]
+
+def get_session_filename(session):
+    """
+    Return filename associated to last session scan or an empty string
+    """
+    info = get_session_last_scan(session).info.get_all()
+    return info.get("filename", "")
+
 def get_scan_list(session_node):
     return get_node_list(session_node, node_type="Scan", filter="scan")
 
@@ -106,7 +151,7 @@ def get_data_channels(node):
 def get_spectra(node, dimension=1):
     return get_node_list(node, filter="channel", dimension=1)
 
-def get_session_filename(session_node):
+def get_filename(session_node):
     scan_list = get_scan_list(session_node)
     filename = ""
     if len(scan_list):
