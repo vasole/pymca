@@ -221,6 +221,76 @@ def get_scan_data(scan_node):
     return result
 
 def scan_info(scan_node):
+    """
+    See https://gitlab.esrf.fr/bliss/bliss/-/blob/master/bliss/data/display.py
+
+    def collect_channels_info(self, scan_info):
+
+                #------------- scan_info example -------------------------------------------------------
+
+                # session_name = scan_info.get('session_name')             # ex: 'test_session'
+                # user_name = scan_info.get('user_name')                   # ex: 'pguillou'
+                # filename = scan_info.get('filename')                     # ex: '/mnt/c/tmp/test_session/data.h5'
+                # node_name = scan_info.get('node_name')                   # ex: 'test_session:mnt:c:tmp:183_ascan'
+
+                # start_time = scan_info.get('start_time')                 # ex: datetime.datetime(2019, 3, 18, 15, 28, 17, 83204)
+                # start_time_str = scan_info.get('start_time_str')         # ex: 'Mon Mar 18 15:28:17 2019'
+                # start_timestamp = scan_info.get('start_timestamp')       # ex: 1552919297.0832036
+
+                # save = scan_info.get('save')                             # ex: True
+                # sleep_time = scan_info.get('sleep_time')                 # ex: None
+
+                # title = scan_info.get('title')                           # ex: 'ascan roby 0 10 10 0.01'
+                # scan_type = scan_info.get('type')                        # ex:    ^
+                # start = scan_info.get('start')                           # ex:             ^              = [0]
+                # stop = scan_info.get('stop')                             # ex:                ^           = [10]
+                # npoints = scan_info.get('npoints')                       # ex:                   ^        = 10
+                # count_time = scan_info.get('count_time')                 # ex:                       ^    = 0.01
+
+                # total_acq_time = scan_info.get('total_acq_time')         # ex: 0.1  ( = npoints * count_time )
+                # scan_nb = scan_info.get('scan_nb')                       # ex: 183
+
+                # positioners_dial = scan_info.get('positioners_dial')     # ex: {'bad': 0.0, 'calc_mot1': 20.0, 'roby': 20.0, ... }
+                # positioners = scan_info.get('positioners')               # ex: {'bad': 0.0, 'calc_mot1': 20.0, 'roby': 10.0, ...}
+
+                # acquisition_chain = scan_info.get('acquisition_chain')  
+                # ex: {'axis':
+                #       { 
+                #         'master' : {'scalars': ['axis:roby'], 'spectra': [], 'images': [] }, 
+                #         'scalars': ['timer:elapsed_time', 'diode:diode'], 
+                #         'spectra': [], 
+                #         'images' : [] 
+                #       }
+                #     }
+                # master, channels = next(iter(scan_info["acquisition_chain"].items()))
+                # master = axis
+                # channels = {'master': {'scalars': ['axis:roby'], 
+                #                        'scalars_units': {'axis:roby': None}, 
+                #                        'spectra': [], 
+                #                        'images': [], 
+                #                        'display_names': {'axis:roby': 'roby'}
+                #                       }, 
+
+                #             'scalars': ['timer:elapsed_time', 
+                #                         'timer:epoch', 
+                #                         'lima_simulator2:bpm:x', 
+                #                         'simulation_diode_sampling_controller:diode'],
+                #  
+                #             'scalars_units': {'timer:elapsed_time': 's', 
+                #                               'timer:epoch': 's', 
+                #                               'lima_simulator2:bpm:x': 'px', 
+                #                               'simulation_diode_sampling_controller:diode': None}, 
+                #             'spectra': [], 
+                #             'images': [], 
+                #             'display_names': {'timer:elapsed_time': 'elapsed_time', 
+                #                               'timer:epoch': 'epoch', 
+                #                               'lima_simulator2:bpm:x': 'x', 
+                #                               'simulation_diode_sampling_controller:diode': 'diode'}}
+
+        # ONLY MANAGE THE FIRST ACQUISITION BRANCH (multi-top-masters scan are ignored)
+        top_master, channels = next(iter(scan_info["acquisition_chain"].items()))
+        """
+
     return scan_node.info.get_all()
         
 if __name__ == "__main__":
@@ -254,7 +324,9 @@ if __name__ == "__main__":
                 if nFiles > 1:
                     print("WARNING, more than one file associated to scan")
                 filename = filenames[-1]
-            title = scan_info(scan).get("title", "No COMMAND")
+            sInfo = scan_info(scan)
+            print(list(sInfo.keys()))
+            title = sInfo.get("title", "No COMMAND")
             if scan_number:
                 if scan.name.startswith("161"):
                     reference = scan
