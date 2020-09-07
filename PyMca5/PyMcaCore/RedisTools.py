@@ -85,14 +85,17 @@ def get_node_list(node, node_type=None, name=None, db_name=None, dimension=None,
                 break
     return output_list
 
-def get_session_scans(session):
+def get_session_scan_list(session, filename=None):
     """
     Returns a sorted list of actual scans. Last scan is last.
     """
     nodes = list(_get_session_scans(session))
     nodes = sorted(nodes, key=lambda k: k.info["start_timestamp"])
+    if filename:
+        nodes = [node for node in nodes
+                     if scan_info(node)["filename"] == filename]
     return nodes
-
+        
 def _get_session_scans(session):
     if hasattr(session, "name"):
         session_node = session
@@ -114,7 +117,7 @@ def _get_session_scans(session):
             )
 
 def get_session_last_scan(session):
-    return get_session_scans(session)[-1]
+    return get_session_scan_list(session)[-1]
 
 def get_session_filename(session):
     """
