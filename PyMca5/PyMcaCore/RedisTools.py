@@ -68,7 +68,7 @@ NODE_TYPE["DataNodeContainer"] = DataNodeContainer
 NODE_TYPE["ChannelDataNode"] = ChannelDataNode
 
 def get_node_list(node, node_type=None, name=None, db_name=None, dimension=None,
-                  filter=None, unique=False):
+                  filter=None, unique=False, reverse=False, ignore_underscore=True):
     """
     Return list of nodes matching the given filter
     """
@@ -76,12 +76,18 @@ def get_node_list(node, node_type=None, name=None, db_name=None, dimension=None,
         input_node = get_node(node)
     else:
         input_node = node
+    if reverse:
+        iterator = input_node.iterator.walk_from_last
+    else:
+        iterator = input_node.iterator.walk
     if node_type in NODE_TYPE.keys():
         node_type = NODE_TYPE[node_type]
     output_list = []
     # walk not waiting
     if node_type or name or db_name or dimension:
-        for node in input_node.iterator.walk(wait=False, filter=filter):
+        for node in iterator(wait=False, filter=filter):
+            if ignore_underscore and node.name.startswith("_"):
+                continue
             if node_type and isinstance(node, node_type):
                 output_list.append(node)
             elif name and (node.name == name):
@@ -97,8 +103,10 @@ def get_node_list(node, node_type=None, name=None, db_name=None, dimension=None,
             if unique and len(output_list):
                 break 
     else:
-        for node in input_node.iterator.walk(wait=False, filter=filter):
+        for node in iterator(wait=False, filter=filter):
             #print(node.name, node.db_name, node)
+            if ignore_underscore and node.name.startswith("_"):
+                continue
             output_list.append(node)
             if unique:
                 break
