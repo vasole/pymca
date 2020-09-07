@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -176,7 +176,7 @@ class QSourceSelector(qt.QWidget):
             if not os.path.exists(filename):         
                 txt = "Last output file <%s>  does not exist"  % filename
                 raise IOError(txt)
-            filename = [filename]
+            filename = [filename, session]
         if not specsession:
             if justloaded is None:
                 justloaded = True

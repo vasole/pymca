@@ -43,6 +43,7 @@ from PyMca5.PyMcaIO import BAXSCSVFileParser
 from PyMca5.PyMcaIO import OlympusCSVFileParser
 from PyMca5.PyMcaIO import ThermoEMSFileParser
 from PyMca5.PyMcaIO import JcampFileParser
+from PyMca5.PyMcaIO import BlissSpecFile
 
 _logger = logging.getLogger(__name__)
 
@@ -75,6 +76,8 @@ else:
         return var[0]
 
 def Specfile(filename):
+    if BlissSpecFile.isBlissSpecFile(filename):
+        return BlissSpecFile.BlissSpecFile(filename)
     if sys.version_info < (3, 0):
         f = open(filename)
     else:
