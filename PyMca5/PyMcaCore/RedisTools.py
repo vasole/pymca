@@ -228,7 +228,6 @@ def shortnamemap(names, separator=":"):
 def get_scan_data(scan_node):
     data_channels = get_data_channels(scan_node)
     names = shortnamemap(x.name for x in data_channels)
-    print(names)
     result = {}
     i = 0
     for channel in data_channels:
