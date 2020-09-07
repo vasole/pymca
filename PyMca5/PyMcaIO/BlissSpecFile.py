@@ -68,7 +68,6 @@ class BlissSpecFile(object):
         self._filename = redis.get_session_filename(self._session)
         self._scan_nodes = redis.get_session_scan_list(self._session,
                                                   self._filename)
-        self.motorNames = []
 
     def list(self):
         """
@@ -101,7 +100,7 @@ class BlissSpecFile(object):
         return len(self._scan_nodes)
 
     def allmotors(self):
-        return self.motorNames
+        return []
 
 class BlissSpecScan(object):
     def __init__(self, scanNode):
@@ -109,6 +108,7 @@ class BlissSpecScan(object):
         self._identification = scanNode.name.split("_")[0] + ".1"
         self._spectra = redis.get_spectra(scanNode)
         self._counters = redis.get_scan_data(scanNode)
+        self._motors = redis.scan_info(self._node).get("positioners", {})
 
     def alllabels(self):
         """
@@ -116,8 +116,13 @@ class BlissSpecScan(object):
         """
         return [key for key in self._counters]
 
+    def allmotors(self):
+        positioners = self._motors.get("positioners_start", {})
+        return [key for key in positioners if not hasattr(positioners[key], "endswith")]
+
     def allmotorpos(self):
-        return []
+        positioners = self._motors.get("positioners_start", {})
+        return [positioners[key] for key in positioners if not hasattr(positioners[key], "endswith")]
 
     def cols(self):
         return len(self._counters)
@@ -130,7 +135,8 @@ class BlissSpecScan(object):
         return numpy.transpose(self.__data)
 
     def datacol(self, col):
-        return self.__data[:,col]
+        keys = list(self._counters.keys())
+        return self._counters[keys[col]]
 
     def dataline(self,line):
         return self.__data[line,:]
@@ -211,7 +217,7 @@ def test(filename):
     if sf[0].nbmca():
         print(sf[0].mca(1))
     print(sf[0].header('S'))
-    print(sf.allmotors())
+    print(sf[0].allmotors())
     print(sf[0].allmotorpos())
     print(sf[0].header('@CTIME'))
     print(sf[0].header('@CALIB'))
