@@ -28,38 +28,11 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 from collections import OrderedDict
-try:
-    from bliss.config import get_sessions_list
-except:
-    try:
-        from bliss.shell.cli import get_sessions_list
-    except ImportError:
-        # This point should not be reached
-        from bliss.config import static
-    def get_sessions_list():
-        """Return a list of available sessions found in config"""
-        all_sessions = list()
-        config = static.get_config()
-        for name in config.names_list:
-            c = config.get_config(name)
-            if c.get("class") != "Session":
-                continue
-            if c.get_inherited("plugin") != "session":
-                continue
-            all_sessions.append(name)
-        return all_sessions
-        
-from bliss.data.node import get_node, DataNode, DataNodeContainer
-
-try:
-    from bliss.data.scan import Scan
-except:
-    from bliss.data.nodes.scan import Scan
-
-try:
-    from bliss.data.channel import ChannelDataNode
-except:
-    from bliss.data.nodes.channel import ChannelDataNode
+from bliss.config import get_sessions_list
+from bliss.config.settings import scan as rdsscan        
+from bliss.data.node import get_node, get_nodes, DataNode, DataNodeContainer
+from bliss.data.nodes.scan import Scan
+from bliss.data.nodes.channel import ChannelDataNode
 
 NODE_TYPE = {}
 NODE_TYPE["Scan"] = Scan
@@ -72,7 +45,7 @@ def get_node_list(node, node_type=None, name=None, db_name=None, dimension=None,
     """
     Return list of nodes matching the given filter
     """
-    if not has_attr(node, "name"):
+    if not hasattr(node, "name"):
         input_node = get_node(node)
     else:
         input_node = node
@@ -268,7 +241,7 @@ if __name__ == "__main__":
         if not session_node:
             print("\tNot Available")
             continue
-        scans = get_scan_list(session_node)
+        scans = get_session_scan_list(session_node)
         for scan in scans:
             filenames = get_filenames(scan)
             nFiles = len(filenames)
