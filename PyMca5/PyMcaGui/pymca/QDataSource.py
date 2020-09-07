@@ -38,7 +38,7 @@ QTVERSION = qt.qVersion()
 
 from PyMca5.PyMcaCore import SpecFileDataSource
 from PyMca5.PyMcaCore import EdfFileDataSource
-from PyMca5.PyMcaCore import BlissSpecFile
+from PyMca5.PyMcaIO import BlissSpecFile
 from PyMca5.PyMcaGui.io import QEdfFileWidget
 from PyMca5.PyMcaGui.io import QSpecFileWidget
 
@@ -84,7 +84,7 @@ def getSourceType(sourceName0):
     if BlissSpecFile.isBlissSpecFile(sourceName):
         # wrapped as SpecFile
         return SpecFileDataSource.SOURCE_TYPE
-
+    
     if sps is not None:
         if sourceName in sps.getspeclist():
             return QSpsDataSource.SOURCE_TYPE
