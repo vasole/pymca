@@ -176,7 +176,9 @@ class QSourceSelector(qt.QWidget):
             if not os.path.exists(filename):         
                 txt = "Last output file <%s>  does not exist"  % filename
                 raise IOError(txt)
-            filename = [filename, session]
+            key = "%s" % session
+            self._emitSourceSelectedOrReloaded(session, key)
+            filename = [filename]
         if not specsession:
             if justloaded is None:
                 justloaded = True
@@ -225,6 +227,10 @@ class QSourceSelector(qt.QWidget):
                                     "SPS Error",
                                     "No shared memory source named %s" % key)
                 return
+
+        self._emitSourceSelectedOrReloaded(filename, key)
+
+    def _emitSourceSelectedOrReloaded(self, filename, key):
         ddict = {}
         ddict["event"] = "NewSourceSelected"
         if key in self.mapCombo.keys():
