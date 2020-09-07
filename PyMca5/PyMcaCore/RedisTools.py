@@ -151,12 +151,61 @@ def get_last_spectrum_instances(session_node, offset=None):
                 spectra[name] = (obj, scan) 
     return spectra
 
+def shortnamemap(names, separator=":"):
+    """
+    Map full Redis names to short (but still unique) names
+
+    :param list(str) names:
+    :param str separator:
+    :returns dict:
+    """
+    if not names:
+        return {}
+    names = set(names)
+    parts = [name.split(separator) for name in names]
+    nparts = max(map(len, parts))
+    parts = [([""] * (nparts - len(lst))) + lst for lst in parts]
+    ret = {}
+    for i in reversed(range(-nparts, 0)):
+        joinednames = [separator.join(s for s in lst[i:] if s) for lst in parts]
+        newnames = joinednames + list(ret.values())
+        selection = [
+            (idx, (separator.join(s for s in lst if s), name))
+            for idx, (name, lst) in enumerate(zip(joinednames, parts))
+            if newnames.count(name) == 1
+        ]
+        if selection:
+            idx, tuples = list(zip(*selection))
+            ret.update(tuples)
+            parts = [lst for j, lst in enumerate(parts) if j not in idx]
+    return ret
+    
+def get_scan_data(scan_node):
+    data_channels = get_data_channels(scan_node)
+    names = shortnamemap(x.name for x in data_channels)
+    print(names)
+    result = {}
+    i = 0
+    for channel in data_channels:
+        short_name = names[channel.name]
+        result[short_name] = channel.get_as_array(0, -1)
+        i += 1
+    return result
+
 def scan_info(scan_node):
     return scan_node.info.get_all()
         
 if __name__ == "__main__":
+    import sys
     # get the available sessions
-    sessions = get_sessions_list() 
+    scan_number = None
+    reference = None
+    if len(sys.argv) > 1:
+        sessions = [sys.argv[1]]
+        if len(sys.argv) > 2:
+            scan_number = sys.argv[2]
+    else:
+        sessions = get_sessions_list()
     for session_name in sessions:
         print("SESSION <%s>"  % session_name)
         #connection = client.get_redis_connection(db=1)
@@ -178,4 +227,20 @@ if __name__ == "__main__":
                     print("WARNING, more than one file associated to scan")
                 filename = filenames[-1]
             title = scan_info(scan).get("title", "No COMMAND")
-            print("\t%s %s %s"  % (scan.name, filename, title))
+            if scan_number:
+                if scan.name.startswith("161"):
+                    reference = scan
+            else:
+                print("\t%s %s %s"  % (scan.name, filename, title))
+    if len(sessions) == 1:
+        if reference:
+            scan = reference
+        else:
+            scan = scans[-1]
+        print("SCAN = %s" % scan)
+        print("NAME = %s" % scan.name)
+        print("TITLE = %s" % scan_info(scan).get("title", "No COMMAND"))
+        counters = get_data_channels(scan)
+        #for counter in counters:
+        #    print(counter.name, counter.short_name, counter.dtype, counter.type, counter.info, counter.get_as_array(0, -1))
+        print(get_scan_data(scan))
