@@ -55,7 +55,7 @@ except:
 
 
 class BlissSpecFile(object):
-    def __init__(self, filename):
+    def __init__(self, filename, nscans=10):
         """
         filename is the name of the bliss session
         """
@@ -68,6 +68,8 @@ class BlissSpecFile(object):
         self._filename = redis.get_session_filename(self._session)
         self._scan_nodes = redis.get_session_scan_list(self._session,
                                                   self._filename)
+        if len(self._scan_nodes) > nscans:
+            self._scan_nodes = self._scan_nodes[-10:]
 
     def list(self):
         """
@@ -90,6 +92,7 @@ class BlissSpecFile(object):
         key is of the from s.o
         scan number, scan order
         """
+        _logger.debug("select called")
         n = key.split(".")
         return self.__getitem__(int(n[0])-1)
 
@@ -97,56 +100,86 @@ class BlissSpecFile(object):
         """
         Gives back the number of scans in the file
         """
+        _logger.debug("scanno called")
         return len(self._scan_nodes)
 
     def allmotors(self):
+        _logger.debug("allmotors called")
         return []
 
 class BlissSpecScan(object):
     def __init__(self, scanNode):
+        _logger.debug("__init__ called %s" % scanNode.name)
         self._node = scanNode
         self._identification = scanNode.name.split("_")[0] + ".1"
         self._spectra = redis.get_spectra(scanNode)
         self._counters = redis.get_scan_data(scanNode)
-        self._motors = redis.scan_info(self._node).get("positioners", {})
+        self._scan_info = redis.scan_info(self._node) 
+        self._motors = self._scan_info.get("positioners", {})
 
     def alllabels(self):
         """
         These are the labels associated to the counters
         """
+        _logger.debug("called")
         return [key for key in self._counters]
 
     def allmotors(self):
+        _logger.debug("called")
         positioners = self._motors.get("positioners_start", {})
         return [key for key in positioners if not hasattr(positioners[key], "endswith")]
 
     def allmotorpos(self):
+        _logger.debug("called")
         positioners = self._motors.get("positioners_start", {})
         return [positioners[key] for key in positioners if not hasattr(positioners[key], "endswith")]
 
     def cols(self):
+        _logger.debug("called")
         return len(self._counters)
 
     def command(self):
         _logger.debug("command called")
-        return redis.scan_info(self._node).get("title",
-                                                      "No COMMAND")
+        return self._scan_info.get("title", "No COMMAND")
     def data(self):
-        return numpy.transpose(self.__data)
+        # somehow I have to manage to get the same number of points in all counters
+        _logger.debug("called")
+        counters = redis.get_scan_data(self._node)
+        keys = list(counters.keys())
+        n_actual = len(counters[keys[0]])
+        n_expected = self.lines()
+        data = numpy.empty((len(keys), n_expected), dtype=numpy.float32)
+        i = 0
+        for key in keys:
+            cdata = counters[key]
+            n = cdata.size
+            if n >= n_expected:
+                data[i] = cdata[:n_expected]
+            else:
+                data[i, :n] = cdata
+                data[i, n:n_expected] = numpy.nan
+            i += 1
+        return data
 
     def datacol(self, col):
-        keys = list(self._counters.keys())
-        return self._counters[keys[col]]
+        _logger.debug("called")
+        return self.data()[col, :]
 
     def dataline(self,line):
-        return self.__data[line,:]
+        _logger.debug("called")
+        return self.data()[:, line]
 
     def date(self):
+        _logger.debug("called")
         text = 'sometime'
-        return redis.scan_info(self._node).get("start_time", text)
+        text = self._scan_info.get("start_time", text)
+        return self._scan_info.get("start_time_str", text)
 
-    def fileheader(self):
+    def fileheader(self, key=''):
         _logger.debug("file header called")
+        # this implementations returns the scan header instead of the correct
+        # keys #E (file), #D (date) #O0 (motor names)
+        #
         labels = '#L '
         for label in self._counters:
             labels += '  '+label
@@ -156,6 +189,7 @@ class BlissSpecScan(object):
                 labels]
 
     def header(self,key):
+        _logger.debug("header called")
         if key == 'S':
             return self.fileheader()[0]
         elif key == 'D':
@@ -178,21 +212,27 @@ class BlissSpecScan(object):
             return output
 
     def order(self):
+        _logger.debug("order called")
         return 1
 
     def number(self):
+        _logger.debug("number called")
         return int(self._node.name.split("_")[0])
 
     def lines(self):
-        if self.scantype == 'SCAN':
-            return self.rows
+        _logger.debug("lines called")
+        if len(self._counters):
+            key = list(self._counters.keys())[0]
+            return len(self._counters[key])
         else:
             return 0
 
     def nbmca(self):
+        _logger.debug("nbmca called")
         return len(self._spectra)
 
     def mca(self,number):
+        _logger.debug("mca called")
         if number <= 0:
             raise IndexError("Mca numbering starts at 1")
         elif number > self.nbmca():
@@ -222,6 +262,10 @@ def test(filename):
     print(sf[0].header('@CTIME'))
     print(sf[0].header('@CALIB'))
     print(sf[0].header(''))
+    print("Number of lines = ", sf[0].lines())
+    if sf[0].lines():
+        print("1st column = ", sf[0].datacol(0))
+        print("1st line = ", sf[0].dataline(0))
 
 if __name__ == "__main__":
     test(sys.argv[1])
