@@ -176,9 +176,15 @@ class QSourceSelector(qt.QWidget):
             if not os.path.exists(filename):         
                 txt = "Last output file <%s>  does not exist"  % filename
                 raise IOError(txt)
+            key = os.path.basename(filename[0])
+            filename = [filename]
+            try:
+                self._emitSourceSelectedOrReloaded(filename, key)
+            except:
+                _logger.error("Problem opening %s" % filename[0])
             key = "%s" % session
             self._emitSourceSelectedOrReloaded(session, key)
-            filename = [filename]
+            return
         if not specsession:
             if justloaded is None:
                 justloaded = True
