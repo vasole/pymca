@@ -183,7 +183,7 @@ class QSourceSelector(qt.QWidget):
             except:
                 _logger.error("Problem opening %s" % filename[0])
             key = "%s" % session
-            self._emitSourceSelectedOrReloaded(session, key)
+            self._emitSourceSelectedOrReloaded([session], key)
             return
         if not specsession:
             if justloaded is None:
