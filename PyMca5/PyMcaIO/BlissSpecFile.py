@@ -70,6 +70,7 @@ class BlissSpecFile(object):
                                                   self._filename)
         if len(self._scan_nodes) > nscans:
             self._scan_nodes = self._scan_nodes[-10:]
+        self.list()
 
     def list(self):
         """
@@ -78,13 +79,14 @@ class BlissSpecFile(object):
         """
         _logger.debug("list method called")
         scanlist = ["%s" % scan.name.split("_")[0] for scan in self._scan_nodes]
+        self._list = ["%s.1" % idx for idx in scanlist]
         return ",".join(scanlist)
 
     def __getitem__(self, item):
         """
         Returns the scan data
         """
-        _logger.debug("__getitem__ called")
+        _logger.debug("__getitem__ called %s" % item)
         return BlissSpecScan(self._scan_nodes[item])
 
     def select(self, key):
@@ -93,8 +95,8 @@ class BlissSpecFile(object):
         scan number, scan order
         """
         _logger.debug("select called")
-        n = key.split(".")
-        return self.__getitem__(int(n[0])-1)
+        n = self._list.index(key)
+        return self.__getitem__(n)
 
     def scanno(self):
         """
@@ -114,7 +116,7 @@ class BlissSpecScan(object):
         self._identification = scanNode.name.split("_")[0] + ".1"
         self._spectra = redis.get_spectra(scanNode)
         self._counters = redis.get_scan_data(scanNode)
-        self._scan_info = redis.scan_info(self._node) 
+        self._scan_info = redis.scan_info(self._node)
         self._motors = self._scan_info.get("positioners", {})
 
     def alllabels(self):
@@ -247,7 +249,7 @@ def isBlissSpecFile(filename):
             return True
     except:
         pass
-    return False    
+    return False
 
 def test(filename):
     sf = BlissSpecFile(filename)
@@ -266,6 +268,16 @@ def test(filename):
     if sf[0].lines():
         print("1st column = ", sf[0].datacol(0))
         print("1st line = ", sf[0].dataline(0))
+    for i in range(sf.scanno()):
+        print(i)
+        print(sf[i].header('S'))
+        print(sf[i].header('D'))
+        print(sf[i].alllabels())
+        print(sf[i].nbmca())
+        if sf[i].nbmca():
+            print(sf[i].mca(1))
+        print(sf[0].allmotors())
+        print(sf[0].allmotorpos())
 
 if __name__ == "__main__":
     test(sys.argv[1])
