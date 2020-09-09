@@ -28,20 +28,18 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 from collections import OrderedDict
-from bliss.config import get_sessions_list
-from bliss.config.settings import scan as rdsscan        
-from bliss.data.node import get_node, get_nodes, DataNode, DataNodeContainer
-try:
-    from bliss.data.nodes.scan import ScanNode as Scan
-except:
-    from bliss.data.nodes.scan import Scan
-from bliss.data.nodes.channel import ChannelDataNode
+import logging
+_logger = logging.getLogger(__name__)
 
-NODE_TYPE = {}
-NODE_TYPE["Scan"] = Scan
-NODE_TYPE["DataNode"] = DataNode
-NODE_TYPE["DataNodeContainer"] = DataNodeContainer
-NODE_TYPE["ChannelDataNode"] = ChannelDataNode
+from bliss.config import get_sessions_list
+from bliss.config.settings import scan as rdsscan
+from bliss.data.node import get_node, get_nodes
+
+_NODE_TYPES = [ "channel",
+                "lima",
+                "node_ref_channel",
+                "scan",
+                "scan_group"]
 
 def get_node_list(node, node_type=None, name=None, db_name=None, dimension=None,
                   filter=None, unique=False, reverse=False, ignore_underscore=True):
@@ -56,15 +54,20 @@ def get_node_list(node, node_type=None, name=None, db_name=None, dimension=None,
         iterator = input_node.iterator.walk_from_last
     else:
         iterator = input_node.iterator.walk
-    if node_type in NODE_TYPE.keys():
-        node_type = NODE_TYPE[node_type]
+    if node_type:
+        if hasattr(node_type, "lower"):
+            node_type = node_type.lower()
+            if node_type not in _NODE_TYPES:
+                _logger.warning("Node type %s ignored" % node_type)
+                node_type = None
+
     output_list = []
     # walk not waiting
     if node_type or name or db_name or dimension:
         for node in iterator(wait=False, filter=filter):
             if ignore_underscore and node.name.startswith("_"):
                 continue
-            if node_type and isinstance(node, node_type):
+            if node_type and (node.type == node_type):
                 output_list.append(node)
             elif name and (node.name == name):
                 output_list.append(node)
@@ -77,7 +80,7 @@ def get_node_list(node, node_type=None, name=None, db_name=None, dimension=None,
                         output_list.append(node)
                         print(node.name, node.db_name)
             if unique and len(output_list):
-                break 
+                break
     else:
         for node in iterator(wait=False, filter=filter):
             #print(node.name, node.db_name, node)
@@ -98,7 +101,7 @@ def get_session_scan_list(session, filename=None):
         nodes = [node for node in nodes
                      if scan_info(node)["filename"] == filename]
     return nodes
-        
+
 def _get_session_scans(session):
     if hasattr(session, "name"):
         session_node = session
@@ -130,10 +133,10 @@ def get_session_filename(session):
     return info.get("filename", "")
 
 def get_scan_list(session_node):
-    return get_node_list(session_node, node_type="Scan", filter="scan")
+    return get_node_list(session_node, node_type="scan", filter="scan")
 
 def get_data_channels(node):
-    return get_node_list(node, node_type="ChannelDataNode", filter="channel")
+    return get_node_list(node, node_type="channel", filter="channel")
 
 def get_spectra(node, dimension=1):
     return get_node_list(node, filter="channel", dimension=1)
@@ -149,7 +152,7 @@ def get_filename(session_node):
 
 def get_filenames(node):
     filenames = []
-    if isinstance(node, NODE_TYPE["Scan"]):
+    if node.type == "scan":
         info = scan_info(node)
         if "filename" in info:
             filenames.append(info["filename"])
@@ -162,7 +165,7 @@ def get_filenames(node):
                 if filename not in filenames:
                     filenames.append(filename)
     return filenames
-    
+
 def get_last_spectrum_instances(session_node, offset=None):
     sc = get_scan_list(session_node)
     sc.reverse()
@@ -180,7 +183,7 @@ def get_last_spectrum_instances(session_node, offset=None):
         for obj, name in names:
             if name not in spectra:
                 print("adding name ", obj.db_name, " scan = ", scan.name)
-                spectra[name] = (obj, scan) 
+                spectra[name] = (obj, scan)
     return spectra
 
 def shortnamemap(names, separator=":"):
@@ -211,7 +214,7 @@ def shortnamemap(names, separator=":"):
             ret.update(tuples)
             parts = [lst for j, lst in enumerate(parts) if j not in idx]
     return ret
-    
+
 def get_scan_data(scan_node):
     data_channels = get_data_channels(scan_node)
     names = shortnamemap(x.name for x in data_channels)
@@ -256,38 +259,38 @@ def scan_info(scan_node):
                 # positioners_dial = scan_info.get('positioners_dial')     # ex: {'bad': 0.0, 'calc_mot1': 20.0, 'roby': 20.0, ... }
                 # positioners = scan_info.get('positioners')               # ex: {'bad': 0.0, 'calc_mot1': 20.0, 'roby': 10.0, ...}
 
-                # acquisition_chain = scan_info.get('acquisition_chain')  
+                # acquisition_chain = scan_info.get('acquisition_chain')
                 # ex: {'axis':
-                #       { 
-                #         'master' : {'scalars': ['axis:roby'], 'spectra': [], 'images': [] }, 
-                #         'scalars': ['timer:elapsed_time', 'diode:diode'], 
-                #         'spectra': [], 
-                #         'images' : [] 
+                #       {
+                #         'master' : {'scalars': ['axis:roby'], 'spectra': [], 'images': [] },
+                #         'scalars': ['timer:elapsed_time', 'diode:diode'],
+                #         'spectra': [],
+                #         'images' : []
                 #       }
                 #     }
                 # master, channels = next(iter(scan_info["acquisition_chain"].items()))
                 # master = axis
-                # channels = {'master': {'scalars': ['axis:roby'], 
-                #                        'scalars_units': {'axis:roby': None}, 
-                #                        'spectra': [], 
-                #                        'images': [], 
+                # channels = {'master': {'scalars': ['axis:roby'],
+                #                        'scalars_units': {'axis:roby': None},
+                #                        'spectra': [],
+                #                        'images': [],
                 #                        'display_names': {'axis:roby': 'roby'}
-                #                       }, 
+                #                       },
 
-                #             'scalars': ['timer:elapsed_time', 
-                #                         'timer:epoch', 
-                #                         'lima_simulator2:bpm:x', 
+                #             'scalars': ['timer:elapsed_time',
+                #                         'timer:epoch',
+                #                         'lima_simulator2:bpm:x',
                 #                         'simulation_diode_sampling_controller:diode'],
-                #  
-                #             'scalars_units': {'timer:elapsed_time': 's', 
-                #                               'timer:epoch': 's', 
-                #                               'lima_simulator2:bpm:x': 'px', 
-                #                               'simulation_diode_sampling_controller:diode': None}, 
-                #             'spectra': [], 
-                #             'images': [], 
-                #             'display_names': {'timer:elapsed_time': 'elapsed_time', 
-                #                               'timer:epoch': 'epoch', 
-                #                               'lima_simulator2:bpm:x': 'x', 
+                #
+                #             'scalars_units': {'timer:elapsed_time': 's',
+                #                               'timer:epoch': 's',
+                #                               'lima_simulator2:bpm:x': 'px',
+                #                               'simulation_diode_sampling_controller:diode': None},
+                #             'spectra': [],
+                #             'images': [],
+                #             'display_names': {'timer:elapsed_time': 'elapsed_time',
+                #                               'timer:epoch': 'epoch',
+                #                               'lima_simulator2:bpm:x': 'x',
                 #                               'simulation_diode_sampling_controller:diode': 'diode'}}
 
         # ONLY MANAGE THE FIRST ACQUISITION BRANCH (multi-top-masters scan are ignored)
@@ -295,7 +298,7 @@ def scan_info(scan_node):
         """
 
     return scan_node.info.get_all()
-        
+
 if __name__ == "__main__":
     import sys
     # get the available sessions
