@@ -65,7 +65,9 @@ def get_node_list(node, node_type=None, name=None, db_name=None, dimension=None,
     # walk not waiting
     if node_type or name or db_name or dimension:
         for node in iterator(wait=False, filter=filter):
-            if ignore_underscore and node.name.startswith("_"):
+            if ignore_underscore and hasattr(node.name, "startswith") and node.name.startswith("_"):
+                continue
+            if not _check_dimension(node, dimension):
                 continue
             if node_type and (node.type == node_type):
                 output_list.append(node)
@@ -73,23 +75,29 @@ def get_node_list(node, node_type=None, name=None, db_name=None, dimension=None,
                 output_list.append(node)
             elif db_name and node.db_name == db_name:
                 output_list.append(node)
-            elif dimension:
-                if hasattr(node, "shape"):
-                    shape = node.shape
-                    if len(shape) == dimension:
-                        output_list.append(node)
-                        print(node.name, node.db_name)
+            else:
+                output_list.append(node)
             if unique and len(output_list):
                 break
     else:
         for node in iterator(wait=False, filter=filter):
             #print(node.name, node.db_name, node)
-            if ignore_underscore and node.name.startswith("_"):
+            if ignore_underscore and hasattr(node.name, "startswith") and node.name.startswith("_"):
                 continue
             output_list.append(node)
             if unique:
                 break
     return output_list
+
+def _check_dimension(node, dimension=None):
+    if dimension is None:
+        return True
+    elif not hasattr(node, "shape"):
+        return False
+    elif len(node.shape) == dimension:
+        return True
+    else:
+        return False
 
 def get_session_scan_list(session, filename=None):
     """
@@ -136,10 +144,10 @@ def get_scan_list(session_node):
     return get_node_list(session_node, node_type="scan", filter="scan")
 
 def get_data_channels(node):
-    return get_node_list(node, node_type="channel", filter="channel")
+    return get_node_list(node, node_type="channel", filter="channel", dimension=0)
 
 def get_spectra(node, dimension=1):
-    return get_node_list(node, filter="channel", dimension=1)
+    return get_node_list(node, node_type="channel", filter="channel", dimension=1)
 
 def get_filename(session_node):
     scan_list = get_scan_list(session_node)
@@ -221,7 +229,11 @@ def get_scan_data(scan_node):
     result = {}
     i = 0
     for channel in data_channels:
-        short_name = names[channel.name]
+        # names :mon and :det from ID10 are badly mapped
+        if channel.name not in names and channel.name.startswith(":"):
+            short_name = names[channel.name[1:]]
+        else:
+            short_name = names[channel.name]
         result[short_name] = channel.get_as_array(0, -1)
         i += 1
     return result
