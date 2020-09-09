@@ -146,8 +146,15 @@ def get_scan_list(session_node):
 def get_data_channels(node):
     return get_node_list(node, node_type="channel", filter="channel", dimension=0)
 
-def get_spectra(node, dimension=1):
+def get_spectrum_nodes(node, dimension=1):
     return get_node_list(node, node_type="channel", filter="channel", dimension=1)
+
+def get_spectra(node):
+    spectra_nodes = get_spectrum_nodes(node)
+    if len(spectra_nodes):
+        return spectra_nodes[0].get_as_array(0, -1)
+    else:
+        return []
 
 def get_filename(session_node):
     scan_list = get_scan_list(session_node)
