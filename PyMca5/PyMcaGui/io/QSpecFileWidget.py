@@ -423,10 +423,17 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             if len(self.scans):
                 if sn == self.scans[-1]:
                     if hasattr(self.data, "isUpdated") and hasattr(self.data, "refresh"):
+                        if hasattr(self.data.sourceName, "upper"):
+                            source = self.data.sourceName
+                        else:
+                            source = self.data.sourceName[0]
                         if self.data.isUpdated(self.data.sourceName, sn):
                             updated = True
+                        elif os.path.exists(source):
+                            # actual file, not the bliss case
+                            updated = False
                         elif sn != self.data.getSourceInfo()["KeyList"][-1]:
-                            # not any longer the last scan
+                            # bliss case and not any longer the last scan
                             updated = True
                         else:
                             updated = False
