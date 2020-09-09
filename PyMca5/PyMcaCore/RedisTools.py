@@ -31,7 +31,10 @@ from collections import OrderedDict
 from bliss.config import get_sessions_list
 from bliss.config.settings import scan as rdsscan        
 from bliss.data.node import get_node, get_nodes, DataNode, DataNodeContainer
-from bliss.data.nodes.scan import Scan
+try:
+    from bliss.data.nodes.scan import ScanNode as Scan
+except:
+    from bliss.data.nodes.scan import Scan
 from bliss.data.nodes.channel import ChannelDataNode
 
 NODE_TYPE = {}
