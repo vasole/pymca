@@ -424,6 +424,13 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                 if sn == self.scans[-1]:
                     if hasattr(self.data, "isUpdated") and hasattr(self.data, "refresh"):
                         if self.data.isUpdated(self.data.sourceName, sn):
+                            updated = True
+                        elif sn != self.data.getSourceInfo()["KeyList"][-1]:
+                            # not any longer the last scan
+                            updated = True
+                        else:
+                            updated = False
+                        if updated:
                             self.data.refresh()
                             self.refresh()
 
