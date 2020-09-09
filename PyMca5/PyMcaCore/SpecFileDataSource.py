@@ -192,11 +192,17 @@ class SpecFileDataSource(object):
         """
         fileName = self.__sourceNameList[0]
         key_type= self.__getKeyType(key)
-        if key_type=="scan": scan_key= key
-        elif key_type=="mca": (scan_key, mca_no)=self.__getMcaPars(key)
+        if key_type=="scan":
+            scan_key= key
+        elif key_type=="mca":
+            (scan_key, mca_no)=self.__getMcaPars(key)
+        key_info = self.__getScanInfo(scan_key)
         if os.path.exists(fileName):
             self.__lastKeyInfo[key] = os.path.getmtime(fileName)
-        return self.__getScanInfo(scan_key)
+        else:
+            self.__lastKeyInfo[key] = key_info["Lines"] + \
+                                      key_info["NbMca"]
+        return key_info
 
     def __getKeyType (self,key):
         count= key.count('.')
@@ -765,7 +771,16 @@ class SpecFileDataSource(object):
         #sourceName is redundant?
         index = 0
         if not os.path.exists(self.__sourceNameList[index]):
-            return False
+            # bliss case
+            if key not in self.__lastKeyInfo:
+                return False
+            previous = self.__lastKeyInfo[key]
+            # update the value
+            self.getKeyInfo(key)
+            if self.__lastKeyInfo[key] != previous:
+                return True
+            else:
+                return False
         lastmodified = os.path.getmtime(self.__sourceNameList[index])
         if key not in self.__lastKeyInfo.keys():
             #nothing has been read???
