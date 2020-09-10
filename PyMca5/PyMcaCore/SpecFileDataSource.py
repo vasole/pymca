@@ -503,7 +503,7 @@ class SpecFileDataSource(object):
                 output.y    = None
                 output.m    = None
                 output.data = None
-                npoints = output.info['NbMca']/output.info['NbMcaDet']
+                npoints = output.info['NbMca'] // output.info['NbMcaDet']
                 index = 0
                 scan_obj = self._sourceObjectList[index].select(scan_key)
                 SPECFILE = True
