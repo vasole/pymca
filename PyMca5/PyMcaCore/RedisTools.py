@@ -127,7 +127,8 @@ def _get_session_scans(session):
              for node in get_nodes(
                 *(db_name.replace("_children_list", "") for db_name in db_names)
              )
-             if node is not None and node.type == "scan" and not node.name.startswith("_")
+             if node is not None and node.type == "scan" and \
+                 hasattr(node.name, "startswith") and not node.name.startswith("_")
             )
 
 def get_session_last_scan(session):
