@@ -420,6 +420,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             ddict['Command']  = str(item.text(2))
             ddict['NbPoints'] = int(str(item.text(3)))
             ddict['NbMca']    = int(str(item.text(4)))
+            selected = item.isSelected()
             if len(self.scans):
                 if sn == self.scans[-1]:
                     if hasattr(self.data, "isUpdated") and hasattr(self.data, "refresh"):
@@ -427,19 +428,23 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                             source = self.data.sourceName
                         else:
                             source = self.data.sourceName[0]
-                        if self.data.isUpdated(self.data.sourceName, sn):
-                            updated = True
-                        elif os.path.exists(source):
-                            # actual file, not the bliss case
-                            updated = False
-                        elif sn != self.data.getSourceInfo()["KeyList"][-1]:
-                            # bliss case and not any longer the last scan
-                            updated = True
+                        updated = False
+                        if os.path.exists(source):
+                            if self.data.isUpdated(self.data.sourceName, sn):
+                                updated = True
                         else:
-                            updated = False
+                            # bliss case, it takes as long to check as to update
+                            updated = True
                         if updated:
                             self.data.refresh()
                             self.refresh()
+                            if QTVERSION > "5.0.0":
+                                # make sure the item is selected
+                                itemList = self.list.findItems(sn, qt.Qt.MatchExactly,1)
+                                if len(itemList) == 1:
+                                    itemList[0].setSelected(selected)
+                    if selected:
+                        self._addClicked()
 
     def __doubleClicked(self, item):
         _logger.debug("__doubleClicked")
@@ -451,6 +456,26 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             ddict['NbPoints'] = int(str(item.text(3)))
             ddict['NbMca']    = int(str(item.text(4)))
             self.sigScanDoubleClicked.emit(ddict)
+            if len(self.scans):
+                if sn == self.scans[-1]:
+                    if hasattr(self.data, "isUpdated") and hasattr(self.data, "refresh"):
+                        if hasattr(self.data.sourceName, "upper"):
+                            source = self.data.sourceName
+                        else:
+                            source = self.data.sourceName[0]
+                        if os.path.exists(source) and self.data.isUpdated(self.data.sourceName, sn):
+                            updated = True
+                        else:
+                            # bliss case, it takes as long to check as to update
+                            updated = True
+                        if updated:
+                            self.data.refresh()
+                            self.refresh()
+                            if QTVERSION > "5.0.0":
+                                # make sure the item is selected
+                                itemList = self.list.findItems(sn, qt.Qt.MatchExactly,1)
+                                if len(itemList) == 1:
+                                    itemList[0].setSelected(True)
             #shortcut selec + remove?
             #for the time being just add
             self._addClicked()
