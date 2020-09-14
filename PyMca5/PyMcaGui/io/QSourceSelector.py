@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -177,6 +177,14 @@ class QSourceSelector(qt.QWidget):
                 txt = "Last output file <%s>  does not exist"  % filename
                 raise IOError(txt)
             filename = [filename]
+            key = os.path.basename(filename[0])
+            try:
+                self._emitSourceSelectedOrReloaded(filename, key)
+            except:
+                _logger.error("Problem opening %s" % filename[0])
+            key = "%s" % session
+            self._emitSourceSelectedOrReloaded([session], key)
+            return
         if not specsession:
             if justloaded is None:
                 justloaded = True
@@ -225,6 +233,10 @@ class QSourceSelector(qt.QWidget):
                                     "SPS Error",
                                     "No shared memory source named %s" % key)
                 return
+
+        self._emitSourceSelectedOrReloaded(filename, key)
+
+    def _emitSourceSelectedOrReloaded(self, filename, key):
         ddict = {}
         ddict["event"] = "NewSourceSelected"
         if key in self.mapCombo.keys():

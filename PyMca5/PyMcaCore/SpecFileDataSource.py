@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -82,9 +82,9 @@ class SpecFileDataSource(object):
     def refresh(self):
         self._sourceObjectList=[]
         self.__fileHeaderList = []
-        for name in self.__sourceNameList:
-            if not os.path.exists(name):
-                raise ValueError("File %s does not exists" % name)
+        #for name in self.__sourceNameList:
+        #    if not os.path.exists(name):
+        #        raise ValueError("File %s does not exists" % name)
         for name in self.__sourceNameList:
             self._sourceObjectList.append(specfile.Specfile(name))
             self.__fileHeaderList.append(False)
@@ -141,7 +141,7 @@ class SpecFileDataSource(object):
         source_info["NumMca"] = num_mca
         source_info["NumPts"] = num_pts
         source_info["Commands"] = commands
-        source_info["ScanType"] = map(self.__getScanType, num_pts, num_mca, commands)
+        source_info["ScanType"] = list(map(self.__getScanType, num_pts, num_mca, commands))
         self.__source_info_cached = source_info
         return source_info
 
@@ -192,10 +192,17 @@ class SpecFileDataSource(object):
         """
         fileName = self.__sourceNameList[0]
         key_type= self.__getKeyType(key)
-        if key_type=="scan": scan_key= key
-        elif key_type=="mca": (scan_key, mca_no)=self.__getMcaPars(key)
-        self.__lastKeyInfo[key] = os.path.getmtime(fileName)
-        return self.__getScanInfo(scan_key)
+        if key_type=="scan":
+            scan_key= key
+        elif key_type=="mca":
+            (scan_key, mca_no)=self.__getMcaPars(key)
+        key_info = self.__getScanInfo(scan_key)
+        if os.path.exists(fileName):
+            self.__lastKeyInfo[key] = os.path.getmtime(fileName)
+        else:
+            self.__lastKeyInfo[key] = key_info["Lines"] + \
+                                      key_info["NbMca"]
+        return key_info
 
     def __getKeyType (self,key):
         count= key.count('.')
@@ -496,7 +503,7 @@ class SpecFileDataSource(object):
                 output.y    = None
                 output.m    = None
                 output.data = None
-                npoints = output.info['NbMca']/output.info['NbMcaDet']
+                npoints = output.info['NbMca'] // output.info['NbMcaDet']
                 index = 0
                 scan_obj = self._sourceObjectList[index].select(scan_key)
                 SPECFILE = True
@@ -763,6 +770,17 @@ class SpecFileDataSource(object):
     def isUpdated(self, sourceName, key):
         #sourceName is redundant?
         index = 0
+        if not os.path.exists(self.__sourceNameList[index]):
+            # bliss case
+            if key not in self.__lastKeyInfo:
+                return False
+            previous = self.__lastKeyInfo[key]
+            # update the value
+            self.getKeyInfo(key)
+            if self.__lastKeyInfo[key] != previous:
+                return True
+            else:
+                return False
         lastmodified = os.path.getmtime(self.__sourceNameList[index])
         if key not in self.__lastKeyInfo.keys():
             #nothing has been read???

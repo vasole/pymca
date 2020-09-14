@@ -28,17 +28,18 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 from collections import OrderedDict
-from bliss.config import get_sessions_list
-from bliss.config.settings import scan as rdsscan        
-from bliss.data.node import get_node, get_nodes, DataNode, DataNodeContainer
-from bliss.data.nodes.scan import Scan
-from bliss.data.nodes.channel import ChannelDataNode
+import logging
+_logger = logging.getLogger(__name__)
 
-NODE_TYPE = {}
-NODE_TYPE["Scan"] = Scan
-NODE_TYPE["DataNode"] = DataNode
-NODE_TYPE["DataNodeContainer"] = DataNodeContainer
-NODE_TYPE["ChannelDataNode"] = ChannelDataNode
+from bliss.config import get_sessions_list
+from bliss.config.settings import scan as rdsscan
+from bliss.data.node import get_node, get_nodes
+
+_NODE_TYPES = [ "channel",
+                "lima",
+                "node_ref_channel",
+                "scan",
+                "scan_group"]
 
 def get_node_list(node, node_type=None, name=None, db_name=None, dimension=None,
                   filter=None, unique=False, reverse=False, ignore_underscore=True):
@@ -53,44 +54,60 @@ def get_node_list(node, node_type=None, name=None, db_name=None, dimension=None,
         iterator = input_node.iterator.walk_from_last
     else:
         iterator = input_node.iterator.walk
-    if node_type in NODE_TYPE.keys():
-        node_type = NODE_TYPE[node_type]
+    if node_type:
+        if hasattr(node_type, "lower"):
+            node_type = node_type.lower()
+            if node_type not in _NODE_TYPES:
+                _logger.warning("Node type %s ignored" % node_type)
+                node_type = None
+
     output_list = []
     # walk not waiting
     if node_type or name or db_name or dimension:
         for node in iterator(wait=False, filter=filter):
-            if ignore_underscore and node.name.startswith("_"):
+            if ignore_underscore and hasattr(node.name, "startswith") and node.name.startswith("_"):
                 continue
-            if node_type and isinstance(node, node_type):
+            if not _check_dimension(node, dimension):
+                continue
+            if node_type and (node.type == node_type):
                 output_list.append(node)
             elif name and (node.name == name):
                 output_list.append(node)
             elif db_name and node.db_name == db_name:
                 output_list.append(node)
-            elif dimension:
-                if hasattr(node, "shape"):
-                    shape = node.shape
-                    if len(shape) == dimension:
-                        output_list.append(node)
-                        print(node.name, node.db_name)
+            else:
+                output_list.append(node)
             if unique and len(output_list):
-                break 
+                break
     else:
         for node in iterator(wait=False, filter=filter):
             #print(node.name, node.db_name, node)
-            if ignore_underscore and node.name.startswith("_"):
+            if ignore_underscore and hasattr(node.name, "startswith") and node.name.startswith("_"):
                 continue
             output_list.append(node)
             if unique:
                 break
     return output_list
 
-def get_session_scans(session):
+def _check_dimension(node, dimension=None):
+    if dimension is None:
+        return True
+    elif not hasattr(node, "shape"):
+        return False
+    elif len(node.shape) == dimension:
+        return True
+    else:
+        return False
+
+def get_session_scan_list(session, filename=None):
     """
     Returns a sorted list of actual scans. Last scan is last.
     """
     nodes = list(_get_session_scans(session))
     nodes = sorted(nodes, key=lambda k: k.info["start_timestamp"])
+    if filename:
+        nodes = [node for node in nodes
+                     if scan_info(node)["filename"] == filename]
     return nodes
 
 def _get_session_scans(session):
@@ -110,11 +127,12 @@ def _get_session_scans(session):
              for node in get_nodes(
                 *(db_name.replace("_children_list", "") for db_name in db_names)
              )
-             if node is not None and node.type == "scan" and not node.name.startswith("_")
+             if node is not None and node.type == "scan" and \
+                 hasattr(node.name, "startswith") and not node.name.startswith("_")
             )
 
 def get_session_last_scan(session):
-    return get_session_scans(session)[-1]
+    return get_session_scan_list(session)[-1]
 
 def get_session_filename(session):
     """
@@ -124,13 +142,20 @@ def get_session_filename(session):
     return info.get("filename", "")
 
 def get_scan_list(session_node):
-    return get_node_list(session_node, node_type="Scan", filter="scan")
+    return get_node_list(session_node, node_type="scan", filter="scan")
 
 def get_data_channels(node):
-    return get_node_list(node, node_type="ChannelDataNode", filter="channel")
+    return get_node_list(node, node_type="channel", filter="channel", dimension=0)
 
-def get_spectra(node, dimension=1):
-    return get_node_list(node, filter="channel", dimension=1)
+def get_spectrum_nodes(node, dimension=1):
+    return get_node_list(node, node_type="channel", filter="channel", dimension=1)
+
+def get_spectra(node):
+    spectra_nodes = get_spectrum_nodes(node)
+    if len(spectra_nodes):
+        return spectra_nodes[0].get_as_array(0, -1)
+    else:
+        return []
 
 def get_filename(session_node):
     scan_list = get_scan_list(session_node)
@@ -143,7 +168,7 @@ def get_filename(session_node):
 
 def get_filenames(node):
     filenames = []
-    if isinstance(node, NODE_TYPE["Scan"]):
+    if node.type == "scan":
         info = scan_info(node)
         if "filename" in info:
             filenames.append(info["filename"])
@@ -156,7 +181,7 @@ def get_filenames(node):
                 if filename not in filenames:
                     filenames.append(filename)
     return filenames
-    
+
 def get_last_spectrum_instances(session_node, offset=None):
     sc = get_scan_list(session_node)
     sc.reverse()
@@ -174,7 +199,7 @@ def get_last_spectrum_instances(session_node, offset=None):
         for obj, name in names:
             if name not in spectra:
                 print("adding name ", obj.db_name, " scan = ", scan.name)
-                spectra[name] = (obj, scan) 
+                spectra[name] = (obj, scan)
     return spectra
 
 def shortnamemap(names, separator=":"):
@@ -205,21 +230,95 @@ def shortnamemap(names, separator=":"):
             ret.update(tuples)
             parts = [lst for j, lst in enumerate(parts) if j not in idx]
     return ret
-    
+
 def get_scan_data(scan_node):
     data_channels = get_data_channels(scan_node)
     names = shortnamemap(x.name for x in data_channels)
     result = {}
     i = 0
     for channel in data_channels:
-        short_name = names[channel.name]
+        # names :mon and :det from ID10 are badly mapped
+        if channel.name not in names and channel.name.startswith(":"):
+            short_name = names[channel.name[1:]]
+        else:
+            short_name = names[channel.name]
         result[short_name] = channel.get_as_array(0, -1)
         i += 1
     return result
 
 def scan_info(scan_node):
+    """
+    See https://gitlab.esrf.fr/bliss/bliss/-/blob/master/bliss/data/display.py
+
+    def collect_channels_info(self, scan_info):
+
+                #------------- scan_info example -------------------------------------------------------
+
+                # session_name = scan_info.get('session_name')             # ex: 'test_session'
+                # user_name = scan_info.get('user_name')                   # ex: 'pguillou'
+                # filename = scan_info.get('filename')                     # ex: '/mnt/c/tmp/test_session/data.h5'
+                # node_name = scan_info.get('node_name')                   # ex: 'test_session:mnt:c:tmp:183_ascan'
+
+                # start_time = scan_info.get('start_time')                 # ex: datetime.datetime(2019, 3, 18, 15, 28, 17, 83204)
+                # start_time_str = scan_info.get('start_time_str')         # ex: 'Mon Mar 18 15:28:17 2019'
+                # start_timestamp = scan_info.get('start_timestamp')       # ex: 1552919297.0832036
+
+                # save = scan_info.get('save')                             # ex: True
+                # sleep_time = scan_info.get('sleep_time')                 # ex: None
+
+                # title = scan_info.get('title')                           # ex: 'ascan roby 0 10 10 0.01'
+                # scan_type = scan_info.get('type')                        # ex:    ^
+                # start = scan_info.get('start')                           # ex:             ^              = [0]
+                # stop = scan_info.get('stop')                             # ex:                ^           = [10]
+                # npoints = scan_info.get('npoints')                       # ex:                   ^        = 10
+                # count_time = scan_info.get('count_time')                 # ex:                       ^    = 0.01
+
+                # total_acq_time = scan_info.get('total_acq_time')         # ex: 0.1  ( = npoints * count_time )
+                # scan_nb = scan_info.get('scan_nb')                       # ex: 183
+
+                # positioners_dial = scan_info.get('positioners_dial')     # ex: {'bad': 0.0, 'calc_mot1': 20.0, 'roby': 20.0, ... }
+                # positioners = scan_info.get('positioners')               # ex: {'bad': 0.0, 'calc_mot1': 20.0, 'roby': 10.0, ...}
+
+                # acquisition_chain = scan_info.get('acquisition_chain')
+                # ex: {'axis':
+                #       {
+                #         'master' : {'scalars': ['axis:roby'], 'spectra': [], 'images': [] },
+                #         'scalars': ['timer:elapsed_time', 'diode:diode'],
+                #         'spectra': [],
+                #         'images' : []
+                #       }
+                #     }
+                # master, channels = next(iter(scan_info["acquisition_chain"].items()))
+                # master = axis
+                # channels = {'master': {'scalars': ['axis:roby'],
+                #                        'scalars_units': {'axis:roby': None},
+                #                        'spectra': [],
+                #                        'images': [],
+                #                        'display_names': {'axis:roby': 'roby'}
+                #                       },
+
+                #             'scalars': ['timer:elapsed_time',
+                #                         'timer:epoch',
+                #                         'lima_simulator2:bpm:x',
+                #                         'simulation_diode_sampling_controller:diode'],
+                #
+                #             'scalars_units': {'timer:elapsed_time': 's',
+                #                               'timer:epoch': 's',
+                #                               'lima_simulator2:bpm:x': 'px',
+                #                               'simulation_diode_sampling_controller:diode': None},
+                #             'spectra': [],
+                #             'images': [],
+                #             'display_names': {'timer:elapsed_time': 'elapsed_time',
+                #                               'timer:epoch': 'epoch',
+                #                               'lima_simulator2:bpm:x': 'x',
+                #                               'simulation_diode_sampling_controller:diode': 'diode'}}
+
+        # ONLY MANAGE THE FIRST ACQUISITION BRANCH (multi-top-masters scan are ignored)
+        top_master, channels = next(iter(scan_info["acquisition_chain"].items()))
+        """
+
     return scan_node.info.get_all()
-        
+
 if __name__ == "__main__":
     import sys
     # get the available sessions
@@ -251,7 +350,9 @@ if __name__ == "__main__":
                 if nFiles > 1:
                     print("WARNING, more than one file associated to scan")
                 filename = filenames[-1]
-            title = scan_info(scan).get("title", "No COMMAND")
+            sInfo = scan_info(scan)
+            print(list(sInfo.keys()))
+            title = sInfo.get("title", "No COMMAND")
             if scan_number:
                 if scan.name.startswith("161"):
                     reference = scan

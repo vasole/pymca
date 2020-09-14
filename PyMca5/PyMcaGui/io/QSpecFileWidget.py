@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -168,6 +168,8 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         self.list.itemSelectionChanged.connect(self.__selectionChanged)
         self.list.setContextMenuPolicy(qt.Qt.CustomContextMenu)
         self.list.customContextMenuRequested.connect(self.__contextMenu)
+        self.list.itemClicked[qt.QTreeWidgetItem, int].connect( \
+                     self.__singleClicked)
         self.list.itemDoubleClicked[qt.QTreeWidgetItem, int].connect( \
                      self.__doubleClicked)
         self.cntTable.sigSpecFileCntTableSignal.connect(self._cntSignal)
@@ -409,6 +411,41 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             self.list.sortItems(index, qt.Qt.AscendingOrder)
             #print "index = ", index
 
+    def __singleClicked(self, item):
+        _logger.debug("__singleClicked")
+        if item is not None:
+            sn  = str(item.text(1))
+            ddict={}
+            ddict['Key']      = sn
+            ddict['Command']  = str(item.text(2))
+            ddict['NbPoints'] = int(str(item.text(3)))
+            ddict['NbMca']    = int(str(item.text(4)))
+            selected = item.isSelected()
+            if len(self.scans):
+                if sn == self.scans[-1]:
+                    if hasattr(self.data, "isUpdated") and hasattr(self.data, "refresh"):
+                        if hasattr(self.data.sourceName, "upper"):
+                            source = self.data.sourceName
+                        else:
+                            source = self.data.sourceName[0]
+                        updated = False
+                        if os.path.exists(source):
+                            if self.data.isUpdated(self.data.sourceName, sn):
+                                updated = True
+                        else:
+                            # bliss case, it takes as long to check as to update
+                            updated = True
+                        if updated:
+                            self.data.refresh()
+                            self.refresh()
+                            if QTVERSION > "5.0.0":
+                                # make sure the item is selected
+                                itemList = self.list.findItems(sn, qt.Qt.MatchExactly,1)
+                                if len(itemList) == 1:
+                                    itemList[0].setSelected(selected)
+                    if selected:
+                        self._addClicked()
+
     def __doubleClicked(self, item):
         _logger.debug("__doubleClicked")
         if item is not None:
@@ -419,6 +456,26 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             ddict['NbPoints'] = int(str(item.text(3)))
             ddict['NbMca']    = int(str(item.text(4)))
             self.sigScanDoubleClicked.emit(ddict)
+            if len(self.scans):
+                if sn == self.scans[-1]:
+                    if hasattr(self.data, "isUpdated") and hasattr(self.data, "refresh"):
+                        if hasattr(self.data.sourceName, "upper"):
+                            source = self.data.sourceName
+                        else:
+                            source = self.data.sourceName[0]
+                        if os.path.exists(source) and self.data.isUpdated(self.data.sourceName, sn):
+                            updated = True
+                        else:
+                            # bliss case, it takes as long to check as to update
+                            updated = True
+                        if updated:
+                            self.data.refresh()
+                            self.refresh()
+                            if QTVERSION > "5.0.0":
+                                # make sure the item is selected
+                                itemList = self.list.findItems(sn, qt.Qt.MatchExactly,1)
+                                if len(itemList) == 1:
+                                    itemList[0].setSelected(True)
             #shortcut selec + remove?
             #for the time being just add
             self._addClicked()

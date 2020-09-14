@@ -330,7 +330,7 @@ class StackBase(object):
                                 self._stack.info["McaLiveTime"].sum()
             else:
                 print("Not an array. Skipping time information")
-                del dataObject.info["McaLiveTime"]
+                #del dataObject.info["McaLiveTime"]
         if not hasattr(self._stack, 'x'):
             self._stack.x = None
         if self._stack.x in [None, []]:
