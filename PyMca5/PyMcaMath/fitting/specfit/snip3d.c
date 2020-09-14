@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -175,7 +175,7 @@ void snip3d(double *data, int nx, int ny, int nz, int width)
 			for (j=p; j<(ny-p); j++)
 			{
 				joffset = j * nz;
-				for (k=p; k<(nz-p); j++)
+				for (k=p; k<(nz-p); k++)
 				{
 					data[ioffset + joffset + k] = w[ioffset + joffset + k];
 				}
