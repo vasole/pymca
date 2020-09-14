@@ -141,7 +141,7 @@ class SpecFileDataSource(object):
         source_info["NumMca"] = num_mca
         source_info["NumPts"] = num_pts
         source_info["Commands"] = commands
-        source_info["ScanType"] = map(self.__getScanType, num_pts, num_mca, commands)
+        source_info["ScanType"] = list(map(self.__getScanType, num_pts, num_mca, commands))
         self.__source_info_cached = source_info
         return source_info
 
