@@ -151,16 +151,16 @@ def get_session_filename(session):
 def get_scan_list(session_node):
     return get_node_list(session_node, node_type="scan", filter="scan")
 
-def get_data_channels(node):
-    return get_node_list(node, node_type="channel", filter="channel", dimension=0)
+def get_data_channels(node, unique=False):
+    return get_node_list(node, node_type="channel", filter="channel", dimension=0, unique=unique)
 
-def get_spectrum_nodes(node, dimension=1):
-    return get_node_list(node, node_type="channel", filter="channel", dimension=1)
+def get_spectrum_nodes(node, dimension=1, unique=False):
+    return get_node_list(node, node_type="channel", filter="channel", dimension=1, unique=unique)
 
-def get_spectra(node):
-    spectra_nodes = get_spectrum_nodes(node)
+def get_spectra(node, unique=False):
+    spectra_nodes = get_spectrum_nodes(node, unique=unique)
     if len(spectra_nodes):
-        return spectra_nodes[0].get_as_array(0, -1)
+        return [spectra_node.get_as_array(0, -1) for spectra_node in spectra_nodes]
     else:
         return []
 
@@ -238,8 +238,8 @@ def shortnamemap(names, separator=":"):
             parts = [lst for j, lst in enumerate(parts) if j not in idx]
     return ret
 
-def get_scan_data(scan_node):
-    data_channels = get_data_channels(scan_node)
+def get_scan_data(scan_node, unique=False):
+    data_channels = get_data_channels(scan_node, unique=unique)
     names = shortnamemap(x.name for x in data_channels)
     result = {}
     i = 0
