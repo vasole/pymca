@@ -128,15 +128,20 @@ class BlissSpecScan(object):
         self._node = scanNode
         self._identification = scanNode.name.split("_")[0] + ".1"
         self._spectra = redis.get_spectra(scanNode)
-        self._counters = redis.get_scan_data(scanNode)
+        self._counters = None
         self._scan_info = redis.scan_info(self._node)
         self._motors = self._scan_info.get("positioners", {})
+
+    def _read_counters(self, force=False):
+        if force or not self._counters:
+            self._counters = redis.get_scan_data(self._node)
 
     def alllabels(self):
         """
         These are the labels associated to the counters
         """
         _logger.debug("alllabels called")
+        self._read_counters()
         return [key for key in self._counters]
 
     def allmotors(self):
@@ -151,6 +156,7 @@ class BlissSpecScan(object):
 
     def cols(self):
         _logger.debug("cols called")
+        self._read_counters()
         return len(self._counters)
 
     def command(self):
@@ -160,7 +166,8 @@ class BlissSpecScan(object):
     def data(self):
         # somehow I have to manage to get the same number of points in all counters
         _logger.info("data called")
-        counters = redis.get_scan_data(self._node)
+        self._read_counters(force=True)
+        counters = self._counters
         keys = list(counters.keys())
         n_actual = len(counters[keys[0]])
         n_expected = self.lines()
@@ -237,9 +244,14 @@ class BlissSpecScan(object):
 
     def lines(self):
         _logger.debug("lines called")
-        if len(self._counters):
-            key = list(self._counters.keys())[0]
-            return len(self._counters[key])
+        if self._counters is None:
+            counters = redis.get_scan_data(self._node, unique=True)
+        else:
+            self._read_counters()
+            counters = self._counters
+        if len(counters):
+            key = list(counters.keys())[0]
+            return len(counters[key])
         else:
             return 0
 
