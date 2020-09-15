@@ -160,7 +160,7 @@ def get_spectrum_nodes(node, dimension=1, unique=False):
 def get_spectra(node, unique=False):
     spectra_nodes = get_spectrum_nodes(node, unique=unique)
     if len(spectra_nodes):
-        return spectra_nodes[0].get_as_array(0, -1)
+        return [spectra_node.get_as_array(0, -1) for spectra_node in spectra_nodes]
     else:
         return []
 

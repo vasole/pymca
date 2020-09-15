@@ -127,7 +127,8 @@ class BlissSpecScan(object):
         _logger.debug("__init__ called %s" % scanNode.name)
         self._node = scanNode
         self._identification = scanNode.name.split("_")[0] + ".1"
-        self._spectra = redis.get_spectra(scanNode)
+        # for the time being only one MCA read
+        self._spectra = redis.get_spectra(scanNode, unique=True)
         self._counters = None
         self._scan_info = redis.scan_info(self._node)
         self._motors = self._scan_info.get("positioners", {})
@@ -257,7 +258,10 @@ class BlissSpecScan(object):
 
     def nbmca(self):
         _logger.debug("nbmca called")
-        return len(self._spectra)
+        if len(spectra):
+            return len(self._spectra[0])
+        else:
+            return 0
 
     def mca(self,number):
         _logger.debug("mca called")
@@ -265,7 +269,7 @@ class BlissSpecScan(object):
             raise IndexError("Mca numbering starts at 1")
         elif number > self.nbmca():
             raise IndexError("Only %d MCAs in file" % self.nbmca())
-        return self._spectra[number - 1]
+        return self._spectra[0][number - 1]
 
 def isBlissSpecFile(filename):
     if os.path.exists(filename):
