@@ -31,6 +31,7 @@ from collections import OrderedDict
 import logging
 _logger = logging.getLogger(__name__)
 
+from bliss import version_info
 from bliss.config import get_sessions_list
 from bliss.config.settings import scan as rdsscan
 from bliss.data.node import get_node, get_nodes
@@ -50,10 +51,16 @@ def get_node_list(node, node_type=None, name=None, db_name=None, dimension=None,
         input_node = get_node(node)
     else:
         input_node = node
-    if reverse:
-        iterator = input_node.iterator.walk_from_last
+    if version_info < ['1', '5', '0']:
+        if reverse:
+            iterator = input_node.iterator.walk_from_last
+        else:
+            iterator = input_node.iterator.walk
     else:
-        iterator = input_node.iterator.walk
+        if reverse:
+            iterator = input_node.walk_from_last
+        else:
+            iterator = input_node.walk
     if node_type:
         if hasattr(node_type, "lower"):
             node_type = node_type.lower()
