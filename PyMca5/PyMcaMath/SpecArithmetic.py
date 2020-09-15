@@ -58,12 +58,14 @@ def search_com(xdata,ydata):
     """
     Return the center of mass in arrays xdata and ydata
     """
+    # make sure com is inside the region
+    ydata = ydata - numpy.min(ydata)
     num    = numpy.sum(xdata*ydata)
     denom  = numpy.sum(ydata).astype(numpy.float)
     try:
        result = num/denom
     except ZeroDivisionError:
-       result = 0
+       result = numpy.mean(x)
     return result
 
 
@@ -80,8 +82,29 @@ def search_fwhm(xdata,ydata,peak=None,index=None):
         mypeak     = peak
         index_peak = index
 
-    hm = mypeak/2
+    mymin = numpy.min(ydata)
+    hm = (mypeak-mymin)/2 + mymin
     idx = index_peak
+
+    lpeak = False
+    upeak = False
+
+    if numpy.any(ydata[0:idx] < hm):
+        lpeak = True
+    if numpy.any(ydata[idx:] < hm):
+        upeak = True
+
+    if lpeak and upeak:
+        # it is a peak so we keep the data and half-max
+        pass
+    elif lpeak:
+        # it is step-like data with a positive gradient 
+        ydata = numpy.gradient(ydata)
+        hm = (numpy.max(ydata)-numpy.min(ydata))/2+numpy.min(ydata)
+    else:
+        # it is step-like data with a negative gradient
+        ydata = -1*numpy.gradient(ydata)
+        hm = (numpy.max(ydata)-numpy.min(ydata))/2+numpy.min(ydata)
 
     try:
         while ydata[idx] >= hm:
