@@ -39,6 +39,7 @@ It can be used to wrap other formats as specile
 import os
 import sys
 import numpy
+import time
 import logging
 _logger = logging.getLogger(__name__)
 
@@ -71,6 +72,8 @@ class BlissSpecFile(object):
         if len(self._scan_nodes) > nscans:
             self._scan_nodes = self._scan_nodes[-10:]
         self.list()
+        self.__lastTime = 0
+        self.__lastKey = "0.0"
 
     def list(self):
         """
@@ -86,7 +89,7 @@ class BlissSpecFile(object):
         """
         Returns the scan data
         """
-        _logger.debug("__getitem__ called %s" % item)
+        _logger.info("__getitem__ called %s" % item)
         return BlissSpecScan(self._scan_nodes[item])
 
     def select(self, key):
@@ -94,9 +97,19 @@ class BlissSpecFile(object):
         key is of the from s.o
         scan number, scan order
         """
-        _logger.debug("select called")
-        n = self._list.index(key)
-        return self.__getitem__(n)
+        _logger.info("select called %s" % key)
+        t0 = time.time()
+        if key == self.__lastKey and (t0 - self.__lastTime) < 1:
+            # less than one second since last call, return cached value
+            _logger.info("Returning cached value for key %s" % key)
+        else:
+            if key == self.__lastKey:
+                _logger.info("Re-reading value for key %s" % key)
+            n = self._list.index(key)
+            self.__lastKey = key
+            self.__lastItem = self.__getitem__(n)
+            self.__lastTime = time.time()
+        return self.__lastItem
 
     def scanno(self):
         """
@@ -123,29 +136,30 @@ class BlissSpecScan(object):
         """
         These are the labels associated to the counters
         """
-        _logger.debug("called")
+        _logger.debug("alllabels called")
         return [key for key in self._counters]
 
     def allmotors(self):
-        _logger.debug("called")
+        _logger.debug("allmotors called")
         positioners = self._motors.get("positioners_start", {})
         return [key for key in positioners if not hasattr(positioners[key], "endswith")]
 
     def allmotorpos(self):
-        _logger.debug("called")
+        _logger.debug("allmotorpos called")
         positioners = self._motors.get("positioners_start", {})
         return [positioners[key] for key in positioners if not hasattr(positioners[key], "endswith")]
 
     def cols(self):
-        _logger.debug("called")
+        _logger.debug("cols called")
         return len(self._counters)
 
     def command(self):
         _logger.debug("command called")
         return self._scan_info.get("title", "No COMMAND")
+
     def data(self):
         # somehow I have to manage to get the same number of points in all counters
-        _logger.debug("called")
+        _logger.info("data called")
         counters = redis.get_scan_data(self._node)
         keys = list(counters.keys())
         n_actual = len(counters[keys[0]])
@@ -164,21 +178,21 @@ class BlissSpecScan(object):
         return data
 
     def datacol(self, col):
-        _logger.debug("called")
+        _logger.debug("datacol called")
         return self.data()[col, :]
 
     def dataline(self,line):
-        _logger.debug("called")
+        _logger.debug("dataline called")
         return self.data()[:, line]
 
     def date(self):
-        _logger.debug("called")
+        _logger.debug("date called")
         text = 'sometime'
         text = self._scan_info.get("start_time", text)
         return self._scan_info.get("start_time_str", text)
 
     def fileheader(self, key=''):
-        _logger.debug("file header called")
+        _logger.debug("fileheader called")
         # this implementations returns the scan header instead of the correct
         # keys #E (file), #D (date) #O0 (motor names)
         #
