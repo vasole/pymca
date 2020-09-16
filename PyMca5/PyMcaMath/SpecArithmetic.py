@@ -104,6 +104,8 @@ def search_fwhm(xdata,ydata,peak=None,index=None):
         ydata = -1*numpy.gradient(ydata)
         hm = (numpy.max(ydata)-numpy.min(ydata))/2+numpy.min(ydata)
 
+    index_peak = numpy.argmax(ydata)
+    idx = index_peak
     try:
         while ydata[idx] >= hm:
            idx = idx-1
