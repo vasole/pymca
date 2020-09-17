@@ -523,7 +523,7 @@ def numpyCorrelationPCA(stack, ncomponents=10, binning=None, legacy=True, **kw):
                     force=force)
 
 def numpyPCA(stack, ncomponents=10, binning=None, legacy=True,
-                     center=True, scale=False, mask=None, spectral_mask=None, force=True):
+                     center=True, scale=False, mask=None, spectral_mask=None, force=True, **kw):
     """
     This is a covariance method using numpy
     """
