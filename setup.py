@@ -337,6 +337,29 @@ def build_PyMcaIOHelper(ext_modules):
                                      numpy.get_include()])
     ext_modules.append(module)
 
+def build__cython_kmeans(ext_modules):
+    if sys.platform.startswith("win"):
+        extra_compile_args = ["/openmp"]
+        extra_link_args= []
+    else:
+        extra_compile_args = ["-fopenmp"]
+        extra_link_args=['-fopenmp']
+
+    # aim at maximal compatibility instead of performance
+    extra_compile_args = []
+    extra_link_args= []
+
+    if build_ext:
+        sources = ['PyMca5/PyMcaMath/mva/_cython_kmeans/kmeans.pyx']
+    else:
+        sources = ['PyMca5/PyMcaMath/mva/_cython_kmeans/default/kmeans.c']
+    module = Extension(name='PyMca5.PyMcaMath.mva._cython_kmeans',
+                       sources=sources,
+                       define_macros=[],
+                       extra_compile_args=extra_compile_args,
+                       extra_link_args=extra_link_args,
+                       include_dirs=[numpy.get_include()])
+    ext_modules.append(module)
 
 def build_Object3DCTools(ext_modules):
     includes = [numpy.get_include()]
@@ -509,6 +532,8 @@ build_specfile(ext_modules)
 build_specfit(ext_modules)
 build_sps(ext_modules)
 build_PyMcaIOHelper(ext_modules)
+
+build__cython_kmeans(ext_modules)
 
 build_Object3DCTools(ext_modules)
 build_Object3DQhull(ext_modules)

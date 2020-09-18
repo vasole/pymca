@@ -37,6 +37,8 @@ include PyMca5/PyMcaIO/sps/LICENSE
 recursive-include PyMca5/PyMcaMath *.py *.c *.cl
 include PyMca5/PyMcaMath/mva/py_nnma/LICENSE
 include PyMca5/PyMcaMath/mva/py_nnma/README
+include PyMca5/PyMcaMath/mva/_cython_kmeans/kmeans.pyx
+include PyMca5/PyMcaMath/mva/_cython_kmeans/default/kmeans.c
 include PyMca5/PyMcaMath/PyMcaSciPy/signal/LICENSE.txt
 recursive-include PyMca5/PyMcaMisc *.py
 recursive-include PyMca5/PyMcaPhysics *.py
