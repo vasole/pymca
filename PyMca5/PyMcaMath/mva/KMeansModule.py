@@ -34,35 +34,61 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import numpy
 try:
-    from mdp.nodes import KMeansClassifier
-    KMEANS = "mdp"
+    from sklearn.cluster import KMeans
+    KMEANS = "sklearn"
 except:
-    KMEANS = False
+    try:
+        from PyMca5.PyMcaMath.mva import _cython_kmeans as kmeans
+        KMEANS = "_kmeans"
+    except:
+        KMEANS = False
     print(sys.exc_info())
 
+def _labelCythonKMeans(x, k):
+    labels, means, iterations, converged = kmeans.kmeans(x, k)
+    return {"labels": labels,
+            "means": means,
+            "iterations":iterations,
+            "converged":converged}
+
 def _labelMdp(x, k):
+    from mdp.nodes import KMeansClassifier
     classifier = KMeansClassifier(k)
     for i in range(x.shape[0]):
         classifier.train(x[i:i+1])
     #classifier.train(x)
     labels = classifier.label(x)
-    return labels
-
+    return {"labels": labels}
+     
 def _labelScikitLearn(x, k):
     from sklearn.cluster import KMeans
     km = KMeans(n_clusters=k)
     km.fit(x)
     labels = km.predict(x)
-    return labels
+    return {"labels": labels}
 
-def label(x, k, method=None):
+def label(x, k, method=None, normalize=True):
+    """
+    x is a 2D array [n_observations, n_observables]
+    k is the desired number of clusters
+    """
     # TODO -> Deal with inf values and NaNs
     assert len(x.shape) == 2
     data = numpy.ascontiguousarray(x)
-    deltas = data.max(axis=1) - data.min(axis=1)
-    data = data / deltas[:, None]
+    if normalize:
+        deltas = data.max(axis=1) - data.min(axis=1)
+        deltas[deltas < 1.0e-200] = 1
+        data = data / deltas[:, None]
+    if method is None:
+        method = KMEANS 
     if method == "mdp":
-        labels = _labelMdp(data, k)
+        labels = _labelMdp(data, k)["labels"]
+    elif method == "sklearn":
+        labels = _labelScikitLearn(data, k)["labels"]
+    elif method.endswith("kmeans"):
+        labels = _labelCythonKMeans(data, k)["labels"]
+    elif "mdp" in sys.modules:
+        labels = _labelMdp(data, k)["labels"]
     else:
-        labels = _labelScikitLearn(data, k)
-    return numpy.array(labels, copy=False)
+        raise ValueError("Unknown clustering <%s>"  % method)
+    return numpy.array(labels, dtype=numpy.int32, copy=False)
