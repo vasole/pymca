@@ -68,6 +68,8 @@ except:
     NNMA = False
     PCA  = False
 
+KMEANS = RGBImageCalculator.KMEANS
+
 try:
     import tomogui.gui.utils.icons
     from tomogui.gui.ProjectWidget import ProjectWindow as TomoguiProjWindow
@@ -309,7 +311,6 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.toggleSlidersButton.clicked.connect(self.toggleSliders)
 
         self.calculationButton.clicked.connect(self._showCalculationDialog)
-        self.calculationButton.clicked.connect(self._showCalculationDialog)
 
         self.profileButton.clicked.connect(self.profileSelectedImages)
 
@@ -317,6 +318,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.scatterPlotWidget = None
         self.pcaDialog  = None
         self.nnmaDialog = None
+        self.kMeansDialog = None
         self._tomoguiWindow = None
 
         self.__imageResizeButton.clicked.connect(self._imageResizeSlot)
@@ -327,7 +329,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.buttonGroup.buttonClicked[int].connect(self._colormapTypeChange)
 
     def _showCalculationDialog(self):
-        if (not NNMA) and (not PCA):
+        if (not NNMA) and (not PCA) and (not KMEANS):
             return self.showCalculationDialog()
         if self._calculationMenu is None:
             self._calculationMenu = qt.QMenu()
@@ -345,6 +347,9 @@ class RGBCorrelatorWidget(qt.QWidget):
             if NNMA:
                 self._calculationMenu.addAction(QString("NNMA Analysis"),
                                             self.showNNMADialog)
+            if KMEANS:
+                self._calculationMenu.addAction(QString("K-Means Clustering"),
+                                            self.showKMeansDialog)
         self._calculationMenu.exec_(self.cursor().pos())
 
     def _showTomoReconsDialog(self):
@@ -1239,6 +1244,22 @@ class RGBCorrelatorWidget(qt.QWidget):
         if self.calculationDialog.isHidden():
             self.calculationDialog.show()
         self.calculationDialog.raise_()
+
+    def showKMeansDialog(self):
+        if self.kMeansDialog is None:
+            self.kMeansDialog = RGBImageCalculator.RGBImageCalculator(math="kmeans",
+                                                                           replace=self.replaceOption)
+            self.kMeansDialog.sigAddImageClicked.connect(self.addImageSlot)
+            self.kMeansDialog.sigRemoveImageClicked.connect( \
+                         self.removeImage)
+            if self.replaceOption:
+                self.kMeansDialog.sigReplaceImageClicked.connect( \
+                         self.replaceImageSlot)
+        self.kMeansDialog.imageList = self._imageList
+        self.kMeansDialog.imageDict = self._imageDict
+        if self.kMeansDialog.isHidden():
+            self.kMeansDialog.show()
+        self.kMeansDialog.raise_()
 
     def showScatterPlotDialog(self):
         if self.scatterPlotWidget is None:

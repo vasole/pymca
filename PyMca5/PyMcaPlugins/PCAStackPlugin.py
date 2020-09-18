@@ -51,7 +51,7 @@ import numpy
 import logging
 
 from PyMca5 import StackPluginBase
-from PyMca5.PyMcaMath.mva import KMeans
+from PyMca5.PyMcaMath.mva import KMeansModule
 from PyMca5.PyMcaGui import CalculationThread
 
 from PyMca5.PyMcaGui.math.PCAWindow import PCAParametersDialog
@@ -73,7 +73,8 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
                                     "Show last results",
                                     PyMca_Icons.brushselect]}
         self.__methodKeys = ['Calculate', 'Show']
-        if KMeans.KMEANS:
+        # TODO Implement a proper way to select the number of clusters
+        if 0 and KMeansModule.KMEANS:
             self.methodDict['KMeans'] = [self._showKMeansWidget,
                                          "KMeans",
                                          None]
@@ -178,6 +179,7 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
         self.configurationWidget.show()
         ret = self.configurationWidget.exec_()
         if ret:
+            self._kMeansWidget = None
             self._executeFunctionAndParameters()
 
     def _executeFunctionAndParameters(self):
@@ -344,11 +346,8 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
         view.shape = -1, nImages
         if self._kMeansWidget is None:
             self._kMeansWidget = MaskImageWidget.MaskImageWidget()
-            print(view.shape)
-            labels = KMeans.label(view, k=int(min(nImages, 4)))
+            labels = KMeansModule.label(view, k=int(min(nImages, 4)))
             labels.shape = nRows, nColumns
-            print(labels.shape)
-            print(type(labels), )
             self._kMeansWidget.sigMaskImageWidgetSignal.connect(self.mySlot)
             self._kMeansWidget.setImageData(labels)
 

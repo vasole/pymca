@@ -33,6 +33,11 @@ import logging
 from PyMca5.PyMcaGui.plotting import MaskImageWidget
 from PyMca5.PyMcaGui.plotting import ColormapDialog
 from PyMca5 import spslut
+try:
+    from PyMca5.PyMcaMath.mva import KMeansModule
+    KMEANS = KMeansModule.KMEANS
+except:
+    KMEANS = False
 from . import QPyMcaMatplotlibSave
 MATPLOTLIB = True
 
@@ -52,11 +57,11 @@ class RGBImageCalculator(qt.QWidget):
     sigRemoveImageClicked = qt.pyqtSignal(object)
     sigReplaceImageClicked = qt.pyqtSignal(object)
 
-    def __init__(self, parent = None, math = True, replace = False,
+    def __init__(self, parent=None, math=True, replace=False,
                  scanwindow=None):
         qt.QWidget.__init__(self, parent)
         self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
-        self.setWindowTitle("PyMCA - RGB Image Calculator")
+        self.setWindowTitle("PyMca - RGB Image Calculator")
 
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
@@ -72,8 +77,7 @@ class RGBImageCalculator(qt.QWidget):
         self.setDefaultColormap(2, logflag=False)
         self._y1AxisInverted = False
         self._matplotlibSaveImage = None
-        self._build(math = math, replace = replace, scanwindow=scanwindow)
-
+        self._build(math=math, replace = replace, scanwindow=scanwindow)
 
     def _buildMath(self):
         self.mathBox = qt.QWidget(self)
@@ -102,9 +106,37 @@ class RGBImageCalculator(qt.QWidget):
         self.mainLayout.addWidget(self.mathBox)
         self.mathAction.clicked.connect(self._calculateClicked)
 
-    def _build(self, math = True, replace = False, scanwindow=False):
+    def _buildKMeansMath(self):
+        self.mathBox = qt.QWidget(self)
+        self.mathBox.mainLayout = qt.QHBoxLayout(self.mathBox)
+
+        self.mathLabel = qt.QLabel(self.mathBox)
+        self.mathLabel.setText("Please select number of clusters = ")
+
+        self.mathExpression = qt.QSpinBox(self.mathBox)
+        text  = ""
+        text += "Enter the number of desired clusters.\n"
+        text += "It cannot be greater than the number of selected images."
+        self.mathExpression.setMinimum(2)
+        self.mathExpression.setMaximum(100)
+        self.mathExpression.setValue(4)
+        self.mathExpression.setToolTip(text)
+
+        self.mathAction = qt.QToolButton(self.mathBox)
+        self.mathAction.setText("CALCULATE")
+
+        self.mathBox.mainLayout.addWidget(self.mathLabel)
+        self.mathBox.mainLayout.addWidget(self.mathExpression)
+        self.mathBox.mainLayout.addWidget(self.mathAction)
+        self.mainLayout.addWidget(self.mathBox)
+        self.mathAction.clicked.connect(self._calculateKMeansClicked)
+
+    def _build(self, math=True, replace=False, scanwindow=False):
         if math:
-            self._buildMath()
+            if math == "kmeans":
+                self._buildKMeansMath()
+            else:
+                self._buildMath()
 
         self.graphWidget = MaskImageWidget.MaskImageWidget(self,
                                                            colormap=True,
@@ -166,6 +198,8 @@ class RGBImageCalculator(qt.QWidget):
                                 self._graphSignal)
 
     def plotImage(self, update=True):
+        print("REceived ", self._imageData.shape)
+        print("REceived ", self._imageData.dtype)
         self.graphWidget.setImageData(self._imageData,
                                       xScale=self._xScale,
                                       yScale=self._yScale)
@@ -207,6 +241,38 @@ class RGBImageCalculator(qt.QWidget):
             error = sys.exc_info()
             text = "Failed to evaluate expression:\n"
             text += "%s\n" % expression
+            text += "%s" % error[1]
+            qt.QMessageBox.critical(self,"%s" % error[0], text)
+            return 1
+        self.setName("(%s)" % name)
+        self.plotImage()
+
+    def _calculateKMeansClicked(self):
+        _logger.debug("Calculate k-means clicked")
+        k = self.mathExpression.value()
+        name       = "k-means(%d)" % k
+
+        # get dimensions
+        keys = list(self.imageDict.keys())
+        key = keys[0]
+        image = self.imageDict[key]['image']
+        shape = image.shape
+        nElements = image.size
+        # build a stack (expected a small amount of images)
+        data = numpy.zeros((nElements, len(keys)),
+                            dtype=numpy.float)
+        i = 0
+        for key in self.imageDict:
+            data[:, i] = self.imageDict[key]['image'].ravel()
+            i += 1
+
+        try:
+            self._imageData = KMeansModule.label(data, k,
+                                                 normalize=True).reshape(shape)
+        except:
+            self._imageData = None
+            error = sys.exc_info()
+            text = "Failed to evaluate k-means(%d)\n"
             text += "%s" % error[1]
             qt.QMessageBox.critical(self,"%s" % error[0], text)
             return 1
