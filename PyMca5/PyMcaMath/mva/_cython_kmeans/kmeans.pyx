@@ -1,41 +1,31 @@
 """
 Parallelized k-means module.
+Original version by David Warde-Farley, February 2012.
+Licensed under the 3-clause BSD.
 
-By David Warde-Farley, February 2012. Licensed under the 3-clause BSD.
+FROM gist.github.com/dwf/2200359
 """
 cimport cython
 from cython.parallel import prange
 import numpy as np
 cimport numpy as np
 from numpy.random import normal
-cdef extern from "numpy/npy_math.h":
-    double NPY_INFINITY
 
-# TODO: Allow this to accept float32 or float64 using
-# Cython's fused types, coming in 0.16.
 
-ctypedef np.float64_t DTYPE_t
-
-# Determine the right dtype for arrays of indices at compile time.
-IF UNAME_MACHINE[-2:] == '64':
-    ctypedef np.int64_t INTP_t
-    intp = np.int64
-ELSE:
-    ctypedef np.int32_t INTP_t
-    intp = np.int32
+ctypedef fused double_or_float:
+    double
+    float
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef inline void _compute_means(np.ndarray[DTYPE_t, ndim=2] data,
-                                np.ndarray[INTP_t, ndim=1] assign,
-                                np.ndarray[DTYPE_t, ndim=2] means,
-                                np.ndarray[INTP_t, ndim=1] counts):
+cdef inline void _compute_means(double_or_float[:, :] data,
+                                int[:] assign,
+                                double_or_float[:, :] means,
+                                int[:] counts):
     """
     _compute_means(data, assign, means, counts)
-
     Compute the new centroids given the assignments in `assign`,
     leaving the results in `means`.
-
     Parameters
     ----------
     data : ndarray, 2-dimensional, float64
@@ -53,7 +43,6 @@ cdef inline void _compute_means(np.ndarray[DTYPE_t, ndim=2] data,
         A vector of length `k` indicating the number of training
         examples assigned to each centroid. This array wil be
         overwritten by this function.
-
     Notes
     -----
     The data in `counts` argument at call time is never actually
@@ -61,23 +50,23 @@ cdef inline void _compute_means(np.ndarray[DTYPE_t, ndim=2] data,
     reallocating a new buffer on every mean computation (which can
     be a slight performance hit if the number of centroids is
     substantial).
-
     This parallelizes over features (columns of `data` and
     `means`) using OpenMP via Cython's `cython.parallel.prange`.
     Parallelizing over examples would also be possible but would
     result in slightly different results compared with a non-parallel
     version due to the non-associativity of floating point addition.
-
     Cython currently gives the warning "buffer unpacking not
     optimized away" due to this being an inline function. This should
     be fixed in the next release, at which point we will reap the
     full benefits of inlining this.
     """
     # Convenience variables and loop indices.
-    cdef np.npy_intp ndata = data.shape[0]
-    cdef np.npy_intp nfeat = data.shape[1]
-    cdef np.npy_intp k = means.shape[0]
-    cdef np.npy_intp example, feature, centroid
+    cdef:
+        np.npy_intp ndata = data.shape[0]
+        np.npy_intp nfeat = data.shape[1]
+        np.npy_intp k = means.shape[0]
+        np.npy_intp example, feature, centroid
+
     # Zero the counts vector before repopulating it.
     for centroid in range(k):
         counts[centroid] = 0
@@ -105,16 +94,14 @@ cdef inline void _compute_means(np.ndarray[DTYPE_t, ndim=2] data,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.embedsignature(True)
-cpdef tuple kmeans(np.ndarray[DTYPE_t, ndim=2] data, np.npy_intp k,
+cpdef tuple kmeans(double_or_float[:, :] data, np.npy_intp k,
                    np.npy_intp max_iter=1000, np.ndarray init=None,
                    rng=None):
     """
     assign, means, iterations, converged = kmeans(data, k, max_iter=1000,
                                                   init=None, rng=None)
-
     Run k-means on a dense matrix of features, parallelizing
     computations with OpenMP and BLAS where possible.
-
     Parameters
     ----------
     data : ndarray, 2-dimensional, float64
@@ -137,7 +124,6 @@ cpdef tuple kmeans(np.ndarray[DTYPE_t, ndim=2] data, np.npy_intp k,
         initialization. This array **must** be of shape
         `(k, data.shape[1])` if it is provided, and **will be
         overwritten**.
-
     Returns
     -------
     means : ndarray, 2-dimensional, float64
@@ -158,7 +144,6 @@ cpdef tuple kmeans(np.ndarray[DTYPE_t, ndim=2] data, np.npy_intp k,
         last iteration). This disambiguates the rare but feasible
         case where convergence took place just as `max_iter` was
         reached.
-
     Notes
     -----
     The main bottleneck of k-means is the distance matrix computation.
@@ -169,7 +154,6 @@ cpdef tuple kmeans(np.ndarray[DTYPE_t, ndim=2] data, np.npy_intp k,
     be if you are using the full version of the Enthought Python
     Distribution), make sure the environment variable `MKL_NUM_THREADS`
     is set to the number of cores you wish it to use.
-
     Significant gains can be made by parallelizing the quantization
     and centroid computation as well. This implementation uses OpenMP
     to parallelize mean computation over *features* (columns of
@@ -177,20 +161,24 @@ cpdef tuple kmeans(np.ndarray[DTYPE_t, ndim=2] data, np.npy_intp k,
     sure `OMP_NUM_THREADS` is set to the desired number of worker
     threads/CPU cores.
     """
-    cdef np.npy_intp ndata = data.shape[0]
-    cdef np.npy_intp nfeat = data.shape[1]
-    dtype = data.dtype
-    cdef np.ndarray[DTYPE_t, ndim=1] mindist = np.empty(ndata, dtype=dtype)
-    cdef np.ndarray[INTP_t, ndim=1] counts = np.empty(k, dtype=intp)
-    # Allocate space for the assignment indices, distance matrix, the means.
-    cdef np.ndarray[DTYPE_t, ndim=2] dists = np.empty((ndata, k), dtype=dtype)
-    cdef np.ndarray[DTYPE_t, ndim=1] m_sqnorm = np.empty(k, dtype=dtype)
-    cdef np.ndarray[DTYPE_t, ndim=2] means
-    # Declare variables for the current assignments and current argmin.
-    # Storing the current argmin separately lets us easily check for
-    # convergence at a memory cost of (pointer width * ndata).
-    cdef np.ndarray[INTP_t, ndim=1] assign
-    cdef np.ndarray[INTP_t, ndim=1] argmin = np.empty(ndata, dtype=intp)
+    cdef:
+        int centroid, feature, example
+        np.npy_intp ndata = data.shape[0]
+        np.npy_intp nfeat = data.shape[1]
+        dtype = np.array([data[0,0]]).dtype
+        dists = np.empty((ndata, k), dtype=dtype)
+        double_or_float[:] mindist = np.empty(ndata, dtype=dtype)
+        int[:] counts = np.empty(k, dtype=int)
+        # Allocate space for the assignment indices, distance matrix, the means.
+        double_or_float[:, :] distsview = dists
+        double_or_float[:] m_sqnorm = np.empty(k, dtype=dtype)
+        double_or_float[:, :] means
+        # Declare variables for the current assignments and current argmin.
+        # Storing the current argmin separately lets us easily check for
+        # convergence at a memory cost of (pointer width * ndata).
+        int[:] assign
+        int[:] argmin = np.empty(ndata, dtype=int)
+        double_or_float minusinf
 
     if init is not None:
         if rng is not None:
@@ -199,16 +187,17 @@ cpdef tuple kmeans(np.ndarray[DTYPE_t, ndim=2] data, np.npy_intp k,
             raise ValueError('init if provided must have shape (k, '
                              'data.shape[1])')
         means = init
-        assign = np.empty(ndata, dtype=intp)
+        assign = np.empty(ndata, dtype=int)
     else:
         means = np.empty((k, nfeat), dtype=dtype)
         # Randomly initialize assignments to uniformly drawn training points.
         if not hasattr(rng, 'random_integers'):
             rng = np.random.RandomState(rng)
-        assign = rng.random_integers(0, k - 1, size=ndata).astype(intp)
+        assign = rng.randint(0, k, size=ndata).astype(int)
         # Compute the means from the random initial assignments.
         _compute_means(data, assign, means, counts)
 
+    minusinf = np.finfo(dtype).min # how to write np.inf 
     for iteration in range(max_iter):
         # Quantization step: compute squared distance between every point
         # and every mean.
@@ -230,11 +219,11 @@ cpdef tuple kmeans(np.ndarray[DTYPE_t, ndim=2] data, np.npy_intp k,
         for example in prange(ndata, nogil=True):
             # Initialize the min and argmin to invalid values.
             argmin[example] = -1
-            mindist[example] = -NPY_INFINITY
+            mindist[example] = minusinf
             for centroid in range(k):
-                dists[example, centroid] -= 0.5 * m_sqnorm[centroid]
-                if dists[example, centroid] > mindist[example]:
-                    mindist[example] = dists[example, centroid]
+                distsview[example, centroid] -= 0.5 * m_sqnorm[centroid]
+                if distsview[example, centroid] > mindist[example]:
+                    mindist[example] = distsview[example, centroid]
                     argmin[example] = centroid
 
         # Check previous assignment against current assignment to determine if
