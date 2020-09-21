@@ -362,7 +362,11 @@ class H5NodeProxy(object):
     def getNode(self, name=None):
         if not name:
             name = self.name
-        return self.file[name]
+        try:
+            return self.file[name]
+        except:
+            _logger.critical("Cannot access HDF5 file path <%s>" % name)
+            return name
 
     def __len__(self):
         return len(self.children)
@@ -438,13 +442,14 @@ class FileModel(qt.QAbstractItemModel):
                             names = [posixpath.basename(o.name) for o in children]
                             if "title" in names:
                                 idx = names.index("title")
-                                if len(children[idx].getNode().shape):
-                                    #stored as an array of strings!!!
+                                node = children[idx].getNode()
+                                if hasattr(node, "shape") and len(node.shape):
+                                    #stored as an array of strings???
                                     #return just the first item
-                                    return MyQVariant("%s" % children[idx].getNode()[()][0])
+                                    return MyQVariant("%s" % node[()][0])
                                 else:
                                     #stored as a string
-                                    return MyQVariant("%s" % children[idx].getNode()[()])
+                                    return MyQVariant("%s" % node[()])
                 return MyQVariant(item.type)
             if column == 2:
                 return MyQVariant(item.shape)
