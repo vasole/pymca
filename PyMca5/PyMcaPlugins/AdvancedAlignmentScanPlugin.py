@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2020 T. Rueter, V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -1004,7 +1004,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
         step = numpy.average(numpy.diff(activeX))
         xmin, xmax = self.getXLimits([x for (x,y,leg,info) in curves],
                                      overlap=False)
-        num  = factor * numpy.ceil((xmax-xmin)/step)
+        num  = int(factor * numpy.ceil((xmax-xmin)/step))
 
         # Create equidistant x-range, exclude first and last point
         xeq = numpy.linspace(xmin, xmax, num, endpoint=False)[:-1]

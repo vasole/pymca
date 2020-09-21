@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -580,6 +580,9 @@ class MaskImageWidget(qt.QWidget):
                 #all points are the same
                 _logger.debug("START AND END POINT ARE THE SAME!!")
                 return
+
+            # make sure we deal with integers
+            npoints = int(npoints)
 
             if width < 0:  # width = pixelwidth - 1
                 x = numpy.zeros((npoints, 2), numpy.float)
