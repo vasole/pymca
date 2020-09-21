@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -209,6 +209,8 @@ def _getROILineProfileCurve(image, roiStart, roiEnd, roiWidth,
         nPoints = deltaRow + 1
         coordsRange = row0, row1
 
+    nPoints = int(nPoints)
+
     if nPoints == 1:  # all points are the same
         _logger.debug("START AND END POINT ARE THE SAME!!")
         return None
@@ -308,7 +310,7 @@ def _getROILineProfileCurve(image, roiStart, roiEnd, roiWidth,
         # oversampling solves noise introduction issues
         oversampling = roiWidth + 1
         oversampling = min(oversampling, 21)
-        ncontributors = roiWidth * oversampling
+        ncontributors = int(roiWidth * oversampling)
         iterValues = numpy.linspace(-0.5 * roiWidth, 0.5 * roiWidth,
                                     ncontributors)
         tmpMatrix = numpy.zeros((nPoints * len(iterValues), 2),

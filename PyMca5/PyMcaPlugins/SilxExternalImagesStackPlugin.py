@@ -1,5 +1,5 @@
 # /*#########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -76,8 +76,8 @@ def resize_image(original_image, new_shape):
     bilinimg = BilinearImage(original_image)
 
     row_array, column_array = numpy.meshgrid(
-            numpy.linspace(0, original_image.shape[0], new_shape[0]),
-            numpy.linspace(0, original_image.shape[1], new_shape[1]),
+            numpy.linspace(0, original_image.shape[0], int(new_shape[0])),
+            numpy.linspace(0, original_image.shape[1], int(new_shape[1])),
             indexing="ij")
 
     interpolated_values = bilinimg.map_coordinates((row_array, column_array))

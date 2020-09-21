@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 T. Rueter, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -568,6 +568,7 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
                 curr = numpy.nonzero((x >= xmin) &
                                      (x <= xmax))[0].size
                 num = curr if curr>num else num
+            num = int(num)
             # Exclude first and last point
             out = numpy.linspace(xmin, xmax, num, endpoint=False)[1:]
         else:

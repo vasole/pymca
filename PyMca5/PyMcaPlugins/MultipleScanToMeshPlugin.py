@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2020 M. Rovezzi, V.A. Sole European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -224,7 +224,7 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
 
         # construct the grid in steps of eStep eV
         eStep = 0.05
-        n = (xMax - xMin) * (factor / eStep)
+        n = int((xMax - xMin) * (factor / eStep))
         grid0 = numpy.linspace(xMin * factor, xMax * factor, n)
         grid1 = numpy.linspace(yData.min(), yData.max(), n)
 
