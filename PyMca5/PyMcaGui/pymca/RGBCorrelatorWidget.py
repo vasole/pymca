@@ -160,7 +160,7 @@ class RGBCorrelatorWidget(qt.QWidget):
 
     sigRGBCorrelatorWidgetSignal = qt.pyqtSignal(object)
 
-    def __init__(self, parent = None, bgrx = False, replace = False):
+    def __init__(self, parent = None, bgrx = False, replace = False, image_shape=None):
         qt.QWidget.__init__(self, parent)
         self.replaceOption = replace
         self.setWindowTitle("RGBCorrelatorWidget")
@@ -279,7 +279,14 @@ class RGBCorrelatorWidget(qt.QWidget):
             self.bgrx = "RGBX"
         self._imageList = []
         self._imageDict = {}
-        self.__imageLength = None
+        if image_shape:
+            self.__imageLength = numpy.prod(image_shape, dtype=int)
+            self.__imageShape = tuple(image_shape)
+        else:
+            self.__imageLength = None
+            self.__imageShape = None
+        self.__imageLengthOriginal = self.__imageLength
+        self.__imageShapeOriginal = self.__imageShape
         self.__redLabel = None
         self.__greenLabel = None
         self.__blueLabel = None
@@ -763,8 +770,8 @@ class RGBCorrelatorWidget(qt.QWidget):
         self._tableSlot({'r':[],'g':[],'b':[]})
         self._imageList = []
         self._imageDict = {}
-        self.__imageLength = None
-        self.__imageShape = None
+        self.__imageLength = self.__imageLengthOriginal
+        self.__imageShape = self.__imageShapeOriginal
         self.__redLabel    = None
         self.__greenLabel  = None
         self.__blueLabel   = None
