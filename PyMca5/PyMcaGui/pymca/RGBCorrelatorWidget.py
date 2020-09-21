@@ -700,7 +700,6 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.addImageSlot(ddict)
 
     def _imageResizeSlot(self):
-        if self.__imageLength is None: return
         dialog = ImageShapeDialog(self, shape = self.__imageShape)
         dialog.setModal(True)
         ret = dialog.exec_()
@@ -721,11 +720,10 @@ class RGBCorrelatorWidget(qt.QWidget):
 
 
     def setImageShape(self, shape):
-        if self.__imageLength is None: return
-        length = 1
-        for value in shape:
-            length *= value
-        if length != self.__imageLength:
+        length = numpy.prod(shape, dtype=int)
+        if self.__imageLength is None:
+            self.__imageLength = length
+        elif length != self.__imageLength:
             raise ValueError("New length %d different of old length %d" % \
                     (length, self.__imageLength))
         self.__imageShape = shape
@@ -1459,13 +1457,19 @@ class ImageShapeDialog(qt.QDialog):
         self.okButton.clicked.connect(self.accept)
 
     def _rowsChanged(self):
+        if not self._size:
+            return
         nrows, ncolumns = self.getImageShape()
-        if (nrows * ncolumns) != self._size:
+        size = nrows * ncolumns
+        if size and size != self._size:
             self.columns.setText("%g" % (self._size/float(nrows)))
 
     def _columnsChanged(self):
+        if not self._size:
+            return
         nrows, ncolumns = self.getImageShape()
-        if (nrows * ncolumns) != self._size:
+        size = nrows * ncolumns
+        if size and size != self._size:
             self.rows.setText("%g" % (self._size/float(ncolumns)))
 
     def getImageShape(self):
