@@ -131,11 +131,11 @@ def main():
     w.layout().setContentsMargins(11, 11, 11, 11)
     if not filelist:
         filelist = w._getStackOfFiles()
-    if not filelist:
+    if filelist:
+        w.addFileList(filelist)
+    else:
         print("Usage:")
         print("python PyMcaPostBatch.py PyMCA_BATCH_RESULT_DOT_DAT_FILE")
-        sys.exit(app.quit())
-    w.addFileList(filelist)
     if transpose:
         w.transposeImages()
     w.show()
