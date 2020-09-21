@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -346,7 +346,7 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
         view.shape = -1, nImages
         if self._kMeansWidget is None:
             self._kMeansWidget = MaskImageWidget.MaskImageWidget()
-            labels = KMeansModule.label(view, k=int(min(nImages, 4)))
+            labels = KMeansModule.labels(view, k=int(min(nImages, 4)))
             labels.shape = nRows, nColumns
             self._kMeansWidget.sigMaskImageWidgetSignal.connect(self.mySlot)
             self._kMeansWidget.setImageData(labels)

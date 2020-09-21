@@ -33,20 +33,37 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 import sys
 import numpy
+import logging
+_logger = logging.getLogger(__name__)
+
+try:
+    from PyMca5.PyMcaMath.mva import _cython_kmeans as kmeans
+    KMEANS = "_kmeans"
+except:
+    if _logger.getEffectiveLevel() == logging.DEBUG:
+        raise
+    else:
+        _logger.warning("Cannot load built-in K-means.\n %s" % \
+                         sys.exc_info()[1])
+    KMEANS = None
+
 try:
     from sklearn.cluster import KMeans
     KMEANS = "sklearn"
 except:
-    try:
-        from PyMca5.PyMcaMath.mva import _cython_kmeans as kmeans
-        KMEANS = "_kmeans"
-    except:
-        KMEANS = False
-    print(sys.exc_info())
+    if not KMEANS:
+        try:
+            from PyMca5.PyMcaMath.mva import _cython_kmeans as kmeans
+            KMEANS = "_kmeans"
+        except:
+            KMEANS = False
+
+_logger.info("kmeans default to <%s>"  % KMEANS)
+
 
 def _labelCythonKMeans(x, k):
     labels, means, iterations, converged = kmeans.kmeans(x, k)
-    return {"labels": labels,
+    return {"labels": numpy.array(labels, dtype=numpy.int32, copy=False),
             "means": means,
             "iterations":iterations,
             "converged":converged}
@@ -58,18 +75,23 @@ def _labelMdp(x, k):
         classifier.train(x[i:i+1])
     #classifier.train(x)
     labels = classifier.label(x)
-    return {"labels": labels}
+    return {"labels": numpy.array(labels, dtype=numpy.int32, copy=False)}
      
 def _labelScikitLearn(x, k):
     from sklearn.cluster import KMeans
     km = KMeans(n_clusters=k)
     km.fit(x)
-    labels = km.predict(x)
-    return {"labels": labels}
+    labels = km.labels_
+    #labels = km.predict(x)
+    converged = len(km.cluster_centers_) == len(labels)
+    return {"labels": numpy.array(labels, dtype=numpy.int32, copy=False),
+            "means": km.cluster_centers_,
+            "iterations":km.n_iter_,
+            "converged":converged}
 
-def label(x, k, method=None, normalize=True):
+def kmeans(x, k, method=None, normalize=True):
     """
-    x is a 2D array [n_observations, n_observables]
+    x is a 2D array [n_samples, n_features]
     k is the desired number of clusters
     """
     # TODO -> Deal with inf values and NaNs
@@ -82,13 +104,16 @@ def label(x, k, method=None, normalize=True):
     if method is None:
         method = KMEANS 
     if method == "mdp":
-        labels = _labelMdp(data, k)["labels"]
+        result = _labelMdp(data, k)
     elif method == "sklearn":
-        labels = _labelScikitLearn(data, k)["labels"]
+        result = _labelScikitLearn(data, k)
     elif method.endswith("kmeans"):
-        labels = _labelCythonKMeans(data, k)["labels"]
+        result = _labelCythonKMeans(data, k)
     elif "mdp" in sys.modules:
-        labels = _labelMdp(data, k)["labels"]
+        result = _labelMdp(data, k)
     else:
         raise ValueError("Unknown clustering <%s>"  % method)
-    return numpy.array(labels, dtype=numpy.int32, copy=False)
+    return result
+
+def labels(*var, **kw):
+    return kmeans(*var, **kw)["labels"]
