@@ -767,7 +767,7 @@ class MaskImageWidget(qt.QWidget):
                         oversampling = min(oversampling, 21)
                     else:
                         oversampling = 1
-                    ncontributors = width * oversampling
+                    ncontributors = int(width * oversampling)
                     iterValues = numpy.linspace(-0.5*width, 0.5*width, ncontributors)
                     tmpMatrix = numpy.zeros((npoints*len(iterValues), 2) , numpy.float)
                     x[0, :] = tmpX
