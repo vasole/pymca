@@ -199,8 +199,6 @@ class RGBImageCalculator(qt.QWidget):
                                 self._graphSignal)
 
     def plotImage(self, update=True):
-        print("REceived ", self._imageData.shape)
-        print("REceived ", self._imageData.dtype)
         self.graphWidget.setImageData(self._imageData,
                                       xScale=self._xScale,
                                       yScale=self._yScale)
