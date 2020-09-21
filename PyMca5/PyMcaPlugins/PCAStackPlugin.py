@@ -56,7 +56,7 @@ from PyMca5.PyMcaGui import CalculationThread
 
 from PyMca5.PyMcaGui.math.PCAWindow import PCAParametersDialog
 from PyMca5.PyMcaGui import StackPluginResultsWindow
-from PyMca5.PyMcaGui import MaskImageWidget
+from PyMca5.PyMcaGui.pymca import RGBImageCalculator
 from PyMca5.PyMcaGui import PyMca_Icons
 
 qt = StackPluginResultsWindow.qt
@@ -73,7 +73,6 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
                                     "Show last results",
                                     PyMca_Icons.brushselect]}
         self.__methodKeys = ['Calculate', 'Show']
-        # TODO Implement a proper way to select the number of clusters
         if 0 and KMeansModule.KMEANS:
             self.methodDict['KMeans'] = [self._showKMeansWidget,
                                          "KMeans",
@@ -101,7 +100,7 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
         mask = self.getStackSelectionMask()
         self.widget.setSelectionMask(mask)
         if self._kMeansWidget:
-            self._kMeansWidget.setSelectionMask(mask)
+            self._kMeansWidget.graphWidget.setSelectionMask(mask)
 
     def mySlot(self, ddict):
         _logger.debug("mySlot %s %s", ddict['event'], ddict.keys())
@@ -333,23 +332,23 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
         self.selectionMaskUpdated()
 
     def _showKMeansWidget(self):
-        imageList = self.widget.imageList
-        if hasattr(imageList, "shape"):
-            nImages = imageList.shape[0]
-        else:
-            nImages = len(imageList)
-        nRows, nColumns = imageList[0].shape
-        data = numpy.zeros((nRows, nColumns, nImages), numpy.float32)
-        for i in range(nImages):
-            data[:, :, i] = imageList[i] 
-        view = data[:]
-        view.shape = -1, nImages
         if self._kMeansWidget is None:
-            self._kMeansWidget = MaskImageWidget.MaskImageWidget()
-            labels = KMeansModule.label(view, k=int(min(nImages, 4)))
-            labels.shape = nRows, nColumns
-            self._kMeansWidget.sigMaskImageWidgetSignal.connect(self.mySlot)
-            self._kMeansWidget.setImageData(labels)
+            self._kMeansWidget = RGBImageCalculator.RGBImageCalculator( \
+                                    math="kmeans", selection=True)
+            #self._kMeansWidget = MaskImageWidget.MaskImageWidget()
+            #labels = KMeansModule.label(view, k=int(min(nImages, 4)))
+            #labels.shape = nRows, nColumns
+            self._kMeansWidget.graphWidget.sigMaskImageWidgetSignal.connect( \
+                                            self.mySlot)
+            # self._kMeansWidget.setImageData(labels)
+
+        imageDict = {}
+        for i in range(len(self.widget.imageList)):
+            imageDict[self.widget.imageNames[i]] = \
+                                        {"image":self.widget.imageList[i]}
+
+        self._kMeansWidget.imageList = list(imageDict.keys())
+        self._kMeansWidget.imageDict = imageDict
 
         #Show
         self._kMeansWidget.show()
