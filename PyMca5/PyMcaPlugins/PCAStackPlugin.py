@@ -346,7 +346,7 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
         view.shape = -1, nImages
         if self._kMeansWidget is None:
             self._kMeansWidget = MaskImageWidget.MaskImageWidget()
-            labels = KMeansModule.labels(view, k=int(min(nImages, 4)))
+            labels = KMeansModule.label(view, k=int(min(nImages, 4)))
             labels.shape = nRows, nColumns
             self._kMeansWidget.sigMaskImageWidgetSignal.connect(self.mySlot)
             self._kMeansWidget.setImageData(labels)
