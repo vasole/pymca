@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -30,6 +30,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import numpy
 import logging
+import traceback
 from PyMca5.PyMcaGui.plotting import MaskImageWidget
 from PyMca5.PyMcaGui.plotting import ColormapDialog
 from PyMca5 import spslut
@@ -271,10 +272,14 @@ class RGBImageCalculator(qt.QWidget):
                                                  normalize=True).reshape(shape)
         except:
             self._imageData = None
-            error = sys.exc_info()
-            text = "Failed to evaluate k-means(%d)\n"
-            text += "%s" % error[1]
-            qt.QMessageBox.critical(self,"%s" % error[0], text)
+            text = "Failed to evaluate k-means(%d)\n" % k
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setWindowTitle("Save error")
+            msg.setText(text)
+            msg.setInformativeText(qt.safe_str(sys.exc_info()[1]))
+            msg.setDetailedText(traceback.format_exc())
+            msg.exec_()
             return 1
         self.setName("(%s)" % name)
         self.plotImage()
