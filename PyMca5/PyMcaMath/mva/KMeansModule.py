@@ -115,5 +115,5 @@ def kmeans(x, k, method=None, normalize=True):
         raise ValueError("Unknown clustering <%s>"  % method)
     return result
 
-def labels(*var, **kw):
+def label(*var, **kw):
     return kmeans(*var, **kw)["labels"]
