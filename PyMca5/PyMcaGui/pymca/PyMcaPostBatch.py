@@ -101,12 +101,13 @@ def main():
     import getopt
     options = ''
     longoptions = ["nativefiledialogs=", "transpose=", "fileindex=",
-                   "logging=", "debug="]
+                   "logging=", "debug=", "shape="]
     opts, args = getopt.getopt(
                     sys.argv[1:],
                     options,
                     longoptions)
     transpose = False
+    image_shape = None
     for opt, arg in opts:
         if opt in '--nativefiledialogs':
             if int(arg):
@@ -119,19 +120,22 @@ def main():
         elif opt in '--fileindex':
             if int(arg):
                 transpose = True
+        elif opt in '--shape':
+            image_shape = tuple(int(n) for n in arg.split(','))
+            print(image_shape)
 
     logging.basicConfig(level=getLoggingLevel(opts))
 
     filelist = args
-    w = PyMcaPostBatch()
+    w = PyMcaPostBatch(image_shape=image_shape)
     w.layout().setContentsMargins(11, 11, 11, 11)
     if not filelist:
         filelist = w._getStackOfFiles()
-    if not filelist:
+    if filelist:
+        w.addFileList(filelist)
+    else:
         print("Usage:")
         print("python PyMcaPostBatch.py PyMCA_BATCH_RESULT_DOT_DAT_FILE")
-        sys.exit(app.quit())
-    w.addFileList(filelist)
     if transpose:
         w.transposeImages()
     w.show()

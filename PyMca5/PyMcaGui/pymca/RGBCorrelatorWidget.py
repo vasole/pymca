@@ -160,7 +160,7 @@ class RGBCorrelatorWidget(qt.QWidget):
 
     sigRGBCorrelatorWidgetSignal = qt.pyqtSignal(object)
 
-    def __init__(self, parent = None, bgrx = False, replace = False):
+    def __init__(self, parent = None, bgrx = False, replace = False, image_shape=None):
         qt.QWidget.__init__(self, parent)
         self.replaceOption = replace
         self.setWindowTitle("RGBCorrelatorWidget")
@@ -279,7 +279,14 @@ class RGBCorrelatorWidget(qt.QWidget):
             self.bgrx = "RGBX"
         self._imageList = []
         self._imageDict = {}
-        self.__imageLength = None
+        if image_shape:
+            self.__imageLength = numpy.prod(image_shape, dtype=int)
+            self.__imageShape = tuple(image_shape)
+        else:
+            self.__imageLength = None
+            self.__imageShape = None
+        self.__imageLengthOriginal = self.__imageLength
+        self.__imageShapeOriginal = self.__imageShape
         self.__redLabel = None
         self.__greenLabel = None
         self.__blueLabel = None
@@ -693,7 +700,6 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.addImageSlot(ddict)
 
     def _imageResizeSlot(self):
-        if self.__imageLength is None: return
         dialog = ImageShapeDialog(self, shape = self.__imageShape)
         dialog.setModal(True)
         ret = dialog.exec_()
@@ -714,11 +720,10 @@ class RGBCorrelatorWidget(qt.QWidget):
 
 
     def setImageShape(self, shape):
-        if self.__imageLength is None: return
-        length = 1
-        for value in shape:
-            length *= value
-        if length != self.__imageLength:
+        length = numpy.prod(shape, dtype=int)
+        if self.__imageLength is None:
+            self.__imageLength = length
+        elif length != self.__imageLength:
             raise ValueError("New length %d different of old length %d" % \
                     (length, self.__imageLength))
         self.__imageShape = shape
@@ -763,8 +768,8 @@ class RGBCorrelatorWidget(qt.QWidget):
         self._tableSlot({'r':[],'g':[],'b':[]})
         self._imageList = []
         self._imageDict = {}
-        self.__imageLength = None
-        self.__imageShape = None
+        self.__imageLength = self.__imageLengthOriginal
+        self.__imageShape = self.__imageShapeOriginal
         self.__redLabel    = None
         self.__greenLabel  = None
         self.__blueLabel   = None
@@ -1452,13 +1457,19 @@ class ImageShapeDialog(qt.QDialog):
         self.okButton.clicked.connect(self.accept)
 
     def _rowsChanged(self):
+        if not self._size:
+            return
         nrows, ncolumns = self.getImageShape()
-        if (nrows * ncolumns) != self._size:
+        size = nrows * ncolumns
+        if size and size != self._size:
             self.columns.setText("%g" % (self._size/float(nrows)))
 
     def _columnsChanged(self):
+        if not self._size:
+            return
         nrows, ncolumns = self.getImageShape()
-        if (nrows * ncolumns) != self._size:
+        size = nrows * ncolumns
+        if size and size != self._size:
             self.rows.setText("%g" % (self._size/float(ncolumns)))
 
     def getImageShape(self):

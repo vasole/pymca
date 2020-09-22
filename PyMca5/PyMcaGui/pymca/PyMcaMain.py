@@ -1325,11 +1325,10 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                         "All Files (*)"]
         message = "Open ONE Batch result .dat file or SEVERAL EDF files"
         filelist = self.__getStackOfFiles(fileTypeList, message)
-        if not(len(filelist)):
-            return
-        filelist.sort()
-        self.sourceWidget.sourceSelector.lastInputDir = os.path.dirname(filelist[0])
-        PyMcaDirs.inputDir = os.path.dirname(filelist[0])
+        if filelist:
+            filelist.sort()
+            self.sourceWidget.sourceSelector.lastInputDir = os.path.dirname(filelist[0])
+            PyMcaDirs.inputDir = os.path.dirname(filelist[0])
         self.__correlator.append(PyMcaPostBatch.PyMcaPostBatch())
         for correlator in self.__correlator:
             if correlator.isHidden():
@@ -1337,7 +1336,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             correlator.raise_()
         self.__correlator[-1].sigRGBCorrelatorSignal.connect( \
                 self._deleteCorrelator)
-        correlator.addFileList(filelist)
+        if filelist:
+            correlator.addFileList(filelist)
 
     def __sumRules(self):
         if self.__correlator is None:

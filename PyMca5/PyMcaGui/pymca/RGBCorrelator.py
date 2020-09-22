@@ -49,7 +49,7 @@ class RGBCorrelator(qt.QWidget):
 
     sigRGBCorrelatorSignal = qt.pyqtSignal(object)
     
-    def __init__(self, parent = None, graph = None, bgrx = True):
+    def __init__(self, parent = None, graph = None, bgrx = True, image_shape=None):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle("PyMca RGB Correlator")
         self.setWindowIcon(qt.QIcon(qt.QPixmap(RGBCorrelatorGraph.IconDict['gioconda16'])))
@@ -58,7 +58,7 @@ class RGBCorrelator(qt.QWidget):
         self.mainLayout.setSpacing(6)
         self.splitter   = qt.QSplitter(self)
         self.splitter.setOrientation(qt.Qt.Horizontal)
-        self.controller = RGBCorrelatorWidget.RGBCorrelatorWidget(self.splitter)
+        self.controller = RGBCorrelatorWidget.RGBCorrelatorWidget(self.splitter, image_shape=image_shape)
         self._y1AxisInverted = False
         self._imageBuffer = None
         self._matplotlibSaveImage = None
