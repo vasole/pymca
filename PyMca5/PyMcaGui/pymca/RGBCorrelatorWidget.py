@@ -1343,8 +1343,9 @@ class RGBCorrelatorWidget(qt.QWidget):
 
     def showPCADialog(self):
         if self.pcaDialog is None:
+            selection=True
             self.pcaDialog = PCADialog.PCADialog(rgbwidget=self,
-                                                 selection=False)
+                                                 selection=selection)
             self.pcaDialog.pcaWindow.\
                     buildAndConnectImageButtonBox(self.replaceOption)
             self.pcaDialog.pcaWindow.sigMaskImageWidgetSignal.connect(\
@@ -1357,13 +1358,15 @@ class RGBCorrelatorWidget(qt.QWidget):
             return
 
         self.pcaDialog.setData(datalist)
+        self.pcaDialog.pcaWindow.setSelectionMask(self.getSelectionMask())
         self.pcaDialog.show()
         self.pcaDialog.raise_()
 
     def showNNMADialog(self):
         if self.nnmaDialog is None:
+            selection=True
             self.nnmaDialog = NNMADialog.NNMADialog(rgbwidget=self,
-                                                 selection=False)
+                                                 selection=selection)
             self.nnmaDialog.nnmaWindow.\
                         buildAndConnectImageButtonBox(self.replaceOption)
             self.nnmaDialog.nnmaWindow.sigMaskImageWidgetSignal.connect(\
@@ -1376,6 +1379,7 @@ class RGBCorrelatorWidget(qt.QWidget):
             return
 
         self.nnmaDialog.setData(datalist)
+        self.nnmaDialog.nnmaWindow.setSelectionMask(self.getSelectionMask())
         self.nnmaDialog.show()
         self.nnmaDialog.raise_()
 
