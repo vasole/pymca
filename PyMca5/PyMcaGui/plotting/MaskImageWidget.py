@@ -1201,7 +1201,8 @@ class MaskImageWidget(qt.QWidget):
         self._yScale = yScale
         if data is None:
             self.__imageData = data
-            self.__selectionMask = None
+            if not clearmask:
+                self.__selectionMask = None
             self.plotImage(update=True)
             self.graphWidget._zoomReset(replot=True)
             return
