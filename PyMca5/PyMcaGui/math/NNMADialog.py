@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -132,8 +132,10 @@ class NNMADialog(qt.QDialog):
                                                          **kw)
                     if type(threadResult) == type((1,)):
                         if len(threadResult):
-                            if threadResult[0] == "Exception":
-                                raise Exception(threadResult[1],threadResult[2])
+                            if hasattr(threadResult[0], "startswith"):
+                                if threadResult[0].startswith("Exception"):
+                                    raise Exception(threadResult[1],
+                                                threadResult[2])
                     images, eigenvalues, eigenvectors = threadResult
                 except:
                     if isinstance(data, numpy.ndarray):
