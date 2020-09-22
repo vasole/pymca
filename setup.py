@@ -199,42 +199,34 @@ packages = ['PyMca5', 'PyMca5.PyMcaPlugins', 'PyMca5.tests',
 if USING_SETUPTOOLS and PYMCA_DATA_DIR == defaultDataPath \
         and PYMCA_DOC_DIR == defaultDataPath:
     # general case: pip install or "setup.py install" without parameters
-    package_data = {'PyMca5': ['LICENSE*',
-                               'changelog.txt',
-                               'PyMcaData/*.*',
-                               'PyMcaData/attdata/*',
-                               'PyMcaData/HTML/*.*',
-                               'PyMcaData/HTML/IMAGES/*',
-                               'PyMcaData/HTML/PyMCA_files/*',
-                               'EPDL97/*.DAT',
-                               'EPDL97/LICENSE']}
-    data_files = []
+    use_smart_install_data_class = True
 else:
     # used by debian packaging (PYMCA_DATA_DIR & PYMCA_DOC_DIR set by the packager)
     # or used by cx_freeze or py2app to generate frozen binaries.
-    package_data = {}
-    data_files = [(PYMCA_DATA_DIR, ['LICENSE',
-                                    'LICENSE.GPL',
-                                    'LICENSE.LGPL',
-                                    'LICENSE.MIT',
-                                    'PyMca5/PyMcaData/Scofield1973.dict',
-                                    'changelog.txt',
-                                    'PyMca5/PyMcaData/McaTheory.cfg',
-                                    'PyMca5/PyMcaData/PyMcaSplashImage.png',
-                                    'PyMca5/PyMcaData/KShellRatesScofieldHS.dat',
-                                    'PyMca5/PyMcaData/LShellRatesCampbell.dat',
-                                    'PyMca5/PyMcaData/LShellRatesScofieldHS.dat',
-                                    'PyMca5/PyMcaData/EXAFS_Cu.dat',
-                                    'PyMca5/PyMcaData/EXAFS_Ge.dat',
-                                    'PyMca5/PyMcaData/Steel.cfg',
-                                    'PyMca5/PyMcaData/Steel.spe',
-                                    'PyMca5/PyMcaData/XRFSpectrum.mca']),
-                  (PYMCA_DATA_DIR + '/attdata', glob.glob('PyMca5/PyMcaData/attdata/*')),
-                  (PYMCA_DOC_DIR + '/HTML', glob.glob('PyMca5/PyMcaData/HTML/*.*')),
-                  (PYMCA_DOC_DIR + '/HTML/IMAGES', glob.glob('PyMca5/PyMcaData/HTML/IMAGES/*')),
-                  (PYMCA_DOC_DIR + '/HTML/PyMCA_files', glob.glob('PyMca5/HTML/PyMCA_files/*')),
-                  (PYMCA_DATA_DIR + '/EPDL97', glob.glob('PyMca5/EPDL97/*.DAT')),
-                  (PYMCA_DATA_DIR + '/EPDL97', ['PyMca5/EPDL97/LICENSE'])]
+    use_smart_install_data_class = False
+package_data = {}
+data_files = [(PYMCA_DATA_DIR, ['LICENSE',
+                                'LICENSE.GPL',
+                                'LICENSE.LGPL',
+                                'LICENSE.MIT',
+                                'PyMca5/PyMcaData/Scofield1973.dict',
+                                'changelog.txt',
+                                'PyMca5/PyMcaData/McaTheory.cfg',
+                                'PyMca5/PyMcaData/PyMcaSplashImage.png',
+                                'PyMca5/PyMcaData/KShellRatesScofieldHS.dat',
+                                'PyMca5/PyMcaData/LShellRatesCampbell.dat',
+                                'PyMca5/PyMcaData/LShellRatesScofieldHS.dat',
+                                'PyMca5/PyMcaData/EXAFS_Cu.dat',
+                                'PyMca5/PyMcaData/EXAFS_Ge.dat',
+                                'PyMca5/PyMcaData/Steel.cfg',
+                                'PyMca5/PyMcaData/Steel.spe',
+                                'PyMca5/PyMcaData/XRFSpectrum.mca']),
+              (PYMCA_DATA_DIR + '/attdata', glob.glob('PyMca5/PyMcaData/attdata/*')),
+              (PYMCA_DOC_DIR + '/HTML', glob.glob('PyMca5/PyMcaData/HTML/*.*')),
+              (PYMCA_DOC_DIR + '/HTML/IMAGES', glob.glob('PyMca5/PyMcaData/HTML/IMAGES/*')),
+              (PYMCA_DOC_DIR + '/HTML/PyMCA_files', glob.glob('PyMca5/HTML/PyMCA_files/*')),
+              (PYMCA_DATA_DIR + '/EPDL97', glob.glob('PyMca5/EPDL97/*.DAT')),
+              (PYMCA_DATA_DIR + '/EPDL97', ['PyMca5/EPDL97/LICENSE'])]
 
 
 SIFT_OPENCL_FILES = []
@@ -556,6 +548,10 @@ class smart_build_py(build_py):
             #default, just make sure the complete path is there
             PYMCA_INSTALL_DIR = getattr(install_cmd, 'install_lib')
 
+        if use_smart_install_data_class:
+            global INSTALL_DIR
+            INSTALL_DIR = getattr(install_cmd, 'install_lib')
+
         # frozen binary: use --install-data directory (absolute path)
         if PYMCA_DATA_DIR == defaultDataPath and "--install-data" in sys.argv:
             PYMCA_DATA_DIR = getattr(install_cmd, 'install_data')
@@ -841,10 +837,20 @@ class sdist_debian(sdist):
         self.archive_files = [debian_arch]
         print("Building debian .orig.tar.gz in %s" % self.archive_files[0])
 
+class smart_install_data(install_data):
+    def run(self):
+        global INSTALL_DIR
+        #need to change self.install_dir to the library dir
+        install_cmd = self.get_finalized_command('install')
+        self.install_dir = getattr(install_cmd, 'install_lib')
+        INSTALL_DIR = self.install_dir
+        return install_data.run(self)
 
 # end of man pages handling
 cmdclass = {'install_data': install_data,
             'build_py': smart_build_py}
+if use_smart_install_data_class:
+    cmdclass['install_data'] = smart_install_data
 if build_ext is not None:
     cmdclass['build_ext'] = build_ext
 
