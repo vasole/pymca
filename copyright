@@ -195,6 +195,10 @@ Files: PyMca5/PyMcaMath/mva/NNMAModule.py
 Copyright: 2008, 2009, Uwe Schmitt, uschmitt@mineway.de
 License: BSD-3-clause
 
+Files: PyMca5/PyMcaMath/mva/_cython_kmeans/*
+Copyright: 2012 David Warde-Farley
+License: BSD-3-clause
+
 Files: PyMca5/PyMcaMath/mva/py_nnma/*
 Copyright: 2008 Uwe Schmitt, uschmitt@mineway.de,
  2007 D. Kim, S.  Sra and I. S. Dhillon
