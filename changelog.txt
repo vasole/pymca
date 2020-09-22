@@ -1,3 +1,21 @@
+VERSION 5.6.0
+-------------
+
+- RGB Correlator. Implement K-means clustering on user selected images.
+
+- RGB Correlator. Provide a shape command line argument to simplify reading of HDF5 groups.
+
+- ROI Imaging. Support mask selections from the RGB correlator.
+
+- ROI Imaging. Save stacks with calibration, live times and positioners.
+
+- IO. Provide access to bliss data via redis.
+
+- GUI. Deal with matplotlib warnings.
+
+- Plugins. Correct numpy 1.19.x related issues.
+
+
 VERSION 5.5.5
 -------------
 
