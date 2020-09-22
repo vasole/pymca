@@ -1310,8 +1310,8 @@ class RGBCorrelatorWidget(qt.QWidget):
                 ScatterPlotCorrelatorWidget.ScatterPlotCorrelatorWidget(\
                                     labels=("Legend", "X", "Y"),
                                     types=("Text","RadioButton", "RadioButton"))
-        self.scatterPlotWidget.show()
-        self.scatterPlotWidget.raise_()
+            self.scatterPlotWidget.sigMaskScatterWidgetSignal.connect( \
+                                                      self.maskImageSlot)
         # I should check if the list is to be updated instead of systematically
         # send it
         initialize = True
@@ -1323,8 +1323,8 @@ class RGBCorrelatorWidget(qt.QWidget):
                 initialize = False
             else:
                 self.scatterPlotWidget.addSelectableItem(item, label=label)
-        if self.scatterPlotWidget.isHidden():
-            self.scatterPlotWidget.show()
+        self.scatterPlotWidget.setSelectionMask(self.getSelectionMask())
+        self.scatterPlotWidget.show()
         self.scatterPlotWidget.raise_()
 
     def getSelectedDataList(self):
@@ -1392,11 +1392,9 @@ class RGBCorrelatorWidget(qt.QWidget):
             ddict['label'] = ddict['title']
             self.removeImageSlot(ddict)
             return
-        if ddict['event'] == "selectionMaskChanged":
-            self.setSelectionMask(ddict['current'], instance_id=ddict['id'])
-            self.sigMaskImageWidgetSignal.emit(ddict)
-            return
-        if ddict['event'] == "resetSelection":
+        if ddict['event'] in ["selectionMaskChanged",
+                              "resetSelection",
+                              "invertSelection"]:
             self.setSelectionMask(None, instance_id=ddict['id'])
             self.sigMaskImageWidgetSignal.emit(ddict)
             return
