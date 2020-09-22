@@ -1181,7 +1181,10 @@ class MaskImageWidget(qt.QWidget):
             if self.__imageData is not None:
                 # this operation will be made when retrieving the mask
                 #mask *= numpy.isfinite(self.__imageData)
-                pass
+                if self.__imageData.size == mask.size:
+                    view = mask[:]
+                    view.shape = self.__imageData.shape
+                    mask = view
         self.__selectionMask = mask
         if plot:
             self.plotImage(update=False)
@@ -1210,6 +1213,11 @@ class MaskImageWidget(qt.QWidget):
             self.__imageData = data
         if clearmask:
             self.__selectionMask = None
+        if self.__selectionMask is not None and self.__imageData is not None:
+            if self.__selectionMask.size == self.__imageData.size:
+                view = self.__selectionMask[:]
+                view.shape = self.__imageData.shape
+                self.__selectionMask = view
         if self.colormapDialog is not None:
             goodData = self.__imageData[numpy.isfinite(self.__imageData)]
             minData = goodData.min()
