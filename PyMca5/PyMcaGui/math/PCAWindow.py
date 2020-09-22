@@ -603,8 +603,9 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
     def _updateScatterPlotWidget(self):
         w = self.scatterPlotWidget
         if self.__scatterPlotWidgetDataToUpdate:
-            for i in range(len(self.imageNames)):
-                w.addSelectableItem(self.imageList[i], self.imageNames[i])
+            if self.imageNames:
+                for i in range(len(self.imageNames)):
+                    w.addSelectableItem(self.imageList[i], self.imageNames[i])
             self.__scatterPlotWidgetDataToUpdate = False
         w.setPolygonSelectionMode()
         w.setSelectionMask(self.getSelectionMask())
