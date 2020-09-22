@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -121,8 +121,11 @@ def main():
             if int(arg):
                 transpose = True
         elif opt in '--shape':
-            image_shape = tuple(int(n) for n in arg.split(','))
-            print(image_shape)
+            if 'x' in arg:
+                split_on = "x"
+            else:
+                split_on = ","
+            image_shape = tuple(int(n) for n in arg.split(split_on))
 
     logging.basicConfig(level=getLoggingLevel(opts))
 

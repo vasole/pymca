@@ -59,7 +59,7 @@ class RGBImageCalculator(qt.QWidget):
     sigReplaceImageClicked = qt.pyqtSignal(object)
 
     def __init__(self, parent=None, math=True, replace=False,
-                 scanwindow=None):
+                 scanwindow=None, selection=False):
         qt.QWidget.__init__(self, parent)
         self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
         self.setWindowTitle("PyMca - RGB Image Calculator")
@@ -78,7 +78,8 @@ class RGBImageCalculator(qt.QWidget):
         self.setDefaultColormap(2, logflag=False)
         self._y1AxisInverted = False
         self._matplotlibSaveImage = None
-        self._build(math=math, replace = replace, scanwindow=scanwindow)
+        self._build(math=math, replace=replace, scanwindow=scanwindow,
+                    selection=selection)
 
     def _buildMath(self):
         self.mathBox = qt.QWidget(self)
@@ -132,19 +133,23 @@ class RGBImageCalculator(qt.QWidget):
         self.mainLayout.addWidget(self.mathBox)
         self.mathAction.clicked.connect(self._calculateKMeansClicked)
 
-    def _build(self, math=True, replace=False, scanwindow=False):
+    def _build(self, math=True, replace=False, scanwindow=False, selection=False):
         if math:
             if math == "kmeans":
                 self._buildKMeansMath()
             else:
                 self._buildMath()
+        if selection:
+            imageicons=True
+        else:
+            imageicons=False
 
         self.graphWidget = MaskImageWidget.MaskImageWidget(self,
                                                            colormap=True,
                                                            standalonesave=True,
-                                                           imageicons=False,
+                                                           imageicons=imageicons,
                                                            profileselection=True,
-                                                           selection=False,
+                                                           selection=selection,
                                                            scanwindow=scanwindow,
                                                            aspect=True)
 

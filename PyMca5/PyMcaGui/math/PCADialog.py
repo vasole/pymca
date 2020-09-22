@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -41,10 +41,7 @@ except ImportError:
     PCA = False
     MDP = False
 
-
 _logger = logging.getLogger(__name__)
-
-
 
 class SimpleThread(qt.QThread):
     def __init__(self, function, *var, **kw):
@@ -157,8 +154,9 @@ class PCADialog(qt.QDialog):
                                                          **kw)
                     if type(threadResult) == type((1,)):
                         if len(threadResult):
-                            if threadResult[0] == "Exception":
-                                raise Exception(threadResult[1],
+                            if hasattr(threadResult[0], "startswith"):
+                                if threadResult[0].startswith("Exception"):
+                                    raise Exception(threadResult[1],
                                                 threadResult[2])
                     images, eigenvalues, eigenvectors = threadResult
                 except:

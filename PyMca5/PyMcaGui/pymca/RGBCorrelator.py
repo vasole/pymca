@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -48,8 +48,9 @@ MATPLOTLIB = True
 class RGBCorrelator(qt.QWidget):
 
     sigRGBCorrelatorSignal = qt.pyqtSignal(object)
-    
-    def __init__(self, parent = None, graph = None, bgrx = True, image_shape=None):
+    sigMaskImageWidgetSignal = qt.pyqtSignal(object)
+
+    def __init__(self, parent=None, graph=None, bgrx=True, image_shape=None):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle("PyMca RGB Correlator")
         self.setWindowIcon(qt.QIcon(qt.QPixmap(RGBCorrelatorGraph.IconDict['gioconda16'])))
@@ -106,6 +107,8 @@ class RGBCorrelator(qt.QWidget):
         self.transposeImages   = self.controller.transposeImages
         self.controller.sigRGBCorrelatorWidgetSignal.connect( \
                      self.correlatorSignalSlot)
+        self.controller.sigMaskImageWidgetSignal.connect( \
+                     self.maskImageSlot)
 
     def _hFlipIconSignal(self):
         if self._handleGraph:
@@ -117,6 +120,12 @@ class RGBCorrelator(qt.QWidget):
             #this is not needed
             #self.controller.update()
             return
+
+    def setSelectionMask(self, *var, **kw):
+        self.controller.setSelectionMask(*var, **kw)
+
+    def maskImageSlot(self, ddict):
+        self.sigMaskImageWidgetSignal.emit(ddict)
 
     def correlatorSignalSlot(self, ddict):
         if 'image' in ddict:

@@ -374,6 +374,8 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
     def setSelectionMask(self, mask=None, plot=True):
         if self._selectionCurve is not None:
             selectionCurve = self.getCurve(self._selectionCurve)
+        else:
+            selectionCurve = None
         if selectionCurve in [[], None]:
             self._selectionCurve = None
             self._selectionMask = mask

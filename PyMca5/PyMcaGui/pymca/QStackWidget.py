@@ -972,6 +972,10 @@ class QStackWidget(StackBase.StackBase,
 
         #ROI Image
         widgetList = [self.stackWidget, self.roiWidget]
+        if self.rgbWidget is not None:
+            if hasattr(self.rgbWidget, "sigMaskImageWidgetSignal"):
+                widgetList.append(self.rgbWidget)
+
         for widget in widgetList:
             widget.sigMaskImageWidgetSignal.connect(self._maskImageWidgetSlot)
 
@@ -1185,12 +1189,20 @@ class QStackWidget(StackBase.StackBase,
             _logger.debug("SLAVE setSelectionMask CALLED")
 
         #inform built in widgets
-        for widget in [self.stackWidget, self.roiWidget]:
+        widgetList = [self.stackWidget, self.roiWidget]
+        for widget in widgetList:
             if instance_id != id(widget):
                 if mask is None:
-                    widget._resetSelection(owncall=False)
+                    if hasattr(widget, "_resetSelection"):
+                        widget._resetSelection(owncall=False)
+                    else:
+                        widget.setSelectionMask(mask, plot=True)
                 else:
                     widget.setSelectionMask(mask, plot=True)
+
+        if self.rgbWidget is not None:
+            if hasattr(self.rgbWidget, "setSelectionMask"):
+                self.rgbWidget.setSelectionMask(mask, instance_id=instance_id)
 
         #inform slave
         if self._slaveList is not None:

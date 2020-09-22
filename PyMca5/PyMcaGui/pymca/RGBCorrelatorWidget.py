@@ -159,6 +159,7 @@ _logger = logging.getLogger(__name__)
 class RGBCorrelatorWidget(qt.QWidget):
 
     sigRGBCorrelatorWidgetSignal = qt.pyqtSignal(object)
+    sigMaskImageWidgetSignal = qt.pyqtSignal(object)
 
     def __init__(self, parent = None, bgrx = False, replace = False, image_shape=None):
         qt.QWidget.__init__(self, parent)
@@ -327,6 +328,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.nnmaDialog = None
         self.kMeansDialog = None
         self._tomoguiWindow = None
+        self._lastMask = None
 
         self.__imageResizeButton.clicked.connect(self._imageResizeSlot)
         self.sliderWidget.sigRGBCorrelatorSliderSignal.connect(self._sliderSlot)
@@ -1237,32 +1239,68 @@ class RGBCorrelatorWidget(qt.QWidget):
 
     def showCalculationDialog(self):
         if self.calculationDialog is None:
-            self.calculationDialog = RGBImageCalculator.RGBImageCalculator(replace=self.replaceOption)
+            selection = True
+            self.calculationDialog = RGBImageCalculator.RGBImageCalculator(\
+                                        replace=self.replaceOption,
+                                        selection=selection)
             self.calculationDialog.sigAddImageClicked.connect(self.addImageSlot)
             self.calculationDialog.sigRemoveImageClicked.connect( \
                          self.removeImage)
             if self.replaceOption:
                 self.calculationDialog.sigReplaceImageClicked.connect( \
                          self.replaceImageSlot)
+            if selection:
+                self.calculationDialog.graphWidget.sigMaskImageWidgetSignal.connect( \
+                                self.maskImageSlot)
+                self.calculationDialog.graphWidget.setSelectionMask( \
+                                    self.getSelectionMask())
         self.calculationDialog.imageList = self._imageList
         self.calculationDialog.imageDict = self._imageDict
         if self.calculationDialog.isHidden():
+            self.calculationDialog.graphWidget.setSelectionMask( \
+                                    self.getSelectionMask())
             self.calculationDialog.show()
         self.calculationDialog.raise_()
 
     def showKMeansDialog(self):
+        itemList = self.tableWidget.selectedItems()
+        if len(itemList) < 1:
+            errorText = "Please select at least one image"
+            qt.QMessageBox.critical(self,"ValueError", errorText)
+            return
         if self.kMeansDialog is None:
+            selection = True
             self.kMeansDialog = RGBImageCalculator.RGBImageCalculator(math="kmeans",
-                                                                           replace=self.replaceOption)
+                                            replace=self.replaceOption,
+                                            selection=selection)
             self.kMeansDialog.sigAddImageClicked.connect(self.addImageSlot)
             self.kMeansDialog.sigRemoveImageClicked.connect( \
                          self.removeImage)
             if self.replaceOption:
                 self.kMeansDialog.sigReplaceImageClicked.connect( \
                          self.replaceImageSlot)
-        self.kMeansDialog.imageList = self._imageList
-        self.kMeansDialog.imageDict = self._imageDict
+            if selection:
+                self.kMeansDialog.graphWidget.sigMaskImageWidgetSignal.connect( \
+                                self.maskImageSlot)
+                self.kMeansDialog.graphWidget.setSelectionMask( \
+                                    self.getSelectionMask())
+
+        # TODO: just pass a list or an array of images instead of a dict
+        nImages = len(self._imageList)
+        dataDict = {}
+        for item in itemList:
+            row = item.row()
+            if row >= nImages:
+                errorText = "Requested to work with non existing \nimage number %d." % row
+                qt.QMessageBox.critical(self,"ValueError", errorText)
+                return
+            label = self._imageList[row]
+            dataDict[label] = {"image": self._imageDict[label]['image']}
+        self.kMeansDialog.graphWidget.setImageData(None, clearmask=False)
+        self.kMeansDialog.imageDict = dataDict
         if self.kMeansDialog.isHidden():
+            self.kMeansDialog.graphWidget.setSelectionMask( \
+                                self.getSelectionMask())
             self.kMeansDialog.show()
         self.kMeansDialog.raise_()
 
@@ -1272,8 +1310,8 @@ class RGBCorrelatorWidget(qt.QWidget):
                 ScatterPlotCorrelatorWidget.ScatterPlotCorrelatorWidget(\
                                     labels=("Legend", "X", "Y"),
                                     types=("Text","RadioButton", "RadioButton"))
-        self.scatterPlotWidget.show()
-        self.scatterPlotWidget.raise_()
+            self.scatterPlotWidget.sigMaskScatterWidgetSignal.connect( \
+                                                      self.maskImageSlot)
         # I should check if the list is to be updated instead of systematically
         # send it
         initialize = True
@@ -1285,8 +1323,8 @@ class RGBCorrelatorWidget(qt.QWidget):
                 initialize = False
             else:
                 self.scatterPlotWidget.addSelectableItem(item, label=label)
-        if self.scatterPlotWidget.isHidden():
-            self.scatterPlotWidget.show()
+        self.scatterPlotWidget.setSelectionMask(self.getSelectionMask())
+        self.scatterPlotWidget.show()
         self.scatterPlotWidget.raise_()
 
     def getSelectedDataList(self):
@@ -1305,8 +1343,9 @@ class RGBCorrelatorWidget(qt.QWidget):
 
     def showPCADialog(self):
         if self.pcaDialog is None:
+            selection=True
             self.pcaDialog = PCADialog.PCADialog(rgbwidget=self,
-                                                 selection=False)
+                                                 selection=selection)
             self.pcaDialog.pcaWindow.\
                     buildAndConnectImageButtonBox(self.replaceOption)
             self.pcaDialog.pcaWindow.sigMaskImageWidgetSignal.connect(\
@@ -1319,13 +1358,15 @@ class RGBCorrelatorWidget(qt.QWidget):
             return
 
         self.pcaDialog.setData(datalist)
+        self.pcaDialog.pcaWindow.setSelectionMask(self.getSelectionMask())
         self.pcaDialog.show()
         self.pcaDialog.raise_()
 
     def showNNMADialog(self):
         if self.nnmaDialog is None:
+            selection=True
             self.nnmaDialog = NNMADialog.NNMADialog(rgbwidget=self,
-                                                 selection=False)
+                                                 selection=selection)
             self.nnmaDialog.nnmaWindow.\
                         buildAndConnectImageButtonBox(self.replaceOption)
             self.nnmaDialog.nnmaWindow.sigMaskImageWidgetSignal.connect(\
@@ -1338,6 +1379,7 @@ class RGBCorrelatorWidget(qt.QWidget):
             return
 
         self.nnmaDialog.setData(datalist)
+        self.nnmaDialog.nnmaWindow.setSelectionMask(self.getSelectionMask())
         self.nnmaDialog.show()
         self.nnmaDialog.raise_()
 
@@ -1354,7 +1396,32 @@ class RGBCorrelatorWidget(qt.QWidget):
             ddict['label'] = ddict['title']
             self.removeImageSlot(ddict)
             return
+        if ddict['event'] in ["selectionMaskChanged",
+                              "resetSelection",
+                              "invertSelection"]:
+            self.setSelectionMask(None, instance_id=ddict['id'])
+            self.sigMaskImageWidgetSignal.emit(ddict)
+            return
 
+    def setSelectionMask(self, mask, instance_id=None):
+        self._lastMask = mask
+        widgetList = []
+        if self.calculationDialog:
+            widgetList.append(self.calculationDialog.graphWidget)
+        if self.kMeansDialog:
+            widgetList.append(self.kMeansDialog.graphWidget)
+        if self.pcaDialog:
+            widgetList.append(self.pcaDialog.pcaWindow)
+        if self.nnmaDialog:
+            widgetList.append(self.nnmaDialog.nnmaWindow)
+        if self.scatterPlotWidget:
+            widgetList.append(self.scatterPlotWidget)
+        for widget in widgetList:
+            if id(widget) != instance_id:
+                widget.setSelectionMask(mask)
+
+    def getSelectionMask(self):
+        return self._lastMask
 
     def addImageSlot(self, ddict):
         self.addImage(ddict['image'], ddict['label'])
