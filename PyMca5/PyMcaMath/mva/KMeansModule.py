@@ -37,7 +37,7 @@ import logging
 _logger = logging.getLogger(__name__)
 
 try:
-    from PyMca5.PyMcaMath.mva import _cython_kmeans as kmeans
+    from PyMca5.PyMcaMath.mva import _cython_kmeans as _kmeans
     KMEANS = "_kmeans"
 except:
     if _logger.getEffectiveLevel() == logging.DEBUG:
@@ -51,18 +51,16 @@ try:
     from sklearn.cluster import KMeans
     KMEANS = "sklearn"
 except:
-    if not KMEANS:
-        try:
-            from PyMca5.PyMcaMath.mva import _cython_kmeans as kmeans
-            KMEANS = "_kmeans"
-        except:
-            KMEANS = False
+    pass
 
-_logger.info("kmeans default to <%s>"  % KMEANS)
-
+if KMEANS:
+    _logger.info("kmeans default to <%s>"  % KMEANS)
+else:
+    _logger.info("kmeans disabled")
+    
 
 def _labelCythonKMeans(x, k):
-    labels, means, iterations, converged = kmeans.kmeans(x, k)
+    labels, means, iterations, converged = _kmeans.kmeans(x, k)
     return {"labels": numpy.array(labels, dtype=numpy.int32, copy=False),
             "means": means,
             "iterations":iterations,
