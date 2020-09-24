@@ -19,9 +19,9 @@ ctypedef fused double_or_float:
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef inline void _compute_means(double_or_float[:, :] data,
-                                int[:] assign,
+                                np.int32_t[:] assign,
                                 double_or_float[:, :] means,
-                                int[:] counts):
+                                np.int32_t[:] counts):
     """
     _compute_means(data, assign, means, counts)
     Compute the new centroids given the assignments in `assign`,
@@ -165,19 +165,19 @@ cpdef tuple kmeans(double_or_float[:, :] data, np.npy_intp k,
         int centroid, feature, example
         np.npy_intp ndata = data.shape[0]
         np.npy_intp nfeat = data.shape[1]
-        dtype = np.array([data[0,0]]).dtype
-        dists = np.empty((ndata, k), dtype=dtype)
-        double_or_float[:] mindist = np.empty(ndata, dtype=dtype)
-        int[:] counts = np.empty(k, dtype=int)
+        data_dtype = np.array([data[0,0]]).dtype
+        dists = np.empty((ndata, k), dtype=data_dtype)
+        double_or_float[:] mindist = np.empty(ndata, dtype=data_dtype)
+        np.int32_t[:] counts = np.empty(k, dtype=np.int32)
         # Allocate space for the assignment indices, distance matrix, the means.
         double_or_float[:, :] distsview = dists
-        double_or_float[:] m_sqnorm = np.empty(k, dtype=dtype)
+        double_or_float[:] m_sqnorm = np.empty(k, dtype=data_dtype)
         double_or_float[:, :] means
         # Declare variables for the current assignments and current argmin.
         # Storing the current argmin separately lets us easily check for
         # convergence at a memory cost of (pointer width * ndata).
-        int[:] assign
-        int[:] argmin = np.empty(ndata, dtype=int)
+        np.int32_t[:] assign
+        np.int32_t[:] argmin = np.empty(ndata, dtype=np.int32)
         double_or_float minusinf
 
     if init is not None:
@@ -187,17 +187,17 @@ cpdef tuple kmeans(double_or_float[:, :] data, np.npy_intp k,
             raise ValueError('init if provided must have shape (k, '
                              'data.shape[1])')
         means = init
-        assign = np.empty(ndata, dtype=int)
+        assign = np.empty(ndata, dtype=np.int32)
     else:
-        means = np.empty((k, nfeat), dtype=dtype)
+        means = np.empty((k, nfeat), dtype=data_dtype)
         # Randomly initialize assignments to uniformly drawn training points.
         if not hasattr(rng, 'random_integers'):
             rng = np.random.RandomState(rng)
-        assign = rng.randint(0, k, size=ndata).astype(int)
+        assign = rng.randint(0, k, size=ndata).astype(np.int32)
         # Compute the means from the random initial assignments.
         _compute_means(data, assign, means, counts)
 
-    minusinf = np.finfo(dtype).min # how to write np.inf 
+    minusinf = np.finfo(data_dtype).min # how to write np.inf 
     for iteration in range(max_iter):
         # Quantization step: compute squared distance between every point
         # and every mean.
