@@ -46,16 +46,18 @@ from numpy import vstack as numpyvstack
 # Problem on debian6 numpy version 1.4.1 unsigned longs give infinity
 #from numpy import nanmax, nanmin
 def nanmax(x):
-    try:
-        return x[numpy.isfinite(x)].max()
-    except:
-        return numpy.nanmax(x)
+    x = x[numpy.isfinite(x)]
+    if len(x):
+        return x.max()
+    else:
+        return 0
 
 def nanmin(x):
-    try:
-        return x[numpy.isfinite(x)].min()
-    except:
-        return numpy.nanmin(x)
+    x = x[numpy.isfinite(x)]
+    if len(x):
+        return x.min()
+    else:
+        return 0
 
 import sys
 import types
