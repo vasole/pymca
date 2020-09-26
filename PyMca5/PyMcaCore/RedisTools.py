@@ -144,7 +144,21 @@ def get_session_filename(session):
     """
     Return filename associated to last session scan or an empty string
     """
-    info = get_session_last_scan(session).info.get_all()
+    try:
+        info = get_session_last_scan(session).info.get_all()
+    except:
+        _logger.warning("Error reading info from last scan")
+        _logger.warning("attempting slower method")
+        info = {}
+        scan_list = get_session_scan_list(session)
+        scan_list.reverse()
+        for scan in scan_list:
+            try:
+                info = scan.info.get_all()
+            except:
+                info = {}
+            if "filename" in info:
+                break   
     return info.get("filename", "")
 
 def get_scan_list(session_node):

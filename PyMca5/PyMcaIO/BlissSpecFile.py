@@ -204,6 +204,7 @@ class BlissSpecScan(object):
         # this implementations returns the scan header instead of the correct
         # keys #E (file), #D (date) #O0 (motor names)
         #
+        self._read_counters()
         labels = '#L '
         for label in self._counters:
             labels += '  '+label
@@ -245,11 +246,8 @@ class BlissSpecScan(object):
 
     def lines(self):
         _logger.debug("lines called")
-        if self._counters is None:
-            counters = redis.get_scan_data(self._node, unique=True)
-        else:
-            self._read_counters()
-            counters = self._counters
+        self._read_counters()
+        counters = self._counters
         if len(counters):
             key = list(counters.keys())[0]
             return len(counters[key])
