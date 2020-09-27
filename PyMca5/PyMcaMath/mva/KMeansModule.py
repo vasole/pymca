@@ -96,9 +96,10 @@ def kmeans(x, k, method=None, normalize=True):
     assert len(x.shape) == 2
     data = numpy.ascontiguousarray(x)
     if normalize:
-        deltas = data.max(axis=1) - data.min(axis=1)
+        datamin = data.min(axis=0)
+        deltas = data.max(axis=0) - datamin 
         deltas[deltas < 1.0e-200] = 1
-        data = data / deltas[:, None]
+        data = (data - datamin) / deltas
     if method is None:
         method = KMEANS 
     if method == "mdp":

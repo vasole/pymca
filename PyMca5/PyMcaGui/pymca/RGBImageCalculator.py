@@ -261,9 +261,9 @@ class RGBImageCalculator(qt.QWidget):
         key = keys[0]
         image = self.imageDict[key]['image']
         shape = image.shape
-        nElements = image.size
+        nSamples = image.size
         # build a stack (expected a small amount of images)
-        data = numpy.zeros((nElements, len(keys)),
+        data = numpy.zeros((nSamples, len(keys)),
                             dtype=numpy.float)
         i = 0
         for key in self.imageDict:
