@@ -90,7 +90,18 @@ class BlissSpecFile(object):
         Returns the scan data
         """
         _logger.info("__getitem__ called %s" % item)
-        return BlissSpecScan(self._scan_nodes[item])
+        t0 = time.time()
+        key = self._list[item]
+        if key == self.__lastKey and (t0 - self.__lastTime) < 1:
+            # less than one second since last call, return cached value
+            _logger.info("Returning cached value for key %s" % key)
+        else:
+            if key == self.__lastKey:
+                _logger.info("Re-reading value for key %s" % key)
+            self.__lastKey = key
+            self.__lastItem = BlissSpecScan(self._scan_nodes[item])
+            self.__lastTime = time.time()
+        return self.__lastItem
 
     def select(self, key):
         """
@@ -98,18 +109,8 @@ class BlissSpecFile(object):
         scan number, scan order
         """
         _logger.info("select called %s" % key)
-        t0 = time.time()
-        if key == self.__lastKey and (t0 - self.__lastTime) < 1:
-            # less than one second since last call, return cached value
-            _logger.info("Returning cached value for key %s" % key)
-        else:
-            if key == self.__lastKey:
-                _logger.info("Re-reading value for key %s" % key)
-            n = self._list.index(key)
-            self.__lastKey = key
-            self.__lastItem = self.__getitem__(n)
-            self.__lastTime = time.time()
-        return self.__lastItem
+        n = self._list.index(key)
+        return self.__getitem__(n)
 
     def scanno(self):
         """
@@ -309,8 +310,8 @@ def test(filename):
         print(sf[i].nbmca())
         if sf[i].nbmca():
             print(sf[i].mca(1))
-        print(sf[0].allmotors())
-        print(sf[0].allmotorpos())
+        print(sf[i].allmotors())
+        print(sf[i].allmotorpos())
 
 if __name__ == "__main__":
     test(sys.argv[1])
