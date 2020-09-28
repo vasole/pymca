@@ -127,10 +127,15 @@ class BlissSpecScan(object):
         _logger.debug("__init__ called %s" % scanNode.name)
         self._node = scanNode
         self._identification = scanNode.name.split("_")[0] + ".1"
-        # for the time being only one MCA read
-        self._spectra = redis.get_spectra(scanNode, unique=True)
-        self._counters = None
         self._scan_info = redis.scan_info(self._node)
+        # check if there are 1D detectors
+        top_master, channels = next(iter(scanNode.info["acquisition_chain"].items()))
+        if len(channels["spectra"]):
+            # for the time being only one MCA read
+            self._spectra = redis.get_spectra(scanNode, unique=True)
+        else:
+            self._spectra = []
+        self._counters = None
         self._motors = self._scan_info.get("positioners", {})
 
     def _read_counters(self, force=False):
@@ -256,7 +261,7 @@ class BlissSpecScan(object):
 
     def nbmca(self):
         _logger.debug("nbmca called")
-        if len(spectra):
+        if len(self._spectra):
             return len(self._spectra[0])
         else:
             return 0
