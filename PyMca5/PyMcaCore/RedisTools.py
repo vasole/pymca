@@ -1,3 +1,4 @@
+
 #/*##########################################################################
 # Copyright (C) 2019-2020 European Synchrotron Radiation Facility
 #
@@ -110,7 +111,11 @@ def get_session_scan_list(session, filename=None):
     Returns a sorted list of actual scans. Last scan is last.
     """
     nodes = list(_get_session_scans(session))
-    nodes = sorted(nodes, key=lambda k: k.info["start_timestamp"])
+    try:
+        nodes = sorted(nodes, key=lambda k: k.info["start_timestamp"])
+    except KeyError:
+        _logger.error("At least one scan does not contain the start_timestamp key")
+        nodes = sorted(nodes, key=lambda k: k.info["start_timestamp"] if ("start_timestamp" in k.info) else k)
     if filename:
         nodes = [node for node in nodes
                      if scan_info(node)["filename"] == filename]
