@@ -146,11 +146,19 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
 
         self.list.header().setStretchLastSection(False)
         if QTVERSION > '5.0.0':
-            self.list.header().setSectionResizeMode(0, qt.QHeaderView.ResizeToContents)
-            self.list.header().setSectionResizeMode(1, qt.QHeaderView.ResizeToContents)
+            self.list.header().setSectionResizeMode(0, qt.QHeaderView.Interactive)
+            self.list.header().setSectionResizeMode(1, qt.QHeaderView.Interactive)
             self.list.header().setSectionResizeMode(2, qt.QHeaderView.Interactive)
-            self.list.header().setSectionResizeMode(3, qt.QHeaderView.ResizeToContents)
-            self.list.header().setSectionResizeMode(4, qt.QHeaderView.ResizeToContents)
+            self.list.header().setSectionResizeMode(3, qt.QHeaderView.Interactive)
+            self.list.header().setSectionResizeMode(4, qt.QHeaderView.Interactive)
+            size = self.list.header().fontMetrics().width("X")
+            self.list.header().setMinimumSectionSize(size)
+            self.list.header().resizeSection(0, size)
+            #    self.list.header().resizeSection(1, size * 4)
+            self.list.header().resizeSection(2, size * 25)
+            #    self.list.header().resizeSection(3, size * 7)
+            #    self.list.header().resizeSection(4, size * 8)
+
         elif QTVERSION < '4.2.0':
             self.list.header().setResizeMode(0, qt.QHeaderView.Stretch)
             self.list.header().setResizeMode(1, qt.QHeaderView.Stretch)
@@ -321,6 +329,12 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             self.scans.append(sn)
             after= item
             i = i + 1
+        if QTVERSION > '5.0.0':
+            self.list.resizeColumnToContents(0)
+            self.list.resizeColumnToContents(1)
+            #self.list.resizeColumnToContents(2)
+            self.list.resizeColumnToContents(3)
+            self.list.resizeColumnToContents(4)
 
     def clear(self):
         self.list.clear()
