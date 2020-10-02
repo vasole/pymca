@@ -368,7 +368,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
 
 
     def __selectionChanged(self):
-        _logger.debug("__selectionChanged")
+        _logger.info("__selectionChanged")
         itemlist = self.list.selectedItems()
         sel = [str(item.text(1)) for item in itemlist]
         _logger.debug("selection = %s", sel)
@@ -426,7 +426,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             #print "index = ", index
 
     def __singleClicked(self, item):
-        _logger.debug("__singleClicked")
+        _logger.info("__singleClicked")
         if item is not None:
             sn  = str(item.text(1))
             ddict={}
@@ -442,13 +442,11 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                             source = self.data.sourceName
                         else:
                             source = self.data.sourceName[0]
-                        updated = False
-                        if os.path.exists(source):
-                            if self.data.isUpdated(self.data.sourceName, sn):
-                                updated = True
-                        else:
-                            # bliss case, it takes as long to check as to update
-                            updated = True
+                        try:
+                            updated = self.data.isUpdated(self.data.sourceName, sn)
+                        except:
+                            _logger.warning("Error trying to verify if source was updated")
+                            updated = False
                         if updated:
                             self.data.refresh()
                             self.refresh()
@@ -457,11 +455,12 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                                 itemList = self.list.findItems(sn, qt.Qt.MatchExactly,1)
                                 if len(itemList) == 1:
                                     itemList[0].setSelected(selected)
-                    if selected:
-                        self._addClicked()
+                        if selected and updated:
+                            _logger.info("Updated. Not sending _addEvent")
+                            #self._addClicked()
 
     def __doubleClicked(self, item):
-        _logger.debug("__doubleClicked")
+        _logger.info("__doubleClicked")
         if item is not None:
             sn  = str(item.text(1))
             ddict={}
@@ -495,7 +494,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             self._addClicked()
 
     def __contextMenu(self, point):
-        _logger.debug("__contextMenu %s", point)
+        _logger.info("__contextMenu %s", point)
         item = self.list.itemAt(point)
         if item is not None:
             sn= str(item.text(1))
