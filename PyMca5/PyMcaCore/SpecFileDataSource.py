@@ -800,7 +800,10 @@ class SpecFileDataSource(object):
                 # not the last key and only last scan is supposed to change
                 return False
             if hasattr(self._sourceObjectList[0], "isUpdated"):
-                return self._sourceObjectList[0].isUpdated()
+                if self._sourceObjectList[0].isUpdated():
+                    return True
+            # double check the source might have changed respect to what is
+            # available for this module
             key_info = self.__getScanInfo(key)
             npoints = key_info['Lines']
             nmca = key_info["NbMca"]
