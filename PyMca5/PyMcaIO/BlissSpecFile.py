@@ -63,7 +63,7 @@ class BlissSpecFile(object):
         if not HAS_REDIS:
             raise ImportError("Could not import RedisTools")
         if filename not in redis.get_sessions_list():
-            return None
+            raise IOError("Session <%s> not available" % filename)
         self._scan_nodes = []
         self._session = filename
         self._filename = redis.get_session_filename(self._session)
@@ -77,8 +77,7 @@ class BlissSpecFile(object):
 
     def list(self):
         """
-        If there is only one scan returns 1:1
-        with two scans returns 1:2
+        Return a string with all the scan keys separated by ,
         """
         _logger.debug("list method called")
         scanlist = ["%s" % scan.name.split("_")[0] for scan in self._scan_nodes]
@@ -122,6 +121,44 @@ class BlissSpecFile(object):
     def allmotors(self):
         _logger.debug("allmotors called")
         return []
+
+    def isUpdated(self):
+        _logger.debug("BlissSpecFile is updated called")
+        # get last scan
+        scan_nodes = redis.get_session_scan_list(self._session,
+                                                  self._filename)
+        if not len(scan_nodes):
+            # if we get no scans, information was emptied/lost and we'll get errors in any case
+            # just say the file was updated. Perhaps the application asks for an update
+            return True
+        scanlist = ["%s" % scan.name.split("_")[0] for scan in scan_nodes]
+        keylist = ["%s.1" % idx for idx in scanlist]
+        scankey = keylist[-1]
+
+        # if the last node is different, there are new data
+        if scankey != self._list[-1]:
+            return True
+
+        # if the number of points or of mcas in the last node are different there are new data
+        # the problem is how to obtain the previous number of points and mcas but in any case
+        # we are going to read again the last scan
+        if self.__lastKey == scankey:
+            # we have old data available
+            previous_npoints = self.__lastItem.lines()
+            previous_nmca = self.__lastItem.nbmca()
+
+        # read back (I do not force to read for the time being)
+        scan = self.select(scankey)
+        npoints = scan.lines()
+        nmca = scan.nbmca()
+        if self.__lastKey == scankey:
+            if npoints > previous_npoints or nmca > previous_nmca:
+                _logger.info("BlissSpecFile <%s> updated. New last scan data" % self._session)
+                return True
+        # there might be new points or mcas in the last scan, but that is easy and fast
+        # to check by the main application because data are in cache
+        _logger.debug("BlissSpecFile <%s> NOT updated." % self._session)
+        return False
 
 class BlissSpecScan(object):
     def __init__(self, scanNode):
@@ -302,16 +339,19 @@ def test(filename):
     if sf[0].lines():
         print("1st column = ", sf[0].datacol(0))
         print("1st line = ", sf[0].dataline(0))
-    for i in range(sf.scanno()):
-        print(i)
-        print(sf[i].header('S'))
-        print(sf[i].header('D'))
-        print(sf[i].alllabels())
-        print(sf[i].nbmca())
-        if sf[i].nbmca():
-            print(sf[i].mca(1))
-        print(sf[i].allmotors())
-        print(sf[i].allmotorpos())
+    if sf.scanno() > 1:
+        t0 = time.time()
+        for i in range(sf.scanno()):
+            #print(i)
+            print(sf[i].header('S'))
+            print(sf[i].header('D'))
+            print(sf[i].alllabels())
+            print(sf[i].nbmca())
+            if sf[i].nbmca():
+                print(sf[i].mca(1))
+            print(sf[i].allmotors())
+            print(sf[i].allmotorpos())
+        print("elapsed = ", time.time() - t0)
 
 if __name__ == "__main__":
     test(sys.argv[1])
