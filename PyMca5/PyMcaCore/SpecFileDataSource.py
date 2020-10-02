@@ -113,10 +113,10 @@ class SpecFileDataSource(object):
             if self.__source_info_cached["SourceName"] == self.__sourceNameList[0]:
                 HAS_CACHED_INFO = True
 
-        num_mca=[]
-        num_pts=[]
-        commands=[]
-        sf_type=[]
+        num_mca = []
+        num_pts = []
+        commands = []
+        sf_type = []
         for i in scanlist:
             CACHE_INDEX = None
             if HAS_CACHED_INFO:
