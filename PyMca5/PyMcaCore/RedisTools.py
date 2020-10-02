@@ -114,13 +114,14 @@ def get_session_scan_list(session, filename=None):
     try:
         nodes = sorted(nodes, key=lambda k: k.info["start_timestamp"])
     except KeyError:
+        # slower but safe method
         if _logger.getEffectiveLevel() == logging.DEBUG:
             for node in nodes:
-                if "start_timescan" not in node.info:
-                    _logger.debug("start_timescan missing in <%s>" % node.name)
+                if "start_timestamp" not in node.info:
+                    _logger.debug("start_timestamp missing in <%s>" % node.name)
                     break
-        _logger.error("At least one scan does not contain the start_timestamp key")
-        nodes = sorted(nodes, key=lambda k: k.info["start_timestamp"] if ("start_timestamp" in k.info) else k)
+        nodes = [node for node in nodes if "start_timestamp" in node.info]
+        nodes = sorted(nodes, key=lambda k: k.info["start_timestamp"])
     if filename:
         nodes = [node for node in nodes
                      if scan_info(node)["filename"] == filename]
