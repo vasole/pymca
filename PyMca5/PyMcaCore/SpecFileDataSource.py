@@ -35,7 +35,7 @@ import os
 import numpy
 import types
 import logging
-from . import DataObject
+from PyMca5.PyMcaCore import DataObject
 from PyMca5.PyMcaIO import specfilewrapper as specfile
 
 _logger = logging.getLogger(__name__)
@@ -80,7 +80,7 @@ class SpecFileDataSource(object):
         self.refresh()
 
     def refresh(self):
-        self._sourceObjectList=[]
+        self._sourceObjectList = []
         self.__fileHeaderList = []
         #for name in self.__sourceNameList:
         #    if not os.path.exists(name):
@@ -108,11 +108,30 @@ class SpecFileDataSource(object):
         source_info["KeyList"]    = scanlist
         source_info["SourceType"] = SOURCE_TYPE
 
+        HAS_CACHED_INFO = False
+        if self.__source_info_cached:
+            if self.__source_info_cached["SourceName"] == self.__sourceNameList[0]:
+                HAS_CACHED_INFO = True
+
         num_mca=[]
         num_pts=[]
         commands=[]
         sf_type=[]
         for i in scanlist:
+            CACHE_INDEX = None
+            if HAS_CACHED_INFO:
+                if i in self.__source_info_cached["KeyList"]:
+                    if i != self.__source_info_cached["KeyList"][-1]:
+                        # information in cache and it was not the last scan
+                        # at that time. We can use the cached information
+                        self.__fileHeaderList[0] = self.__source_info_cached["FileHeader"]
+                        CACHE_INDEX = self.__source_info_cached["KeyList"].index(i)
+            if CACHE_INDEX is not None: # it can be 0 and still use the cache
+                num_mca.append(self.__source_info_cached["NumMca"][CACHE_INDEX])
+                num_pts.append(self.__source_info_cached["NumPts"][CACHE_INDEX])
+                commands.append(self.__source_info_cached["Commands"][CACHE_INDEX])
+                continue
+
             sel=self._sourceObjectList[0].select(i)
             if self.__fileHeaderList[0] == False:
                 try:
@@ -137,6 +156,7 @@ class SpecFileDataSource(object):
             except:
                 n= ""
             commands.append(n)
+        source_info["SourceName"] = self.__sourceNameList[0]
         source_info["FileHeader"] = self.__fileHeaderList[0]
         source_info["NumMca"] = num_mca
         source_info["NumPts"] = num_pts
@@ -766,21 +786,30 @@ class SpecFileDataSource(object):
     def __getMeshMotorRange(self, info, obj):
         return ()
 
-
     def isUpdated(self, sourceName, key):
-        #sourceName is redundant?
+        #sourceName is redundant because only the first file is retained.
         index = 0
         if not os.path.exists(self.__sourceNameList[index]):
             # bliss case
-            if key not in self.__lastKeyInfo:
+            if self.__source_info_cached is None:
                 return False
-            previous = self.__lastKeyInfo[key]
-            # update the value
-            self.getKeyInfo(key)
-            if self.__lastKeyInfo[key] != previous:
+            sourcekeys = self.__source_info_cached['KeyList']
+            if key not in sourcekeys:
+                return False
+            if key != sourcekeys[-1]:
+                # not the last key and only last scan is supposed to change
+                return False
+            if hasattr(self._sourceObjectList[0], "isUpdated"):
+                return self._sourceObjectList[0].isUpdated()
+            key_info = self.__getScanInfo(key)
+            npoints = key_info['Lines']
+            nmca = key_info["NbMca"]
+            if (npoints > self.__source_info_cached["NumPts"][-1]) or \
+               (nmca > self.__source_info_cached["NumMca"][-1]):
                 return True
-            else:
-                return False
+            # the problem that remains is if there are new scans taken after the last
+            # one was finished. That was supposed to be handled by the isUpdated method if present
+            return False
         lastmodified = os.path.getmtime(self.__sourceNameList[index])
         if key not in self.__lastKeyInfo.keys():
             #nothing has been read???
@@ -815,15 +844,18 @@ if __name__ == "__main__":
     sf = SpecFileDataSource(filename)
     sf = DataSource(filename)
     if len(sys.argv)==2:
-        info= sf.getSourceInfo()
-        print("Filename        :", sf.sourceName)
-        print("Number of scans :", info["Size"])
+        import time
+        for i in range(2):
+            t0 = time.time()
+            info = sf.getSourceInfo()
+            print("getSourceInfo %d elapsed = " % i, time.time() - t0)
+            print("Filename        :", sf.sourceName)
+            print("Number of scans :", info["Size"])
 
-        print("S# - command - pts - mca - type")
-        for (s,c,p,m,t) in zip(info["KeyList"],info["Commands"],info["NumPts"],info["NumMca"],info["ScanType"]):
-                print(s,"-",c,"-",p,"-",m,"-",t)
-        print("KeyList = ",info["KeyList"])
-        #print info['Channel0']
+            print("S# - command - pts - mca - type")
+            for (s,c,p,m,t) in zip(info["KeyList"],info["Commands"],info["NumPts"],info["NumMca"],info["ScanType"]):
+                    print(s,"-",c,"-",p,"-",m,"-",t)
+            print("KeyList = ",info["KeyList"])
 
     if len(sys.argv)==3:
         t0 = time.time()
