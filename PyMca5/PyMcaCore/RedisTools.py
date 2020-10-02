@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #/*##########################################################################
 # Copyright (C) 2019-2020 European Synchrotron Radiation Facility
 #
