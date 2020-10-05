@@ -177,7 +177,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         self.list.setContextMenuPolicy(qt.Qt.CustomContextMenu)
         self.list.customContextMenuRequested.connect(self.__contextMenu)
         self.list.itemClicked[qt.QTreeWidgetItem, int].connect( \
-                     self.__singleClicked)
+                    self.__singleClicked)
         self.list.itemDoubleClicked[qt.QTreeWidgetItem, int].connect( \
                      self.__doubleClicked)
         self.cntTable.sigSpecFileCntTableSignal.connect(self._cntSignal)
@@ -289,7 +289,9 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             item = self.list.itemAt(qt.QPoint(0,0))
             if item is not None:
                 item.setSelected(True)
-                self.__selectionChanged()
+                # this call is not needed
+                # triggered by the selectionChanged signal
+                # self.__selectionChanged()
 
     #OLD data management
     def setData(self, specfiledata):
@@ -427,6 +429,8 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
 
     def __singleClicked(self, item):
         _logger.info("__singleClicked")
+        print("ignoring single clicked")
+        return
         if item is not None:
             sn  = str(item.text(1))
             ddict={}
@@ -590,12 +594,24 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         sel_list = []
         #build the appropriate selection for mca's
         for scan in scan_sel:
+            toPoll = False
+            if len(self.scans) and scan == self.scans[-1]:
+                if hasattr(self.data, "isUpdated") and \
+                   hasattr(self.data, "refresh"):
+                    if hasattr(self.data.sourceName, "upper"):
+                        source = self.data.sourceName
+                    else:
+                        source = self.data.sourceName[0]
+                    if not os.path.exists(source):
+                        # bliss
+                        toPoll = True
             for mca in mca_sel:
                 sel = {}
                 sel['SourceName'] = self.data.sourceName
                 sel['SourceType'] = self.data.sourceType
                 sel['Key'] = scan
-                sel['Key'] += "."+mca
+                sel['Key'] += "." + mca
+                sel["addToPoller"] = toPoll
                 sel['selection'] = None #for the future
                 #sel['scanselection']  = False
                 sel['legend']    = os.path.basename(sel['SourceName'][0]) +" "+ sel['Key']
@@ -606,6 +622,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                     sel['SourceName'] = self.data.sourceName
                     sel['SourceType'] = self.data.sourceType
                     sel['Key'] = scan
+                    sel["addToPoller"] = toPoll
                     sel['selection'] = {}
                     if self.forceMcaBox.isChecked():
                         sel['scanselection']  = "MCA"
