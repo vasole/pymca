@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -103,9 +103,14 @@ class QSource(qt.QObject):
         dataObjectRef=weakref.proxy(dataObject, dataObjectDestroyed)
 
         try:
+            _logger.debug("Dealing with data object reference %s", dataObjectRef)
             if dataObjectRef not in self.surveyDict[key]:
+                _logger.debug("dataObject reference ADDED")
+
                 self.surveyDict[key].append(dataObjectRef)
                 self.selections[key].append((id(dataObjectRef), dataObjectRef.info))
+            else:
+                _logger.debug("dataObject reference IGNORED")
         except KeyError:
             self.surveyDict[key] = [dataObjectRef]
             self.selections[key] = [(id(dataObjectRef), dataObjectRef.info)]
