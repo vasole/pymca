@@ -51,9 +51,10 @@ if sys.platform == "win32":
     sps = None
 else:
     from PyMca5.PyMcaGui.pymca import QSpsDataSource
+    from PyMca5.PyMcaGui.pymca import QSpecFileDataSource
     sps = QSpsDataSource.SpsDataSource.sps
     from PyMca5.PyMcaGui.io import QSpsWidget
-    source_types = { SpecFileDataSource.SOURCE_TYPE: SpecFileDataSource.SpecFileDataSource,
+    source_types = { SpecFileDataSource.SOURCE_TYPE: QSpecFileDataSource.QSpecFileDataSource,
                      EdfFileDataSource.SOURCE_TYPE:  EdfFileDataSource.EdfFileDataSource,
                      QSpsDataSource.SOURCE_TYPE: QSpsDataSource.QSpsDataSource}
 
