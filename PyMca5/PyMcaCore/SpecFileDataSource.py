@@ -799,10 +799,7 @@ class SpecFileDataSource(object):
             if key != sourcekeys[-1]:
                 # not the last key and only last scan is supposed to change
                 return False
-            if hasattr(self._sourceObjectList[0], "isUpdated"):
-                if self._sourceObjectList[0].isUpdated():
-                    return True
-            # double check the source might have changed respect to what is
+            # check the source might have changed respect to what is
             # available for this module
             key_info = self.__getScanInfo(key)
             npoints = key_info['Lines']
@@ -811,7 +808,10 @@ class SpecFileDataSource(object):
                (nmca > self.__source_info_cached["NumMca"][-1]):
                 return True
             # the problem that remains is if there are new scans taken after the last
-            # one was finished. That was supposed to be handled by the isUpdated method if present
+            # one was finished. That is supposed to be handled by the isUpdated method if present
+            if hasattr(self._sourceObjectList[0], "isUpdated"):
+                if self._sourceObjectList[0].isUpdated():
+                    return True
             return False
         lastmodified = os.path.getmtime(self.__sourceNameList[index])
         if key not in self.__lastKeyInfo.keys():
