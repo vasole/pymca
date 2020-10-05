@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -143,7 +143,13 @@ class QDispatcher(qt.QWidget):
                             #there is only one read out.
                             #I should create a weakref to it in order to be informed
                             #about its deletion.
-                            if source.sourceType != "SPS":
+                            addToPoller = False
+                            if source.sourceType == "SPS":
+                                addToPoller = True
+                            elif "addToPoller" in sel:
+                                if sel["addToPoller"]:
+                                    addToPoller = True
+                            if not addToPoller:
                                 try:
                                     dataObject = source.getDataObject(sel['Key'],
                                                           selection=sel['selection'])
