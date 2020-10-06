@@ -56,12 +56,12 @@ class QSource(qt.QObject):
 
         self.surveyDict = {}
         self.selections = {}
-        self.setPollTime(700) # 700 milliseconds
+        self.setPollTime(0.7) # 700 milliseconds
         self.pollerThreadId = None
 
     def setPollTime(self, pollTime):
-        """Set polling time (in milliseconds)"""
-        self._pollTime = max(pollTime, 1)
+        """Set polling time (in seconds)"""
+        self._pollTime = max(pollTime, 0.1)
         return self._pollTime
 
     def getPollTime(self):
@@ -110,7 +110,7 @@ class QSource(qt.QObject):
             else:
                 _logger.debug("dataObject reference IGNORED")
         except KeyError:
-            _logger.debug("ADDING BECAUSE OF KEY ERROR")
+            print("ADDING BECAUSE OF KEY ERROR")
             self.surveyDict[key] = [dataObjectRef]
             self.selections[key] = [(id(dataObjectRef), dataObjectRef.info)]
         except ReferenceError:
