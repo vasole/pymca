@@ -255,7 +255,9 @@ class QDispatcher(qt.QWidget):
             sourceType = source.sourceType
             self.selectorWidget[sourceType].setDataSource(source)
             self.tabWidget.setCurrentWidget(self.selectorWidget[sourceType])
-            if sourceType == "SPS":
+            #if sourceType == "SPS":
+            if hasattr(source, "sigUpdated"):
+                _logger.debug("connecting source of type %s" % sourceType)
                 source.sigUpdated.connect(self._selectionUpdatedSlot)
 
         elif (ddict["event"] == "SourceSelected") or \
@@ -301,7 +303,7 @@ class QDispatcher(qt.QWidget):
             _logger.debug("not implemented yet")
 
     def _selectionUpdatedSlot(self, ddict):
-        _logger.debug("_selectionUpdatedSlot(self, dict=%s)")
+        _logger.debug("_selectionUpdatedSlot(self, dict=%s)", ddict)
         if 'selectionlist' in ddict:
             sel_list = ddict['selectionlist']
         else:
