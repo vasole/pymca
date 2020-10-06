@@ -30,12 +30,17 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 import sys
 import logging
-from PyMca5.PyMcaGui import PyMcaQt as qt
 import time
 import weakref
+from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 _logger = logging.getLogger(__name__)
 SOURCE_EVENT = qt.QEvent.registerEventType()
+
+try:
+    import thread
+except ImportError:
+    import _thread as thread
 
 class SourceEvent(qt.QEvent):
     def __init__(self, ddict=None):
@@ -52,13 +57,7 @@ class QSource(qt.QObject):
         self.surveyDict = {}
         self.selections = {}
         self.setPollTime(700) # 700 milliseconds
-        # start a new polling thread
-        #print "starting new thread"
-        _logger.debug("Starting polling timer")
-        self.pollerThreadId = qt.QTimer()
-        self.pollerThreadId.setSingleShot(True)
-        self.pollerThreadId.setInterval(self._pollTime)
-        self.pollerThreadId.timeout.connect(self.__run)
+        self.pollerThreadId = None
 
     def setPollTime(self, pollTime):
         """Set polling time (in milliseconds)"""
@@ -67,7 +66,6 @@ class QSource(qt.QObject):
 
     def getPollTime(self):
         return self._pollTime
-
 
     def addToPoller(self, dataObject):
         """Set polling for data object"""
@@ -119,13 +117,14 @@ class QSource(qt.QObject):
             _logger.debug("NOT ADDED TO THE POLL dataObject = %s", dataObject)
             return
 
-        _logger.debug("SURVEY DICT AFTER ADDITION = %s", self.surveyDict)
-        if not self.pollerThreadId.isActive():
-            self.pollerThreadId.start()
+        if self.pollerThreadId is None:
+            # start a new polling thread
+            _logger.debug("starting new thread")
+            self.pollerThreadId = thread.start_new_thread(self.__run, ())
 
     def __run(self):
         _logger.debug("In QSource __run method")
-        if len(self.surveyDict) > 0:
+        while len(self.surveyDict) > 0:
             #for key in self.surveyDict is dangerous
             # runtime error: dictionary changed during iteration
             # a mutex is needed
@@ -145,7 +144,6 @@ class QSource(qt.QObject):
                             event.dict['Key']   = key
                             event.dict['event'] = 'updated'
                             event.dict['id']    = self.surveyDict[key]
-                            print(self.surveyDict[key])
                             scanselection = False
                             info = self.surveyDict[key][0].info
                             if "scanselection" in info:
@@ -171,10 +169,8 @@ class QSource(qt.QObject):
                 for event in eventsToPost[key]:
                     qt.QApplication.postEvent(self, event)
             qt.QApplication.instance().processEvents()
-        if len(self.surveyDict) > 0:
-            if not self.pollerThreadId.isActive():
-                 self.pollerThreadId.start()
-        else:
-            self.pollerThreadId.stop()
-            self.selections = {}
+            time.sleep(self._pollTime)
+            _logger.debug("woke up")
 
+        self.pollerThreadId = None
+        self.selections = {}
