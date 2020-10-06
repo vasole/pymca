@@ -413,10 +413,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                         if dataObject.info['operations'][-1] == 'derivate':
                             yaxis = 'right'
                     # do not keep unnecessary references
-                    if ("addToPoller" in sel) and sel["addToPoller"]:
-                        self.dataObjectsDict[newDataObject.info['legend']] = dataObject
-                    else:
-                        self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
+                    self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
                     self.addCurve(xdata, ydata, legend=newDataObject.info['legend'],
                                     info=newDataObject.info,
                                     symbol=symbol,
