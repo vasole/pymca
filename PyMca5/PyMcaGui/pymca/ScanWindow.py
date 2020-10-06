@@ -412,6 +412,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                     elif 'operations' in dataObject.info:
                         if dataObject.info['operations'][-1] == 'derivate':
                             yaxis = 'right'
+                    # do not keep unnecessary references
                     self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
                     self.addCurve(xdata, ydata, legend=newDataObject.info['legend'],
                                     info=newDataObject.info,

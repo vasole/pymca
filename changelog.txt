@@ -1,3 +1,10 @@
+VERSION 5.6.1
+-------------
+
+- IO. More robust access to redis.
+
+- K-Means. Subtract minimum of each feature prior to scaling.
+
 VERSION 5.6.0
 -------------
 

@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python
 #/*##########################################################################
 # Copyright (C) 2019-2020 European Synchrotron Radiation Facility
 #
@@ -114,8 +114,14 @@ def get_session_scan_list(session, filename=None):
     try:
         nodes = sorted(nodes, key=lambda k: k.info["start_timestamp"])
     except KeyError:
-        _logger.error("At least one scan does not contain the start_timestamp key")
-        nodes = sorted(nodes, key=lambda k: k.info["start_timestamp"] if ("start_timestamp" in k.info) else k)
+        # slower but safe method
+        if _logger.getEffectiveLevel() == logging.DEBUG:
+            for node in nodes:
+                if "start_timestamp" not in node.info:
+                    _logger.debug("start_timestamp missing in <%s>" % node.name)
+                    break
+        nodes = [node for node in nodes if "start_timestamp" in node.info]
+        nodes = sorted(nodes, key=lambda k: k.info["start_timestamp"])
     if filename:
         nodes = [node for node in nodes
                      if scan_info(node)["filename"] == filename]
@@ -349,6 +355,7 @@ if __name__ == "__main__":
     # get the available sessions
     scan_number = None
     reference = None
+    _logger.setLevel(logging.DEBUG)
     if len(sys.argv) > 1:
         sessions = [sys.argv[1]]
         if len(sys.argv) > 2:
@@ -391,6 +398,16 @@ if __name__ == "__main__":
         print("SCAN = %s" % scan)
         print("NAME = %s" % scan.name)
         print("TITLE = %s" % scan_info(scan).get("title", "No COMMAND"))
+        print("ACQUISITION_CHAIN = ", scan_info(scan).get("acquisition_chain", None))
+        #for master in scan_info(scan)["acquisition_chain"]:
+        #    print(" master = ", master)
+        #    print(" channels = ", list(scan_info(scan)[master].keys()))
+        top_master, channels = next(iter(scan.info["acquisition_chain"].items()))
+        print("N counters devices = ", len(channels["spectra"]))
+        print("N Mca devices = ", len(channels["spectra"]))
+        print(top_master)
+        print(channels)
+        sys.exit(0)
         counters = get_data_channels(scan)
         #for counter in counters:
         #    print(counter.name, counter.short_name, counter.dtype, counter.type, counter.info, counter.get_as_array(0, -1))

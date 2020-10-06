@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -23,16 +23,24 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
+import sys
 import logging
+import time
+import weakref
 from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 _logger = logging.getLogger(__name__)
-SOURCE_EVENT = qt.QEvent.User
+SOURCE_EVENT = qt.QEvent.registerEventType()
+
+try:
+    import thread
+except ImportError:
+    import _thread as thread
 
 class SourceEvent(qt.QEvent):
     def __init__(self, ddict=None):
@@ -41,13 +49,6 @@ class SourceEvent(qt.QEvent):
         self.dict = ddict
         qt.QEvent.__init__(self, SOURCE_EVENT)
 
-import time
-try:
-    import thread
-except ImportError:
-    import _thread as thread
-import weakref
-
 class QSource(qt.QObject):
     sigUpdated = qt.pyqtSignal(object)
     def __init__(self):
@@ -55,19 +56,16 @@ class QSource(qt.QObject):
 
         self.surveyDict = {}
         self.selections = {}
-        self._pollTime = 0.7 #700 ms
+        self.setPollTime(0.7) # 700 milliseconds
         self.pollerThreadId = None
 
     def setPollTime(self, pollTime):
-        """Set polling time (in milliseconds)"""
-        self._pollTime = max(pollTime * 0.001, 0.001)
-
-        return self._pollTime * 1000
-
+        """Set polling time (in seconds)"""
+        self._pollTime = max(pollTime, 0.1)
+        return self._pollTime
 
     def getPollTime(self):
-        return self._pollTime * 1000
-
+        return self._pollTime
 
     def addToPoller(self, dataObject):
         """Set polling for data object"""
@@ -103,26 +101,29 @@ class QSource(qt.QObject):
         dataObjectRef=weakref.proxy(dataObject, dataObjectDestroyed)
 
         try:
+            _logger.debug("Dealing with data object reference %s", dataObjectRef)
             if dataObjectRef not in self.surveyDict[key]:
+                _logger.debug("dataObject reference ADDED")
+
                 self.surveyDict[key].append(dataObjectRef)
                 self.selections[key].append((id(dataObjectRef), dataObjectRef.info))
+            else:
+                _logger.debug("dataObject reference IGNORED")
         except KeyError:
+            print("ADDING BECAUSE OF KEY ERROR")
             self.surveyDict[key] = [dataObjectRef]
             self.selections[key] = [(id(dataObjectRef), dataObjectRef.info)]
         except ReferenceError:
             _logger.debug("NOT ADDED TO THE POLL dataObject = %s", dataObject)
             return
 
-        _logger.debug("SURVEY DICT AFTER ADDITION = %s", self.surveyDict)
-
         if self.pollerThreadId is None:
             # start a new polling thread
-            #print "starting new thread"
+            _logger.debug("starting new thread")
             self.pollerThreadId = thread.start_new_thread(self.__run, ())
 
-
     def __run(self):
-        #print "RUN"
+        _logger.debug("In QSource __run method")
         while len(self.surveyDict) > 0:
             #for key in self.surveyDict is dangerous
             # runtime error: dictionary changed during iteration
@@ -144,9 +145,13 @@ class QSource(qt.QObject):
                             event.dict['event'] = 'updated'
                             event.dict['id']    = self.surveyDict[key]
                             scanselection = False
-                            if 'scanselection' in self.surveyDict[key][0].info:
-                                scanselection = \
-                                  self.surveyDict[key][0].info['scanselection']
+                            info = self.surveyDict[key][0].info
+                            if "scanselection" in info:
+                                scanselection = info['scanselection']
+                            elif "selectiontype" in info:
+                                _logger.debug("selectiontype %s", info["selectiontype"])
+                                if info["selectiontype"] == "1D":
+                                    scanselection = True
                             if (key == 'SCAN_D') or scanselection:
                                 event.dict['scanselection'] = True
                             else:
@@ -155,8 +160,10 @@ class QSource(qt.QObject):
                         else:
                             del self.surveyDict[key]
                             del self.selections[key]
-                    except KeyError:
-                        _logger.debug("key error in loop")
+                    except:
+                        _logger.debug("error in loop %s", sys.exc_info())
+                        del self.surveyDict[key]
+                        del self.selections[key]
                         pass
             for key in eventsToPost:
                 for event in eventsToPost[key]:
@@ -167,4 +174,3 @@ class QSource(qt.QObject):
 
         self.pollerThreadId = None
         self.selections = {}
-

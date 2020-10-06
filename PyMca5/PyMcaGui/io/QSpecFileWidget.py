@@ -146,11 +146,19 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
 
         self.list.header().setStretchLastSection(False)
         if QTVERSION > '5.0.0':
-            self.list.header().setSectionResizeMode(0, qt.QHeaderView.ResizeToContents)
-            self.list.header().setSectionResizeMode(1, qt.QHeaderView.ResizeToContents)
+            self.list.header().setSectionResizeMode(0, qt.QHeaderView.Interactive)
+            self.list.header().setSectionResizeMode(1, qt.QHeaderView.Interactive)
             self.list.header().setSectionResizeMode(2, qt.QHeaderView.Interactive)
-            self.list.header().setSectionResizeMode(3, qt.QHeaderView.ResizeToContents)
-            self.list.header().setSectionResizeMode(4, qt.QHeaderView.ResizeToContents)
+            self.list.header().setSectionResizeMode(3, qt.QHeaderView.Interactive)
+            self.list.header().setSectionResizeMode(4, qt.QHeaderView.Interactive)
+            size = self.list.header().fontMetrics().width("X")
+            self.list.header().setMinimumSectionSize(size)
+            self.list.header().resizeSection(0, size)
+            #    self.list.header().resizeSection(1, size * 4)
+            self.list.header().resizeSection(2, size * 25)
+            #    self.list.header().resizeSection(3, size * 7)
+            #    self.list.header().resizeSection(4, size * 8)
+
         elif QTVERSION < '4.2.0':
             self.list.header().setResizeMode(0, qt.QHeaderView.Stretch)
             self.list.header().setResizeMode(1, qt.QHeaderView.Stretch)
@@ -169,7 +177,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         self.list.setContextMenuPolicy(qt.Qt.CustomContextMenu)
         self.list.customContextMenuRequested.connect(self.__contextMenu)
         self.list.itemClicked[qt.QTreeWidgetItem, int].connect( \
-                     self.__singleClicked)
+                    self.__singleClicked)
         self.list.itemDoubleClicked[qt.QTreeWidgetItem, int].connect( \
                      self.__doubleClicked)
         self.cntTable.sigSpecFileCntTableSignal.connect(self._cntSignal)
@@ -193,6 +201,15 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
 
         self.disableMca    = 0 #(type=="scan")
         self.disableScan   = 0 #(type=="mca")
+
+        # -- last scan watcher
+        if QTVERSION > '5.0.0':
+            self.lastScanWatcher = qt.QTimer()
+            self.lastScanWatcher.setSingleShot(True)
+            self.lastScanWatcher.setInterval(2000) # 2 seconds
+            self.lastScanWatcher.timeout.connect(self._timerSlot)
+        else:
+            self.lastScanWatcher = None
 
         # --- context menu
         self.data= None
@@ -281,7 +298,9 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             item = self.list.itemAt(qt.QPoint(0,0))
             if item is not None:
                 item.setSelected(True)
-                self.__selectionChanged()
+                # this call is not needed
+                # triggered by the selectionChanged signal
+                # self.__selectionChanged()
 
     #OLD data management
     def setData(self, specfiledata):
@@ -321,6 +340,12 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             self.scans.append(sn)
             after= item
             i = i + 1
+        if QTVERSION > '5.0.0':
+            self.list.resizeColumnToContents(0)
+            self.list.resizeColumnToContents(1)
+            #self.list.resizeColumnToContents(2)
+            self.list.resizeColumnToContents(3)
+            self.list.resizeColumnToContents(4)
 
     def clear(self):
         self.list.clear()
@@ -354,7 +379,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
 
 
     def __selectionChanged(self):
-        _logger.debug("__selectionChanged")
+        _logger.info("__selectionChanged")
         itemlist = self.list.selectedItems()
         sel = [str(item.text(1)) for item in itemlist]
         _logger.debug("selection = %s", sel)
@@ -411,8 +436,46 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             self.list.sortItems(index, qt.Qt.AscendingOrder)
             #print "index = ", index
 
+    def _timerSlot(self):
+        _logger.info("_timerSlot")
+        # check if last scan is selected
+        if not len(self.scans):
+            self.lastScanWatcher.stop()
+            return
+        scan = self.scans[-1]
+        itemList = self.list.findItems(scan, qt.Qt.MatchExactly,1)
+        if len(itemList) == 1:
+            itemlist = self.list.selectedItems()
+            scan_sel = [str(item.text(1)) for item in itemlist]
+            if itemList[0].isSelected():
+                if len(scan_sel) == 1:
+                    # allow the user to perform multiple selections
+                    # that include the last scan
+                    if hasattr(self.data, "isUpdated") and hasattr(self.data, "refresh"):
+                        if hasattr(self.data.sourceName, "upper"):
+                            source = self.data.sourceName
+                        else:
+                            source = self.data.sourceName[0]
+                        try:
+                            updated = self.data.isUpdated(self.data.sourceName, scan)
+                        except:
+                            _logger.warning("Error trying to verify if source was updated")
+                            updated = False
+                        if updated:
+                            self.data.refresh()
+                            self.refresh()
+                            if QTVERSION > "5.0.0":
+                                # make sure the item is found and selected after the update
+                                itemList = self.list.findItems(scan, qt.Qt.MatchExactly,1)
+                                if len(itemList) == 1:
+                                    itemList[0].setSelected(True)
+                if not self.lastScanWatcher.isActive():
+                    self.lastScanWatcher.start()
+        else:
+            self.lastScanWatcher.setActive(False)
+
     def __singleClicked(self, item):
-        _logger.debug("__singleClicked")
+        _logger.info("__singleClicked")
         if item is not None:
             sn  = str(item.text(1))
             ddict={}
@@ -424,30 +487,15 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             if len(self.scans):
                 if sn == self.scans[-1]:
                     if hasattr(self.data, "isUpdated") and hasattr(self.data, "refresh"):
-                        if hasattr(self.data.sourceName, "upper"):
-                            source = self.data.sourceName
-                        else:
-                            source = self.data.sourceName[0]
-                        updated = False
-                        if os.path.exists(source):
-                            if self.data.isUpdated(self.data.sourceName, sn):
-                                updated = True
-                        else:
-                            # bliss case, it takes as long to check as to update
-                            updated = True
-                        if updated:
-                            self.data.refresh()
-                            self.refresh()
-                            if QTVERSION > "5.0.0":
-                                # make sure the item is selected
-                                itemList = self.list.findItems(sn, qt.Qt.MatchExactly,1)
-                                if len(itemList) == 1:
-                                    itemList[0].setSelected(selected)
-                    if selected:
-                        self._addClicked()
+                        if not self.lastScanWatcher.isActive():
+                            self.lastScanWatcher.start()
+                        _logger.info("last scan watcher started")
+                        return
+            if self.lastScanWatcher.isActive():
+                self.lastScanWatcher.stop()
 
     def __doubleClicked(self, item):
-        _logger.debug("__doubleClicked")
+        _logger.info("__doubleClicked")
         if item is not None:
             sn  = str(item.text(1))
             ddict={}
@@ -481,7 +529,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             self._addClicked()
 
     def __contextMenu(self, point):
-        _logger.debug("__contextMenu %s", point)
+        _logger.info("__contextMenu %s", point)
         item = self.list.itemAt(point)
         if item is not None:
             sn= str(item.text(1))
@@ -582,7 +630,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                 sel['SourceName'] = self.data.sourceName
                 sel['SourceType'] = self.data.sourceType
                 sel['Key'] = scan
-                sel['Key'] += "."+mca
+                sel['Key'] += "." + mca
                 sel['selection'] = None #for the future
                 #sel['scanselection']  = False
                 sel['legend']    = os.path.basename(sel['SourceName'][0]) +" "+ sel['Key']

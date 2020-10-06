@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -30,6 +30,8 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 from PyMca5.PyMcaGui.pymca import QSource
 from PyMca5.PyMcaCore import SpsDataSource
+import logging
+_logger = logging.getLogger(__name__)
 qt = QSource.qt
 QTVERSION = qt.qVersion()
 
@@ -75,6 +77,10 @@ class QSpsDataSource(QSource.QSource):
 
     def customEvent(self, event):
         ddict = event.dict
+        if "SourceType" in ddict:
+            if ddict["SourceType"] != SOURCE_TYPE:
+                _logger.debug("Not a SPS event")
+                return
         ddict['SourceName'] = self.__dataSource.sourceName
         ddict['SourceType'] = SOURCE_TYPE
         key = ddict['Key']

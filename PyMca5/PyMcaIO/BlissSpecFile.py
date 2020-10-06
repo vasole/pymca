@@ -63,7 +63,7 @@ class BlissSpecFile(object):
         if not HAS_REDIS:
             raise ImportError("Could not import RedisTools")
         if filename not in redis.get_sessions_list():
-            return None
+            raise IOError("Session <%s> not available" % filename)
         self._scan_nodes = []
         self._session = filename
         self._filename = redis.get_session_filename(self._session)
@@ -77,8 +77,7 @@ class BlissSpecFile(object):
 
     def list(self):
         """
-        If there is only one scan returns 1:1
-        with two scans returns 1:2
+        Return a string with all the scan keys separated by ,
         """
         _logger.debug("list method called")
         scanlist = ["%s" % scan.name.split("_")[0] for scan in self._scan_nodes]
@@ -90,7 +89,18 @@ class BlissSpecFile(object):
         Returns the scan data
         """
         _logger.info("__getitem__ called %s" % item)
-        return BlissSpecScan(self._scan_nodes[item])
+        t0 = time.time()
+        key = self._list[item]
+        if key == self.__lastKey and (t0 - self.__lastTime) < 1:
+            # less than one second since last call, return cached value
+            _logger.info("Returning cached value for key %s" % key)
+        else:
+            if key == self.__lastKey:
+                _logger.info("Re-reading value for key %s" % key)
+            self.__lastKey = key
+            self.__lastItem = BlissSpecScan(self._scan_nodes[item])
+            self.__lastTime = time.time()
+        return self.__lastItem
 
     def select(self, key):
         """
@@ -98,18 +108,8 @@ class BlissSpecFile(object):
         scan number, scan order
         """
         _logger.info("select called %s" % key)
-        t0 = time.time()
-        if key == self.__lastKey and (t0 - self.__lastTime) < 1:
-            # less than one second since last call, return cached value
-            _logger.info("Returning cached value for key %s" % key)
-        else:
-            if key == self.__lastKey:
-                _logger.info("Re-reading value for key %s" % key)
-            n = self._list.index(key)
-            self.__lastKey = key
-            self.__lastItem = self.__getitem__(n)
-            self.__lastTime = time.time()
-        return self.__lastItem
+        n = self._list.index(key)
+        return self.__getitem__(n)
 
     def scanno(self):
         """
@@ -122,15 +122,58 @@ class BlissSpecFile(object):
         _logger.debug("allmotors called")
         return []
 
+    def isUpdated(self):
+        _logger.debug("BlissSpecFile is updated called")
+        # get last scan
+        scan_nodes = redis.get_session_scan_list(self._session,
+                                                  self._filename)
+        if not len(scan_nodes):
+            # if we get no scans, information was emptied/lost and we'll get errors in any case
+            # just say the file was updated. Perhaps the application asks for an update
+            return True
+        scanlist = ["%s" % scan.name.split("_")[0] for scan in scan_nodes]
+        keylist = ["%s.1" % idx for idx in scanlist]
+        scankey = keylist[-1]
+
+        # if the last node is different, there are new data
+        if scankey != self._list[-1]:
+            return True
+
+        # if the number of points or of mcas in the last node are different there are new data
+        # the problem is how to obtain the previous number of points and mcas but in any case
+        # we are going to read again the last scan
+        if self.__lastKey == scankey:
+            # we have old data available
+            previous_npoints = self.__lastItem.lines()
+            previous_nmca = self.__lastItem.nbmca()
+
+        # read back (I do not force to read for the time being)
+        scan = self.select(scankey)
+        npoints = scan.lines()
+        nmca = scan.nbmca()
+        if self.__lastKey == scankey:
+            if npoints > previous_npoints or nmca > previous_nmca:
+                _logger.info("BlissSpecFile <%s> updated. New last scan data" % self._session)
+                return True
+        # there might be new points or mcas in the last scan, but that is easy and fast
+        # to check by the main application because data are in cache
+        _logger.debug("BlissSpecFile <%s> NOT updated." % self._session)
+        return False
+
 class BlissSpecScan(object):
     def __init__(self, scanNode):
         _logger.debug("__init__ called %s" % scanNode.name)
         self._node = scanNode
         self._identification = scanNode.name.split("_")[0] + ".1"
-        # for the time being only one MCA read
-        self._spectra = redis.get_spectra(scanNode, unique=True)
-        self._counters = None
         self._scan_info = redis.scan_info(self._node)
+        # check if there are 1D detectors
+        top_master, channels = next(iter(scanNode.info["acquisition_chain"].items()))
+        if len(channels["spectra"]):
+            # for the time being only one MCA read
+            self._spectra = redis.get_spectra(scanNode, unique=True)
+        else:
+            self._spectra = []
+        self._counters = None
         self._motors = self._scan_info.get("positioners", {})
 
     def _read_counters(self, force=False):
@@ -256,7 +299,7 @@ class BlissSpecScan(object):
 
     def nbmca(self):
         _logger.debug("nbmca called")
-        if len(spectra):
+        if len(self._spectra):
             return len(self._spectra[0])
         else:
             return 0
@@ -296,16 +339,19 @@ def test(filename):
     if sf[0].lines():
         print("1st column = ", sf[0].datacol(0))
         print("1st line = ", sf[0].dataline(0))
-    for i in range(sf.scanno()):
-        print(i)
-        print(sf[i].header('S'))
-        print(sf[i].header('D'))
-        print(sf[i].alllabels())
-        print(sf[i].nbmca())
-        if sf[i].nbmca():
-            print(sf[i].mca(1))
-        print(sf[0].allmotors())
-        print(sf[0].allmotorpos())
+    if sf.scanno() > 1:
+        t0 = time.time()
+        for i in range(sf.scanno()):
+            #print(i)
+            print(sf[i].header('S'))
+            print(sf[i].header('D'))
+            print(sf[i].alllabels())
+            print(sf[i].nbmca())
+            if sf[i].nbmca():
+                print(sf[i].mca(1))
+            print(sf[i].allmotors())
+            print(sf[i].allmotorpos())
+        print("elapsed = ", time.time() - t0)
 
 if __name__ == "__main__":
     test(sys.argv[1])
