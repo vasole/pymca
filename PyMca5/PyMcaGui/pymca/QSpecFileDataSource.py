@@ -30,6 +30,9 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 from PyMca5.PyMcaGui.pymca import QSource
 from PyMca5.PyMcaCore import SpecFileDataSource
+import logging
+_logger = logging.getLogger(__name__)
+
 qt = QSource.qt
 QTVERSION = qt.qVersion()
 
@@ -74,7 +77,12 @@ class QSpecFileDataSource(QSource.QSource):
             return self.__dataSource.getDataObject(key_list,selection)
 
     def customEvent(self, event):
+        _logger.debug("QSpecFileDataSource customEvent %s", event.dict)
         ddict = event.dict
+        if "SourceType" in ddict:
+            if ddict["SourceType"] != SOURCE_TYPE:
+                _logger.debug("Not a specfile event")
+                return
         ddict['SourceName'] = self.__dataSource.sourceName
         ddict['SourceType'] = SOURCE_TYPE
         key = ddict['Key']
@@ -94,29 +102,40 @@ class QSpecFileDataSource(QSource.QSource):
                 legendlist = []
                 for i in a:
                     objectId, info = self.selections[key][i]
-                    scanselection = 0
-                    if 'scanselection' in info:
-                        scanselection = info['scanselection']
-                    if info['legend'] in legendlist:
-                        if not scanselection:
-                            del self.selections[key][i]
-                            continue
+                    #print(n, i, list(info.keys()))
+                    #scanselection = 0
+                    #if 'scanselection' in info:
+                    #    scanselection = info['scanselection']
+                    #if info['legend'] in legendlist:
+                    #if not scanselection:
+                    #        del self.selections[key][i]
+                    #        continue
                     if objectId in idtolook:
                         sel = {}
-                        sel['SourceName'] = self.__dataSource.sourceName
-                        sel['SourceType'] = SOURCE_TYPE
-                        sel['Key']        = key
+                        #sel['SourceName'] = self.__dataSource.sourceName
+                        #sel['SourceType'] = SOURCE_TYPE
+                        #sel['Key']        = key
+                        for tmpKey in ["SourceName", "SourceType", "Key"]:
+                            sel[tmpKey] = info[tmpKey]                        
                         sel['selection'] = info['selection']
-                        sel['legend'] = info['legend']
-                        legendlist.append(info['legend'])
+                        if "legend" in info:
+                            sel['legend'] = info['legend']
+                            legendlist.append(info['legend'])
+                        else:
+                            print("Missing legend")
+                            print(list(info.keys()))
+                            continue
+
                         sel['targetwidgetid'] = info.get('targetwidgetid', None)
                         sel['scanselection'] = info.get('scanselection', False)
                         sel['imageselection'] = info.get('imageselection', False)
                         ddict['selectionlist'].append(sel)
                     #else:
                         del self.selections[key][i]
-
-                self.sigUpdated.emit(ddict)
+                if len(ddict['selectionlist']):
+                    self.sigUpdated.emit(ddict)
+                else:
+                    print("no legend")
             else:
                 print("No info????")
 
