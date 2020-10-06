@@ -35,6 +35,7 @@ import os
 import numpy
 import types
 import logging
+import time
 from PyMca5.PyMcaCore import DataObject
 from PyMca5.PyMcaIO import specfilewrapper as specfile
 
@@ -790,6 +791,8 @@ class SpecFileDataSource(object):
         #sourceName is redundant because only the first file is retained.
         index = 0
         if not os.path.exists(self.__sourceNameList[index]):
+            if _logger.getEffectiveLevel() == logging.DEBUG:
+                t0 = time.time()
             # bliss case
             if self.__source_info_cached is None:
                 return False
@@ -812,6 +815,8 @@ class SpecFileDataSource(object):
             if hasattr(self._sourceObjectList[0], "isUpdated"):
                 if self._sourceObjectList[0].isUpdated():
                     return True
+            if _logger.getEffectiveLevel() == logging.DEBUG:
+                _logger.debug("Update check took %s seconds", time.time() - t0)
             return False
 
         lastmodified = os.path.getmtime(self.__sourceNameList[index])
@@ -839,8 +844,6 @@ def DataSource(name="", source_type=SOURCE_TYPE):
 
 
 if __name__ == "__main__":
-    import time
-
     if len(sys.argv) not in [2,3,4]:
         print("Usage: %s <filename> [<key_to_load>]")
         sys.exit()
