@@ -28,11 +28,14 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
+import sys
 import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
+import time
+import weakref
 QTVERSION = qt.qVersion()
 _logger = logging.getLogger(__name__)
-SOURCE_EVENT = qt.QEvent.User
+SOURCE_EVENT = qt.QEvent.registerEventType()
 
 class SourceEvent(qt.QEvent):
     def __init__(self, ddict=None):
@@ -41,13 +44,6 @@ class SourceEvent(qt.QEvent):
         self.dict = ddict
         qt.QEvent.__init__(self, SOURCE_EVENT)
 
-import time
-try:
-    import thread
-except ImportError:
-    import _thread as thread
-import weakref
-
 class QSource(qt.QObject):
     sigUpdated = qt.pyqtSignal(object)
     def __init__(self):
@@ -55,18 +51,22 @@ class QSource(qt.QObject):
 
         self.surveyDict = {}
         self.selections = {}
-        self._pollTime = 0.7 #700 ms
-        self.pollerThreadId = None
+        self.setPollTime(700) # 700 milliseconds
+        # start a new polling thread
+        #print "starting new thread"
+        _logger.debug("Starting polling timer")
+        self.pollerThreadId = qt.QTimer()
+        self.pollerThreadId.setSingleShot(True)
+        self.pollerThreadId.setInterval(self._pollTime)
+        self.pollerThreadId.timeout.connect(self.__run)
 
     def setPollTime(self, pollTime):
         """Set polling time (in milliseconds)"""
-        self._pollTime = max(pollTime * 0.001, 0.001)
-
-        return self._pollTime * 1000
-
+        self._pollTime = max(pollTime, 1)
+        return self._pollTime
 
     def getPollTime(self):
-        return self._pollTime * 1000
+        return self._pollTime
 
 
     def addToPoller(self, dataObject):
@@ -112,6 +112,7 @@ class QSource(qt.QObject):
             else:
                 _logger.debug("dataObject reference IGNORED")
         except KeyError:
+            _logger.debug("ADDING BECAUSE OF KEY ERROR")
             self.surveyDict[key] = [dataObjectRef]
             self.selections[key] = [(id(dataObjectRef), dataObjectRef.info)]
         except ReferenceError:
@@ -119,16 +120,12 @@ class QSource(qt.QObject):
             return
 
         _logger.debug("SURVEY DICT AFTER ADDITION = %s", self.surveyDict)
-
-        if self.pollerThreadId is None:
-            # start a new polling thread
-            #print "starting new thread"
-            self.pollerThreadId = thread.start_new_thread(self.__run, ())
-
+        if not self.pollerThreadId.isActive():
+            self.pollerThreadId.start()
 
     def __run(self):
-        #print "RUN"
-        while len(self.surveyDict) > 0:
+        _logger.debug("In QSource __run method")
+        if len(self.surveyDict) > 0:
             #for key in self.surveyDict is dangerous
             # runtime error: dictionary changed during iteration
             # a mutex is needed
@@ -148,10 +145,15 @@ class QSource(qt.QObject):
                             event.dict['Key']   = key
                             event.dict['event'] = 'updated'
                             event.dict['id']    = self.surveyDict[key]
+                            print(self.surveyDict[key])
                             scanselection = False
-                            if 'scanselection' in self.surveyDict[key][0].info:
-                                scanselection = \
-                                  self.surveyDict[key][0].info['scanselection']
+                            info = self.surveyDict[key][0].info
+                            if "scanselection" in info:
+                                scanselection = info['scanselection']
+                            elif "selectiontype" in info:
+                                _logger.debug("selectiontype %s", info["selectiontype"])
+                                if info["selectiontype"] == "1D":
+                                    scanselection = True
                             if (key == 'SCAN_D') or scanselection:
                                 event.dict['scanselection'] = True
                             else:
@@ -160,16 +162,19 @@ class QSource(qt.QObject):
                         else:
                             del self.surveyDict[key]
                             del self.selections[key]
-                    except KeyError:
-                        _logger.debug("key error in loop")
+                    except:
+                        _logger.debug("error in loop %s", sys.exc_info())
+                        del self.surveyDict[key]
+                        del self.selections[key]
                         pass
             for key in eventsToPost:
                 for event in eventsToPost[key]:
                     qt.QApplication.postEvent(self, event)
             qt.QApplication.instance().processEvents()
-            time.sleep(self._pollTime)
-            _logger.debug("woke up")
-
-        self.pollerThreadId = None
-        self.selections = {}
+        if len(self.surveyDict) > 0:
+            if not self.pollerThreadId.isActive():
+                 self.pollerThreadId.start()
+        else:
+            self.pollerThreadId.stop()
+            self.selections = {}
 
