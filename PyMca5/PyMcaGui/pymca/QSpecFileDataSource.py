@@ -49,6 +49,7 @@ class QSpecFileDataSource(QSource.QSource):
     """
     def __init__(self, sourceName):
         QSource.QSource.__init__(self)
+        self.setPollTime(2000) # 2 seconds as default  
         self.__dataSource = SpecFileDataSource.SpecFileDataSource(sourceName)
         #easy speed up by making a local reference
         self.sourceName = self.__dataSource.sourceName
