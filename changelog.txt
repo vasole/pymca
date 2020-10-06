@@ -1,9 +1,11 @@
 VERSION 5.6.1
 -------------
 
+- K-Means. Subtract minimum of each feature prior to scaling.
+
 - IO. More robust access to redis.
 
-- K-Means. Subtract minimum of each feature prior to scaling.
+- IO. Automatic update of data from redis when last scan is selected. 
 
 VERSION 5.6.0
 -------------

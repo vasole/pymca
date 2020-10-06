@@ -58,7 +58,7 @@ Examples of source installation
 
 You will need the following dependencies installed:
 
--  `python <https://www.python.org/>`_ (one of 2.7, 3.5 or higher
+-  `python <https://www.python.org/>`_ (3.6 or higher
    recommended)
 -  `numpy <https://www.numpy.org/>`_
 -  `fisx <https://github.com/vasole/fisx>`_
@@ -67,9 +67,6 @@ You will need the following dependencies installed:
 If you want to use the graphical interface provided, you will need a
 running python installation with one of the following combinations:
 
--  ``PyQt4`` + ``matplotlib`` (PyMca license will be
-   `GPL <https://www.gnu.org/licenses/gpl-3.0.en.html>`_ unless you
-   have a commercial PyQt4 license)
 -  ``PyQt5`` + ``matplotlib`` (PyMca license will be
    `GPL <https://www.gnu.org/licenses/gpl-3.0.en.html>`_ unless you
    have a commercial PyQt5 license)
