@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -129,13 +129,13 @@ class SGWindow(qt.QWidget):
                                                     degree=degree,
                                                     order=order)
         if order > 0:
-            maptoy2 = True
+            maptoy2 = "right"
         else:
-            maptoy2 = False
-        self.graph.newCurve(self.xValues,
+            maptoy2 = "left"
+        self.graph.addCurve(self.xValues,
                     self.background, "Filtered Spectrum",
                     replace=False,
-                    maptoy2=maptoy2)
+                    yaxis=maptoy2)
 
         #Force information update
         legend = self.graph.getActiveCurve(just_legend=True)
