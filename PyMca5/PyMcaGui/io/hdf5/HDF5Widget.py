@@ -73,8 +73,6 @@ else:
     def MyQVariant(x=None):
         return x
 
-
-
 QVERSION = qt.qVersion()
 
 
@@ -449,7 +447,11 @@ class FileModel(qt.QAbstractItemModel):
                                     return MyQVariant("%s" % node[()][0])
                                 else:
                                     #stored as a string
-                                    return MyQVariant("%s" % node[()])
+                                    try:
+                                        return MyQVariant("%s" % node[()])
+                                    except TypeError:
+                                        # issue #745
+                                        return MyQVariant("Unknown %s" % node)
                 return MyQVariant(item.type)
             if column == 2:
                 return MyQVariant(item.shape)
