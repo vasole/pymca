@@ -813,13 +813,15 @@ class SpecFileDataSource(object):
                 if self._sourceObjectList[0].isUpdated():
                     return True
             return False
+
         lastmodified = os.path.getmtime(self.__sourceNameList[index])
         if key not in self.__lastKeyInfo.keys():
             #nothing has been read???
             self.__lastKeyInfo[key] = lastmodified
             return False
         if lastmodified != self.__lastKeyInfo[key]:
-            self.__lastKeyInfo[key] = lastmodified
+            # do not update the __lastKeyInfo because until
+            # refresh is not called data will not be updated
             return True
         else:
             return False
