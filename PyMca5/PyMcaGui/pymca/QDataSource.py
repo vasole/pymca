@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -51,10 +51,9 @@ if sys.platform == "win32":
     sps = None
 else:
     from PyMca5.PyMcaGui.pymca import QSpsDataSource
-    from PyMca5.PyMcaGui.pymca import QSpecFileDataSource
     sps = QSpsDataSource.SpsDataSource.sps
     from PyMca5.PyMcaGui.io import QSpsWidget
-    source_types = { SpecFileDataSource.SOURCE_TYPE: QSpecFileDataSource.QSpecFileDataSource,
+    source_types = { SpecFileDataSource.SOURCE_TYPE: SpecFileDataSource.SpecFileDataSource,
                      EdfFileDataSource.SOURCE_TYPE:  EdfFileDataSource.EdfFileDataSource,
                      QSpsDataSource.SOURCE_TYPE: QSpsDataSource.QSpsDataSource}
 
