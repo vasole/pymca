@@ -202,6 +202,15 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         self.disableMca    = 0 #(type=="scan")
         self.disableScan   = 0 #(type=="mca")
 
+        # -- last scan watcher
+        if QTVERSION > '5.0.0':
+            self.lastScanWatcher = qt.QTimer()
+            self.lastScanWatcher.setSingleShot(True)
+            self.lastScanWatcher.setInterval(2000) # 2 seconds
+            self.lastScanWatcher.timeout.connect(self._timerSlot)
+        else:
+            self.lastScanWatcher = None
+
         # --- context menu
         self.data= None
         self.scans= []
@@ -427,10 +436,46 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             self.list.sortItems(index, qt.Qt.AscendingOrder)
             #print "index = ", index
 
+    def _timerSlot(self):
+        _logger.info("_timerSlot")
+        # check if last scan is selected
+        if not len(self.scans):
+            self.lastScanWatcher.stop()
+            return
+        scan = self.scans[-1]
+        itemList = self.list.findItems(scan, qt.Qt.MatchExactly,1)
+        if len(itemList) == 1:
+            itemlist = self.list.selectedItems()
+            scan_sel = [str(item.text(1)) for item in itemlist]
+            if itemList[0].isSelected():
+                if len(scan_sel) == 1:
+                    # allow the user to perform multiple selections
+                    # that include the last scan
+                    if hasattr(self.data, "isUpdated") and hasattr(self.data, "refresh"):
+                        if hasattr(self.data.sourceName, "upper"):
+                            source = self.data.sourceName
+                        else:
+                            source = self.data.sourceName[0]
+                        try:
+                            updated = self.data.isUpdated(self.data.sourceName, scan)
+                        except:
+                            _logger.warning("Error trying to verify if source was updated")
+                            updated = False
+                        if updated:
+                            self.data.refresh()
+                            self.refresh()
+                            if QTVERSION > "5.0.0":
+                                # make sure the item is found and selected after the update
+                                itemList = self.list.findItems(scan, qt.Qt.MatchExactly,1)
+                                if len(itemList) == 1:
+                                    itemList[0].setSelected(True)
+                if not self.lastScanWatcher.isActive():
+                    self.lastScanWatcher.start()
+        else:
+            self.lastScanWatcher.setActive(False)
+
     def __singleClicked(self, item):
         _logger.info("__singleClicked")
-        print("ignoring single clicked")
-        return
         if item is not None:
             sn  = str(item.text(1))
             ddict={}
@@ -442,26 +487,12 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             if len(self.scans):
                 if sn == self.scans[-1]:
                     if hasattr(self.data, "isUpdated") and hasattr(self.data, "refresh"):
-                        if hasattr(self.data.sourceName, "upper"):
-                            source = self.data.sourceName
-                        else:
-                            source = self.data.sourceName[0]
-                        try:
-                            updated = self.data.isUpdated(self.data.sourceName, sn)
-                        except:
-                            _logger.warning("Error trying to verify if source was updated")
-                            updated = False
-                        if updated:
-                            self.data.refresh()
-                            self.refresh()
-                            if QTVERSION > "5.0.0":
-                                # make sure the item is selected
-                                itemList = self.list.findItems(sn, qt.Qt.MatchExactly,1)
-                                if len(itemList) == 1:
-                                    itemList[0].setSelected(selected)
-                        if selected and updated:
-                            _logger.info("Updated. Not sending _addEvent")
-                            #self._addClicked()
+                        if not self.lastScanWatcher.isActive():
+                            self.lastScanWatcher.start()
+                        _logger.info("last scan watcher started")
+                        return
+            if self.lastScanWatcher.isActive():
+                self.lastScanWatcher.stop()
 
     def __doubleClicked(self, item):
         _logger.info("__doubleClicked")
@@ -594,24 +625,12 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         sel_list = []
         #build the appropriate selection for mca's
         for scan in scan_sel:
-            toPoll = False
-            if len(self.scans) and scan == self.scans[-1]:
-                if hasattr(self.data, "isUpdated") and \
-                   hasattr(self.data, "refresh"):
-                    if hasattr(self.data.sourceName, "upper"):
-                        source = self.data.sourceName
-                    else:
-                        source = self.data.sourceName[0]
-                    if not os.path.exists(source):
-                        # bliss
-                        toPoll = True
             for mca in mca_sel:
                 sel = {}
                 sel['SourceName'] = self.data.sourceName
                 sel['SourceType'] = self.data.sourceType
                 sel['Key'] = scan
                 sel['Key'] += "." + mca
-                sel["addToPoller"] = toPoll
                 sel['selection'] = None #for the future
                 #sel['scanselection']  = False
                 sel['legend']    = os.path.basename(sel['SourceName'][0]) +" "+ sel['Key']
@@ -622,7 +641,6 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                     sel['SourceName'] = self.data.sourceName
                     sel['SourceType'] = self.data.sourceType
                     sel['Key'] = scan
-                    sel["addToPoller"] = toPoll
                     sel['selection'] = {}
                     if self.forceMcaBox.isChecked():
                         sel['scanselection']  = "MCA"
