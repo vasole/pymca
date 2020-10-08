@@ -657,7 +657,7 @@ class TiffIO(object):
             raise ValueError("Unsupported combination. Bits = %s  Format = %d" % (nBits, sampleFormat))
         if hasattr(nBits, 'index'):
             image = numpy.zeros((nRows, nColumns, len(nBits)), dtype=dtype)
-        elif colormap is not None:
+        elif colormap is not None and (interpretation > 0):
             # should I use colormap dtype?
             image = numpy.zeros((nRows, nColumns, 3), dtype=dtype)
         else:
@@ -686,7 +686,7 @@ class TiffIO(object):
                 readout = numpy.array(numpy.frombuffer(fd.read(nBytes), dtype))
             if hasattr(nBits, 'index'):
                 readout.shape = -1, nColumns, len(nBits)
-            elif info['colormap'] is not None:
+            elif info['colormap'] is not None and (interpretation > 0):
                 readout = colormap[readout]
                 readout.shape = -1, nColumns, 3
             else:
