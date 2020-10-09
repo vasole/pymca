@@ -535,7 +535,7 @@ build__cython_kmeans(ext_modules)
 # In Debian or Ubuntu the package mesa-common-dev (or equivalent) is
 # not installed by default
 HAS_OPENGL_HEADERS = True
-if sys.platorm not in ["win32", "darwin"]:
+if sys.platform not in ["win32", "darwin"]:
     import distutils.ccompiler
     comp = distutils.ccompiler.get_default_compiler()
     if comp == "unix":
