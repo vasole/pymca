@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -23,19 +23,21 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
 import logging
+import traceback
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaMath.fitting import SimpleFitModule
 from . import SimpleFitConfigurationGui
 from PyMca5.PyMcaMath.fitting import SimpleFitUserEstimatedFunctions
 from . import Parameters
-from PyMca5.PyMcaGui import PlotWindow
+from PyMca5.PyMcaGui.plotting import PlotWindow
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 
 _logger = logging.getLogger(__name__)
 
@@ -197,7 +199,7 @@ class SimpleFitGui(qt.QWidget):
 
         #connect top widget
         self.topWidget.addFunctionButton.clicked.connect(\
-                    self.importFunctions)
+                    self.importFunctionsSlot)
 
         self.topWidget.fitFunctionCombo.currentIndexChanged[int].connect(\
                      self.fitFunctionComboSlot)
@@ -214,13 +216,25 @@ class SimpleFitGui(qt.QWidget):
             self.fitActions.startFitButton.clicked.connect(self.startFit)
             self.fitActions.dismissButton.clicked.connect(self.dismiss)
 
+    def importFunctionsSlot(self):
+        return self.importFunctions()
+
     def importFunctions(self, functionsfile=None):
         if functionsfile is None:
-            fn = qt.QFileDialog.getOpenFileName()
-            if fn.isEmpty():
-                functionsfile = ""
+            filetypelist = ['Python files (*.py)', 'All Files (*)']
+            fileList = PyMcaFileDialogs.getFileList(self,
+                                        filetypelist=filetypelist,
+                                        message="Select input functions file",
+                                        currentdir=None,
+                                        mode="OPEN",
+                                        getfilter=None,
+                                        single=True,
+                                        currentfilter=filetypelist[0],
+                                        native=None)
+            if len(fileList):
+                functionsfile= qt.safe_str(fileList[0])
             else:
-                functionsfile= qt.safe_str(fn)
+                functionsfile = ""
             if not len(functionsfile):
                 return
 
@@ -229,8 +243,13 @@ class SimpleFitGui(qt.QWidget):
         except:
             if _logger.getEffectiveLevel() == logging.DEBUG:
                 raise
-            qt.QMessageBox.critical(self, "ERROR",
-                                    "Function not imported")
+            msg = qt.QMessageBox()
+            msg.setWindowTitle("SimpleFitGui error")
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setInformativeText("Function not imported %s" % \
+                                           str(sys.exc_info()[1]))
+            msg.setDetailedText(traceback.format_exc())
+            msg.exec_()
 
         config = self.fitModule.getConfiguration()
         self.topWidget.setFunctions(config['fit']['functions'])
