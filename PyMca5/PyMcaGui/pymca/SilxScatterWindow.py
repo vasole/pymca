@@ -25,20 +25,54 @@
 #############################################################################*/
 import numpy
 from silx.gui import qt
-#from silx.gui.plot import Plot2D
-from silx.gui.plot import ScatterView as Plot2D
+from silx.gui.plot import ScatterView, items
 from silx.gui.colors import Colormap
 
 DEBUG = 0
 
+DEFAULT_SCATTER_SYMBOL = "s"
+DEFAULT_SCATTER_COLORMAP = "temperature"
+DEFAULT_SCATTER_VISUALIZATION = items.Scatter.Visualization.POINTS
+
+class ScatterViewUserDefault(ScatterView):
+    _defaultColormap = None
+    _defaultSymbol = None
+    _defaultVisualization = None
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if self._defaultColormap is None:
+            self._defaultColormap = Colormap(DEFAULT_SCATTER_COLORMAP)
+        if self._defaultSymbol is None:
+            self._defaultSymbol = DEFAULT_SCATTER_SYMBOL
+        if self._defaultVisualization is None:
+            self._defaultVisualization= DEFAULT_SCATTER_VISUALIZATION
+
+        # Apply defaults
+        self.setColormap(self._defaultColormap.copy())
+        scatter = self.getScatterItem()
+        scatter.setSymbol(self._defaultSymbol)
+        scatter.setVisualization(self._defaultVisualization)
+
+        # Connect to scatter item
+        scatter.sigItemChanged.connect(self.__scatterItemChanged)
+
+    def __scatterItemChanged(self, event):
+        """Handle change of scatter item colormap and symbol"""
+        if event is items.ItemChangedType.COLORMAP:
+            ScatterViewUserDefault._defaultColormap = self.getScatterItem().getColormap().copy()
+        elif event is items.ItemChangedType.SYMBOL:
+            ScatterViewUserDefault._defaultSymbol = self.getScatterItem().getSymbol()
+        elif event is items.ItemChangedType.VISUALIZATION_MODE:
+            ScatterViewUserDefault._defaultVisualization = self.getScatterItem().getVisualization()
+            
 class SilxScatterWindow(qt.QWidget):
     def __init__(self, parent=None, backend="gl"):
         super(SilxScatterWindow, self).__init__(parent)
         self.mainLayout = qt.QVBoxLayout(self)
-        self._defaultSymbol = "s"
-        self._defaultColormap = Colormap("temperature")
-        self.plot = Plot2D(self, backend=backend)
-        self.plot.setColormap(self._defaultColormap)
+        self.plot = ScatterViewUserDefault(self, backend=backend)
+        #self.plot = ScatterView(self, backend=backend)
         self.plot.getPlotWidget().setDataMargins(0.05, 0.05, 0.05, 0.05)
         self.mainLayout.addWidget(self.plot)
         self._plotEnabled = True
@@ -102,7 +136,7 @@ class SilxScatterWindow(qt.QWidget):
                 # standard scatter plot
                 data.shape = 1, -1
                 nscatter = 1
-            elif (x.size == y.size) and ((data % x.size) == 0):
+            elif (x.size == y.size) and ((data.size % x.size) == 0):
                 # we have n items, assuming they follow C order we can collapse them to
                 # something that can be viewed. In this case (scatter) we can sum. The
                 # only problem is that if we have a multidimensional monitor we have to
@@ -201,15 +235,11 @@ class SilxScatterWindow(qt.QWidget):
         #y.shape = -1
         values = dataObject.data[index]
         #values.shape = -1
-        item = self.plot.getPlotWidget().getScatter(legend)
+        item = self.plot.getScatterItem()
         if item is None:
             # only one scatter there
             self.plot.getPlotWidget().remove(kind="scatter")
-            symbol = self._defaultSymbol
-            cmap = self._defaultColormap
-            self.plot.getPlotWidget().addScatter(x, y, values,
-                            legend=legend, info=dataObject.info,
-                            symbol=symbol, colormap=cmap)
+            self.plot.getPlotWidget().addScatter(x, y, values, info=dataObject.info)
         else:
             # by using the OO API symbol and colormap are kept
             item.setData(x, y, values)
