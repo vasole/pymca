@@ -22,6 +22,7 @@ import os
 import glob
 import platform
 import numpy
+import time
 
 USING_SETUPTOOLS = True
 if '--distutils' in sys.argv:
@@ -528,8 +529,30 @@ build_PyMcaIOHelper(ext_modules)
 
 build__cython_kmeans(ext_modules)
 
-build_Object3DCTools(ext_modules)
-build_Object3DQhull(ext_modules)
+# the Object3D modules add little functionality to PyMca but require a
+# proper compilation environment to build PyMca.
+# In particular, the OpenGL header files have to be installed.
+# In Debian or Ubuntu the package mesa-common-dev (or equivalent) is
+# not installed by default
+HAS_OPENGL_HEADERS = True
+if sys.platform not in ["win32", "darwin"]:
+    import distutils.ccompiler
+    comp = distutils.ccompiler.get_default_compiler()
+    if comp == "unix":
+        import subprocess
+        if subprocess.call("which gcc > /dev/null", shell=True) == 0:
+            c_prog = "#include <stdint.h>\n int main()\n{return 0;}\n"
+            if subprocess.call("echo '%s' | gcc -x c - " % c_prog, shell=True) == 0:
+                c_prog = "#include <GL/gl.h>\n int main()\n{return 0;}\n"
+                if subprocess.call("echo '%s' | gcc -x c - " % c_prog, shell=True):
+                    HAS_OPENGL_HEADERS = False
+
+if HAS_OPENGL_HEADERS:
+    build_Object3DCTools(ext_modules)
+    build_Object3DQhull(ext_modules)
+else:
+    print("Missing <GL/gl.h> - OpenGL extensions disabled")
+    time.sleep(1)
 
 build_PyMcaSciPy(ext_modules)
 build_plotting_ctools(ext_modules)

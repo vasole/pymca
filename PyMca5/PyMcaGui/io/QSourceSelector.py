@@ -39,12 +39,13 @@ from PyMca5.PyMcaIO import spswrap as sps
 from PyMca5 import PyMcaDirs
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 
-try:
-    from PyMca5.PyMcaCore import RedisTools
-    BLISS = True
-except ImportError:
-    _logger.info("Bliss data file direct support not available")
-    BLISS = False
+BLISS = False
+if sys.version_info > (3, 5):
+    try:
+        from PyMca5.PyMcaCore import RedisTools
+        BLISS = True
+    except:
+        _logger.info("Bliss data file direct support not available")
 
 
 class QSourceSelector(qt.QWidget):
