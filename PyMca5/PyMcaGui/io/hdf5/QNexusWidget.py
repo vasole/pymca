@@ -621,6 +621,7 @@ class QNexusWidget(qt.QWidget):
             return False
 
     def hdf5Slot(self, ddict):
+        _logger.debug("hdf5Slot %s" % ddict)
         entryName = NexusTools.getEntryName(ddict['name'])
         currentEntry = "%s::%s" % (ddict['file'], entryName)
         if (currentEntry != self._lastEntry) and not self._BUTTONS:
@@ -666,8 +667,10 @@ class QNexusWidget(qt.QWidget):
                     cleanedCntList.append(key[len(root):])
             self._autoAliasList = aliasList
             self._autoCntList = cleanedCntList
+            _logger.info("building autoTable")
             self.autoTable.build(self._autoCntList,
-                                 self._autoAliasList)
+                                 self._autoAliasList,
+                                 selection=self._lastCntSelection)
             currentTab = qt.safe_str(self.tableTab.tabText( \
                                     self.tableTab.currentIndex()))
             if self._mca:

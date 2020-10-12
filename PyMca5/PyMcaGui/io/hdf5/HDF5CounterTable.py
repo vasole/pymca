@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -66,12 +66,16 @@ class HDF5CounterTable(qt.QTableWidget):
         """
         self.cellChanged[int, int].connect(self._aliasSlot)
 
-    def build(self, cntlist, aliaslist=None):
+    def build(self, cntlist, aliaslist=None, selection=None):
         _logger.debug("build cntlist = %s aliaslist = %s" % (cntlist, aliaslist))
         self.__building = True
-        if len(cntlist):
-            if len(self.cntList):
-                self.__oldSelection = self.getCounterSelection()
+        if selection is None:
+            if len(cntlist):
+                if len(self.cntList):
+                    self.__oldSelection = self.getCounterSelection()
+        else:
+            _logger.info("received selection %s", selection)
+            self.__oldSelection = selection
         if aliaslist is None:
             aliaslist = []
             for item in cntlist:
