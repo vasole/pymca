@@ -36,6 +36,7 @@ import h5py
 import logging
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from PyMca5.PyMcaCore import NexusTools
 safe_str = qt.safe_str
 
@@ -55,8 +56,7 @@ except ImportError:
     from . import HDF5DatasetTable
     Hdf5NodeView = None
 from PyMca5.PyMcaIO import ConfigDict
-if "PyMcaDirs" in sys.modules:
-    from PyMca5 import PyMcaDirs
+from PyMca5 import PyMcaDirs
 
 _logger = logging.getLogger(__name__)
 
@@ -344,46 +344,53 @@ class QNexusWidget(qt.QWidget):
 
     def getInputFilename(self):
         if self._dir is None:
-            if "PyMcaDirs" in sys.modules:
-                inidir = PyMcaDirs.inputDir
-            else:
-                inidir = os.getcwd()
+            inidir = PyMcaDirs.inputDir
         else:
             inidir = self._dir
 
         if not os.path.exists(inidir):
             inidir = os.getcwd()
 
-        ret = safe_str(qt.QFileDialog.getOpenFileName(self,
-                                         "Select a .ini file",
-                                         inidir,
-                                         "*.ini"))
+        fileList = PyMcaFileDialogs.getFileList(parent=self,
+                                                filetypelist=["ini files (*.ini)"],
+                                                message="Select a .ini file",
+                                                currentdir=inidir,
+                                                mode="OPEN",
+                                                getfilter=False)
+
+        if len(fileList):
+            ret = fileList[0]
+        else:
+            ret = ""
+
         if len(ret):
             self._dir = os.path.dirname(ret)
-            if "PyMcaDirs" in sys.modules:
-                PyMcaDirs.inputDir = os.path.dirname(ret)
+            PyMcaDirs.inputDir = os.path.dirname(ret)
         return ret
 
     def getOutputFilename(self):
         if self._dir is None:
-            if "PyMcaDirs" in sys.modules:
-                inidir = PyMcaDirs.outputDir
-            else:
-                inidir = os.getcwd()
+            inidir = PyMcaDirs.outputDir
         else:
             inidir = self._dir
 
         if not os.path.exists(inidir):
             inidir = os.getcwd()
 
-        ret = safe_str(qt.QFileDialog.getSaveFileName(self,
-                                         "Select a .ini file",
-                                         inidir,
-                                         "*.ini"))
+        fileList = PyMcaFileDialogs.getFileList(parent=self,
+                                                filetypelist=["ini files (*.ini)"],
+                                                message="Select a .ini file",
+                                                currentdir=inidir,
+                                                mode="SAVE",
+                                                getfilter=False)
+        if len(fileList):
+            ret = fileList[0]
+        else:
+            ret = ""
+
         if len(ret):
             self._dir = os.path.dirname(ret)
-            if "PyMcaDirs" in sys.modules:
-                PyMcaDirs.outputDir = os.path.dirname(ret)
+            PyMcaDirs.outputDir = os.path.dirname(ret)
         return ret
 
     def getWidgetConfiguration(self):
