@@ -118,6 +118,8 @@ class QNexusWidget(qt.QWidget):
         self._dir = None
         self._lastAction = None
         self._lastEntry = None
+        self._lastMcaSelection = None
+        self._lastCntSelection = None
         self._mca = mca
         self._BUTTONS = buttons
         self.build()
@@ -392,6 +394,7 @@ class QNexusWidget(qt.QWidget):
         return ddict
 
     def setWidgetConfiguration(self, ddict=None):
+        _logger.debug("setWidgetConfiguration %s" % ddict)
         if ddict is None:
             self._cntList = []
             self._aliasList = []
@@ -1059,6 +1062,10 @@ class QNexusWidget(qt.QWidget):
             return selectionList
         self._lastAction = "%s" % ddict['action']
         if len(selectionList):
+            if text.upper() == "MCA":
+                self._lastMcaSelection = mcaSelection
+            else:
+                self._lastCntSelection = cntSelection
             if selectionType.upper() in ["SCAN", "MCA"]:
                 ddict = {}
                 ddict['event'] = "SelectionTypeChanged"
