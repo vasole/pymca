@@ -454,7 +454,7 @@ class FileModel(qt.QAbstractItemModel):
                                             # issue #745
                                             return MyQVariant("Unknown %s" % node)
                             else:
-                                _logger.critical("Entry %s has not children" % item.name)
+                                _logger.critical("Entry %s has no children" % item.name)
                 return MyQVariant(item.type)
             if column == 2:
                 return MyQVariant(item.shape)
