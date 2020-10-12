@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -67,6 +67,7 @@ class HDF5CounterTable(qt.QTableWidget):
         self.cellChanged[int, int].connect(self._aliasSlot)
 
     def build(self, cntlist, aliaslist=None):
+        _logger.debug("build cntlist = %s aliaslist = %s" % (cntlist, aliaslist))
         self.__building = True
         if len(cntlist):
             if len(self.cntList):
@@ -215,6 +216,7 @@ class HDF5CounterTable(qt.QTableWidget):
         self._update()
 
     def _update(self, emit=True):
+        _logger.debug("_update called with emit = %s" % emit)
         axisLabels = ['X', 'Y', 'Z']
         for i in range(self.rowCount()):
             j = 1
