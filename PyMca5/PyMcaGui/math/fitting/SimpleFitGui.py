@@ -397,17 +397,20 @@ class SimpleFitGui(qt.QWidget):
         self.graph.addCurve(ddict['x'], ddict['y'], 'Data', replot=False)
         self.graph.addCurve(ddict['x'], ddict['yfit'], 'Fit', replot=False)
         self.graph.addCurve(ddict['x'], ddict['background'], 'Background',
-                                                replot=False)
+                                                replot=True)
         contributions = ddict['contributions']
         if len(contributions) > 1:
             background = ddict['background']
             i = 0
             for contribution in contributions:
                 i += 1
+                if i == len(contributions):
+                    replot = True
+                else:
+                    replot = False
                 self.graph.addCurve(ddict['x'], background + contribution,
                                     legend='Contribution %d' % i,
-                                    replot=False)
-        self.graph.replot()
+                                    replot=replot)
         self.graph.show()
 
     def dismiss(self):
