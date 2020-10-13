@@ -26,17 +26,19 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+import sys
 import os
 from operator import itemgetter
 import re
 import posixpath
 try:
     # try to import hdf5plugin
-    import hdf5plugin
+    if hdf5plugin not in sys.modules:
+        import hdf5plugin
 except:
     # but do not crash just because of it
     pass
@@ -484,7 +486,7 @@ def getMeasurementGroup(h5file, path):
                     measurement = group
                     nitems = len(measurement)
         else:
-            # default could ne anything ... crashes should be prevented
+            # default could be anything ... crashes should be prevented
             if default in entry:
                 group = entry[default]
                 if isGroup(group):
@@ -513,6 +515,11 @@ def getScannedPositioners(h5file, path):
         - Look for datasets present at measurement and title
     """
     entry_name = getEntryName(path)
+    try:
+        title = getTitle(h5file, path)
+    except:
+        _logger.warning("Error getting title from entry <%s>" % entry_name)
+        title = ""
     measurement = getMeasurementGroup(h5file, entry_name)
     scanned = []
     if measurement is not None:
@@ -537,31 +544,31 @@ def getScannedPositioners(h5file, path):
                                             (hasattr(item, "size") and (item.size > 1))]
         if not len(scanned):
             entry = h5file[entry_name]
-            if "title" in entry:
-                title = entry["title"][()]
-                if hasattr(title, "dtype"):
-                    _logger.warning("entry title should be a string not an array")
-                    if hasattr(title, "__len__"):
-                        if len(title) == 1:
-                            title = title[0]
-                if hasattr(title, "decode"):
-                    title = title.decode("utf-8")
-                if hasattr(title, "split"):
-                    tokens = title.split()
-                else:
-                    candidates = [key for key, item in measurement.items() if \
-                                                isDataset(item) and \
-                                                (key in tokens)]
-                    indices = []
-                    for key in candidates:
-                        indices.append((tokens.index(key), key))
-                    indices.sort()
-                    if len(indices):
-                        scanned = [measurement[key].name for idx, key in indices]
+            if len(title) and hasattr(title, "split"):
+                tokens = title.split()
+                scanned = [item.name for key, item in measurement.items() if \
+                                            isDataset(item) and \
+                                            (key in tokens)]
+        
+        # provide proper sorting
+        if len(scanned) > 1 and sys.version_info > (3, 3):
+            # sort irrespective of capital or lower case
+            scanned.sort(key=str.casefold)
+            if len(title) and hasattr(title, "split"):
+                indices = []
+                tokens = title.split()
+                offset = len(tokens) + len(scanned)
+                for key in scanned:
+                    short = posixpath.basename(key) 
+                    if short in tokens:
+                        indices.append((tokens.index(short), key))
+                    else:
+                        indices.append((offset + scanned.index(key), key))
+                indices.sort()    
+                scanned = [key for idx, key in indices]
     return scanned
 
 if __name__ == "__main__":
-    import sys
     import h5py
     try:
         sourcename=sys.argv[1]
