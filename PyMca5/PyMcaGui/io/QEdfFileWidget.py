@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -189,7 +189,12 @@ class EdfFile_StandardArray(qt.QWidget):
         else:
             image= idx-1
 
-        ylist= [ idx for idx in range(self.yList.count()) if self.yList.isItemSelected(self.yList.item(idx)) ]
+        if hasattr(self.yList, "isItemSelected"):
+            ylist= [ idx for idx in range(self.yList.count()) \
+                     if self.yList.isItemSelected(self.yList.item(idx))]
+        else:
+            selectedItems = self.yList.selectedItems()
+            ylist = [self.yList.row(item) for item in selectedItems]
         for y in ylist:
             selection.append({"plot":plot, "image": image,"x":None, "y":y})
         return selection
