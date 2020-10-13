@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -649,6 +649,12 @@ class QNexusWidget(qt.QWidget):
                     if measurement is not None:
                         measurement = [item.name for key,item in measurement.items() \
                                        if self._isNumeric(item)]
+                        try:
+                            # case insensitive sorting of measurement
+                            if sys.version_info > (3, 3):
+                                measurement.sort(key=str.casefold)
+                        except:
+                            _logger.error("Cannot apply sorting %s" % sys.exc_info()[1])
                     if self._mca:
                         mcaList = NexusTools.getMcaList(h5file, entryName)
                 finally:
