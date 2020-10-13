@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -36,6 +36,7 @@ import h5py
 import logging
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from PyMca5.PyMcaCore import NexusTools
 safe_str = qt.safe_str
 
@@ -55,8 +56,7 @@ except ImportError:
     from . import HDF5DatasetTable
     Hdf5NodeView = None
 from PyMca5.PyMcaIO import ConfigDict
-if "PyMcaDirs" in sys.modules:
-    from PyMca5 import PyMcaDirs
+from PyMca5 import PyMcaDirs
 
 _logger = logging.getLogger(__name__)
 
@@ -118,6 +118,8 @@ class QNexusWidget(qt.QWidget):
         self._dir = None
         self._lastAction = None
         self._lastEntry = None
+        self._lastMcaSelection = None
+        self._lastCntSelection = None
         self._mca = mca
         self._BUTTONS = buttons
         self.build()
@@ -342,46 +344,53 @@ class QNexusWidget(qt.QWidget):
 
     def getInputFilename(self):
         if self._dir is None:
-            if "PyMcaDirs" in sys.modules:
-                inidir = PyMcaDirs.inputDir
-            else:
-                inidir = os.getcwd()
+            inidir = PyMcaDirs.inputDir
         else:
             inidir = self._dir
 
         if not os.path.exists(inidir):
             inidir = os.getcwd()
 
-        ret = safe_str(qt.QFileDialog.getOpenFileName(self,
-                                         "Select a .ini file",
-                                         inidir,
-                                         "*.ini"))
+        fileList = PyMcaFileDialogs.getFileList(parent=self,
+                                                filetypelist=["ini files (*.ini)"],
+                                                message="Select a .ini file",
+                                                currentdir=inidir,
+                                                mode="OPEN",
+                                                getfilter=False)
+
+        if len(fileList):
+            ret = fileList[0]
+        else:
+            ret = ""
+
         if len(ret):
             self._dir = os.path.dirname(ret)
-            if "PyMcaDirs" in sys.modules:
-                PyMcaDirs.inputDir = os.path.dirname(ret)
+            PyMcaDirs.inputDir = os.path.dirname(ret)
         return ret
 
     def getOutputFilename(self):
         if self._dir is None:
-            if "PyMcaDirs" in sys.modules:
-                inidir = PyMcaDirs.outputDir
-            else:
-                inidir = os.getcwd()
+            inidir = PyMcaDirs.outputDir
         else:
             inidir = self._dir
 
         if not os.path.exists(inidir):
             inidir = os.getcwd()
 
-        ret = safe_str(qt.QFileDialog.getSaveFileName(self,
-                                         "Select a .ini file",
-                                         inidir,
-                                         "*.ini"))
+        fileList = PyMcaFileDialogs.getFileList(parent=self,
+                                                filetypelist=["ini files (*.ini)"],
+                                                message="Select a .ini file",
+                                                currentdir=inidir,
+                                                mode="SAVE",
+                                                getfilter=False)
+        if len(fileList):
+            ret = fileList[0]
+        else:
+            ret = ""
+
         if len(ret):
             self._dir = os.path.dirname(ret)
-            if "PyMcaDirs" in sys.modules:
-                PyMcaDirs.outputDir = os.path.dirname(ret)
+            PyMcaDirs.outputDir = os.path.dirname(ret)
         return ret
 
     def getWidgetConfiguration(self):
@@ -392,6 +401,7 @@ class QNexusWidget(qt.QWidget):
         return ddict
 
     def setWidgetConfiguration(self, ddict=None):
+        _logger.debug("setWidgetConfiguration %s" % ddict)
         if ddict is None:
             self._cntList = []
             self._aliasList = []
@@ -618,6 +628,7 @@ class QNexusWidget(qt.QWidget):
             return False
 
     def hdf5Slot(self, ddict):
+        _logger.debug("hdf5Slot %s" % ddict)
         entryName = NexusTools.getEntryName(ddict['name'])
         currentEntry = "%s::%s" % (ddict['file'], entryName)
         if (currentEntry != self._lastEntry) and not self._BUTTONS:
@@ -638,6 +649,12 @@ class QNexusWidget(qt.QWidget):
                     if measurement is not None:
                         measurement = [item.name for key,item in measurement.items() \
                                        if self._isNumeric(item)]
+                        try:
+                            # case insensitive sorting of measurement
+                            if sys.version_info > (3, 3):
+                                measurement.sort(key=str.casefold)
+                        except:
+                            _logger.error("Cannot apply sorting %s" % sys.exc_info()[1])
                     if self._mca:
                         mcaList = NexusTools.getMcaList(h5file, entryName)
                 finally:
@@ -663,8 +680,10 @@ class QNexusWidget(qt.QWidget):
                     cleanedCntList.append(key[len(root):])
             self._autoAliasList = aliasList
             self._autoCntList = cleanedCntList
+            _logger.info("building autoTable")
             self.autoTable.build(self._autoCntList,
-                                 self._autoAliasList)
+                                 self._autoAliasList,
+                                 selection=self._lastCntSelection)
             currentTab = qt.safe_str(self.tableTab.tabText( \
                                     self.tableTab.currentIndex()))
             if self._mca:
@@ -1059,6 +1078,10 @@ class QNexusWidget(qt.QWidget):
             return selectionList
         self._lastAction = "%s" % ddict['action']
         if len(selectionList):
+            if text.upper() == "MCA":
+                self._lastMcaSelection = mcaSelection
+            else:
+                self._lastCntSelection = cntSelection
             if selectionType.upper() in ["SCAN", "MCA"]:
                 ddict = {}
                 ddict['event'] = "SelectionTypeChanged"

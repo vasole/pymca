@@ -436,22 +436,25 @@ class FileModel(qt.QAbstractItemModel):
                 if showtitle:
                     if hasattr(item, 'type'):
                         if item.type in ["Entry", "NXentry"]:
-                            children = item.children
-                            names = [posixpath.basename(o.name) for o in children]
-                            if "title" in names:
-                                idx = names.index("title")
-                                node = children[idx].getNode()
-                                if hasattr(node, "shape") and len(node.shape):
-                                    #stored as an array of strings???
-                                    #return just the first item
-                                    return MyQVariant("%s" % node[()][0])
-                                else:
-                                    #stored as a string
-                                    try:
-                                        return MyQVariant("%s" % node[()])
-                                    except TypeError:
-                                        # issue #745
-                                        return MyQVariant("Unknown %s" % node)
+                            if hasattr(item, "children"):
+                                children = item.children
+                                names = [posixpath.basename(o.name) for o in children]
+                                if "title" in names:
+                                    idx = names.index("title")
+                                    node = children[idx].getNode()
+                                    if hasattr(node, "shape") and len(node.shape):
+                                        #stored as an array of strings???
+                                        #return just the first item
+                                        return MyQVariant("%s" % node[()][0])
+                                    else:
+                                        #stored as a string
+                                        try:
+                                            return MyQVariant("%s" % node[()])
+                                        except TypeError:
+                                            # issue #745
+                                            return MyQVariant("Unknown %s" % node)
+                            else:
+                                _logger.critical("Entry %s has no children" % item.name)
                 return MyQVariant(item.type)
             if column == 2:
                 return MyQVariant(item.shape)
