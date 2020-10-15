@@ -292,6 +292,18 @@ if sys.platform.startswith("linux"):
             OBJECT3D = False
             _logger.warning("OpenGL disabled. Errors using glxinfo command")
 
+if OPENGL_DRIVERS_OK and isSilxGLAvailable:
+    # additional test (takes care of disabled forwarding)
+    try:
+        from silx.gui.utils.glutils import isOpenGLAvailable
+        isSilxGLAvailable = isOpenGLAvailable(version=(2, 1), runtimeCheck=True)
+        if not isSilxGLAvailable:
+            if not isOpenGLAvailable(version=(1, 4), runtimeCheck=True):
+                OPENGL_DRIVERS_OK = False
+                OBJECT3D = False
+    except:
+        _logger.info("Cannot test OpenGL availability %s" % sys.exc_info()[1])
+
 from PyMca5.PyMcaGui.pymca import QDispatcher
 from PyMca5.PyMcaGui import ElementsInfo
 from PyMca5.PyMcaGui import PeakIdentifier
