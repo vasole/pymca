@@ -440,7 +440,9 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         _logger.info("_timerSlot")
         # check if last scan is selected
         if not len(self.scans):
-            self.lastScanWatcher.stop()
+            if self.lastScanWatcher:
+                if self.lastScanWatcher.isActive():
+                    self.lastScanWatcher.stop()
             return
         scan = self.scans[-1]
         itemList = self.list.findItems(scan, qt.Qt.MatchExactly,1)
@@ -484,9 +486,18 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             ddict['NbPoints'] = int(str(item.text(3)))
             ddict['NbMca']    = int(str(item.text(4)))
             selected = item.isSelected()
-            if len(self.scans):
+            if len(self.scans) and self.lastScanWatcher:
                 if sn == self.scans[-1]:
                     if hasattr(self.data, "isUpdated") and hasattr(self.data, "refresh"):
+                        if hasattr(self.data.sourceName, "upper"):
+                            source = self.data.sourceName
+                        else:
+                            source = self.data.sourceName[0]
+                        if os.path.exists(source):
+                            _logger.info("last scan watcher disabled on actual files")
+                            if self.lastScanWatcher.isActive():
+                                self.lastScanWatcher.stop()
+                            return
                         if not self.lastScanWatcher.isActive():
                             self.lastScanWatcher.start()
                         _logger.info("last scan watcher started")
