@@ -279,8 +279,6 @@ try:
 except:
     _logger.info("Cannot import SilxScatterWindow")
 
-_logger.info("SilxGL availability: %s", isSilxGLAvailable)
-
 # check that OpenGL is actually supported (ESRF rnice problems)
 OPENGL_DRIVERS_OK = True
 if sys.platform.startswith("linux"):
@@ -298,11 +296,15 @@ if OPENGL_DRIVERS_OK and isSilxGLAvailable:
         from silx.gui.utils.glutils import isOpenGLAvailable
         isSilxGLAvailable = isOpenGLAvailable(version=(2, 1), runtimeCheck=True)
         if not isSilxGLAvailable:
+            _logger.info("OpenGL >= 2.1 not available")
             if not isOpenGLAvailable(version=(1, 4), runtimeCheck=True):
+                _logger.info("OpenGL >= 1.4 not available")
                 OPENGL_DRIVERS_OK = False
                 OBJECT3D = False
     except:
         _logger.info("Cannot test OpenGL availability %s" % sys.exc_info()[1])
+
+_logger.info("SilxGL availability: %s", isSilxGLAvailable)
 
 from PyMca5.PyMcaGui.pymca import QDispatcher
 from PyMca5.PyMcaGui import ElementsInfo
