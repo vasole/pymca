@@ -115,7 +115,11 @@ class ConfigDict(dict):
                             raise IOError("File <%s> does not exist" % ffile)
                         if h5py.is_hdf5(fname):
                             with h5py.File(fname, "r") as h5:
-                                config = StringIO(h5[path][()])
+                                stringOrBytes = h5[path][()]
+                                if hasattr(stringOrBytes, "decode"):
+                                    stringOrBytes = \
+                                                  stringOrBytes.decode("utf-8")
+                                config = StringIO(stringOrBytes)
                                 self.readfp(config, sections=sections)
                             hdf5files.append(ffile)
                 else:
