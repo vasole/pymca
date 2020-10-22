@@ -445,12 +445,19 @@ class FileModel(qt.QAbstractItemModel):
                                     if hasattr(node, "shape") and len(node.shape):
                                         #stored as an array of strings???
                                         #return just the first item
-                                        return MyQVariant("%s" % node[()][0])
+                                        if hasattr(node, "asstr"):
+                                            try:
+                                                return MyQVariant("%s" % node.asstr()[()][0])
+                                            except:
+                                                return MyQVariant("%s" % node[()][0])
                                     else:
                                         #stored as a string
                                         try:
-                                            return MyQVariant("%s" % node[()])
-                                        except TypeError:
+                                            try:
+                                                return MyQVariant("%s" % node.asstr()[()])
+                                            except:
+                                                return MyQVariant("%s" % node[()])
+                                        except:
                                             # issue #745
                                             return MyQVariant("Unknown %s" % node)
                             else:
