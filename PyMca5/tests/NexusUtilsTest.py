@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2019 European Synchrotron Radiation Facility
+# Copyright (c) 2019-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -183,12 +183,12 @@ class testNexusUtils(unittest.TestCase):
     @unittest.skipIf(NexusUtils is None,
                      'PyMca5.PyMcaIO.NexusUtils cannot be imported')
     def testNxExtStringAttribute(self):
-        self._checkStringTypes(attribute=True, raiseExtended=False)
+        self._checkStringTypes(attribute=True, raiseExtended=True)
 
     @unittest.skipIf(NexusUtils is None,
                      'PyMca5.PyMcaIO.NexusUtils cannot be imported')
     def testNxExtStringDataset(self):
-        self._checkStringTypes(attribute=False, raiseExtended=False)
+        self._checkStringTypes(attribute=False, raiseExtended=True)
 
     def _checkStringTypes(self, attribute=True, raiseExtended=True):
         # Test following string literals
@@ -262,8 +262,14 @@ class testNexusUtils(unittest.TestCase):
                 if attribute:
                     value = out[name]
                 else:
-                    value = out[name][()]
-                # Expected type and value?
+                    if hasattr(out[name], "asstr"):
+                        charSet = out[name].id.get_type().get_cset()
+                        if charSet == h5py.h5t.CSET_ASCII:
+                            value = out[name][()]
+                        else:
+                            value = out[name].asstr()[()]
+                    else:
+                        value = out[name][()]
                 if 'list' in name or '1d-array' in name:
                     self.assertTrue(isinstance(value, numpy.ndarray))
                     value = value.tolist()
@@ -275,12 +281,12 @@ class testNexusUtils(unittest.TestCase):
                 msg = '{} {} instead of {}'.format(name, type(value), type(expectedValue))
                 self.assertEqual(type(value), type(expectedValue), msg=msg)
                 self.assertEqual(value, expectedValue, msg=name)
-                # Expected character set?
                 if not attribute:
+                    # Expected character set?
                     charSet = out[name].id.get_type().get_cset()
                     if isinstance(firstValue, bytes):
-                        # This is the tricky part, CSET_ASCII is supposed to be only 0-127
-                        # while we actually allow
+                        # This is the tricky part, CSET_ASCII is supposed to be
+                        # only 0-127 while we actually allow
                         expectedCharSet = h5py.h5t.CSET_ASCII
                     else:
                         expectedCharSet = h5py.h5t.CSET_UTF8
