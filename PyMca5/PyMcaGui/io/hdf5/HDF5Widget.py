@@ -36,12 +36,13 @@ import re
 from operator import itemgetter
 import logging
 _logger = logging.getLogger(__name__)
-try:
+
+if "hdf5plugin" not in sys.modules:
     # try to import hdf5plugins
-    import hdf5plugin
-except:
-    # but do not crash just because of it
-    pass
+    try:
+        import hdf5plugin
+    except:
+        _logger.info("Cannot import hdf5plugin")
 import h5py
 import weakref
 
