@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -23,11 +23,12 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
+import h5py
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 safe_str = qt.safe_str
@@ -181,7 +182,7 @@ class MembersGroupBox(qt.QGroupBox):
             return
         self.table.setRowCount(nrows)
         if ddict['Path'] != '/':
-            #this could distroy ordering ...
+            #this could destroy ordering ...
             keylist.sort()
         row = 0
         for key in keylist:
@@ -425,7 +426,11 @@ def getInfo(hdf5File, node):
                    ("%s" % dtype).startswith("|O"):
                     if not len(shape):
                         ddict['general'][member]['Shape'] = ""
-                        ddict['general'][member]['Value'] = "%s" % memberObject[()]
+                        if hasattr(memberObject, "asstr") and \
+                           memberObject.id.get_type().get_cset() == h5py.h5t.CSET_UTF8:
+                           ddict['general'][member]['Value'] = "%s" % memberObject.asstr()[()]
+                        else:
+                            ddict['general'][member]['Value'] = "%s" % memberObject[()]
                     else:
                         ddict['general'][member]['Shape'] = shape[0]
                         if shape[0] > 0:
@@ -485,7 +490,6 @@ if __name__ == "__main__":
         print("Usage:")
         print("python HDF5Info.py hdf5File node")
         sys.exit(0)
-    import h5py
     h=h5py.File(sys.argv[1], "r")
     node = sys.argv[2]
     info = getInfo(h, node)
