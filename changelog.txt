@@ -1,3 +1,12 @@
+VERSION 5.6.2
+-------------
+
+- IO. h5py 3.0.0 compatibility
+
+- Double-check OpenGL availability on startup
+
+- Allow building of PyMca under linux without OpenGL
+
 VERSION 5.6.1
 -------------
 
