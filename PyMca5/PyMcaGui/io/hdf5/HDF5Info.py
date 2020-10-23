@@ -29,6 +29,8 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import h5py
+import logging
+_logger = logging.getLogger(__name__)
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 safe_str = qt.safe_str
@@ -343,7 +345,7 @@ class HDF5InfoWidget(qt.QTabWidget):
                 try:
                     qt.QApplication.postEvent(widget, newEvent)
                 except:
-                    print("Error notifying close event to widget", widget)
+                    _logger.warning("Error notifying close event to widget", widget)
             self._notifyCloseEventToWidget = []
         return qt.QWidget.closeEvent(self, event)
 
@@ -386,24 +388,33 @@ def getInfo(hdf5File, node):
             ddict['general']['Name'] = data.file.filename
     ddict['general']['Type'] = safe_str(data)
     if hasattr(data, 'dtype'):
+        dataw = data
+        if hasattr(data, "asstr"):
+            id_type = data.id.get_type()
+            if hasattr(id_type, "get_cset") and id_type.get_cset() == h5py.h5t.CSET_UTF8:
+                try:
+                    dataw = data.asstr()
+                except:
+                    _logger.warning("Cannot decode %s as utf-8" % data.name)
+                    dataw = data
         if ("%s" % data.dtype).startswith("|S") or\
            ("%s" % data.dtype).startswith("|O"):
             if hasattr(data, 'shape'):
                 shape = data.shape
                 if not len(shape):
-                    ddict['general']['Value'] = "%s" % data[()]
+                    ddict['general']['Value'] = "%s" % dataw[()]
                 elif shape[0] == 1:
-                    ddict['general']['Value'] = "%s" % data[0]
+                    ddict['general']['Value'] = "%s" % dataw[0]
                 else:
-                    print("Warning: Node %s not fully understood" % node)
-                    ddict['general']['Value'] = "%s" % data[()]
+                    _logger.warning("Node %s not fully understood" % node)
+                    ddict['general']['Value'] = "%s" % dataw[()]
         elif hasattr(data, 'shape'):
             shape = data.shape
             if len(shape) == 1:
                 if shape[0] == 1:
-                    ddict['general']['Value'] = "%s" % data[0]
+                    ddict['general']['Value'] = "%s" % dataw[0]
             elif len(shape) == 0:
-                ddict['general']['Value'] = "%s" % data[()]
+                ddict['general']['Value'] = "%s" % dataw[()]
     if hasattr(data, "keys"):
         ddict['general']['members'] = list(data.keys())
     elif hasattr(data, "listnames"):
@@ -422,23 +433,29 @@ def getInfo(hdf5File, node):
             dtype = memberObject.dtype
             if hasattr(memberObject, 'shape'):
                 shape = memberObject.shape
+                memberObjectw = memberObject
+                if hasattr(memberObject, "asstr"):
+                    id_type = memberObject.id.get_type()
+                    if hasattr(id_type, "get_cset") and id_type.get_cset() == h5py.h5t.CSET_UTF8:
+                        try:
+                            memberObjectw = memberObject.asstr()
+                        except:
+                            _logger.warning("Cannot decode %s as utf-8" % \
+                                            ddict['general'][member]['Name'])
+                            memberObjectw = memberObject
                 if ("%s" % dtype).startswith("|S") or\
                    ("%s" % dtype).startswith("|O"):
                     if not len(shape):
                         ddict['general'][member]['Shape'] = ""
-                        if hasattr(memberObject, "asstr") and \
-                           memberObject.id.get_type().get_cset() == h5py.h5t.CSET_UTF8:
-                           ddict['general'][member]['Value'] = "%s" % memberObject.asstr()[()]
-                        else:
-                            ddict['general'][member]['Value'] = "%s" % memberObject[()]
+                        ddict['general'][member]['Value'] = "%s" % memberObjectw[()]
                     else:
                         ddict['general'][member]['Shape'] = shape[0]
                         if shape[0] > 0:
-                            ddict['general'][member]['Value'] = "%s" % memberObject[0]
+                            ddict['general'][member]['Value'] = "%s" % memberObjectw[0]
                     continue
                 if not len(shape):
                     ddict['general'][member]['Shape'] = ""
-                    ddict['general'][member]['Value'] = "%s" % memberObject[()]
+                    ddict['general'][member]['Value'] = "%s" % memberObjectw[()]
                     continue
                 ddict['general'][member]['Shape'] = "%d" % shape[0]
                 for i in range(1, len(shape)):
@@ -453,7 +470,7 @@ def getInfo(hdf5File, node):
                     ddict['general'][member]['Value'] = "%s, ..., %s" % (memberObject[0],
                                                                          memberObject[-1])
                 else:
-                    pass
+                    _logger.info("Not showing value information for %dd data" % len(shape))
         else:
             ddict['general'][member]['Type'] = safe_str(hdf5File[node+"/"+member])
 
@@ -476,6 +493,9 @@ def getInfo(hdf5File, node):
         elif type(Value) in [type(1), type(0.0)]:
             Value = safe_str(Value)
             Size = "1"
+        elif hasattr(Value, "size"):
+            Size = "%s" % Value.size
+            Value = safe_str(Value)
         else:
             Value = safe_str(Value)
             Size = "Unknown"
