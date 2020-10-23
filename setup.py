@@ -540,7 +540,7 @@ if sys.platform not in ["win32", "darwin"]:
     comp = distutils.ccompiler.get_default_compiler()
     if comp == "unix":
         import subprocess
-        if subprocess.call("which gcc > /dev/null", shell=True) == 0:
+        if subprocess.call("gcc -v > /dev/null 2>&1", shell=True) == 0:
             c_prog = "#include <stdint.h>\n int main()\n{return 0;}\n"
             if subprocess.call("echo '%s' | gcc -x c - " % c_prog, shell=True) == 0:
                 c_prog = "#include <GL/gl.h>\n int main()\n{return 0;}\n"
