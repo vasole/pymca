@@ -36,12 +36,13 @@ import re
 from operator import itemgetter
 import logging
 _logger = logging.getLogger(__name__)
-try:
+
+if "hdf5plugin" not in sys.modules:
     # try to import hdf5plugins
-    import hdf5plugin
-except:
-    # but do not crash just because of it
-    pass
+    try:
+        import hdf5plugin
+    except:
+        _logger.info("Cannot import hdf5plugin")
 import h5py
 import weakref
 
@@ -445,12 +446,19 @@ class FileModel(qt.QAbstractItemModel):
                                     if hasattr(node, "shape") and len(node.shape):
                                         #stored as an array of strings???
                                         #return just the first item
-                                        return MyQVariant("%s" % node[()][0])
+                                        if hasattr(node, "asstr"):
+                                            try:
+                                                return MyQVariant("%s" % node.asstr()[()][0])
+                                            except:
+                                                return MyQVariant("%s" % node[()][0])
                                     else:
                                         #stored as a string
                                         try:
-                                            return MyQVariant("%s" % node[()])
-                                        except TypeError:
+                                            try:
+                                                return MyQVariant("%s" % node.asstr()[()])
+                                            except:
+                                                return MyQVariant("%s" % node[()])
+                                        except:
                                             # issue #745
                                             return MyQVariant("Unknown %s" % node)
                             else:
