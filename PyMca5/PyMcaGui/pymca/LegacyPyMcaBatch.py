@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -24,7 +24,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -350,7 +350,7 @@ class McaBatchGUI(qt.QWidget):
         else:
             self.__roiSpin.setMinimum(10)
             self.__roiSpin.setMaximum(1000)
-        self.__roiSpin.setValue(ROIWIDTH)
+        self.__roiSpin.setValue(int(ROIWIDTH))
         box3.l.addWidget(label)
         box3.l.addWidget(self.__roiSpin)
 
