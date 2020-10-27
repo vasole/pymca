@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -189,9 +189,14 @@ class SpecFileDataInfo(qt.QTabWidget):
                 return
             if num:
                 table= self.__createTable(num, "Motor", "Position")
-                for idx in range(num):
-                    table.setText(idx, 0, str(names[idx]))
-                    table.setText(idx, 1, str(pos[idx]))
+                if sys.version_info > (3, 3):
+                    sorted_list = sorted(names, key=str.casefold)
+                else:
+                    sorted_list = sorted(names)
+                for i in range(num):
+                    idx = names.index(sorted_list[i])
+                    table.setText(i, 0, str(names[idx]))
+                    table.setText(i, 1, str(pos[idx]))
                 self.__adjustTable(table)
                 self.addTab(table, "Motors")
 
@@ -219,9 +224,14 @@ class SpecFileDataInfo(qt.QTabWidget):
                 return
             if num:
                 table= self.__createTable(num, "Counter", "Value")
-                for idx in range(num):
-                    table.setText(idx, 0, str(cnts[idx]))
-                    table.setText(idx, 1, str(vals[idx]))
+                if sys.version_info > (3, 3):
+                    sorted_list = sorted(cnts, key=str.casefold)
+                else:
+                    sorted_list = sorted(cnts)
+                for i in range(num):
+                    idx = cnts.index(sorted_list[i])
+                    table.setText(i, 0, str(cnts[idx]))
+                    table.setText(i, 1, str(vals[idx]))
                 self.__adjustTable(table)
                 self.addTab(table, "Counters")
 
@@ -296,7 +306,7 @@ def test():
     d = SpecFileLayer.SpecFileLayer()
 
     d.SetSource(sys.argv[1])
-    info,data = d.LoadSource(sys.argv[2])
+    info, data = d.LoadSource(sys.argv[2])
 
     app= qt.QApplication([])
     wid= SpecFileDataInfo(info)
