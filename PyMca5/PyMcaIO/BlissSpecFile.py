@@ -27,14 +27,12 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 """
-This class just puts in evidence the Specfile methods called from
-PyMca.
-It can be used to wrap other formats as specile
+This class exposes scan information stored by Bliss into redis as SPEC file.
 """
 import os
 import sys
@@ -54,6 +52,8 @@ except:
         _logger.info("Cannot import PyMca5.PyMcaCore.RedisTools")
         HAS_REDIS = False
 
+if HAS_REDIS:
+    from collections import OrderedDict
 
 class BlissSpecFile(object):
     def __init__(self, filename, nscans=10):
@@ -178,7 +178,60 @@ class BlissSpecScan(object):
 
     def _read_counters(self, force=False):
         if force or not self._counters:
-            self._counters = redis.get_scan_data(self._node)
+            _counters = redis.get_scan_data(self._node)
+            try:
+                _counters = self._sort_counters(_counters)
+            except:
+                _logger.error("Error sorting counters %s" % sys.exc_info()[1])
+            self._counters = _counters
+
+    def _sort_counters(self, counters):
+        positioners = self.allmotors()
+        title = self.command()
+        tokens = title.split()
+        scanned = [item for item in positioners if item in counters]
+        if not len(scanned):
+            scanned = [item for item in tokens if item in counters]
+
+        # do nothing if there are no scanned motors assuming that the default
+        # order will have the relevant items first
+        if not len(scanned):
+            return counters
+
+        pure_counters = [item for item in counters if not (item in scanned)]
+        # sort the pure counters
+        if len(pure_counters) > 1:
+            if sys.version_info > (3, 3):
+                # sort irrespective of capital or lower case
+                pure_counters.sort(key=str.casefold)
+            else:
+                # sort (capital letters first)
+                pure_counters.sort()
+
+        # sort the scanned motors
+        if len(scanned) > 1:
+            if sys.version_info > (3, 3):
+                # sort irrespective of capital or lower case
+                scanned.sort(key=str.casefold)
+            else:
+                # sort (capital letters first)
+                scanned.sort()
+            indices = []
+            offset = len(tokens) + len(scanned)
+            for item in scanned:
+                if item in tokens:
+                    indices.append((tokens.index(item), item))
+                else:
+                    indices.append((offset + scanned.index(item), item))
+            indices.sort()
+            scanned = [item for idx, item in indices]
+
+        ordered = OrderedDict()
+        for key in scanned:
+            ordered[key] = counters[key]
+        for key in pure_counters:
+            ordered[key] = counters[key]
+        return ordered
 
     def alllabels(self):
         """
