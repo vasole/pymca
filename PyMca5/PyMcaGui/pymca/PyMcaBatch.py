@@ -2197,6 +2197,10 @@ def main():
     app = None
 
 if __name__ == "__main__":
+    # We are going to read. Disable file locking.
+    os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
+    _logger.info("%s set to %s" % ("HDF5_USE_FILE_LOCKING",
+                                    os.environ["HDF5_USE_FILE_LOCKING"]))
     main()
 
 # PyMcaBatch.py --cfg=/mntdirect/_bliss/users/sole/COTTE/WithLead.cfg --outdir=/tmp/   /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0007.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0008.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0009.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0010.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0011.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0012.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0013.edf &
