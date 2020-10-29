@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -114,12 +114,10 @@ if __name__ == '__main__':
 
     from PyMca5.PyMcaCore.LoggingLevel import getLoggingLevel
     logging.basicConfig(level=getLoggingLevel(opts))
-    if "HDF5_USE_FILE_LOCKING" not in os.environ:
-        if "h5py" in sys.modules:
-             _logger.warning("h5py already imported")
-        os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
-        _logger.info("%s set to %s" % ("HDF5_USE_FILE_LOCKING",
-                                       os.environ["HDF5_USE_FILE_LOCKING"]))
+    # We are going to read. Disable file locking.
+    os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
+    _logger.info("%s set to %s" % ("HDF5_USE_FILE_LOCKING",
+                                    os.environ["HDF5_USE_FILE_LOCKING"]))
     if binding is None:
         if qtversion == '3':
             raise NotImplementedError("Qt3 is no longer supported")

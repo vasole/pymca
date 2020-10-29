@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -24,7 +24,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -37,12 +37,10 @@ import logging
 _logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
-    if "HDF5_USE_FILE_LOCKING" not in os.environ:
-        if "h5py" in sys.modules:
-             _logger.warning("h5py already imported")
-        os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
-        _logger.info("%s set to %s" % ("HDF5_USE_FILE_LOCKING",
-                                       os.environ["HDF5_USE_FILE_LOCKING"]))
+    # We are going to read. Disable file locking.
+    os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
+    _logger.info("%s set to %s" % ("HDF5_USE_FILE_LOCKING",
+                                    os.environ["HDF5_USE_FILE_LOCKING"]))
     try:
         # make sure hdf5plugins are imported
         import hdf5plugin
