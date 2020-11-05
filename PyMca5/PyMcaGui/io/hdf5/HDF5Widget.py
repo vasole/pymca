@@ -254,17 +254,7 @@ class H5NodeProxy(object):
                             finalList[i][1] = BrokenLink()
                             finalList[i][1]._posixPath = posixpath.join(self.name,
                                                                finalList[i][0])
-                    if self.__sorting:
-                        if self.__sorting_order == 1:
-                            finalList.reverse()
-                            self._children = [H5NodeProxy(self.file, finalList[i][1], self)
-                                              for i in range(len(finalList)-1,-1,-1)]
-
-                        else:
-                            self._children = [H5NodeProxy(self.file, i[1], self)
-                                              for i in finalList]
-                    else:
-                        self._children = [H5NodeProxy(self.file, i[1], self)
+                    self._children = [H5NodeProxy(self.file, i[1], self)
                                       for i in finalList]
                 except:
                     #one cannot afford any error, so I revert to the old
