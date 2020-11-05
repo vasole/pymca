@@ -722,6 +722,8 @@ class HDF5Widget(FileView):
         self.setSortingEnabled(False)
         self.header().sectionDoubleClicked[int].connect( \
                          self._headerSectionDoubleClicked)
+        tip = "Double click on first two columns to change order"
+        self.header().setToolTip(tip)
 
     def _headerSectionDoubleClicked(self, index):
         self.sortItems(index, qt.Qt.AscendingOrder)
