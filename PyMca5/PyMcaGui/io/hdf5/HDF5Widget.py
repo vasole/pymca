@@ -226,7 +226,7 @@ class H5NodeProxy(object):
         else:
             self.__sorting_list = None
         self.__sorting_order = order
-    
+
     @property
     def children(self):
         if not self.hasChildren:
@@ -467,7 +467,7 @@ class FileModel(qt.QAbstractItemModel):
         if len(l):
             print(self.getProxyFromIndex(l[0]).name)
             print(self.getProxyFromIndex(l[-1]).name)
-        #return qt.QAbstractItemModel.sort(self, column, order)       
+        #return qt.QAbstractItemModel.sort(self, column, order)
 
     def sortByColumn(self, column):
         print("abstract item model sort by column called")
@@ -709,7 +709,7 @@ class FileView(qt.QTreeView):
         #with no possibility to recover them
         #self.collapsed[QModelIndex].connect(fileModel.clearRows)
         fileModel.sigFileAppended.connect(self.fileAppended)
-        fileModel.sigFileUpdated.connect(self.fileUpdated)        
+        fileModel.sigFileUpdated.connect(self.fileUpdated)
 
     def fileAppended(self, ddict=None):
         self.doItemsLayout()
@@ -871,7 +871,7 @@ class HDF5Widget(FileView):
             item = self.model().getProxyFromIndex(modelIndex)
             if item.type in ["weakproxy", "File"]:
                 continue
-            filename = item.file.filename 
+            filename = item.file.filename
             path = item.name * 1
             if (path, filename) in analyzedPaths:
                 continue
