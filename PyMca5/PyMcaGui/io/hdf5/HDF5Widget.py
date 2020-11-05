@@ -118,7 +118,11 @@ def h5py_sorting(object_list, sorting_list=None):
     try:
         if sorting_key == 'title':
             def getTitle(x):
-                title = x["title"][()]
+                try:
+                    title = x["title"][()]
+                except:
+                    # allow the title to be missing
+                    title = ""
                 if hasattr(title, "dtype"):
                     if hasattr(title, "__len__"):
                         if len(title) == 1:
@@ -126,9 +130,15 @@ def h5py_sorting(object_list, sorting_list=None):
                 if hasattr(title, "decode"):
                     title = title.decode("utf-8")
                 return title
-            sorting_list = [(getTitle(o[1]), o) for o in object_list]
-            sorting_list.sort()
-            return [x[1] for x in sorting_list]
+            # sort first by the traditional keys in order to be sorted
+            # by title and respecting actquisition order for equal title
+            try:
+                ordered_list = h5py_sorting(object_list)
+            except:
+                ordered_list = object_list
+            sorting_list = [(getTitle(o[1]), o) for o in ordered_list]
+            sorted_list = sorted(sorting_list, key=itemgetter(0))
+            return [x[1] for x in sorted_list]
 
         if sorting_key != 'name':
             sorting_list = [(o[1][sorting_key][()], o)
@@ -772,7 +782,7 @@ class HDF5Widget(FileView):
             self._lastMouse = "left"
         qt.QTreeView.mousePressEvent(self, e)
         if self._lastMouse != "left":
-            # Qt5 only sends itenClicked on left button mouse click
+            # Qt5 only sends itemClicked on left button mouse click
             if QVERSION > "5":
                 event = "itemClicked"
                 modelIndex = self.indexAt(e.pos())
