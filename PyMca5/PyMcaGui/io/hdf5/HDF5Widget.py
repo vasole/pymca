@@ -78,8 +78,9 @@ QVERSION = qt.qVersion()
 
 
 #sorting method
-def h5py_sorting(object_list):
-    sorting_list = ['start_time', 'end_time', 'name']
+def h5py_sorting(object_list, sorting_list=None):
+    if sorting_list is None:
+        sorting_list = ['start_time', 'end_time', 'name']
     n = len(object_list)
     if n < 2:
         return object_list
@@ -115,6 +116,20 @@ def h5py_sorting(object_list):
             return object_list
 
     try:
+        if sorting_key == 'title':
+            def getTitle(x):
+                title = x["title"][()]
+                if hasattr(title, "dtype"):
+                    if hasattr(title, "__len__"):
+                        if len(title) == 1:
+                            title = title[0]
+                if hasattr(title, "decode"):
+                    title = title.decode("utf-8")
+                return title
+            sorting_list = [(getTitle(o[1]), o) for o in object_list]
+            sorting_list.sort()
+            return [x[1] for x in sorting_list]
+
         if sorting_key != 'name':
             sorting_list = [(o[1][sorting_key][()], o)
                            for o in object_list]
@@ -203,12 +218,21 @@ class RootItem(object):
         del self._identifiers[idx]
 
 class H5NodeProxy(object):
+    def sortChildren(self, column, order):
+        print("sort children called with ", column, order)
+        self.__sorting = True
+        if column == 1:
+            self.__sorting_list = ["title"]
+        else:
+            self.__sorting_list = None
+        self.__sorting_order = order
+    
     @property
     def children(self):
         if not self.hasChildren:
             return []
 
-        if not self._children:
+        if self.__sorting or not self._children:
             # obtaining the lock here is necessary, otherwise application can
             # freeze if navigating tree while data is processing
             if 1: #with self.file.plock:
@@ -220,7 +244,7 @@ class H5NodeProxy(object):
                     doit = False
                 try:
                     # better handling of external links
-                    finalList = h5py_sorting(items)
+                    finalList = h5py_sorting(items, sorting_list=self.__sorting_list)
                     for i in range(len(finalList)):
                         if finalList[i][1] is not None:
                             finalList[i][1]._posixPath = posixpath.join(self.name,
@@ -230,12 +254,22 @@ class H5NodeProxy(object):
                             finalList[i][1] = BrokenLink()
                             finalList[i][1]._posixPath = posixpath.join(self.name,
                                                                finalList[i][0])
-                    self._children = [H5NodeProxy(self.file, i[1], self)
+                    if self.__sorting:
+                        if self.__sorting_order == 1:
+                            finalList.reverse()
+                            self._children = [H5NodeProxy(self.file, finalList[i][1], self)
+                                              for i in range(len(finalList)-1,-1,-1)]
+
+                        else:
+                            self._children = [H5NodeProxy(self.file, i[1], self)
+                                              for i in finalList]
+                    else:
+                        self._children = [H5NodeProxy(self.file, i[1], self)
                                       for i in finalList]
                 except:
                     #one cannot afford any error, so I revert to the old
                     # method where values where used instead of items
-                    if _logger.getEffectiveLevel() == logging.DEBUG:
+                    if 1 or _logger.getEffectiveLevel() == logging.DEBUG:
                         raise
                     else:
                         # tmpList = list(self.getNode(self.name).values())
@@ -248,6 +282,7 @@ class H5NodeProxy(object):
                                                                items[i][0])
                     self._children = [H5NodeProxy(self.file, i, self)
                                       for i in finalList]
+        self.__sorting = False
         return self._children
 
     @property
@@ -304,6 +339,9 @@ class H5NodeProxy(object):
         return self._color
 
     def __init__(self, ffile, node, parent=None, path=None):
+        self.__sorting = False
+        self.__sorting_list = None
+        self.__sorting_order = qt.Qt.AscendingOrder
         if 1:#with ffile.plock:
             self._file = ffile
             self._parent = parent
@@ -407,6 +445,38 @@ class FileModel(qt.QAbstractItemModel):
         qt.QAbstractItemModel.__init__(self, parent)
         self.rootItem = RootItem(['File/Group/Dataset', 'Description', 'Shape', 'DType'])
         self._idMap = {qt.QModelIndex().internalId(): self.rootItem}
+
+    def sort(self, column, order):
+        print("FileModel sort called with ", column, order)
+        for item in self.rootItem:
+            item.sortChildren(column, order)
+
+    """
+    def __lt__(self, other):
+        # get the sorting column
+        print("CALLED")
+        column = 1
+        v1 = self.data(column, qt.Qt.DisplayRole)
+        v2 = other.data(column, qt.Qt.DisplayRole)
+        return v1 < v2
+
+    def sort(self, column, order):
+        print("abstract item model sort called", column, order)
+        print(self.persistentIndexList())
+        l = self.persistentIndexList()
+        if len(l):
+            print(self.getProxyFromIndex(l[0]).name)
+            print(self.getProxyFromIndex(l[-1]).name)
+        #return qt.QAbstractItemModel.sort(self, column, order)       
+
+    def sortByColumn(self, column):
+        print("abstract item model sort by column called")
+        qt.QAbstractItemModel.sortByColumn(column)
+
+    def sortItems(self, column):
+        print(" sort items called")
+        return qt.QAbstractItemModel.sortItems(self, column)
+    """
 
     def clearRows(self, index):
         self.getProxyFromIndex(index).clearChildren()
@@ -639,14 +709,13 @@ class FileView(qt.QTreeView):
         #with no possibility to recover them
         #self.collapsed[QModelIndex].connect(fileModel.clearRows)
         fileModel.sigFileAppended.connect(self.fileAppended)
-        fileModel.sigFileUpdated.connect(self.fileUpdated)
+        fileModel.sigFileUpdated.connect(self.fileUpdated)        
 
     def fileAppended(self, ddict=None):
         self.doItemsLayout()
         if ddict is None:
             return
         self.fileUpdated(ddict)
-
 
     def fileUpdated(self, ddict):
         rootModelIndex = self.rootIndex()
@@ -677,6 +746,59 @@ class HDF5Widget(FileView):
         self.doubleClicked[qt.QModelIndex].connect(self.itemDoubleClicked)
         self.collapsed[qt.QModelIndex].connect(self._adjust)
         self.expanded[qt.QModelIndex].connect(self._adjust)
+        self.setSortingEnabled(False)
+        self.header().sectionDoubleClicked[int].connect( \
+                         self._headerSectionDoubleClicked)
+
+    def _headerSectionDoubleClicked(self, index):
+        print("_headerSectionDoubleClicked CALL sortitems")
+        self.sortItems(index, qt.Qt.AscendingOrder)
+
+    def __updateOrder(self):
+        print("update order")
+        rootModelIndex = self.rootIndex()
+        filelist = []
+        if self.model().hasChildren(rootModelIndex):
+            rootItem = self.model().getProxyFromIndex(rootModelIndex)
+            for row in range(len(rootItem)):
+                if self.model().hasIndex(row, 0, rootModelIndex):
+                    modelIndex = self.model().index(row, 0, rootModelIndex)
+                    item = self.model().getProxyFromIndex(modelIndex)
+                    try:
+                        filename = item.file.filename
+                        if filename not in filelist:
+                            filelist.append(filename)
+                    except:
+                        continue
+        if len(filelist):
+            for file in filelist:
+                ddict = {}
+                ddict['event'] = "fileUpdated"
+                ddict['filename'] = filename
+                self.model().sigFileUpdated.emit(ddict)
+        #if index == 0:
+        #    return
+        #else:
+        #self.sortItems(index, qt.Qt.AscendingOrder)
+
+    def sortByColumn(self, column, order):
+        #reimplement QTreeWidget sorting
+        print("sort by column setting indicator", column, order)
+        self.setSortingEnabled(True)
+        self.header().setSortIndicator(column, order)
+        #self.setSortingEnabled(False)
+        #if self.sortingEnabled:
+        #    print(" sorting enabled")
+        #self.model().sort(column, order)
+        #else:
+        #    print(" sorting disabled")
+        self.__updateOrder()
+        self.setSortingEnabled(False)
+
+    def sortItems(self, column, order):
+        #reimplement QTreeWidget sorting
+        print("sort items")
+        self.sortByColumn(column, order)
 
     def _adjust(self, modelIndex=None):
         self.resizeColumnToContents(0)
