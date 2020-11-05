@@ -746,7 +746,7 @@ class HDF5Widget(FileView):
                 ddict = {}
                 ddict['event'] = "fileUpdated"
                 ddict['filename'] = filename
-                self.model().sigFileUpdated.emit(ddict)
+                self.fileUpdated(ddict)
 
     def sortByColumn(self, column, order):
         #reimplement QTreeWidget sorting
