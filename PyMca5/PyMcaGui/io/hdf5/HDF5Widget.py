@@ -145,8 +145,8 @@ def h5py_sorting(object_list, sorting_list=None):
         #The only way to reach this point is to have different
         #structures among the different entries. In that case
         #defaults to the unfiltered case
-        print("WARNING: Default ordering")
-        print("Probably all entries do not have the key %s" % sorting_key)
+        _logger.warning("WARNING: Default ordering")
+        _logger.warning("Probably all entries do not have the key %s" % sorting_key)
         return object_list
 
 def _get_number_list(txt):
@@ -219,7 +219,7 @@ class RootItem(object):
 
 class H5NodeProxy(object):
     def sortChildren(self, column, order):
-        print("sort children called with ", column, order)
+        #print("sort children called with ", column, order)
         self.__sorting = True
         if column == 1:
             self.__sorting_list = ["title"]
@@ -447,36 +447,9 @@ class FileModel(qt.QAbstractItemModel):
         self._idMap = {qt.QModelIndex().internalId(): self.rootItem}
 
     def sort(self, column, order):
-        print("FileModel sort called with ", column, order)
+        #print("FileModel sort called with ", column, order)
         for item in self.rootItem:
             item.sortChildren(column, order)
-
-    """
-    def __lt__(self, other):
-        # get the sorting column
-        print("CALLED")
-        column = 1
-        v1 = self.data(column, qt.Qt.DisplayRole)
-        v2 = other.data(column, qt.Qt.DisplayRole)
-        return v1 < v2
-
-    def sort(self, column, order):
-        print("abstract item model sort called", column, order)
-        print(self.persistentIndexList())
-        l = self.persistentIndexList()
-        if len(l):
-            print(self.getProxyFromIndex(l[0]).name)
-            print(self.getProxyFromIndex(l[-1]).name)
-        #return qt.QAbstractItemModel.sort(self, column, order)
-
-    def sortByColumn(self, column):
-        print("abstract item model sort by column called")
-        qt.QAbstractItemModel.sortByColumn(column)
-
-    def sortItems(self, column):
-        print(" sort items called")
-        return qt.QAbstractItemModel.sortItems(self, column)
-    """
 
     def clearRows(self, index):
         self.getProxyFromIndex(index).clearChildren()
@@ -751,11 +724,9 @@ class HDF5Widget(FileView):
                          self._headerSectionDoubleClicked)
 
     def _headerSectionDoubleClicked(self, index):
-        print("_headerSectionDoubleClicked CALL sortitems")
         self.sortItems(index, qt.Qt.AscendingOrder)
 
     def __updateOrder(self):
-        print("update order")
         rootModelIndex = self.rootIndex()
         filelist = []
         if self.model().hasChildren(rootModelIndex):
@@ -776,28 +747,18 @@ class HDF5Widget(FileView):
                 ddict['event'] = "fileUpdated"
                 ddict['filename'] = filename
                 self.model().sigFileUpdated.emit(ddict)
-        #if index == 0:
-        #    return
-        #else:
-        #self.sortItems(index, qt.Qt.AscendingOrder)
 
     def sortByColumn(self, column, order):
         #reimplement QTreeWidget sorting
-        print("sort by column setting indicator", column, order)
+        _logger.info("sort by column %d setting indicator %s" % (column, order))
         self.setSortingEnabled(True)
         self.header().setSortIndicator(column, order)
-        #self.setSortingEnabled(False)
-        #if self.sortingEnabled:
-        #    print(" sorting enabled")
-        #self.model().sort(column, order)
-        #else:
-        #    print(" sorting disabled")
         self.__updateOrder()
         self.setSortingEnabled(False)
 
     def sortItems(self, column, order):
         #reimplement QTreeWidget sorting
-        print("sort items")
+        _logger.info("sort items")
         self.sortByColumn(column, order)
 
     def _adjust(self, modelIndex=None):
