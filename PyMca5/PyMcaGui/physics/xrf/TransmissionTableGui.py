@@ -66,8 +66,8 @@ class TransmissionTableGui(qt.QWidget):
         """
         Expects a dictionary of the form:
 
-        dict["UserAttenuators"]["UserAttenuator0"] = TransmissionTableDict
-        dict["UserAttenuators"]["UserAttenuator1"] = TransmissionTableDict
+        dict["UserAttenuators"]["UserFilter0"] = TransmissionTableDict
+        dict["UserAttenuators"]["UserFilter1"] = TransmissionTableDict
 
         where TransmissionTableDict has the keys needed to define a
         transmission table (use, name, comment, energy, transmission)
@@ -76,9 +76,9 @@ class TransmissionTableGui(qt.QWidget):
         for key in ddict:
             if key.lower() == "userattenuators":
                 for ttable in ddict[key]:
-                    if ttable.lower() == "userattenuator0":
+                    if ttable.lower() == "userfilter0":
                         t = self.groupBoxList[0].transmissionTable
-                    elif ttable.lower() == "userattenuator1":
+                    elif ttable.lower() == "userfilter1":
                         t = self.groupBoxList[1].transmissionTable
                     else:
                         _logger.warning("Ignored entry %s"  % ttable)
@@ -89,9 +89,14 @@ class TransmissionTableGui(qt.QWidget):
         ddict = {}
         ddict["UserAttenuators"] = {}
         for i in range(2):
+            key = "UserFilter%d" % i
             t = self.groupBoxList[i].transmissionTable
-            ddict["UserAttenuators"]["UserAttenuator%d" % i] = \
+            ddict["UserAttenuators"][key] = \
                             t.getTransmissionTable()
+
+            # provide a default name
+            if ddict["UserAttenuators"][key]["name"] == "":
+                ddict["UserAttenuators"][key]["name"] = key
         return ddict
 
 if __name__ == "__main__":
