@@ -91,7 +91,7 @@ class FitParamWidget(FitParamForm):
                                                        plugins=False, fit=False)
         self.graph = self.graphDialog.graph
         self.graph._togglePointsSignal()
-        self.tabAttenuators   = AttenuatorsTable.AttenuatorsTab(self.tabAtt,
+        self.tabAttenuators = AttenuatorsTable.AttenuatorsTab(self.tabAtt,
                                                 graph=self.graphDialog)
         self.graphDialog.mainLayout.addWidget(self.graph)
         self.graphDialog.okButton = qt.QPushButton(self.graphDialog)
@@ -518,6 +518,9 @@ class FitParamWidget(FitParamForm):
         self.__setPeakShapePar()
         if "tube" in pardict:
             self.xRayTube.setParameters(pardict["tube"])
+        if "userattenuators"  in pardict:
+            self.tabAttenuators.userAttenuators.setParameters( \
+                                        pardict["userattenuators"])
         if "xrfmc" in pardict:
             if XRFMC_FLAG:
                 self.tabXRFMCWidget.setParameters(pardict)
@@ -528,6 +531,7 @@ class FitParamWidget(FitParamForm):
         sections.append('multilayer')
         sections.append('materials')
         sections.append('tube')
+        sections.append('userattenuators')
         if XRFMC_FLAG:
             sections.append('xrfmc')
         for key in sections:
@@ -547,6 +551,8 @@ class FitParamWidget(FitParamForm):
             return self.__getPeakShapePar()
         if parname in ["attenuators", "ATTENUATORS"]:
             return self.__getAttPar()
+        if parname in ["userattenuators"]:
+            return self.tabAttenuators.userAttenuators.getParameters()
         if parname in ["multilayer", "MULTILAYER"]:
             return self.__getMultilayerPar()
         if parname in ["materials", "MATERIALS"]:
