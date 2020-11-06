@@ -48,8 +48,8 @@ class TransmissionTableEditor(qt.QWidget):
     def __init__(self, parent=None):
         qt.QWidget.__init__(self, parent)
         layout = qt.QGridLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(2)
         self.lineEditDict = {}
         i = 0
         labels = ["Name", "Comment"]
@@ -70,6 +70,7 @@ class TransmissionTableEditor(qt.QWidget):
         self.buttonsDict = {}
         actions = ["LOAD", "SAVE", "SHOW"]
         slots = [self._loadSlot, self._saveSlot, self._showSlot]
+        buttonsBoxLayout.addWidget(qt.HorizontalSpacer(buttonsBox))
         for i in range(len(slots)):
             l = actions[i]
             s = slots[i]
@@ -79,7 +80,8 @@ class TransmissionTableEditor(qt.QWidget):
             b.clicked.connect(s)
             buttonsBoxLayout.addWidget(b)
             self.buttonsDict[l.lower()] = b
-        layout.addWidget(buttonsBox)
+        buttonsBoxLayout.addWidget(qt.HorizontalSpacer(buttonsBox))
+        layout.addWidget(buttonsBox, 2, 0, 1, 2)
         self.inputDir = None
         self.outputDir = None
         self.outputFilter = None
