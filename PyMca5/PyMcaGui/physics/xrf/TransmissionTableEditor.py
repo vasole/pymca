@@ -50,8 +50,22 @@ class TransmissionTableEditor(qt.QWidget):
         layout = qt.QGridLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(2)
+
+        # the flag to use it
+        useBox = qt.QWidget(self)
+        label = qt.QLabel(useBox)
+        label.setText("Use")
+        self.useCheckBox = qt.QCheckBox(useBox)
+        self.useCheckBox.setChecked(False)
+        self.useCheckBox.clicked.connect(self._useSlot)
+        useBoxLayout = qt.QHBoxLayout(useBox)
+        useBoxLayout.addWidget(label)
+        useBoxLayout.addWidget(self.useCheckBox)
+        layout.addWidget(useBox, 0, 0, 2, 1)
+
         self.lineEditDict = {}
-        i = 0
+        r = 0
+        c = 1
         labels = ["Name", "Comment"]
         for idx in range(len(labels)):
             l = labels[idx]
@@ -60,11 +74,11 @@ class TransmissionTableEditor(qt.QWidget):
             line = qt.QLineEdit(self)
             line.editingFinished.connect(self._lineSlot)
             line.setText("")
-            layout.addWidget(label, i, 0)
-            layout.addWidget(line, i, 1)
+            layout.addWidget(label, r, c)
+            layout.addWidget(line, r, c + 1)
             self.lineEditDict[l.lower()] = line
-            i += 1
-        
+            r += 1
+
         buttonsBox = qt.QWidget(self)
         buttonsBoxLayout = qt.QHBoxLayout(buttonsBox)
         self.buttonsDict = {}
@@ -81,12 +95,13 @@ class TransmissionTableEditor(qt.QWidget):
             buttonsBoxLayout.addWidget(b)
             self.buttonsDict[l.lower()] = b
         buttonsBoxLayout.addWidget(qt.HorizontalSpacer(buttonsBox))
-        layout.addWidget(buttonsBox, 2, 0, 1, 2)
+        layout.addWidget(buttonsBox, 2, 0, 1, 3)
         self.inputDir = None
         self.outputDir = None
         self.outputFilter = None
         self.plotDialog = None
         ddict = {}
+        ddict["use"] = 0
         ddict["name"] = ""
         ddict["comment"] = ""
         ddict["energy"] = [0.0, 0.001]
@@ -94,6 +109,12 @@ class TransmissionTableEditor(qt.QWidget):
         self._transmissionTable = ddict
         self.update()
         self.setTransmissionTable(ddict)
+
+    def _useSlot(self):
+        if self.useCheckBox.isChecked():
+            self._transmissionTable["use"] = 1
+        else:
+            self._transmissionTable["use"] = 0
 
     def _lineSlot(self):
         ddict = {}
@@ -227,16 +248,26 @@ class TransmissionTableEditor(qt.QWidget):
         else:
             # a complete dictionary expected
             ddict = {}
+            ddict["use"] = 0
             ddict["name"] = ""
             ddict["comment"] = ""
             ddict["energy"] = [0.0, 0.001]
             ddict["transmission"] = [0.0, 1.0]
+
         for key in ["name", "comment"]:
-            ddict[key] = ""
             if key in tableKeysLower:
                 idx = tableKeysLower.index(key)
                 txt = tableDict[tableKeys[idx]]
                 ddict[key] = txt
+
+        for key in ["use"]:
+            if key in tableKeysLower:
+                idx = tableKeysLower.index(key)
+                txt = tableDict[tableKeys[idx]]
+                if txt in ["", "0", 0, "false", "False"]:
+                    ddict[key] = 0
+                else:
+                    ddict[key] = 1
 
         for key in ["energy", "transmission"]:
             if key in tableKeysLower:
@@ -278,6 +309,10 @@ class TransmissionTableEditor(qt.QWidget):
     def update(self):
         for key in ["name", "comment"]:
             self.lineEditDict[key].setText(self._transmissionTable[key])
+        if self._transmissionTable["use"]:
+            self.useCheckBox.setChecked(True)
+        else:
+            self.useCheckBox.setChecked(False)
         if self.plotDialog is not None:
             self.plot()
                 
