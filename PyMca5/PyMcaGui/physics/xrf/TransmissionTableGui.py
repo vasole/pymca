@@ -66,8 +66,8 @@ class TransmissionTableGui(qt.QWidget):
         """
         Expects a dictionary of the form:
 
-        dict["UserAttenuators"]["UserAttenuators0"] = TransmissionTableDict
-        dict["UserAttenuators"]["UserAttenuators1"] = TransmissionTableDict
+        dict["UserAttenuators"]["UserAttenuator0"] = TransmissionTableDict
+        dict["UserAttenuators"]["UserAttenuator1"] = TransmissionTableDict
 
         where TransmissionTableDict has the keys needed to define a
         transmission table (use, name, comment, energy, transmission)
@@ -76,9 +76,9 @@ class TransmissionTableGui(qt.QWidget):
         for key in ddict:
             if key.lower() == "userattenuators":
                 for ttable in ddict[key]:
-                    if ttable.lower() == "userattenuators0":
+                    if ttable.lower() == "userattenuator0":
                         t = self.groupBoxList[0].transmissionTable
-                    elif ttable.lower() == "userattenuators1":
+                    elif ttable.lower() == "userattenuator1":
                         t = self.groupBoxList[1].transmissionTable
                     else:
                         _logger.warning("Ignored entry %s"  % ttable)
