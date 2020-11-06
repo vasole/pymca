@@ -45,7 +45,7 @@ from PyMca5.PyMcaIO import ArraySave
 _logger = logging.getLogger(__name__)
 
 class TransmissionTableEditor(qt.QWidget):
-    def __init__(self, parent=None)
+    def __init__(self, parent=None):
         qt.QWidget.__init__(self, parent)
         layout = qt.QGridLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -82,7 +82,8 @@ class TransmissionTableEditor(qt.QWidget):
         layout.addWidget(buttonsBox)
         self.inputDir = None
         self.outputDir = None
-        self.plotWidget = None
+        self.outputFilter = None
+        self.plotDialog = None
         ddict = {}
         ddict["name"] = ""
         ddict["comment"] = ""
@@ -90,12 +91,12 @@ class TransmissionTableEditor(qt.QWidget):
         ddict["transmission"] = [0.0, 1.0]
         self._transmissionTable = ddict
         self.update()
-        self.setTransmisionTable(ddict)
+        self.setTransmissionTable(ddict)
 
     def _lineSlot(self):
         ddict = {}
         for key in ["name", "comment"]:
-            ddict[key] = qt.safe_str(self._lineEditDict[key].text())
+            ddict[key] = qt.safe_str(self.lineEditDict[key].text())
         self.setTransmissionTable(ddict, updating=True)
 
     def _loadSlot(self):
@@ -133,14 +134,24 @@ class TransmissionTableEditor(qt.QWidget):
         sf = specfile.Specfile(filename)
         scan = sf[0]
         data = scan.data()
+        labels = scan.alllabels()
         scan = None
         sf = None
-        if data.shape[0] != 2:
-            txt = "Expected a two column file got %d columns" % data.shape[0]
+
+        nLabels = len(scan.alllabels())
+        if nLabels not in [2, 3]:
+            txt = "Expected a two column file got %d columns" % nLabels
             raise IOError(txt)
+
+        if nLabels == 3 and labels[0].lower().startwith("point"):
+            energyIdx = 1
+            transmissionIdx = 2
+        else:
+            energyIdx = 0
+            transmissionIdx = 1
         ddict = {}
-        ddict["energy"] = data[0, :]
-        ddict["transmission"] = data[1, :]
+        ddict["energy"] = data[energyIdx, :]
+        ddict["transmission"] = data[transmissionIdx, :]
         self.setTransmissionTable(ddict, updating=True)
 
     def _saveSlot(self):
@@ -219,13 +230,13 @@ class TransmissionTableEditor(qt.QWidget):
         for key in ["name", "comment"]:
             ddict[key] = ""
             if key in tableKeysLower:
-                idx = tableKeysLower.index(self)
+                idx = tableKeysLower.index(key)
                 txt = tableDict[tableKeys[idx]]
                 ddict[key] = txt
 
         for key in ["energy", "transmission"]:
             if key in tableKeysLower:
-                idx = tableKeysLower.index(self)
+                idx = tableKeysLower.index(key)
                 values = tableDict[tableKeys[idx]]
                 ddict[key] = values
 
@@ -233,7 +244,7 @@ class TransmissionTableEditor(qt.QWidget):
             ddict[key] = numpy.array(ddict[key], numpy.float).reshape(-1)
 
         try:
-            self._validateDict(ddict):
+            self._validateDict(ddict)
             self._transmissionTable = ddict
         except:
             msg=qt.QMessageBox(self)
@@ -268,18 +279,26 @@ class TransmissionTableEditor(qt.QWidget):
                 
     def plot(self):
         if self.plotDialog is None:
-            from PyMca5.PyMcaGui.plotting.PlotWindow import PlotWindow
+            from PyMca5.PyMcaGui.plotting.PlotWindow import PlotWindow                
             dialog = qt.QDialog(self)
             dialog.mainLayout = qt.QVBoxLayout(dialog)
             dialog.mainLayout.setContentsMargins(0, 0, 0, 0)
             dialog.mainLayout.setSpacing(0)
-            dialog.plotWidget = PlotWindow(dialog)
-            dialog.mainLayout.addWidget(self.plotWidget)
+            dialog.plotWidget = PlotWindow(dialog,
+                                           plugins=False,
+                                           control=True,
+                                           position=True)
+            dialog.plotWidget.setDefaultPlotLines(True)
+            dialog.plotWidget.setDefaultPlotPoints(True)
+            dialog.plotWidget.setDataMargins(0.05, 0.05, 0.05, 0.05)
+            dialog.mainLayout.addWidget(dialog.plotWidget)
             self.plotDialog = dialog
 
         legend = self._transmissionTable["name"]
-        x = _transmissionTable["energy"]
-        y = _transmissionTable["transmission"]
+        if legend == "":
+            legend = None
+        x = self._transmissionTable["energy"]
+        y = self._transmissionTable["transmission"]
         comment = self._transmissionTable["comment"]
         self.plotDialog.plotWidget.addCurve(x,
                                  y,
@@ -288,7 +307,7 @@ class TransmissionTableEditor(qt.QWidget):
                                  ylabel="Transmission",
                                  replot=True,
                                  replace=True)
-        self.plotDialog.plotWidget.setGraphTitle(ddict['Comment'])
+        self.plotDialog.plotWidget.setGraphTitle(comment)
 
     def showPlot(self):
         self.plot()
