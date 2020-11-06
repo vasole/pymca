@@ -66,37 +66,34 @@ class TransmissionTableGui(qt.QWidget):
         """
         Expects a dictionary of the form:
 
-        dict["UserAttenuators"]["UserFilter0"] = TransmissionTableDict
-        dict["UserAttenuators"]["UserFilter1"] = TransmissionTableDict
+        dict["UserFilter0"] = TransmissionTableDict
+        dict["UserFilter1"] = TransmissionTableDict
 
         where TransmissionTableDict has the keys needed to define a
         transmission table (use, name, comment, energy, transmission)
         """
-        _logger.info("Received keys = %s" % list(ddict.keys))
-        for key in ddict:
-            if key.lower() == "userattenuators":
-                for ttable in ddict[key]:
-                    if ttable.lower() == "userfilter0":
-                        t = self.groupBoxList[0].transmissionTable
-                    elif ttable.lower() == "userfilter1":
-                        t = self.groupBoxList[1].transmissionTable
-                    else:
-                        _logger.warning("Ignored entry %s"  % ttable)
-                        continue
-                    t.setTransmissionTable(ddict[key][ttable])
+        _logger.info("Received keys = %s" % list(ddict.keys()))
+        if "userattenuators" in ddict:
+            ddict = ddict["userattenuators"]
+        for ttable in ddict:
+            if ttable.lower() == "userfilter0":
+                t = self.groupBoxList[0].transmissionTable
+            elif ttable.lower() == "userfilter1":
+                t = self.groupBoxList[1].transmissionTable
+            else:
+                _logger.warning("Ignored key %s"  % ttable)
+                continue
+            t.setTransmissionTable(ddict[ttable])
 
     def getParameters(self):
         ddict = {}
-        ddict["UserAttenuators"] = {}
         for i in range(2):
             key = "UserFilter%d" % i
             t = self.groupBoxList[i].transmissionTable
-            ddict["UserAttenuators"][key] = \
-                            t.getTransmissionTable()
-
+            ddict[key] = t.getTransmissionTable()
             # provide a default name
-            if ddict["UserAttenuators"][key]["name"] == "":
-                ddict["UserAttenuators"][key]["name"] = key
+            if ddict[key]["name"] == "":
+                ddict[key]["name"] = key
         return ddict
 
 if __name__ == "__main__":
