@@ -176,8 +176,8 @@ class TransmissionTableEditor(qt.QWidget):
         print("TODO: Sort energies in ascending order")
         print("TODO: Prevent duplicated energies")
         ddict = {}
-        ddict["energy"] = data[energyIdx, :].tolist()
-        ddict["transmission"] = data[transmissionIdx, :].tolist()
+        ddict["energy"] = data[energyIdx, :]
+        ddict["transmission"] = data[transmissionIdx, :]
         self.setTransmissionTable(ddict, updating=True)
 
     def _saveSlot(self):
@@ -279,7 +279,10 @@ class TransmissionTableEditor(qt.QWidget):
                 ddict[key] = values
 
         for key in ["energy", "transmission"]:
-            ddict[key] = numpy.array(ddict[key], numpy.float).reshape(-1)
+            # make sure we have floats
+            values = numpy.array(ddict[key], numpy.float).reshape(-1)
+            # convert to list to prevent issues when saving
+            ddict[key] = values.tolist()
 
         try:
             self._validateDict(ddict)
@@ -304,7 +307,7 @@ class TransmissionTableEditor(qt.QWidget):
             raise ValueError("Invalid name '%s'\n" % txt + \
                         "It starts or ends with a space.\n")
 
-        if ddict["energy"].size != ddict["transmission"].size:
+        if len(ddict["energy"]) != len(ddict["transmission"]):
             txt = "Energy and transmission vectors must have same length"
             raise ValueError(txt)
         return True
