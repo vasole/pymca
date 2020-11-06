@@ -62,6 +62,38 @@ class TransmissionTableGui(qt.QWidget):
             layout.addWidget(groupBox, 0, i)
             self.groupBoxList.append(groupBox)
 
+    def setParameters(self, ddict):
+        """
+        Expects a dictionary of the form:
+
+        dict["UserAttenuators"]["UserAttenuators0"] = TransmissionTableDict
+        dict["UserAttenuators"]["UserAttenuators1"] = TransmissionTableDict
+
+        where TransmissionTableDict has the keys needed to define a
+        transmission table (use, name, comment, energy, transmission)
+        """
+        _logger.info("Received keys = %s" % list(ddict.keys))
+        for key in ddict:
+            if key.lower() == "userattenuators":
+                for ttable in ddict[key]:
+                    if ttable.lower() == "userattenuators0":
+                        t = self.groupBoxList[0].transmissionTable
+                    elif ttable.lower() == "userattenuators1":
+                        t = self.groupBoxList[1].transmissionTable
+                    else:
+                        _logger.warning("Ignored entry %s"  % ttable)
+                        continue
+                    t.setTransmissionTable(ddict[key][ttable])
+
+    def getParameters(self):
+        ddict = {}
+        ddict["UserAttenuators"] = {}
+        for i in range(2):
+            t = self.groupBoxList[i].transmissionTable
+            ddict["UserAttenuators"]["UserAttenuator%d" % i] = \
+                            t.getTransmissionTable()
+        return ddict
+
 if __name__ == "__main__":
     app = qt.QApplication([])
     app.lastWindowClosed.connect(app.quit)
