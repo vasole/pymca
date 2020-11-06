@@ -711,6 +711,8 @@ class HDF5Widget(FileView):
     def __init__(self, model, parent=None):
         FileView.__init__(self, model, parent)
         self.setSelectionBehavior(qt.QAbstractItemView.SelectRows)
+        self.setAutoScroll(False)
+
         self._adjust()
         if 0:
             self.activated[qt.QModelIndex].connect(self.itemActivated)
