@@ -119,7 +119,8 @@ class TransmissionTableEditor(qt.QWidget):
     def _lineSlot(self):
         ddict = {}
         for key in ["name", "comment"]:
-            ddict[key] = qt.safe_str(self.lineEditDict[key].text())
+            txt = qt.safe_str(self.lineEditDict[key].text())
+            ddict[key] = txt.strip()
         self.setTransmissionTable(ddict, updating=True)
 
     def _loadSlot(self):
@@ -175,8 +176,8 @@ class TransmissionTableEditor(qt.QWidget):
         print("TODO: Sort energies in ascending order")
         print("TODO: Prevent duplicated energies")
         ddict = {}
-        ddict["energy"] = data[energyIdx, :]
-        ddict["transmission"] = data[transmissionIdx, :]
+        ddict["energy"] = data[energyIdx, :].tolist()
+        ddict["transmission"] = data[transmissionIdx, :].tolist()
         self.setTransmissionTable(ddict, updating=True)
 
     def _saveSlot(self):
@@ -258,7 +259,9 @@ class TransmissionTableEditor(qt.QWidget):
             if key in tableKeysLower:
                 idx = tableKeysLower.index(key)
                 txt = tableDict[tableKeys[idx]]
-                ddict[key] = txt
+                if not len(txt):
+                    txt = ""
+                ddict[key] = txt.strip()
 
         for key in ["use"]:
             if key in tableKeysLower:
