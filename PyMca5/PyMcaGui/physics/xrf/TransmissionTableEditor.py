@@ -151,6 +151,8 @@ class TransmissionTableEditor(qt.QWidget):
         else:
             energyIdx = 0
             transmissionIdx = 1
+        print("TODO: Sort energies in ascending order")
+        print("TODO: Prevent duplicated energies")
         ddict = {}
         ddict["energy"] = data[energyIdx, :]
         ddict["transmission"] = data[transmissionIdx, :]
