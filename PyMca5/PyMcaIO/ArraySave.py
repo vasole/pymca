@@ -90,7 +90,7 @@ def getDate():
                                                       minute, second, delta)
 
 def saveXY(x, y, filename, xlabel=None, ylabel=None,
-                     csv=False, csvseparator=None):
+                     csv=False, csvseparator=None, fmt=None):
     """
     Convenience function to save two 1D arrays to file as pure ASCII (no header)
     or as CSV.
@@ -116,7 +116,8 @@ def saveXY(x, y, filename, xlabel=None, ylabel=None,
         else:
             # ASCII default separator set to double space
             csvseparator = "  "
-    fmt = "%.7E%s%.7E\n"
+    if fmt is None:
+        fmt = "%.7E%s%.7E\n"
     if os.path.exists(filename):
         try:
             os.remove(filename)
