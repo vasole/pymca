@@ -82,7 +82,7 @@ class TransmissionTableEditor(qt.QWidget):
         buttonsBox = qt.QWidget(self)
         buttonsBoxLayout = qt.QHBoxLayout(buttonsBox)
         self.buttonsDict = {}
-        actions = ["LOAD", "SAVE", "SHOW"]
+        actions = ["Load", "Save", "Show"]
         slots = [self._loadSlot, self._saveSlot, self._showSlot]
         buttonsBoxLayout.addWidget(qt.HorizontalSpacer(buttonsBox))
         for i in range(len(slots)):
@@ -192,7 +192,7 @@ class TransmissionTableEditor(qt.QWidget):
         if self.outputFilter is None:
             self.outputFilter = format_list[0]
         outfile, filterused = PyMcaFileDialogs.getFileList(self,
-                                        filetypelist=format_list,                                          
+                                        filetypelist=format_list,
                                         mode="SAVE",
                                         message="Output File Selection",
                                         currentdir=wdir,
@@ -234,7 +234,7 @@ class TransmissionTableEditor(qt.QWidget):
             msg.setText("Input Output Error: %s" % (sys.exc_info()[1]))
             msg.exec_()
             return
-        
+
     def _showSlot(self):
         self.showPlot()
 
@@ -315,10 +315,10 @@ class TransmissionTableEditor(qt.QWidget):
             self.useCheckBox.setChecked(False)
         if self.plotDialog is not None:
             self.plot()
-                
+
     def plot(self):
         if self.plotDialog is None:
-            from PyMca5.PyMcaGui.plotting.PlotWindow import PlotWindow                
+            from PyMca5.PyMcaGui.plotting.PlotWindow import PlotWindow
             dialog = qt.QDialog(self)
             dialog.mainLayout = qt.QVBoxLayout(dialog)
             dialog.mainLayout.setContentsMargins(0, 0, 0, 0)
