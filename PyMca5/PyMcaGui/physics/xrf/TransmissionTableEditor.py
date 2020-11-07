@@ -162,12 +162,11 @@ class TransmissionTableEditor(qt.QWidget):
         scan = None
         sf = None
 
-        nLabels = len(scan.alllabels())
+        nLabels = len(labels)
         if nLabels not in [2, 3]:
             txt = "Expected a two column file got %d columns" % nLabels
             raise IOError(txt)
-
-        if nLabels == 3 and labels[0].lower().startwith("point"):
+        if nLabels == 3 and labels[0].lower().startswith("point"):
             energyIdx = 1
             transmissionIdx = 2
         else:

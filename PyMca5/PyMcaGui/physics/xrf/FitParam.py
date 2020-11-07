@@ -310,9 +310,9 @@ class FitParamWidget(FitParamForm):
                                (1.0 - funnyfactor))
             if len(detector):
                 detector = detector[0]
-                formula   = detector[0]
+                formula = detector[0]
                 thickness = detector[1] * detector[2]
-                coeffs   =  thickness *\
+                coeffs = thickness *\
                            numpy.array(massatt(formula,1.0,energies)['total'])
                 efficiency *= (1.0 - numpy.exp(-coeffs))
 
