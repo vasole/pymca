@@ -57,6 +57,7 @@ def main(auto=True):
     return unittest.TextTestRunner(verbosity=2).run(getSuite(auto=auto))
 
 if __name__ == '__main__':
+    os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
     if len(sys.argv) > 1:
         auto = False
     else:
