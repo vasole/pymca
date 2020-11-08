@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -971,14 +971,17 @@ def _filterPeaks(peaklist, ethreshold = None, ithreshold = None,
 
 
 def _getAttFilteredElementDict(elementsList,
-                               attenuators= None,
-                               detector   = None,
-                               funnyfilters = None,
-                               energy = None):
+                               attenuators=None,
+                               detector=None,
+                               funnyfilters=None,
+                               energy=None,
+                               userattenuators=None):
     if energy is None:
         energy = 100.
     if attenuators is None:
         attenuators = []
+    if userattenuators is None:
+        userattenuators = []
     if funnyfilters is None:
         funnyfilters = []
     outputDict = {}
@@ -1064,6 +1067,14 @@ def _getAttFilteredElementDict(elementsList,
                 for i in range(len(rates)):
                     rates[i] *= (trans[i] * transFunny[i])
 
+            #user attenuators
+            if userattenuators:
+                utrans = numpy.ones((len(energies),), numpy.float)
+                for userattenuator in userattenuators:
+                    utrans *= getTableTransmission(userattenuator, energies)
+                for i in range(len(rates)):
+                    rates[i] *= utrans[i]
+
             #detector term
             if detector is not None:
                 formula   = detector[0]
@@ -1101,6 +1112,7 @@ def getMultilayerFluorescence(multilayer0,
                               beamfilters = None,
                               elementsList = None,
                               attenuators  = None,
+                              userattenuators = None,
                               alphain      = None,
                               alphaout     = None,
                               cascade = None,
@@ -1109,8 +1121,12 @@ def getMultilayerFluorescence(multilayer0,
                               forcepresent=None,
                               secondary=None):
 
-    if multilayer0 is None:return []
-    if secondary is None:secondary=False
+    if multilayer0 is None:
+        return []
+    if secondary:
+        print("Use fisx library ro deal with secondary excitation")
+        print("Ignoring secondary excitation request")
+    secondary=False
     if len(multilayer0):
         if type(multilayer0[0]) != type([]):
             multilayer=[multilayer0 * 1]
@@ -1156,10 +1172,16 @@ def getMultilayerFluorescence(multilayer0,
                 if len(elementsList[0]) == 3:
                     optimized = 1
 
-    if attenuators is None:attenuators = []
-    if beamfilters is None:beamfilters = []
-    if alphain  is None: alphain =  45.0
-    if alphaout is None: alphaout = 45.0
+    if attenuators is None:
+        attenuators = []
+    if userattenuators is None:
+        userattenuators = []
+    if beamfilters is None:
+        beamfilters = []
+    if alphain  is None:
+        alphain =  45.0
+    if alphaout is None:
+        alphaout = 45.0
     if alphain >= 0:
         sinAlphaIn  = numpy.sin(alphain  * numpy.pi / 180.)
     else:
@@ -1300,16 +1322,19 @@ def getMultilayerFluorescence(multilayer0,
         #here I could recalculate the dictionary
         if optimized:
             userElementDict = _getAttFilteredElementDict(newelementsList,
-                               attenuators= origattenuators,
-                               detector   = detector,
-                               funnyfilters = funnyfilters,
-                               energy = max(energyList))
+                               attenuators=origattenuators,
+                               userattenuators=userattenuators,
+                               detector=detector,
+                               funnyfilters=funnyfilters,
+                               energy=max(energyList))
             workattenuators = None
-            workdetector    = None
+            workuserattenuators = None
+            workdetector = None
             workfunnyfilters = None
         else:
             userElementDict = None
             workattenuators = origattenuators * 1
+            workuserattenuators = userattenuators * 1
             if detector is not None:
                 workdetector = detector * 1
             else:
@@ -1392,6 +1417,7 @@ def getMultilayerFluorescence(multilayer0,
                 #print "before origattenuators = ",origattenuators
                 dict = getFluorescence(pseudomatrix, energy,
                                 attenuators = workattenuators,
+                                useratteanuators = workuserattenuators,
                                 alphain = alphain,
                                 alphaout = alphaout,
                                 #elementsList = newelementsList,
@@ -1415,99 +1441,6 @@ def getMultilayerFluorescence(multilayer0,
                         dict[ele]['mass fraction'] = eleDict[ele] * 1.0
                 #if ele == "Cl":print "dict[ele]['mass fraction'] ",eleDict[ele]
                 dictList.append(dict)
-        #secondary fluorescence term from next layers
-        if secondary:
-            newweightlist2 = newweightlist * 1
-            for ilayer2 in range(len(multilayer)):
-                if ilayer2 <= ilayer:continue
-                #get beam intensity at the layer
-                pseudomatrix2 = multilayer[ilayer2]   * 1
-                beamfilter    = multilayer[ilayer2-1] * 1
-                formula   = beamfilter[0]
-                thickness = beamfilter[1] * beamfilter[2]
-                coeffs   =  thickness * numpy.array(getMaterialMassAttenuationCoefficients(formula,1.0,energyList)['total'])
-                try:
-                    trans = numpy.exp(-coeffs)
-                except OverflowError:
-                    #deal with underflows reported as overflows
-                    trans = numpy.zeros(len(energyList), numpy.float)
-                    for i in range(len(energyList)):
-                        coef = coeffs[i]
-                        if coef < 0.0:
-                            raise ValueError("Positive exponent in attenuators transmission term")
-                        else:
-                            try:
-                                trans[i] = numpy.exp(-coef)
-                            except OverflowError:
-                                #if we are here we know it is not an overflow and trans[i] has the proper value
-                                pass
-                newweightlist2 = newweightlist2 * trans
-                #get beam2
-                for iene in  range(len(energyList)):
-                    energy = energyList[iene]  * 1.0
-                    escape = getEscape(pseudomatrix2,
-                                       energy,
-                                       alphain    = alphain,
-                                       cascade    = True,
-                                       #up to 20 peaks
-                                       nthreshold = 20,
-                                       ithreshold = 1.0e-5,
-                                       ethreshold = 0.010,
-                                       fluorescencemode=True)
-                    if not len(escape):continue
-                    energyList2 = [x[0] for x in escape]
-                    weightList2 = numpy.array([x[1] for x in escape]) * newweightlist2[iene]
-                    #correct for attenuation in intermediate layers!!!
-                    weightList3 = 1.0 * weightList2
-                    for ilayer3 in range(len(multilayer)):
-                        if ilayer3 >= ilayer2:continue
-                        if ilayer3 <= ilayer: continue
-                        #I have an intermediate layer
-                        beamfilter = multilayer[ilayer3] * 1
-                        formula   = beamfilter[0]
-                        thickness = beamfilter[1] * beamfilter[2]
-                        coeffs   =  thickness * numpy.array(getMaterialMassAttenuationCoefficients(formula,1.0,energyList2)['total'])
-                        try:
-                            trans = numpy.exp(-coeffs)
-                        except OverflowError:
-                            #deal with underflows reported as overflows
-                            trans = numpy.zeros(len(energyList2), numpy.float)
-                            for i in range(len(energyList2)):
-                                coef = coeffs[i]
-                                if coef < 0.0:
-                                    raise ValueError("Positive exponent in attenuators transmission term")
-                                else:
-                                    try:
-                                        trans[i] = numpy.exp(-coef)
-                                    except OverflowError:
-                                        #if we are here we know it is not an overflow and trans[i] has the proper value
-                                        pass
-                        weightList3 = weightList3 * trans
-
-                    for iene2 in range(len(energyList2)):
-                        energy = energyList2[iene2]
-                        dict2 = getFluorescence(pseudomatrix, energy,
-                                                attenuators = workattenuators,
-                                                alphain =  -90.,
-                                                alphaout = alphaout,
-                                                elementsList = newelementsList,
-                                                cascade  = cascade,
-                                                detector = workdetector,
-                                                funnyfilters = workfunnyfilters,
-                                                userElementDict = userElementDict)
-                        if optimized:
-                            #give back with concentration 1
-                            #for ele in dict.keys():
-                            for ele in dict2.keys():
-                                dict2[ele]['weight'] = weightList3[iene2] * 1.0
-                                dict2[ele]['mass fraction'] = eleDict[ele] * 1.0
-                        else:
-                            #already corrected for concentration
-                            #for ele in dict.keys():
-                            for ele in dict2.keys():
-                                dict2[ele]['weight'] = weightList3[iene2] * eleDict[ele]
-                                dict2[ele]['mass fraction'] = eleDict[ele] * 1.0
-                        dictList.append(dict2)
         if optimized:
             pass
         else:
@@ -1720,13 +1653,15 @@ def getScattering(matrix, energy, attenuators = None, alphain = None, alphaout =
             #outputDict[ele][rays]= Element[ele]['rays'] * 1
     return outputDict
 
-def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout = None,
+def getFluorescence(matrix, energy, attenuators = None,
+                    alphain = None, alphaout = None,
                                                 elementsList = None, cascade=None,
                                                 detector=None,
                                                 funnyfilters=None,
                                                 userElementDict=None,
                                                 matrixmutotalfluorescence=None,
-                                                matrixmutotalexcitation=None):
+                                                matrixmutotalexcitation=None,
+                                                userattenuators=None):
     """
     getFluorescence(matrixlist, energy, attenuators = None, alphain = None, alphaout = None,
                             elementsList = None, cascade=None, detector=None)
@@ -1767,6 +1702,8 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
     if cascade is None:cascade=False
     if attenuators is None:
         attenuators = []
+    if userattenuators is None:
+        userattenuators = []
     if len(attenuators):
         if type(attenuators[0]) != type([]):
             attenuators=[attenuators]
@@ -1916,6 +1853,14 @@ def getFluorescence(matrix, energy, attenuators = None, alphain = None, alphaout
                                  (1.0 - funnyfactor)
                 for i in range(len(rates)):
                     rates[i] *= (trans[i] * transFunny[i])
+
+            #user attenuators
+            if userattenuators:
+                utrans = numpy.ones((len(energies),), numpy.float)
+                for userattenuator in userattenuators:
+                    utrans *= getTableTransmission(userattenuator, energies)
+                for i in range(len(rates)):
+                    rates[i] *= utrans[i]
 
             #detector term
             if detector is not None:
@@ -2300,6 +2245,25 @@ def __materialInCompoundList(lst):
         if item in Material.keys():
             return True
     return False
+
+def getTableTransmission(tableDict, energy):
+    """
+    tableDict is a dictionary containing the keys energy and transmission.
+    It gets the transmission at the given energy by linear interpolation.
+
+    The energy is in keV.
+    Values below the lowest energy get transmission equal to the first table value.
+    Values above the greates energy get transmission equal to the last table value.
+    """
+    # use a lazy import
+    from fisx import TransmissionTable
+    tTable = TransmissionTable()
+    if type(tableDict) == type([]):
+        tTable.setTransmissionTableFromLists(tableDict[0], tableDict[1]) 
+    else:
+        tTable.setTransmissionTable(tableDict) 
+    return tTable.getTransmission(energy)
+
 
 def getMaterialTransmission(compoundList0, fractionList0, energy0 = None,
                             density=None, thickness=None, listoutput=True):
