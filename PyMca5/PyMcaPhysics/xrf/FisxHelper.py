@@ -202,8 +202,8 @@ def getMultilayerFluorescence(multilayerSample,
                 energy = userAttenuator[0]
                 transmission = userAttenuator[1]
                 if len(userAttenuator) == 4:
-                    name = userAttenuator[3]
-                    comment = userAttenuator[4]
+                    name = userAttenuator[2]
+                    comment = userAttenuator[3]
             else:
                 if userattenuatorList[userAttenuator]["use"]:
                     energy = userattenuatorList[userAttenuator]["energy"]
