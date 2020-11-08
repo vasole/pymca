@@ -271,8 +271,8 @@ class McaTheory(object):
         self._fluoRates = None
         if self.attflag:
             for userattenuator in self.config['userattenuators']:
-                if userattenuator["use"]:
-                    userattenuatorlist.append(userattenuator)
+                if self.config['userattenuators'][userattenuator]["use"]:
+                    userattenuatorlist.append(self.config['userattenuators'][userattenuator])
             for attenuator in self.config['attenuators'].keys():
                 if not self.config['attenuators'][attenuator][0]:
                     continue
@@ -674,9 +674,10 @@ class McaTheory(object):
 
                         # user attenuators
                         for userattenuator in self.config['userattenuators']:
-                            if userattenuator["use"]:
-                                ttrans = Elements.getTableTransmission(userattenuator,
-                                                                  [x[1] for x in newpeaks])
+                            if self.config['userattenuators'][userattenuator]["use"]:
+                                ttrans = Elements.getTableTransmission(
+                                                            self.config['userattenuators'][userattenuator],
+                                                            [x[1] for x in newpeaks])
                                 for i in range(len(newpeaks)):
                                     newpeaks[i][0] *= ttrans[i]
 

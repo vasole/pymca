@@ -972,10 +972,10 @@ def _filterPeaks(peaklist, ethreshold = None, ithreshold = None,
 
 def _getAttFilteredElementDict(elementsList,
                                attenuators=None,
-                               userattenuators=None
                                detector=None,
                                funnyfilters=None,
-                               energy=None):
+                               energy=None,
+                               userattenuators=None):
     if energy is None:
         energy = 100.
     if attenuators is None:
@@ -1417,7 +1417,7 @@ def getMultilayerFluorescence(multilayer0,
                 #print "before origattenuators = ",origattenuators
                 dict = getFluorescence(pseudomatrix, energy,
                                 attenuators = workattenuators,
-                                useratteanuators = workuserattenuators,
+                                userattenuators = workuserattenuators,
                                 alphain = alphain,
                                 alphaout = alphaout,
                                 #elementsList = newelementsList,
@@ -2257,11 +2257,13 @@ def getTableTransmission(tableDict, energy):
     """
     # use a lazy import
     from fisx import TransmissionTable
+    print("RECEIVED = ", tableDict)
     tTable = TransmissionTable()
     if type(tableDict) == type([]):
         tTable.setTransmissionTableFromLists(tableDict[0], tableDict[1]) 
     else:
-        tTable.setTransmissionTable(tableDict) 
+        tTable.setTransmissionTableFromLists(tableDict["energy"],
+                                    tableDict["transmission"])
     return tTable.getTransmission(energy)
 
 
