@@ -151,7 +151,7 @@ class TransmissionTableEditor(qt.QWidget):
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText("Error transmission table: %s" % (sys.exc_info()[1]))
                     msg.exec_()
-        self.update()
+                    return
 
     def loadTransmissionTable(self, filename):
         # read with our wrapper
@@ -172,11 +172,21 @@ class TransmissionTableEditor(qt.QWidget):
         else:
             energyIdx = 0
             transmissionIdx = 1
-        print("TODO: Sort energies in ascending order")
-        print("TODO: Prevent duplicated energies")
+
+        # sort energies in ascending order
+        energy = data[energyIdx, :]
+        transmission = data[transmissionIdx, :]
+        idx = numpy.argsort(energy)
+        energy = numpy.take(energy, idx)
+        transmission = numpy.take(transmission, idx)
+
         ddict = {}
-        ddict["energy"] = data[energyIdx, :]
-        ddict["transmission"] = data[transmissionIdx, :]
+        ddict["use"] = 1
+        ddict["energy"] = energy
+        ddict["transmission"] = transmission 
+        ddict["name"] = os.path.basename(filename)
+        ddict["comment"] = ""
+
         self.setTransmissionTable(ddict, updating=True)
 
     def _saveSlot(self):
@@ -329,6 +339,8 @@ class TransmissionTableEditor(qt.QWidget):
             dialog.mainLayout.setContentsMargins(0, 0, 0, 0)
             dialog.mainLayout.setSpacing(0)
             dialog.plotWidget = PlotWindow(dialog,
+                                           newplot=False,
+                                           fit=False,
                                            plugins=False,
                                            control=True,
                                            position=True)
