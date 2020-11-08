@@ -972,10 +972,10 @@ def _filterPeaks(peaklist, ethreshold = None, ithreshold = None,
 
 def _getAttFilteredElementDict(elementsList,
                                attenuators=None,
+                               userattenuators=None
                                detector=None,
                                funnyfilters=None,
-                               energy=None,
-                               userattenuators=None):
+                               energy=None):
     if energy is None:
         energy = 100.
     if attenuators is None:

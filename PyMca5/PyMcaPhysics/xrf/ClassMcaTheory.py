@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -170,6 +170,8 @@ class McaTheory(object):
 
     def __configure(self):
         self.linearMatrix = None
+        #user attenuators key
+        self.config['userattenuators'] = self.config.get('userattenuators',{})
         #multilayer key
         self.config['multilayer'] = self.config.get('multilayer',{})
         #update Elements material information
@@ -261,12 +263,16 @@ class McaTheory(object):
         self.config['detector']['nthreshold'] = nthreshold
         usematrix = 0
         attenuatorlist =[]
+        userattenuatorlist =[]
         filterlist = []
         funnyfilters = []
         detector = None
         multilayerlist = None
         self._fluoRates = None
         if self.attflag:
+            for userattenuator in self.config['userattenuators']:
+                if userattenuator["use"]:
+                    userattenuatorlist.append(userattenuator)
             for attenuator in self.config['attenuators'].keys():
                 if not self.config['attenuators'][attenuator][0]:
                     continue
@@ -370,7 +376,8 @@ class McaTheory(object):
                                  detector=detector,
                                  funnyfilters=funnyfilters,
                                  beamfilters=filterlist,
-                                 forcepresent = 1)
+                                 forcepresent=1,
+                                 userattenuators=userattenuatorlist)
           dict = self._fluoRates[0]
 
           # this will not be needed once fisx replaces the Elements module
@@ -664,6 +671,15 @@ class McaTheory(object):
                                     else:
                                         raise ValueError(\
                                             "Invalid excitation energy")
+
+                        # user attenuators
+                        for userattenuator in self.config['userattenuators']:
+                            if userattenuator["use"]:
+                                ttrans = Elements.getTableTransmission(userattenuator,
+                                                                  [x[1] for x in newpeaks])
+                                for i in range(len(newpeaks)):
+                                    newpeaks[i][0] *= ttrans[i]
+
                     #--- renormalize
                     div = sum([x[0] for x in newpeaks])
                     try:
