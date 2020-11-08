@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -42,7 +42,10 @@ import sys
 xcom = None
 
 _logger = logging.getLogger(__name__)
-
+try:
+    from fisx import TransmissionTable
+except ImportError:
+    _logger.warning("Consider to use fisx >= 1.2.0")
 
 def getElementsInstance(dataDir=None, bindingEnergies=None, xcomFile=None):
     if dataDir is None:
@@ -110,6 +113,7 @@ def getMultilayerFluorescence(multilayerSample,
                               beamFilters = None,
                               elementsList = None,
                               attenuatorList  = None,
+                              userattenuatorList = None,
                               alphaIn      = None,
                               alphaOut     = None,
                               cascade = None,
@@ -188,6 +192,33 @@ def getMultilayerFluorescence(multilayerSample,
         if len(attenuatorList) > 0:
             _logger.debug("setting attenuators")
             xrf.setAttenuators(attenuatorList)
+
+    # the user attenuators
+    if userattenuatorList is not None:
+        i = 0
+        for userAttenuator in userattenuatorList:
+            if isinstance(userAttenuator, tuple) or \
+               isinstance(userAttenuator, list):
+                energy = userAttenuator[0]
+                transmission = userAttenuator[1]
+                if len(userAttenuator) == 4:
+                    name = userAttenuator[2]
+                    comment = userAttenuator[3]
+            else:
+                if userattenuatorList[userAttenuator]["use"]:
+                    energy = userattenuatorList[userAttenuator]["energy"]
+                    transmission = userattenuatorList[userAttenuator]["transmission"]
+                    name = userattenuatorList[userAttenuator].get("name",
+                                                        "UserFilter%d" % i)
+                    name = userattenuatorList[userAttenuator].get("comment","")
+                else:
+                    continue
+            ttable = TransmissionTable()
+            ttable.setTransmissionTableFromLists(energy,
+                                                 transmission,
+                                                 name,
+                                                 comment)
+            xrf.setTransmissionTable(ttable)
 
     # the geometry
     _logger.debug("setting Geometry")
@@ -513,6 +544,21 @@ def _getBeam(fitConfiguration):
                         characteristicList.append(0)
     return energyList, weightList, characteristicList
 
+def _getUserAttenuators(fitConfiguration):
+    return _getUserattenuators(fitConfiguration)
+
+def _getUserattenuators(fitConfiguration):
+    userattenuatorList =[]
+    userattenuators = fitConfiguration.get('userattenuators', {})
+    for userattenuator in userattenuators.keys():
+        ddict = userattenuators[userattenuator]
+        if ddict["use"]:
+            userattenuatorList.append([ddict["energy"],
+                                       ddict["transmission"],
+                                       ddict["name"],
+                                       ddict["comment"]])
+    return userattenuatorList
+
 def _getFiltersMatrixAttenuatorsDetectorGeometry(fitConfiguration):
     useMatrix = False
     attenuatorList =[]
@@ -664,6 +710,9 @@ def _fisxFromFitConfigurationAction(fitConfiguration,
     filterList, multilayerSample, attenuatorList, detector, alphaIn, alphaOut \
                 = _getFiltersMatrixAttenuatorsDetectorGeometry(fitConfiguration)
 
+    # extract transmission tables used as atenuators
+    userattenuatorList = _getUserattenuators(fitConfiguration)
+
     # The elements and families to be considered
     elementsList = _getPeakList(fitConfiguration)
 
@@ -685,6 +734,7 @@ def _fisxFromFitConfigurationAction(fitConfiguration,
                                       beamFilters = filterList,
                                       elementsList = elementsList,
                                       attenuatorList = attenuatorList,
+                                      userattenuatorList = userattenuatorList,
                                       alphaIn = alphaIn,
                                       alphaOut = alphaOut,
                                       cascade = None,
@@ -706,6 +756,7 @@ def _fisxFromFitConfigurationAction(fitConfiguration,
                                       beamFilters = filterList,
                                       elementsList = elementsList,
                                       attenuatorList = attenuatorList,
+                                      userattenuatorList = userattenuatorList,
                                       alphaIn = alphaIn,
                                       alphaOut = alphaOut,
                                       cascade = None,

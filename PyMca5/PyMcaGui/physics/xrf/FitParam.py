@@ -88,10 +88,14 @@ class FitParamWidget(FitParamForm):
         self.graphDialog.mainLayout.setSpacing(0)
         self.graphDialog.graph = PlotWindow.PlotWindow(self.graphDialog,
                                                        newplot=False,
-                                                       plugins=False, fit=False)
+                                                       fit=False,
+                                                       plugins=False,
+                                                       control=True,
+                                                       position=True)
         self.graph = self.graphDialog.graph
         self.graph._togglePointsSignal()
-        self.tabAttenuators   = AttenuatorsTable.AttenuatorsTab(self.tabAtt,
+        self.graph.setDataMargins(0.05, 0.05, 0.05, 0.05)
+        self.tabAttenuators = AttenuatorsTable.AttenuatorsTab(self.tabAtt,
                                                 graph=self.graphDialog)
         self.graphDialog.mainLayout.addWidget(self.graph)
         self.graphDialog.okButton = qt.QPushButton(self.graphDialog)
@@ -272,15 +276,15 @@ class FitParamWidget(FitParamForm):
         maxenergy = qt.safe_str(self.peakTable.energy.text())
         if maxenergy=='None':
             maxenergy = 100.
-            energies = numpy.arange(1, maxenergy, 0.1)
+            energies = numpy.arange(0.3, maxenergy, 0.1)
         else:
             maxenergy = float(maxenergy)
             if maxenergy < 50:
-                energies = numpy.arange(1, maxenergy, 0.01)
+                energies = numpy.arange(0.3, maxenergy, 0.01)
             elif maxenergy > 100:
-                energies = numpy.arange(1, maxenergy, 0.1)
+                energies = numpy.arange(0.3, maxenergy, 0.1)
             else:
-                energies = numpy.arange(1, maxenergy, 0.02)
+                energies = numpy.arange(0.3, maxenergy, 0.02)
         efficiency = numpy.ones(len(energies), numpy.float)
         if (len(attenuators)+len(detector)+len(funnyfilters)) != 0:
             massatt = Elements.getMaterialMassAttenuationCoefficients
@@ -310,11 +314,20 @@ class FitParamWidget(FitParamForm):
                                (1.0 - funnyfactor))
             if len(detector):
                 detector = detector[0]
-                formula   = detector[0]
+                formula = detector[0]
                 thickness = detector[1] * detector[2]
-                coeffs   =  thickness *\
+                coeffs = thickness *\
                            numpy.array(massatt(formula,1.0,energies)['total'])
                 efficiency *= (1.0 - numpy.exp(-coeffs))
+
+        userattenuators = []
+        userAtt = self.tabAttenuators.userAttenuators.getParameters()
+        for key in userAtt:
+            if userAtt[key]["use"]:
+                efficiency *= Elements.getTableTransmission( \
+                                                [userAtt[key]["energy"],
+                                                 userAtt[key]["transmission"]],
+                                                 energies)
 
         self.graph.setGraphTitle('Filter (not beam filter) and detector correction')
         self.graph.addCurve(energies, efficiency,
@@ -518,6 +531,9 @@ class FitParamWidget(FitParamForm):
         self.__setPeakShapePar()
         if "tube" in pardict:
             self.xRayTube.setParameters(pardict["tube"])
+        if "userattenuators"  in pardict:
+            self.tabAttenuators.userAttenuators.setParameters( \
+                                        pardict["userattenuators"])
         if "xrfmc" in pardict:
             if XRFMC_FLAG:
                 self.tabXRFMCWidget.setParameters(pardict)
@@ -528,6 +544,7 @@ class FitParamWidget(FitParamForm):
         sections.append('multilayer')
         sections.append('materials')
         sections.append('tube')
+        sections.append('userattenuators')
         if XRFMC_FLAG:
             sections.append('xrfmc')
         for key in sections:
@@ -547,6 +564,8 @@ class FitParamWidget(FitParamForm):
             return self.__getPeakShapePar()
         if parname in ["attenuators", "ATTENUATORS"]:
             return self.__getAttPar()
+        if parname in ["userattenuators"]:
+            return self.tabAttenuators.userAttenuators.getParameters()
         if parname in ["multilayer", "MULTILAYER"]:
             return self.__getMultilayerPar()
         if parname in ["materials", "MATERIALS"]:

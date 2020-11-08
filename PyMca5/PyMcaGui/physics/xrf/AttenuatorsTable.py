@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V. Armando Sole - ESRF Data Analysis"
+__author__ = "V. Armando Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -46,6 +46,7 @@ class Q3GridLayout(qt.QGridLayout):
 from PyMca5.PyMcaPhysics import Elements
 from . import MaterialEditor
 from . import MatrixEditor
+from . import TransmissionTableGui
 import re
 
 _logger = logging.getLogger(__name__)
@@ -98,7 +99,9 @@ class AttenuatorsTab(qt.QWidget):
                 self.editor = MaterialEditor.MaterialEditor(graph=graph)
                 self.table.setMinimumHeight(13*rheight)
             self.table.setMaximumHeight(13*rheight)
+        self.userAttenuators = TransmissionTableGui.TransmissionTableGui()
         self.mainTab.addTab(self.editor, "Material Editor")
+        self.mainTab.addTab(self.userAttenuators, "User Attenuators")
 
 class MultilayerTab(qt.QWidget):
     def __init__(self,parent=None, name="Multilayer Tab", matrixlayers=None):

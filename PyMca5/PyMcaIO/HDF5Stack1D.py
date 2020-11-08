@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -94,7 +94,7 @@ class HDF5Stack1D(DataObject.DataObject):
         # built the selection in terms of HDF terms
         # for the time being
         xSelectionList = selection.get('x', None)
-        if xSelectionList == []:
+        if not xSelectionList:
             xSelectionList = None
         if xSelectionList is not None:
             if type(xSelectionList) != type([]):
@@ -115,9 +115,11 @@ class HDF5Stack1D(DataObject.DataObject):
 
         # monitor selection
         mSelection = selection.get('m', None)
-        if mSelection not in [None, []]:
+        if mSelection:
             if type(mSelection) != type([]):
                 mSelection = [mSelection]
+        else:
+            mSelection = None
         if type(mSelection) == type([]):
             if len(mSelection):
                 mSelection = mSelection[0]

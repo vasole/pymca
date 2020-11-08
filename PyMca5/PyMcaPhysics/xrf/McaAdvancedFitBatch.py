@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -350,7 +350,8 @@ class McaAdvancedFitBatch(object):
                 ffile.SetSource(inputfile)
             return ffile
         except:
-            raise IOError("I do not know what to do with file %s" % inputfile)
+            _logger.critical("I do not know what to do with file %s" % inputfile)
+            raise
 
     @property
     def filehandle(self):

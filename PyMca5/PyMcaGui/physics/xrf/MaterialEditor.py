@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V. Armando Sole - ESRF Data Analysis"
+__author__ = "V. Armando Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -311,11 +311,11 @@ class MaterialComboBox(qt.QComboBox):
                             "It contains a % character.\n")
                 msg.exec_()
                 msg = qt.QMessageBox.No
-            elif text.endswith(" "):
+            elif text.endswith(" ") or text.startswith(" "):
                 msg =  qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Invalid Material Name '%s'\n" % text + \
-                            "It ends with a space character.\n")
+                            "It starts or ends with a space character.\n")
                 msg.exec_()
                 msg = qt.QMessageBox.No
             else:

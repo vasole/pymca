@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -244,6 +244,7 @@ class ConcentrationsTool(object):
             raise  ImportError("Module fisx does not seem to be available")
         # get attenuators and matrix from fit
         attenuators = []
+        userattenuators = []
         beamfilters = []
         funnyfilters = []
         matrix = None
@@ -272,6 +273,11 @@ class ConcentrationsTool(object):
                 else:
                     attenuators.append(fitresult['result']['config']['attenuators']\
                                                                 [attenuator][1:])
+
+        for userattenuator in fitresult['result']['config']['userattenuators']:
+            if fitresult['result']['config']['userattenuators'][userattenuator]:
+                userattenuators.append(fitresult['result']['config']\
+                                       ['userattenuators'][userattenuator])
         if matrix is None:
             raise ValueError("Invalid or undefined sample matrix")
 
@@ -366,6 +372,7 @@ class ConcentrationsTool(object):
         if not config['useattenuators']:
             attenuators  = None
             funnyfilters = None
+            userattenuators = None
         #import time
         #t0=time.time()
         if elementsfrommatrix:
@@ -391,6 +398,7 @@ class ConcentrationsTool(object):
                          fulloutput=1,
                          beamfilters=beamfilters * 1,
                          attenuators=attenuators * 1,
+                         userattenuators=userattenuators * 1,
                          elementsList=newelementsList * 1,
                          alphain=alphain,
                          alphaout=alphaout,
@@ -413,6 +421,7 @@ class ConcentrationsTool(object):
                              fulloutput=1,
                              beamfilters=beamfilters * 1,
                              attenuators=attenuators * 1,
+                             userattenuators=userattenuators * 1,
                              elementsList=newelements * 1,
                              alphain=alphain,
                              alphaout=alphaout,

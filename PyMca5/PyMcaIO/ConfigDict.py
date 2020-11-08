@@ -193,6 +193,9 @@ class ConfigDict(dict):
         dataline = [line for line in data.splitlines()]
         if len(dataline) == 1:
             return self.__parse_line(dataline[0])
+        elif len(dataline) == 0:
+            # do not return an empty list but an empty string
+            return ""
         else:
             return [self.__parse_line(line) for line in dataline]
 
