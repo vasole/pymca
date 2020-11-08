@@ -2257,7 +2257,6 @@ def getTableTransmission(tableDict, energy):
     """
     # use a lazy import
     from fisx import TransmissionTable
-    print("RECEIVED = ", tableDict)
     tTable = TransmissionTable()
     if type(tableDict) == type([]):
         tTable.setTransmissionTableFromLists(tableDict[0], tableDict[1]) 
