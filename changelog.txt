@@ -1,3 +1,10 @@
+VERSION 5.6.3
+-------------
+
+- XRF. Allow to take user supplied transmission tables as attenuators.
+
+- IO. Allow sorting of entries in NeXus files by title.
+
 VERSION 5.6.2
 -------------
 
