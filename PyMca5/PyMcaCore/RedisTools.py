@@ -262,8 +262,18 @@ def shortnamemap(names, separator=":"):
             parts = [lst for j, lst in enumerate(parts) if j not in idx]
     return ret
 
-def get_scan_data(scan_node, unique=False):
+def get_scan_data(scan_node, unique=False, top_master=False):
     data_channels = get_data_channels(scan_node, unique=unique)
+    if top_master:
+        try:
+            top_master, channels = \
+                    next(iter(scan_node.info["acquisition_chain"].items()))
+            if "scalars" in channels:
+                _logger.info("Taking only scalar data from top master")
+                data_channels = [x for x in data_channels \
+                                     if x.name in channels["scalars"]]
+        except:
+            _logger.warning("Cannot perform top_master filtering")
     names = shortnamemap(x.name for x in data_channels)
     result = {}
     i = 0
