@@ -128,6 +128,13 @@ class SGWindow(qt.QWidget):
                                                     points,
                                                     degree=degree,
                                                     order=order)
+
+        # if the x are decreasing the result is not correct
+        if order % 2:
+            if self.xValues is not None:
+                if self.xValues[0] > self.xValues[-1]:
+                    self.background *= -1
+
         if order > 0:
             maptoy2 = "right"
         else:
@@ -190,7 +197,7 @@ if __name__ == "__main__":
     import numpy
     app = qt.QApplication([])
     if 1:
-        noise = numpy.random.randn(1000.)
+        noise = numpy.random.randn(1000)
         y=numpy.arange(1000.)
         w = SGDialog(None, y+numpy.sqrt(y)* noise)
     w.show()
