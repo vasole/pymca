@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -60,11 +60,14 @@ class SimpleMath(object):
         else:
             # all points are equal
             minDelta = 1.0
+        _logger.info("Using a delta between points of %f" % minDelta)
         xInter = numpy.arange(x[0]-minDelta,x[-1]+minDelta,minDelta)
         yInter = numpy.interp(xInter, x, y, left=y[0], right=y[-1])
         if len(yInter) > 499:
+            _logger.info("Using 5 points interpolation")
             npoints = 5
         else:
+            _logger.info("Using 3 points interpolation")
             npoints = 3
         degree = 1
         order = 1
