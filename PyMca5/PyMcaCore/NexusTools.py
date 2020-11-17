@@ -53,8 +53,25 @@ except:
         return False
 
 import logging
-
 _logger = logging.getLogger(__name__)
+
+def isGroup(item):
+    if isinstance(item, Group):
+        return True
+    elif hasattr(item, "keys"):
+        return True
+    elif is_group(item):
+        return True
+    else:
+        return False
+
+def isDataset(item):
+    if isinstance(item, Dataset):
+        return True
+    elif is_dataset(item):
+        return True
+    else:
+        return False
 
 #sorting method
 def h5py_sorting(object_list):
@@ -118,24 +135,6 @@ def _get_number_list(txt):
     nbs= [float(w) for w in re.split(rexpr, txt) if w not in ['',' ']]
     return nbs
 
-def isGroup(item):
-    if isinstance(item, Group):
-        return True
-    elif hasattr(item, "keys"):
-        return True
-    elif is_group(item):
-        return True
-    else:
-        return False
-
-def isDataset(item):
-    if isinstance(item, Dataset):
-        return True
-    elif is_dataset(item):
-        return True
-    else:
-        return False
-
 def getEntryName(path):
     """
     Retrieve the top level name (not h5py object) associated to a given path
@@ -155,7 +154,7 @@ def getTitle(h5file, path):
     """
     entry = h5file[getEntryName(path)]
     title = ''
-    if "title" in entry:
+    if isGroup(entry) and "title" in entry:
         title = entry["title"][()]
         if hasattr(title, "dtype"):
             _logger.warning("entry title should be a string not an array")
