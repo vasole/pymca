@@ -1,5 +1,5 @@
 # /*##########################################################################
-# Copyright (C) 1995-2019 European Synchrotron Radiation Facility
+# Copyright (C) 1995-2020 European Synchrotron Radiation Facility
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -63,11 +63,6 @@
 #include <SpecFile.h>
 #include <SpecFileP.h>
 #include <locale_management.h>
-#ifndef _GNU_SOURCE
-#ifdef PYMCA_POSIX
-#include <locale.h>
-#endif
-#endif
 
 /*
  * Declarations
@@ -477,12 +472,19 @@ SfAllMotorPos ( SpecFile *sf, long index, double **retpos, int *error )
      long      no_lines;
      short     i,j;
 
-#ifndef _GNU_SOURCE
-#ifdef PYMCA_POSIX
-	char *currentLocaleBuffer;
-	char localeBuffer[21];
-#endif
-#endif
+     /* locale function to be used */
+     double (*my_atof) (const char *);
+     struct lconv * lc;
+     lc=localeconv();
+
+     if (strcmp(lc->mon_decimal_point, ".") == 0)
+     {
+         my_atof = atof;
+     }
+     else
+     {
+         my_atof = PyMcaAtof;
+     }
 
      if (sfSetCurrent(sf,index,error) == -1) {
          *retpos = (double *) NULL;
@@ -512,13 +514,6 @@ SfAllMotorPos ( SpecFile *sf, long index, double **retpos, int *error )
      }
 
      motct = 0;
-#ifndef _GNU_SOURCE
-#ifdef PYMCA_POSIX
-	currentLocaleBuffer = setlocale(LC_NUMERIC, NULL);
-	strcpy(localeBuffer, currentLocaleBuffer);
-	setlocale(LC_NUMERIC, "C\0");
-#endif
-#endif
      for (j=0;j<no_lines;j++) {
          thisline = lines[j] + 4;
          endline  = thisline + strlen(thisline);
@@ -527,7 +522,7 @@ SfAllMotorPos ( SpecFile *sf, long index, double **retpos, int *error )
             if (*ptr==' ') {
                posstr[i] = '\0';
 
-               pos[motct]  = PyMcaAtof(posstr);
+               pos[motct]  = my_atof(posstr);
 
                motct++;
                i=-1;
@@ -541,17 +536,12 @@ SfAllMotorPos ( SpecFile *sf, long index, double **retpos, int *error )
             i++;
          }
          posstr[i]   = '\0';
-         pos[motct]  = PyMcaAtof(posstr);
+         pos[motct]  = my_atof(posstr);
 
          motct++;
 
 	 }
 
-#ifndef _GNU_SOURCE
-#ifdef PYMCA_POSIX
-	setlocale(LC_NUMERIC, localeBuffer);
-#endif
-#endif
 
      /*
       * Save in specfile structure

@@ -1,5 +1,5 @@
 # /*##########################################################################
-# Copyright (C) 2000-2017 European Synchrotron Radiation Facility
+# Copyright (C) 2000-2020 European Synchrotron Radiation Facility
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -57,11 +57,6 @@
 #include <SpecFile.h>
 #include <SpecFileP.h>
 #include <locale_management.h>
-#ifndef _GNU_SOURCE
-#ifdef PYMCA_POSIX
-#include <locale.h>
-#endif
-#endif
 
 #include <ctype.h>
 #include <stdlib.h>
@@ -164,12 +159,20 @@ SfGetMca( SpecFile *sf, long index, long number, double **retdata, int *error )
 
      long    blocks=1,
              initsize=1024;
-#ifndef _GNU_SOURCE
-#ifdef PYMCA_POSIX
-	char *currentLocaleBuffer;
-	char localeBuffer[21];
-#endif
-#endif
+
+     /* locale function to be used */
+     double (*my_atof) (const char *);
+     struct lconv * lc;
+     lc=localeconv();
+
+     if (strcmp(lc->mon_decimal_point, ".") == 0)
+     {
+         my_atof = atof;
+     }
+     else
+     {
+         my_atof = PyMcaAtof;
+     }
 
      headersize = ((SpecScan *)sf->current->contents)->data_offset
                 - ((SpecScan *)sf->current->contents)->offset;
@@ -255,13 +258,6 @@ SfGetMca( SpecFile *sf, long index, long number, double **retdata, int *error )
     /*
      * continue
      */
-#ifndef _GNU_SOURCE
-#ifdef PYMCA_POSIX
-	currentLocaleBuffer = setlocale(LC_NUMERIC, NULL);
-	strcpy(localeBuffer, currentLocaleBuffer);
-	setlocale(LC_NUMERIC, "C\0");
-#endif
-#endif
      for ( ;(*(ptr+1) != '\n' || (*ptr == MCA_CONT)) && ptr < to - 1 ; ptr++)
      {
          if (*ptr == ' ' || *ptr == '\t' || *ptr == '\\' || *ptr == '\n') {
@@ -271,18 +267,13 @@ SfGetMca( SpecFile *sf, long index, long number, double **retdata, int *error )
                     if ((data = (double *)realloc (data, sizeof(double) * blocks * initsize))
                                        == (double *)NULL) {
                           *error = SF_ERR_MEMORY_ALLOC;
-#ifndef _GNU_SOURCE
-#ifdef PYMCA_POSIX
-	setlocale(LC_NUMERIC, localeBuffer);
-#endif
-#endif
 							return(-1);
                     }
 
                 }
                 strval[i] = '\0';
                 i = 0;
-                val = PyMcaAtof(strval);
+                val = my_atof(strval);
                 data[vals] = val;
                 vals++;
              }
@@ -295,15 +286,10 @@ SfGetMca( SpecFile *sf, long index, long number, double **retdata, int *error )
      if (isnumber(*ptr)) {
        strval[i]    = *ptr;
        strval[i+1]  = '\0';
-       val = PyMcaAtof(strval);
+       val = my_atof(strval);
        data[vals] = val;
        vals++;
      }
-#ifndef _GNU_SOURCE
-#ifdef PYMCA_POSIX
-	setlocale(LC_NUMERIC, localeBuffer);
-#endif
-#endif
 
     *retdata = data;
 
