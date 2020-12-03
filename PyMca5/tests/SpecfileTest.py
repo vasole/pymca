@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -35,6 +35,17 @@ import sys
 import os
 import gc
 import tempfile
+import locale
+current_locale = locale.getlocale()
+for l in ['de_DE.utf8', 'fr_FR.utf8']:
+    try:
+        locale.setlocale(locale.LC_ALL, l)
+    except:
+        other_locale = False
+    else:
+        other_locale = l
+        break
+locale.setlocale(locale.LC_ALL, current_locale)
 
 class testSpecfile(unittest.TestCase):
     def setUp(self):
@@ -78,6 +89,9 @@ class testSpecfile(unittest.TestCase):
         self._scan = None
         # this should free the handle
         gc.collect()
+        # restore saved locale
+        locale.setlocale(locale.LC_ALL, current_locale)  
+
         if self.specfileClass is not None:
             if os.path.exists(self.fname):
                 os.remove(self.fname)
@@ -143,6 +157,30 @@ class testSpecfile(unittest.TestCase):
                     (datacol[1], data[0][1]))
         gc.collect()
 
+    @unittest.skipIf(not other_locale, "other locale not installed")
+    def testSpecfileReadingCompatibleWithOtherLocale(self):
+        self.testSpecfileImport()
+        self._sf = self.specfileClass.Specfile(self.fname)
+        locale.setlocale(locale.LC_ALL, other_locale)
+        self._scan = self._sf[1]
+        datacol = self._scan.datacol(1)
+        data = self._scan.data()
+        locale.setlocale(locale.LC_ALL, current_locale)
+        self._sf = None
+        self.assertEqual(datacol[0], 1.3,
+                    'Read %f instead of %f' %\
+                    (datacol[0], 1.3))
+        self.assertEqual(datacol[1], 2.5,
+                    'Read %f instead of %f' %\
+                    (datacol[1], 2.5))
+        self.assertEqual(datacol[2], 3.7,
+                    'Read %f instead of %f' %\
+                    (datacol[2], 3.7))
+        self.assertEqual(datacol[1], data[0][1],
+                    'Read %f instead of %f' %\
+                    (datacol[1], data[0][1]))
+        gc.collect()
+
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()
     if auto:
@@ -154,6 +192,8 @@ def getSuite(auto=True):
         testSuite.addTest(testSpecfile("testSpecfileReading"))
         testSuite.addTest(\
             testSpecfile("testSpecfileReadingCompatibleWithUserLocale"))
+        testSuite.addTest(\
+            testSpecfile("testSpecfileReadingCompatibleWithOtherLocale"))
     return testSuite
 
 def test(auto=False):

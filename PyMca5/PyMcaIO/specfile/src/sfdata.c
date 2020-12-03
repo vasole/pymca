@@ -1,5 +1,5 @@
 # /*##########################################################################
-# Copyright (C) 1995-2017 European Synchrotron Radiation Facility
+# Copyright (C) 1995-2020 European Synchrotron Radiation Facility
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -70,12 +70,6 @@
 #include <SpecFile.h>
 #include <SpecFileP.h>
 #include <locale_management.h>
-
-#ifndef _GNU_SOURCE
-#ifdef PYMCA_POSIX
-#include <locale.h>
-#endif
-#endif
 
 #include <ctype.h>
 /*
@@ -202,12 +196,19 @@ SfData( SpecFile *sf, long index, double ***retdata, long **retinfo, int *error 
              maxcol=512;
      long    rows;
      int     i;
-#ifndef _GNU_SOURCE
-#ifdef PYMCA_POSIX
-	char *currentLocaleBuffer;
-	char localeBuffer[21];
-#endif
-#endif
+     /* locale function to be used */
+     double (*my_atof) (const char *);
+     struct lconv * lc;
+     lc=localeconv();
+
+     if (strcmp(lc->mon_decimal_point, ".") == 0)
+     {
+         my_atof = atof;
+     }
+     else
+     {
+         my_atof = PyMcaAtof;
+     }
 
      if (index <= 0 ){
         return(-1);
@@ -299,13 +300,7 @@ if(0){
      */
     ptr++;
 }
-#ifndef _GNU_SOURCE
-#ifdef PYMCA_POSIX
-	currentLocaleBuffer = setlocale(LC_NUMERIC, NULL);
-	strcpy(localeBuffer, currentLocaleBuffer);
-	setlocale(LC_NUMERIC, "C\0");
-#endif
-#endif
+
     for ( ; ptr < to; ptr++) {
         /* get a complete line */
         i=0;
@@ -362,7 +357,7 @@ if(0){
             if (*ptr == ' ' || *ptr == '\t' ) {
                 strval[i] = '\0';
                 i = 0;
-                val = PyMcaAtof(strval);
+                val = my_atof(strval);
                 valline[cols] = val;
                 cols++;
                 if (cols >= maxcol) return(-1);
@@ -380,7 +375,7 @@ if(0){
         }
         if ((*(ptr)== '\n') && (i != 0)){
                 strval[i] = '\0';
-                val = PyMcaAtof(strval);
+                val = my_atof(strval);
                 valline[cols] = val;
                 cols++;
                 if (cols >= maxcol) return(-1);
@@ -417,11 +412,6 @@ if(0){
         }
     }
 
-#ifndef _GNU_SOURCE
-#ifdef PYMCA_POSIX
-    setlocale(LC_NUMERIC, localeBuffer);
-#endif
-#endif
     /*
     * make a copy in specfile structure
     */

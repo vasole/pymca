@@ -1,5 +1,5 @@
 # /*##########################################################################
-# Copyright (C) 2012-2017 European Synchrotron Radiation Facility
+# Copyright (C) 2012-2020 European Synchrotron Radiation Facility
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,29 +20,8 @@
 # THE SOFTWARE.
 #
 # ############################################################################*/
-#include <locale_management.h>
 #include <stdlib.h>
-
-#ifdef _GNU_SOURCE
-#  include <locale.h>
-#  ifdef __GLIBC__
-#    include <features.h>
-#    if !((__GLIBC__ > 2) || ((__GLIBC__ == 2) && (__GLIBC_MINOR__ > 25)))
-#      /* strtod_l has been moved to stdlib.h since glibc 2.26 */
-#      include <xlocale.h>
-#    endif
-#  else 
-#    include <xlocale.h>
-#  endif
-#else
-#  ifdef PYMCA_POSIX
-#  else
-#    ifdef SPECFILE_POSIX
-#      include <locale.h>
-#    endif
-#  endif
-#endif
-
+#include <locale_management.h>
 #include <string.h>
 
 double PyMcaAtof(const char * inputString)
@@ -54,14 +33,15 @@ double PyMcaAtof(const char * inputString)
 	result = strtod_l(inputString, NULL, newLocale);
 	freelocale(newLocale);
 	return result;
-#else
-#ifdef PYMCA_POSIX
-	return atof(inputString);
-#else
+#endif
+#if defined(_MSC_VER) && defined(_MSC_FULL_VER)
+	_locale_t c_locale = _create_locale(LC_NUMERIC, "C");
+	return _atof_l(inputString, c_locale);
+#endif
 #ifdef SPECFILE_POSIX
 	char *currentLocaleBuffer;
 	char *restoredLocaleBuffer;
-	char localeBuffer[21];
+	char localeBuffer[LOCALE_NAME_MAX_LENGTH + 1] = {'\0'};
 	double result;
 	currentLocaleBuffer = setlocale(LC_NUMERIC, NULL);
 	strcpy(localeBuffer, currentLocaleBuffer);
@@ -71,7 +51,5 @@ double PyMcaAtof(const char * inputString)
 	return(result);
 #else
 	return atof(inputString);
-#endif
-#endif
 #endif
 }
