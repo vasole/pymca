@@ -260,13 +260,14 @@ def build_FastEdf(ext_modules):
 
 def build_specfile(ext_modules):
     if os.name.lower().startswith('posix'):
-        specfile_define_macros = [('PYMCA_POSIX', None)]
+        specfile_define_macros = [('SPECFILE_POSIX', None)]
         # the best choice is to use _GNU_SOURCE if possible
         # because that enables the use of strtod_l
         if SPECFILE_USE_GNU_SOURCE:
             specfile_define_macros = [('_GNU_SOURCE', 1)]
     else:
-        specfile_define_macros = define_macros
+        specfile_define_macros = [('WIN32', None),
+                                  ('SPECFILE_POSIX', None)]
     srcfiles = ['sfheader', 'sfinit', 'sflists', 'sfdata', 'sfindex',
                 'sflabel', 'sfmca', 'sftools', 'locale_management',
                 'specfile_py']
