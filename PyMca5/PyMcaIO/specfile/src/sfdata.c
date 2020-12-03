@@ -201,14 +201,12 @@ SfData( SpecFile *sf, long index, double ***retdata, long **retinfo, int *error 
      struct lconv * lc;
      lc=localeconv();
 
-     if (lc->mon_decimal_point == ".")
+     if (strcmp(lc->mon_decimal_point, ".") == 0)
      {
-         printf("using standard atof\n");
          my_atof = atof;
      }
      else
      {
-         printf("using replacement atof\n");
          my_atof = PyMcaAtof;
      }
 
