@@ -170,7 +170,7 @@ class StackROIBatch(object):
                     rawSum = 0.0
                     netSum = 0.0
                 else:
-                    roichunk = chunk[:, idx[j]]
+                    roichunk = numpy.array(chunk[:, idx[j]], copy=False, dtype=numpy.float)
                     rawSum = roichunk.sum(axis=1, dtype=numpy.float)
                     deltaX = xw[j][iXMaxList[j]] - xw[j][iXMinList[j]]
                     left = roichunk[:, iXMinList[j]]
