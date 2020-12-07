@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -97,7 +97,7 @@ class RGBCorrelatorGraph(qt.QWidget):
         self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
 
     def sizeHint(self):
-        return qt.QSize(1.5 * qt.QWidget.sizeHint(self).width(),
+        return qt.QSize(int(1.5 * qt.QWidget.sizeHint(self).width()),
                         qt.QWidget.sizeHint(self).height())
 
     def _buildToolBar(self, selection=False, colormap=False,
