@@ -75,7 +75,7 @@ def calc_coeff(num_points, pol_degree, diff_order=0):
     # ... you might use other interpolation points
     # and maybe other functions than monomials ....
 
-    x = numpy.arange(-num_points, num_points+1, dtype=numpy.int)
+    x = numpy.arange(-num_points, num_points+1, dtype=numpy.int32)
     monom = lambda x, deg : pow(x, deg)
 
     A = numpy.zeros((2*num_points+1, pol_degree+1), numpy.float64)

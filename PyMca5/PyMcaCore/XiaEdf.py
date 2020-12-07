@@ -116,7 +116,7 @@ class XiaEdfCountFile:
             if len(dets)==self.nbDet:
                 self.detList= map(int, dets)
 
-        self.statArray = numpy.zeros(XiaStatNb*self.nbDet, numpy.int)
+        self.statArray = numpy.zeros(XiaStatNb*self.nbDet, numpy.int64)
         idx= 0
         for det in self.detList:
             self.statArray[idx+XiaStatIndex["det"]]= int(self.header.get("xdet%02d"%det, det))
@@ -224,7 +224,7 @@ class XiaEdfCountFile:
                 sumdata[idx,:] = numpy.sum(self.data[1:,], 0)
                 xdet= self.detList
             else:
-                mask= numpy.zeros((self.nbDet+1,1), numpy.int)
+                mask= numpy.zeros((self.nbDet+1,1), numpy.int64)
                 xdet= []
                 for det in sums[idx]:
                     if det in self.detList:
