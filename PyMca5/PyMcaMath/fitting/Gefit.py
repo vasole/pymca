@@ -107,7 +107,7 @@ def LeastSquaresFit(model, parameters0, data=None, maxiter = 100,constrains=None
     """
     if constrains is None:
         constrains = []
-    parameters = numpy.array(parameters0, dtype=numpy.float, copy=False)
+    parameters = numpy.array(parameters0, dtype=numpy.float64, copy=False)
     if linear is None:linear=0
     if deltachi is None:
         deltachi = 0.01
@@ -212,7 +212,7 @@ def LinearLeastSquaresFit(model0,parameters0,data0,maxiter,
             raise ValueError("Linear fit cannot handle quoted constraint")
     # make a local copy of the function for an easy speed up ...
     model = model0
-    parameters = numpy.array(parameters0, dtype=numpy.float, copy=False)
+    parameters = numpy.array(parameters0, dtype=numpy.float64, copy=False)
     if data0 is not None:
         selfx = numpy.array([x[0] for x in data0])
         selfy = numpy.array([x[1] for x in data0])
@@ -326,7 +326,7 @@ def RestreinedLeastSquaresFit(model0,parameters0,data0,maxiter,
                 raise ValueError("Unknown constraint %s" % constrains[0][i])
     # make a local copy of the function for an easy speed up ...
     model = model0
-    parameters = numpy.array(parameters0, dtype=numpy.float, copy=False)
+    parameters = numpy.array(parameters0, dtype=numpy.float64, copy=False)
     if ONED:
         data = numpy.array(data0)
         x = data[1:2,0]

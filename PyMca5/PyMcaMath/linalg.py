@@ -229,8 +229,8 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
     >>> plt.show()
 
     """
-    a = numpy.array(a, dtype=numpy.float, copy=False)
-    b = numpy.array(b, dtype=numpy.float, copy=False)
+    a = numpy.array(a, dtype=numpy.float64, copy=False)
+    b = numpy.array(b, dtype=numpy.float64, copy=False)
     a_shape = a.shape
     b_shape = b.shape
     original = b_shape
@@ -250,7 +250,7 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
     if weight:
         if sigma_b is not None:
             # experimental uncertainties provided these are the ones to use (if any)
-            w = numpy.abs(numpy.array(sigma_b, dtype=numpy.float, copy=False))
+            w = numpy.abs(numpy.array(sigma_b, dtype=numpy.float64, copy=False))
             w = w + numpy.equal(w, 0)
             if w.size == b_shape[0]:
                 # same uncertainty for every spectrum

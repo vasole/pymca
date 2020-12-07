@@ -228,8 +228,7 @@ class StackNormalizationPlugin(StackPluginBase.StackPluginBase):
                     normalizationData = normalizationData[:, -1]
         if normalizationData.size != imageSize:
                 raise ValueError("Loaded data size does not match required size")
-        if normalizationData.dtype not in [numpy.float,
-                                           numpy.float32,
+        if normalizationData.dtype not in [numpy.float32,
                                            numpy.float64]:
             normalizationData = normalizationData.astype(numpy.float32)
         if operation == "scale":

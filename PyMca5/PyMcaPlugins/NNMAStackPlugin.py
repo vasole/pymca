@@ -218,7 +218,7 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
         del nnmaParameters
         stack = self.getStackDataObject()
         if isinstance(stack, numpy.ndarray):
-            if stack.data.dtype not in [numpy.float, numpy.float32]:
+            if stack.data.dtype not in [numpy.float64, numpy.float32]:
                 _logger.warning("WARNING: Non floating point data")
                 text = "Calculation going on."
                 text += " WARNING: Non floating point data."

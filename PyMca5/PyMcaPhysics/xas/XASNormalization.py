@@ -145,8 +145,8 @@ def estimateXANESEdge(spectrum, energy=None, npoints=5, full=False,
         if energy is None:
             x = numpy.arange(len(spectrum)).astype(numpy.float64)
         else:
-            x = numpy.array(energy, dtype=numpy.float, copy=False)
-        y = numpy.array(spectrum, dtype=numpy.float, copy=False)
+            x = numpy.array(energy, dtype=numpy.float64, copy=False)
+        y = numpy.array(spectrum, dtype=numpy.float64, copy=False)
         # make sure data are sorted
         idx = energy.argsort(kind='mergesort')
         x = numpy.take(energy, idx)
