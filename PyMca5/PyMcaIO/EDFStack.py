@@ -630,7 +630,7 @@ if __name__ == "__main__":
     t0= time.time()
     stack = EDFStack()
     #stack.loadIndexedStack("Z:\COTTE\ch09\ch09__mca_0005_0000_0070.edf")
-    stack.loadIndexedStack(".\COTTE\ch09\ch09__mca_0005_0000_0070.edf")
+    stack.loadIndexedStack(r".\COTTE\ch09\ch09__mca_0005_0000_0070.edf")
     shape = stack.data.shape
     print("elapsed = %f" % (time.time() - t0))
     #guess the MCA
