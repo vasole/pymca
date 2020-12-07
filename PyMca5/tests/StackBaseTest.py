@@ -76,9 +76,9 @@ class testStackBase(unittest.TestCase):
         nrows = 50
         ncolumns = 100
         nchannels = 500
-        a = numpy.ones((nrows, ncolumns), numpy.float)
+        a = numpy.ones((nrows, ncolumns), numpy.float64)
         referenceData = numpy.zeros((nrows, ncolumns, nchannels),
-                                   numpy.float)
+                                   numpy.float64)
         for i in range(nchannels):
             referenceData[:, :, i] = a * i
         a = None
@@ -141,9 +141,9 @@ class testStackBase(unittest.TestCase):
         nrows = 50
         ncolumns = 100
         nchannels = 500
-        a = numpy.ones((nrows, ncolumns), numpy.float)
+        a = numpy.ones((nrows, ncolumns), numpy.float64)
         referenceData = numpy.zeros((nchannels, nrows, ncolumns),
-                                   numpy.float)
+                                   numpy.float64)
         for i in range(nchannels):
             referenceData[i] = a * i
         a = None

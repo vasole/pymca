@@ -289,7 +289,7 @@ class StackNormalizationPlugin(StackPluginBase.StackPluginBase):
             text = "Please make sure to have an active curve"
             raise TypeError(text)
         x, y, legend, info = self.getActiveCurve()
-        yWork = y[y!=0].astype(numpy.float)
+        yWork = y[y!=0].astype(numpy.float64)
         mcaIndex = stack.info.get('McaIndex', -1)
         if mcaIndex in [-1, 2]:
             for i, value in enumerate(yWork):
@@ -322,7 +322,7 @@ class StackNormalizationPlugin(StackPluginBase.StackPluginBase):
                 raise TypeError(text)
             x, y, legend, info = self.getActiveCurve()
             if divider is None:
-                yWork = y[y>0].astype(numpy.float)
+                yWork = y[y>0].astype(numpy.float64)
             mcaIndex = stack.info.get('McaIndex', -1)
             if mcaIndex in [-1, 2]:
                 for i, value in enumerate(yWork):

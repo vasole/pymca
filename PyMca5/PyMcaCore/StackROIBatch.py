@@ -170,8 +170,8 @@ class StackROIBatch(object):
                     rawSum = 0.0
                     netSum = 0.0
                 else:
-                    roichunk = numpy.array(chunk[:, idx[j]], copy=False, dtype=numpy.float)
-                    rawSum = roichunk.sum(axis=1, dtype=numpy.float)
+                    roichunk = numpy.array(chunk[:, idx[j]], copy=False, dtype=numpy.float64)
+                    rawSum = roichunk.sum(axis=1, dtype=numpy.float64)
                     deltaX = xw[j][iXMaxList[j]] - xw[j][iXMinList[j]]
                     left = roichunk[:, iXMinList[j]]
                     right = roichunk[:, iXMaxList[j]]
@@ -179,7 +179,7 @@ class StackROIBatch(object):
                     if abs(deltaX) > 0.0:
                         slope = deltaY / float(deltaX)
                         background = left * len(xw[j]) + slope * \
-                                    (xw[j] - xw[j][iXMinList[j]]).sum(dtype=numpy.float)
+                                    (xw[j] - xw[j][iXMinList[j]]).sum(dtype=numpy.float64)
                         netSum = rawSum - background
                     else:
                         netSum = 0.0

@@ -171,10 +171,10 @@ class XiaEdfCountFile:
             raise XiaEdfError("<%s> seems already deadtime corrected"%self.filename)
 
         self.__readData()
-        self.data= self.data.astype(numpy.float)
+        self.data= self.data.astype(numpy.float64)
 
         if livetime:
-            lvt= numpy.zeros((self.nbDet,1), numpy.float)
+            lvt= numpy.zeros((self.nbDet,1), numpy.float64)
             derr= []
             for idx in range(len(self.detList)):
                 lvt[idx]= self.statArray[idx*XiaStatNb + XiaStatIndex["lt"]] / 1000.0
@@ -188,7 +188,7 @@ class XiaEdfCountFile:
             self.header["xcorr"]= corrflag|2
 
         if deadtime:
-            rate= numpy.zeros((self.nbDet,1), numpy.float)
+            rate= numpy.zeros((self.nbDet,1), numpy.float64)
             for idx in range(len(self.detList)):
                 derr= []
                 try:
@@ -215,9 +215,9 @@ class XiaEdfCountFile:
         if deadtime or livetime:
             message+= self.correct(deadtime, livetime)
         else:
-            self.data= self.data.astype(numpy.float)
+            self.data= self.data.astype(numpy.float64)
 
-        sumdata= numpy.zeros((len(sums), self.data.shape[1]), numpy.float)
+        sumdata= numpy.zeros((len(sums), self.data.shape[1]), numpy.float64)
 
         for idx in range(len(sums)):
             if not len(sums[idx]):
@@ -363,12 +363,12 @@ class XiaEdfScanFile:
         if deadtime and corrflag&1:
             raise XiaEdfError("det #%02d seems already deadtime corrected"%detector)
 
-        self.data= self.data.astype(numpy.float)
+        self.data= self.data.astype(numpy.float64)
         idx= self.detList.index(detector)
         pts= self.statArray.shape[0]
 
         if livetime:
-            lvt= numpy.zeros((pts, 1), numpy.float)
+            lvt= numpy.zeros((pts, 1), numpy.float64)
             lvt[:,0]= self.statArray[:,((XiaStatNb*idx)+XiaStatIndex["lt"])] / 1000.0
 
             perr= self.__checkNullLivetime(lvt, pts)
@@ -379,8 +379,8 @@ class XiaEdfScanFile:
             self.header["xcorr"]= corrflag|2
 
         if deadtime:
-            rate= numpy.zeros((self.statArray.shape[0], 1), numpy.float)
-            count= numpy.zeros((self.statArray.shape[0], 2), numpy.float)
+            rate= numpy.zeros((self.statArray.shape[0], 1), numpy.float64)
+            count= numpy.zeros((self.statArray.shape[0], 2), numpy.float64)
 
             count[:,0]= self.statArray[:, (XiaStatNb*idx)+XiaStatIndex["ocr"]]
             count[:,1]= self.statArray[:, (XiaStatNb*idx)+XiaStatIndex["icr"]]
@@ -472,7 +472,7 @@ class XiaEdfScanFile:
                 message+= self.correct(det, deadtime, livetime)
             else:
                 self.__readData(det)
-                self.data= self.data.astype(numpy.float)
+                self.data= self.data.astype(numpy.float64)
 
             if sumdata is None:
                 sumdata= self.data * 1.0

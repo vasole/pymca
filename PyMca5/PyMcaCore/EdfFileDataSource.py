@@ -216,16 +216,16 @@ class EdfFileDataSource(object):
         data.info['rows'], data.info['cols'] = data.data.shape[0:2]
         if data.info['selectiontype'] == "1D":
             if MCAIMP:
-                data.y = [numpy.ravel(data.data[:]).astype(numpy.float)]
+                data.y = [numpy.ravel(data.data[:]).astype(numpy.float64)]
             else:
                 if key_split[2].upper() == 'C':
-                    data.y=[data.data[:,int(key_split[3])-1].astype(numpy.float)]
+                    data.y=[data.data[:,int(key_split[3])-1].astype(numpy.float64)]
                 elif key_split[2].upper() == 'R':
-                    data.y=[data.data[int(key_split[3])-1, :].astype(numpy.float)]
+                    data.y=[data.data[int(key_split[3])-1, :].astype(numpy.float64)]
                 else:
                     raise ValueError("Unknown key %s" % key)
             ch0 = int(data.info['Channel0'])
-            data.x = [ch0+numpy.arange(len(data.y[0])).astype(numpy.float)]
+            data.x = [ch0+numpy.arange(len(data.y[0])).astype(numpy.float64)]
             data.m = None
             data.data = None
             #print "data.x.shape ", data.x[0].shape

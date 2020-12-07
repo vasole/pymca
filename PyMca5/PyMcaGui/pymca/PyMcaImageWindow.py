@@ -230,7 +230,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                                 if m.size == self._imageData.size:
                                     tmpView = m[:]
                                     tmpView.shape = shape
-                                    self._imageData = self._imageData / tmpView.astype(numpy.float)
+                                    self._imageData = self._imageData / tmpView.astype(numpy.float64)
                                 else:
                                     #let numpy raise the appropriate error
                                     self._imageData = self._imageData / numpy.float(m)
@@ -285,7 +285,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                             if m.size == data.size:
                                 tmpView = m[:]
                                 tmpView.shape = data.shape
-                                data = data / tmpView.astype(numpy.float)
+                                data = data / tmpView.astype(numpy.float64)
                             else:
                                 data = data / numpy.float(m)
                         else:
@@ -306,7 +306,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                             if m.size == data.size:
                                 tmpView = m[:]
                                 tmpView.shape = data.shape
-                                data = data / tmpView.astype(numpy.float)
+                                data = data / tmpView.astype(numpy.float64)
                             else:
                                 data = data / numpy.float(m)
                         else:
@@ -428,7 +428,7 @@ if __name__ == "__main__":
     a = 1000
     b = 1000
     period = 1000
-    x1 = numpy.arange(a * b).astype(numpy.float)
+    x1 = numpy.arange(a * b).astype(numpy.float64)
     x1.shape= [a, b]
     x2 = numpy.transpose(x1)
 

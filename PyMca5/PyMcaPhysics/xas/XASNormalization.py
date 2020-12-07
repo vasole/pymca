@@ -51,7 +51,7 @@ def e2k(energy, e0=0.0, units="eV"):
         e2k(energy, e0=0.0): converts from E (eV) to k (A^-1)
         note: we use the convention that points with E<e0 will have negative k
     """
-    energy = numpy.array(energy, copy=False, dtype=numpy.float)
+    energy = numpy.array(energy, copy=False, dtype=numpy.float64)
     if units.lower() != "ev":
         energy *= 1000.
         e0 *= 1000.
@@ -111,7 +111,7 @@ def modifiedVictoreenDerivative(parameter_list, parameter_index, x):
     if parameter_index == 0:
         return pow(x, -3)
     else:
-        return numpy.ones(x.shape, dtype=numpy.float)
+        return numpy.ones(x.shape, dtype=numpy.float64)
 
 def getE0SavitzkyGolay(energy, mu, points=5, full=False):
     # It does not check anything, data have to be prepared before!!!
@@ -125,8 +125,8 @@ def getE0SavitzkyGolay(energy, mu, points=5, full=False):
     # get the center of mass
     w = points
     selection = yPrime[iMax-w:iMax+w+1]
-    edge = (selection * xPrime[iMax-w:iMax+w+1]).sum(dtype=numpy.float)/\
-           selection.sum(dtype=numpy.float)
+    edge = (selection * xPrime[iMax-w:iMax+w+1]).sum(dtype=numpy.float64)/\
+           selection.sum(dtype=numpy.float64)
 
     if full:
         # return intermediate information
@@ -143,7 +143,7 @@ def estimateXANESEdge(spectrum, energy=None, npoints=5, full=False,
                       sanitize=True):
     if sanitize:
         if energy is None:
-            x = numpy.arange(len(spectrum)).astype(numpy.float)
+            x = numpy.arange(len(spectrum)).astype(numpy.float64)
         else:
             x = numpy.array(energy, dtype=numpy.float, copy=False)
         y = numpy.array(spectrum, dtype=numpy.float, copy=False)
@@ -318,7 +318,7 @@ def XASPolynomialNormalization(spectrum,
     if pre_edge_order == 0:
         prePol = [yPre.mean()]
     elif pre_edge_order > 0:
-        p = numpy.arange(pre_edge_order + 1).astype(numpy.float)
+        p = numpy.arange(pre_edge_order + 1).astype(numpy.float64)
         prePol = LeastSquaresFit(pre_edge_function, p,
                                  xdata=xPre, ydata=yPre,
                                  model_deriv=polynomDerivative,
@@ -363,7 +363,7 @@ def XASPolynomialNormalization(spectrum,
         postPol = [(yPost-baseLine).mean()]
         normalizedSpectrum = (spectrum - pre_edge_function(prePol, energy))/postPol[0]
     elif post_edge_order > 0:
-        p = numpy.arange(post_edge_order + 1).astype(numpy.float)
+        p = numpy.arange(post_edge_order + 1).astype(numpy.float64)
         postPol = LeastSquaresFit(post_edge_function, p,
                                   xdata=xPost,
                                   ydata=yPost-baseLine,

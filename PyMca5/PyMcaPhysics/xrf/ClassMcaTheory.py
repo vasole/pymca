@@ -495,21 +495,21 @@ class McaTheory(object):
             if not HYPERMET:
                 if self.config['fit']['escapeflag']:
                     if OLDESCAPE:
-                        PEAKSW.append(numpy.ones((2*r,3+1),numpy.float))
+                        PEAKSW.append(numpy.ones((2*r,3+1),numpy.float64))
                     else:
                         PEAKSW.append(numpy.ones(((r+_nescape_),3+1),
-                                                    numpy.float))
+                                                    numpy.float64))
                 else:
-                    PEAKSW.append(numpy.ones((r,3+1),numpy.float))
+                    PEAKSW.append(numpy.ones((r,3+1),numpy.float64))
             else:
                 if self.config['fit']['escapeflag']:
                     if OLDESCAPE:
-                        PEAKSW.append(numpy.ones((2*r,3+5),numpy.float))
+                        PEAKSW.append(numpy.ones((2*r,3+5),numpy.float64))
                     else:
                         PEAKSW.append(numpy.ones(((r+_nescape_),3+5),
-                                                    numpy.float))
+                                                    numpy.float64))
                 else:
-                    PEAKSW.append(numpy.ones((r,3+5),numpy.float))
+                    PEAKSW.append(numpy.ones((r,3+5),numpy.float64))
 
 
 #######################################
@@ -817,21 +817,21 @@ class McaTheory(object):
                     if not HYPERMET:
                         if self.config['fit']['escapeflag']:
                             if OLDESCAPE:
-                                PEAKSW.append(numpy.ones((2*r,3 + 1),numpy.float))
+                                PEAKSW.append(numpy.ones((2*r,3 + 1),numpy.float64))
                             else:
                                 PEAKSW.append(numpy.ones(((r+_nescape_),3 + 1),
-                                                            numpy.float))
+                                                            numpy.float64))
                         else:
-                            PEAKSW.append(numpy.ones((r,3 + 1),numpy.float))
+                            PEAKSW.append(numpy.ones((r,3 + 1),numpy.float64))
                     else:
                         if self.config['fit']['escapeflag']:
                             if OLDESCAPE:
-                                PEAKSW.append(numpy.ones((2*r,3+5),numpy.float))
+                                PEAKSW.append(numpy.ones((2*r,3+5),numpy.float64))
                             else:
                                 PEAKSW.append(numpy.ones(((r+_nescape_),3+5),
-                                                            numpy.float))
+                                                            numpy.float64))
                         else:
-                            PEAKSW.append(numpy.ones((r,3+5),numpy.float))
+                            PEAKSW.append(numpy.ones((r,3+5),numpy.float64))
             elif (not usematrix) and (len(energylist) > 1):
                 raise ValueError("Multiple energies require a matrix definition")
             else:
@@ -912,21 +912,21 @@ class McaTheory(object):
                                 if not HYPERMET:
                                     if self.config['fit']['escapeflag']:
                                         if OLDESCAPE:
-                                            PEAKSW.append(numpy.ones((2*r, 3 + 1),numpy.float))
+                                            PEAKSW.append(numpy.ones((2*r, 3 + 1),numpy.float64))
                                         else:
                                             PEAKSW.append(numpy.ones(((r+_nescape_), 3 + 1),
-                                                                        numpy.float))
+                                                                        numpy.float64))
                                     else:
-                                        PEAKSW.append(numpy.ones((r, 3 + 1),numpy.float))
+                                        PEAKSW.append(numpy.ones((r, 3 + 1),numpy.float64))
                                 else:
                                     if self.config['fit']['escapeflag']:
                                         if OLDESCAPE:
-                                            PEAKSW.append(numpy.ones((2*r, 3+5),numpy.float))
+                                            PEAKSW.append(numpy.ones((2*r, 3+5),numpy.float64))
                                         else:
                                             PEAKSW.append(numpy.ones(((r+_nescape_),3+5),
-                                                                        numpy.float))
+                                                                        numpy.float64))
                                     else:
-                                        PEAKSW.append(numpy.ones((r,3+5),numpy.float))
+                                        PEAKSW.append(numpy.ones((r,3+5),numpy.float64))
 #########
         PARAMETERS=['Zero','Gain','Noise','Fano','Sum']
         CONTINUUM    = self.config['fit']['continuum']
@@ -1160,7 +1160,7 @@ class McaTheory(object):
                     self.__getselfzz()
                 else:
                     self.laststrip = None
-                    self.zz     = numpy.zeros((n,1),numpy.float)
+                    self.zz     = numpy.zeros((n,1),numpy.float64)
 
             self.sigmay=numpy.take(self.sigmay,i1)
             self.xdata = numpy.resize(self.xdata,(n,1))
@@ -1184,18 +1184,18 @@ class McaTheory(object):
         try:
             if hasattr(y, "shape"):
                 if len(y.shape) > 1:
-                    result=SpecfitFuns.SavitskyGolay(numpy.ravel(y).astype(numpy.float),
+                    result=SpecfitFuns.SavitskyGolay(numpy.ravel(y).astype(numpy.float64),
                                     self.config['fit']['stripfilterwidth'])
                 else:
-                    result=SpecfitFuns.SavitskyGolay(numpy.array(y).astype(numpy.float),
+                    result=SpecfitFuns.SavitskyGolay(numpy.array(y).astype(numpy.float64),
                                     self.config['fit']['stripfilterwidth'])
             else:
-                result=SpecfitFuns.SavitskyGolay(numpy.array(y).astype(numpy.float),
+                result=SpecfitFuns.SavitskyGolay(numpy.array(y).astype(numpy.float64),
                                     self.config['fit']['stripfilterwidth'])
         except:
             print("Unsuccessful Savitsky-Golay smoothing: %s" % sys.exc_info())
             raise
-            result=numpy.array(y).astype(numpy.float)
+            result=numpy.array(y).astype(numpy.float64)
         if len(result) > 1:
             result[1:-1]=numpy.convolve(result,f,mode=0)
             result[0]=0.5*(result[0]+result[1])
@@ -1282,7 +1282,7 @@ class McaTheory(object):
                                       anchorslist)
             self.zz     = numpy.resize(self.zz,(n,1))
         else:
-            self.zz     = numpy.zeros((n,1),numpy.float) + min(ysmooth)
+            self.zz     = numpy.zeros((n,1),numpy.float64) + min(ysmooth)
 
         self.laststripalgorithm  = self.config['fit']['stripalgorithm']
         self.laststripwidth      = self.config['fit']['stripwidth']
@@ -1304,10 +1304,10 @@ class McaTheory(object):
         if summing is None:
             summing  = self.__SUM
         param= numpy.array(param0)
-        #param= numpy.ones(param.shape, numpy.float)
+        #param= numpy.ones(param.shape, numpy.float64)
         if t0 is None:t0 = self.xdata
         x    = numpy.array(t0)
-        matrix = numpy.zeros((len(x),len(param)-self.NGLOBAL)).astype(numpy.float)
+        matrix = numpy.zeros((len(x),len(param)-self.NGLOBAL)).astype(numpy.float64)
 
 
         zero = param[0]
@@ -1629,11 +1629,11 @@ class McaTheory(object):
              return self.linearMatrix[:, index-NGLOBAL]
         PARAMETERS = self.PARAMETERS
         if self.__CONTINUUM and (PARAMETERS[index] == 'Constant'):
-            return numpy.ones(len(t0)).astype(numpy.float)
+            return numpy.ones(len(t0)).astype(numpy.float64)
         elif self.__CONTINUUM and (PARAMETERS[index] == '1st Order'):
-            return numpy.array(t0).astype(numpy.float)
+            return numpy.array(t0).astype(numpy.float64)
         elif self.__CONTINUUM and (PARAMETERS[index] == '2nd Order'):
-            a = numpy.array(t0).astype(numpy.float)
+            a = numpy.array(t0).astype(numpy.float64)
             return a*a
         elif (self.__CONTINUUM == CONTINUUM_LIST.index('Linear Polynomial')) and \
              (PARAMETERS[index] == ( 'A%d' % (index-PARAMETERS.index('Sum')-1))):
@@ -1690,9 +1690,9 @@ class McaTheory(object):
             (r,c) = (PEAKS0[i]).shape
             if OLDESCAPE:
                 if HYPERMET:
-                    dummy      = numpy.ones((2*r,3+5*(HYPERMET > 0)), numpy.float)
+                    dummy      = numpy.ones((2*r,3+5*(HYPERMET > 0)), numpy.float64)
                 else:
-                    dummy      = numpy.ones((2*r,3+1), numpy.float)
+                    dummy      = numpy.ones((2*r,3+1), numpy.float64)
                 dummy[0:r,0] = PEAKS0[i][:,0] * gain
                 dummy[0:r,1] = PEAKS0[i][:,1] * 1.0
                 dummy[0:r,2] = numpy.sqrt(noise+ PEAKS0[i][:,1] * fano)
@@ -1703,9 +1703,9 @@ class McaTheory(object):
                 n_escape_lines = self.PEAKSW[i].shape[0] - r
                 #if 1:print "nlines = ",r, "n escape lines =",n_escape_lines
                 if HYPERMET:
-                    dummy    = numpy.ones((r + n_escape_lines, 3+5*(HYPERMET > 0)), numpy.float)
+                    dummy    = numpy.ones((r + n_escape_lines, 3+5*(HYPERMET > 0)), numpy.float64)
                 else:
-                    dummy    = numpy.ones((r + n_escape_lines, 3+1), numpy.float)
+                    dummy    = numpy.ones((r + n_escape_lines, 3+1), numpy.float64)
                 dummy[0:r,0] = PEAKS0[i][:,0] * gain
                 dummy[0:r,1] = PEAKS0[i][:,1] * 1.0
                 dummy[0:r,2] = numpy.sqrt(noise+ PEAKS0[i][:,1] * fano)
@@ -1725,9 +1725,9 @@ class McaTheory(object):
          else:
             (r,c) = (PEAKS0[i]).shape
             if HYPERMET:
-                dummy      = numpy.ones((r,3+5*(HYPERMET > 0)),numpy.float)
+                dummy      = numpy.ones((r,3+5*(HYPERMET > 0)),numpy.float64)
             else:
-                dummy      = numpy.ones((r,3+1),numpy.float)
+                dummy      = numpy.ones((r,3+1),numpy.float64)
             dummy[0:r,0] = PEAKS0[i][:,0] * gain
             dummy[0:r,1] = PEAKS0[i][:,1] * 1.0
             dummy[0:r,2] = numpy.sqrt(noise + PEAKS0[i][:,1] * fano)
@@ -1852,7 +1852,7 @@ class McaTheory(object):
                 backpar = []
                 for i in range(self.config['fit']['linpolorder']+1):
                     backpar.append(0.0)
-                backcodes=numpy.zeros((3,len(backpar)),numpy.float)
+                backcodes=numpy.zeros((3,len(backpar)),numpy.float64)
             else:
                 backpar,backcodes=self.estimatelinpol(self.xdata, self.ydata,self.zz)
         elif CONTINUUM == CONTINUUM_LIST.index('Exp. Polynomial'):
@@ -1866,7 +1866,7 @@ class McaTheory(object):
                     backpar = []
                     for i in range(self.config['fit']['exppolorder']+1):
                         backpar.append(0.0)
-                    backcodes=numpy.zeros((3,len(backpar)),numpy.float)
+                    backcodes=numpy.zeros((3,len(backpar)),numpy.float64)
             else:
                 backpar,backcodes=self.estimateexppol(self.xdata, self.ydata,self.zz)
         else:
@@ -1877,7 +1877,7 @@ class McaTheory(object):
             else:
                 for i in range(5,NGLOBAL-1):
                     backpar.append(0.0)
-            backcodes=numpy.zeros((3,len(backpar)),numpy.float)
+            backcodes=numpy.zeros((3,len(backpar)),numpy.float64)
             if CONTINUUM == 0:
                 backcodes[0,:] = Gefit.CFIXED
             elif CONTINUUM == CONTINUUM_LIST.index('Constant'):
@@ -1924,7 +1924,7 @@ class McaTheory(object):
             for i in range(len(PARAMETERS)-NGLOBAL):
                 newpar.append(1.0)
         # the codes
-        codes = numpy.zeros((3,len(newpar)),numpy.float)
+        codes = numpy.zeros((3,len(newpar)),numpy.float64)
         codes[0,:]   = Gefit.CPOSITIVE # POSITIVE
         codes[0,0:4] = Gefit.CQUOTED # QUOTED
         if self.__SUM==0:
@@ -2038,7 +2038,7 @@ class McaTheory(object):
                 #print "n escape lines = ",self.PEAKSW[i].shape[0] - len(rates)
                 #get the number of escape lines to get a proper buffer
                 n_escape_lines = self.PEAKSW[i].shape[0] - len(rates)
-                peak_buffer    = numpy.zeros((n_escape_lines, 3)).astype(numpy.float)
+                peak_buffer    = numpy.zeros((n_escape_lines, 3)).astype(numpy.float64)
                 ii=0
                 jj=0
                 for esc_group in self.PEAKS0ESCAPE[i]:
@@ -2107,7 +2107,7 @@ class McaTheory(object):
                     #get the number of escape lines to get a proper buffer
                     rates     =  self.PEAKS0[i][:,0]
                     n_escape_lines = self.PEAKSW[i].shape[0] - len(rates)
-                    peak_buffer    = numpy.zeros((n_escape_lines, 3)).astype(numpy.float)
+                    peak_buffer    = numpy.zeros((n_escape_lines, 3)).astype(numpy.float64)
                     ii=0
                     jj=0
                     for esc_group in self.PEAKS0ESCAPE[i]:
@@ -2791,7 +2791,7 @@ class McaTheory(object):
     def linpol_deriv(self,p0,index,x):
         xw=numpy.array(x)
         if index==0:
-            return numpy.ones(len(x)).astype(numpy.float)
+            return numpy.ones(len(x)).astype(numpy.float64)
         else:
             return pow(xw,index)
 
@@ -2817,7 +2817,7 @@ class McaTheory(object):
                                            #deltachi=self.config['fit']['deltachi'],
                                            fulloutput=1)
         fittedpar=fitresult[0]
-        return fittedpar,numpy.zeros((3,len(fittedpar)),numpy.float)
+        return fittedpar,numpy.zeros((3,len(fittedpar)),numpy.float64)
 
     def estimateexppol(self,x,y,z,xscaling=1.0,yscaling=1.0):
         #initial fit on zz
@@ -2844,7 +2844,7 @@ class McaTheory(object):
                                            fulloutput=1)
         fittedpar=fitresult[0]
         fittedpar[0] = numpy.exp(fittedpar[0])
-        return fittedpar,numpy.zeros((3,len(fittedpar)),numpy.float)
+        return fittedpar,numpy.zeros((3,len(fittedpar)),numpy.float64)
 
 
 class ClassMcaTheory(McaTheory):

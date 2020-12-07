@@ -398,7 +398,7 @@ if __name__ == "__main__":
     import numpy
     app = qt.QApplication([])
     if 0:
-        noise = numpy.random.randn(1000).astype(numpy.float)
+        noise = numpy.random.randn(1000).astype(numpy.float64)
         y = numpy.arange(1000.)
         w = SNIPDialog(None, y+numpy.sqrt(y)* noise)
     elif len(sys.argv) > 1:

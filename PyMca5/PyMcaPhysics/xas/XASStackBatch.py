@@ -131,18 +131,18 @@ class XASStackBatch(object):
                 # we need to calculate the sum spectrum to derive the uncertainties
                 totalSpectra = data.shape[0] * data.shape[1]
                 jStep = min(5000, data.shape[1])
-                ysum = numpy.zeros((data.shape[mcaIndex],), numpy.float)
+                ysum = numpy.zeros((data.shape[mcaIndex],), numpy.float64)
                 for i in range(0, data.shape[0]):
                     if i == 0:
-                        chunk = numpy.zeros((data.shape[0], jStep), numpy.float)
+                        chunk = numpy.zeros((data.shape[0], jStep), numpy.float64)
                     jStart = 0
                     while jStart < data.shape[1]:
                         jEnd = min(jStart + jStep, data.shape[1])
-                        ysum += data[i, jStart:jEnd, :].sum(axis=0, dtype=numpy.float)
+                        ysum += data[i, jStart:jEnd, :].sum(axis=0, dtype=numpy.float64)
                         jStart = jEnd
                 firstSpectrum = ysum
             else:
-                firstSpectrum = data[0, :, :].sum(axis=0, dtype=numpy.float)
+                firstSpectrum = data[0, :, :].sum(axis=0, dtype=numpy.float64)
 
         if firstSpectrum is None:
             firstSpectrum = data[0, 0, :]
@@ -278,7 +278,7 @@ class XASStackBatch(object):
             if i == 0:
                 chunk = numpy.zeros((jStep,
                                      iXMax-iXMin+1),
-                                     numpy.float)
+                                     numpy.float64)
             jStart = 0
             j = 0
             while jStart < data.shape[1]:

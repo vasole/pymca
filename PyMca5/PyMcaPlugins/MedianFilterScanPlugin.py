@@ -152,8 +152,8 @@ class MedianFilterScanPlugin(Plugin1DBase.Plugin1DBase):
         nChannels = x0.shape[0]
 
         # built a couple of temporary array of spectra for handy access
-        tmpArray = numpy.zeros((nChannels, nCurves), numpy.float)
-        medianSpectra = numpy.zeros((nChannels, nCurves), numpy.float)
+        tmpArray = numpy.zeros((nChannels, nCurves), numpy.float64)
+        medianSpectra = numpy.zeros((nChannels, nCurves), numpy.float64)
         i = 0
         for idx in indices:
             x, y, legend, info = curves[idx][0:4]

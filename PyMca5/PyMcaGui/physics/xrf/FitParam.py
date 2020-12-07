@@ -285,11 +285,11 @@ class FitParamWidget(FitParamForm):
                 energies = numpy.arange(0.3, maxenergy, 0.1)
             else:
                 energies = numpy.arange(0.3, maxenergy, 0.02)
-        efficiency = numpy.ones(len(energies), numpy.float)
+        efficiency = numpy.ones(len(energies), numpy.float64)
         if (len(attenuators)+len(detector)+len(funnyfilters)) != 0:
             massatt = Elements.getMaterialMassAttenuationCoefficients
             if len(attenuators):
-                coeffs = numpy.zeros(len(energies), numpy.float)
+                coeffs = numpy.zeros(len(energies), numpy.float64)
                 for attenuator in attenuators:
                     formula   = attenuator[0]
                     thickness = attenuator[1] * attenuator[2]
@@ -298,7 +298,7 @@ class FitParamWidget(FitParamForm):
                 efficiency *= numpy.exp(-coeffs)
 
             if len(funnyfilters):
-                coeffs = numpy.zeros(len(energies), numpy.float)
+                coeffs = numpy.zeros(len(energies), numpy.float64)
                 funnyfactor = None
                 for attenuator in funnyfilters:
                     formula   = attenuator[0]
@@ -433,7 +433,7 @@ class FitParamWidget(FitParamForm):
             return
 
         pars = self.__getFitPar()
-        y = numpy.ravel(numpy.array(self._counts)).astype(numpy.float)
+        y = numpy.ravel(numpy.array(self._counts)).astype(numpy.float64)
         x = numpy.ravel(numpy.array(self._channels))
         if self._stripDialog is None:
             self._stripDialog = StripBackgroundWidget.StripBackgroundDialog(self)

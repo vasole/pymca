@@ -258,10 +258,10 @@ class Scene(object):
                   centerX, centerY, centerZ,
                   upX, upY, upZ):
         F = numpy.array((centerX - eyeX, centerY - eyeY, centerZ - eyeZ),
-            numpy.float)
-        UP = numpy.array((upX, upY, upZ), numpy.float)
+            numpy.float64)
+        UP = numpy.array((upX, upY, upZ), numpy.float64)
 
-        M = numpy.zeros((4,4), numpy.float)
+        M = numpy.zeros((4,4), numpy.float64)
         M[0,0] = 1.0
         M[1,1] = 1.0
         M[2,2] = 1.0
@@ -289,7 +289,7 @@ class Scene(object):
         # the translation -eyeX, -eyeY, -eyeZ
         if 0:
             # as pure matrix operation
-            T = numpy.zeros((4,4), numpy.float)
+            T = numpy.zeros((4,4), numpy.float64)
             T[0,0] = 1.0
             T[1,1] = 1.0
             T[2,2] = 1.0

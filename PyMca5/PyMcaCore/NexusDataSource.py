@@ -487,7 +487,7 @@ class NexusDataSource(object):
                     mcaselectiontype = selection['mcaselectiontype'].lower()
                     nSpectra = 1.0
                     for iDummy in data.shape[:-1]:
-                        data = data.sum(axis=0, dtype=numpy.float)
+                        data = data.sum(axis=0, dtype=numpy.float64)
                         nSpectra *= iDummy
                     if mcaselectiontype == "sum":
                         # sum already calculated

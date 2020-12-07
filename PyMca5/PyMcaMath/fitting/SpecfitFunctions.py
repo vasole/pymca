@@ -205,7 +205,7 @@ class SpecfitFunctions(object):
         Fit function periodic_gauss(pars, x)
         pars = [npeaks, delta, height, position, fwhm]
         """
-        newpars = numpy.zeros((int(pars[0]), 3), numpy.float)
+        newpars = numpy.zeros((int(pars[0]), 3), numpy.float64)
         for i in range(int(pars[0])):
             newpars[i, 0] = pars[2]
             newpars[i, 1] = pars[3] + i * pars[1]
@@ -263,7 +263,7 @@ class SpecfitFunctions(object):
         """
         Internal Background
         """
-        return numpy.zeros(x.shape,numpy.float)
+        return numpy.zeros(x.shape,numpy.float64)
 
     def fun(self,param, t):
         gterm = param[2] * numpy.exp(-0.5 * ((t - param[3]) * (t - param[3]))/param[4])
@@ -283,7 +283,7 @@ class SpecfitFunctions(object):
             newpar.append(input('Position = '))
             newpar.append(input('FWHM     = '))
             #newpar.append(in)
-        return newpar,numpy.zeros((3,len(newpar)),numpy.float)
+        return newpar,numpy.zeros((3,len(newpar)),numpy.float64)
 
     def seek(self,y,x=None,yscaling=None,
                            fwhm=None,
@@ -317,7 +317,7 @@ class SpecfitFunctions(object):
         if mca:
             ysearch = numpy.array(y) * yscaling
         else:
-            ysearch = numpy.ones([len(y) + 2 * search_fwhm,], numpy.float)
+            ysearch = numpy.ones([len(y) + 2 * search_fwhm,], numpy.float64)
             if y[0]:
                 ysearch[0:(search_fwhm+1)]=ysearch[0:(search_fwhm+1)]*y[0]*yscaling
             else:
@@ -484,7 +484,7 @@ class SpecfitFunctions(object):
             else:
                 yw = numpy.resize(yy-zz,(npoints,1))
                 datawork = numpy.concatenate((xw,yw),1)
-            cons = numpy.zeros((3,len(param)),numpy.float)
+            cons = numpy.zeros((3,len(param)),numpy.float64)
             cons [0] [0:len(param):3] = CPOSITIVE
             #force peaks to stay around their position
             if (1):
@@ -498,8 +498,8 @@ class SpecfitFunctions(object):
                     cons [1] [1:len(param):3] = param[1:len(param):3]-0.5*fwhmx
                     cons [2] [1:len(param):3] = param[1:len(param):3]+0.5*fwhmx
                 else:
-                    cons [1] [1:len(param):3] = numpy.ones(shape(param[1:len(param):3]),numpy.float)*min(xw)
-                    cons [2] [1:len(param):3] = numpy.ones(shape(param[1:len(param):3]),numpy.float)*max(xw)
+                    cons [1] [1:len(param):3] = numpy.ones(shape(param[1:len(param):3]),numpy.float64)*min(xw)
+                    cons [2] [1:len(param):3] = numpy.ones(shape(param[1:len(param):3]),numpy.float64)*max(xw)
 
             if 0:
                 cons [0] [2:len(param):3] = CFACTOR
@@ -534,7 +534,7 @@ class SpecfitFunctions(object):
        #     fittedpar=[height,peakpos,fwhm]
        #     largest=numpy.array([height,peakpos,fwhm])
        #     peaks=[peakpos]
-       cons = numpy.zeros((3,len(fittedpar)),numpy.float)
+       cons = numpy.zeros((3,len(fittedpar)),numpy.float64)
        j=0
        for i in range(len(peaks)):
                 #Setup height area constrains
@@ -601,7 +601,7 @@ class SpecfitFunctions(object):
         #get the number of found peaks
         npeaks=int(len(cons[0])/3)
         estimated_parameters = []
-        estimated_constraints = numpy.zeros((3, 4*npeaks),numpy.float)
+        estimated_constraints = numpy.zeros((3, 4*npeaks),numpy.float64)
         for i in range(npeaks):
             for j in range(3):
                 estimated_parameters.append(fittedpar[3*i+j])
@@ -629,7 +629,7 @@ class SpecfitFunctions(object):
         #get the number of found peaks
         npeaks=int(len(cons[0])/3)
         estimated_parameters = []
-        estimated_constraints = numpy.zeros((3, 4*npeaks),numpy.float)
+        estimated_constraints = numpy.zeros((3, 4*npeaks),numpy.float64)
         for i in range(npeaks):
             for j in range(3):
                 estimated_parameters.append(fittedpar[3*i+j])
@@ -656,7 +656,7 @@ class SpecfitFunctions(object):
        fittedpar,cons = self.estimate_gauss(xx,yy,zzz,xscaling,yscaling)
        npeaks=int(len(cons[0])/3)
        newpar=[]
-       newcons=numpy.zeros((3,4*npeaks),numpy.float)
+       newcons=numpy.zeros((3,4*npeaks),numpy.float64)
        #find out related parameters proper index
        if self.config['NoConstrainsFlag'] == 0:
             if self.config['SameFwhmFlag']:
@@ -698,7 +698,7 @@ class SpecfitFunctions(object):
        fittedpar,cons = self.estimate_gauss(xx,yy,zzz,xscaling,yscaling)
        npeaks=int(len(cons[0])/3)
        newpar=[]
-       newcons=numpy.zeros((3,5*npeaks),numpy.float)
+       newcons=numpy.zeros((3,5*npeaks),numpy.float64)
        #find out related parameters proper index
        if self.config['NoConstrainsFlag'] == 0:
             if self.config['SameFwhmFlag']:
@@ -770,7 +770,7 @@ class SpecfitFunctions(object):
        fittedpar,cons = self.estimate_gauss(xx,yy,zzz,xscaling,yscaling)
        npeaks=int(len(cons[0])/3)
        newpar=[]
-       newcons=numpy.zeros((3,8*npeaks),numpy.float)
+       newcons=numpy.zeros((3,8*npeaks),numpy.float64)
        main_peak=0
        #find out related parameters proper index
        if self.config['NoConstrainsFlag'] == 0:
@@ -879,7 +879,7 @@ class SpecfitFunctions(object):
                newcons[1][8*i+7]=self.config['MinStepTailHeightRatio']
                newcons[2][8*i+7]=self.config['MaxStepTailHeightRatio']
             #if self.config['NoConstrainsFlag'] == 1:
-            #   newcons=numpy.zeros((3,8*npeaks),numpy.float)
+            #   newcons=numpy.zeros((3,8*npeaks),numpy.float64)
        if npeaks > 0:
           if g_term:
             if self.config['HeightAreaFlag']:
@@ -938,7 +938,7 @@ class SpecfitFunctions(object):
         largest=[fittedpar[3*largest_index],
                  fittedpar[3*largest_index+1],
                  fittedpar[3*largest_index+2]]
-        newcons=numpy.zeros((3,3),numpy.float)
+        newcons=numpy.zeros((3,3),numpy.float64)
         for i in range(npeaks):
             if fittedpar[3*i] > largest[0]:
                 largest_index=i
@@ -988,7 +988,7 @@ class SpecfitFunctions(object):
         position=(xx[0]+xx[-1])/2.0
         fwhm=xx[-1]-xx[0]
         largest=[height,position,fwhm,beamfwhm]
-        cons=numpy.zeros((3,4),numpy.float)
+        cons=numpy.zeros((3,4),numpy.float64)
         #Setup constrains
         if self.config['NoConstrainsFlag'] == 0:
                 #Setup height constrains
@@ -1033,7 +1033,7 @@ class SpecfitFunctions(object):
         largest = [fittedpar[3 * largest_index],
                    fittedpar[3 * largest_index + 1],
                    fittedpar[3 * largest_index + 2]]
-        newcons=numpy.zeros((3,3),numpy.float)
+        newcons=numpy.zeros((3,3),numpy.float64)
         for i in range(npeaks):
             if fittedpar[3*i] > largest[0]:
                 largest_index=i
@@ -1106,7 +1106,7 @@ class SpecfitFunctions(object):
         npeaks = len(peaks)
         if not npeaks:
             fittedpar = []
-            cons = numpy.zeros((3,len(fittedpar)), numpy.float)
+            cons = numpy.zeros((3,len(fittedpar)), numpy.float64)
             return fittedpar, cons
 
         fittedpar = [0.0, 0.0, 0.0, 0.0, 0.0]
@@ -1136,7 +1136,7 @@ class SpecfitFunctions(object):
         fittedpar[4] = search_fwhm
 
         #setup constraints
-        cons = numpy.zeros((3, 5), numpy.float)
+        cons = numpy.zeros((3, 5), numpy.float64)
         cons [0] [0] = CFIXED     #the number of gaussians
         if npeaks == 1:
             cons[0][1] = CFIXED  #the delta between peaks
@@ -1285,7 +1285,7 @@ def test(a):
     from PyMca5.PyMcaMath.fitting import Specfit
     from PyMca5.PyMcaGui.pymca import ScanWindow
     #print dir(a)
-    x = numpy.arange(1000).astype(numpy.float)
+    x = numpy.arange(1000).astype(numpy.float64)
     p1 = numpy.array([1500,100.,50.0])
     p2 = numpy.array([1500,700.,50.0])
     y = a.gauss(p1,x)+1

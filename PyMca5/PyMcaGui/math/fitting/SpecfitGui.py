@@ -521,7 +521,7 @@ if __name__ == "__main__":
     import numpy
     from PyMca5 import SpecfitFunctions
     a=SpecfitFunctions.SpecfitFunctions()
-    x = numpy.arange(2000).astype(numpy.float)
+    x = numpy.arange(2000).astype(numpy.float64)
     p1 = numpy.array([1500,100.,30.0])
     p2 = numpy.array([1500,300.,30.0])
     p3 = numpy.array([1500,500.,30.0])

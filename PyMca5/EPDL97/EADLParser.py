@@ -520,10 +520,10 @@ def getActualDataFromLinesAndOffset(lines, index):
     _logger.debug(lines[data_end])
     _logger.debug("END ADDITIONAL LINE")
     ndata = data_end - data_begin
-    energy = numpy.zeros((ndata,), numpy.float)
+    energy = numpy.zeros((ndata,), numpy.float64)
     t = lines[data_begin].split()
     if len(t) == 2:
-        value  = numpy.zeros((ndata,), numpy.float)
+        value  = numpy.zeros((ndata,), numpy.float64)
         for i in range(ndata):
             t = lines[data_begin+i].split()
             energy[i] = float(t[0])
@@ -811,7 +811,7 @@ def getAtomicWeights():
     if EADL97_ATOMIC_WEIGHTS is None:
         lines = EADL97_DATA
         i = 1
-        EADL97_ATOMIC_WEIGHTS = numpy.zeros((len(Elements),), numpy.float)
+        EADL97_ATOMIC_WEIGHTS = numpy.zeros((len(Elements),), numpy.float64)
         for line in lines:
             if line.startswith('%3d000 ' % i):
                 ddict0 = parseHeader0(line)

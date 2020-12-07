@@ -67,13 +67,13 @@ def linregress(x, y, sigmay=None, full_output=False):
         square root of the variance
     
     """
-    x = numpy.asarray(x, dtype=numpy.float).flatten()
-    y = numpy.asarray(y, dtype=numpy.float).flatten()
+    x = numpy.asarray(x, dtype=numpy.float64).flatten()
+    y = numpy.asarray(y, dtype=numpy.float64).flatten()
     N = y.size
     if sigmay is None:
         sigmay = numpy.ones((N,), dtype=y.dtype)
     else:
-        sigmay = numpy.asarray(sigmay, dtype=numpy.float).flatten()
+        sigmay = numpy.asarray(sigmay, dtype=numpy.float64).flatten()
     w = 1.0 / (sigmay * sigmay + (sigmay == 0))
 
     n = S = w.sum()
@@ -134,8 +134,8 @@ def rateLaw(x, y, sigmay=None, order=None, xmin=None, ymin=None, xmax=None, ymax
     multiplied by ymax
     """
 
-    x = numpy.asarray(x, dtype=numpy.float).flatten()
-    y = numpy.asarray(y, dtype=numpy.float).flatten()
+    x = numpy.asarray(x, dtype=numpy.float64).flatten()
+    y = numpy.asarray(y, dtype=numpy.float64).flatten()
 
     if xmin is not None:
         x = x - x.min() + xmin

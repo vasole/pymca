@@ -455,7 +455,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                                          offsets[1]:offsets[1]+widths[1]]
         image2fft2 = fft2Function(image2)
         mcaIndex = stack.info.get('McaIndex')
-        shifts = numpy.zeros((data.shape[mcaIndex], 2), numpy.float)
+        shifts = numpy.zeros((data.shape[mcaIndex], 2), numpy.float64)
         image1 = numpy.zeros(image2.shape, dtype=DTYPE)
         total = float(data.shape[mcaIndex])
         if mcaIndex == 0:

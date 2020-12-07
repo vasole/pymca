@@ -57,7 +57,7 @@ class SixCircle(object):
         :param ublist: the ub matrix element values
         :type ublist: list, tuple or array to convert to a 3x3 matrix
         """
-        self._ub = numpy.array(ublist, copy=True, dtype=numpy.float)
+        self._ub = numpy.array(ublist, copy=True, dtype=numpy.float64)
         self._ub.shape = 3, 3
 
     def getUB(self):
@@ -119,7 +119,7 @@ class SixCircle(object):
         sphi = sin(angle)
         return numpy.array([[cphi, sphi, 0.0],
                             [-sphi, cphi, 0.0],
-                            [0.0, 0.0, 1.0]], numpy.float)
+                            [0.0, 0.0, 1.0]], numpy.float64)
 
     def getChiMatrix(self, chi):
         """
@@ -133,7 +133,7 @@ class SixCircle(object):
         schi = sin(angle)
         return numpy.array([[cchi, 0.0, schi],
                             [0.0, 1.0, 0.0],
-                            [-schi, 0.0, cchi]], numpy.float)
+                            [-schi, 0.0, cchi]], numpy.float64)
 
     def getThetaMatrix(self, th):
         """
@@ -147,7 +147,7 @@ class SixCircle(object):
         sth = sin(angle)
         return numpy.array([[cth, sth, 0],
                             [-sth, cth, 0],
-                            [0, 0, 1]], numpy.float)
+                            [0, 0, 1]], numpy.float64)
 
     def getDeltaMatrix(self, delta):
         """
@@ -161,7 +161,7 @@ class SixCircle(object):
         sdel = sin(angle)
         return numpy.array([[cdel, sdel, 0],
                             [-sdel, cdel, 0],
-                            [0, 0, 1]], numpy.float)
+                            [0, 0, 1]], numpy.float64)
 
     def getGammaMatrix(self, gamma):
         """
@@ -175,7 +175,7 @@ class SixCircle(object):
         sgam = sin(angle)
         return numpy.array([[1.0, 0.0, 0.0],
                             [0.0, cgam, -sgam],
-                            [0.0, sgam, cgam]], numpy.float)
+                            [0.0, sgam, cgam]], numpy.float64)
 
     def getMuMatrix(self, mu):
         """
@@ -189,7 +189,7 @@ class SixCircle(object):
         smu = sin(angle)
         return numpy.array([[1.0, 0.0, 0.0],
                             [0.0, cmu, -smu],
-                            [0.0, smu, cmu]], numpy.float)
+                            [0.0, smu, cmu]], numpy.float64)
 
     def _getDeltaDotGammaMatrix(self, delta, gamma, gamma_first=False):
         """
@@ -212,7 +212,7 @@ class SixCircle(object):
             cdel, cgam = numpy.meshgrid(numpy.cos(delr), numpy.cos(gamr))
             sdel, sgam = numpy.meshgrid(numpy.sin(delr), numpy.sin(gamr))
         deltaDotGamma = numpy.zeros((3, 3, len(delta), len(gamma)),
-                                    numpy.float)
+                                    numpy.float64)
         # 1st row of dot(deltamatrix, gammaMatrix)
         deltaDotGamma[0, 0, :] = cdel
         deltaDotGamma[0, 1, :] = (sdel * cgam)[:]
@@ -349,12 +349,12 @@ class SixCircle(object):
                 # this is to give the same result as Didier and not the transpose
                 cdel, cgam = numpy.meshgrid(cdel, cgam)
                 sdel, sgam = numpy.meshgrid(sdel, sgam)
-            Q = numpy.zeros((3, sdel.shape[0], sdel.shape[1]), numpy.float)
+            Q = numpy.zeros((3, sdel.shape[0], sdel.shape[1]), numpy.float64)
             Q[0, :, :] = sdel * cgam
             Q[1, :, :] = cmu * cdel * cgam - smu * sgam - 1
             Q[2, :, :] = smu * cdel * cgam + cmu * sgam
         else:
-            Q = numpy.zeros((3, 1), numpy.float)
+            Q = numpy.zeros((3, 1), numpy.float64)
             Q[0, 0] = sdel * cgam
             Q[1, 0] = cmu * cdel * cgam - smu * sgam - 1
             Q[2, 0] = smu * cdel * cgam + cmu * sgam

@@ -264,7 +264,7 @@ class RGBImageCalculator(qt.QWidget):
         nSamples = image.size
         # build a stack (expected a small amount of images)
         data = numpy.zeros((nSamples, len(keys)),
-                            dtype=numpy.float)
+                            dtype=numpy.float64)
         i = 0
         for key in self.imageDict:
             data[:, i] = self.imageDict[key]['image'].ravel()

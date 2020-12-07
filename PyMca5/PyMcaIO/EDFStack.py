@@ -426,7 +426,7 @@ class EDFStack(DataObject.DataObject):
                             if os.path.exists(i0StartFile):
                                 ID24 = True
                                 id24idx = 0
-                                i0Start = EdfFile.EdfFile(i0StartFile, 'rb').GetData(0).astype(numpy.float)
+                                i0Start = EdfFile.EdfFile(i0StartFile, 'rb').GetData(0).astype(numpy.float64)
                                 i0Start -= bckData
                                 i0EndFile = filelist[0].replace("_sample_", "_I0end_")
                                 i0Slope = 0.0
@@ -619,11 +619,11 @@ class EDFStack(DataObject.DataObject):
         return self.__indexedStack
 
     def getZSelectionArray(self,z=0):
-        return (self.data[:,:,z]).astype(numpy.float)
+        return (self.data[:,:,z]).astype(numpy.float64)
 
     def getXYSelectionArray(self,coord=(0,0)):
         x,y=coord
-        return (self.data[y,x,:]).astype(numpy.float)
+        return (self.data[y,x,:]).astype(numpy.float64)
 
 if __name__ == "__main__":
     import time

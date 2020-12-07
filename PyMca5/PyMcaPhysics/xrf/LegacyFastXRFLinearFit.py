@@ -224,21 +224,21 @@ class FastXRFLinearFit(object):
                 # we need to calculate the sum spectrum to derive the uncertainties
                 totalSpectra = data.shape[0] * data.shape[1]
                 jStep = min(5000, data.shape[1])
-                ysum = numpy.zeros((data.shape[mcaIndex],), numpy.float)
+                ysum = numpy.zeros((data.shape[mcaIndex],), numpy.float64)
                 for i in range(0, data.shape[0]):
                     if i == 0:
-                        chunk = numpy.zeros((data.shape[0], jStep), numpy.float)
+                        chunk = numpy.zeros((data.shape[0], jStep), numpy.float64)
                     jStart = 0
                     while jStart < data.shape[1]:
                         jEnd = min(jStart + jStep, data.shape[1])
-                        ysum += data[i, jStart:jEnd, :].sum(axis=0, dtype=numpy.float)
+                        ysum += data[i, jStart:jEnd, :].sum(axis=0, dtype=numpy.float64)
                         jStart = jEnd
                 firstSpectrum = ysum
             elif not concentrations:
                 # just one spectrum is enough for the setup
                 firstSpectrum = data[0, 0, :]
             else:
-                firstSpectrum = data[0, :, :].sum(axis=0, dtype=numpy.float)
+                firstSpectrum = data[0, :, :].sum(axis=0, dtype=numpy.float64)
 
         # make sure we calculate the matrix of the contributions
         self._mcaTheory.enableOptimizedLinearFit()
@@ -282,7 +282,7 @@ class FastXRFLinearFit(object):
                                                              self._mcaTheory.xdata)
             deriv.shape = -1
             if derivatives is None:
-                derivatives = numpy.zeros((deriv.shape[0], nFree), numpy.float)
+                derivatives = numpy.zeros((deriv.shape[0], nFree), numpy.float64)
             derivatives[:, idx] = deriv
             idx += 1
 
@@ -355,7 +355,7 @@ class FastXRFLinearFit(object):
             if i == 0:
                 chunk = numpy.zeros((dummySpectrum.shape[0],
                                      jStep),
-                                     numpy.float)
+                                     numpy.float64)
             jStart = 0
             while jStart < data.shape[1]:
                 jEnd = min(jStart + jStep, data.shape[1])

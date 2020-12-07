@@ -74,7 +74,7 @@ class SupaVisioMap(DataObject.DataObject):
         self.__nImagesPerFile = 1
 
         e0 = time.time()
-        self.data = PyMcaIOHelper.fillSupaVisio(data).astype(numpy.float);
+        self.data = PyMcaIOHelper.fillSupaVisio(data).astype(numpy.float64);
         shape = self.data.shape
         for i in range(len(shape)):
             key = 'Dim_%d' % (i+1,)

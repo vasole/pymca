@@ -255,7 +255,7 @@ class testElements(unittest.TestCase):
             # calculate mass fractions
             totalMass = 0.0
             massFractions = numpy.zeros((len(unpackedFormulae[i]),),
-                                            numpy.float)
+                                            numpy.float64)
             j = 0
             for ele, amount in unpackedFormulae[i]:
                 tmpValue = amount * self._elements.Element[ele]['mass']

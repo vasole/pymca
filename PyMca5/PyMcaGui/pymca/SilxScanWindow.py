@@ -448,7 +448,7 @@ class ScanWindow(BaseScanWindow):
             if not hasattr(dataObject, 'x'):
                 ylen = len(dataObject.y[0])
                 if ylen:
-                    xdata = numpy.arange(ylen).astype(numpy.float)
+                    xdata = numpy.arange(ylen).astype(numpy.float64)
                 else:
                     #nothing to be plot
                     continue
@@ -457,7 +457,7 @@ class ScanWindow(BaseScanWindow):
                 if not ylen:
                     # nothing to be plot
                     continue
-                xdata = numpy.arange(ylen).astype(numpy.float)
+                xdata = numpy.arange(ylen).astype(numpy.float64)
             elif len(dataObject.x) > 1:
                 # mesh plot
                 continue
@@ -515,9 +515,9 @@ class ScanWindow(BaseScanWindow):
                 for ydata in dataObject.y:
                     ylen = len(ydata)
                     if ylen == 1 and len(xdata) > 1:
-                        ydata = ydata[0] * numpy.ones(len(xdata)).astype(numpy.float)
+                        ydata = ydata[0] * numpy.ones(len(xdata)).astype(numpy.float64)
                     elif len(xdata) == 1:
-                        xdata = xdata[0] * numpy.ones(ylen).astype(numpy.float)
+                        xdata = xdata[0] * numpy.ones(ylen).astype(numpy.float64)
                     ycounter += 1
                     newDataObject = DataObject.DataObject()
                     newDataObject.info = copy.deepcopy(dataObject.info)
@@ -528,7 +528,7 @@ class ScanWindow(BaseScanWindow):
                                 dataObject.m[imon] = \
                                              numpy.array([dataObject.m[imon]])
                     if dataObject.m is None:
-                        mdata = numpy.ones(len(ydata)).astype(numpy.float)
+                        mdata = numpy.ones(len(ydata)).astype(numpy.float64)
                     elif len(dataObject.m[0]) == len(ydata):
                         index = numpy.nonzero(dataObject.m[0])[0]
                         if not len(index):
@@ -539,7 +539,7 @@ class ScanWindow(BaseScanWindow):
                         # A priori the graph only knows about plots
                         ydata = ydata / mdata
                     elif len(dataObject.m[0]) == 1:
-                        mdata = numpy.ones(len(ydata)).astype(numpy.float)
+                        mdata = numpy.ones(len(ydata)).astype(numpy.float64)
                         mdata *= dataObject.m[0][0]
                         index = numpy.nonzero(dataObject.m[0])[0]
                         if not len(index):

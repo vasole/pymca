@@ -604,7 +604,7 @@ def getFTWindowWeights(tk, window="Gaussian", windpar=0.2, wrange=None):
     apo2 = xmax - windpar
 
     npoint = len(tk)
-    wind = numpy.ones(npoint, dtype=numpy.float)
+    wind = numpy.ones(npoint, dtype=numpy.float64)
 
     if window in ["Gaussian", "Gauss"]:
         wind = numpy.power((tk - xp)/xm, 2)
@@ -675,7 +675,7 @@ def getFT(k, exafs, npoints=2048, rrange=(0.0, 7.0),
                                       windpar=apodization,
                                       wrange=krange)
     if 0:
-        set3 = numpy.zeros((k.size, 2), dtype=numpy.float)
+        set3 = numpy.zeros((k.size, 2), dtype=numpy.float64)
         set3[:, 0] = k
         set3[:, 1] = exafs * wweights
         setFT = exex.fastftr(set3,npoint=npoints,rrange=[0.,7.],kstep=0.02)
@@ -1095,7 +1095,7 @@ class XASClass(object):
         kValues = e2k(self._energy - e0)
         ddict.update(self.postEdge(kValues, cleanMu))
 
-        dataSet = numpy.zeros((cleanMu.size, 2), numpy.float)
+        dataSet = numpy.zeros((cleanMu.size, 2), numpy.float64)
         dataSet[:, 0] = kValues
         dataSet[:, 1] = cleanMu
 
@@ -1357,29 +1357,29 @@ class XASClass(object):
                     workingRegions.append([vMin, vMax])
             x, y = self._getRegionsData(energy, mu, workingRegions)
             if methodLower == "constant":
-                modelMatrix = numpy.ones((x.size, 1), numpy.float)
+                modelMatrix = numpy.ones((x.size, 1), numpy.float64)
                 #parameters[key] = y.mean()
             elif methodLower == "linear":
-                modelMatrix = numpy.empty((x.size, 2), numpy.float)
+                modelMatrix = numpy.empty((x.size, 2), numpy.float64)
                 modelMatrix[:, 0] = 1.0
                 modelMatrix[:, 1] = x
             elif methodLower == "parabolic":
-                modelMatrix = numpy.empty((x.size, 3), numpy.float)
+                modelMatrix = numpy.empty((x.size, 3), numpy.float64)
                 modelMatrix[:, 0] = 1.0
                 modelMatrix[:, 1] = x
                 modelMatrix[:, 2] = pow(x, 2)
             elif methodLower == "cubic":
-                modelMatrix = numpy.empty((x.size, 4), numpy.float)
+                modelMatrix = numpy.empty((x.size, 4), numpy.float64)
                 modelMatrix[:, 0] = 1.0
                 modelMatrix[:, 1] = x
                 modelMatrix[:, 2] = pow(x, 2)
                 modelMatrix[:, 3] = pow(x, 3)
             elif methodLower == "victoreen":
-                modelMatrix = numpy.empty((x.size, 2), numpy.float)
+                modelMatrix = numpy.empty((x.size, 2), numpy.float64)
                 modelMatrix[:,0] = pow(x, -3)
                 modelMatrix[:,1] = pow(x, -4)
             elif methodLower == "modif. victoreen":
-                modelMatrix = numpy.empty((x.size, 2), numpy.float)
+                modelMatrix = numpy.empty((x.size, 2), numpy.float64)
                 modelMatrix[:,0] = pow(x, -3)
                 modelMatrix[:,1] = 1.0
             else:

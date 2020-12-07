@@ -526,11 +526,11 @@ class SpecFileStack(DataObject.DataObject):
         return self.__indexedStack
 
     def getZSelectionArray(self, z=0):
-        return (self.data[:, :, z]).astype(numpy.float)
+        return (self.data[:, :, z]).astype(numpy.float64)
 
     def getXYSelectionArray(self, coord=(0, 0)):
         x, y = coord
-        return (self.data[y, x, :]).astype(numpy.float)
+        return (self.data[y, x, :]).astype(numpy.float64)
 
 if __name__ == "__main__":
     stack = SpecFileStack()

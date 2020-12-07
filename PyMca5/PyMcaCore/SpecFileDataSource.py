@@ -515,8 +515,8 @@ class SpecFileDataSource(object):
             output.info['selectiontype'] = selectiontype
             if output.info['selectiontype'] not in ['2D', '3D', 'STACK']:
                 ch0 =  int(output.info['Channel0'])
-                output.x = [numpy.arange(ch0, ch0 + len(output.data)).astype(numpy.float)]
-                output.y = [output.data[:].astype(numpy.float)]
+                output.x = [numpy.arange(ch0, ch0 + len(output.data)).astype(numpy.float64)]
+                output.y = [output.data[:].astype(numpy.float64)]
                 output.m = None
                 output.data = None
             else:
@@ -607,7 +607,7 @@ class SpecFileDataSource(object):
                 output.x[i] = numpy.outer(output.x[i], ones).flatten()
             tmp = numpy.outer(channels, numpy.ones(float(npoints))).flatten()
             output.x.append(tmp)
-            output.y = [numpy.zeros(nChannels * npoints,numpy.float)]
+            output.y = [numpy.zeros(nChannels * npoints,numpy.float64)]
             for i in range(npoints):
                 mca_key = '%s.%d.%d' % (key, 1+detectorNumber, 1)
                 mcaData = self._getMcaData(mca_key)
@@ -660,7 +660,7 @@ class SpecFileDataSource(object):
                 else:
                     scan_array = scan_obj.data()
                     (mot1,mot2,cnts) = self.__getMeshSize(scan_array)
-                    scan_data = numpy.zeros((mot1,mot2,cnts), numpy.float)
+                    scan_data = numpy.zeros((mot1,mot2,cnts), numpy.float64)
                     for idx in range(mot2):
                         scan_data[:,idx,:] = numpy.transpose(scan_array[:,idx*mot1:(idx+1)*mot1]).copy()
                     scan_data = numpy.transpose(scan_data).copy()

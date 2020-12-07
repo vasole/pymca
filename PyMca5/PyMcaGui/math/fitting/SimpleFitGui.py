@@ -428,7 +428,7 @@ def test():
     #import DefaultFitFunctions as SpecfitFunctions
     from PyMca5.PyMca import SpecfitFunctions
     a=SpecfitFunctions.SpecfitFunctions()
-    x = numpy.arange(1000).astype(numpy.float)
+    x = numpy.arange(1000).astype(numpy.float64)
     p1 = numpy.array([1500,100.,50.0])
     p2 = numpy.array([1500,700.,50.0])
     y = a.gauss(p1, x)

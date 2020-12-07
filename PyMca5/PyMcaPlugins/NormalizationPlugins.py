@@ -268,7 +268,7 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
 
         x, y, legend0, info = activeCurve
         xmin, xmax = self.getGraphXLimits()
-        y = y.astype(numpy.float)
+        y = y.astype(numpy.float64)
 
         #get the nonzero values
         idx = numpy.nonzero(abs(y) != 0.0)[0]

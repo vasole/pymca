@@ -291,7 +291,7 @@ class testXrf(unittest.TestCase):
         configuration.readfp(StringIO(cfg))
         mcaFit = ClassMcaTheory.ClassMcaTheory()
         configuration=mcaFit.configure(configuration)
-        x = numpy.arange(y.size).astype(numpy.float)
+        x = numpy.arange(y.size).astype(numpy.float64)
         mcaFit.setData(x, y,
                        xmin=configuration["fit"]["xmin"],
                        xmax=configuration["fit"]["xmax"])
@@ -364,7 +364,7 @@ class testXrf(unittest.TestCase):
         self.assertTrue(sf[0].nbmca() == 1,
                         "Spe file should contain MCA data")
         y = counts = sf[0].mca(1)
-        x = channels = numpy.arange(y.size).astype(numpy.float)
+        x = channels = numpy.arange(y.size).astype(numpy.float64)
         sf = None
 
         # read the fit configuration

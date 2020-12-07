@@ -266,7 +266,7 @@ class StackBase(object):
         if self._tryNumpy and isinstance(self._stack.data, numpy.ndarray):
             self._stackImageData = numpy.sum(self._stack.data,
                                              axis=self.mcaIndex,
-                                             dtype=numpy.float)
+                                             dtype=numpy.float64)
             #original ICR mca
             logger.debug("(self.otherIndex, self.fileIndex) = (%d, %d)",
                          self.otherIndex, self.fileIndex)
@@ -274,21 +274,21 @@ class StackBase(object):
             j = min(self.otherIndex, self.fileIndex)
             mcaData0 = numpy.sum(numpy.sum(self._stack.data,
                                            axis=i,
-                                           dtype=numpy.float), j)
+                                           dtype=numpy.float64), j)
         else:
             t0 = time.time()
             shape = self._stack.data.shape
             if self.mcaIndex in [2, -1]:
                 self._stackImageData = numpy.zeros((shape[0], shape[1]),
-                                                dtype=numpy.float)
-                mcaData0 = numpy.zeros((shape[2],), numpy.float)
+                                                dtype=numpy.float64)
+                mcaData0 = numpy.zeros((shape[2],), numpy.float64)
                 step = 1
                 # this is not the meaning of monitor
                 #if hasattr(self._stack, "monitor"):
                 #    monitor = self._stack.monitor[:]
                 #    monitor.shape = shape[2]
                 #else:
-                #    monitor = numpy.ones((shape[2],), numpy.float)
+                #    monitor = numpy.ones((shape[2],), numpy.float64)
                 for i in range(shape[0]):
                     tmpData = self._stack.data[i:i+step,:,:]
                     numpy.add(self._stackImageData[i:i+step,:],
@@ -298,8 +298,8 @@ class StackBase(object):
                     numpy.add(mcaData0, numpy.sum(tmpData, 0), mcaData0)
             elif self.mcaIndex == 0:
                 self._stackImageData = numpy.zeros((shape[1], shape[2]),
-                                                dtype=numpy.float)
-                mcaData0 = numpy.zeros((shape[0],), numpy.float)
+                                                dtype=numpy.float64)
+                mcaData0 = numpy.zeros((shape[0],), numpy.float64)
                 step = 1
                 for i in range(shape[0]):
                     tmpData = self._stack.data[i:i+step,:,:]
@@ -334,7 +334,7 @@ class StackBase(object):
         if not hasattr(self._stack, 'x'):
             self._stack.x = None
         if self._stack.x in [None, []]:
-            self._stack.x = [numpy.arange(len(mcaData0)).astype(numpy.float)+\
+            self._stack.x = [numpy.arange(len(mcaData0)).astype(numpy.float64)+\
                                 self._stack.info.get('Channel0', 0.0)]
         # for the time being it can only contain one axis
         dataObject.x = [self._stack.x[0]]
@@ -579,7 +579,7 @@ class StackBase(object):
                 dataObject = self._mcaData0
             return dataObject
 
-        mcaData = numpy.zeros(self._mcaData0.y[0].shape, numpy.float)
+        mcaData = numpy.zeros(self._mcaData0.y[0].shape, numpy.float64)
 
         n_nonselected = self._stackImageData.shape[0] *\
                         self._stackImageData.shape[1] - npixels
@@ -620,7 +620,7 @@ class StackBase(object):
                         for i in range(self._stack.data.shape[0]):
                             tmpData[0:1,:,:] = self._stack.data[i:i+1,rMin:(rMax+1),cMin:(cMax+1)]
                             #multiplication is faster than selection
-                            mcaData[i] = (tmpData[0]*tmpMask).sum(dtype=numpy.float)
+                            mcaData[i] = (tmpData[0]*tmpMask).sum(dtype=numpy.float64)
                 elif self.mcaIndex == 1:
                     if isinstance(self._stack.data, numpy.ndarray):
                         for r, c in cleanMask:
@@ -651,14 +651,14 @@ class StackBase(object):
                             for i in range(self._stack.data.shape[0]):
                                 tmpData[0:1, :, :] = self._stack.data[i:i + 1, rMin:(rMax + 1), cMin:(cMax + 1)]
                                 #multiplication is faster than selection
-                                mcaData[i] = (tmpData[0] * tmpMask).sum(dtype=numpy.float)
+                                mcaData[i] = (tmpData[0] * tmpMask).sum(dtype=numpy.float64)
                         if 0:
                             tmpData = numpy.zeros((1, self._stack.data.shape[1], self._stack.data.shape[2]))
                             for i in range(self._stack.data.shape[0]):
                                 tmpData[0:1, :, :] = self._stack.data[i:i + 1,:,:]
                                 #multiplication is faster than selection
                                 #tmpData[arrayMask].sum() in my machine
-                                mcaData[i] = (tmpData[0] * arrayMask).sum(dtype=numpy.float)
+                                mcaData[i] = (tmpData[0] * arrayMask).sum(dtype=numpy.float64)
                 elif self.mcaIndex == 2:
                     if isinstance(self._stack.data, numpy.ndarray):
                         logger.debug("In memory case 3")
@@ -677,7 +677,7 @@ class StackBase(object):
                         for r in row_list:
                             tmpMcaData = self._stack.data[r:r + 1, row_dict[r], :]
                             tmpMcaData.shape = -1, mcaData.shape[0]
-                            mcaData += numpy.sum(tmpMcaData, axis=0, dtype=numpy.float)
+                            mcaData += numpy.sum(tmpMcaData, axis=0, dtype=numpy.float64)
                 else:
                     raise IndexError("Wrong combination of indices. Case 1")
             elif self.fileIndex == 0:
@@ -706,7 +706,7 @@ class StackBase(object):
                         for r in row_list:
                             tmpMcaData = self._stack.data[r:r + 1, row_dict[r], :]
                             tmpMcaData.shape = -1, mcaData.shape[0]
-                            mcaData += tmpMcaData.sum(axis=0, dtype=numpy.float)
+                            mcaData += tmpMcaData.sum(axis=0, dtype=numpy.float64)
                 else:
                     raise IndexError("Wrong combination of indices. Case 2")
             else:
@@ -752,7 +752,7 @@ class StackBase(object):
             energy = self._mcaData0.x[0]
 
         if i1 == i2:
-            dummy = numpy.zeros(self._stackImageData.shape, numpy.float)
+            dummy = numpy.zeros(self._stackImageData.shape, numpy.float64)
             imageDict = {'ROI': dummy,
                       'Maximum': dummy,
                       'Minimum': dummy,
@@ -770,7 +770,7 @@ class StackBase(object):
                 rightImage = self._stack.data[:, i2 - 1, :]
                 dataImage = self._stack.data[:, i1:i2, :]
                 background = 0.5 * (i2 - i1) * (leftImage + rightImage)
-                roiImage = numpy.sum(dataImage, axis=1, dtype=numpy.float)
+                roiImage = numpy.sum(dataImage, axis=1, dtype=numpy.float64)
                 maxImage = energy[(numpy.argmax(dataImage, axis=1) + i1)]
                 minImage = energy[(numpy.argmin(dataImage, axis=1) + i1)]
                 isUsingSuppliedEnergyAxis = True
@@ -783,7 +783,7 @@ class StackBase(object):
                     rightImage = self._stack.data[:, :, i2 - 1]
                     dataImage = self._stack.data[:, :, i1:i2]
                     background = 0.5 * (i2 - i1) * (leftImage + rightImage)
-                    roiImage = numpy.sum(dataImage, axis=2, dtype=numpy.float)
+                    roiImage = numpy.sum(dataImage, axis=2, dtype=numpy.float64)
                     maxImage = energy[numpy.argmax(dataImage, axis=2) + i1]
                     minImage = energy[numpy.argmin(dataImage, axis=2) + i1]
                     isUsingSuppliedEnergyAxis = True
@@ -792,7 +792,7 @@ class StackBase(object):
                 else:
                     shape = self._stack.data.shape
                     roiImage = numpy.zeros(self._stackImageData.shape,
-                                           numpy.float)
+                                           numpy.float64)
                     background = roiImage * 1
                     leftImage = roiImage * 1
                     middleImage = roiImage * 1
@@ -805,7 +805,7 @@ class StackBase(object):
                     for i in range(shape[0]):
                         tmpData = self._stack.data[i:i+step,:, i1:i2] * 1
                         numpy.add(roiImage[i:i+step,:],
-                              numpy.sum(tmpData, axis=2,dtype=numpy.float),
+                              numpy.sum(tmpData, axis=2,dtype=numpy.float64),
                               roiImage[i:i+step,:])
                         
                         minImage[i:i + step,:] = i1 + numpy.argmin(tmpData, axis=2)
@@ -857,13 +857,13 @@ class StackBase(object):
                         maxImage = energy[maxImage]
                     isUsingSuppliedEnergyAxis = True
                     background = 0.5 * (i2 - i1) * (leftImage + rightImage)
-                    roiImage = numpy.sum(dataImage, axis=0, dtype=numpy.float)
+                    roiImage = numpy.sum(dataImage, axis=0, dtype=numpy.float64)
                     logger.debug("Case 3 ROI image calculation elapsed = %f ",
                                  time.time() - t0)
                 else:
                     shape = self._stack.data.shape
                     roiImage = numpy.zeros(self._stackImageData.shape,
-                                           numpy.float)
+                                           numpy.float64)
                     background = roiImage * 1
                     leftImage = roiImage * 1
                     middleImage = roiImage * 1
@@ -912,7 +912,7 @@ class StackBase(object):
                     rightImage = self._stack.data[:, :, i2 - 1]
                     dataImage = self._stack.data[:, :, i1:i2]
                     background = 0.5 * (i2 - i1) * (leftImage + rightImage)
-                    roiImage = numpy.sum(dataImage, axis=2, dtype=numpy.float)
+                    roiImage = numpy.sum(dataImage, axis=2, dtype=numpy.float64)
                     maxImage = energy[numpy.argmax(dataImage, axis=2) + i1]
                     minImage = energy[numpy.argmin(dataImage, axis=2) + i1]
                     isUsingSuppliedEnergyAxis = True
@@ -921,7 +921,7 @@ class StackBase(object):
                 else:
                     shape = self._stack.data.shape
                     roiImage = numpy.zeros(self._stackImageData.shape,
-                                           numpy.float)
+                                           numpy.float64)
                     background = roiImage * 1
                     leftImage = roiImage * 1
                     middleImage = roiImage * 1
@@ -932,7 +932,7 @@ class StackBase(object):
                     for i in range(shape[0]):
                         tmpData = self._stack.data[i:i+step,:, i1:i2] * 1
                         numpy.add(roiImage[i:i+step,:],
-                              numpy.sum(tmpData, axis=2, dtype=numpy.float),
+                              numpy.sum(tmpData, axis=2, dtype=numpy.float64),
                               roiImage[i:i+step,:])
                         numpy.add(minImage[i:i+step,:],
                                   numpy.min(tmpData, 2),
@@ -955,7 +955,7 @@ class StackBase(object):
                 rightImage = self._stack.data[i2 - 1]
                 background = 0.5 * (i2 - i1) * (leftImage + rightImage)
                 dataImage = self._stack.data[i1:i2]
-                roiImage = numpy.sum(dataImage, axis=0, dtype=numpy.float)
+                roiImage = numpy.sum(dataImage, axis=0, dtype=numpy.float64)
                 minImage = energy[numpy.argmin(dataImage, axis=0) + i1]
                 maxImage = energy[numpy.argmax(dataImage, axis=0) + i1]
                 isUsingSuppliedEnergyAxis = True
@@ -967,7 +967,7 @@ class StackBase(object):
                 rightImage = self._stack.data[:, i2 - 1, :]
                 background = 0.5 * (i2 - i1) * (leftImage + rightImage)
                 dataImage = self._stack.data[:, i1:i2, :]
-                roiImage = numpy.sum(dataImage, axis=1, dtype=numpy.float)
+                roiImage = numpy.sum(dataImage, axis=1, dtype=numpy.float64)
                 minImage = energy[numpy.argmin(dataImage, axis=1) + i1]
                 maxImage = energy[numpy.argmax(dataImage, axis=1) + i1]
                 isUsingSuppliedEnergyAxis = True
@@ -1175,8 +1175,8 @@ def test():
     nrows = 100
     ncols = 200
     nchannels = 1024
-    a = numpy.ones((nrows, ncols), numpy.float)
-    stackData = numpy.zeros((nrows, ncols, nchannels), numpy.float)
+    a = numpy.ones((nrows, ncols), numpy.float64)
+    stackData = numpy.zeros((nrows, ncols, nchannels), numpy.float64)
     for i in range(nchannels):
         stackData[:, :, i] = a * i
     stack = StackBase()

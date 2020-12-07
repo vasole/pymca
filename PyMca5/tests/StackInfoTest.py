@@ -110,7 +110,7 @@ class testStackInfo(unittest.TestCase):
                         "Spe file should contain MCA data")
 
         y = counts = sf[0].mca(1)
-        x = channels = numpy.arange(y.size).astype(numpy.float)
+        x = channels = numpy.arange(y.size).astype(numpy.float64)
         sf = None
         configuration = ConfigDict.ConfigDict()
         configuration.read(cfg)
@@ -121,8 +121,8 @@ class testStackInfo(unittest.TestCase):
         nRows = 5
         nColumns = 10
         nTimes = 3
-        data = numpy.zeros((nRows, nColumns, counts.size), dtype = numpy.float)
-        live_time = numpy.zeros((nRows * nColumns), dtype=numpy.float)
+        data = numpy.zeros((nRows, nColumns, counts.size), dtype = numpy.float64)
+        live_time = numpy.zeros((nRows * nColumns), dtype=numpy.float64)
         mcaIndex = 0
         for i in range(nRows):
             for j in range(nColumns):
@@ -300,7 +300,7 @@ class testStackInfo(unittest.TestCase):
         self.assertTrue(sf[0].nbmca() == 1,
                         "Spe file should contain MCA data")
         y = counts = sf[0].mca(1)
-        x = channels = numpy.arange(y.size).astype(numpy.float)
+        x = channels = numpy.arange(y.size).astype(numpy.float64)
         sf = None
         configuration = ConfigDict.ConfigDict()
         configuration.read(cfg)
@@ -312,8 +312,8 @@ class testStackInfo(unittest.TestCase):
         nRows = 5
         nColumns = 10
         nTimes = 3
-        data = numpy.zeros((nRows, nColumns, counts.size), dtype = numpy.float)
-        live_time = numpy.zeros((nRows * nColumns), dtype=numpy.float)
+        data = numpy.zeros((nRows, nColumns, counts.size), dtype = numpy.float64)
+        live_time = numpy.zeros((nRows * nColumns), dtype=numpy.float64)
 
         mcaIndex = 0
         for i in range(nRows):

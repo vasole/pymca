@@ -57,7 +57,7 @@ class testGefit(unittest.TestCase):
         self.testGefitImport()
         x = numpy.arange(500.)
         originalParameters = numpy.array([10.5, 2, 1000.0, 200., 100],
-                                         numpy.float)
+                                         numpy.float64)
         fitFunction = self.gaussianPlusLinearBackground
         y = fitFunction(originalParameters, x)
 

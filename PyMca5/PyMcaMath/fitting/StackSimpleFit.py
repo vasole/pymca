@@ -257,7 +257,7 @@ class StackSimpleFit(object):
                 raise TypeError("Unsupported x data shape lenght")
         elif xSize == y.size:
             #only one x for all the y values
-            x = numpy.zeros(y.size, numpy.float)
+            x = numpy.zeros(y.size, numpy.float64)
             x[:] = self.stack_x[:]
             x.shape = y.shape
         else:
@@ -287,7 +287,7 @@ class StackSimpleFit(object):
                 raise TypeError("Unsupported sigma data shape lenght")
         elif sigmaSize == y.size:
             #only one sigma for all the y values
-            sigma = numpy.zeros(y.size, numpy.float)
+            sigma = numpy.zeros(y.size, numpy.float64)
             sgima[:] = self.stack_sigma[:]
             sigma.shape = y.shape
         else:
@@ -431,7 +431,7 @@ def test():
     import numpy
     from PyMca5.PyMcaMath.fitting import SpecfitFuns
     x = numpy.arange(1000.)
-    data = numpy.zeros((50, 1000), numpy.float)
+    data = numpy.zeros((50, 1000), numpy.float64)
 
     #the peaks to be fitted
     p0 = [100., 300., 50.,

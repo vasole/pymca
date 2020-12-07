@@ -174,9 +174,9 @@ def getAlignedROIProfileCurve(image, roiCenter, roiWidth, roiRange, axis):
     # Get the ROI polygon
     roiPolygonCols = numpy.array(
         (startRange, endRange + stepRange, endRange + stepRange, startRange),
-        dtype=numpy.float)
+        dtype=numpy.float64)
     roiPolygonRows = numpy.array((start, start, end, end),
-                                 dtype=numpy.float)
+                                 dtype=numpy.float64)
 
     if axis == 1:  # Image was transposed
         roiPolygonCols, roiPolygonRows = roiPolygonRows, roiPolygonCols
@@ -216,18 +216,18 @@ def _getROILineProfileCurve(image, roiStart, roiEnd, roiWidth,
         return None
 
     # the coordinates of the reference points
-    x0 = numpy.arange(image.shape[0], dtype=numpy.float)
-    y0 = numpy.arange(image.shape[1], dtype=numpy.float)
+    x0 = numpy.arange(image.shape[0], dtype=numpy.float64)
+    y0 = numpy.arange(image.shape[1], dtype=numpy.float64)
 
     if roiWidth < 1:
-        x = numpy.zeros((nPoints, 2), numpy.float)
+        x = numpy.zeros((nPoints, 2), numpy.float64)
         x[:, 0] = numpy.linspace(row0, row1, nPoints)
         x[:, 1] = numpy.linspace(col0, col1, nPoints)
         # perform the interpolation
         ydata = SpecfitFuns.interpol((x0, y0), image, x)
 
-        roiPolygonCols = numpy.array((col0, col1), dtype=numpy.float)
-        roiPolygonRows = numpy.array((row0, row1), dtype=numpy.float)
+        roiPolygonCols = numpy.array((col0, col1), dtype=numpy.float64)
+        roiPolygonRows = numpy.array((row0, row1), dtype=numpy.float64)
 
     else:
         # find m and b in the line y = mx + b
@@ -255,15 +255,15 @@ def _getROILineProfileCurve(image, roiStart, roiEnd, roiWidth,
         _logger.debug("new X1 Y1 = %f, %f  ", newCol1, newRow1)
 
         tmpX = numpy.linspace(newCol0, newCol1,
-                              nPoints).astype(numpy.float)
-        rotMatrix = numpy.zeros((2, 2), dtype=numpy.float)
+                              nPoints).astype(numpy.float64)
+        rotMatrix = numpy.zeros((2, 2), dtype=numpy.float64)
         rotMatrix[0, 0] = cosalpha
         rotMatrix[0, 1] = - sinalpha
         rotMatrix[1, 0] = sinalpha
         rotMatrix[1, 1] = cosalpha
         if _logger.getEffectiveLevel() == logging.DEBUG:
             # test if I recover the original points
-            testX = numpy.zeros((2, 1), numpy.float)
+            testX = numpy.zeros((2, 1), numpy.float64)
             colRow = numpy.dot(rotMatrix, testX)
             _logger.debug("Recovered X0 = %f", colRow[0, 0] + col0)
             _logger.debug("Recovered Y0 = %f", colRow[1, 0] + row0)
@@ -276,7 +276,7 @@ def _getROILineProfileCurve(image, roiStart, roiEnd, roiWidth,
             _logger.debug("It should be = %f, %f", col1, row1)
 
         # find the drawing limits
-        testX = numpy.zeros((2, 4), numpy.float)
+        testX = numpy.zeros((2, 4), numpy.float64)
         testX[0, 0] = newCol0
         testX[0, 1] = newCol0
         testX[0, 2] = newCol1
@@ -305,7 +305,7 @@ def _getROILineProfileCurve(image, roiStart, roiEnd, roiWidth,
             _logger.debug("r0 > r1 %s %s", r0, r1)
             raise ValueError("r0 > r1")
 
-        x = numpy.zeros((2, nPoints), numpy.float)
+        x = numpy.zeros((2, nPoints), numpy.float64)
 
         # oversampling solves noise introduction issues
         oversampling = roiWidth + 1
@@ -314,7 +314,7 @@ def _getROILineProfileCurve(image, roiStart, roiEnd, roiWidth,
         iterValues = numpy.linspace(-0.5 * roiWidth, 0.5 * roiWidth,
                                     ncontributors)
         tmpMatrix = numpy.zeros((nPoints * len(iterValues), 2),
-                                dtype=numpy.float)
+                                dtype=numpy.float64)
         x[0, :] = tmpX
         offset = 0
         for i in iterValues:
@@ -466,7 +466,7 @@ def getProfileCurve(image, roiStart, roiEnd, roiWidth=1,
         deltaDistance = numpy.sqrt(
             colRange * colRange + rowRange * rowRange) / (len(values) - 1.0)
 
-        coords = deltaDistance * numpy.arange(len(values), dtype=numpy.float)
+        coords = deltaDistance * numpy.arange(len(values), dtype=numpy.float64)
 
     else:
         # Profile coordinates are returned in plot coords
@@ -474,7 +474,7 @@ def getProfileCurve(image, roiStart, roiEnd, roiWidth=1,
         # Build coords in image frame
         start, end = result['profileCoordsRange']
         step = 1 if start <= end else -1  # In case profile is inverted
-        coords = numpy.arange(start, end + step, step, dtype=numpy.float)
+        coords = numpy.arange(start, end + step, step, dtype=numpy.float64)
 
         # Convert coords from image to plot
         if lineProjectionMode == 'X':

@@ -169,7 +169,7 @@ class Object3DMesh(Object3DBase.Object3D):
                         x = None
                 if doit:
                     y = arr[1]
-                    z = numpy.zeros(x.shape[0]*y.shape[0], numpy.float)
+                    z = numpy.zeros(x.shape[0]*y.shape[0], numpy.float64)
                     z[:] = xyz[:, 2]
                     xyz = None
         if (x is None) and (y is None) and (xyz is None):

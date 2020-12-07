@@ -153,8 +153,8 @@ if __name__ == "__main__":
     nrows = 100
     ncols = 200
     nchannels = 1024
-    a = numpy.ones((nrows, ncols), numpy.float)
-    stackData = numpy.zeros((nrows, ncols, nchannels), numpy.float)
+    a = numpy.ones((nrows, ncols), numpy.float64)
+    stackData = numpy.zeros((nrows, ncols, nchannels), numpy.float64)
     for i in range(nchannels):
         if i % 10:
             stackData[:, :, i] = a * i

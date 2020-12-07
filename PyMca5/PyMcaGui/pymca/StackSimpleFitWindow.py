@@ -244,7 +244,7 @@ if __name__ == "__main__":
     from PyMca5.PyMcaMath.fitting import SpecfitFuns
     from PyMca5.PyMcaMath.fitting import SimpleFitUserEstimatedFunctions as Functions
     x = numpy.arange(1000.)
-    data = numpy.zeros((50, 1000), numpy.float)
+    data = numpy.zeros((50, 1000), numpy.float64)
 
     #the peaks to be fitted
     p0 = [100., 300., 50.,

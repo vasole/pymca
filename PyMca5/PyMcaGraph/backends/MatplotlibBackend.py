@@ -201,7 +201,7 @@ I'm not aware of. Don't expect those to work either.
         self._A = A
 
         if self._A.dtype != numpy.uint8 and not numpy.can_cast(self._A.dtype,
-                                                         numpy.float):
+                                                         numpy.float64):
             raise TypeError("Image data can not convert to float")
 
         if (self._A.ndim not in (2, 3) or
@@ -560,7 +560,7 @@ class MatplotlibGraph(FigureCanvas):
             color = self._zoomColor
         if len(color) == 4:
             if type(color[3]) in [type(1), numpy.uint8, numpy.int8]:
-                color = numpy.array(color, dtype=numpy.float)/255.
+                color = numpy.array(color, dtype=numpy.float64)/255.
         self._zoomColor = color
         if flag:
             self._zoomEnabled = True
@@ -775,7 +775,7 @@ class MatplotlibGraph(FigureCanvas):
             color = self._drawingParameters["color"]
             if len(color) == 4:
                 if type(color[3]) in [type(1), numpy.uint8, numpy.int8]:
-                    color = numpy.array(color, dtype=numpy.float)/255.
+                    color = numpy.array(color, dtype=numpy.float64)/255.
         return color
 
     def onMouseMoved(self, event):
@@ -1694,7 +1694,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             color = self._activeCurveColor
         if len(color) == 4:
             if type(color[3]) in [type(1), numpy.uint8, numpy.int8]:
-                color = numpy.array(color, dtype=numpy.float)/255.
+                color = numpy.array(color, dtype=numpy.float64)/255.
 
         brush = color
         style = linestyle
