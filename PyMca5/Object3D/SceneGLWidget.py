@@ -83,7 +83,7 @@ class SceneGLWidget(_BaseOpenGLWidget):
             for i in [0, 1, 2, 3]:
                 self.__currentViewPosition[i, i] = 1
             self.scene.setCurrentViewMatrix(self.__currentViewPosition)
-        self.__sceneModelViewMatrix = numpy.zeros((4,4), numpy.float)
+        self.__sceneModelViewMatrix = numpy.zeros((4,4), numpy.float64)
         for i in [0, 1, 2, 3]:
             self.__sceneModelViewMatrix[i, i] = 1
         self.__sceneProjectionMatrix = self.__sceneModelViewMatrix * 1.0

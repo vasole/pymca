@@ -164,17 +164,17 @@ class StackROIBatch(object):
         nRows = data.shape[0]
         nColumns = data.shape[1]
         if xAtMinMax:
-            results = numpy.zeros((nRois * 4, nRows, nColumns), numpy.float)
+            results = numpy.zeros((nRois * 4, nRows, nColumns), numpy.float64)
             names = [None] * 4 * nRois
         else:
-            results = numpy.zeros((nRois * 2, nRows, nColumns), numpy.float)
+            results = numpy.zeros((nRois * 2, nRows, nColumns), numpy.float64)
             names = [None] * 2 * nRois
 
         for i in range(0, data.shape[0]):
             if i == 0:
                 chunk = numpy.zeros((jStep,
                                      data.shape[index]),
-                                     numpy.float)
+                                     numpy.float64)
                 xData = x
             jStart = 0
             while jStart < data.shape[1]:
@@ -210,7 +210,7 @@ class StackROIBatch(object):
                         netSum = 0.0
                     else:
                         tmpArray = chunk[:(jEnd - jStart), idx[j]]
-                        rawSum = tmpArray.sum(axis=-1, dtype=numpy.float)
+                        rawSum = tmpArray.sum(axis=-1, dtype=numpy.float64)
                         deltaX = xw[j][iXMaxList[j]] - xw[j][iXMinList[j]]
                         left = tmpArray[:, iXMinList[j]]
                         right = tmpArray[:, iXMaxList[j]]
@@ -218,7 +218,7 @@ class StackROIBatch(object):
                         if abs(deltaX) > 0.0:
                             slope = deltaY / float(deltaX)
                             background = left * len(xw[j])+ slope * \
-                                         (xw[j] - xw[j][iXMinList[j]]).sum(dtype=numpy.float) 
+                                         (xw[j] - xw[j][iXMinList[j]]).sum(dtype=numpy.float64) 
                             netSum = rawSum - background
                         else:
                             netSum = 0.0

@@ -223,7 +223,7 @@ class SpecFileLayer(object):
             try:
                 scan_array= scan_obj.data()
                 (mot1,mot2,cnts)= self.__GetMeshSize(scan_array)
-                scan_data= numpy.zeros((mot1,mot2,cnts), numpy.float)
+                scan_data= numpy.zeros((mot1,mot2,cnts), numpy.float64)
                 for idx in range(mot2):
                     scan_data[:,idx,:]= numpy.transpose(scan_array[:,idx*mot1:(idx+1)*mot1]).copy()
                 scan_data= numpy.transpose(scan_data).copy()
@@ -275,7 +275,7 @@ class SpecFileLayer(object):
             if scan_type==SF_SCAN+SF_MCA or scan_type==SF_MCA:
                 try:
                     mca_length= scan_obj.mca(1).shape[0]
-                    scan_data= numpy.zeros((scan_info["NbMca"], mca_length), numpy.float)
+                    scan_data= numpy.zeros((scan_info["NbMca"], mca_length), numpy.float64)
                     for idx in range(scan_info["NbMca"]):
                         scan_data[idx]= scan_obj.mca(idx+1)
                     idx= 0
@@ -291,7 +291,7 @@ class SpecFileLayer(object):
                 try:
                     mca_length= scan_obj.mca(1).shape[0]
                     mca_det= scan_info["NbMcaDet"]
-                    scan_data= numpy.zeros((mca_det, mca_length), numpy.float)
+                    scan_data= numpy.zeros((mca_det, mca_length), numpy.float64)
                     for idx in range(mca_det):
                          scan_data[idx]= scan_obj.mca(idx+1)
                     mca_range[0]= ("McaDet", mca_det, None)
@@ -305,7 +305,7 @@ class SpecFileLayer(object):
                     scan_array= scan_obj.data()
                     (mot1,mot2,cnts)= self.__GetMeshSize(scan_array)
                     mca_length= scan_obj.mca(1).shape[0]
-                    scan_data= numpy.zeros((mot1,mot2,mca_length), numpy.float)
+                    scan_data= numpy.zeros((mot1,mot2,mca_length), numpy.float64)
                     for idx1 in range(mot1):
                         for idx2 in range(mot2):
                             mca_no= 1 + idx1 + idx2*mot1
@@ -318,7 +318,7 @@ class SpecFileLayer(object):
                     mca_length= scan_obj.mca(1).shape[0]
                     nbdet= scan_info["NbMcaDet"]
                     nbpts= scan_info["Lines"]
-                    scan_data= numpy.zeros((nbpts, nbdet, mca_length), numpy.float)
+                    scan_data= numpy.zeros((nbpts, nbdet, mca_length), numpy.float64)
                     for idx in range(nbpts):
                             for idy in range(nbdet):
                                     scan_data[idx,idy,:]= scan_obj.mca(1+idx*nbdet+idy)

@@ -69,13 +69,13 @@ def linregress(x, y, sigmay=None, full_output=False):
         square root of the variance
     
     """
-    x = numpy.asarray(x, dtype=numpy.float).flatten()
-    y = numpy.asarray(y, dtype=numpy.float).flatten()
+    x = numpy.asarray(x, dtype=numpy.float64).flatten()
+    y = numpy.asarray(y, dtype=numpy.float64).flatten()
     N = y.size
     if sigmay is None:
         sigmay = numpy.ones((N,), dtype=y.dtype)
     else:
-        sigmay = numpy.asarray(sigmay, dtype=numpy.float).flatten()
+        sigmay = numpy.asarray(sigmay, dtype=numpy.float64).flatten()
     w = 1.0 / (sigmay * sigmay + (sigmay == 0))
 
     n = S = w.sum()
@@ -132,7 +132,7 @@ def main(argv=None):
         print("INTERCEPT = ", ddict["intercept"], " +/- ", ddict["sigma_intercept"])
         from PyMca5.PyMcaMath.linalg import lstsq
         derivatives = numpy.zeros((len(y), 2))
-        derivatives[:, 0] = numpy.array(x, dtype=numpy.float)
+        derivatives[:, 0] = numpy.array(x, dtype=numpy.float64)
         derivatives[:, 1] = 1.0
         print("LEAST SQUARES RESULT")
         result = lstsq(derivatives, y, sigma_b=sigmay, weight=1, uncertainties=True)
@@ -149,7 +149,7 @@ def main(argv=None):
         print("SLOPE = ", ddict["slope"], " +/- ", ddict["sigma_slope"])
         print("INTERCEPT = ", ddict["intercept"], " +/- ", ddict["sigma_intercept"])
         derivatives = numpy.zeros((len(y), 2))
-        derivatives[:, 0] = numpy.array(x, dtype=numpy.float)
+        derivatives[:, 0] = numpy.array(x, dtype=numpy.float64)
         derivatives[:, 1] = 1.0
         print("LEAST SQUARES RESULT")
         result = lstsq(derivatives, y, sigma_b=None, weight=0, uncertainties=True)

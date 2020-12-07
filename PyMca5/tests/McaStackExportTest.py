@@ -87,7 +87,7 @@ class testMcaStackExport(unittest.TestCase):
                         "Spe file should contain MCA data")
 
         y = counts = sf[0].mca(1)
-        x = channels = numpy.arange(y.size).astype(numpy.float)
+        x = channels = numpy.arange(y.size).astype(numpy.float64)
         sf = None
         configuration = ConfigDict.ConfigDict()
         configuration.read(cfg)
@@ -98,10 +98,10 @@ class testMcaStackExport(unittest.TestCase):
         nRows = 5
         nColumns = 10
         nTimes = 3
-        data = numpy.zeros((nRows, nColumns, counts.size), dtype = numpy.float)
-        live_time = numpy.zeros((nRows * nColumns), dtype=numpy.float)
-        xpos = 10 + numpy.zeros((nRows * nColumns), dtype=numpy.float)
-        ypos = 100 + numpy.zeros((nRows * nColumns), dtype=numpy.float)
+        data = numpy.zeros((nRows, nColumns, counts.size), dtype = numpy.float64)
+        live_time = numpy.zeros((nRows * nColumns), dtype=numpy.float64)
+        xpos = 10 + numpy.zeros((nRows * nColumns), dtype=numpy.float64)
+        ypos = 100 + numpy.zeros((nRows * nColumns), dtype=numpy.float64)
         mcaIndex = 0
         for i in range(nRows):
             for j in range(nColumns):

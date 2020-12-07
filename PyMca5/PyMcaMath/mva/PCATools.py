@@ -148,7 +148,7 @@ def getCovarianceMatrix(stack,
     nChannels = int(N / binning)
 
     if weights is None:
-        weights = numpy.ones(N, numpy.float)
+        weights = numpy.ones(N, numpy.float64)
 
     if weights.size == nChannels:
         # binning was taken into account
@@ -794,7 +794,7 @@ def test():
 
     print("MDP")
     import mdp
-    pca = mdp.nodes.PCANode(dtype=numpy.float)
+    pca = mdp.nodes.PCANode(dtype=numpy.float64)
     x.shape = shape0
     pca.train(x)
     # access to a protected member to prevent
@@ -806,7 +806,7 @@ def test():
     print("Average = ", pca.avg)
 
     print("TEST AS IMAGES")
-    stack = numpy.zeros((shape0[-1], shape0[0], 1), numpy.float)
+    stack = numpy.zeros((shape0[-1], shape0[0], 1), numpy.float64)
     for i in range(stack.shape[0]):
         stack[i, :, 0] = x[:, i]
     x = stack
@@ -817,7 +817,7 @@ def test():
     print("Average = ", pymcaAvg)
 
     print("PCATools.getCovarianceMatrix(x) force=True) use_spatialMask")
-    y = numpy.zeros((shape0[-1], shape0[0], 2), numpy.float)
+    y = numpy.zeros((shape0[-1], shape0[0], 2), numpy.float64)
     y[:, :, 0] = x[:, :, 0]
     y[:, :, 1] = numpy.nan
     dataSum = y.sum(axis=0)

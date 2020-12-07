@@ -88,11 +88,11 @@ def continuumEbel(target, e0, e=None, window=None,
     if e is None:
         energy = numpy.arange(e0 * 1.0)[1:]
     elif type(e) == type([]):
-        energy = numpy.array(e, dtype=numpy.float)
+        energy = numpy.array(e, dtype=numpy.float64)
     elif type(e) == numpy.ndarray:
-        energy = numpy.array(e, dtype=numpy.float)
+        energy = numpy.array(e, dtype=numpy.float64)
     else:
-        energy = numpy.array([e], dtype=numpy.float)
+        energy = numpy.array([e], dtype=numpy.float64)
 
     if alphae is None:
         alphae = 75.0
@@ -141,7 +141,7 @@ def continuumEbel(target, e0, e=None, window=None,
     if not transmission:
         rhelp = tau * 2.0 * rhoz * sinfactor
         if len(numpy.nonzero(rhelp <= 0.0)[0]):
-            result = numpy.zeros(rhelp.shape, numpy.float)
+            result = numpy.zeros(rhelp.shape, numpy.float64)
             for i in range(len(rhelp)):
                 if rhelp[i] > 0.0:
                     result[i] = const * z * pow(u0[i] - 1.0, x) * \
@@ -181,7 +181,7 @@ def continuumEbel(target, e0, e=None, window=None,
     # generationdepth = min(ttarget, 2 * rhozmax)
     rhelp = tau * 2.0 * rhoz * sinfactor
     if len(numpy.nonzero(rhelp <= 0.0)[0]):
-        result = numpy.zeros(rhelp.shape, numpy.float)
+        result = numpy.zeros(rhelp.shape, numpy.float64)
         for i in range(len(rhelp)):
             if rhelp[i] > 0.0:
                 result[i] = const * z * pow(u0[i] - 1.0, x) * \
@@ -496,8 +496,8 @@ def generateLists(target, e0, window=None,
     energyweight[0:len(x1)] *= step1
     energyweight[len(x1):(len(x1) + len(x2))] *= step2
     energyweight[len(x1)] *= (energy[len(x1)] - energy[len(x1) - 1]) / step2
-    finalenergy = numpy.zeros(len(fllines) + len(energyweight), numpy.float)
-    finalweight = numpy.zeros(len(fllines) + len(energyweight), numpy.float)
+    finalenergy = numpy.zeros(len(fllines) + len(energyweight), numpy.float64)
+    finalweight = numpy.zeros(len(fllines) + len(energyweight), numpy.float64)
     scatterflag = numpy.zeros(len(fllines) + len(energyweight))
     finalenergy[len(fllines):] = energy[0:]
     finalweight[len(fllines):] = energyweight[0:] / 1.0e7

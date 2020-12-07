@@ -310,7 +310,7 @@ if __name__ == "__main__":
     a = 1000
     b = 1000
     period = 1000
-    x1 = numpy.arange(a * b).astype(numpy.float)
+    x1 = numpy.arange(a * b).astype(numpy.float64)
     x1.shape= [a, b]
     x2 = numpy.transpose(x1)
     print("INPUT SHAPES = ", x1.shape, x2.shape)

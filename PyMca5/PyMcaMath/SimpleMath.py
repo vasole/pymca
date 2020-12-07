@@ -40,8 +40,8 @@ _logger = logging.getLogger(__name__)
 
 class SimpleMath(object):
     def derivate(self,xdata,ydata, xlimits=None):
-        x=numpy.array(xdata, copy=False, dtype=numpy.float)
-        y=numpy.array(ydata, copy=False, dtype=numpy.float)
+        x=numpy.array(xdata, copy=False, dtype=numpy.float64)
+        y=numpy.array(ydata, copy=False, dtype=numpy.float64)
         if xlimits is not None:
             i1=numpy.nonzero((xdata>=xlimits[0])&\
                                (xdata<=xlimits[1]))[0]
@@ -186,7 +186,7 @@ class SimpleMath(object):
         else:
             ydata=self.y
         f=[0.25,0.5,0.25]
-        result=numpy.array(ydata, copy=False, dtype=numpy.float)
+        result=numpy.array(ydata, copy=False, dtype=numpy.float64)
         if len(result) > 1:
             result[1:-1]=numpy.convolve(result,f,mode=0)
             result[0]=0.5*(result[0]+result[1])

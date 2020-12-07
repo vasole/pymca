@@ -439,21 +439,21 @@ class RGBCorrelatorWidget(qt.QWidget):
         if ddict['b'] == []:ddict['b'] = None
 
         if ddict['r'] is None:
-            self.__redImageData = numpy.zeros(self.__imageShape).astype(numpy.float)
+            self.__redImageData = numpy.zeros(self.__imageShape).astype(numpy.float64)
             self.__redLabel = None
         else:
             self.__redLabel = ddict['elementlist'][ddict['r'][0]]
             self.__redImageData = self._imageDict[self.__redLabel]['image']
 
         if ddict['g'] is None:
-            self.__greenImageData = numpy.zeros(self.__imageShape).astype(numpy.float)
+            self.__greenImageData = numpy.zeros(self.__imageShape).astype(numpy.float64)
             self.__greenLabel = None
         else:
             self.__greenLabel = ddict['elementlist'][ddict['g'][0]]
             self.__greenImageData = self._imageDict[self.__greenLabel]['image']
 
         if ddict['b'] is None:
-            self.__blueImageData = numpy.zeros(self.__imageShape).astype(numpy.float)
+            self.__blueImageData = numpy.zeros(self.__imageShape).astype(numpy.float64)
             self.__blueLabel = None
         else:
             self.__blueLabel = ddict['elementlist'][ddict['b'][0]]
@@ -591,7 +591,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         return image_buffer, size, minmax
 
     def addImage(self, image0, label=None):
-        image = numpy.array(image0).astype(numpy.float)
+        image = numpy.array(image0).astype(numpy.float64)
         if label is None:
             label = "Unnamed 00"
             i = 0
@@ -1090,7 +1090,7 @@ class RGBCorrelatorWidget(qt.QWidget):
                 #color image
                 colorIndex = 0
                 for component in ['R', 'G', 'B']:
-                    self.addImage(imgData[:,:,colorIndex].astype(numpy.float), title + '_' + component)
+                    self.addImage(imgData[:,:,colorIndex].astype(numpy.float64), title + '_' + component)
                     colorIndex += 1
                 data = imgData[:,:,0] * 0.114 +\
                         imgData[:,:,1] * 0.587 +\
@@ -1135,12 +1135,12 @@ class RGBCorrelatorWidget(qt.QWidget):
                     iterationList.append(i)
         else:
             iterationList = range(2, nlabels)
-        totalArray = numpy.zeros((nrows, nlabels), numpy.float)
+        totalArray = numpy.zeros((nrows, nlabels), numpy.float64)
         for i in range(nrows):
             totalArray[i, :] = [float(x) for x in lines[i+1].split()]
         nrows = int(max(totalArray[:,0]) + 1)
         ncols = int(max(totalArray[:,1]) + 1)
-        singleArray = numpy.zeros((nrows* ncols, 1), numpy.float)
+        singleArray = numpy.zeros((nrows* ncols, 1), numpy.float64)
         for i in iterationList:
             singleArray[:, 0] = totalArray[:,i] * 1
             self.addImage(numpy.resize(singleArray, (nrows, ncols)), labels[i])

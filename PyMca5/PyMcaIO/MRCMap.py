@@ -131,7 +131,7 @@ class MRCMap(DataObject.DataObject):
             dataFormat = dataFormat.lower()
 
 
-        data = numpy.zeros((nImages, nRows * nColumns), numpy.float)
+        data = numpy.zeros((nImages, nRows * nColumns), numpy.float64)
         fid = open(filename, 'rb')
         fileOffset = 1024 + offset
         fid.seek(fileOffset)

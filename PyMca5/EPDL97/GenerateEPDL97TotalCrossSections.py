@@ -111,10 +111,10 @@ if __name__ == "__main__":
         #        log(y) = ------------------------------------------
         #                                  log (x1/x0)
         #
-        cohe    = numpy.zeros(len(energy), numpy.float)
-        incohe  = numpy.zeros(len(energy), numpy.float)
-        photo   = numpy.zeros(len(energy), numpy.float)
-        total   = numpy.zeros(len(energy), numpy.float)
+        cohe    = numpy.zeros(len(energy), numpy.float64)
+        incohe  = numpy.zeros(len(energy), numpy.float64)
+        photo   = numpy.zeros(len(energy), numpy.float64)
+        total   = numpy.zeros(len(energy), numpy.float64)
 
         #coherent needs to interpolate
         indices = numpy.nonzero(energy_cohe<energy_photo[0])

@@ -247,21 +247,21 @@ elements = range(1,nele+1)
 weights = []
 for ele in elements:
     weights.append(getweights(ele))
-weights = numpy.array(weights).astype(numpy.float)
+weights = numpy.array(weights).astype(numpy.float64)
 ElementLShellRates = numpy.zeros((len(ElementL1ShellRates),
                                   len(ElementLShellTransitions)),
-                                  numpy.float)
+                                  numpy.float64)
 ElementLShellRates[:,0]     = numpy.arange(len(ElementL1ShellRates)) + 1
 n1 = len(ElementL1ShellTransitions)
 lo = labeloffset
-ElementLShellRates[:,lo:n1] = numpy.array(ElementL1ShellRates).astype(numpy.float)[:,lo:] * \
+ElementLShellRates[:,lo:n1] = numpy.array(ElementL1ShellRates).astype(numpy.float64)[:,lo:] * \
                               numpy.resize(weights[:,0],(nele,1))
 n2 = n1 + len(ElementL2ShellTransitions) - lo
-ElementLShellRates[:,n1:n2] = numpy.array(ElementL2ShellRates).astype(numpy.float)[:,lo:]* \
+ElementLShellRates[:,n1:n2] = numpy.array(ElementL2ShellRates).astype(numpy.float64)[:,lo:]* \
                               numpy.resize(weights[:,1],(nele,1))
 n1 = n2
 n2 = n1 + len(ElementL3ShellTransitions) - lo
-ElementLShellRates[:,n1:n2] = numpy.array(ElementL3ShellRates).astype(numpy.float)[:,lo:]* \
+ElementLShellRates[:,n1:n2] = numpy.array(ElementL3ShellRates).astype(numpy.float64)[:,lo:]* \
                               numpy.resize(weights[:,2],(nele,1))
 
 if __name__ == "__main__":

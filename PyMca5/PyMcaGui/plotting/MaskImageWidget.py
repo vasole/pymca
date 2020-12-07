@@ -505,7 +505,7 @@ class MaskImageWidget(qt.QWidget):
                                          info=ddict,
                                          replace=True,
                                          replot=True)
-            xdata  = numpy.arange(shape[1]).astype(numpy.float)
+            xdata  = numpy.arange(shape[1]).astype(numpy.float64)
             if self._xScale is not None:
                 xdata = self._xScale[0] + xdata * self._xScale[1]
         elif ddict['mode'].upper() in ["VLINE", "VERTICAL"]:
@@ -548,7 +548,7 @@ class MaskImageWidget(qt.QWidget):
                                          info=ddict,
                                          replace=True,
                                          replot=True)
-            xdata  = numpy.arange(shape[0]).astype(numpy.float)
+            xdata  = numpy.arange(shape[0]).astype(numpy.float64)
             if self._yScale is not None:
                 xdata = self._yScale[0] + xdata * self._yScale[1]
         elif ddict['mode'].upper() in ["LINE"]:
@@ -585,7 +585,7 @@ class MaskImageWidget(qt.QWidget):
             npoints = int(npoints)
 
             if width < 0:  # width = pixelwidth - 1
-                x = numpy.zeros((npoints, 2), numpy.float)
+                x = numpy.zeros((npoints, 2), numpy.float64)
                 x[:, 0] = numpy.linspace(row0, row1, npoints)
                 x[:, 1] = numpy.linspace(col0, col1, npoints)
                 legend = "From (%.3f, %.3f) to (%.3f, %.3f)" % (col0, row0, col1, row1)
@@ -693,15 +693,15 @@ class MaskImageWidget(qt.QWidget):
                 _logger.debug("new X0 Y0 = %f, %f  ", newCol0, newRow0)
                 _logger.debug("new X1 Y1 = %f, %f  ", newCol1, newRow1)
 
-                tmpX   = numpy.linspace(newCol0, newCol1, npoints).astype(numpy.float)
-                rotMatrix = numpy.zeros((2,2), numpy.float)
+                tmpX   = numpy.linspace(newCol0, newCol1, npoints).astype(numpy.float64)
+                rotMatrix = numpy.zeros((2,2), numpy.float64)
                 rotMatrix[0,0] =   cosalpha
                 rotMatrix[0,1] = - sinalpha
                 rotMatrix[1,0] =   sinalpha
                 rotMatrix[1,1] =   cosalpha
                 if _logger.getEffectiveLevel() == logging.DEBUG:
                     #test if I recover the original points
-                    testX = numpy.zeros((2, 1), numpy.float)
+                    testX = numpy.zeros((2, 1), numpy.float64)
                     colRow = numpy.dot(rotMatrix, testX)
                     _logger.debug("Recovered X0 = %f", colRow[0, 0] + col0)
                     _logger.debug("Recovered Y0 = %f", colRow[1, 0] + row0)
@@ -714,7 +714,7 @@ class MaskImageWidget(qt.QWidget):
                     _logger.debug("It should be = %f, %f", col1, row1)
 
                 #find the drawing limits
-                testX = numpy.zeros((2, 4) , numpy.float)
+                testX = numpy.zeros((2, 4) , numpy.float64)
                 testX[0,0] = newCol0
                 testX[0,1] = newCol0
                 testX[0,2] = newCol1
@@ -743,8 +743,8 @@ class MaskImageWidget(qt.QWidget):
                     _logger.debug("r0 > r1 %s %s" % (r0, r1))
                     raise ValueError("r0 > r1")
 
-                x = numpy.zeros((2, npoints) , numpy.float)
-                tmpMatrix = numpy.zeros((npoints, 2) , numpy.float)
+                x = numpy.zeros((2, npoints) , numpy.float64)
+                tmpMatrix = numpy.zeros((npoints, 2) , numpy.float64)
 
                 if 0:
                     #take only the central point
@@ -769,7 +769,7 @@ class MaskImageWidget(qt.QWidget):
                         oversampling = 1
                     ncontributors = int(width * oversampling)
                     iterValues = numpy.linspace(-0.5*width, 0.5*width, ncontributors)
-                    tmpMatrix = numpy.zeros((npoints*len(iterValues), 2) , numpy.float)
+                    tmpMatrix = numpy.zeros((npoints*len(iterValues), 2) , numpy.float64)
                     x[0, :] = tmpX
                     offset = 0
                     for i in iterValues:
@@ -1271,7 +1271,7 @@ class MaskImageWidget(qt.QWidget):
             pixmap[:, :, 2] = tmpBuffer
 
         if data is None:
-            self.__imageData = numpy.zeros((height, width), numpy.float)
+            self.__imageData = numpy.zeros((height, width), numpy.float64)
             self.__imageData = pixmap[:,:,0] * 0.299 +\
                                pixmap[:,:,1] * 0.587 +\
                                pixmap[:,:,2] * 0.114

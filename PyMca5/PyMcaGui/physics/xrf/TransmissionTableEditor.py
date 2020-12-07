@@ -289,7 +289,7 @@ class TransmissionTableEditor(qt.QWidget):
 
         for key in ["energy", "transmission"]:
             # make sure we have floats
-            values = numpy.array(ddict[key], numpy.float).reshape(-1)
+            values = numpy.array(ddict[key], numpy.float64).reshape(-1)
             # convert to list to prevent issues when saving
             ddict[key] = values.tolist()
 

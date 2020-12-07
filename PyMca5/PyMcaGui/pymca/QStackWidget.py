@@ -1337,8 +1337,8 @@ def test():
     nrows = 100
     ncols = 200
     nchannels = 1024
-    a = numpy.ones((nrows, ncols), numpy.float)
-    stackData = numpy.zeros((nrows, ncols, nchannels), numpy.float)
+    a = numpy.ones((nrows, ncols), numpy.float64)
+    stackData = numpy.zeros((nrows, ncols, nchannels), numpy.float64)
     for i in range(nchannels):
         stackData[:, :, i] = a * i
     stackData[0:10, :, :] = 0

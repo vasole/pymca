@@ -186,7 +186,7 @@ class specfilewrapper(object):
                 f = open(filename, 'rb')
                 raw_content = f.read()
                 f.close()
-                expr = '([-+]?\d+)\t\r\n'
+                expr = r'([-+]?\d+)\t\r\n'
                 self.data = [float(i) for i in re.split(expr,raw_content) if i != '']
                 self.data = numpy.array(self.data, numpy.float32)
             else:
@@ -276,7 +276,7 @@ class specfilewrapper(object):
                 line = f.readline().replace("\n","")
             nlines = len(outdata)
             f.close()
-            self.data = numpy.resize(numpy.array(outdata).astype(numpy.float),(nlines,1))
+            self.data = numpy.resize(numpy.array(outdata).astype(numpy.float64),(nlines,1))
         else:
             if sys.version < '3.0':
                 line = line.replace(",","  ")
@@ -337,7 +337,7 @@ class specfilewrapper(object):
                     line = line.replace(bytes('"',"utf-8"), bytes("", "utf-8"))
                     line = line.replace(bytes('\n\n',"utf-8"), tmpBytes)
             f.close()
-            self.data = numpy.resize(numpy.array(outdata).astype(numpy.float),(nlines,ncol0))
+            self.data = numpy.resize(numpy.array(outdata).astype(numpy.float64),(nlines,ncol0))
         if self.amptek:
             self.scandata=[myscandata(self.data,'MCA','1.1',
                                       scanheader=self.header)]
@@ -395,7 +395,7 @@ class myscandata(object):
         #print shape(data)
         (rows, cols) = numpy.shape(data)
         if scantype == 'SCAN':
-            self.__data = numpy.zeros((rows, cols +1 ), numpy.float)
+            self.__data = numpy.zeros((rows, cols +1 ), numpy.float64)
             self.__data[:,0] = numpy.arange(rows) * 1.0
             self.__data[:,1:] = data * 1
             self.__cols = cols + 1
@@ -532,8 +532,8 @@ class myscandata(object):
                         gain = (y1-y0)/(x1-x0)
                         zero = y0 - gain * x0
                     else:
-                        x = numpy.zeros((n,), numpy.float)
-                        y = numpy.zeros((n,), numpy.float)
+                        x = numpy.zeros((n,), numpy.float64)
+                        y = numpy.zeros((n,), numpy.float64)
                         for i in range(n):
                             values = amptekCalibrationLines[i].split()
                             x[i], y[i] = map(float,values)

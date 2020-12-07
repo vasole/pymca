@@ -91,7 +91,7 @@ class TestMcaAdvancedFitWidget(TestCaseQt):
         self.assertTrue(sf[0].nbmca() == 1,
                         "Spe file should contain MCA data")
         y = counts = sf[0].mca(1)
-        x = channels = numpy.arange(y.size).astype(numpy.float)
+        x = channels = numpy.arange(y.size).astype(numpy.float64)
         sf = None
         widget.setData(x, y)
         self.qapp.processEvents()

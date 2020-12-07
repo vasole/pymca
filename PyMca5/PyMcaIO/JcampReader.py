@@ -185,7 +185,7 @@ class JcampReader(object):
             nLines = len(lines)
             yValues = numpy.fromiter( \
                         [item for sublist in lines for item in sublist[1:]],
-                        numpy.float)
+                        numpy.float64)
             nValues = [(len(x) - 1) for x in lines] 
             # the y values are all there, but the x values are not
             lastX = float(self.info["LASTX"])
@@ -205,9 +205,9 @@ class JcampReader(object):
                 #print("WRONG")
                 xValues = numpy.fromiter( \
                         [item for sublist in lines for item in sublist[0:1]],
-                        numpy.float)
+                        numpy.float64)
                 xValues.append(lastX)
-                x = numpy.zeros((len(yValues),), dtype=numpy.float)
+                x = numpy.zeros((len(yValues),), dtype=numpy.float64)
                 start = 0
                 nDataLines = len(nValues)
                 for i in range(nDataLines):
@@ -261,7 +261,7 @@ class JcampReader(object):
                     ((lastX - firstX) / (nPoints - 1.0))
             except KeyError:
                 xValues.append(lastX)
-                x = numpy.zeros((len(yValues),), dtype=numpy.float)
+                x = numpy.zeros((len(yValues),), dtype=numpy.float64)
                 start = 0
                 nDataLines = len(nValues)
                 for i in range(nDataLines):

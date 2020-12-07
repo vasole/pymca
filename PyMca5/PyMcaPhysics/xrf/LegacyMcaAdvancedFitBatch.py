@@ -747,13 +747,13 @@ class McaAdvancedFitBatch(object):
                             self.__peaks.append(group)
                             self.__images[group]= numpy.zeros((self.__nrows,
                                                                self.__ncols),
-                                                               numpy.float)
+                                                               numpy.float64)
                             self.__sigmas[group]= numpy.zeros((self.__nrows,
                                                                self.__ncols),
-                                                               numpy.float)
+                                                               numpy.float64)
                         self.__images['chisq']  = numpy.zeros((self.__nrows,
                                                                self.__ncols),
-                                                               numpy.float) - 1.
+                                                               numpy.float64) - 1.
                         if self._concentrations:
                             layerlist = concentrations['layerlist']
                             if 'mmolar' in concentrations:
@@ -767,14 +767,14 @@ class McaAdvancedFitBatch(object):
                                 self.__concentrationsKeys.append(key)
                                 self.__images[key] = numpy.zeros((self.__nrows,
                                                                   self.__ncols),
-                                                                  numpy.float)
+                                                                  numpy.float64)
                                 if len(layerlist) > 1:
                                     for layer in layerlist:
                                         key = group+" "+layer
                                         self.__concentrationsKeys.append(key)
                                         self.__images[key] = numpy.zeros((self.__nrows,
                                                                     self.__ncols),
-                                                                    numpy.float)
+                                                                    numpy.float64)
                 for peak in self.__peaks:
                     try:
                         self.__images[peak][self.__row, self.__col] = result[peak]['fitarea']
@@ -826,7 +826,7 @@ class McaAdvancedFitBatch(object):
                             for roi in dict[group].keys():
                                 self._ROIimages[group][roi]=numpy.zeros((self.__nrows,
                                                                    self.__ncols),
-                                                                   numpy.float)
+                                                                   numpy.float64)
                 if not hasattr(self, "_ROIimages"):
                     print("ROI fitting only supported on EDF")
                 for group in self.__ROIpeaks:

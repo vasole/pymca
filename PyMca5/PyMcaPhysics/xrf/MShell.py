@@ -294,26 +294,26 @@ elements = range(1,nele+1)
 weights = []
 for ele in elements:
     weights.append(getweights(ele))
-weights = numpy.array(weights).astype(numpy.float)
-ElementMShellRates = numpy.zeros((len(ElementM1ShellRates),len(ElementMShellTransitions)),numpy.float)
+weights = numpy.array(weights).astype(numpy.float64)
+ElementMShellRates = numpy.zeros((len(ElementM1ShellRates),len(ElementMShellTransitions)),numpy.float64)
 ElementMShellRates[:,0]     = numpy.arange(len(ElementM1ShellRates)) + 1
 n1 = len(ElementM1ShellTransitions)
-ElementMShellRates[:,2:n1] = numpy.array(ElementM1ShellRates).astype(numpy.float)[:,2:] * \
+ElementMShellRates[:,2:n1] = numpy.array(ElementM1ShellRates).astype(numpy.float64)[:,2:] * \
                              numpy.resize(weights[:,0],(nele,1))
 n2 = n1 + len(ElementM2ShellTransitions) - 2
-ElementMShellRates[:,n1:n2] = numpy.array(ElementM2ShellRates).astype(numpy.float)[:,2:] * \
+ElementMShellRates[:,n1:n2] = numpy.array(ElementM2ShellRates).astype(numpy.float64)[:,2:] * \
                               numpy.resize(weights[:,1],(nele,1))
 n1 = n2
 n2 = n1 + len(ElementM3ShellTransitions) - 2
-ElementMShellRates[:,n1:n2] = numpy.array(ElementM3ShellRates).astype(numpy.float)[:,2:] * \
+ElementMShellRates[:,n1:n2] = numpy.array(ElementM3ShellRates).astype(numpy.float64)[:,2:] * \
                               numpy.resize(weights[:,2],(nele,1))
 n1 = n2
 n2 = n1 + len(ElementM4ShellTransitions) - 2
-ElementMShellRates[:,n1:n2] = numpy.array(ElementM4ShellRates).astype(numpy.float)[:,2:] * \
+ElementMShellRates[:,n1:n2] = numpy.array(ElementM4ShellRates).astype(numpy.float64)[:,2:] * \
                               numpy.resize(weights[:,3],(nele,1))
 n1 = n2
 n2 = n1 + len(ElementM5ShellTransitions) - 2
-ElementMShellRates[:,n1:n2] = numpy.array(ElementM5ShellRates).astype(numpy.float)[:,2:] * \
+ElementMShellRates[:,n1:n2] = numpy.array(ElementM5ShellRates).astype(numpy.float64)[:,2:] * \
                               numpy.resize(weights[:,4],(nele,1))
 
 if __name__ == "__main__":

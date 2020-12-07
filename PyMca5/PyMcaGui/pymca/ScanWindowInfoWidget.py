@@ -298,9 +298,9 @@ class GraphInfoWidget(qt.QWidget):
         ylen = len(ydata)
         if ylen:
             if dataObject.x is None:
-                xdata = numpy.arange(ylen).astype(numpy.float)
+                xdata = numpy.arange(ylen).astype(numpy.float64)
             elif not len(dataObject.x):
-                xdata = numpy.arange(ylen).astype(numpy.float)
+                xdata = numpy.arange(ylen).astype(numpy.float64)
             else:
                 xdata = numpy.ravel(dataObject.x[0])
         else:

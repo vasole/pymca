@@ -733,7 +733,7 @@ class McaWindow(ScanWindow.ScanWindow):
             yb = numpy.array(ybfinal)
             newDataObject.x = [x]
             newDataObject.y = [yfit]
-            newDataObject.m = [numpy.ones(len(yfit)).astype(numpy.float)]
+            newDataObject.m = [numpy.ones(len(yfit)).astype(numpy.float64)]
             if mcamode:
                 newDataObject.info['regions'] = regions
                 newDataObject.info['baseline'] = yb
@@ -890,16 +890,16 @@ class McaWindow(ScanWindow.ScanWindow):
                 if xhelp is None:
                     if 'Channel0' not in info:
                         info['Channel0'] = 0.0
-                    xhelp = info['Channel0'] + numpy.arange(len(data)).astype(numpy.float)
+                    xhelp = info['Channel0'] + numpy.arange(len(data)).astype(numpy.float64)
                     dataObject.x = [xhelp]
 
                 ylen = len(data)
                 if ylen == 1:
                     if len(xhelp) > 1:
-                        data = data[0] * numpy.ones(len(xhelp)).astype(numpy.float)
+                        data = data[0] * numpy.ones(len(xhelp)).astype(numpy.float64)
                         dataObject.y = [data]
                 elif len(xhelp) == 1:
-                    xhelp = xhelp[0] * numpy.ones(ylen).astype(numpy.float)
+                    xhelp = xhelp[0] * numpy.ones(ylen).astype(numpy.float64)
                     dataObject.x = [xhelp]
 
                 if not hasattr(dataObject, 'm'):
@@ -922,7 +922,7 @@ class McaWindow(ScanWindow.ScanWindow):
                             mdata = numpy.take(mdata, index)
                             data = data / mdata
                             dataObject.x = [xhelp * 1]
-                            dataObject.m = [numpy.ones(len(data)).astype(numpy.float)]
+                            dataObject.m = [numpy.ones(len(data)).astype(numpy.float64)]
                         elif (len(mdata) == 1) or (ylen == 1):
                             if mdata[0] == 0.0:
                                 continue

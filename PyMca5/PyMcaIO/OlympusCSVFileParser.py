@@ -86,7 +86,7 @@ class OlympusCSVFileParser(object):
                 ddict[key] = splitLine[1:]
                 if key == "NumData":
                     nChannels = int(splitLine[1])
-                    ddict['data'] = numpy.zeros((nSpectra, nChannels), numpy.float)
+                    ddict['data'] = numpy.zeros((nSpectra, nChannels), numpy.float64)
             else:
                 ddict['data'][:, channel] = [float(x) for x in splitLine[1:]]
                 channel += 1

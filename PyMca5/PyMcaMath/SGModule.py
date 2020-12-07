@@ -75,17 +75,17 @@ def calc_coeff(num_points, pol_degree, diff_order=0):
     # ... you might use other interpolation points
     # and maybe other functions than monomials ....
 
-    x = numpy.arange(-num_points, num_points+1, dtype=numpy.int)
+    x = numpy.arange(-num_points, num_points+1, dtype=numpy.int32)
     monom = lambda x, deg : pow(x, deg)
 
-    A = numpy.zeros((2*num_points+1, pol_degree+1), numpy.float)
+    A = numpy.zeros((2*num_points+1, pol_degree+1), numpy.float64)
     for i in range(2*num_points+1):
         for j in range(pol_degree+1):
             A[i,j] = monom(x[i], j)
 
     # calculate diff_order-th row of inv(A^T A)
     ATA = numpy.dot(A.transpose(), A)
-    rhs = numpy.zeros((pol_degree+1,), numpy.float)
+    rhs = numpy.zeros((pol_degree+1,), numpy.float64)
     rhs[diff_order] = 1
     wvec = solve(ATA, rhs)
 

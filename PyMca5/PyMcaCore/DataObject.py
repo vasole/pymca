@@ -160,7 +160,7 @@ class DataObject(object):
                 else:
                     ch0 = 0
                 dataObject.x = [numpy.arange(ch0,
-                             ch0 + len(dataObject.y[0])).astype(numpy.float)]
+                             ch0 + len(dataObject.y[0])).astype(numpy.float64)]
             if not ("selectiontype" in dataObject.info):
                 dataObject.info["selectiontype"] = "%dD" % len(dataObject.y)
             return dataObject

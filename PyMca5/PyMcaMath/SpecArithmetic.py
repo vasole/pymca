@@ -61,7 +61,7 @@ def search_com(xdata,ydata):
     # make sure com is inside the region
     ydata = ydata - numpy.min(ydata)
     num    = numpy.sum(xdata*ydata)
-    denom  = numpy.sum(ydata).astype(numpy.float)
+    denom  = numpy.sum(ydata).astype(numpy.float64)
     try:
        result = num/denom
     except ZeroDivisionError:

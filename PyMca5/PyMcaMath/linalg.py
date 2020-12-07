@@ -90,13 +90,13 @@ def linregress(x, y, sigmay=None, full_output=False):
         square root of the variance
     
     """
-    x = numpy.asarray(x, dtype=numpy.float).flatten()
-    y = numpy.asarray(y, dtype=numpy.float).flatten()
+    x = numpy.asarray(x, dtype=numpy.float64).flatten()
+    y = numpy.asarray(y, dtype=numpy.float64).flatten()
     N = y.size
     if sigmay is None:
         sigmay = numpy.ones((N,), dtype=y.dtype)
     else:
-        sigmay = numpy.asarray(sigmay, dtype=numpy.float).flatten()
+        sigmay = numpy.asarray(sigmay, dtype=numpy.float64).flatten()
     w = 1.0 / (sigmay * sigmay + (sigmay == 0))
 
     n = S = w.sum()
@@ -229,8 +229,8 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
     >>> plt.show()
 
     """
-    a = numpy.array(a, dtype=numpy.float, copy=False)
-    b = numpy.array(b, dtype=numpy.float, copy=False)
+    a = numpy.array(a, dtype=numpy.float64, copy=False)
+    b = numpy.array(b, dtype=numpy.float64, copy=False)
     a_shape = a.shape
     b_shape = b.shape
     original = b_shape
@@ -250,7 +250,7 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
     if weight:
         if sigma_b is not None:
             # experimental uncertainties provided these are the ones to use (if any)
-            w = numpy.abs(numpy.array(sigma_b, dtype=numpy.float, copy=False))
+            w = numpy.abs(numpy.array(sigma_b, dtype=numpy.float64, copy=False))
             w = w + numpy.equal(w, 0)
             if w.size == b_shape[0]:
                 # same uncertainty for every spectrum
@@ -268,11 +268,11 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
         # we have an unweighted fit with no uncertainties
         # assume all the uncertainties equal to 1
         fastest = True
-        w = numpy.ones(b.shape, numpy.float)
+        w = numpy.ones(b.shape, numpy.float64)
     if len(w.shape) == 1:
         w.shape = -1, 1
     if covariances:
-        covarianceMatrix = numpy.zeros((b_shape[1], n, n), numpy.float)
+        covarianceMatrix = numpy.zeros((b_shape[1], n, n), numpy.float64)
 
     if not weight:
         # no weight is applied
@@ -284,9 +284,9 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
             U, s, V = numpy.linalg.svd(a, full_matrices=False)
 
         if rcond is None:
-            s_cutoff = max(m, n) * numpy.finfo(numpy.float).eps
+            s_cutoff = max(m, n) * numpy.finfo(numpy.float64).eps
         elif rcond == -1:
-            s_cutoff = n * numpy.finfo(numpy.float).eps            
+            s_cutoff = n * numpy.finfo(numpy.float64).eps            
         else:
             s_cutoff = rcond * s[0]
         s[s < s_cutoff] = numpy.inf
@@ -313,7 +313,7 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
                 # loop in order not to use potentially big matrices
                 # but calculates the covariance matrices
                 # It only makes sense if the covariance matrix is requested
-                sigmapar = numpy.zeros((n, b_shape[1]), numpy.float)
+                sigmapar = numpy.zeros((n, b_shape[1]), numpy.float64)
                 for k in range(b_shape[1]):
                     pseudoData = numpy.eye(b_shape[0]) * w[:, k]
                     tmpTerm = numpy.dot(dummy, numpy.dot(U.T, pseudoData))
@@ -323,7 +323,7 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
             else:
                 # loop in order not to use potentially big matrices
                 # but not calculating the covariance matrix
-                d = numpy.zeros(b.shape, numpy.float)
+                d = numpy.zeros(b.shape, numpy.float64)
                 sigmapar = numpy.zeros((n, b_shape[1]))
                 for k in range(b_shape[0]):
                     d[k] = w[k]
@@ -344,7 +344,7 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
             U, s, V = numpy.linalg.svd(A, full_matrices=False)
 
         if rcond is None:
-            s_cutoff = n * numpy.finfo(numpy.float).eps
+            s_cutoff = n * numpy.finfo(numpy.float64).eps
         else:
             s_cutoff = rcond * s[0]
         s[s < s_cutoff] = numpy.inf
@@ -362,8 +362,8 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
             if covariances:
                 covarianceMatrix[:] = _covariance
     else:
-        parameters = numpy.zeros((n, b_shape[1]), numpy.float)
-        sigmapar = numpy.zeros((n, b_shape[1]), numpy.float)
+        parameters = numpy.zeros((n, b_shape[1]), numpy.float64)
+        sigmapar = numpy.zeros((n, b_shape[1]), numpy.float64)
         if svd:
             # SVD - slower by a factor 2
             for i in range(b_shape[1]):
@@ -372,7 +372,7 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
                 A = a / tmpWeight
                 U, s, V = numpy.linalg.svd(A, full_matrices=False)
                 if rcond is None:
-                    s_cutoff = n * numpy.finfo(numpy.float).eps
+                    s_cutoff = n * numpy.finfo(numpy.float64).eps
                 else:
                     s_cutoff = rcond * s[0]
                 s[s < s_cutoff] = numpy.inf
@@ -388,8 +388,8 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
         elif 1:
             # Pure matrix inversion (faster than SVD)
             # I do not seem to gain anything by re-using the storage
-            #alpha = numpy.empty((n, n), numpy.float)
-            #beta = numpy.empty((n, 1), numpy.float)
+            #alpha = numpy.empty((n, n), numpy.float64)
+            #beta = numpy.empty((n, 1), numpy.float64)
             for i in range(b_shape[1]):
                 tmpWeight = w[:, i:i+1]
                 A = a / tmpWeight
@@ -411,9 +411,9 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
                     covarianceMatrix[i] = covariance
         else:
             # Matrix inversion with buffers does not improve
-            bufferProduct = numpy.empty((n, n + 1), numpy.float)
-            bufferAB = numpy.empty((b_shape[0], n+1), numpy.float)
-            alpha = numpy.empty((n, n), numpy.float)
+            bufferProduct = numpy.empty((n, n + 1), numpy.float64)
+            bufferAB = numpy.empty((b_shape[0], n+1), numpy.float64)
+            alpha = numpy.empty((n, n), numpy.float64)
             for i in range(b_shape[1]):
                 tmpWeight = w[:, i:i+1]
                 A = a / tmpWeight
@@ -464,7 +464,7 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
 def getModelMatrixFromFunction(model_function, dummy_parameters, xdata, derivative=None):
     nPoints = xdata.size
     nParameters = len(dummy_parameters)
-    modelMatrix = numpy.zeros((nPoints, nParameters) , numpy.float)
+    modelMatrix = numpy.zeros((nPoints, nParameters) , numpy.float64)
     pwork = dummy_parameters * 1
     for i in range(len(dummy_parameters)):
         fitparam = dummy_parameters[i]
@@ -508,12 +508,12 @@ def test2():
     data.shape = -1, 3
 
     # the model matrix for a straight line
-    A = numpy.ones((data.shape[0],2), numpy.float)
+    A = numpy.ones((data.shape[0],2), numpy.float64)
     A[:, 1] = data[:, 0]
     print("Unweighted results:")
     t0 = time.time()
-    y =  numpy.ones((data.shape[0], 1000), numpy.float) * data[:, 1:2]
-    sigmay =  numpy.ones((data.shape[0], 1000), numpy.float) * data[:, 2:3]
+    y =  numpy.ones((data.shape[0], 1000), numpy.float64) * data[:, 1:2]
+    sigmay =  numpy.ones((data.shape[0], 1000), numpy.float64) * data[:, 2:3]
     parameters, uncertainties = lstsq(A, y, #sigma_b=sigmay, #sigma_b=numpy.ones(sigmay.shape),
                                       uncertainties=True, weight=False)
     print("Elapsed Module = %f" % (time.time() - t0))

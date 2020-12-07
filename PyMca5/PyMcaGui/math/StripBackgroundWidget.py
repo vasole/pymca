@@ -263,7 +263,7 @@ class StripBackgroundWidget(qt.QWidget):
         pars = self.getParameters()
 
         #smoothed data
-        y = numpy.ravel(numpy.array(self._y)).astype(numpy.float)
+        y = numpy.ravel(numpy.array(self._y)).astype(numpy.float64)
         ysmooth = SpecfitFuns.SavitskyGolay(y, pars['stripfilterwidth'])
         f=[0.25,0.5,0.25]
         ysmooth[1:-1] = numpy.convolve(ysmooth,f,mode=0)

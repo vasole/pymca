@@ -77,7 +77,7 @@ class SimpleFitDefaultFunctions(object):
         return result
 
     def polynomial(self, pars, x):
-        result = numpy.zeros(x.shape, numpy.float) + pars[0]
+        result = numpy.zeros(x.shape, numpy.float64) + pars[0]
         if len(pars) == 1:
             return result
         d = x * 1.0

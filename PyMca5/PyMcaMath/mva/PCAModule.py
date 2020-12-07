@@ -434,7 +434,7 @@ def expectationMaximizationPCA(stack, ncomponents=10, binning=None, legacy=True,
     if ncomponents > N:
         raise ValueError("Number of components too high.")
     #end of common part
-    avg = numpy.sum(data, axis=0, dtype=numpy.float) / (1.0 * r * c)
+    avg = numpy.sum(data, axis=0, dtype=numpy.float64) / (1.0 * r * c)
     numpy.subtract(data, avg, data)
     dataw = data * 1
     images = numpy.zeros((ncomponents, r * c), data.dtype)

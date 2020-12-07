@@ -101,7 +101,7 @@ class ThermoEMSFileParser(object):
             line = line.replace(','," ")
             splitLine = line.split()
         _fileObject.close()
-        data = numpy.array(data, dtype=numpy.float)
+        data = numpy.array(data, dtype=numpy.float64)
         ddict["data"] = data
         interestingMotors = ["VacPressure",
                              "TubeVoltageSet",

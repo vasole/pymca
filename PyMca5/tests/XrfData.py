@@ -69,7 +69,7 @@ def generateXRFData(nRows=5, nColumns=10, nDet=1, nTimes=3, presetTime=1, same=T
     counts = sf[0].mca(1).astype(numpy.int32)
     #counts = numpy.arange(counts.size, dtype=int) # for testing
     data = numpy.zeros((nDet, nRows, nColumns, counts.size), dtype=counts.dtype)
-    liveTime = numpy.zeros((nDet, nRows, nColumns), dtype=numpy.float)
+    liveTime = numpy.zeros((nDet, nRows, nColumns), dtype=numpy.float64)
     nTimes *= nDet
     initialTime = presetTime
     mcaIndex = 0

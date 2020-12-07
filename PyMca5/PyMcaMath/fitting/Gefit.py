@@ -107,7 +107,7 @@ def LeastSquaresFit(model, parameters0, data=None, maxiter = 100,constrains=None
     """
     if constrains is None:
         constrains = []
-    parameters = numpy.array(parameters0, dtype=numpy.float, copy=False)
+    parameters = numpy.array(parameters0, dtype=numpy.float64, copy=False)
     if linear is None:linear=0
     if deltachi is None:
         deltachi = 0.01
@@ -212,14 +212,14 @@ def LinearLeastSquaresFit(model0,parameters0,data0,maxiter,
             raise ValueError("Linear fit cannot handle quoted constraint")
     # make a local copy of the function for an easy speed up ...
     model = model0
-    parameters = numpy.array(parameters0, dtype=numpy.float, copy=False)
+    parameters = numpy.array(parameters0, dtype=numpy.float64, copy=False)
     if data0 is not None:
         selfx = numpy.array([x[0] for x in data0])
         selfy = numpy.array([x[1] for x in data0])
     else:
         selfx = xdata
         selfy = ydata
-    selfweight = numpy.ones(selfy.shape,numpy.float)
+    selfweight = numpy.ones(selfy.shape,numpy.float64)
     # nr0 = len(selfy)
     if data0 is not None:
         nc =  len(data0[0])
@@ -326,7 +326,7 @@ def RestreinedLeastSquaresFit(model0,parameters0,data0,maxiter,
                 raise ValueError("Unknown constraint %s" % constrains[0][i])
     # make a local copy of the function for an easy speed up ...
     model = model0
-    parameters = numpy.array(parameters0, dtype=numpy.float, copy=False)
+    parameters = numpy.array(parameters0, dtype=numpy.float64, copy=False)
     if ONED:
         data = numpy.array(data0)
         x = data[1:2,0]
@@ -344,7 +344,7 @@ def RestreinedLeastSquaresFit(model0,parameters0,data0,maxiter,
         else:
             selfx = xdata
             selfy = ydata
-    selfweight = numpy.ones(selfy.shape,numpy.float)
+    selfweight = numpy.ones(selfy.shape,numpy.float64)
     if ONED:
         nr0, nc = data.shape
     else:
@@ -401,7 +401,7 @@ def RestreinedLeastSquaresFit(model0,parameters0,data0,maxiter,
                 #(it was unsuccessful)
                 alphadiag=numpy.sqrt(numpy.diag(alpha0))
                 npar = len(numpy.sqrt(alphadiag))
-                narray = numpy.zeros((npar,npar),numpy.float)
+                narray = numpy.zeros((npar,npar),numpy.float64)
                 for i in range(npar):
                     for j in range(npar):
                         narray[i,j] = alpha0[i,j]/(alphadiag[i]*alphadiag[j])
@@ -410,7 +410,7 @@ def RestreinedLeastSquaresFit(model0,parameters0,data0,maxiter,
                     for j in range(npar):
                         narray[i,j] = narray[i,j]/(alphadiag[i]*alphadiag[j])
                 deltapar = numpy.dot(beta, narray)
-            pwork = numpy.zeros(deltapar.shape, numpy.float)
+            pwork = numpy.zeros(deltapar.shape, numpy.float64)
             for i in range(n_free):
                 if constrains [0] [free_index[i]] == CFREE:
                     pwork [0] [i] = fitparam [i] + deltapar [0] [i]
@@ -510,9 +510,9 @@ def ChisqAlphaBeta(model0, parameters, x,y,weight, constrains,model_deriv=None,l
                 print("Initial value = %f" % parameters[i])
                 print("Limits are %f and %f" % (pmin, pmax))
                 print("Parameter will be kept at its starting value")
-    fitparam = numpy.array(fitparam, numpy.float)
-    alpha = numpy.zeros((n_free, n_free),numpy.float)
-    beta = numpy.zeros((1,n_free),numpy.float)
+    fitparam = numpy.array(fitparam, numpy.float64)
+    alpha = numpy.zeros((n_free, n_free),numpy.float64)
+    beta = numpy.zeros((1,n_free),numpy.float64)
     delta = (fitparam + numpy.equal(fitparam,0.0)) * 0.00001
     nr  = x.shape[0]
     ##############
@@ -625,7 +625,7 @@ def getsigmaparameters(parameters,sigma0,constrains):
     # 0 = Free       1 = Positive     2 = Quoted
     # 3 = Fixed      4 = Factor       5 = Delta
     n_free = 0
-    sigma_par = numpy.zeros(parameters.shape,numpy.float)
+    sigma_par = numpy.zeros(parameters.shape,numpy.float64)
     for i in range(len(constrains [0])):
         if constrains[0][i] == CFREE:
             sigma_par [i] = sigma0[n_free]

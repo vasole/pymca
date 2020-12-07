@@ -115,7 +115,7 @@ class BAXSCSVFileParser(object):
             splitLine = line.split(",")
         _fileObject.close()
         dataColumnNames = [x for x in header[-1].split(",") if len(x) > 0]
-        data = numpy.array(data, dtype=numpy.float)
+        data = numpy.array(data, dtype=numpy.float64)
         #print(header)
         #print(data)
         labels=[]

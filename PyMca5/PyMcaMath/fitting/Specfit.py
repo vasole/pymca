@@ -121,12 +121,12 @@ class Specfit(object):
         self.bkg_internal_oldpars=[0,0]
         self.bkg_internal_oldbkg=numpy.array([])
         self.fitconfig['fittheory']=None
-        self.xdata0=numpy.array([],numpy.float)
-        self.ydata0=numpy.array([],numpy.float)
-        self.sigmay0=numpy.array([],numpy.float)
-        self.xdata=numpy.array([],numpy.float)
-        self.ydata=numpy.array([],numpy.float)
-        self.sigmay=numpy.array([],numpy.float)
+        self.xdata0=numpy.array([],numpy.float64)
+        self.ydata0=numpy.array([],numpy.float64)
+        self.sigmay0=numpy.array([],numpy.float64)
+        self.xdata=numpy.array([],numpy.float64)
+        self.ydata=numpy.array([],numpy.float64)
+        self.sigmay=numpy.array([],numpy.float64)
         #if (y is not None):
         #    self.setdata(x,y,sigmay)
         self.setdata(*vars,**kw)
@@ -417,7 +417,7 @@ class Specfit(object):
         else:
             nu=len(self.theorydict[self.fitconfig['fittheory']][1])
             niter=int((len(pars)-nb)/nu)
-            u_term=numpy.zeros(numpy.shape(t),numpy.float)
+            u_term=numpy.zeros(numpy.shape(t),numpy.float64)
             if niter > 0:
                 for i in range(niter):
                     u_term= u_term+ \
@@ -467,7 +467,7 @@ class Specfit(object):
         try:
             zz = numpy.array(esti_bkg[2])
         except:
-            zz = numpy.zeros(numpy.shape(yy),numpy.float)
+            zz = numpy.zeros(numpy.shape(yy),numpy.float64)
         #added scaling support
         yscaling=1.0
         if 'AutoScaling' in self.fitconfig:
@@ -773,7 +773,7 @@ class Specfit(object):
         """
         Constant background
         """
-        return pars[0]  * numpy.ones(numpy.shape(x),numpy.float)
+        return pars[0]  * numpy.ones(numpy.shape(x),numpy.float64)
 
     def bkg_linear(self,pars,x):
         """
@@ -797,7 +797,7 @@ class Specfit(object):
                     #same parameters
                     if numpy.sum(self.bkg_internal_oldx == x) == len(x):
                         if numpy.sum(self.bkg_internal_oldy == self.ydata) == len(self.ydata):
-                            return self.bkg_internal_oldbkg + pars[2] * numpy.ones(numpy.shape(x),numpy.float)
+                            return self.bkg_internal_oldbkg + pars[2] * numpy.ones(numpy.shape(x),numpy.float64)
         self.bkg_internal_oldy=self.ydata
         self.bkg_internal_oldx=x
         self.bkg_internal_oldpars=pars
@@ -810,25 +810,25 @@ class Specfit(object):
         nry=numpy.shape(yy)[0]
         if nrx == nry:
             self.bkg_internal_oldbkg=SpecfitFuns.subac(yy,pars[0],pars[1])
-            return self.bkg_internal_oldbkg + pars[2] * numpy.ones(numpy.shape(x),numpy.float)
+            return self.bkg_internal_oldbkg + pars[2] * numpy.ones(numpy.shape(x),numpy.float64)
 
         else:
             self.bkg_internal_oldbkg=SpecfitFuns.subac(numpy.take(yy,numpy.arange(0,nry,2)),
                                     pars[0],pars[1])
-            return self.bkg_internal_oldbkg + pars[2] * numpy.ones(numpy.shape(x),numpy.float)
+            return self.bkg_internal_oldbkg + pars[2] * numpy.ones(numpy.shape(x),numpy.float64)
 
     def bkg_squarefilter(self,pars,x):
         """
         Square filter Background
         """
         #yy=self.squarefilter(self.ydata,pars[0])
-        return pars[1]  * numpy.ones(numpy.shape(x),numpy.float)
+        return pars[1]  * numpy.ones(numpy.shape(x),numpy.float64)
 
     def bkg_none(self,pars,x):
         """
         Internal Background
         """
-        return numpy.zeros(x.shape,numpy.float)
+        return numpy.zeros(x.shape,numpy.float64)
 
     def estimate_builtin_bkg(self,xx,yy):
        self.zz=SpecfitFuns.subac(yy,1.0001,1000)
@@ -839,18 +839,18 @@ class Specfit(object):
             S = float(npoints)
             Sy = min(zz)
             fittedpar=[Sy]
-            cons = numpy.zeros((3,len(fittedpar)),numpy.float)
+            cons = numpy.zeros((3,len(fittedpar)),numpy.float64)
        elif self.fitconfig['fitbkg'] == 'Internal':
             #Internal
             fittedpar=[1.000,10000,0.0]
-            cons = numpy.zeros((3,len(fittedpar)),numpy.float)
+            cons = numpy.zeros((3,len(fittedpar)),numpy.float64)
             cons[0][0]= 3
             cons[0][1]= 3
             cons[0][2]= 3
        elif self.fitconfig['fitbkg'] == 'No Background':
             #None
             fittedpar=[]
-            cons = numpy.zeros((3,len(fittedpar)),numpy.float)
+            cons = numpy.zeros((3,len(fittedpar)),numpy.float64)
        elif self.fitconfig['fitbkg'] == 'Square Filter':
             fwhm=5
             if 'AutoFwhm' in self.fitconfig:
@@ -868,7 +868,7 @@ class Specfit(object):
                 fittedpar=[fwhm,0.0]
             else:
                 fittedpar=[fwhm+1,0.0]
-            cons = numpy.zeros((3,len(fittedpar)),numpy.float)
+            cons = numpy.zeros((3,len(fittedpar)),numpy.float64)
             cons[0][0]= 3
             cons[0][1]= 3
        else:
@@ -886,7 +886,7 @@ class Specfit(object):
                 bg = 0.0
                 slop = 0.0
             fittedpar=[bg/1.0,slop/1.0]
-            cons = numpy.zeros((3,len(fittedpar)),numpy.float)
+            cons = numpy.zeros((3,len(fittedpar)),numpy.float64)
        return fittedpar,cons,zz
 
     def configure(self,**kw):
@@ -943,7 +943,7 @@ class Specfit(object):
             else:
                 sigmay=None
             if x is None:
-                x=numpy.arange(len(y)).astype(numpy.float)
+                x=numpy.arange(len(y)).astype(numpy.float64)
             if sigmay is None:
                 self.setdata(x,y,**kw)
             else:
@@ -1532,7 +1532,7 @@ class Specfit(object):
             derivlast= numpy.array((y[-1]-y[-2])/(x[-1]-x[-2]))
         except:
             derivlast=numpy.array([])
-        result=numpy.zeros(len(i1)+1,numpy.float)
+        result=numpy.zeros(len(i1)+1,numpy.float64)
         result[1:len(i1)]=0.5*((num[0:-1]/deno[0:-1])+\
                                      (num[1:]/deno[1:]))
         if len(derivfirst):
@@ -1607,7 +1607,7 @@ class Specfit(object):
          	width=5
         w = int(width) + ((int(width)+1) % 2)
         u = int(w/2)
-        coef=numpy.zeros((2*u+w),numpy.float)
+        coef=numpy.zeros((2*u+w),numpy.float64)
         coef[0:u]=-0.5/float(u)
         coef[u:(u+w)]=1.0/float(w)
         coef[(u+w):len(coef)]=-0.5/float(u)
@@ -1620,7 +1620,7 @@ class Specfit(object):
             if len(y) < len(coef):
           	    return y
             else:
-                result=numpy.zeros(len(y),numpy.float)
+                result=numpy.zeros(len(y),numpy.float64)
                 result[(w-1):-(w-1)]=numpy.convolve(y,coef,0)
                 result[0:w-1]=result[w-1]
                 result[-(w-1):]=result[-(w+1)]
@@ -1632,7 +1632,7 @@ class Specfit(object):
 def test():
     from PyMca5.PyMcaMath.fitting import SpecfitFunctions
     a=SpecfitFunctions.SpecfitFunctions()
-    x = numpy.arange(1000).astype(numpy.float)
+    x = numpy.arange(1000).astype(numpy.float64)
     p1 = numpy.array([1500,100.,50.0])
     p2 = numpy.array([1500,700.,50.0])
     y = a.gauss(p1,x)+1

@@ -360,12 +360,12 @@ class Mca2EdfBatch(qt.QThread):
                         if i == 0:
                             mcainfo,mcadata = ffile.LoadSource(key)
                         mcadata = scan_obj.mca(i+1)
-                        y0 = numpy.array(mcadata, numpy.float)
+                        y0 = numpy.array(mcadata, numpy.float64)
                         if counter == 0:
                             key0 = "%s key %s" % (os.path.basename(fitfile), key)
                             self.__ncols = len(y0)
                             image = numpy.zeros((self.__nrows,self.__ncols), \
-                                                numpy.float)
+                                                numpy.float64)
                         if self.__ncols !=  len(y0):
                             print("spectrum has different number of columns")
                             print("skipping it")

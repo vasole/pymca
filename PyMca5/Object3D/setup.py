@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -49,7 +49,7 @@ for line in file('SceneGLWindow.py').readlines():
         if os.path.isdir('.svn') and os.path.isfile(os.sep.join(['.svn', 'entries'])):
             import re
             revision = 0
-            revre = re.compile('committed-rev="(\d+)"')
+            revre = re.compile(r'committed-rev="(\d+)"')
             for match in revre.finditer(open(os.sep.join(['.svn', 'entries'])).read()):
                 revision = max(revision, int(match.group(1)))
             __version__ += 'dev_r%i' % revision

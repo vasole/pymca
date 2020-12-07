@@ -87,7 +87,7 @@ class McaCalWidget(qt.QDialog):
         self.dict = {}
         if x is None:
             if len(y):
-                x = numpy.arange(len(y)).astype(numpy.float)
+                x = numpy.arange(len(y)).astype(numpy.float64)
         self.dict ['x'] = x
         self.dict ['y'] = y
         self.dict ['legend'] = legend
@@ -765,7 +765,7 @@ class McaCalWidget(qt.QDialog):
                 x[i] = usedpeaks[i][0]
                 y[i] = usedpeaks[i][1]
             try:
-                codes = numpy.zeros((3,3), numpy.float)
+                codes = numpy.zeros((3,3), numpy.float64)
                 if fixed:
                     codes[0,2] = Gefit.CFIXED
                 fittedpar, chisq, sigmapar = Gefit.LeastSquaresFit(self.functionTOF,
@@ -799,7 +799,7 @@ class McaCalWidget(qt.QDialog):
         if index == 1:
             return A * pow((x-B), -3)
         if index == 2:
-            return numpy.ones(x.shape, numpy.float)
+            return numpy.ones(x.shape, numpy.float64)
 
 
     def calculate(self, usedpeaks, order=1):
@@ -819,7 +819,7 @@ class McaCalWidget(qt.QDialog):
                         self.caldict[current]['C']]
         if (order > 1) and (len(usedpeaks) == 2):
             usedpeaks.append([0.0,0.0])
-        usedarray = numpy.array(usedpeaks).astype(numpy.float)
+        usedarray = numpy.array(usedpeaks).astype(numpy.float64)
         energy = usedarray[:,1]
         channel= usedarray[:,0]
 
@@ -1704,6 +1704,6 @@ if __name__ == '__main__':
         scan=sf.select(scankey)
     nbmca=scan.nbmca()
     mcadata=scan.mca(nbmca)
-    y=numpy.array(mcadata).astype(numpy.float)
-    x=numpy.arange(len(y)).astype(numpy.float)
+    y=numpy.array(mcadata).astype(numpy.float64)
+    x=numpy.arange(len(y)).astype(numpy.float64)
     test(x,y,inputfile)

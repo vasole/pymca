@@ -83,7 +83,7 @@ class XASSelfattenuationCorrection(object):
         alphaIn, alphaOut = self._configuration['XAS']['angles']
         edgeEnergy = Elements.Element[element]['binding'][edge]
         userEdgeEnergy = self._configuration['XAS'].get('energy', edgeEnergy)
-        energy = numpy.array(energy0, dtype=numpy.float)
+        energy = numpy.array(energy0, dtype=numpy.float64)
 
         #PyMca data ar in keV but XAS data are usually in eV
         if 0.5 * (energy[0] + energy[-1])/edgeEnergy > 100:

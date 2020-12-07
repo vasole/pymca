@@ -746,7 +746,7 @@ class FastXRFLinearFit(object):
     @staticmethod
     def _fitDtypeCalculation(data):
         # TODO: always 64bit?
-        return numpy.float
+        return numpy.float64
 
     @staticmethod
     def _fitBkgSubtract(spectra, config=None, anchorslist=None, fitmodel=None):

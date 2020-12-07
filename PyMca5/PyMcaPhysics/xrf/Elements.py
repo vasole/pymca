@@ -1009,7 +1009,7 @@ def _getAttFilteredElementDict(elementsList,
             #I do not know if to include this loop in the previous one (because rates are 0.0 sometimes)
 
             #attenuators
-            coeffs = numpy.zeros(len(energies), numpy.float)
+            coeffs = numpy.zeros(len(energies), numpy.float64)
             for attenuator in attenuators:
                 formula   = attenuator[0]
                 thickness = attenuator[1] * attenuator[2]
@@ -1018,7 +1018,7 @@ def _getAttFilteredElementDict(elementsList,
                 trans = numpy.exp(-coeffs)
             except OverflowError:
                 #deal with underflows reported as overflows
-                trans = numpy.zeros(len(energies), numpy.float)
+                trans = numpy.zeros(len(energies), numpy.float64)
                 for i in range(len(energies)):
                     coef = coeffs[i]
                     if coef < 0.0:
@@ -1031,7 +1031,7 @@ def _getAttFilteredElementDict(elementsList,
                             pass
 
             #funnyfilters (only make sense to have more than one if same opening and aligned)
-            coeffs = numpy.zeros(len(energies), numpy.float)
+            coeffs = numpy.zeros(len(energies), numpy.float64)
             funnyfactor = None
             for attenuator in funnyfilters:
                 formula   = attenuator[0]
@@ -1051,7 +1051,7 @@ def _getAttFilteredElementDict(elementsList,
                                  (1.0 - funnyfactor)
                 except OverflowError:
                     #deal with underflows reported as overflows
-                    transFunny = numpy.zeros(len(energies), numpy.float)
+                    transFunny = numpy.zeros(len(energies), numpy.float64)
                     for i in range(len(energies)):
                         coef = coeffs[i]
                         if coef < 0.0:
@@ -1069,7 +1069,7 @@ def _getAttFilteredElementDict(elementsList,
 
             #user attenuators
             if userattenuators:
-                utrans = numpy.ones((len(energies),), numpy.float)
+                utrans = numpy.ones((len(energies),), numpy.float64)
                 for userattenuator in userattenuators:
                     utrans *= getTableTransmission(userattenuator, energies)
                 for i in range(len(rates)):
@@ -1084,7 +1084,7 @@ def _getAttFilteredElementDict(elementsList,
                     trans = (1.0 - numpy.exp(-coeffs))
                 except OverflowError:
                     #deal with underflows reported as overflows
-                    trans = numpy.ones(len(energies), numpy.float)
+                    trans = numpy.ones(len(energies), numpy.float64)
                     for i in range(len(energies)):
                         coef = coeffs[i]
                         if coef < 0.0:
@@ -1137,7 +1137,7 @@ def getMultilayerFluorescence(multilayer0,
        (type(energyList) != numpy.ndarray):
         energyList = [energyList]
 
-    energyList = numpy.array(energyList, dtype=numpy.float)
+    energyList = numpy.array(energyList, dtype=numpy.float64)
     if layerList is None:
         layerList = list(range(len(multilayer)))
     if type(layerList) != type([]):
@@ -1150,16 +1150,16 @@ def getMultilayerFluorescence(multilayer0,
         if (type(weightList) != type([])) and \
            (type(weightList) != numpy.ndarray):
             weightList = [weightList]
-        weightList = numpy.array(weightList, dtype=numpy.float)
+        weightList = numpy.array(weightList, dtype=numpy.float64)
     else:
-        weightList = numpy.ones(len(energyList)).astype(numpy.float)
+        weightList = numpy.ones(len(energyList)).astype(numpy.float64)
     if flagList is not None:
         if (type(flagList) != type([])) and \
            (type(flagList) != numpy.ndarray):
             flagList = [flagList]
         flagList   = numpy.array(flagList)
     else:
-        flagList = numpy.ones(len(energyList)).astype(numpy.float)
+        flagList = numpy.ones(len(energyList)).astype(numpy.float64)
 
     optimized = 0
     if beamfilters is None:beamfilters = []
@@ -1199,9 +1199,9 @@ def getMultilayerFluorescence(multilayer0,
 
     #normalize incoming beam
     i0 = numpy.nonzero(flagList>0)[0]
-    weightList = numpy.take(weightList, i0).astype(numpy.float)
-    energyList = numpy.take(energyList, i0).astype(numpy.float)
-    flagList   = numpy.take(flagList, i0).astype(numpy.float)
+    weightList = numpy.take(weightList, i0).astype(numpy.float64)
+    energyList = numpy.take(energyList, i0).astype(numpy.float64)
+    flagList   = numpy.take(flagList, i0).astype(numpy.float64)
     #normalize selected weights
     total = sum(weightList)
     if 0:
@@ -1344,9 +1344,9 @@ def getMultilayerFluorescence(multilayer0,
             else:
                 workfunnyfilters = None
 
-        newweightlist = numpy.ones(weightList.shape,numpy.float)
+        newweightlist = numpy.ones(weightList.shape,numpy.float64)
         if len(newbeamfilters):
-            coeffs = numpy.zeros(len(energyList), numpy.float)
+            coeffs = numpy.zeros(len(energyList), numpy.float64)
             for beamfilter in newbeamfilters:
                 formula   = beamfilter[0]
                 thickness = beamfilter[1] * beamfilter[2]
@@ -1355,7 +1355,7 @@ def getMultilayerFluorescence(multilayer0,
                 trans = numpy.exp(-coeffs)
             except OverflowError:
                 #deal with underflows reported as overflows
-                trans = numpy.zeros(len(energyList), numpy.float)
+                trans = numpy.zeros(len(energyList), numpy.float64)
                 for i in range(len(energyList)):
                     coef = coeffs[i]
                     if coef < 0.0:
@@ -1586,7 +1586,7 @@ def getScattering(matrix, energy, attenuators = None, alphain = None, alphaout =
                     trans = numpy.exp(-coeffs)
                 except OverflowError:
                     #deal with underflows reported as overflows
-                    trans = numpy.zeros(len(energies), numpy.float)
+                    trans = numpy.zeros(len(energies), numpy.float64)
                     for i in range(len(energies)):
                         coef = coeffs[i]
                         if coef < 0.0:
@@ -1610,7 +1610,7 @@ def getScattering(matrix, energy, attenuators = None, alphain = None, alphaout =
                     trans = (1.0 - numpy.exp(-coeffs))
                 except OverflowError:
                     #deal with underflows reported as overflows
-                    trans = numpy.ones(len(rates), numpy.float)
+                    trans = numpy.ones(len(rates), numpy.float64)
                     for i in range(len(rates)):
                         coef = coeffs[i]
                         if coef < 0.0:
@@ -1801,7 +1801,7 @@ def getFluorescence(matrix, energy, attenuators = None,
 
             #I do not know if to include this loop in the previous one (because rates are 0.0 sometimes)
             #attenuators
-            coeffs = numpy.zeros(len(energies), numpy.float)
+            coeffs = numpy.zeros(len(energies), numpy.float64)
             for attenuator in attenuators:
                 formula   = attenuator[0]
                 thickness = attenuator[1] * attenuator[2]
@@ -1816,7 +1816,7 @@ def getFluorescence(matrix, energy, attenuators = None,
                 trans = 0.0 * coeffs
 
             #funnyfilters
-            coeffs = numpy.zeros(len(energies), numpy.float)
+            coeffs = numpy.zeros(len(energies), numpy.float64)
             funnyfactor = None
             for attenuator in funnyfilters:
                 formula   = attenuator[0]
@@ -1837,7 +1837,7 @@ def getFluorescence(matrix, energy, attenuators = None,
                                  (1.0 - funnyfactor)
                 except OverflowError:
                     #deal with underflows reported as overflows
-                    transFunny = numpy.zeros(len(energies), numpy.float)
+                    transFunny = numpy.zeros(len(energies), numpy.float64)
                     for i in range(len(energies)):
                         coef = coeffs[i]
                         if coef < 0.0:
@@ -1856,7 +1856,7 @@ def getFluorescence(matrix, energy, attenuators = None,
 
             #user attenuators
             if userattenuators:
-                utrans = numpy.ones((len(energies),), numpy.float)
+                utrans = numpy.ones((len(energies),), numpy.float64)
                 for userattenuator in userattenuators:
                     utrans *= getTableTransmission(userattenuator, energies)
                 for i in range(len(rates)):
@@ -1871,7 +1871,7 @@ def getFluorescence(matrix, energy, attenuators = None,
                     trans = (1.0 - numpy.exp(-coeffs))
                 except OverflowError:
                     #deal with underflows reported as overflows
-                    trans = numpy.ones(len(rates), numpy.float)
+                    trans = numpy.ones(len(rates), numpy.float64)
                     for i in range(len(rates)):
                         coef = coeffs[i]
                         if coef < 0.0:
@@ -2291,8 +2291,8 @@ def getMaterialTransmission(compoundList0, fractionList0, energy0 = None,
     if thickness is None: thickness = 1.0
     dict = getMaterialMassAttenuationCoefficients(compoundList0,
                                                  fractionList0, energy0)
-    energy = numpy.array(dict['energy'],numpy.float)
-    mu     = numpy.array(dict['total'],numpy.float) * density * thickness
+    energy = numpy.array(dict['energy'],numpy.float64)
+    mu     = numpy.array(dict['total'],numpy.float64) * density * thickness
     if energy0 is not None:
         if type(energy0) != type([]):
             listoutput = False
@@ -2782,21 +2782,21 @@ def getElementLShellRates(symbol,energy=None,photoweights = None):
         weights = [1.0, 1.0, 1.0]
     z = getz(symbol)
     index = z-1
-    shellrates = numpy.arange(len(LShell.ElementLShellTransitions)).astype(numpy.float)
+    shellrates = numpy.arange(len(LShell.ElementLShellTransitions)).astype(numpy.float64)
     shellrates[0] = z
     shellrates[1] = 0
     lo = 0
     if 'Z' in LShell.ElementL1ShellTransitions[0:2]:lo=1
     if 'TOTAL' in LShell.ElementL1ShellTransitions[0:2]:lo=lo+1
     n1 = len(LShell.ElementL1ShellTransitions)
-    rates = numpy.array(LShell.ElementL1ShellRates[index]).astype(numpy.float)
+    rates = numpy.array(LShell.ElementL1ShellRates[index]).astype(numpy.float64)
     shellrates[lo:n1] = (rates[lo:] / (sum(rates[lo:]) + (sum(rates[lo:])==0))) * weights[0]
     n2 = n1 + len(LShell.ElementL2ShellTransitions) - lo
-    rates = numpy.array(LShell.ElementL2ShellRates[index]).astype(numpy.float)
+    rates = numpy.array(LShell.ElementL2ShellRates[index]).astype(numpy.float64)
     shellrates[n1:n2] = (rates[lo:] / (sum(rates[lo:]) + (sum(rates[lo:])==0))) * weights[1]
     n1 = n2
     n2 = n1 + len(LShell.ElementL3ShellTransitions) - lo
-    rates = numpy.array(LShell.ElementL3ShellRates[index]).astype(numpy.float)
+    rates = numpy.array(LShell.ElementL3ShellRates[index]).astype(numpy.float64)
     shellrates[n1:n2] = (rates[lo:] / (sum(rates[lo:]) + (sum(rates[lo:])==0))) * weights[2]
     return shellrates
 
@@ -2815,26 +2815,26 @@ def getElementMShellRates(symbol,energy=None, photoweights = None):
         weights = [1.0, 1.0, 1.0, 1.0, 1.0]
     z = getz(symbol)
     index = z-1
-    shellrates = numpy.arange(len(MShell.ElementMShellTransitions)).astype(numpy.float)
+    shellrates = numpy.arange(len(MShell.ElementMShellTransitions)).astype(numpy.float64)
     shellrates[0] = z
     shellrates[1] = 0
     n1 = len(MShell.ElementM1ShellTransitions)
-    rates = numpy.array(MShell.ElementM1ShellRates[index]).astype(numpy.float)
+    rates = numpy.array(MShell.ElementM1ShellRates[index]).astype(numpy.float64)
     shellrates[2:n1] = (rates[2:] / (sum(rates[2:]) + (sum(rates[2:])==0))) * weights[0]
     n2 = n1 + len(MShell.ElementM2ShellTransitions) - 2
-    rates = numpy.array(MShell.ElementM2ShellRates[index]).astype(numpy.float)
+    rates = numpy.array(MShell.ElementM2ShellRates[index]).astype(numpy.float64)
     shellrates[n1:n2] = (rates[2:] / (sum(rates[2:]) + (sum(rates[2:])==0))) * weights[1]
     n1 = n2
     n2 = n1 + len(MShell.ElementM3ShellTransitions) - 2
-    rates = numpy.array(MShell.ElementM3ShellRates[index]).astype(numpy.float)
+    rates = numpy.array(MShell.ElementM3ShellRates[index]).astype(numpy.float64)
     shellrates[n1:n2] = (rates[2:] / (sum(rates[2:]) + (sum(rates[2:])==0))) * weights[2]
     n1 = n2
     n2 = n1 + len(MShell.ElementM4ShellTransitions) - 2
-    rates = numpy.array(MShell.ElementM4ShellRates[index]).astype(numpy.float)
+    rates = numpy.array(MShell.ElementM4ShellRates[index]).astype(numpy.float64)
     shellrates[n1:n2] = (rates[2:] / (sum(rates[2:]) + (sum(rates[2:])==0)))* weights[3]
     n1 = n2
     n2 = n1 + len(MShell.ElementM5ShellTransitions) - 2
-    rates = numpy.array(MShell.ElementM5ShellRates[index]).astype(numpy.float)
+    rates = numpy.array(MShell.ElementM5ShellRates[index]).astype(numpy.float64)
     shellrates[n1:n2] = (rates[2:] / (sum(rates[2:]) + (sum(rates[2:])==0)))* weights[4]
     return shellrates
 

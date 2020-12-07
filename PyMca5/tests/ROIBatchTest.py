@@ -154,14 +154,14 @@ class testROIBatch(unittest.TestCase):
             if len(idx):
                 xw = x[idx]
                 yw = y[idx]
-                rawCounts = yw.sum(dtype=numpy.float)
+                rawCounts = yw.sum(dtype=numpy.float64)
                 deltaX = xw[-1] - xw[0]
                 deltaY = yw[-1] - yw[0]
                 if abs(deltaX) > 0.0:
                     slope = (deltaY/deltaX)
                     background = yw[0] + slope * (xw - xw[0])
                     netCounts = rawCounts -\
-                                background.sum(dtype=numpy.float)
+                                background.sum(dtype=numpy.float64)
                 else:
                     netCounts = 0.0
             else:

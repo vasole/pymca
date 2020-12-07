@@ -53,11 +53,13 @@ if sys.platform == "win32":
         HKLM = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
         try:
             # 32 bit
-            softwareKey = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, "Software\XMI-MSIM")
+            softwareKey = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
+                                         r"Software\XMI-MSIM")
         except:
             try:
                 # 64 bit
-                softwareKey = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, "Software\Wow6432Node\XMI-MSIM")
+                softwareKey = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
+                                             r"Software\Wow6432Node\XMI-MSIM")
             except:
                 # XMI-MSIM not installed ...
                 softwareKey = None

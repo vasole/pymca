@@ -474,7 +474,7 @@ class SimpleFit(object):
                                   anchorslist)
         else:
             _logger.debug("NO STRIP, NO SNIP")
-            result     = numpy.zeros(ysmooth.shape, numpy.float) + min(ysmooth)
+            result     = numpy.zeros(ysmooth.shape, numpy.float64) + min(ysmooth)
 
         return result
 
@@ -483,18 +483,18 @@ class SimpleFit(object):
         try:
             if hasattr(y, "shape"):
                 if len(y.shape) > 1:
-                    result=SpecfitFuns.SavitskyGolay(numpy.ravel(y).astype(numpy.float),
+                    result=SpecfitFuns.SavitskyGolay(numpy.ravel(y).astype(numpy.float64),
                                     self._fitConfiguration['fit']['stripfilterwidth'])
                 else:
-                    result=SpecfitFuns.SavitskyGolay(numpy.array(y).astype(numpy.float),
+                    result=SpecfitFuns.SavitskyGolay(numpy.array(y).astype(numpy.float64),
                                     self._fitConfiguration['fit']['stripfilterwidth'])
             else:
-                result=SpecfitFuns.SavitskyGolay(numpy.array(y).astype(numpy.float),
+                result=SpecfitFuns.SavitskyGolay(numpy.array(y).astype(numpy.float64),
                                     self._fitConfiguration['fit']['stripfilterwidth'])
         except:
             err = sys.exc_info()[1]
             raise ValueError("Unsuccessful Savitsky-Golay smoothing: %s" % err)
-            result=numpy.array(y).astype(numpy.float)
+            result=numpy.array(y).astype(numpy.float64)
         if len(result) > 1:
             result[1:-1]=numpy.convolve(result,f,mode=0)
             result[0]=0.5*(result[0]+result[1])
@@ -815,7 +815,7 @@ class SimpleFit(object):
                       ['function'](pars[:nb], x)
 
         else:
-            y = numpy.zeros(x.shape, numpy.float)
+            y = numpy.zeros(x.shape, numpy.float64)
         if self._fitConfiguration['fit']['strip_flag']:
             #If the x is not self._x, how to add the strip?
             try:
@@ -833,7 +833,7 @@ class SimpleFit(object):
             return self._fitConfiguration['functions'][self.getFitFunction()]\
                       ['function'](pars[nb:], x)
         else:
-            return numpy.zeros(x.shape, numpy.float)
+            return numpy.zeros(x.shape, numpy.float64)
 
     def evaluateDefinedFunction(self, x=None):
         if x is None:
@@ -857,7 +857,7 @@ class SimpleFit(object):
         pars = self._fitResult['fittedvalues']
         nb = self.__nBackgroundParameters
         ddict["contributions"] = []
-        ddict["function"] = numpy.zeros(x.shape, numpy.float)
+        ddict["function"] = numpy.zeros(x.shape, numpy.float64)
         nTotal = len(self.paramlist) 
         if  nTotal > nb:
             nParametersPerFunction = len(fitFunctionDict['parameters'])
@@ -877,7 +877,7 @@ class SimpleFit(object):
 def test():
     from PyMca5.PyMca import SpecfitFunctions
     a=SpecfitFunctions.SpecfitFunctions()
-    x = numpy.arange(1000).astype(numpy.float)
+    x = numpy.arange(1000).astype(numpy.float64)
     p1 = numpy.array([1500,100.,50.0])
     p2 = numpy.array([1500,700.,50.0])
     y = a.gauss(p1, x)+1
