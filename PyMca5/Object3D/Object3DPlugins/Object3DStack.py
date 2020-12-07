@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -603,7 +603,7 @@ if __name__ == "__main__":
             filename = args[0]
         else:
             stack = EDFStack.EDFStack(dtype=numpy.float32, imagestack=False)
-            filename = "..\COTTE\ch09\ch09__mca_0005_0000_0070.edf"
+            filename = r"..\COTTE\ch09\ch09__mca_0005_0000_0070.edf"
         if os.path.exists(filename):
             print("fileindex = ", fileindex)
             stack.loadIndexedStack(filename, begin=begin, end=end, fileindex=fileindex)
