@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 E. Papillon, V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -90,7 +90,7 @@ class SpecFileMcaTable(qt.QWidget):
             ncol = int(info['NbMcaDet'])
         else:
             ncol = 1
-        nrow = info['NbMca']/ncol
+        nrow = info['NbMca'] // ncol
         self.table.setColumnCount(ncol)
         self.table.setRowCount(nrow)
         if nrow == 0:
