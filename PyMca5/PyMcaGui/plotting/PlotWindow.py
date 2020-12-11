@@ -416,9 +416,9 @@ class PlotWindow(PlotWidget.PlotWidget):
                                 self._averageIconSignal,
                                  'Average Plotted Curves')
 
-            tb = self._addToolButton(self.deriveIcon,
-                                self._deriveIconSignal,
-                                 'Take Derivative of Active Curve')
+            self.derivateToolButton = self._addToolButton(self.deriveIcon,
+                                            self._deriveIconSignal,
+                                            'Take Derivative of Active Curve')
 
             tb = self._addToolButton(self.smoothIcon,
                                  self._smoothIconSignal,
