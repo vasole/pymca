@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -26,7 +26,7 @@
 """This plugin provide simple math functions, to derivate or invert the
 active curve.
 """
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -50,8 +50,15 @@ class MathPlugins(Plugin1DBase.Plugin1DBase):
                                     "Multiply active curve by -1",
                                     swapsign],
                           'Derivate':[self.derivate,
-                                    "Derivate zoomed active curve",
-                                    derive]}
+                                      "Derivate zoomed active curve",
+                                      derive],
+                          'Derivate 3':[self.derivate3,
+                                      "3-point Smoothed Derivative of zoomed active curve",
+                                      derive],
+                          'Derivate 5':[self.derivate5,
+                                      "5-point Smoothed Derivative of zoomed active curve",
+                                      derive],
+                          }
        self.simpleMath = SimpleMath.SimpleMath()
 
     #Methods to be implemented by the plugin
@@ -96,13 +103,13 @@ class MathPlugins(Plugin1DBase.Plugin1DBase):
         legend = "-("+legend+")"
         self.addCurve(x, -y, legend=legend, info=info, replot=True)
 
-    def derivate(self):
+    def derivate(self, option="Single point"):
         activeCurve = self.getActiveCurve()
         if activeCurve is None:
             return
         x, y, legend, info = activeCurve [0:4]
         xlimits=self.getGraphXLimits()
-        x, y = self.simpleMath.derivate(x, y, xlimits=xlimits)
+        x, y = self.simpleMath.derivate(x, y, xlimits=xlimits, option=option)
         info['ylabel'] = info['ylabel'] + "'"
         operations = info.get("operations", [])
         operations.append("derivate")
@@ -111,6 +118,11 @@ class MathPlugins(Plugin1DBase.Plugin1DBase):
         legend = legend+"'"
         self.addCurve(x, y, legend=legend, info=info, replot=True)
 
+    def derivate3(self):
+        return self.derivate(option="SG Smoothed 3 point")
+
+    def derivate5(self):
+        return self.derivate(option="SG Smoothed 5 point")
 
 MENU_TEXT = "Built-in Math"
 def getPlugin1DInstance(plotWindow, **kw):
