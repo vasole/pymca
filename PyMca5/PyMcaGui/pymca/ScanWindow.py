@@ -153,6 +153,17 @@ class ScanWindow(PlotWindow.PlotWindow):
         self.outputFilter = None
 
         #signals
+        if hasattr(self, "derivateToolButton"):
+            # create the derivatives menu
+            self.derivateToolButton.setPopupMode(qt.QToolButton.DelayedPopup)
+            self.derivateOptionSelected = None
+            self.derivateMenu = qt.QMenu()
+            for item in self.simpleMath.derivateOptions:
+                self.derivateMenu.addAction(item)
+
+            self.derivateToolButton.setMenu(self.derivateMenu)
+            self.derivateToolButton.triggered.connect(self._derivateTriggered)
+
         # this one was made in the base class
         #self.setCallback(self.graphCallback)
         if fit:
@@ -167,6 +178,13 @@ class ScanWindow(PlotWindow.PlotWindow):
                                    self._simpleFitSignal)
             self.fitButtonMenu.addAction(QString("Customized Fit") ,
                                    self._customFitSignal)
+
+    def _derivateTriggered(self, action):
+        text = action.text()
+        tip = "Take %s derivative of active curve" % text
+        self.derivateToolButton.setToolTip(tip)
+        self.derivateOptionSelected = text
+        self._deriveIconSignal()
 
     def _toggleInfoWidget(self):
         if self.infoDockWidget.isHidden():
@@ -979,7 +997,8 @@ class ScanWindow(PlotWindow.PlotWindow):
         if operation == "derivate":
             #xmin and xmax
             xlimits=self.getGraphXLimits()
-            xplot, yplot = self.simpleMath.derivate(x, y, xlimits=xlimits)
+            xplot, yplot = self.simpleMath.derivate(x, y, xlimits=xlimits,
+                                                    option=self.derivateOptionSelected)
             ilabel = dataObject.info['selection']['y'][0]
             ylabel = dataObject.info['LabelNames'][ilabel]
             newDataObject.info['LabelNames'][ilabel] = ylabel+"'"

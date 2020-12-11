@@ -39,7 +39,11 @@ _logger = logging.getLogger(__name__)
 
 
 class SimpleMath(object):
-    def derivate(self,xdata,ydata, xlimits=None):
+    derivateOptions = ["Single point",
+                       "SG Smoothed 3 point",
+                       "SG smoothed 5 point"]
+
+    def derivate(self,xdata,ydata, xlimits=None, option=None):
         x=numpy.array(xdata, copy=False, dtype=numpy.float64)
         y=numpy.array(ydata, copy=False, dtype=numpy.float64)
         if xlimits is not None:
@@ -47,39 +51,58 @@ class SimpleMath(object):
                                (xdata<=xlimits[1]))[0]
             x=numpy.take(x,i1)
             y=numpy.take(y,i1)
-        i1 = numpy.argsort(x)
-        x=numpy.take(x,i1)
-        y=numpy.take(y,i1)
+
+        # make sure data are strictly increasing
         deltax=x[1:] - x[:-1]
         i1=numpy.nonzero(abs(deltax)>0.0000001)[0]
         x=numpy.take(x, i1)
         y=numpy.take(y, i1)
-        minDelta = deltax[deltax > 0]
-        if minDelta.size:
-            minDelta = minDelta.min()
+
+        if option is None or option.startswith("SG"):
+            minDelta = deltax[deltax > 0]
+            if minDelta.size:
+                minDelta = minDelta.min()
+            else:
+                # all points are equal
+                minDelta = 1.0
+            _logger.info("Using a delta between points of %f" % minDelta)
+            xInter = numpy.arange(x[0]-minDelta,x[-1]+minDelta,minDelta)
+            yInter = numpy.interp(xInter, x, y, left=y[0], right=y[-1])
+            if len(yInter) > 499:
+                _logger.info("Using 5 points interpolation")
+                option = "SG smoothed 5 point"
+            else:
+                _logger.info("Using 3 points interpolation")
+                option = "SG smoothed 3 point"
+            npoints = int(option.split()[2])
+            degree = 1
+            order = 1
+            coeff = SGModule.calc_coeff(npoints, degree, order)
+            N = int(numpy.size(coeff-1)/2)
+            yInterPrime = numpy.convolve(yInter, coeff, mode='valid')/minDelta
+            i1 = numpy.nonzero((x>=xInter[N+1]) & (x <= xInter[-N]))[0]
+            x = numpy.take(x, i1)
+            result = numpy.interp(x, xInter[(N+1):-N],
+                                  yInterPrime[1:],
+                                  left=yInterPrime[1],
+                                  right=yInterPrime[-1])
         else:
-            # all points are equal
-            minDelta = 1.0
-        _logger.info("Using a delta between points of %f" % minDelta)
-        xInter = numpy.arange(x[0]-minDelta,x[-1]+minDelta,minDelta)
-        yInter = numpy.interp(xInter, x, y, left=y[0], right=y[-1])
-        if len(yInter) > 499:
-            _logger.info("Using 5 points interpolation")
-            npoints = 5
-        else:
-            _logger.info("Using 3 points interpolation")
-            npoints = 3
-        degree = 1
-        order = 1
-        coeff = SGModule.calc_coeff(npoints, degree, order)
-        N = int(numpy.size(coeff-1)/2)
-        yInterPrime = numpy.convolve(yInter, coeff, mode='valid')/minDelta
-        i1 = numpy.nonzero((x>=xInter[N+1]) & (x <= xInter[-N]))[0]
-        x = numpy.take(x, i1)
-        result = numpy.interp(x, xInter[(N+1):-N],
-                              yInterPrime[1:],
-                              left=yInterPrime[1],
-                              right=yInterPrime[-1])
+            # single point derivative
+            result = numpy.zeros((len(y),), dtype=numpy.float64)
+            # loop implementation
+            #for i in range(1, len(y)-1):
+            #    result[i] = 0.5 * \
+            #                (((y[i] - y[i-1]) / (x[i] - x[i-1])) + \
+            #                ((y[i+1] - y[i]) / (x[i+1] - x[i])))
+            result[1:-1] = 0.5 * \
+                           (((y[1:-1] - y[0:-2]) / (x[1:-1] - x[0:-2])) + \
+                           ((y[2:] - y[1:-1]) / (x[2:] - x[1:-1])))
+            # repeat first and last value for the first and last point?
+            result[0] = result[1]
+            result[-1] = result[-2]
+            # prefer to return what is actually defined?
+            result = result[1:-1]
+            x = x[1:-1]
         return x, result
 
     def average(self, xarr, yarr, x=None):
