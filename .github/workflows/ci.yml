@@ -29,12 +29,12 @@ jobs:
             QT_BINDING: PyQt5
             XVFB_RUN: xvfb-run -a
 
-          #- name-suffix: "sdist"
-          #  os: ubuntu-latest
-          #  python-version: 3.8
-          #  BUILD_COMMAND: sdist
-          #  QT_BINDING: PySide2
-          #  XVFB_RUN: xvfb-run -a
+          - name-suffix: "sdist"
+            os: ubuntu-latest
+            python-version: 3.8
+            BUILD_COMMAND: sdist
+            QT_BINDING: PySide2
+            XVFB_RUN: xvfb-run -a
 
           #- name-suffix: "bdist_wheel"
           #  os: macos-latest
@@ -127,5 +127,6 @@ jobs:
           pip install --pre --find-links dist/ --no-cache-dir --no-index PyMca5
 
       - name: Run the tests
-        run:
+        run: |
+          cd ..
           python -m PyMca5.tests.TestAll
