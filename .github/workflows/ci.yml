@@ -76,8 +76,8 @@ jobs:
               libxcb-xinerama0 \
               libxcb-xkb1 \
               libxcb1
-            # X server
-            export DISPLAY=:99.0
+            #export QT_QPA_PLATFORM=offscreen
+            export DISPLAY=99.0
             ;;
           macOS)
             brew update
@@ -131,4 +131,5 @@ jobs:
       - name: Run the tests
         run: |
           cd ..
-          python -m PyMca5.tests.TestAll
+          export | grep -i display
+          ${{ matrix.XVFB_RUN }} python -m PyMca5.tests.TestAll
