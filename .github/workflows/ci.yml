@@ -76,6 +76,8 @@ jobs:
               libxcb-xinerama0 \
               libxcb-xkb1 \
               libxcb1
+            # X server
+            export DISPLAY=:99.0
             ;;
           macOS)
             brew update
