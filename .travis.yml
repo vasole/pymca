@@ -128,7 +128,15 @@ script:
       else
           pip install h5py;
       fi
-    - pip install silx --pre --trusted-host www.silx.org --find-links http://www.silx.org/pub/wheelhouse/;
+    # too slow to build fabio
+    # - if [ "$TRAVIS_CPU_ARCH" == "ppc64le" ];
+    #  then
+    #      pip install fabio --pre --trusted-host www.silx.org --find-links http://www.silx.org/pub/wheelhouse/;
+    #  else
+    #      pip install fabio;
+    #  fi
+    #
+    #- pip install silx --pre --trusted-host www.silx.org --find-links http://www.silx.org/pub/wheelhouse/;
 
     #- if [[ ! -z $QT_BINDING ]];
     #  then
