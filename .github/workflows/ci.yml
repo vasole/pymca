@@ -38,12 +38,12 @@ jobs:
             QT_BINDING: PySide2
             XVFB_RUN: xvfb-run -a
 
-          - name-suffix: "bdist_wheel"
-            os: macos-latest
-            python-version: 3.8
-            BUILD_COMMAND: bdist_wheel
-            QT_BINDING: PyQt5
-            XVFB_RUN: ""
+          #- name-suffix: "bdist_wheel"
+          #  os: macos-latest
+          #  python-version: 3.8
+          #  BUILD_COMMAND: bdist_wheel
+          #  QT_BINDING: PyQt5
+          #  XVFB_RUN: ""
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -52,8 +52,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install OS dependencies
-        run: |
       - name: Install OS dependencies
         run: |
           case "${{ runner.os }}" in
