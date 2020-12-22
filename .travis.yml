@@ -1,4 +1,4 @@
-dist: bionic
+dist: focal
 
 language: python
 
@@ -96,7 +96,7 @@ install:
     - pip install --upgrade wheel
     - if [ "$TRAVIS_CPU_ARCH" == "ppc64le" ];
       then
-          pip install numpy --pre --find-links https://www.silx.org/pub/wheelhouse/;
+          pip install numpy --pre --trusted-host www.silx.org --find-links http://www.silx.org/pub/wheelhouse/;
       else
           pip install --upgrade numpy;
       fi
@@ -118,17 +118,17 @@ script:
     - pip install fisx
     - if [ "$TRAVIS_CPU_ARCH" == "ppc64le" ];
       then
-          pip install matplotlib --pre --find-links https://www.silx.org/pub/wheelhouse/;
+          pip install matplotlib --pre --trusted-host www.silx.org --find-links http://www.silx.org/pub/wheelhouse/;
       else
           pip install matplotlib;
       fi
     - if [ "$TRAVIS_CPU_ARCH" == "ppc64le" ];
       then
-          pip install h5py --pre --find-links https://www.silx.org/pub/wheelhouse/;
+          pip install h5py --pre --trusted-host www.silx.org --find-links http://www.silx.org/pub/wheelhouse/;
       else
           pip install h5py;
       fi
-    - pip install silx --pre --find-links https://www.silx.org/pub/wheelhouse/;
+    - pip install silx --pre --trusted-host www.silx.org --find-links http://www.silx.org/pub/wheelhouse/;
 
     #- if [[ ! -z $QT_BINDING ]];
     #  then
