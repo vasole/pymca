@@ -10,17 +10,24 @@ matrix:
         #      - BUILD_COMMAND=sdist
         #      - QT_BINDING=PySide2
 
+        #- python: 3.8
+        #  os: linux
+        #  env:
+        #      - BUILD_COMMAND=bdist_wheel
+        #      - QT_BINDING=PyQt5
+
         - python: 3.8
           os: linux
+          arch: ppc64le
           env:
               - BUILD_COMMAND=bdist_wheel
               - QT_BINDING=PyQt5
 
-        - python: 3.6
-          os: linux
-          env:
-              - BUILD_COMMAND=sdist
-              - QT_BINDING=PySide2
+        #- python: 3.6
+        #  os: linux
+        #  env:
+        #      - BUILD_COMMAND=sdist
+        #      - QT_BINDING=PySide2
 
         # No particular need to test Python 2 on OSX
         #- language: generic
@@ -30,12 +37,12 @@ matrix:
         #      - PYTHON_VERSION=2
         #      - QT_BINDING=PySide2
 
-        - language: generic
-          os: osx
-          env: 
-              - BUILD_COMMAND=bdist_wheel
-              - PYTHON_VERSION=3
-              - QT_BINDING=PyQt5
+        #- language: generic
+        #  os: osx
+        #  env: 
+        #      - BUILD_COMMAND=bdist_wheel
+        #      - PYTHON_VERSION=3
+        #      - QT_BINDING=PyQt5
 
 branches:
     only:
@@ -65,6 +72,7 @@ addons:
             - libxcb-xinerama0
             - libxcb-xkb1
             - libxcb1
+            - python3-pyqt5 # no wheel available
 
 services:
     - xvfb
@@ -86,7 +94,12 @@ install:
 
     # Install build dependencies
     - pip install --upgrade wheel
-    - pip install --upgrade numpy
+    - if [ "$TRAVIS_CPU_ARCH" == "ppc64le" ];
+      then
+          pip install numpy --pre --find-links https://www.silx.org/pub/wheelhouse/;
+      else
+          pip install --upgrade numpy;
+      fi
 
     # Print Python info
     - python ./ci/info_platform.py
@@ -102,14 +115,25 @@ script:
     - pip install --upgrade pip
 
     # Dependencies
-    - pip install matplotlib
     - pip install fisx
-    - pip install h5py
-    # - pip install silx --pre --find-links https://silx.gitlab-pages.esrf.fr/bob/silx/
-    - if [[ ! -z $QT_BINDING ]];
+    - if [ "$TRAVIS_CPU_ARCH" == "ppc64le" ];
       then
-          pip install $QT_BINDING;
+          pip install matplotlib --pre --find-links https://www.silx.org/pub/wheelhouse/;
+      else
+          pip install matplotlib;
       fi
+    - if [ "$TRAVIS_CPU_ARCH" == "ppc64le" ];
+      then
+          pip install h5py --pre --find-links https://www.silx.org/pub/wheelhouse/;
+      else
+          pip install h5py;
+      fi
+    - pip install silx --pre --find-links https://www.silx.org/pub/wheelhouse/;
+
+    #- if [[ ! -z $QT_BINDING ]];
+    #  then
+    #      pip install $QT_BINDING;
+    #  fi
 
     # Install from source package
     - pip install --pre --find-links dist/ --no-cache-dir --no-index PyMca5 $PIP_INSTALL_EXTRA_ARGS
