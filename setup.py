@@ -550,6 +550,9 @@ if sys.platform not in ["win32", "darwin"]:
                 c_prog = "#include <GL/gl.h>\n int main()\n{return 0;}\n"
                 if subprocess.call("echo '%s' | gcc -x c - " % c_prog, shell=True):
                     HAS_OPENGL_HEADERS = False
+        gl_header_test = "a.out"
+        if os.path.exists(gl_header_test):
+            os.remove(gl_header_test)
 
 if HAS_OPENGL_HEADERS:
     build_Object3DCTools(ext_modules)
