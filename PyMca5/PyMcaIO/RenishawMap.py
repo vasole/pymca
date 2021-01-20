@@ -3,7 +3,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2021 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -73,6 +73,11 @@ class RenishawMap(DataObject.DataObject):
             nChannels = 0
             for line in f:
                 # read the first line
+                if "X" in line.upper() and \
+                   "Y" in line.upper() and \
+                   "WAVE" in line.upper() and \
+                   "INTENSITY" in line.upper():
+                    continue
                 y[nChannels], x[nChannels], wl[nChannels], data[nChannels] = \
                               [float(value) for value in line.split("\t")]
                 if nChannels == 0:
@@ -95,7 +100,7 @@ class RenishawMap(DataObject.DataObject):
 
         rows = numpy.zeros((nSpectra,), numpy.float32)
         columns = numpy.zeros((nSpectra,), numpy.float32)
-        wl = numpy.array(wl[:nChannels], dtype=numpy.float32)        
+        wl = numpy.array(wl[:nChannels], dtype=numpy.float32)
         data = numpy.zeros((nSpectra, nChannels), numpy.float32)
         nRows = 0
         nColumns = 0
@@ -108,6 +113,11 @@ class RenishawMap(DataObject.DataObject):
             for i in range(nSpectra):
                 for j in range(nChannels):
                     line = f.readline()
+                    if "X" in line.upper() and \
+                       "Y" in line.upper() and \
+                       "WAVE" in line.upper() and \
+                       "INTENSITY" in line.upper():
+                        line = f.readline()
                 if firstChangesFirst:
                     column, row, dummy1, dummy2 = \
                             [float(value) for value in line.split("\t")]
@@ -129,6 +139,11 @@ class RenishawMap(DataObject.DataObject):
                 row, column = indices[i]
                 for j in range(nChannels):
                     line = f.readline()
+                    if "X" in line.upper() and \
+                       "Y" in line.upper() and \
+                       "WAVE" in line.upper() and \
+                       "INTENSITY" in line.upper():
+                        line = f.readline()
                     d1, d2, d3, data[row, column, j] = \
                               [myFloat(value) for value in line.split("\t")]
         #print "nRows = ", nRows
@@ -160,7 +175,13 @@ def isRenishawMapFile(filename):
     try:
         if filename.endswith(".txt"):
             with open(filename, 'r') as f:
-                line = f.readline().split("\t")
+                line = f.readline().upper()
+                if "X" in line and \
+                   "Y" in line and \
+                   "WAVE" in line and \
+                   "INTENSITY" in line:
+                    line = f.readline()
+                line = line.split("\t")
             y, x, wl, data = [float(item) for item in line]
             return True
     except:
