@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2019-2020 European Synchrotron Radiation Facility
+# Copyright (C) 2019-2021 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -71,7 +71,7 @@ def get_node_list(node, node_type=None, name=None, db_name=None, dimension=None,
     output_list = []
     # walk not waiting
     if node_type or name or db_name or dimension:
-        for node in iterator(wait=False, filter=filter):
+        for node in iterator(wait=False, include_filter=filter):
             if ignore_underscore and hasattr(node.name, "startswith") and node.name.startswith("_"):
                 continue
             if not _check_dimension(node, dimension):
@@ -87,7 +87,7 @@ def get_node_list(node, node_type=None, name=None, db_name=None, dimension=None,
             if unique and len(output_list):
                 break
     else:
-        for node in iterator(wait=False, filter=filter):
+        for node in iterator(wait=False, include_filter=filter):
             #print(node.name, node.db_name, node)
             if ignore_underscore and hasattr(node.name, "startswith") and node.name.startswith("_"):
                 continue
