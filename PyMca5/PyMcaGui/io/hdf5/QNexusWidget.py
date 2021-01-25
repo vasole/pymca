@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2021 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -985,7 +985,16 @@ class QNexusWidget(qt.QWidget):
                     else:
                         actualDatasetPath = posixpath.join(entry,
                                                 cntSelection['cntlist'][yCnt])
-                    actualDataset = phynxFile[actualDatasetPath]
+                    try:
+                        actualDataset = phynxFile[actualDatasetPath]
+                    except KeyError:
+                        # filter x.1 and x.2 ESRF case
+                        if len(entryList) > 4:
+                            _logger.info("Ignoring %s in %s" % \
+                                         (actualDatasetPath, entry))
+                            continue
+                        else:
+                            raise
                     sel['scanselection'] = True
                     if hasattr(actualDataset, "shape"):
                         if len(actualDataset.shape) > 1:
