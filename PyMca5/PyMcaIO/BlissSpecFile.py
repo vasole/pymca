@@ -345,8 +345,13 @@ class BlissSpecScan(object):
         self._read_counters()
         counters = self._counters
         if len(counters):
-            key = list(counters.keys())[0]
-            return len(counters[key])
+            nlines = 0
+            keyList = list(counters.keys())
+            for key in keyList:
+                n = len(counters[key])
+                if n > nlines:
+                    nlines = n 
+            return nlines
         else:
             return 0
 
