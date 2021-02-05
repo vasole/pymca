@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2021 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -106,7 +106,7 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
         self._motor0Mne = item[m0idx]
         self._motor1Mne = item[m1idx]
 
-        #print("Scanned motors are %s and %s" % (self._motor0Mne, self._motor1Mne))
+        _logger.info("Scanned motors are %s and %s" % (self._motor0Mne, self._motor1Mne))
         #print("MOTOR 0 ", float(item[m0idx + 1]),
         #                              float(item[m0idx + 2]),
         #                              int(item[m0idx + 3]))
@@ -127,7 +127,7 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
         if y.size < (int(item[m0idx + 3])+plusOne) * (int(item[m1idx + 3])+plusOne):
             _logger.warning("WARNING: Incomplete mesh scan")
             self._motor1 = numpy.resize(self._motor1,
-                                (y.size // (int(item[m0idx + 3])+plusOne),1))
+                                (y.size // (int(item[m0idx + 3])+plusOne),))
             y = numpy.resize(y,((y.size // (int(item[m0idx + 3])+plusOne) * \
                                  (int(item[m0idx + 3])+plusOne)),1))
 
