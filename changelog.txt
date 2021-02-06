@@ -1,3 +1,14 @@
+VERSION 5.6.4
+-------------
+
+- K-means. Filter non-finite numbers.
+
+- GUI. Allow the user to choose derivative order and algorithm.
+
+- IO. Read live time from KETEK AXAS-D.
+
+- IO. Deal with Renishaw files containing a single line header.
+
 VERSION 5.6.3
 -------------
 
