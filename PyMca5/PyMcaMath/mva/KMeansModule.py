@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2020 European Synchrotron Radiation Facility
+# Copyright (c) 2020-2021 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -92,9 +92,12 @@ def kmeans(x, k, method=None, normalize=True):
     x is a 2D array [n_samples, n_features]
     k is the desired number of clusters
     """
-    # TODO -> Deal with inf values and NaNs
     assert len(x.shape) == 2
-    data = numpy.ascontiguousarray(x)
+    # collapse the information to deal with inf and NaNs
+    raws = x.sum(axis=1, dtype=numpy.float64)
+    good = numpy.isfinite(raws)
+    finiteData = numpy.alltrue(good)
+    data = numpy.ascontiguousarray(x[good])
     if normalize:
         datamin = data.min(axis=0)
         deltas = data.max(axis=0) - datamin 
@@ -112,6 +115,11 @@ def kmeans(x, k, method=None, normalize=True):
         result = _labelMdp(data, k)
     else:
         raise ValueError("Unknown clustering <%s>"  % method)
+    if not finiteData:
+        _logger.info("Data contains inf or NaNs")
+        actualResult = -numpy.ones(raws.shape,dtype=numpy.int32)
+        actualResult[good] = result["labels"]
+        result["labels"] = actualResult
     return result
 
 def label(*var, **kw):
