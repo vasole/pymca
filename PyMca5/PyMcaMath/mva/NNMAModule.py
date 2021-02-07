@@ -326,6 +326,12 @@ def nnma(stack, ncomponents, binning=None,
                         data[i, idx] = numpy.sum(tmpData, axis=-1, dtype=numpy.float32)[0, idx]
             data.shape = r * c, N
 
+    if mask is not None:
+        # the mask contains the good data
+        maskview = mask[:]
+        maskview.shape = -1
+        data = data[maskview,:]
+
     #mindata = data.min()
     #numpy.add(data, -mindata+1, data)
     #I do not know the meaning of these paramenters
@@ -388,14 +394,17 @@ def nnma(stack, ncomponents, binning=None,
     for i in range(ncomponents):
         idx = sorted_idx[i]
         if 1:
-            new_images[i, :] = images[idx, :]
+            if mask is None:
+                new_images[i, :] = images[idx, :]
+            else:
+                new_images[i, maskview] = images[idx, :]                
         else:
             #imaging the projected sum gives same results
             Atmp = images[idx, :]
             Atmp.shape = -r*c, 1
             Xtmp = X[idx,:]
             Xtmp.shape = 1, -1
-            new_images[i, :] = numpy.sum(numpy.dot(Atmp, Xtmp), axis=1)
+            new_images[i, maskview] = numpy.sum(numpy.dot(Atmp, Xtmp), axis=1)
         new_vectors[i,:] = X[idx,:]
         values[i] = 100.*total_nnma_intensity[idx][0]/original_intensity
     new_images.shape = ncomponents + n_more, r, c
