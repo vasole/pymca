@@ -1177,6 +1177,11 @@ class QStackWidget(StackBase.StackBase,
             self.tab.setCurrentWidget(self.mcaWidget)
 
     def setSelectionMask(self, mask, instance_id=None):
+        if mask is not None:
+            if self._stackImageData is not None:
+                if mask.shape != self._stackImageData.shape:
+                    _logger.info("Reshaping mask")
+                    mask.shape = self._stackImageData.shape
         self._selectionMask = mask
         if instance_id == id(self):
             return
