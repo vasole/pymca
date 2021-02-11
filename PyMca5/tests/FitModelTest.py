@@ -242,7 +242,7 @@ class testFitModel(unittest.TestCase):
         # TODO: non-linear parameters not precise
         # numpy.testing.assert_allclose(self.fitmodel.parameters, expected1)
         numpy.testing.assert_allclose(
-            self.fitmodel.linear_parameters, expected2, rtol=1e-6
+            self.fitmodel.linear_parameters, expected2, rtol=1e-5
         )
 
     def assert_result(self, result, expected):

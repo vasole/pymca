@@ -1037,7 +1037,7 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         if ystd0 is None or ystd0.size != xdata0.size:
             return 1
 
-        # XRF spectrum selection
+        # XRF spectrum view
         selection = numpy.isfinite(ydata0)
         xmin = self.xmin
         if xmin is not None:
@@ -1048,7 +1048,7 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         if not selection.any():
             return 1
 
-        # Cache original and reformed XRF spectrum
+        # Cache the original XRF spectrum and its view
         idx = numpy.argsort(xdata0)[selection]
         self._xdata = xdata0[idx]
         self._ydata = ydata0[idx]
@@ -1097,6 +1097,7 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         self._lastNumBkgCacheParams = bkgparams
 
     def _snip(self, signal, anchorslist):
+        """Apply SNIP filtering to a signal"""
         _logger.debug("CALCULATING SNIP")
         n = len(signal)
         if len(anchorslist):
@@ -1119,10 +1120,11 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         return bkg
 
     def _strip(self, signal, anchorslist):
+        """Apply STRIP filtering to a signal"""
         cfg = self.config["fit"]
         niter = cfg["stripiterations"]
         if niter <= 0:
-            return numpy.zeros_like(signal) + min(signal)
+            return numpy.full_like(signal, signal.min())
 
         _logger.debug("CALCULATING STRIP")
         if (niter > 1000) and (cfg["stripwidth"] == 1):
@@ -1152,6 +1154,7 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         return bkg
 
     def _smooth(self, y):
+        """Smooth a signal"""
         try:
             y = y.astype(dtype=numpy.float64)
             w = self.config["fit"]["stripfilterwidth"]
