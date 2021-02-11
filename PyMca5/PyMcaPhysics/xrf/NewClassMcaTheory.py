@@ -905,109 +905,6 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
     def ystd0(self):
         return self._ystd0
 
-    @property
-    def _numBkgCacheParams(self):
-        cfg = self.config["fit"]
-        params = [
-            "stripflag",
-            "stripalgorithm",
-            "stripfilterwidth",
-            "stripanchorsflag",
-            "stripanchorslist",
-        ]
-        if cfg["stripalgorithm"] == 1:
-            params += ["snipwidth"]
-        else:
-            params += ["stripwidth", "stripconstant", "stripiterations"]
-        return params
-
-    def _refreshNumBkgCache(self):
-        bkgparams = self._numBkgCacheParams
-        if self._lastNumBkgCacheParams == bkgparams:
-            return
-        elif self.ydata is None:
-            self._numBkg = None
-        elif self.config["fit"]["stripflag"]:
-            signal = self._smooth(self.ydata)
-            anchorslist = list(self._anchorsIndices())
-            if self.config["fit"]["stripalgorithm"] == 1:
-                self._numBkg = self._snip(signal, anchorslist)
-            else:
-                self._numBkg = self._strip(signal, anchorslist)
-        else:
-            self._numBkg = numpy.zeros_like(self.ydata)
-        self._lastNumBkgCacheParams = bkgparams
-
-    def _snip(self, signal, anchorslist):
-        _logger.debug("CALCULATING SNIP")
-        n = len(signal)
-        if len(anchorslist):
-            anchorslist.sort()
-        else:
-            anchorslist = [0, n - 1]
-
-        bkg = 0.0 * signal
-        lastAnchor = 0
-        cfg = self.config["fit"]
-        width = cfg["snipwidth"]
-        for anchor in anchorslist:
-            if (anchor > lastAnchor) and (anchor < len(signal)):
-                bkg[lastAnchor:anchor] = SpecfitFuns.snip1d(
-                    signal[lastAnchor:anchor], width, 0
-                )
-                lastAnchor = anchor
-        if lastAnchor < len(signal):
-            bkg[lastAnchor:] = SpecfitFuns.snip1d(signal[lastAnchor:], width, 0)
-        return bkg
-
-    def _strip(self, signal, anchorslist):
-        cfg = self.config["fit"]
-        niter = cfg["stripiterations"]
-        if niter <= 0:
-            return numpy.zeros_like(signal) + min(signal)
-
-        _logger.debug("CALCULATING STRIP")
-        if (niter > 1000) and (cfg["stripwidth"] == 1):
-            bkg = SpecfitFuns.subac(
-                signal, cfg["stripconstant"], niter / 20, 4, anchorslist
-            )
-            bkg = SpecfitFuns.subac(
-                bkg, cfg["stripconstant"], niter / 4, cfg["stripwidth"], anchorslist
-            )
-        else:
-            bkg = SpecfitFuns.subac(
-                signal, cfg["stripconstant"], niter, cfg["stripwidth"], anchorslist
-            )
-            if niter > 1000:
-                # make sure to get something smooth
-                bkg = SpecfitFuns.subac(bkg, cfg["stripconstant"], 500, 1, anchorslist)
-            else:
-                # make sure to get something smooth but with less than
-                # 500 iterations
-                bkg = SpecfitFuns.subac(
-                    bkg,
-                    cfg["stripconstant"],
-                    int(cfg["stripwidth"] * 2),
-                    1,
-                    anchorslist,
-                )
-        return bkg
-
-    def _smooth(self, y):
-        try:
-            y = y.astype(dtype=numpy.float64)
-            w = self.config["fit"]["stripfilterwidth"]
-            ysmooth = SpecfitFuns.SavitskyGolay(y, w)
-        except Exception:
-            print("Unsuccessful Savitsky-Golay smoothing: %s" % sys.exc_info())
-            raise
-        if ysmooth.size > 1:
-            fltr = [0.25, 0.5, 0.25]
-            ysmooth[1:-1] = numpy.convolve(ysmooth, fltr, mode=0)
-            ysmooth[0] = 0.5 * (ysmooth[0] + ysmooth[1])
-            ysmooth[-1] = 0.5 * (ysmooth[-1] + ysmooth[-2])
-        return ysmooth
-
     def setData(self, *var, **kw):
         """
         Method to update the data to be fitted.
@@ -1091,11 +988,7 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
 
         self._xmin0 = kw.get("xmin", self.xmin)
         self._xmax0 = kw.get("xmax", self.xmax)
-        if self._refreshDataCache(xdata0=xdata0, ydata0=ydata0, ystd0=ystd0):
-            return 1
-        self._xdata0 = xdata0
-        self._ydata0 = ydata0
-        self._ystd0 = ystd0
+        return self._refreshDataCache(xdata0=xdata0, ydata0=ydata0, ystd0=ystd0)
 
     @property
     def xmin(self):
@@ -1115,17 +1008,22 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         else:
             return self._xmax0
 
+    def getLastTime(self):
+        return self._lastTime
+
     @property
     def _dataCacheParams(self):
+        """Any change in these parameter will invalidate the cache"""
         return self.xmin, self.xmax
 
     def _refreshDataCache(self, xdata0=None, ydata0=None, ystd0=None):
-        """Sorted and sliced view of original data"""
+        """Cache sorted and sliced view of the original XRF spectrum data"""
         params = self._dataCacheParams
         if xdata0 is None and ydata0 is None and ystd0 is None:
             if self._lastDataCacheParams == params:
-                return
+                return  # the cached data is still valid
 
+        # Original XRF spectrum
         if xdata0 is None:
             xdata0 = self.xdata0
         if xdata0 is None or not xdata0.size:
@@ -1139,6 +1037,7 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         if ystd0 is None or ystd0.size != xdata0.size:
             return 1
 
+        # XRF spectrum selection
         selection = numpy.isfinite(ydata0)
         xmin = self.xmin
         if xmin is not None:
@@ -1149,17 +1048,123 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         if not selection.any():
             return 1
 
+        # Cache original and reformed XRF spectrum
         idx = numpy.argsort(xdata0)[selection]
         self._xdata = xdata0[idx]
         self._ydata = ydata0[idx]
         self._ystd = ystd0[idx]
-
-        # Fix data cache and invalidate background cache
+        self._xdata0 = xdata0
+        self._ydata0 = ydata0
+        self._ystd0 = ystd0
         self._lastDataCacheParams = params
+
+        # Invalidate background cache
         self._lastNumBkgCacheParams = None
 
-    def getLastTime(self):
-        return self._lastTime
+    @property
+    def _numBkgCacheParams(self):
+        """Any change in these parameter will invalidate the cache"""
+        cfg = self.config["fit"]
+        params = [
+            "stripflag",
+            "stripalgorithm",
+            "stripfilterwidth",
+            "stripanchorsflag",
+            "stripanchorslist",
+        ]
+        if cfg["stripalgorithm"] == 1:
+            params += ["snipwidth"]
+        else:
+            params += ["stripwidth", "stripconstant", "stripiterations"]
+        return params
+
+    def _refreshNumBkgCache(self):
+        """Cache numerical background"""
+        bkgparams = self._numBkgCacheParams
+        if self._lastNumBkgCacheParams == bkgparams:
+            return  # the cached data is still valid
+        elif self.ydata is None:
+            self._numBkg = None
+        elif self.config["fit"]["stripflag"]:
+            signal = self._smooth(self.ydata)
+            anchorslist = list(self._anchorsIndices())
+            if self.config["fit"]["stripalgorithm"] == 1:
+                self._numBkg = self._snip(signal, anchorslist)
+            else:
+                self._numBkg = self._strip(signal, anchorslist)
+        else:
+            self._numBkg = numpy.zeros_like(self.ydata)
+        self._lastNumBkgCacheParams = bkgparams
+
+    def _snip(self, signal, anchorslist):
+        _logger.debug("CALCULATING SNIP")
+        n = len(signal)
+        if len(anchorslist):
+            anchorslist.sort()
+        else:
+            anchorslist = [0, n - 1]
+
+        bkg = 0.0 * signal
+        lastAnchor = 0
+        cfg = self.config["fit"]
+        width = cfg["snipwidth"]
+        for anchor in anchorslist:
+            if (anchor > lastAnchor) and (anchor < len(signal)):
+                bkg[lastAnchor:anchor] = SpecfitFuns.snip1d(
+                    signal[lastAnchor:anchor], width, 0
+                )
+                lastAnchor = anchor
+        if lastAnchor < len(signal):
+            bkg[lastAnchor:] = SpecfitFuns.snip1d(signal[lastAnchor:], width, 0)
+        return bkg
+
+    def _strip(self, signal, anchorslist):
+        cfg = self.config["fit"]
+        niter = cfg["stripiterations"]
+        if niter <= 0:
+            return numpy.zeros_like(signal) + min(signal)
+
+        _logger.debug("CALCULATING STRIP")
+        if (niter > 1000) and (cfg["stripwidth"] == 1):
+            bkg = SpecfitFuns.subac(
+                signal, cfg["stripconstant"], niter / 20, 4, anchorslist
+            )
+            bkg = SpecfitFuns.subac(
+                bkg, cfg["stripconstant"], niter / 4, cfg["stripwidth"], anchorslist
+            )
+        else:
+            bkg = SpecfitFuns.subac(
+                signal, cfg["stripconstant"], niter, cfg["stripwidth"], anchorslist
+            )
+            if niter > 1000:
+                # make sure to get something smooth
+                bkg = SpecfitFuns.subac(bkg, cfg["stripconstant"], 500, 1, anchorslist)
+            else:
+                # make sure to get something smooth but with less than
+                # 500 iterations
+                bkg = SpecfitFuns.subac(
+                    bkg,
+                    cfg["stripconstant"],
+                    int(cfg["stripwidth"] * 2),
+                    1,
+                    anchorslist,
+                )
+        return bkg
+
+    def _smooth(self, y):
+        try:
+            y = y.astype(dtype=numpy.float64)
+            w = self.config["fit"]["stripfilterwidth"]
+            ysmooth = SpecfitFuns.SavitskyGolay(y, w)
+        except Exception:
+            print("Unsuccessful Savitsky-Golay smoothing: %s" % sys.exc_info())
+            raise
+        if ysmooth.size > 1:
+            fltr = [0.25, 0.5, 0.25]
+            ysmooth[1:-1] = numpy.convolve(ysmooth, fltr, mode=0)
+            ysmooth[0] = 0.5 * (ysmooth[0] + ysmooth[1])
+            ysmooth[-1] = 0.5 * (ysmooth[-1] + ysmooth[-2])
+        return ysmooth
 
     @property
     def zero(self):
