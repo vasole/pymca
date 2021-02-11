@@ -595,6 +595,7 @@ class testXrf(unittest.TestCase):
         numpy.testing.assert_array_equal(mcaFitLegacy.xdata.flat, mcaFit.xdata)
         numpy.testing.assert_array_equal(mcaFitLegacy.ydata.flat, mcaFit.ydata)
         numpy.testing.assert_array_equal(mcaFitLegacy.sigmay.flat, mcaFit.ystd)
+        numpy.testing.assert_array_equal(mcaFitLegacy.zz.flat, mcaFit.ynumbkg)
 
         # Compare configuration
         config1 = copy.deepcopy(mcaFitLegacy.config)

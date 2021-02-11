@@ -439,18 +439,22 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         SpecfitFuns.fastagauss([1.0, 10.0, 1.0], numpy.arange(10.0))
         self.useFisxEscape(False)
 
-        # XRF spectrum
+        # Original XRF spectrum
         self._ydata0 = None
         self._xdata0 = None
         self._std0 = None
+        self._xmin0 = None
+        self._xmax0 = None
+
+        # XRF spectrum to fit
         self._ydata = None
         self._xdata = None
         self._std = None
-        self._lastXrange = None
+        self._lastDataCacheParams = None
 
         # XRF spectrum background
         self._numBkg = None
-        self._lastNumBkgParams = None
+        self._lastNumBkgCacheParams = None
 
         self._lastTime = None
 
@@ -864,6 +868,7 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
     @property
     def xdata(self):
         """Sorted and sliced view of xdata0"""
+        self._refreshDataCache()
         return self._xdata
 
     @property
@@ -873,12 +878,20 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
     @property
     def ydata(self):
         """Sorted and sliced view of ydata0"""
+        self._refreshDataCache()
         return self._ydata
 
     @property
     def ystd(self):
         """Sorted and sliced view of ystd0"""
+        self._refreshDataCache()
         return self._ystd
+
+    @property
+    def ynumbkg(self):
+        """Get the numerical background (as opposed to the analytical background)"""
+        self._refreshNumBkgCache()
+        return self._numBkg
 
     @property
     def xdata0(self):
@@ -893,25 +906,7 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         return self._ystd0
 
     @property
-    def ynumbkg(self):
-        """Get the numerical background (as opposed to the analytical background)"""
-        bkgparams = self._numBkgParams
-        if self._numBkg is not None and self._lastNumBkgParams == bkgparams:
-            return self._numBkg
-        if self.config["fit"]["stripflag"]:
-            signal = self._smooth(self.ydata)
-            anchorslist = list(self._anchorsIndices())
-            if self.config["fit"]["stripalgorithm"] == 1:
-                self._numBkg = self._snip(signal, anchorslist)
-            else:
-                self._numBkg = self._strip(signal, anchorslist)
-        else:
-            self._numBkg = numpy.zeros_like(self.ydata)
-        self._lastNumBkgParams = bkgparams
-        return self._numBkg
-
-    @property
-    def _numBkgParams(self):
+    def _numBkgCacheParams(self):
         cfg = self.config["fit"]
         params = [
             "stripflag",
@@ -925,6 +920,23 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         else:
             params += ["stripwidth", "stripconstant", "stripiterations"]
         return params
+
+    def _refreshNumBkgCache(self):
+        bkgparams = self._numBkgCacheParams
+        if self._lastNumBkgCacheParams == bkgparams:
+            return
+        elif self.ydata is None:
+            self._numBkg = None
+        elif self.config["fit"]["stripflag"]:
+            signal = self._smooth(self.ydata)
+            anchorslist = list(self._anchorsIndices())
+            if self.config["fit"]["stripalgorithm"] == 1:
+                self._numBkg = self._snip(signal, anchorslist)
+            else:
+                self._numBkg = self._strip(signal, anchorslist)
+        else:
+            self._numBkg = numpy.zeros_like(self.ydata)
+        self._lastNumBkgCacheParams = bkgparams
 
     def _snip(self, signal, anchorslist):
         _logger.debug("CALCULATING SNIP")
@@ -1062,7 +1074,7 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
                 ystd0 = numpy.sqrt(abs(ydata0))
                 ystd0[~valid] = ystd0[valid].min()
             else:
-                ystd0 = numpy.ones_like(ystd0)
+                ystd0 = numpy.ones_like(ydata0)
         else:
             ystd0 = numpy.ravel(ystd0)
 
@@ -1077,57 +1089,61 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         elif self.config["concentrations"].get("useautotime", False):
             self.config["concentrations"]["time"] = timeFactor
 
-        cfgfit = self.config["fit"]
-
-        xmin = cfgfit["xmin"]
-        if not cfgfit["use_limit"]:
-            if "xmin" in kw:
-                xmin = kw["xmin"]
-                if xmin is not None:
-                    cfgfit["xmin"] = xmin
-                else:
-                    xmin = xdata0.min()
-            elif xdata0.size:
-                xmin = xdata0.min()
-
-        xmax = cfgfit["xmax"]
-        if not cfgfit["use_limit"]:
-            if "xmax" in kw:
-                xmax = kw["xmax"]
-                if xmax is not None:
-                    cfgfit["xmax"] = xmax
-                else:
-                    xmax = xdata0.max()
-            elif xdata0.size:
-                xmax = xdata0.max()
-
-        if self._cacheDataView(xdata0, ydata0, ystd0, xmin, xmax):
+        self._xmin0 = kw.get("xmin", self.xmin)
+        self._xmax0 = kw.get("xmax", self.xmax)
+        if self._refreshDataCache(xdata0=xdata0, ydata0=ydata0, ystd0=ystd0):
             return 1
         self._xdata0 = xdata0
         self._ydata0 = ydata0
         self._ystd0 = ystd0
-        self._lastXrange = xmin, xmax
 
-    def _cacheDataView(
-        self, xdata0=None, ydata0=None, ystd0=None, xmin=None, xmax=None
-    ):
+    @property
+    def xmin(self):
+        """From config (if enabled) or the last `setData` call"""
+        cfgfit = self.config["fit"]
+        if cfgfit["use_limit"]:
+            return cfgfit["xmin"]
+        else:
+            return self._xmin0
+
+    @property
+    def xmax(self):
+        """From config (if enabled) or the last `setData` call"""
+        cfgfit = self.config["fit"]
+        if cfgfit["use_limit"]:
+            return cfgfit["xmax"]
+        else:
+            return self._xmax0
+
+    @property
+    def _dataCacheParams(self):
+        return self.xmin, self.xmax
+
+    def _refreshDataCache(self, xdata0=None, ydata0=None, ystd0=None):
         """Sorted and sliced view of original data"""
+        params = self._dataCacheParams
+        if xdata0 is None and ydata0 is None and ystd0 is None:
+            if self._lastDataCacheParams == params:
+                return
+
         if xdata0 is None:
             xdata0 = self.xdata0
         if xdata0 is None or not xdata0.size:
             return 1
         if ydata0 is None:
             ydata0 = self.ydata0
+        if ydata0 is None or ydata0.size != xdata0.size:
+            return 1
         if ystd0 is None:
             ystd0 = self.ystd0
-        if xmin is None:
-            xmin = self._lastXrange[0]
-        if xmax is None:
-            xmax = self._lastXrange[1]
+        if ystd0 is None or ystd0.size != xdata0.size:
+            return 1
 
         selection = numpy.isfinite(ydata0)
+        xmin = self.xmin
         if xmin is not None:
             selection &= xdata0 >= xmin
+        xmax = self.xmax
         if xmax is not None:
             selection &= xdata0 <= xmax
         if not selection.any():
@@ -1137,7 +1153,10 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         self._xdata = xdata0[idx]
         self._ydata = ydata0[idx]
         self._ystd = ystd0[idx]
-        self._numBkg = None
+
+        # Fix data cache and invalidate background cache
+        self._lastDataCacheParams = params
+        self._lastNumBkgCacheParams = None
 
     def getLastTime(self):
         return self._lastTime
