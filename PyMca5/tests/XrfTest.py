@@ -33,6 +33,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import unittest
 import os
 import sys
+import copy
 import numpy
 if sys.version_info < (3,):
     from StringIO import StringIO
@@ -267,10 +268,8 @@ class testXrf(unittest.TestCase):
         self.assertTrue(os.path.isfile(trainingDataFile),
                         "File %s is not an actual file" % trainingDataFile)
 
-    def testTrainingDataFit(self):
+    def _readTrainingData(self):
         from PyMca5.PyMcaIO import specfilewrapper as specfile
-        from PyMca5.PyMcaPhysics.xrf import LegacyMcaTheory
-        from PyMca5.PyMcaPhysics.xrf import ConcentrationsTool
         from PyMca5.PyMcaIO import ConfigDict
         trainingDataFile = os.path.join(self.dataDir, "XRFSpectrum.mca")
         self.assertTrue(os.path.isfile(trainingDataFile),
@@ -285,18 +284,52 @@ class testXrf(unittest.TestCase):
                         "Training data 1st scan should contain no MCAs")
         y = mcaData = sf[1].mca(1)
         sf = None
+        x = numpy.arange(y.size).astype(numpy.float64)
 
         # perform the actual XRF analysis
         configuration = ConfigDict.ConfigDict()
         configuration.readfp(StringIO(cfg))
+
+        return x, y, configuration
+
+    def _readStainlessSteelData(self):
+        from PyMca5.PyMcaIO import specfilewrapper as specfile
+        from PyMca5.PyMcaIO import ConfigDict
+
+        # read the data
+        dataFile = os.path.join(self.dataDir, "Steel.spe")
+        self.assertTrue(os.path.isfile(dataFile),
+                        "File %s is not an actual file" % dataFile)
+        sf = specfile.Specfile(dataFile)
+        self.assertTrue(len(sf) == 1, "File %s cannot be read" % dataFile)
+        self.assertTrue(sf[0].nbmca() == 1,
+                        "Spe file should contain MCA data")
+        y = counts = sf[0].mca(1)
+        x = channels = numpy.arange(y.size).astype(numpy.float64)
+        sf = None
+
+        # read the fit configuration
+        configFile = os.path.join(self.dataDir, "Steel.cfg")
+        self.assertTrue(os.path.isfile(configFile),
+                        "File %s is not an actual file" % configFile)
+        configuration = ConfigDict.ConfigDict()
+        configuration.read(configFile)
+        # configure the fit
+        # make sure no secondary excitations are used
+        configuration["concentrations"]["usemultilayersecondary"] = 0
+
+        return x, y, configuration
+
+    def testTrainingDataFit(self):
+        from PyMca5.PyMcaIO import specfilewrapper as specfile
+        from PyMca5.PyMcaPhysics.xrf import LegacyMcaTheory
+        from PyMca5.PyMcaPhysics.xrf import ConcentrationsTool
+
+        x, y, configuration = self._readTrainingData()
+
+        # perform the actual XRF analysis
         mcaFit = LegacyMcaTheory.LegacyMcaTheory()
-        configuration=mcaFit.configure(configuration)
-        x = numpy.arange(y.size).astype(numpy.float64)
-        mcaFit.setData(x, y,
-                       xmin=configuration["fit"]["xmin"],
-                       xmax=configuration["fit"]["xmax"])
-        mcaFit.estimate()
-        fitResult, result = mcaFit.startFit(digest=1)
+        configuration, fitResult, result = self._configAndFit(x, y, configuration, mcaFit)
 
         # fit is already done, calculate the concentrations
         concentrationsConfiguration = configuration["concentrations"]
@@ -350,39 +383,14 @@ class testXrf(unittest.TestCase):
                 "Error for <%s> concentration %g != %g" % (key, internal, fp))
 
     def testStainlessSteelDataFit(self):
-        from PyMca5.PyMcaIO import specfilewrapper as specfile
         from PyMca5.PyMcaPhysics.xrf import LegacyMcaTheory
         from PyMca5.PyMcaPhysics.xrf import ConcentrationsTool
-        from PyMca5.PyMcaIO import ConfigDict
 
-        # read the data
-        dataFile = os.path.join(self.dataDir, "Steel.spe")
-        self.assertTrue(os.path.isfile(dataFile),
-                        "File %s is not an actual file" % dataFile)
-        sf = specfile.Specfile(dataFile)
-        self.assertTrue(len(sf) == 1, "File %s cannot be read" % dataFile)
-        self.assertTrue(sf[0].nbmca() == 1,
-                        "Spe file should contain MCA data")
-        y = counts = sf[0].mca(1)
-        x = channels = numpy.arange(y.size).astype(numpy.float64)
-        sf = None
+        x, y, configuration = self._readStainlessSteelData()
 
-        # read the fit configuration
-        configFile = os.path.join(self.dataDir, "Steel.cfg")
-        self.assertTrue(os.path.isfile(configFile),
-                        "File %s is not an actual file" % configFile)
-        configuration = ConfigDict.ConfigDict()
-        configuration.read(configFile)
         # configure the fit
-        # make sure no secondary excitations are used
-        configuration["concentrations"]["usemultilayersecondary"] = 0
         mcaFit = LegacyMcaTheory.LegacyMcaTheory()
-        configuration=mcaFit.configure(configuration)
-        mcaFit.setData(x, y,
-                       xmin=configuration["fit"]["xmin"],
-                       xmax=configuration["fit"]["xmax"])
-        mcaFit.estimate()
-        fitResult, result = mcaFit.startFit(digest=1)
+        configuration, fitResult, result = self._configAndFit(x, y, configuration, mcaFit)
 
         # concentrations
         # fit is already done, calculate the concentrations
@@ -456,12 +464,7 @@ class testXrf(unittest.TestCase):
         # in order to get the good fundamental parameters
         configuration["concentrations"]['usematrix'] = 1
         configuration["concentrations"]["usemultilayersecondary"] = 2
-        mcaFit.setConfiguration(configuration)
-        mcaFit.setData(x, y,
-                       xmin=configuration["fit"]["xmin"],
-                       xmax=configuration["fit"]["xmax"])
-        mcaFit.estimate()
-        fitResult, result = mcaFit.startFit(digest=1)
+        configuration, fitResult, result = self._configAndFit(x, y, configuration, mcaFit)
 
         # concentrations
         # fit is already done, calculate the concentrations
@@ -511,12 +514,7 @@ class testXrf(unittest.TestCase):
                                                          "Ni", "-", "-",
                                                          "-","-","-"]
         mcaFit = LegacyMcaTheory.LegacyMcaTheory()
-        configuration=mcaFit.configure(configuration)
-        mcaFit.setData(x, y,
-                       xmin=configuration["fit"]["xmin"],
-                       xmax=configuration["fit"]["xmax"])
-        mcaFit.estimate()
-        fitResult, result = mcaFit.startFit(digest=1)
+        configuration, fitResult, result = self._configAndFit(x, y, configuration, mcaFit)
 
         # concentrations
         # fit is already done, calculate the concentrations
@@ -545,6 +543,139 @@ class testXrf(unittest.TestCase):
             self.assertTrue(delta < tolerance,
                 "Strategy: Element %s discrepancy too large %.1f %%" % \
                   (element.split()[0], delta))
+
+    def testLegacyMcaTheory(self):
+        x, y, configuration = self._readTrainingData()
+        self._testLegacyMcaTheory(x, y, configuration)
+
+        x, y, configuration = self._readStainlessSteelData()
+
+        configuration["concentrations"]['usematrix'] = 0
+        configuration["concentrations"]["usemultilayersecondary"] = 0
+        self._testLegacyMcaTheory(x, y, configuration)
+
+        configuration["concentrations"]['usematrix'] = 1
+        configuration["concentrations"]["usemultilayersecondary"] = 2
+        self._testLegacyMcaTheory(x, y, configuration)
+
+        configuration["concentrations"]['usematrix'] = 0
+        configuration["concentrations"]["usemultilayersecondary"] = 2
+        configuration["attenuators"]["Matrix"] = [1, 'Fe', 1.0, 1.0, 45.0, 45.0]
+        configuration["fit"]["strategyflag"] = 1
+        configuration["fit"]["strategy"] = "SingleLayerStrategy"
+        configuration["SingleLayerStrategy"] = {}
+        configuration["SingleLayerStrategy"]["layer"] = "Auto"
+        configuration["SingleLayerStrategy"]["iterations"] = 3
+        configuration["SingleLayerStrategy"]["completer"] = "-"
+        configuration["SingleLayerStrategy"]["flags"] = [1, 1, 1, 1, 0,
+                                                         0, 0, 0, 0, 0]
+        configuration["SingleLayerStrategy"]["peaks"] = [ "Cr K",
+                                                         "Mn K", "Fe Ka",
+                                                         "Ni K", "-", "-",
+                                                         "-","-","-","-"]
+        configuration["SingleLayerStrategy"]["materials"] = ["Cr",
+                                                         "Mn", "Fe",
+                                                         "Ni", "-", "-",
+                                                         "-","-","-"]
+        self._testLegacyMcaTheory(x, y, configuration)
+
+    def _testLegacyMcaTheory(self, x, y, configuration):
+        from PyMca5.PyMcaPhysics.xrf import LegacyMcaTheory
+        from PyMca5.PyMcaPhysics.xrf import NewClassMcaTheory
+
+        mcaFitLegacy = LegacyMcaTheory.LegacyMcaTheory()
+        _, fitResult1, result1 = self._configAndFit(
+            x, y, copy.deepcopy(configuration), mcaFitLegacy, tmpflag=True)
+
+        mcaFit = NewClassMcaTheory.McaTheory()
+        _, fitResult2, result2 = self._configAndFit(
+            x, y, copy.deepcopy(configuration), mcaFit, tmpflag=True)
+
+        # Compare data
+        numpy.testing.assert_array_equal(mcaFitLegacy.xdata.flat, mcaFit.xdata)
+        numpy.testing.assert_array_equal(mcaFitLegacy.ydata.flat, mcaFit.ydata)
+        numpy.testing.assert_array_equal(mcaFitLegacy.sigmay.flat, mcaFit.ystd)
+
+        # Compare configuration
+        config1 = copy.deepcopy(mcaFitLegacy.config)
+        config2 = copy.deepcopy(mcaFit.config)
+
+        # The new class removes invalid energies
+        n = len(config2["fit"]["energy"])
+        for name in ["energy", "energyweight", "energyflag", "energyscatter"]:
+            if config1["fit"][name] is None:
+                config1["fit"][name] = []
+            else:
+                config1["fit"][name] = config1["fit"][name][:n]
+        if len(config1["attenuators"]["Matrix"]) == 6:
+            lst = config1["attenuators"]["Matrix"]
+            lst.extend([0, lst[-1]+lst[-2]])
+
+        self._assertDeepEqual(config1, config2)
+
+        # Compare fluo rate dictionaries
+        self.assertEqual(mcaFitLegacy._fluoRates, mcaFit._fluoRates)
+
+        # Compare line groups
+        linegroups1 = mcaFitLegacy.PEAKS0
+        linegroups2 = mcaFit._lineGroups
+        linegroups1 = [[[line[1], line[0], name]
+                        for name, line in zip(names, lines)] 
+                        for names, lines in zip(mcaFitLegacy.PEAKS0NAMES, linegroups1)]
+
+        self.assertEqual(len(linegroups1), len(linegroups2))
+        for lg1, lg2 in zip(linegroups1, linegroups2):
+            self.assertEqual(len(lg1), len(lg2))
+            for line1, line2 in zip(lg1, lg2):
+                self.assertEqual(line1[0], line2[0])
+                numpy.testing.assert_allclose(line1[1], line2[1], rtol=1e-9)
+                self.assertEqual(line1[2], line2[2])
+
+        # Compare escape line groups
+        linegroups1 = mcaFitLegacy.PEAKS0ESCAPE
+        linegroups2 = mcaFit._escapeLineGroups
+        self.assertEqual(len(linegroups1), len(linegroups2))
+        for lg1, lg2 in zip(linegroups1, linegroups2):
+            self.assertEqual(len(lg1), len(lg2))
+            for elines1, elines2 in zip(lg1, lg2):
+                self.assertEqual(len(elines1), len(elines2))
+                for line1, line2 in zip(elines1, elines2):
+                    self.assertEqual(line1[0], line2[0])
+                    numpy.testing.assert_allclose(line1[1], line2[1], rtol=1e-9)
+                    self.assertEqual(line1[2], line2[2])
+
+        # Compare fit results
+        self.assertEqual(fitResult1, fitResult2)
+        self.assertEqual(result1, result2)
+
+    def _configAndFit(self, x, y, configuration, mcaFit, tmpflag=False):
+        configuration = mcaFit.configure(configuration)
+        mcaFit.setData(x, y,
+                       xmin=configuration["fit"]["xmin"],
+                       xmax=configuration["fit"]["xmax"])
+        if tmpflag:
+            return configuration, None, None
+        mcaFit.estimate()
+        fitResult1, result1 = mcaFit.startFit(digest=1)
+        return configuration, fitResult1, result1
+
+    def _assertDeepEqual(self, obj1, obj2):
+        """Better verbosity than assertEqual for deep structures
+        """
+        if isinstance(obj1, dict):
+            self.assertEqual(set(obj1.keys()), set(obj2.keys()))
+            for k in obj1:
+                self._assertDeepEqual(obj1[k], obj2[k])
+        elif isinstance(obj1, (list, tuple)):
+            if isinstance(obj1[0], (list, tuple, numpy.ndarray)):
+                self._assertDeepEqual(obj1, obj2)
+            else:
+                self.assertEqual(obj1, obj2)
+        elif isinstance(obj1, numpy.ndarray):
+            numpy.testing.assert_allclose(obj1, obj2, rtol=0)
+        else:
+            self.assertEqual(obj1, obj2)
+
 
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()

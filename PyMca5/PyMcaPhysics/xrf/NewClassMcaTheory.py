@@ -32,6 +32,7 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 import os
+import sys
 import copy
 import logging
 import warnings
@@ -100,6 +101,7 @@ class McaTheoryConfigApi:
         cfgroot["userattenuators"] = cfgroot.get("userattenuators", {})
         cfgroot["multilayer"] = cfgroot.get("multilayer", {})
         cfgroot["materials"] = cfgroot.get("materials", {})
+        cfgroot["concentrations"] = cfgroot.get("concentrations", {})
 
         cfgpeakshape = cfgroot["peakshape"]
         cfgpeakshape["eta_factor"] = cfgpeakshape.get("eta_factor", 0.02)
@@ -119,16 +121,17 @@ class McaTheoryConfigApi:
         cfgfit["fitweight"] = cfgfit.get("fitweight", 1)
         cfgfit["deltaonepeak"] = cfgfit.get("deltaonepeak", 0.010)
 
-        cfgfit["energy"] = self._normalizeConfigListParam(cfgfit.get("energy", None))
-        nenergies = len(cfgfit["energy"])
-        cfgfit["energyweight"] = self._normalizeConfigListParam(
-            cfgfit.get("energyweight"), length=nenergies, default=1.0
+        cfgfit["energy"], idx = self._normalizeEnergyListParam(
+            cfgfit.get("energy", None)
         )
-        cfgfit["energyflag"] = self._normalizeConfigListParam(
-            cfgfit.get("energyweight"), length=nenergies, default=1
+        cfgfit["energyweight"], _ = self._normalizeEnergyListParam(
+            cfgfit.get("energyweight"), idx=idx, default=1.0
         )
-        cfgfit["energyscatter"] = self._normalizeConfigListParam(
-            cfgfit.get("energyweight"), length=nenergies, default=1
+        cfgfit["energyflag"], _ = self._normalizeEnergyListParam(
+            cfgfit.get("energyweight"), idx=idx, default=1
+        )
+        cfgfit["energyscatter"], _ = self._normalizeEnergyListParam(
+            cfgfit.get("energyweight"), idx=idx, default=1
         )
         cfgfit["scatterflag"] = cfgfit.get("scatterflag", 0)
 
@@ -149,27 +152,23 @@ class McaTheoryConfigApi:
         cfgdetector["nthreshold"] = cfgdetector.get("nthreshold", 4)
         cfgdetector["ithreshold"] = cfgdetector.get("ithreshold", 1.0e-07)
 
-    @staticmethod
-    def _normalizeConfigListParam(lst, length=None, default=0):
-        if isinstance(lst, (str, bytes)) or lst is None:
-            lst = []
-        elif isinstance(lst, list):
-            pass
-        else:
+    def _normalizeEnergyListParam(self, lst, idx=None, default=0):
+        if not isinstance(lst, list):
             lst = [lst]
-        if length is not None:
-            n = len(lst)
-            if n > length:
-                lst = lst[:length]
-            else:
-                lst += [default] * (length - n)
-        return lst
+        if idx is None:
+            idx = [
+                i for i, v in enumerate(lst) if v and not isinstance(v, (str, bytes))
+            ]
+        n = len(lst)
+        lst = [lst[i] if i < n else default for i in idx]
+        return lst, idx
 
     def _sourceLines(self):
         """
         :yields tuple: (energy, weight, scatter)
         """
         cfg = self.config["fit"]
+        scatterflag = cfg["scatterflag"]
         for energy, flag, weight, scatter in zip(
             cfg["energy"],
             cfg["energyflag"],
@@ -177,14 +176,22 @@ class McaTheoryConfigApi:
             cfg["energyscatter"],
         ):
             if energy and flag:
-                yield energy, weight, scatter
+                yield energy, weight, scatter and scatterflag
+
+    def _scatterLines(self):
+        """Source lines that are included in the fir model
+
+        :yields tuple: (energy, weight)
+        """
+        for energy, weight, scatter in self._sourceLines():
+            if scatter and energy > self.SCATTER_ENERGY_THRESHOLD:
+                yield energy, weight
 
     @property
     def _maxEnergy(self):
         """
         :returns float or None:
         """
-        cfg = self.config["fit"]
         energies = [energy for energy, _, _ in self._sourceLines()]
         if energies:
             return max(energies)
@@ -197,6 +204,13 @@ class McaTheoryConfigApi:
         :returns int:
         """
         return len(list(self._sourceLines()))
+
+    @property
+    def _nRayleighLines(self):
+        """
+        :returns int:
+        """
+        return len(list(self._scatterLines()))
 
     def _attenuators(
         self,
@@ -332,7 +346,6 @@ class McaTheoryConfigApi:
         """
         :yields list: [Z, symb, linegroupname]
         """
-        maxenergy = self._maxEnergy
         cfg = self.config["peaks"]
         for element, peaks in cfg.items():
             symb = element.capitalize()
@@ -377,11 +390,33 @@ class McaTheoryConfigApi:
     def _hypermetStep(self):
         return (self.config["fit"]["hypermetflag"] >> 3) & 3
 
+    def _anchorsIndices(self):
+        cfg = self.config["fit"]
+        if not cfg["stripanchorsflag"] or not cfg["stripanchorslist"]:
+            return
+        ravelled = self.xdata
+        for channel in cfg["stripanchorslist"]:
+            if channel <= ravelled[0]:
+                continue
+            index = numpy.nonzero(ravelled >= channel)[0]
+            if len(index):
+                index = min(index)
+                if index > 0:
+                    yield index
+
 
 class McaTheoryLegacyApi:
     def setdata(self, *args, **kw):
         warnings.warn("McaTheory.setdata deprecated, please use setData", FutureWarning)
         return self.setData(*args, **kw)
+
+    @property
+    def sigmay(self):
+        return self.ystd
+
+    @property
+    def sigmay0(self):
+        return self.ystd0
 
     def startfit(self, *args, **kw):
         warnings.warn(
@@ -393,34 +428,35 @@ class McaTheoryLegacyApi:
 class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
     """Model for MCA data"""
 
-    BAND_GAP = 0.00385  # For silicon
+    BAND_GAP = 0.00385  # keV, silicon
     GAUSS_SIGMA_TO_FWHM = 2.3548
     MAX_ATTENUATION = 1.0e-300
+    SCATTER_ENERGY_THRESHOLD = 0.2  # keV
 
     def __init__(self, **kw):
         super(McaTheory, self).__init__(**kw)
+        # TODO: done for some initialization of SpecfitFuns?
         SpecfitFuns.fastagauss([1.0, 10.0, 1.0], numpy.arange(10.0))
         self.useFisxEscape(False)
 
-        self.ydata0 = None
-        self.xdata0 = None
-        self.sigmay0 = None
+        # XRF spectrum
+        self._ydata0 = None
+        self._xdata0 = None
+        self._std0 = None
+        self._ydata = None
+        self._xdata = None
+        self._std = None
+        self._lastXrange = None
+
+        # XRF spectrum background
+        self._numBkg = None
+        self._lastNumBkgParams = None
+
+        self._lastTime = None
+
         self.strategyInstances = {}
 
         self.__toBeConfigured = False
-        self.__lastTime = None
-        self.lastxmin = None
-        self.lastxmax = None
-        self.laststrip = None
-        self.laststripconstant = None
-        self.laststripiterations = None
-        self.laststripalgorithm = None
-        self.lastsnipwidth = None
-        self.laststripwidth = None
-        self.laststripfilterwidth = None
-        self.laststripanchorsflag = None
-        self.laststripanchorslist = None
-
         self.__configure()
 
     def useFisxEscape(self, flag=None):
@@ -469,10 +505,10 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
                     "WARNING: This configuration is the one of last fit.\n"
                     "It does not correspond to the one of next fit."
                 )
-            return copy.deepcopy(self.config)
-        self.config.update(newdict)
-        self.__toBeConfigured = False
-        self.__configure()
+        else:
+            self.config.update(newdict)
+            self.__toBeConfigured = False
+            self.__configure()
         return copy.deepcopy(self.config)
 
     def __configure(self):
@@ -515,14 +551,15 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
     def _getScatterLines(self):
         """Yields a list for scattering lines for each source line.
 
-        :yields list: [[energy, 1.0, "Peak"]]
+        :yields list: [[energy, 1.0, "Scatter %03d"]]
         """
         scatteringAngle = self._scatteringAngle * numpy.pi / 180.0
         angleFactor = 1.0 - numpy.cos(scatteringAngle)
-        for energy, _, scatter in self._sourceLines():
-            if scatter:
-                energy /= 1.0 + (energy / 511.0) * angleFactor
-                yield [[energy, 1.0, "Peak"]]
+        for i, (en_elastic, _) in enumerate(self._scatterLines()):
+            en_inelastic = en_elastic / (1.0 + (en_elastic / 511.0) * angleFactor)
+            name = "Scatter %03d" % i
+            yield [[en_elastic, 1.0, name]]
+            yield [[en_inelastic, 1.0, name]]
 
     def _preCalculateParameterDependent(self):
         pass
@@ -582,16 +619,16 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         """Higher-order interaction corrections on the fluorescence rates.
         This will not be needed once fisx replaces the Elements module.
         """
-        self.config["fisx"] = {}
-        if not FISX or "concentrations" not in self.config:
+        fisxcfg = self.config["fisx"] = {}
+        if not FISX:
             return
         secondary = self.config["concentrations"].get("usemultilayersecondary", False)
         if secondary:
             corrections = FisxHelper.getFisxCorrectionFactorsFromFitConfiguration(
                 self.config, elementsFromMatrix=False
             )
-            self.config["fisx"]["corrections"] = corrections
-            self.config["fisx"]["secondary"] = secondary
+            fisxcfg["corrections"] = corrections
+            fisxcfg["secondary"] = secondary
 
     def _getGroupEmissionLines(self, Z, symb, groupname):
         """Return a list of emission lines with total rate of 1 and
@@ -825,6 +862,287 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         return escape_peaks
 
     @property
+    def xdata(self):
+        """Sorted and sliced view of xdata0"""
+        return self._xdata
+
+    @property
+    def nchannels(self):
+        return len(self.xdata)
+
+    @property
+    def ydata(self):
+        """Sorted and sliced view of ydata0"""
+        return self._ydata
+
+    @property
+    def ystd(self):
+        """Sorted and sliced view of ystd0"""
+        return self._ystd
+
+    @property
+    def xdata0(self):
+        return self._xdata0
+
+    @property
+    def ydata0(self):
+        return self._ydata0
+
+    @property
+    def ystd0(self):
+        return self._ystd0
+
+    @property
+    def ynumbkg(self):
+        """Get the numerical background (as opposed to the analytical background)"""
+        bkgparams = self._numBkgParams
+        if self._numBkg is not None and self._lastNumBkgParams == bkgparams:
+            return self._numBkg
+        if self.config["fit"]["stripflag"]:
+            signal = self._smooth(self.ydata)
+            anchorslist = list(self._anchorsIndices())
+            if self.config["fit"]["stripalgorithm"] == 1:
+                self._numBkg = self._snip(signal, anchorslist)
+            else:
+                self._numBkg = self._strip(signal, anchorslist)
+        else:
+            self._numBkg = numpy.zeros_like(self.ydata)
+        self._lastNumBkgParams = bkgparams
+        return self._numBkg
+
+    @property
+    def _numBkgParams(self):
+        cfg = self.config["fit"]
+        params = [
+            "stripflag",
+            "stripalgorithm",
+            "stripfilterwidth",
+            "stripanchorsflag",
+            "stripanchorslist",
+        ]
+        if cfg["stripalgorithm"] == 1:
+            params += ["snipwidth"]
+        else:
+            params += ["stripwidth", "stripconstant", "stripiterations"]
+        return params
+
+    def _snip(self, signal, anchorslist):
+        _logger.debug("CALCULATING SNIP")
+        n = len(signal)
+        if len(anchorslist):
+            anchorslist.sort()
+        else:
+            anchorslist = [0, n - 1]
+
+        bkg = 0.0 * signal
+        lastAnchor = 0
+        cfg = self.config["fit"]
+        width = cfg["snipwidth"]
+        for anchor in anchorslist:
+            if (anchor > lastAnchor) and (anchor < len(signal)):
+                bkg[lastAnchor:anchor] = SpecfitFuns.snip1d(
+                    signal[lastAnchor:anchor], width, 0
+                )
+                lastAnchor = anchor
+        if lastAnchor < len(signal):
+            bkg[lastAnchor:] = SpecfitFuns.snip1d(signal[lastAnchor:], width, 0)
+        return bkg
+
+    def _strip(self, signal, anchorslist):
+        cfg = self.config["fit"]
+        niter = cfg["stripiterations"]
+        if niter <= 0:
+            return numpy.zeros_like(signal) + min(signal)
+
+        _logger.debug("CALCULATING STRIP")
+        if (niter > 1000) and (cfg["stripwidth"] == 1):
+            bkg = SpecfitFuns.subac(
+                signal, cfg["stripconstant"], niter / 20, 4, anchorslist
+            )
+            bkg = SpecfitFuns.subac(
+                bkg, cfg["stripconstant"], niter / 4, cfg["stripwidth"], anchorslist
+            )
+        else:
+            bkg = SpecfitFuns.subac(
+                signal, cfg["stripconstant"], niter, cfg["stripwidth"], anchorslist
+            )
+            if niter > 1000:
+                # make sure to get something smooth
+                bkg = SpecfitFuns.subac(bkg, cfg["stripconstant"], 500, 1, anchorslist)
+            else:
+                # make sure to get something smooth but with less than
+                # 500 iterations
+                bkg = SpecfitFuns.subac(
+                    bkg,
+                    cfg["stripconstant"],
+                    int(cfg["stripwidth"] * 2),
+                    1,
+                    anchorslist,
+                )
+        return bkg
+
+    def _smooth(self, y):
+        try:
+            y = y.astype(dtype=numpy.float64)
+            w = self.config["fit"]["stripfilterwidth"]
+            ysmooth = SpecfitFuns.SavitskyGolay(y, w)
+        except Exception:
+            print("Unsuccessful Savitsky-Golay smoothing: %s" % sys.exc_info())
+            raise
+        if ysmooth.size > 1:
+            fltr = [0.25, 0.5, 0.25]
+            ysmooth[1:-1] = numpy.convolve(ysmooth, fltr, mode=0)
+            ysmooth[0] = 0.5 * (ysmooth[0] + ysmooth[1])
+            ysmooth[-1] = 0.5 * (ysmooth[-1] + ysmooth[-2])
+        return ysmooth
+
+    def setData(self, *var, **kw):
+        """
+        Method to update the data to be fitted.
+        It accepts several combinations of input arguments, the simplest to
+        take into account is:
+
+        setData(x, y, sigmay=None, xmin=None, xmax=None)
+
+        x corresponds to the spectrum channels
+        y corresponds to the spectrum counts
+        sigmay is the uncertainty associated to the counts. If not given,
+               Poisson statistics will be assumed. If the fit configuration
+               is set to no weight, it will not be used.
+        xmin and xmax define the limits to be considered for performing the fit.
+               If the fit configuration flag self.config['fit']['use_limit'] is
+               set, they will be ignored. If xmin and xmax are not given, the
+               whole given spectrum will be considered for fitting.
+        time (seconds) is the factor associated to the flux, only used when using
+               a strategy based on concentrations
+        """
+        if self.__toBeConfigured:
+            _logger.debug("setData RESTORE ORIGINAL CONFIGURATION")
+            self.configure(self.__originalConfiguration)
+
+        if "y" in kw:
+            ydata0 = kw["y"]
+        elif len(var) > 1:
+            ydata0 = var[1]
+        elif len(var) == 1:
+            ydata0 = var[0]
+        else:
+            ydata0 = None
+
+        if ydata0 is None:
+            return 1
+        else:
+            ydata0 = numpy.ravel(ydata0)
+
+        if "x" in kw:
+            xdata0 = kw["x"]
+        elif len(var) > 1:
+            xdata0 = var[0]
+        else:
+            xdata0 = None
+
+        if xdata0 is None:
+            xdata0 = numpy.arange(len(ydata0))
+        else:
+            xdata0 = numpy.ravel(xdata0)
+
+        if "sigmay" in kw:
+            ystd0 = kw["sigmay"]
+        elif "stdy" in kw:
+            ystd0 = kw["stdy"]
+        elif len(var) > 2:
+            ystd0 = var[2]
+        else:
+            ystd0 = None
+
+        if ystd0 is None:
+            # Poisson noise
+            valid = ydata0 > 0
+            if valid.any():
+                ystd0 = numpy.sqrt(abs(ydata0))
+                ystd0[~valid] = ystd0[valid].min()
+            else:
+                ystd0 = numpy.ones_like(ystd0)
+        else:
+            ystd0 = numpy.ravel(ystd0)
+
+        timeFactor = kw.get("time", None)
+        self._lastTime = timeFactor
+        if timeFactor is None:
+            cfgfit = self.config["fit"]
+            if self.config["concentrations"].get("useautotime", False):
+                if not self.config["concentrations"]["usematrix"]:
+                    msg = "Requested to use time from data but not present!!"
+                    raise ValueError(msg)
+        elif self.config["concentrations"].get("useautotime", False):
+            self.config["concentrations"]["time"] = timeFactor
+
+        cfgfit = self.config["fit"]
+
+        xmin = cfgfit["xmin"]
+        if not cfgfit["use_limit"]:
+            if "xmin" in kw:
+                xmin = kw["xmin"]
+                if xmin is not None:
+                    cfgfit["xmin"] = xmin
+                else:
+                    xmin = xdata0.min()
+            elif xdata0.size:
+                xmin = xdata0.min()
+
+        xmax = cfgfit["xmax"]
+        if not cfgfit["use_limit"]:
+            if "xmax" in kw:
+                xmax = kw["xmax"]
+                if xmax is not None:
+                    cfgfit["xmax"] = xmax
+                else:
+                    xmax = xdata0.max()
+            elif xdata0.size:
+                xmax = xdata0.max()
+
+        if self._cacheDataView(xdata0, ydata0, ystd0, xmin, xmax):
+            return 1
+        self._xdata0 = xdata0
+        self._ydata0 = ydata0
+        self._ystd0 = ystd0
+        self._lastXrange = xmin, xmax
+
+    def _cacheDataView(
+        self, xdata0=None, ydata0=None, ystd0=None, xmin=None, xmax=None
+    ):
+        """Sorted and sliced view of original data"""
+        if xdata0 is None:
+            xdata0 = self.xdata0
+        if xdata0 is None or not xdata0.size:
+            return 1
+        if ydata0 is None:
+            ydata0 = self.ydata0
+        if ystd0 is None:
+            ystd0 = self.ystd0
+        if xmin is None:
+            xmin = self._lastXrange[0]
+        if xmax is None:
+            xmax = self._lastXrange[1]
+
+        selection = numpy.isfinite(ydata0)
+        if xmin is not None:
+            selection &= xdata0 >= xmin
+        if xmax is not None:
+            selection &= xdata0 <= xmax
+        if not selection.any():
+            return 1
+
+        idx = numpy.argsort(xdata0)[selection]
+        self._xdata = xdata0[idx]
+        self._ydata = ydata0[idx]
+        self._ystd = ystd0[idx]
+        self._numBkg = None
+
+    def getLastTime(self):
+        return self._lastTime
+
+    @property
     def zero(self):
         return self.config["detector"]["zero"]
 
@@ -844,7 +1162,7 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
     def fano(self):
         return self.config["detector"]["fano"]
 
-    @gain.setter
+    @fano.setter
     def fano(self, value):
         self.config["detector"]["fano"] = value
 
@@ -879,7 +1197,7 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
     def step_heightratio(self):
         return self.config["peakshape"]["step_heightratio"]
 
-    @sum.setter
+    @step_heightratio.setter
     def step_heightratio(self, value):
         self.config["peakshape"]["step_heightratio"] = value
 
