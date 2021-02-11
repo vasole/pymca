@@ -541,6 +541,10 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
             for peaks in self._lineGroups
         ]
 
+    @property
+    def _nLineGroups(self):
+        return len(self._lineGroups)
+
     def _getEmissionLines(self):
         """Yields a list of emission lines for each group with total
         rate of 1 and sorted by energy.
@@ -1274,11 +1278,12 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
             "lt_sloperatio",
             "step_heightratio",
             "eta_factor",
+            "areas",
         ]
 
     @property
     def _linear_parameter_group_names(self):
-        raise NotImplementedError
+        return ["areas"]
 
     def _iter_parameter_groups(self, linear_only=False):
         """
@@ -1313,8 +1318,21 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
                 yield name, 1
             elif name == "eta_factor" and not hypermet:
                 yield name, 1
+            elif name == "areas":
+                yield name, self._nLineGroups
             else:
                 raise ValueError(name)
+
+    def evaluate(self, xdata=None):
+        """Evaluate model
+
+        :param array xdata: length nxdata
+        :returns array: nxdata
+        """
+        if xdata is None:
+            xdata = self.xdata
+        x = self.zero + self.gain * xdata
+        raise NotImplementedError
 
 
 class MultiMcaTheory(ConcatModel):

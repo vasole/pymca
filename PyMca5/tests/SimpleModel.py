@@ -213,7 +213,7 @@ class SimpleModel(Model):
                 raise ValueError(name)
 
     def evaluate(self, xdata=None):
-        """DEvaluate model
+        """Evaluate model
 
         :param array xdata: length nxdata
         :returns array: nxdata

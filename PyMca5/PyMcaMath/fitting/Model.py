@@ -124,6 +124,10 @@ class Model(Cashed):
         return self._set_parameters(values)
 
     @property
+    def constraints(self):
+        return self._get_constraints()
+
+    @property
     def nparameters(self):
         return sum(tpl[1] for tpl in self._parameter_groups())
 
@@ -148,6 +152,10 @@ class Model(Cashed):
         return self._set_parameters(params, linear_only=True)
 
     @property
+    def linear_constraints(self):
+        return self._get_constraints(linear_only=True)
+
+    @property
     def nlinear_parameters(self):
         return sum(tpl[1] for tpl in self._parameter_groups(linear_only=True))
 
@@ -170,13 +178,37 @@ class Model(Cashed):
         """
         i = 0
         if linear_only:
-            params = numpy.zeros(self.nlinear_parameters)
+            nparams = self.nlinear_parameters
         else:
-            params = numpy.zeros(self.nparameters)
+            nparams = self.nparameters
+        params = numpy.zeros(nparams)
         for name, n in self._parameter_groups(linear_only=linear_only):
             params[i : i + n] = getattr(self, name)
             i += n
         return params
+
+    def _get_constraints(self, linear_only=False):
+        """
+        :param bool linear_only:
+        :returns array:
+        """
+        i = 0
+        if linear_only:
+            nparams = self.nlinear_parameters
+        else:
+            nparams = self.nparameters
+        codes = numpy.zeros((nparams, 3), numpy.float64)
+        bspecified = False
+        for name, n in self._parameter_groups(linear_only=linear_only):
+            name += "_constraint"
+            if hasattr(self, name):
+                bspecified = True
+                codes[i : i + n] = getattr(self, name)
+            i += n
+        if bspecified:
+            return codes.T
+        else:
+            return None
 
     def _set_parameters(self, params, linear_only=False):
         """
@@ -348,20 +380,25 @@ class Model(Cashed):
         :param bool full_output: add statistics to fitted parameters
         :returns dict:
         """
-        initial = self.parameters
+        initial = parameters = self.parameters
+        constraints = self.constraints
         try:
             for i in range(max(self.niter_non_leastsquares, 1)):
                 result = Gefit.LeastSquaresFit(
                     self._evaluate,
-                    initial,
+                    parameters,
                     model_deriv=self._derivative,
                     xdata=self.xdata,
                     ydata=self.ydata,
                     sigmadata=self.ystd,
+                    constrains=constraints,
+                    maxiter=self.maxiter,
+                    weightflag=self.weightflag,
+                    deltachi=self.deltachi,
                     fulloutput=full_output,
                 )
                 if self.niter_non_leastsquares:
-                    self.parameters = result[0]
+                    parameters = self.parameters = result[0]
                     self.non_leastsquares_increment()
         finally:
             self.parameters = initial
@@ -375,6 +412,18 @@ class Model(Cashed):
             ret["niter"] = result[3]
             ret["lastdeltachi"] = result[4]
         return ret
+
+    @property
+    def maxiter(self):
+        return 100
+
+    @property
+    def deltachi(self):
+        return None
+
+    @property
+    def weightflag(self):
+        return 0
 
     def _evaluate(self, parameters, xdata):
         """Update parameters and evaluate model

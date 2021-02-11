@@ -583,13 +583,23 @@ class testXrf(unittest.TestCase):
         from PyMca5.PyMcaPhysics.xrf import LegacyMcaTheory
         from PyMca5.PyMcaPhysics.xrf import NewClassMcaTheory
 
+        import time
+        t0 = time.time()
+
         mcaFitLegacy = LegacyMcaTheory.LegacyMcaTheory()
         _, fitResult1, result1 = self._configAndFit(
             x, y, copy.deepcopy(configuration), mcaFitLegacy, tmpflag=True)
 
+        t1 = time.time()
+
         mcaFit = NewClassMcaTheory.McaTheory()
         _, fitResult2, result2 = self._configAndFit(
             x, y, copy.deepcopy(configuration), mcaFit, tmpflag=True)
+
+        t2 = time.time()
+
+        print("LEGACY TIME", t1-t0)
+        print("NEW TIME", t2-t1)
 
         # Compare data
         numpy.testing.assert_array_equal(mcaFitLegacy.xdata.flat, mcaFit.xdata)
