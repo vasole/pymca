@@ -458,6 +458,10 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
 
         self._lastTime = None
 
+        self._lineGroups = []
+        self._fluoRates = []
+        self._escapeLineGroups = []
+
         self.strategyInstances = {}
 
         self.__toBeConfigured = False
@@ -528,6 +532,7 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         #   line group
         #       -> emission/scattering line
         #           -> energy, rate, line name
+        # This is a filtered and normalized form of `_fluoRates`
         self._lineGroups = list(self._getEmissionLines())
         self._lineGroups.extend(self._getScatterLines())
 
