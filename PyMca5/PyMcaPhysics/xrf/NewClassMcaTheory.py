@@ -379,16 +379,20 @@ class McaTheoryConfigApi:
             return 0
 
     @property
+    def _hypermetGaussian(self):
+        return self._hypermet & 1
+
+    @property
     def _hypermetShortTail(self):
-        return (self.config["fit"]["hypermetflag"] >> 1) & 1
+        return (self._hypermet >> 1) & 1
 
     @property
     def _hypermetLongTail(self):
-        return (self.config["fit"]["hypermetflag"] >> 2) & 2
+        return (self._hypermet >> 2) & 2
 
     @property
     def _hypermetStep(self):
-        return (self.config["fit"]["hypermetflag"] >> 3) & 3
+        return (self._hypermet >> 3) & 3
 
     def _anchorsIndices(self):
         cfg = self.config["fit"]
@@ -1222,6 +1226,74 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
     def sum(self, value):
         self.config["detector"]["sum"] = value
 
+    @classmethod
+    def _calc_fwhm(cls, noise, fano, energy):
+        return numpy.sqrt(
+            noise * noise
+            + cls.BAND_GAP
+            * energy
+            * fano
+            * cls.GAUSS_SIGMA_TO_FWHM
+            * cls.GAUSS_SIGMA_TO_FWHM
+        )
+
+    @property
+    def eta_factor(self):
+        return self.config["peakshape"]["eta_factor"]
+
+    @eta_factor.setter
+    def eta_factor(self, value):
+        self.config["peakshape"]["eta_factor"] = value
+
+    @property
+    def step_heightratio(self):
+        if self._hypermetStep:
+            return self.config["peakshape"]["step_heightratio"]
+        else:
+            return 0
+
+    @step_heightratio.setter
+    def step_heightratio(self, value):
+        self.config["peakshape"]["step_heightratio"] = value
+
+    @property
+    def lt_sloperatio(self):
+        return self.config["peakshape"]["lt_sloperatio"]
+
+    @lt_sloperatio.setter
+    def lt_sloperatio(self, value):
+        self.config["detector"]["lt_sloperatio"] = value
+
+    @property
+    def lt_arearatio(self):
+        if self._hypermetLongTail:
+            return self.config["peakshape"]["lt_arearatio"]
+        else:
+            return 0
+
+    @lt_arearatio.setter
+    def lt_arearatio(self, value):
+        self.config["peakshape"]["lt_arearatio"] = value
+
+    @property
+    def st_sloperatio(self):
+        return self.config["peakshape"]["st_sloperatio"]
+
+    @st_sloperatio.setter
+    def st_sloperatio(self, value):
+        self.config["peakshape"]["st_sloperatio"] = value
+
+    @property
+    def st_arearatio(self):
+        if self._hypermetShortTail:
+            return self.config["peakshape"]["st_arearatio"]
+        else:
+            return 0
+
+    @st_arearatio.setter
+    def st_arearatio(self, value):
+        self.config["peakshape"]["st_arearatio"] = value
+
     @property
     def zero_constraint(self):
         if self.config["detector"]["fixedzero"]:
@@ -1258,64 +1330,59 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
             delta = self.config["detector"]["deltasum"]
             return Gefit.CQUOTED, value + delta, value - delta
 
-    @classmethod
-    def _calc_fwhm(cls, noise, fano, energy):
-        return numpy.sqrt(
-            noise * noise
-            + cls.BAND_GAP
-            * energy
-            * fano
-            * cls.GAUSS_SIGMA_TO_FWHM
-            * cls.GAUSS_SIGMA_TO_FWHM
-        )
+    @property
+    def eta_factor_constraint(self):
+        if self.config["detector"]["fixedeta_factor"]:
+            return Gefit.CFIXED, 0, 0
+        else:
+            value = self.eta_factor
+            delta = self.config["detector"]["deltaeta_factor"]
+            return Gefit.CQUOTED, value + delta, value - delta
 
     @property
-    def eta_factor(self):
-        return self.config["peakshape"]["eta_factor"]
-
-    @eta_factor.setter
-    def eta_factor(self, value):
-        self.config["peakshape"]["eta_factor"] = value
-
-    @property
-    def step_heightratio(self):
-        return self.config["peakshape"]["step_heightratio"]
-
-    @step_heightratio.setter
-    def step_heightratio(self, value):
-        self.config["peakshape"]["step_heightratio"] = value
+    def step_heightratio_constraint(self):
+        if self.config["detector"]["fixedstep_heightratio"] or not self._hypermetStep:
+            return Gefit.CFIXED, 0, 0
+        else:
+            value = self.step_heightratio
+            delta = self.config["detector"]["deltastep_heightratio"]
+            return Gefit.CQUOTED, value + delta, value - delta
 
     @property
-    def lt_sloperatio(self):
-        return self.config["peakshape"]["lt_sloperatio"]
-
-    @lt_sloperatio.setter
-    def lt_sloperatio(self, value):
-        self.config["detector"]["lt_sloperatio"] = value
-
-    @property
-    def lt_arearatio(self):
-        return self.config["peakshape"]["lt_arearatio"]
-
-    @lt_arearatio.setter
-    def lt_arearatio(self, value):
-        self.config["peakshape"]["lt_arearatio"] = value
+    def lt_sloperatio_constraint(self):
+        if self.config["detector"]["fixedlt_sloperatio"] or not self._hypermetLongTail:
+            return Gefit.CFIXED, 0, 0
+        else:
+            value = self.lt_sloperatio
+            delta = self.config["detector"]["deltalt_sloperatio"]
+            return Gefit.CQUOTED, value + delta, value - delta
 
     @property
-    def st_sloperatio(self):
-        return self.config["peakshape"]["st_sloperatio"]
-
-    @st_sloperatio.setter
-    def st_sloperatio(self, value):
-        self.config["peakshape"]["st_sloperatio"] = value
+    def lt_arearatio_constraint(self):
+        if self.config["detector"]["fixedlt_arearatio"] or not self._hypermetLongTail:
+            return Gefit.CFIXED, 0, 0
+        else:
+            value = self.lt_arearatio
+            delta = self.config["detector"]["deltalt_arearatio"]
+            return Gefit.CQUOTED, value + delta, value - delta
 
     @property
-    def st_arearatio(self):
-        return self.config["peakshape"]["st_arearatio"]
+    def st_sloperatio_constraint(self):
+        if self.config["detector"]["fixedst_sloperatio"] or not self._hypermetShortTail:
+            return Gefit.CFIXED, 0, 0
+        else:
+            value = self.st_sloperatio
+            delta = self.config["detector"]["deltast_sloperatio"]
+            return Gefit.CQUOTED, value + delta, value - delta
 
-    @st_arearatio.setter
-    def st_arearatio(self, value):
-        self.config["peakshape"]["st_arearatio"] = value
+    @property
+    def st_arearatio_constraint(self):
+        if self.config["detector"]["fixedst_arearatio"] or not self._hypermetShortTail:
+            return Gefit.CFIXED, 0, 0
+        else:
+            value = self.st_arearatio
+            delta = self.config["detector"]["deltast_arearatio"]
+            return Gefit.CQUOTED, value + delta, value - delta
 
     @property
     def _parameter_group_names(self):
