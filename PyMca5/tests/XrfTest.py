@@ -588,17 +588,17 @@ class testXrf(unittest.TestCase):
 
         mcaFitLegacy = LegacyMcaTheory.LegacyMcaTheory()
         _, fitResult1, result1 = self._configAndFit(
-            x, y, copy.deepcopy(configuration), mcaFitLegacy, tmpflag=True)
+            x, y, copy.deepcopy(configuration), mcaFitLegacy)
 
         t1 = time.time()
 
         mcaFit = NewClassMcaTheory.McaTheory()
         _, fitResult2, result2 = self._configAndFit(
-            x, y, copy.deepcopy(configuration), mcaFit, tmpflag=True)
+            x, y, copy.deepcopy(configuration), mcaFit)
 
         t2 = time.time()
 
-        print("LEGACY TIME", t1-t0)
+        print("\nLEGACY TIME", t1-t0)
         print("NEW TIME", t2-t1)
 
         # Compare data
@@ -659,13 +659,13 @@ class testXrf(unittest.TestCase):
         self.assertEqual(fitResult1, fitResult2)
         self.assertEqual(result1, result2)
 
-    def _configAndFit(self, x, y, configuration, mcaFit, tmpflag=False):
+    def _configAndFit(self, x, y, configuration, mcaFit):
         configuration = mcaFit.configure(configuration)
         mcaFit.setData(x, y,
                        xmin=configuration["fit"]["xmin"],
                        xmax=configuration["fit"]["xmax"])
-        if tmpflag:
-            return configuration, None, None
+        return configuration, None, None
+
         mcaFit.estimate()
         fitResult1, result1 = mcaFit.startFit(digest=1)
         return configuration, fitResult1, result1
