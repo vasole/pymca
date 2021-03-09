@@ -87,7 +87,7 @@ class testFitPolModel(unittest.TestCase):
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()
     if auto:
-        testSuite.addTest(unittest.TestLoader().loadTestsFromTestCase(testFitModel))
+        testSuite.addTest(unittest.TestLoader().loadTestsFromTestCase(testFitPolModel))
     else:
         # use a predefined order
         testSuite.addTest(testFitPolModel("testLinearPol"))
