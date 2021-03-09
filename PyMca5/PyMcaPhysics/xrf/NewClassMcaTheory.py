@@ -42,6 +42,8 @@ from PyMca5 import PyMcaDataDir
 from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaMath.fitting import SpecfitFuns
 from PyMca5.PyMcaMath.fitting.Model import Model, ConcatModel
+from PyMca5.PyMcaMath.fitting.PolynomialModels import LinearPolynomialModel
+from PyMca5.PyMcaMath.fitting.PolynomialModels import ExponentialPolynomialModel
 
 from . import Elements
 from . import ConcentrationsTool
@@ -465,9 +467,14 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         self._std = None
         self._lastDataCacheParams = None
 
-        # XRF spectrum background
+        # XRF spectrum numerical background
         self._numBkg = None
         self._lastNumBkgCacheParams = None
+
+        # XRF spectrum analytical background
+        self._continuum = None
+        self._continuumModel = None
+        self._lastContinuumCacheParams = None
 
         self._lastTime = None
 
@@ -916,6 +923,12 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         return self._numBkg
 
     @property
+    def ycontinuum(self):
+        """Get the analytical background (as opposed to the numerical background)"""
+        self._refreshContinuumCache()
+        return self._continuum
+
+    @property
     def xdata0(self):
         return self._xdata0
 
@@ -1080,14 +1093,12 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         self._ystd0 = ystd0
         self._lastDataCacheParams = params
 
-        # Invalidate background cache
-        self._lastNumBkgCacheParams = None
-
     @property
     def _numBkgCacheParams(self):
         """Any change in these parameter will invalidate the cache"""
         cfg = self.config["fit"]
         params = [
+            id(self._lastDataCacheParams),
             "stripflag",
             "stripalgorithm",
             "stripfilterwidth",
@@ -1117,6 +1128,52 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         else:
             self._numBkg = numpy.zeros_like(self.ydata)
         self._lastNumBkgCacheParams = bkgparams
+
+    @property
+    def _continuumCacheParams(self):
+        cfg = self.config["fit"]
+        params = [id(self._lastDataCacheParams), cfg["continuum"]]
+        if cfg["continuum"] == "Linear Polynomial":
+            params.append(cfg["linpolorder"])
+        elif cfg["continuum"] == "Exp. Polynomial":
+            params.append(cfg["exppolorder"])
+        return params
+
+    def _refreshContinuumCache(self):
+        contparams = self._continuumCacheParams
+        if self._lastContinuumCacheParams == contparams:
+            return  # the cached data is still valid
+        continuum = self.config["fit"]["continuum"]
+        if continuum is None:
+            model = None
+        elif continuum == "Constant":
+            model = LinearPolynomialModel(degree=0)
+        elif continuum == "Linear":
+            model = LinearPolynomialModel(degree=1)
+        elif continuum == "Parabolic":
+            model = LinearPolynomialModel(degree=2)
+        elif continuum == "Linear Polynomial":
+            model = LinearPolynomialModel(degree=self.config["fit"]["linpolorder"])
+        elif continuum == "Exp. Polynomial":
+            model = ExponentialPolynomialModel(degree=self.config["fit"]["exppolorder"])
+        else:
+            raise ValueError("Unknown continuum {}".format(continuum))
+        self._continuumModel = model
+        if model is None:
+            if self.ydata is None:
+                self._continuum = None
+            else:
+                self._continuum = numpy.zeros_like(self.ydata)
+        else:
+            model.xdata = self.xdata
+            model.ydata = self.ynumbkg
+            self._continuum = model.evaluate()
+        self._lastContinuumCacheParams = contparams
+
+    @property
+    def continuumModel(self):
+        self._refreshContinuumCache()
+        return self._continuumModel
 
     def _snip(self, signal, anchorslist):
         """Apply SNIP filtering to a signal"""
@@ -1399,11 +1456,13 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
             "step_heightratio",
             "eta_factor",
             "areas",
+            "continuum_linear",
+            "continuum_nonlinear",
         ]
 
     @property
     def _linear_parameter_group_names(self):
-        return ["areas"]
+        return ["areas", "continuum_linear"]
 
     def _iter_parameter_groups(self, linear_only=False):
         """
@@ -1440,6 +1499,8 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
                 yield name, 1
             elif name == "areas":
                 yield name, self._nLineGroups
+            elif name == "continuum_linear":
+                continuum
             else:
                 raise ValueError(name)
 
