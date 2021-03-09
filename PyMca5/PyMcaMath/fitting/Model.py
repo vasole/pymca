@@ -219,7 +219,7 @@ class Model(Cashed):
         for name, n in self._parameter_groups(linear_only=linear_only):
             if n > 1:
                 getattr(self, name)[:] = params[i : i + n]
-            else:
+            elif n == 1:
                 setattr(self, name, params[i])
             i += n
 
@@ -361,10 +361,12 @@ class Model(Cashed):
         if self.niter_non_leastsquares:
             initial = self.linear_parameters
         try:
+            yshape = self.ydata.shape
             for i in range(max(self.niter_non_leastsquares, 1)):
-                A = self.linear_derivatives().T  # nchannels, npeaks
+                A = self.linear_derivatives().T  # nchannels, nparams
                 b = self.ydata  # nchannels
                 result = lstsq(A, b, digested_output=full_output)
+                b.shape = yshape
                 if self.niter_non_leastsquares:
                     self.linear_parameters = result[0]
                     self.non_leastsquares_increment()
