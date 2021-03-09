@@ -433,6 +433,15 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
     MAX_ATTENUATION = 1.0e-300
     SCATTER_ENERGY_THRESHOLD = 0.2  # keV
 
+    CONTINUUM_LIST = [
+        None,
+        "Constant",
+        "Linear",
+        "Parabolic",
+        "Linear Polynomial",
+        "Exp. Polynomial",
+    ]
+
     def __init__(self, **kw):
         super(McaTheory, self).__init__(**kw)
         # TODO: done for some initialization of SpecfitFuns?
@@ -566,7 +575,7 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
 
         :yields list: [[energy, 1.0, "Scatter %03d"]]
         """
-        scatteringAngle = self._scatteringAngle * numpy.pi / 180.0
+        scatteringAngle = numpy.radians(self._scatteringAngle)
         angleFactor = 1.0 - numpy.cos(scatteringAngle)
         for i, (en_elastic, _) in enumerate(self._scatterLines()):
             en_inelastic = en_elastic / (1.0 + (en_elastic / 511.0) * angleFactor)
@@ -779,8 +788,8 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
 
         energies = [x[0] for x in peaks] + [maxenergy]
         mu = Elements.getMaterialMassAttenuationCoefficients(formula, 1.0, energies)
-        sinAlphaIn = numpy.sin(alphaIn * numpy.pi / 180.0)
-        sinAlphaOut = numpy.sin(alphaOut * numpy.pi / 180.0)
+        sinAlphaIn = numpy.sin(numpy.radians(alphaIn))
+        sinAlphaOut = numpy.sin(numpy.radians(alphaOut))
         sinRatio = sinAlphaIn / sinAlphaOut
         muSource = mu["total"][-1]
         muFluo = numpy.array(mu["total"][:-1])
@@ -1204,11 +1213,50 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
 
     @property
     def sum(self):
-        return self.config["detector"]["sum"]
+        if self.config["fit"]["sumflag"]:
+            return self.config["detector"]["sum"]
+        else:
+            return 0.0
 
     @sum.setter
     def sum(self, value):
         self.config["detector"]["sum"] = value
+
+    @property
+    def zero_constraint(self):
+        if self.config["detector"]["fixedzero"]:
+            return Gefit.CFIXED, 0, 0
+        else:
+            value = self.zero
+            delta = self.config["detector"]["deltazero"]
+            return Gefit.CQUOTED, value + delta, value - delta
+
+    @property
+    def gain_constraint(self):
+        if self.config["detector"]["fixedgain"]:
+            return Gefit.CFIXED, 0, 0
+        else:
+            value = self.gain
+            delta = self.config["detector"]["deltagain"]
+            return Gefit.CQUOTED, value + delta, value - delta
+
+    @property
+    def fano_constraint(self):
+        if self.config["detector"]["fixedfano"]:
+            return Gefit.CFIXED, 0, 0
+        else:
+            value = self.fano
+            delta = self.config["detector"]["deltafano"]
+            return Gefit.CQUOTED, value + delta, value - delta
+
+    @property
+    def sum_constraint(self):
+        if self.config["detector"]["fixedsum"] or not self.config["fit"]["sumflag"]:
+            return Gefit.CFIXED, 0, 0
+        else:
+            value = self.sum
+            delta = self.config["detector"]["deltasum"]
+            return Gefit.CQUOTED, value + delta, value - delta
 
     @classmethod
     def _calc_fwhm(cls, noise, fano, energy):
@@ -1337,6 +1385,7 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         if xdata is None:
             xdata = self.xdata
         x = self.zero + self.gain * xdata
+        fwhm = self._calc_fwhm(self.noise, self.fano, energy)
         raise NotImplementedError
 
 
