@@ -36,12 +36,13 @@ from PyMca5.PyMcaMath.fitting.Model import Model
 
 
 class PolynomialModel(Model):
-    def __init__(self, degree=0):
+    def __init__(self, degree=0, maxiter=100):
         self._xdata = None
         self._ydata = None
         self._mask = None
-        self._linear = None
+        self._linear = True
         self.degree = degree
+        self.maxiter = maxiter
         super(PolynomialModel, self).__init__()
 
     @property
@@ -88,9 +89,21 @@ class PolynomialModel(Model):
     def linear(self, value):
         self._linear = value
 
+    @property
+    def maxiter(self):
+        return self._maxiter
+
+    @maxiter.setter
+    def maxiter(self, value):
+        self._maxiter = value
+
 
 class LinearPolynomialModel(PolynomialModel):
     """y = c0 + c1*x + c2*x^2 + ..."""
+
+    def __init__(self, **kw):
+        super(LinearPolynomialModel, self).__init__(**kw)
+        self._linear = True
 
     @property
     def _parameter_group_names(self):
@@ -157,13 +170,9 @@ class LinearPolynomialModel(PolynomialModel):
 class ExponentialPolynomialModel(PolynomialModel):
     """y = c0 * exp[c1*x + c2*x^2 + ...]"""
 
-    @property
-    def xdata(self):
-        return self._xdata
-
-    @xdata.setter
-    def xdata(self, values):
-        self._xdata = values
+    def __init__(self, **kw):
+        super(ExponentialPolynomialModel, self).__init__(**kw)
+        self._linear = False
 
     @property
     def _parameter_group_names(self):
