@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2021 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -85,11 +85,16 @@ class QSource(qt.QObject):
 
             n = len(self.surveyDict[dataObjectKey])
             if n > 0:
-                n = list(range(n))
-                n.reverse()
-                for i in n:
-                    if not len(dir(self.surveyDict[dataObjectKey][i])):
-                        del self.surveyDict[dataObjectKey][i]
+                ns = list(range(n))
+                newlist = []
+                for i in ns:
+                    try:
+                        if len(dir(self.surveyDict[dataObjectKey][i])):
+                            newlist.append(self.surveyDict[dataObjectKey][i])
+                    except ReferenceError:
+                        pass
+
+                self.surveyDict[dataObjectKey] = newlist
 
             if len(self.surveyDict[dataObjectKey]) == 0:
                 del self.surveyDict[dataObjectKey]
@@ -102,7 +107,10 @@ class QSource(qt.QObject):
 
         try:
             _logger.debug("Dealing with data object reference %s", dataObjectRef)
-            if dataObjectRef not in self.surveyDict[key]:
+            if key not in self.surveyDict:
+                self.surveyDict[key] = [dataObjectRef]
+                self.selections[key] = [(id(dataObjectRef), dataObjectRef.info)]
+            elif dataObjectRef not in self.surveyDict[key]:
                 _logger.debug("dataObject reference ADDED")
 
                 self.surveyDict[key].append(dataObjectRef)
