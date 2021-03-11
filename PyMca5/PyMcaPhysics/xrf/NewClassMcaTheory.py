@@ -479,8 +479,11 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         self._lastTime = None
 
         self._lineGroups = []
+        self.linegroup_areas = []
         self._fluoRates = []
         self._escapeLineGroups = []
+        self._peakfunc = None
+        self._fastpeakfunc = None
 
         self.strategyInstances = {}
 
@@ -551,24 +554,116 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         # Line groups: nested lists
         #   line group
         #       -> emission/scattering line
-        #           -> energy, rate, line name
+        #          [energy, rate, line name]
         # This is a filtered and normalized form of `_fluoRates`
         self._lineGroups = list(self._getEmissionLines())
         self._lineGroups.extend(self._getScatterLines())
+        self.linegroup_areas = numpy.zeros(len(self._lineGroups))
 
         # Escape line groups: nested lists
         #   line group
         #       -> emission/scattering line
         #           -> escape line
-        #               -> energy, rate, escape name
+        #              [energy, rate, escape name]
         self._escapeLineGroups = [
             self._calcEscapePeaks([peak[0] for peak in peaks])
             for peaks in self._lineGroups
         ]
 
-    @property
-    def _nLineGroups(self):
-        return len(self._lineGroups)
+        # Prepare peak shape calculations
+        self._prepare_peakfunc()
+
+    def _prepare_peakfunc(self):
+        npeaks = sum(len(group) for group in self._lineGroups)
+        npeaks += sum(
+            len(escgroup) for group in self._escapeLineGroups for escgroup in group
+        )
+        if self._hypermet:
+            # area, position, fwhm, ST AreaR, ST SlopeR, LT AreaR, LT SlopeR, STEP HeightR
+            htype = self._hypermet
+
+            def peakfunc(params, x):
+                return SpecfitFuns.fastahypermet(params, x, htype)
+
+            self._peakfunc = peakfunc
+            npeakparams = 8
+        else:
+            # area, position, fwhm, eta
+            self._peakfunc = SpecfitFuns.apvoigt
+            npeakparams = 4
+        self._peakfunc_params = numpy.zeros((npeaks, npeakparams))
+
+    def _fill_peakfunc_params(self):
+        """All parameters are in the energy domain (X-axis is energy, not channels)"""
+        parameters = self._peakfunc_params
+
+        # Peak positions and areas
+        i = 0
+        for group, escgroup, grouparea in zip(
+            self._lineGroups, self._escapeLineGroups, self.linegroup_areas
+        ):
+            if not escgroup:
+                escgroup = [[]] * len(group)
+            for (energy, rate, _), esclines in zip(group, escgroup):
+                peakarea = rate * grouparea
+                parameters[i, 0] = peakarea
+                parameters[i, 1] = energy
+                i += 1
+                for escen, escrate, _ in esclines:
+                    parameters[i, 0] = peakarea * escrate
+                    parameters[i, 1] = escen
+                    i += 1
+
+        # Area parameters from channel to energy domain
+        self._peakfunc_params[:, 0] *= self.gain
+
+        # FWHM
+        parameters[:, 2] = self._peak_fwhm(parameters[:, 1])
+
+        # Other peak shape parameters
+        if self._hypermet:
+            shapeparams = [
+                self.st_arearatio,
+                self.st_sloperatio,
+                self.lt_arearatio,
+                self.lt_sloperatio,
+                self.step_heightratio,
+            ]
+        else:
+            shapeparams = [self.eta_factor]
+        for i, param in enumerate(shapeparams, 3):
+            parameters[:, i] = param
+
+    def _evaluate_peakprofiles(self, parameters, x, hypermet=None, fast=True):
+        """When providing parameters for more than one peak, the peak
+        profiles are added.
+
+        :param array parameters: flat 1D array of parameters
+        :param array x: domain on which to evaluate the peak profiles
+        :param int or None hypermet:
+        :param bool fast: ???
+        :returns array: same shape as x
+        """
+        if hypermet is None:
+            hypermet = self._hypermet
+        if hypermet:
+            if fast:
+                return SpecfitFuns.fastahypermet(parameters, x, hypermet)
+            else:
+                return SpecfitFuns.ahypermet(parameters, x, hypermet)
+        else:
+            return SpecfitFuns.apvoigt(parameters, x)
+
+    def _peak_fwhm(self, energy):
+        """Calculate the FWHM of a peak in the energy domain"""
+        return numpy.sqrt(
+            self.noise * self.noise
+            + self.BAND_GAP
+            * energy
+            * self.fano
+            * self.GAUSS_SIGMA_TO_FWHM
+            * self.GAUSS_SIGMA_TO_FWHM
+        )
 
     def _getEmissionLines(self):
         """Yields a list of emission lines for each group with total
@@ -901,6 +996,18 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         return self._xdata
 
     @property
+    def xenergy(self):
+        return self_channels_to_energy(self.xdata)
+
+    def _channels_to_energy(self, xchannels):
+        return self.zero + self.gain * xchannels
+
+    @property
+    def xenergy_cen(self):
+        xchannels = self.xdata
+        return self_channels_to_energy(xchannels - numpy.mean(xchannels))
+
+    @property
     def nchannels(self):
         return len(self.xdata)
 
@@ -925,8 +1032,14 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
     @property
     def ycontinuum(self):
         """Get the analytical background (as opposed to the numerical background)"""
-        self._refreshContinuumCache()
-        return self._continuum
+        model = self.continuumModel
+        if model is None:
+            if self.ydata is None:
+                return None
+            else:
+                return numpy.zeros_like(self.ydata)
+        else:
+            return model.evaluate()
 
     @property
     def xdata0(self):
@@ -1131,49 +1244,100 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
 
     @property
     def _continuumCacheParams(self):
-        cfg = self.config["fit"]
-        params = [id(self._lastDataCacheParams), cfg["continuum"]]
-        if cfg["continuum"] == "Linear Polynomial":
-            params.append(cfg["linpolorder"])
-        elif cfg["continuum"] == "Exp. Polynomial":
-            params.append(cfg["exppolorder"])
+        cfgfit = self.config["fit"]
+        params = [id(self._lastDataCacheParams), cfgfit["continuum"]]
+        if cfgfit["continuum"] == "Linear Polynomial":
+            params.append(cfgfit["linpolorder"])
+        elif cfgfit["continuum"] == "Exp. Polynomial":
+            params.append(cfgfit["exppolorder"])
         return params
 
     def _refreshContinuumCache(self):
         contparams = self._continuumCacheParams
         if self._lastContinuumCacheParams == contparams:
             return  # the cached data is still valid
+
+        # Instantiate the model
         continuum = self.config["fit"]["continuum"]
-        if continuum is None:
+        if continuum is None or self.ynumbkg is None:
             model = None
         elif continuum == "Constant":
-            model = LinearPolynomialModel(degree=0)
+            model = LinearPolynomialModel(degree=0, maxiter=10)
         elif continuum == "Linear":
-            model = LinearPolynomialModel(degree=1)
+            model = LinearPolynomialModel(degree=1, maxiter=10)
         elif continuum == "Parabolic":
-            model = LinearPolynomialModel(degree=2)
+            model = LinearPolynomialModel(degree=2, maxiter=10)
         elif continuum == "Linear Polynomial":
-            model = LinearPolynomialModel(degree=self.config["fit"]["linpolorder"])
+            model = LinearPolynomialModel(
+                degree=self.config["fit"]["linpolorder"], maxiter=10
+            )
         elif continuum == "Exp. Polynomial":
             model = ExponentialPolynomialModel(degree=self.config["fit"]["exppolorder"])
+            estmodel = LinearPolynomialModel(
+                degree=self.config["fit"]["linpolorder"], maxiter=40
+            )
         else:
             raise ValueError("Unknown continuum {}".format(continuum))
         self._continuumModel = model
-        if model is None:
-            if self.ydata is None:
-                self._continuum = None
-            else:
-                self._continuum = numpy.zeros_like(self.ydata)
-        else:
-            model.xdata = self.xdata
+
+        # Estimate the polynomial coefficients by fitting the numerical background
+        if model is not None:
+            x = self.xdata
+            model.xdata = self.xenergy_cen
             model.ydata = self.ynumbkg
-            self._continuum = model.evaluate()
+            if continuum == "Exp. Polynomial":
+                estmodel.xdata = model.xdata
+                estmodel.ydata = numpy.log(model.ydata)
+                params = estmodel.fit()["parameters"]
+                params[0] = numpy.exp(params[0])
+                model.parameters = params
+            else:
+                model.parameters = model.fit()["parameters"]
+
         self._lastContinuumCacheParams = contparams
 
     @property
     def continuumModel(self):
         self._refreshContinuumCache()
         return self._continuumModel
+
+    @property
+    def continuum_coefficients(self):
+        model = self.continuumModel
+        if model is None:
+            return list()
+        else:
+            return model.parameters
+
+    @continuum_coefficients.setter
+    def continuum_coefficients(self, values):
+        model = self.continuumModel
+        if model is not None:
+            model.parameters = values
+
+    @property
+    def linpol_coefficients(self):
+        if isinstance(self.continuumModel, LinearPolynomialModel):
+            return self.continuum_coefficients
+        else:
+            return list()
+
+    @linpol_coefficients.setter
+    def linpol_coefficients(self, values):
+        if isinstance(self.continuumModel, LinearPolynomialModel):
+            self.continuum_coefficients = values
+
+    @property
+    def exppol_coefficients(self):
+        if isinstance(self.continuumModel, ExponentialPolynomialModel):
+            return self.continuum_coefficients
+        else:
+            return list()
+
+    @exppol_coefficients.setter
+    def exppol_coefficients(self, values):
+        if isinstance(self.continuumModel, ExponentialPolynomialModel):
+            self.continuum_coefficients = values
 
     def _snip(self, signal, anchorslist):
         """Apply SNIP filtering to a signal"""
@@ -1282,17 +1446,6 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
     @sum.setter
     def sum(self, value):
         self.config["detector"]["sum"] = value
-
-    @classmethod
-    def _calc_fwhm(cls, noise, fano, energy):
-        return numpy.sqrt(
-            noise * noise
-            + cls.BAND_GAP
-            * energy
-            * fano
-            * cls.GAUSS_SIGMA_TO_FWHM
-            * cls.GAUSS_SIGMA_TO_FWHM
-        )
 
     @property
     def eta_factor(self):
@@ -1455,14 +1608,14 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
             "lt_sloperatio",
             "step_heightratio",
             "eta_factor",
-            "areas",
-            "continuum_linear",
-            "continuum_nonlinear",
+            "linegroup_areas",
+            "linpol_coefficients",
+            "exppol_coefficients",
         ]
 
     @property
     def _linear_parameter_group_names(self):
-        return ["areas", "continuum_linear"]
+        return ["linegroup_areas", "linpol_coefficients"]
 
     def _iter_parameter_groups(self, linear_only=False):
         """
@@ -1498,22 +1651,45 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
             elif name == "eta_factor" and not hypermet:
                 yield name, 1
             elif name == "areas":
-                yield name, self._nLineGroups
-            elif name == "continuum_linear":
-                continuum
+                n = len(self.area)
+                if n:
+                    yield name, n
+            elif name == "linpol":
+                n = len(self.linpol_coefficients)
+                if n:
+                    yield name, n
+            elif name == "exppol":
+                n = len(self.exppol_coefficients)
+                if n:
+                    yield name, n
             else:
                 raise ValueError(name)
 
     def evaluate(self, xdata=None):
-        """Evaluate model
+        """Evaluate to MCA model
+
+        y(xdata) = ybkg + ycont(C(xdata)) + A1*G1(E(xdata)) + A2*G2(E(xdata)) + ...
+
+            xdata: MCA channels (positive integers)
+
+            ybkg: numerical background derived from y
+
+            ycont(x) = 0                              # no analytical background
+                    = c0 + c1*x + c2*x^2 + ...       # linear polynomial
+                    = c0 * exp[c1*x + c2*x^2 + ...]  # exponential polynomial
+
+            E(x) = zero + gain*x    # energy
+            C(x) = E(x) - <E(x)>    # centered energy
+
+            Gi(x): several peaks with normalized total area
 
         :param array xdata: length nxdata
         :returns array: nxdata
         """
         if xdata is None:
             xdata = self.xdata
-        x = self.zero + self.gain * xdata
-        fwhm = self._calc_fwhm(self.noise, self.fano, energy)
+        energy = self._channels_to_energy(xdata)
+
         raise NotImplementedError
 
 
