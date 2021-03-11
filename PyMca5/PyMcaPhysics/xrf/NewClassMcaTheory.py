@@ -41,6 +41,7 @@ import numpy
 from PyMca5 import PyMcaDataDir
 from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaMath.fitting import SpecfitFuns
+from PyMca5.PyMcaMath.fitting import Gefit
 from PyMca5.PyMcaMath.fitting.Model import Model, ConcatModel
 from PyMca5.PyMcaMath.fitting.PolynomialModels import LinearPolynomialModel
 from PyMca5.PyMcaMath.fitting.PolynomialModels import ExponentialPolynomialModel
@@ -482,8 +483,6 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         self.linegroup_areas = []
         self._fluoRates = []
         self._escapeLineGroups = []
-        self._peakfunc = None
-        self._fastpeakfunc = None
 
         self.strategyInstances = {}
 
@@ -570,32 +569,19 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
             for peaks in self._lineGroups
         ]
 
-        # Prepare peak shape calculations
-        self._prepare_peakfunc()
-
-    def _prepare_peakfunc(self):
+    def _peak_profile_params(self):
+        """All parameters are in the energy domain (X-axis is energy, not channels)"""
         npeaks = sum(len(group) for group in self._lineGroups)
         npeaks += sum(
             len(escgroup) for group in self._escapeLineGroups for escgroup in group
         )
         if self._hypermet:
             # area, position, fwhm, ST AreaR, ST SlopeR, LT AreaR, LT SlopeR, STEP HeightR
-            htype = self._hypermet
-
-            def peakfunc(params, x):
-                return SpecfitFuns.fastahypermet(params, x, htype)
-
-            self._peakfunc = peakfunc
             npeakparams = 8
         else:
             # area, position, fwhm, eta
-            self._peakfunc = SpecfitFuns.apvoigt
             npeakparams = 4
-        self._peakfunc_params = numpy.zeros((npeaks, npeakparams))
-
-    def _fill_peakfunc_params(self):
-        """All parameters are in the energy domain (X-axis is energy, not channels)"""
-        parameters = self._peakfunc_params
+        parameters = numpy.zeros((npeaks, npeakparams))
 
         # Peak positions and areas
         i = 0
@@ -634,16 +620,20 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         for i, param in enumerate(shapeparams, 3):
             parameters[:, i] = param
 
-    def _evaluate_peakprofiles(self, parameters, x, hypermet=None, fast=True):
+        return parameters
+
+    def _total_peakgroup_profile(self, parameters, x, hypermet=None, fast=True):
         """When providing parameters for more than one peak, the peak
         profiles are added.
 
-        :param array parameters: flat 1D array of parameters
-        :param array x: domain on which to evaluate the peak profiles
+        :param array parameters: 1D array of parameters
+        :param array x: 1D array
         :param int or None hypermet:
         :param bool fast: ???
         :returns array: same shape as x
         """
+        if parameters.size == 0:
+            return numpy.zeros_like(x)
         if hypermet is None:
             hypermet = self._hypermet
         if hypermet:
@@ -997,15 +987,17 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
 
     @property
     def xenergy(self):
-        return self_channels_to_energy(self.xdata)
-
-    def _channels_to_energy(self, xchannels):
-        return self.zero + self.gain * xchannels
+        return self._channels_to_energy(self.xdata)
 
     @property
-    def xenergy_cen(self):
-        xchannels = self.xdata
-        return self_channels_to_energy(xchannels - numpy.mean(xchannels))
+    def xpol(self):
+        return self._channels_to_xpol(self.xdata)
+
+    def _channels_to_energy(self, x):
+        return self.zero + self.gain * x
+
+    def _channels_to_xpol(self, x):
+        return self.zero + self.gain * (x - x.mean())
 
     @property
     def nchannels(self):
@@ -1272,9 +1264,8 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
                 degree=self.config["fit"]["linpolorder"], maxiter=10
             )
         elif continuum == "Exp. Polynomial":
-            model = ExponentialPolynomialModel(degree=self.config["fit"]["exppolorder"])
-            estmodel = LinearPolynomialModel(
-                degree=self.config["fit"]["linpolorder"], maxiter=40
+            model = ExponentialPolynomialModel(
+                degree=self.config["fit"]["exppolorder"], maxiter=40
             )
         else:
             raise ValueError("Unknown continuum {}".format(continuum))
@@ -1283,16 +1274,10 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         # Estimate the polynomial coefficients by fitting the numerical background
         if model is not None:
             x = self.xdata
-            model.xdata = self.xenergy_cen
+            model.xdata = self.xpol
             model.ydata = self.ynumbkg
-            if continuum == "Exp. Polynomial":
-                estmodel.xdata = model.xdata
-                estmodel.ydata = numpy.log(model.ydata)
-                params = estmodel.fit()["parameters"]
-                params[0] = numpy.exp(params[0])
-                model.parameters = params
-            else:
-                model.parameters = model.fit()["parameters"]
+            result = model.fit()
+            model.use_fit_result(result)
 
         self._lastContinuumCacheParams = contparams
 
@@ -1665,31 +1650,88 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
             else:
                 raise ValueError(name)
 
-    def evaluate(self, xdata=None):
-        """Evaluate to MCA model
+    def _ydata_to_yfit(self, ydata):
+        return ydata - self.ynumbkg
 
-        y(xdata) = ybkg + ycont(C(xdata)) + A1*G1(E(xdata)) + A2*G2(E(xdata)) + ...
+    def evaluate(self, xdata=None):
+        """Evaluate to MCA model (does not include the numerical background)
+
+        y(xdata) = ybkg + ycont(P(xdata)) + A1*G1(E(xdata)) + A2*G2(E(xdata)) + ...
 
             xdata: MCA channels (positive integers)
 
-            ybkg: numerical background derived from y
+            ybkg = numerical background
 
             ycont(x) = 0                              # no analytical background
-                    = c0 + c1*x + c2*x^2 + ...       # linear polynomial
-                    = c0 * exp[c1*x + c2*x^2 + ...]  # exponential polynomial
+                     = c0 + c1*x + c2*x^2 + ...       # linear polynomial
+                     = c0 * exp[c1*x + c2*x^2 + ...]  # exponential polynomial
 
-            E(x) = zero + gain*x    # energy
-            C(x) = E(x) - <E(x)>    # centered energy
+            E(x) = zero + gain*x
+            P(x) = E(x - <x>)
 
             Gi(x): several peaks with normalized total area
 
         :param array xdata: length nxdata
         :returns array: nxdata
         """
+        # Evaluation domain
+        if xdata is None:
+            binterp = True
+            xdata = self.xdata
+        else:
+            binterp = False
+        energy = self._channels_to_energy(xdata)
+
+        # Emission lines, scatter peaks and escape peaks
+        parameters = self._peak_profile_params()
+        y = self._total_peakgroup_profile(parameters, energy)
+
+        # Analytical background
+        model = self.continuumModel
+        if model is not None:
+            xpol = self._channels_to_xpol(xdata)
+            y += model.evaluate(xdata=xpol)
+
+        # Pile-up
+        pileupfactor = self.sum
+        if pileupfactor:
+            y *= pileupfactor * SpecfitFuns.pileup(y, min(xdata), zero, gain)
+
+        # Numerical background
+        ybkg = self.ynumbkg
+        if ybkg is not None:
+            if binterp:
+                try:
+                    binterp = numpy.allclose(xdata, self.xdata)
+                except ValueError:
+                    binterp = True
+                if binterp:
+                    ybkg = numpy.interp(xdata, self.xdata, ybkg)
+            y += ybkg
+
+        return y
+
+    def linear_derivatives(self, xdata=None):
+        """Derivates to all linear parameters
+
+        :param array xdata: length nxdata
+        :returns array: nparams x nxdata
+        """
         if xdata is None:
             xdata = self.xdata
         energy = self._channels_to_energy(xdata)
+        raise NotImplementedError
 
+    def derivative(self, param_idx, xdata=None):
+        """Derivate to a specific parameter
+
+        :param int param_idx:
+        :param array xdata: length nxdata
+        :returns array: nxdata
+        """
+        if xdata is None:
+            xdata = self.xdata
+        energy = self._channels_to_energy(xdata)
         raise NotImplementedError
 
 

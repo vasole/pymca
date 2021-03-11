@@ -108,20 +108,42 @@ class Model(Cashed):
         raise AttributeError from NotImplementedError
 
     @property
-    def ymodel(self):
-        return self.evaluate()
+    def yfitdata(self):
+        return self._ydata_to_fit(self.ydata)
+
+    @property
+    def yfitstd(self):
+        return self._ystd_to_fit(self.ystd)
+
+    @property
+    def yfullmodel(self):
+        """Model of ydata"""
+        return self.evaluate_fullmodel()
+
+    @property
+    def yfitmodel(self):
+        """Model of yfitdata"""
+        return self.evaluate_fitmodel()
 
     @property
     def nchannels(self):
         raise AttributeError from NotImplementedError
 
     @property
+    def fit_parameters(self):
+        return self._get_parameters(fitting=True)
+
+    @fit_parameters.setter
+    def fit_parameters(self, values):
+        return self._set_parameters(values, fitting=True)
+
+    @property
     def parameters(self):
-        return self._get_parameters()
+        return self._get_parameters(fitting=False)
 
     @parameters.setter
     def parameters(self, values):
-        return self._set_parameters(values)
+        return self._set_parameters(values, fitting=False)
 
     @property
     def constraints(self):
@@ -144,12 +166,20 @@ class Model(Cashed):
         raise AttributeError from NotImplementedError
 
     @property
+    def linear_fit_parameters(self):
+        return self._get_parameters(linear_only=True, fitting=True)
+
+    @linear_fit_parameters.setter
+    def linear_fit_parameters(self, params):
+        return self._set_parameters(params, linear_only=True, fitting=True)
+
+    @property
     def linear_parameters(self):
-        return self._get_parameters(linear_only=True)
+        return self._get_parameters(linear_only=True, fitting=False)
 
     @linear_parameters.setter
     def linear_parameters(self, params):
-        return self._set_parameters(params, linear_only=True)
+        return self._set_parameters(params, linear_only=True, fitting=False)
 
     @property
     def linear_constraints(self):
@@ -171,9 +201,10 @@ class Model(Cashed):
     def _linear_parameter_group_names(self):
         raise AttributeError from NotImplementedError
 
-    def _get_parameters(self, linear_only=False):
+    def _get_parameters(self, linear_only=False, fitting=True):
         """
         :param bool linear_only:
+        :param bool fitting:
         :returns array:
         """
         i = 0
@@ -185,7 +216,10 @@ class Model(Cashed):
         for name, n in self._parameter_groups(linear_only=linear_only):
             params[i : i + n] = getattr(self, name)
             i += n
-        return params
+        if fitting:
+            return self._parameters_to_fit(params)
+        else:
+            return params
 
     def _get_constraints(self, linear_only=False):
         """
@@ -210,11 +244,13 @@ class Model(Cashed):
         else:
             return None
 
-    def _set_parameters(self, params, linear_only=False):
+    def _set_parameters(self, params, linear_only=False, fitting=False):
         """
-        :returns values:
         :param bool linear_only:
+        :param bool fitting:
         """
+        if fitting:
+            params = self._fit_to_parameters(params)
         i = 0
         for name, n in self._parameter_groups(linear_only=linear_only):
             if n > 1:
@@ -232,34 +268,50 @@ class Model(Cashed):
             excluded = []
         return [name for name in names if name in included and name not in excluded]
 
-    def evaluate(self, xdata=None):
-        """Evaluate model
+    def evaluate_fullmodel(self, xdata=None):
+        """Evaluate the full model.
+
+        :param array xdata: length nxdata
+        :returns array: nxdata
+        """
+        return self._fit_to_ydata(self.evaluate_fitmodel(xdata=xdata))
+
+    def evaluate_linear_fullmodel(self, xdata=None):
+        """Evaluate the full model.
+
+        :param array xdata: length nxdata
+        :returns array: n x nxdata
+        """
+        return self._fit_to_ydata(self.evaluate_linear_fitmodel(xdata=xdata))
+
+    def evaluate_fitmodel(self, xdata=None):
+        """Evaluate the fit model.
 
         :param array xdata: length nxdata
         :returns array: nxdata
         """
         raise NotImplementedError
 
-    def evaluate_linear(self, xdata=None):
-        """Derivate to a specific parameter
+    def evaluate_linear_fitmodel(self, xdata=None):
+        """Evaluate the fit model.
 
         :param array xdata: length nxdata
         :returns array: n x nxdata
         """
-        derivatives = self.linear_derivatives(xdata=xdata)
+        derivatives = self.linear_derivatives_fitmodel(xdata=xdata)
         return self.linear_parameters.dot(derivatives)
 
-    def linear_decomposition(self, xdata=None):
-        """Linear decomposition
+    def linear_decomposition_fitmodel(self, xdata=None):
+        """Linear decomposition of the fit model.
 
         :param array xdata: length nxdata
         :returns array: nparams x nxdata
         """
-        derivatives = self.linear_derivatives(xdata=xdata)
+        derivatives = self.linear_derivatives_fitmodel(xdata=xdata)
         return self.linear_parameters[:, numpy.newaxis] * derivatives
 
-    def derivative(self, param_idx, xdata=None):
-        """Derivate to a specific parameter
+    def derivative_fitmodel(self, param_idx, xdata=None):
+        """Derivate to a specific parameter of the fit model.
 
         :param int param_idx:
         :param array xdata: length nxdata
@@ -267,17 +319,19 @@ class Model(Cashed):
         """
         raise NotImplementedError
 
-    def derivatives(self, xdata=None):
-        """Derivates to all parameters
+    def derivatives_fitmodel(self, xdata=None):
+        """Derivates to all parameters of the fit model.
 
         :param array xdata: length nxdata
         :returns list(array): nparams x nxdata
         """
         if xdata is None:
             xdata = self.xdata
-        return [self.derivative(i, xdata=xdata) for i in range(self.nparameters)]
+        return [
+            self.derivative_fitmodel(i, xdata=xdata) for i in range(self.nparameters)
+        ]
 
-    def linear_derivatives(self, xdata=None):
+    def linear_derivatives_fitmodel(self, xdata=None):
         """Derivates to all linear parameters
 
         :param array xdata: length nxdata
@@ -359,22 +413,23 @@ class Model(Cashed):
         :returns dict:
         """
         if self.niter_non_leastsquares:
-            initial = self.linear_parameters
+            keep = self.linear_parameters
         try:
-            yshape = self.ydata.shape
+            b = self.yfitdata  # nchannels
             for i in range(max(self.niter_non_leastsquares, 1)):
-                A = self.linear_derivatives().T  # nchannels, nparams
-                b = self.ydata  # nchannels
-                result = lstsq(A, b, digested_output=full_output)
-                b.shape = yshape
+                A = self.linear_derivatives_fitmodel().T  # nchannels, nparams
+                result = lstsq(A, b.copy(), digested_output=full_output)
                 if self.niter_non_leastsquares:
-                    self.linear_parameters = result[0]
+                    self.linear_fit_parameters = result[0]
                     self.non_leastsquares_increment()
         finally:
             if self.niter_non_leastsquares:
-                self.linear_parameters = initial
-        result = {"linear": True, "parameters": result[0], "uncertainties": result[1]}
-        return result
+                self.linear_parameters = keep
+        return {
+            "linear": True,
+            "parameters": self._fit_to_parameters(result[0]),
+            "uncertainties": self._fit_to_uncertainties(result[1]),
+        }
 
     @enable_caching
     def nonlinear_fit(self, full_output=False):
@@ -382,17 +437,20 @@ class Model(Cashed):
         :param bool full_output: add statistics to fitted parameters
         :returns dict:
         """
-        initial = parameters = self.parameters
+        keep = self.parameters
         constraints = self.constraints
+        xdata = self.xdata
+        ydata = self.yfitdata
+        ystd = self.yfitstd
         try:
             for i in range(max(self.niter_non_leastsquares, 1)):
                 result = Gefit.LeastSquaresFit(
-                    self._evaluate,
-                    parameters,
-                    model_deriv=self._derivative,
-                    xdata=self.xdata,
-                    ydata=self.ydata,
-                    sigmadata=self.ystd,
+                    self._evaluate_fitmodel,
+                    self.fit_parameters,
+                    model_deriv=self._derivative_fitmodel,
+                    xdata=xdata,
+                    ydata=ydata,
+                    sigmadata=ystd,
                     constrains=constraints,
                     maxiter=self.maxiter,
                     weightflag=self.weightflag,
@@ -400,20 +458,44 @@ class Model(Cashed):
                     fulloutput=full_output,
                 )
                 if self.niter_non_leastsquares:
-                    parameters = self.parameters = result[0]
+                    self.fit_parameters = parameters
                     self.non_leastsquares_increment()
         finally:
-            self.parameters = initial
+            self.parameters = keep
         ret = {
             "linear": False,
-            "parameters": result[0],
-            "uncertainties": result[2],
+            "parameters": self._fit_to_parameters(result[0]),
+            "uncertainties": self._fit_to_uncertainties(result[2]),
             "chi2_red": result[1],
         }
         if full_output:
             ret["niter"] = result[3]
             ret["lastdeltachi"] = result[4]
         return ret
+
+    def _ydata_to_fit(self, ydata):
+        return ydata
+
+    def _ystd_to_fit(self, ystd):
+        return ystd
+
+    def _parameters_to_fit(self, params):
+        return params
+
+    def _fit_to_ydata(self, yfit):
+        return yfit
+
+    def _fit_to_parameters(self, params):
+        return params
+
+    def _fit_to_uncertainties(self, uncertainties):
+        return uncertainties
+
+    def _linear_parameters_to_fit(self, params):
+        return params
+
+    def _fit_to_linear_parameters(self, params):
+        return params
 
     @property
     def maxiter(self):
@@ -427,17 +509,17 @@ class Model(Cashed):
     def weightflag(self):
         return 0
 
-    def _evaluate(self, parameters, xdata):
+    def _evaluate_fitmodel(self, parameters, xdata):
         """Update parameters and evaluate model
 
         :param array parameters: length nparams
         :param array xdata: length nxdata
         :returns array: nxdata
         """
-        self.parameters = parameters
-        return self.evaluate(xdata=xdata)
+        self.fit_parameters = parameters
+        return self.evaluate_fitmodel(xdata=xdata)
 
-    def _derivative(self, parameters, param_idx, xdata):
+    def _derivative_fitmodel(self, parameters, param_idx, xdata):
         """Update parameters and return derivate to a specific parameter
 
         :param array parameters: length nparams
@@ -445,8 +527,8 @@ class Model(Cashed):
         :param array xdata: length nxdata
         :returns array: nxdata
         """
-        self.parameters = parameters
-        return self.derivative(param_idx, xdata=xdata)
+        self.fit_parameters = parameters
+        return self.derivative_fitmodel(param_idx, xdata=xdata)
 
     def use_fit_result(self, result):
         """
@@ -599,6 +681,14 @@ class ConcatModel(Model):
     def ystd(self, values):
         self._set_data("ystd", values)
 
+    @property
+    def yfitdata(self):
+        return self._get_data("yfitdata")
+
+    @property
+    def yfitstd(self):
+        return self._get_data("yfitstd")
+
     def _get_data(self, attr):
         """
         :param str attr:
@@ -664,21 +754,21 @@ class ConcatModel(Model):
         with self._filter_parameter_context(shared=True):
             return self.model.nlinear_parameters
 
-    def _get_parameters(self, linear_only=False):
+    def _get_parameters(self, linear_only=False, fitting=False):
         """
         :param bool linear_only:
         :returns array:
         """
         return numpy.concatenate(
             [
-                m._get_parameters(linear_only=linear_only)
+                m._get_parameters(linear_only=linear_only, fitting=fitting)
                 for m in self._iter_parameter_models()
             ]
         )
 
-    def _set_parameters(self, values, linear_only=False):
+    def _set_parameters(self, values, linear_only=False, fitting=False):
         """
-        :returns values:
+        :paramm array values:
         :param bool linear_only:
         """
         i = 0
@@ -688,7 +778,9 @@ class ConcatModel(Model):
             else:
                 n = m.nparameters
             if n:
-                m._set_parameters(values[i : i + n], linear_only=linear_only)
+                m._set_parameters(
+                    values[i : i + n], linear_only=linear_only, fitting=fitting
+                )
                 i += n
 
     def _iter_parameter_models(self):
@@ -789,7 +881,7 @@ class ConcatModel(Model):
         with self._filter_parameter_context(shared=True):
             self.model.linear_parameters = values
 
-    def evaluate(self, xdata=None):
+    def _concatenate_evaluation(self, funcname, xdata=None):
         """Evaluate model
 
         :param array xdata: length nxdata
@@ -799,11 +891,44 @@ class ConcatModel(Model):
             xdata = self.xdata
         ret = xdata * 0.0
         for idx, model in self._iter_models(xdata):
-            ret[idx] = model.evaluate(xdata=xdata[idx])
+            func = getattr(model, funcname)
+            ret[idx] = func(xdata=xdata[idx])
         return ret
 
-    def derivative(self, param_idx, xdata=None):
-        """Derivate to a specific parameter
+    def evaluate_fullmodel(self, xdata=None):
+        """Evaluate the full model.
+
+        :param array xdata: length nxdata
+        :returns array: nxdata
+        """
+        return self._concatenate_evaluation("evaluate_fullmodel", xdata=xdata)
+
+    def evaluate_linear_fullmodel(self, xdata=None):
+        """Evaluate the full model.
+
+        :param array xdata: length nxdata
+        :returns array: n x nxdata
+        """
+        return self._concatenate_evaluation("evaluate_linear_fullmodel", xdata=xdata)
+
+    def evaluate_fitmodel(self, xdata=None):
+        """Evaluate the fit model.
+
+        :param array xdata: length nxdata
+        :returns array: nxdata
+        """
+        return self._concatenate_evaluation("evaluate_fitmodel", xdata=xdata)
+
+    def evaluate_linear_fitmodel(self, xdata=None):
+        """Evaluate the fit model.
+
+        :param array xdata: length nxdata
+        :returns array: n x nxdata
+        """
+        return self._concatenate_evaluation("evaluate_linear_fitmodel", xdata=xdata)
+
+    def derivative_fitmodel(self, param_idx, xdata=None):
+        """Derivate to a specific parameter of the fit model.
 
         :param int param_idx:
         :param array xdata: length nxdata
@@ -816,10 +941,10 @@ class ConcatModel(Model):
         for model_idx, param_idx in self._parameter_model_index(param_idx):
             idx = idx_channels[model_idx]
             model = self._models[model_idx]
-            ret[idx] = model.derivative(param_idx, xdata=xdata[idx])
+            ret[idx] = model.derivative_fitmodel(param_idx, xdata=xdata[idx])
         return ret
 
-    def linear_derivatives(self, xdata=None):
+    def linear_derivatives_fitmodel(self, xdata=None):
         """Derivates to all linear parameters
 
         :param array xdata: length nxdata
@@ -829,7 +954,7 @@ class ConcatModel(Model):
             xdata = self.xdata
         ret = numpy.empty((self.nlinear_parameters, xdata.size))
         for idx, model in self._iter_models(xdata):
-            ret[:, idx] = model.linear_derivatives(xdata=xdata[idx])
+            ret[:, idx] = model.linear_derivatives_fitmodel(xdata=xdata[idx])
         return ret
 
     def _iter_models(self, xdata):

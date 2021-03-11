@@ -61,8 +61,11 @@ class testFitModel(unittest.TestCase):
             self.fitmodel = SimpleModel.SimpleConcatModel(ndetectors=nmodels)
         assert not self.fitmodel.linear
         self.init_random()
-        self.fitmodel.ydata = self.fitmodel.ymodel
-        numpy.testing.assert_array_equal(self.fitmodel.ydata, self.fitmodel.ymodel)
+        ydata = self.fitmodel.yfullmodel.copy()
+        self.fitmodel.ydata = ydata
+        numpy.testing.assert_array_equal(self.fitmodel.ydata, ydata)
+        numpy.testing.assert_array_equal(self.fitmodel.yfullmodel, ydata)
+        numpy.testing.assert_allclose(self.fitmodel.yfitmodel, ydata - 10)
         self.validate_model()
 
     def init_random(self, **kw):
@@ -79,6 +82,7 @@ class testFitModel(unittest.TestCase):
         self.nglobals = npeaks  # concentrations
         model.xdata_raw = numpy.arange(nchannels)
         model.ydata_raw = numpy.full(nchannels, numpy.nan)
+        model.ybkg = 10
         model.xmin = self.random_state.randint(low=0, high=10)
         model.xmax = self.random_state.randint(low=nchannels - 10, high=nchannels)
         model.zero = self.random_state.uniform(low=1, high=1.5)
@@ -141,10 +145,17 @@ class testFitModel(unittest.TestCase):
         assert model.nchannels == len(model.xdata)
         assert model.nparameters == len(model.parameters)
         assert model.nlinear_parameters == len(model.linear_parameters)
-        arr1 = model.evaluate()
-        arr2 = model.evaluate_linear()
-        arr3 = sum(model.linear_decomposition())
-        arr4 = model.ymodel
+
+        arr1 = model.evaluate_fullmodel()
+        arr2 = model.evaluate_linear_fullmodel()
+        arr3 = model.yfullmodel
+        numpy.testing.assert_allclose(arr1, arr2)
+        numpy.testing.assert_allclose(arr1, arr3)
+
+        arr1 = model.evaluate_fitmodel()
+        arr2 = model.evaluate_linear_fitmodel()
+        arr3 = model.yfitmodel
+        arr4 = sum(model.linear_decomposition_fitmodel())
         numpy.testing.assert_allclose(arr1, arr2)
         numpy.testing.assert_allclose(arr1, arr3)
         numpy.testing.assert_allclose(arr1, arr4)
@@ -181,7 +192,7 @@ class testFitModel(unittest.TestCase):
         names = m.parameter_names
         plt.figure()
         plt.plot(m.ydata, label="data")
-        plt.plot(m.ymodel, label="model")
+        plt.plot(m.yfitmodel, label="model")
         plt.legend()
         plt.figure()
         for y, name in zip(derivatives, names):
@@ -205,11 +216,11 @@ class testFitModel(unittest.TestCase):
 
         result = self.fitmodel.fit()
         self.assert_result(result, expected)
-        assert not numpy.allclose(self.fitmodel.ydata, self.fitmodel.ymodel)
+        assert not numpy.allclose(self.fitmodel.ydata, self.fitmodel.yfullmodel)
         assert not numpy.allclose(self.fitmodel.linear_parameters, expected)
 
         self.fitmodel.use_fit_result(result)
-        numpy.testing.assert_allclose(self.fitmodel.ydata, self.fitmodel.ymodel)
+        numpy.testing.assert_allclose(self.fitmodel.ydata, self.fitmodel.yfullmodel)
         numpy.testing.assert_allclose(self.fitmodel.linear_parameters, expected)
 
     @with_model(1)
@@ -232,7 +243,7 @@ class testFitModel(unittest.TestCase):
 
         # TODO: non-linear parameters not precise
         # self.assert_result(result, expected1)
-        assert not numpy.allclose(self.fitmodel.ydata, self.fitmodel.ymodel)
+        assert not numpy.allclose(self.fitmodel.ydata, self.fitmodel.yfullmodel)
         assert not numpy.allclose(self.fitmodel.parameters, expected1)
         assert not numpy.allclose(self.fitmodel.linear_parameters, expected2)
 
@@ -254,7 +265,7 @@ class testFitModel(unittest.TestCase):
 
     def assert_ymodel(self):
         a = self.fitmodel.ydata
-        b = self.fitmodel.ymodel
+        b = self.fitmodel.yfullmodel
         mask = (a > 1) & (b > 1)
         assert mask.any()
         numpy.testing.assert_allclose(a[mask], b[mask], rtol=1e-3)

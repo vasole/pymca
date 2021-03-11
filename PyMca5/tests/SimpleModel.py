@@ -51,6 +51,7 @@ class SimpleModel(Model):
         self.xdata_raw = None
         self.ydata_raw = None
         self.ystd_raw = None
+        self.ybkg = 0
         self.sigma_to_fwhm = 2 * numpy.sqrt(2 * numpy.log(2))
         super(SimpleModel, self).__init__()
 
@@ -151,6 +152,12 @@ class SimpleModel(Model):
     def xenergy(self):
         return self.zero + self.gain * self.xdata
 
+    def _ydata_to_fit(self, ydata):
+        return ydata - self.ybkg
+
+    def _fit_to_ydata(self, yfit):
+        return yfit + self.ybkg
+
     @property
     def ydata(self):
         if self.ydata_raw is None:
@@ -212,7 +219,7 @@ class SimpleModel(Model):
             else:
                 raise ValueError(name)
 
-    def evaluate(self, xdata=None):
+    def evaluate_fitmodel(self, xdata=None):
         """Evaluate model
 
         :param array xdata: length nxdata
@@ -222,9 +229,10 @@ class SimpleModel(Model):
             xdata = self.xdata
         x = self.zero + self.gain * xdata
         p = list(zip(self.areas, self.positions, self.fwhms))
-        return SpecfitFuns.agauss(p, x)
+        y = SpecfitFuns.agauss(p, x)
+        return y
 
-    def linear_derivatives(self, xdata=None):
+    def linear_derivatives_fitmodel(self, xdata=None):
         """Derivates to all linear parameters
 
         :param array xdata: length nxdata
@@ -236,7 +244,7 @@ class SimpleModel(Model):
         it = zip(self.efficiency, self.positions, self.fwhms)
         return numpy.array([SpecfitFuns.agauss([a, p, w], x) for a, p, w in it])
 
-    def derivative(self, param_idx, xdata=None):
+    def derivative_fitmodel(self, param_idx, xdata=None):
         """Derivate to a specific parameter
 
         :param int param_idx:

@@ -32,6 +32,7 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 import numpy
+from PyMca5.PyMcaMath.fitting import Gefit
 from PyMca5.PyMcaMath.fitting.Model import Model
 
 
@@ -101,10 +102,6 @@ class PolynomialModel(Model):
 class LinearPolynomialModel(PolynomialModel):
     """y = c0 + c1*x + c2*x^2 + ..."""
 
-    def __init__(self, **kw):
-        super(LinearPolynomialModel, self).__init__(**kw)
-        self._linear = True
-
     @property
     def _parameter_group_names(self):
         return ["coefficients"]
@@ -126,21 +123,21 @@ class LinearPolynomialModel(PolynomialModel):
             if name == "coefficients":
                 yield name, self.degree + 1
 
-    def evaluate(self, xdata=None):
-        """Evaluate model
+    def evaluate_fitmodel(self, xdata=None):
+        """Evaluate the fit model, not the full model.
 
         :param array xdata: length nxdata
         :returns array: nxdata
         """
         if xdata is None:
             xdata = self.xdata
-        coeff = self.coefficients
+        coeff = self.fit_parameters
         y = coeff[0] * numpy.ones_like(xdata)
         for i in range(1, len(coeff)):
             y += coeff[i] * (xdata ** i)
         return y
 
-    def linear_derivatives(self, xdata=None):
+    def linear_derivatives_fitmodel(self, xdata=None):
         """Derivates to all linear parameters
 
         :param array xdata: length nxdata
@@ -149,10 +146,10 @@ class LinearPolynomialModel(PolynomialModel):
         if xdata is None:
             xdata = self.xdata
         return numpy.array(
-            [self.derivative(i, xdata=xdata) for i in range(self.degree + 1)]
+            [self.derivative_fitmodel(i, xdata=xdata) for i in range(self.degree + 1)]
         )
 
-    def derivative(self, param_idx, xdata=None):
+    def derivative_fitmodel(self, param_idx, xdata=None):
         """Derivate to a specific parameter
 
         :param int param_idx:
@@ -167,93 +164,23 @@ class LinearPolynomialModel(PolynomialModel):
             return xdata ** param_idx
 
 
-class ExponentialPolynomialModel(PolynomialModel):
-    """y = c0 * exp[c1*x + c2*x^2 + ...]"""
+class ExponentialPolynomialModel(LinearPolynomialModel):
+    """y = c0 * exp[c1*x + c2*x^2 + ...]
+    yfit = log(y) = log(c1) + c1*x + c2*x^2 + ...
+    """
 
-    def __init__(self, **kw):
-        super(ExponentialPolynomialModel, self).__init__(**kw)
-        self._linear = False
+    def _ydata_to_fit(self, ydata):
+        return numpy.log(ydata)
 
-    @property
-    def _parameter_group_names(self):
-        return ["factor", "expcoefficients"]
+    def _fit_to_ydata(self, yfit):
+        return numpy.exp(yfit)
 
-    @property
-    def _linear_parameter_group_names(self):
-        return ["factor"]
+    def _parameters_to_fit(self, parameters):
+        parameters = parameters.copy()
+        parameters[0] = numpy.log(parameters[0])
+        return parameters
 
-    @property
-    def factor(self):
-        return self.coefficients[0]
-
-    @factor.setter
-    def factor(self, value):
-        self.coefficients[0] = value
-
-    @property
-    def expcoefficients(self):
-        return self.coefficients[1:]
-
-    @expcoefficients.setter
-    def expcoefficients(self, values):
-        self.coefficients[1:] = values
-
-    def _iter_parameter_groups(self, linear_only=False):
-        """
-        :param bool linear_only:
-        :yields (str, int): group name, nb. parameters in the group
-        """
-        if linear_only:
-            names = self.linear_parameter_group_names
-        else:
-            names = self.parameter_group_names
-        for name in names:
-            if name == "factor":
-                yield name, 1
-            elif name == "expcoefficients":
-                yield name, self.degree
-
-    @staticmethod
-    def _exppol(coeff, x):
-        y = numpy.zeros_like(x)
-        for i in range(1, len(coeff)):
-            y += coeff[i] * (x ** i)
-        return coeff[0] * numpy.exp(y)
-
-    def evaluate(self, xdata=None):
-        """Evaluate model
-
-        :param array xdata: length nxdata
-        :returns array: nxdata
-        """
-        if xdata is None:
-            xdata = self.xdata
-        return self._exppol(self.coefficients, xdata)
-
-    def linear_derivatives(self, xdata=None):
-        """Derivates to all linear parameters
-
-        :param array xdata: length nxdata
-        :returns array: nparams x nxdata
-        """
-        if xdata is None:
-            xdata = self.xdata
-        return self.derivative(0, xdata=xdata).reshape((1, xdata.size))
-
-    def derivative(self, param_idx, xdata=None):
-        """Derivate to a specific parameter
-
-        :param int param_idx:
-        :param array xdata: length nxdata
-        :returns array: nxdata
-        """
-        if xdata is None:
-            xdata = self.xdata
-        coeff = self.coefficients
-        if param_idx == 0:
-            coeff = coeff.copy()
-            coeff[0] = 1.0
-        y = self._exppol(coeff, xdata)
-        if param_idx:
-            y *= xdata ** param_idx
-        return y
+    def _fit_to_parameters(self, parameters):
+        parameters = parameters.copy()
+        parameters[0] = numpy.exp(parameters[0])
+        return parameters
