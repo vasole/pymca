@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 E. Papillon, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2021 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -28,9 +28,11 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
+from PyMca5 import PyMcaDirs
+
 import os.path
 
-__revision__="$Revision: 1.9 $"
 
 class XiaCorrectionWidget(qt.QWizardPage):
     def __init__(self, parent=None):
@@ -242,11 +244,13 @@ class XiaInputWidget(qt.QWizardPage):
         layout.addWidget(butWidget)
 
     def __addFiles(self):
-        filetypes = "Edf Files (*.edf)\n All Files (*)\n"
-        files= qt.QFileDialog.getOpenFileNames(self,
-                                    "Add XIA Edf Files",
-                                    "",
-                                    filetypes)
+        files = PyMcaFileDialogs.getFileList(self,
+                                             filetypelist=["Edf Files (*.edf)",
+                                                           "All Files (*)"],
+                                             message="Add XIA Edf Files",
+                                             getfilter=False,
+                                             mode="OPEN",
+                                             single=False)
         for name in files:
             self.__addInFileList("file", name)
 
@@ -260,11 +264,10 @@ class XiaInputWidget(qt.QWizardPage):
         return 1
 
     def __addDirectory(self):
-        wdir = ""
-        directory = qt.QFileDialog.getExistingDirectory(self,
-                    "Add Full Directory",
-                    wdir)
-        if directory is not None:
+        directory = PyMcaFileDialogs.getExistingDirectory(self,
+                                                          message="Add Full Directory",
+                                                          mode="OPEN")
+        if directory not in [None, ""]:
             self.__addInFileList("directory", directory)
 
     def __remove(self):
@@ -358,7 +361,7 @@ class XiaOutputWidget(qt.QWizardPage):
         self.__defaultOutname()
 
     def __openDirectory(self):
-        wdir = ""
+        wdir = PyMcaDirs.outputDir
         outfile = qt.QFileDialog(self)
         outfile.setWindowTitle("Set Output Directory")
         outfile.setModal(1)

@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2021 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -30,11 +30,10 @@ __author__ = "E. Papillon - ESRF Software Group"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+import sys
 import os, os.path
 import numpy
 from PyMca5.PyMcaIO import EdfFile
-
-__version__="$Revision: 1.15 $"
 
 XiaStatIndex= {
     "det": 0,
@@ -46,6 +45,16 @@ XiaStatIndex= {
 }
 XiaStatNb= len(XiaStatIndex.keys())
 XiaStatLabels= ["xdet", "xevt", "xicr", "xocr", "xlt", "xdt"]
+
+if sys.version_info > (3,):
+    def cmp(first, second):
+        if first < second:
+            result = -1
+        elif second < first:
+            result = 1
+        else:
+            result = 0
+        return result
 
 def checkEdfForRead(filename):
     if not os.path.isfile(filename):
@@ -114,7 +123,7 @@ class XiaEdfCountFile:
         if det is not None:
             dets= det.split()
             if len(dets)==self.nbDet:
-                self.detList= map(int, dets)
+                self.detList= list(map(int, dets))
 
         self.statArray = numpy.zeros(XiaStatNb*self.nbDet, numpy.int64)
         idx= 0
@@ -293,7 +302,7 @@ class XiaEdfScanFile:
         if det is not None:
             dets= det.split()
             if len(dets)==self.nbDet:
-                self.detList= map(int, dets)
+                self.detList= list(map(int, dets))
 
         self.statArray= edf.GetData(0)
 
@@ -612,7 +621,7 @@ class XiaFilename:
         else:
             self.prefix= "_".join(filelist[0:xiaidx])
             try:
-                self.index= map(int, filelist[xiaidx+1:])
+                self.index= list(map(int, filelist[xiaidx+1:]))
             except:
                 self.suffix= "_".join(filelist[xiaidx+1:])
 
@@ -668,6 +677,7 @@ class XiaFilename:
                 self.file= "%s.%s"%(self.file, self.ext)
 
     def __cmp__(self, other):
+        # this was only working under python2
         file1= "%s/%s"%(self.dir is None and "." or self.dir, self.prefix is None and "" or self.prefix)
         file2= "%s/%s"%(other.dir is None and "." or other.dir, other.prefix is None and "" or other.prefix)
         res= cmp(file1, file2)
@@ -695,6 +705,11 @@ class XiaFilename:
         file2= "%s.%s"%(other.suffix is None and "" or other.suffix, other.ext is None and "" or other.ext)
         return cmp(file1, file2)
 
+    def __lt__(self, other):
+        # this is needed under python3
+        file1= "%s/%s"%(self.dir is None and "." or self.dir, self.prefix is None and "" or self.prefix)
+        file2= "%s/%s"%(other.dir is None and "." or other.dir, other.prefix is None and "" or other.prefix)
+        return file1 < file2
 
 def testScan():
     x= XiaEdfScanFile("data/test_xiast_0000_0000_0000.edf",
