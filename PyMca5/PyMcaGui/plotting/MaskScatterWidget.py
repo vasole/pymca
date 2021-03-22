@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2021 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -185,9 +185,10 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
                 bins[1] = 2
         else:
             bins = self._bins
-        x0 = x.min()
-        y0 = y.min()
-        image = numpy.histogram2d(y, x,
+        idx = numpy.where(numpy.isfinite(x) & numpy.isfinite(y))
+        x0 = x[idx].min()
+        y0 = y[idx].min()
+        image = numpy.histogram2d(y[idx], x[idx],
                                   bins=bins,
                                   #range=(binsY, binsX),
                                   normed=False)
@@ -230,15 +231,16 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
                 bins[1] = 2
         else:
             bins = self._bins
-        x0 = x.min()
-        y0 = y.min()
-        deltaX = (x.max() - x0) / float(bins[0] - 1)
-        deltaY = (y.max() - y0) / float(bins[1] - 1)
+        idx = numpy.where(numpy.isfinite(x) & numpy.isfinite(y))
+        x0 = x[idx].min()
+        y0 = y[idx].min()
+        deltaX = (x[idx].max() - x0) / float(bins[0] - 1)
+        deltaY = (y[idx].max() - y0) / float(bins[1] - 1)
         self.xScale = (x0, deltaX)
         self.yScale = (y0, deltaY)
         binsX = numpy.arange(bins[0]) * deltaX
         binsY = numpy.arange(bins[1]) * deltaY
-        image = numpy.histogram2d(y, x, bins=(binsY, binsX), normed=False)
+        image = numpy.histogram2d(y[idx], x[idx], bins=(binsY, binsX), normed=False)
         self._binsX = image[2]
         self._binsY = image[1]
         self._bins = bins
@@ -253,13 +255,13 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
                     # this does not work properly yet
                     weightsSum = weights.sum(dtype=numpy.float64)
                     volume = (binsY[1] - binsY[0]) * (binsX[1] - binsX[0])
-                    mask = numpy.round(numpy.histogram2d(y, x,
+                    mask = numpy.round(numpy.histogram2d(y[idx], x[idx],
                                        bins=(binsY, binsX),
                                        weights=weights,
                                        normed=True)[0] * weightsSum * volume).astype(numpy.uint8)
                 else:
                     #print("GOOD PATH")
-                    mask = numpy.histogram2d(y, x,
+                    mask = numpy.histogram2d(y[idx], x[idx],
                                              bins=(binsY, binsX),
                                              weights=weights,
                                              normed=False)[0]
@@ -999,6 +1001,7 @@ if __name__ == "__main__":
         print("Received: ", ddict)
     x = numpy.arange(100.)
     y = x * 1
+    y[50] = numpy.nan
     w = MaskScatterWidget(maxNRois=10, bins=(100,100), backend=backend)
     w.setSelectionCurveData(x, y, color="k", selectable=False)
     import numpy.random
