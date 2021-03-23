@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2020 V.A. Sole, ESRF - D. Dale CHESS
+# Copyright (C) 2004-2021 V.A. Sole, ESRF - D. Dale CHESS
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -312,6 +312,8 @@ class H5NodeProxy(object):
     def shape(self):
         if type(self._shape) == type(""):
             return self._shape
+        if self._shape is None:
+            return ""
         if len(self._shape) == 1:
             return "%d" % self._shape[0]
         elif len(self._shape) > 1:

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2021 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -401,6 +401,8 @@ def getInfo(hdf5File, node):
            ("%s" % data.dtype).startswith("|O"):
             if hasattr(data, 'shape'):
                 shape = data.shape
+                if shape is None:
+                    shape = ()
                 if not len(shape):
                     ddict['general']['Value'] = "%s" % dataw[()]
                 elif shape[0] == 1:
@@ -410,6 +412,8 @@ def getInfo(hdf5File, node):
                     ddict['general']['Value'] = "%s" % dataw[()]
         elif hasattr(data, 'shape'):
             shape = data.shape
+            if shape is None:
+                shape = ()
             if len(shape) == 1:
                 if shape[0] == 1:
                     ddict['general']['Value'] = "%s" % dataw[0]
@@ -433,6 +437,8 @@ def getInfo(hdf5File, node):
             dtype = memberObject.dtype
             if hasattr(memberObject, 'shape'):
                 shape = memberObject.shape
+                if shape is None:
+                    shape = ()
                 memberObjectw = memberObject
                 if hasattr(memberObject, "asstr"):
                     id_type = memberObject.id.get_type()
