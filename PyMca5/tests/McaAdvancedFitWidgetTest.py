@@ -79,7 +79,7 @@ class TestMcaAdvancedFitWidget(TestCaseQt):
         from PyMca5 import PyMcaDataDir
         dataDir = PyMcaDataDir.PYMCA_DATA_DIR
         from PyMca5.PyMcaIO import specfilewrapper as specfile
-        from PyMca5.PyMcaPhysics.xrf import ClassMcaTheory
+        from PyMca5.PyMcaPhysics.xrf import LegacyMcaTheory
         from PyMca5.PyMcaPhysics.xrf import ConcentrationsTool
         from PyMca5.PyMcaIO import ConfigDict
 

@@ -46,7 +46,7 @@ from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaMath.fitting import Gefit
 from PyMca5 import PyMcaDataDir
 _logger = logging.getLogger(__name__)
-#"python ClassMcaTheory.py -s1.1 --file=03novs060sum.mca --pkm=McaTheory.dat --continuum=0 --strip=1 --sumflag=1 --maxiter=4"
+#"python LegacyMcaTheory.py -s1.1 --file=03novs060sum.mca --pkm=McaTheory.dat --continuum=0 --strip=1 --sumflag=1 --maxiter=4"
 CONTINUUM_LIST = [None,'Constant','Linear','Parabolic','Linear Polynomial','Exp. Polynomial']
 OLDESCAPE = 0
 MAX_ATTENUATION = 1.0E-300
@@ -1034,7 +1034,7 @@ class McaTheory(object):
                 self.laststrip = 0
 
     def setdata(self, *var, **kw):
-        print("ClassMcaTheory.setdata deprecated, please use setData")
+        print("LegacyMcaTheory.setdata deprecated, please use setData")
         return self.setData(*var, **kw)
 
     def setData(self,*var,**kw):
@@ -2847,7 +2847,7 @@ class McaTheory(object):
         return fittedpar,numpy.zeros((3,len(fittedpar)),numpy.float64)
 
 
-class ClassMcaTheory(McaTheory):
+class LegacyMcaTheory(McaTheory):
     pass
 
 """
@@ -2895,8 +2895,8 @@ def test(inputfile=None,scankey=None,pkm=None,
 
     if inputfile is None:
         print("USAGE")
-        print("python -m PyMca5.PyMcaPhysics.xrf.ClassMcaTheory.py -s1.1 --file=filename --cfg=cfgfile [--plotflag=1]")
-        #python ClassMcaTheory.py -s2.1 --file=ch09__mca_0005.mca --pkm=TEST.cfg --continuum=0 --stripflag=1 --sumflag=1 --maxiter=4
+        print("python -m PyMca5.PyMcaPhysics.xrf.LegacyMcaTheory.py -s1.1 --file=filename --cfg=cfgfile [--plotflag=1]")
+        #python LegacyMcaTheory.py -s2.1 --file=ch09__mca_0005.mca --pkm=TEST.cfg --continuum=0 --stripflag=1 --sumflag=1 --maxiter=4
         sys.exit(0)
     print("assuming is a specfile ...")
     sf=specfile.Specfile(inputfile)

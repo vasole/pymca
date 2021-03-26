@@ -58,10 +58,10 @@ except:
     #not a big problem
     pass
 
-from PyMca5.PyMcaPhysics.xrf import ClassMcaTheory
-FISX = ClassMcaTheory.FISX
+from PyMca5.PyMcaPhysics.xrf import LegacyMcaTheory
+FISX = LegacyMcaTheory.FISX
 if FISX:
-    FisxHelper = ClassMcaTheory.FisxHelper
+    FisxHelper = LegacyMcaTheory.FisxHelper
 from . import FitParam
 from . import McaAdvancedTable
 from . import QtMcaAdvancedFitReport
@@ -291,7 +291,7 @@ class McaAdvancedFit(qt.QWidget):
         self.matrixXRFMCSpectrumButton.setToolTip('Calculate Matrix Spectrum Using Monte Carlo')
         self.peaksSpectrumButton.setToolTip('Toggle Individual Peaks Spectrum Calculation On/Off')
 
-        self.mcafit   = ClassMcaTheory.McaTheory()
+        self.mcafit   = LegacyMcaTheory.McaTheory()
 
         self.fitButton.clicked.connect(self.fit)
         self.printButton.clicked.connect(self.printActiveTab)

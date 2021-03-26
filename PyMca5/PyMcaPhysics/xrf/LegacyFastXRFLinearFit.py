@@ -37,7 +37,7 @@ import os
 import numpy
 import logging
 from PyMca5.PyMcaMath.linalg import lstsq
-from . import ClassMcaTheory
+from . import LegacyMcaTheory
 from PyMca5.PyMcaMath.fitting import Gefit
 from . import ConcentrationsTool
 from PyMca5.PyMcaMath.fitting import SpecfitFuns
@@ -51,7 +51,7 @@ class FastXRFLinearFit(object):
     def __init__(self, mcafit=None):
         self._config = None
         if mcafit is None:
-            self._mcaTheory = ClassMcaTheory.McaTheory()
+            self._mcaTheory = LegacyMcaTheory.McaTheory()
         else:
             self._mcaTheory = mcafit
 
@@ -261,7 +261,7 @@ class FastXRFLinearFit(object):
         freeNames = []
         nFreeBackgroundParameters = 0
         for i, param in enumerate(self._mcaTheory.PARAMETERS):
-            if self._mcaTheory.codes[0][i] != ClassMcaTheory.Gefit.CFIXED:
+            if self._mcaTheory.codes[0][i] != LegacyMcaTheory.Gefit.CFIXED:
                 nFree += 1
                 freeNames.append(param)
                 if i < self._mcaTheory.NGLOBAL:
@@ -275,7 +275,7 @@ class FastXRFLinearFit(object):
         derivatives = None
         idx = 0
         for i, param in enumerate(self._mcaTheory.PARAMETERS):
-            if self._mcaTheory.codes[0][i] == ClassMcaTheory.Gefit.CFIXED:
+            if self._mcaTheory.codes[0][i] == LegacyMcaTheory.Gefit.CFIXED:
                 continue
             deriv= self._mcaTheory.linearMcaTheoryDerivative(self._mcaTheory.parameters,
                                                              i,

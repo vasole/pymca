@@ -805,7 +805,7 @@ class XRFMCPyMca(qt.QWidget):
             #perform a dummy fit till xmimsim-pymca is upgraded
             if 0:
                 import numpy
-                from PyMca import ClassMcaTheory
+                from PyMca import LegacyMcaTheory
                 newFile['fit']['linearfitflag']=1
                 newFile['fit']['stripflag']=0
                 newFile['fit']['stripiterations']=0
@@ -814,7 +814,7 @@ class XRFMCPyMca(qt.QWidget):
                 #xdata = numpy.arange(xmin, xmax + 1) * 1.0
                 xdata = numpy.arange(0, xmax + 1) * 1.0
                 ydata = 0.0 + 0.1 * xdata
-                mcaFit = ClassMcaTheory.McaTheory()
+                mcaFit = LegacyMcaTheory.McaTheory()
                 mcaFit.configure(newFile)
                 mcaFit.setData(x=xdata, y=ydata, xmin=xmin, xmax=xmax)
                 mcaFit.estimate()
