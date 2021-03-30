@@ -115,7 +115,13 @@ script:
     - pip install --upgrade pip
 
     # Dependencies
-    - pip install fisx
+    # too slow to build fisx
+    - if [ "$TRAVIS_CPU_ARCH" == "ppc64le" ];
+      then
+          pip install fisx --pre --trusted-host www.silx.org --find-links http://www.silx.org/pub/wheelhouse/;
+      else
+          pip install fisx;
+      fi
     - if [ "$TRAVIS_CPU_ARCH" == "ppc64le" ];
       then
           pip install matplotlib --pre --trusted-host www.silx.org --find-links http://www.silx.org/pub/wheelhouse/;
@@ -128,13 +134,6 @@ script:
       else
           pip install h5py;
       fi
-    # too slow to build fabio
-    # - if [ "$TRAVIS_CPU_ARCH" == "ppc64le" ];
-    #  then
-    #      pip install fabio --pre --trusted-host www.silx.org --find-links http://www.silx.org/pub/wheelhouse/;
-    #  else
-    #      pip install fabio;
-    #  fi
     #
     #- pip install silx --pre --trusted-host www.silx.org --find-links http://www.silx.org/pub/wheelhouse/;
 
