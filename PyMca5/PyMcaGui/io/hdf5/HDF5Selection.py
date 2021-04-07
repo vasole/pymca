@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2021 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -40,7 +40,7 @@ class HDF5Selection(qt.QWidget):
         self.mainLayout.setSpacing(2)
         self.selectionWidgetsDict = {}
         row = 0
-        for key in ['x', 'y', 'm']:
+        for key in ['entry', 'x', 'y', 'm']:
             label = qt.QLabel(self)
             label.setText(key+":")
             line  = qt.QLineEdit(self)
@@ -54,7 +54,7 @@ class HDF5Selection(qt.QWidget):
         if 'cntlist' in selection:
             # "Raw" selection
             cntlist = selection['cntlist']
-            for key in ['x', 'y', 'm']:
+            for key in ['entry', 'x', 'y', 'm']:
                 if key not in selection:
                     self.selectionWidgetsDict[key].setText("")
                     continue
@@ -70,7 +70,7 @@ class HDF5Selection(qt.QWidget):
                 self.selectionWidgetsDict[key].setText(text)
         else:
             # "Digested" selection
-            for key in ['x', 'y', 'm']:
+            for key in ['entry', 'x', 'y', 'm']:
                 if key not in selection:
                     self.selectionWidgetsDict[key].setText("")
                     continue
@@ -86,7 +86,7 @@ class HDF5Selection(qt.QWidget):
 
     def getSelection(self):
         selection = {}
-        for key in ['x', 'y', 'm']:
+        for key in ['entry', 'x', 'y', 'm']:
             selection[key] = []
             text = safe_str(self.selectionWidgetsDict[key].text())
             text = text.replace(" ","")
