@@ -79,7 +79,7 @@ class HDF5Stack1D(DataObject.DataObject):
         _logger.info("scanlist = %s", scanlist)
 
         if scanlist is not None:
-            if type(scanlist) not in (type([]), type((,))):
+            if type(scanlist) not in (type([]), type(())):
                 scanlist = [scanlist]
 
         # all the files in the same source
