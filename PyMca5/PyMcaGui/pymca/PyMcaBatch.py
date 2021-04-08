@@ -1098,6 +1098,22 @@ class McaBatchGUI(qt.QWidget):
                 else:
                     self.raise_()
                 return False
+        if len(self.fileList) == 1:
+            if HDF5SUPPORT:
+                try:
+                    if h5py.is_hdf5(self.fileList[0]):
+                        if os.path.dirname(os.path.abspath(self.fileList[0])) == \
+                           os.path.abspath(outputdir):
+                            msg = "Please specify a different output directory.\n"
+                            msg += "Risk of overwritting input file."
+                            qt.QMessageBox.critical(self,"ERROR", msg)
+                            if QTVERSION < '4.0.0':
+                                self.raiseW()
+                            else:
+                                self.raise_()
+                            return False
+                except:
+                    _logger.warning("Cannot verify suitability of output directory")
         return True
 
     def __getFileType(self,inputfile):
