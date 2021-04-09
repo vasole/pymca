@@ -1,3 +1,18 @@
+VERSION 5.6.5
+-------------
+
+- PyMcaBatch. Prevent the use of the input directory as output directory when
+the iinput file list is a single HDF5 file.
+
+- PyMcaBatch. Allow XRF batch fitting of a single entry in an HDF5 file containing
+multiple maps.
+
+- PCA. Deal with NaNs in stacks of spectra.
+
+- SPS. Correct SPEC shared memory access under Python 3.8
+
+- Adapt XIA Correct tool to python 3. 
+
 VERSION 5.6.4
 -------------
 
