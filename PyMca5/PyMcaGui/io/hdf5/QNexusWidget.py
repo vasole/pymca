@@ -124,6 +124,14 @@ class QNexusWidget(qt.QWidget):
         self._BUTTONS = buttons
         self.build()
 
+    def sizeHint(self):
+        originalHint = qt.QWidget.sizeHint(self)
+        if isinstance(self.parent(), qt.QDialog):
+            return qt.QSize(2 * originalHint.width(),
+                            originalHint.height())
+        else:
+            return qt.QSize(originalHint.width(),
+                            originalHint.height())
     def build(self):
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setContentsMargins(5, 5, 5, 0)
