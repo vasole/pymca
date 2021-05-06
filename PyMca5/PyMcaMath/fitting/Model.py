@@ -274,7 +274,8 @@ class Model(Cashed):
         :param array xdata: length nxdata
         :returns array: nxdata
         """
-        return self._fit_to_ydata(self.evaluate_fitmodel(xdata=xdata))
+        y = self.evaluate_fitmodel(xdata=xdata)
+        return self._fit_to_ydata(y, xdata=xdata)
 
     def evaluate_linear_fullmodel(self, xdata=None):
         """Evaluate the full model.
@@ -282,7 +283,8 @@ class Model(Cashed):
         :param array xdata: length nxdata
         :returns array: n x nxdata
         """
-        return self._fit_to_ydata(self.evaluate_linear_fitmodel(xdata=xdata))
+        y = self.evaluate_linear_fitmodel(xdata=xdata)
+        return self._fit_to_ydata(y, xdata=xdata)
 
     def evaluate_fitmodel(self, xdata=None):
         """Evaluate the fit model.
@@ -356,7 +358,7 @@ class Model(Cashed):
         :returns iterable(str, int): group name, nb. parameters in the group
         """
         if self.caching_enabled:
-            cache = self._cache.setdefault("all_parameter_groups", {})
+            cache = self._cache.setdefault("parameter_groups", {})
             a = self.included_parameters
             b = self.excluded_parameters
             if a is not None:
@@ -394,6 +396,17 @@ class Model(Cashed):
         for name, n in self._parameter_groups(linear_only=linear_only):
             if idx >= i and idx < (i + n):
                 return name, idx - i
+            i += n
+
+    def _parameter_indices_from_name(self, name, linear_only=False):
+        """Parameter group name to index range
+
+        :returns int, int: start and end parameter index of the group
+        """
+        i = 0
+        for _name, n in self._parameter_groups(linear_only=linear_only):
+            if name == _name:
+                return i, i + n
             i += n
 
     def fit(self, full_output=False):
@@ -473,16 +486,16 @@ class Model(Cashed):
             ret["lastdeltachi"] = result[4]
         return ret
 
-    def _ydata_to_fit(self, ydata):
+    def _ydata_to_fit(self, ydata, xdata=None):
         return ydata
 
-    def _ystd_to_fit(self, ystd):
+    def _ystd_to_fit(self, ystd, xdata=None):
         return ystd
 
     def _parameters_to_fit(self, params):
         return params
 
-    def _fit_to_ydata(self, yfit):
+    def _fit_to_ydata(self, yfit, xdata=None):
         return yfit
 
     def _fit_to_parameters(self, params):

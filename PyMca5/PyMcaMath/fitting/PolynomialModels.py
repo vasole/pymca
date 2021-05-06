@@ -169,10 +169,10 @@ class ExponentialPolynomialModel(LinearPolynomialModel):
     yfit = log(y) = log(c1) + c1*x + c2*x^2 + ...
     """
 
-    def _ydata_to_fit(self, ydata):
+    def _ydata_to_fit(self, ydata, xdata=None):
         return numpy.log(ydata)
 
-    def _fit_to_ydata(self, yfit):
+    def _fit_to_ydata(self, yfit, xdata=None):
         return numpy.exp(yfit)
 
     def _parameters_to_fit(self, parameters):

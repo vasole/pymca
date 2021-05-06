@@ -152,10 +152,10 @@ class SimpleModel(Model):
     def xenergy(self):
         return self.zero + self.gain * self.xdata
 
-    def _ydata_to_fit(self, ydata):
+    def _ydata_to_fit(self, ydata, xdata=None):
         return ydata - self.ybkg
 
-    def _fit_to_ydata(self, yfit):
+    def _fit_to_ydata(self, yfit, xdata=None):
         return yfit + self.ybkg
 
     @property
