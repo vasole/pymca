@@ -181,7 +181,7 @@ class SimpleModel(Model):
         self.ystd_raw[self.idx_channels] = values
 
     @property
-    def nchannels(self):
+    def ndata(self):
         return self.xmax - self.xmin
 
     @property

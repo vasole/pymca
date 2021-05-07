@@ -142,7 +142,7 @@ class testFitModel(unittest.TestCase):
 
         assert not model.excluded_parameters
         assert not model.included_parameters
-        assert model.nchannels == len(model.xdata)
+        assert model.ndata == len(model.xdata)
         assert model.nparameters == len(model.parameters)
         assert model.nlinear_parameters == len(model.linear_parameters)
 

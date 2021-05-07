@@ -126,8 +126,8 @@ class Model(Cashed):
         return self.evaluate_fitmodel()
 
     @property
-    def nchannels(self):
-        raise AttributeError from NotImplementedError
+    def ndata(self):
+        return len(self.xdata)
 
     @property
     def fit_parameters(self):
@@ -428,9 +428,9 @@ class Model(Cashed):
         if self.niter_non_leastsquares:
             keep = self.linear_parameters
         try:
-            b = self.yfitdata  # nchannels
+            b = self.yfitdata  # ndata
             for i in range(max(self.niter_non_leastsquares, 1)):
-                A = self.linear_derivatives_fitmodel().T  # nchannels, nparams
+                A = self.linear_derivatives_fitmodel().T  # ndata, nparams
                 result = lstsq(A, b.copy(), digested_output=full_output)
                 if self.niter_non_leastsquares:
                     self.linear_fit_parameters = result[0]
@@ -663,12 +663,12 @@ class ConcatModel(Model):
         return len(self._models)
 
     @property
-    def nchannels(self):
+    def ndata(self):
         nmodels = self.nmodels
         if nmodels == 0:
             return 0
         else:
-            return sum([m.nchannels for m in self._models])
+            return sum([m.ndata for m in self._models])
 
     @property
     def xdata(self):
@@ -722,7 +722,7 @@ class ConcatModel(Model):
         :param str attr:
         :param array values:
         """
-        if len(values) != self.nchannels:
+        if len(values) != self.ndata:
             raise ValueError("Not the expected number of channels")
         for idx, model in self._iter_models(values):
             setattr(model, attr, values[idx])
@@ -998,14 +998,14 @@ class ConcatModel(Model):
         """Yield slice of the concatenated data for each model.
         The concatenated data could be sliced as `xdata[::stride]`.
         """
-        nchannels = [m.nchannels for m in self._models]
+        ndata = [m.ndata for m in self._models]
         if not stride:
-            stride, remain = divmod(sum(nchannels), nconcat)
+            stride, remain = divmod(sum(ndata), nconcat)
             stride += remain > 0
         start = 0
         offset = 0
         i = 0
-        for n in nchannels:
+        for n in ndata:
             # Index of model in concatenated xdata due to slicing
             stop = start + n
             lst = list(range(start + offset, stop, stride))

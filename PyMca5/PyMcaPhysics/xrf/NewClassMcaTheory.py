@@ -488,10 +488,6 @@ class McaTheoryDataApi(McaTheoryConfigApi):
         return self._xdata
 
     @property
-    def nchannels(self):
-        return len(self.xdata)
-
-    @property
     def ydata(self):
         """Sorted and sliced view of ydata0"""
         self._refreshDataCache()
