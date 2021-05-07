@@ -45,39 +45,41 @@ class Cached(object):
         self._cache = dict()
 
     @contextmanager
-    def cachingContext(self, field):
-        reset = not self.cachingEnabled(field)
+    def cachingContext(self, cachename):
+        reset = not self.cachingEnabled(cachename)
         if reset:
-            self._cache[field] = dict()
+            self._cache[cachename] = dict()
         try:
             yield
         finally:
             if reset:
-                del self._cache[field]
+                del self._cache[cachename]
 
-    def cachingEnabled(self, field):
-        return field in self._cache
+    def cachingEnabled(self, cachename):
+        return cachename in self._cache
 
-    def getCache(self, field, *subfields):
-        if field in self._cache:
-            ret = self._cache[field]
-            for field in subfields:
-                if field in ret:
-                    ret = ret[field]
+    def getCache(self, cachename, *subnames):
+        if cachename in self._cache:
+            ret = self._cache[cachename]
+            for cachename in subnames:
+                if cachename in ret:
+                    ret = ret[cachename]
                 else:
-                    ret = ret[field] = dict()
+                    ret = ret[cachename] = dict()
             return ret
         else:
             return None
 
     @staticmethod
-    def enableCaching(field):
+    def enableCaching(cachename):
         def decorator(method):
             @functools.wraps(method)
             def cache_wrapper(self, *args, **kw):
-                with self.cachingContext(field):
+                with self.cachingContext(cachename):
                     return method(self, *args, **kw)
+
             return cache_wrapper
+
         return decorator
 
 
@@ -830,7 +832,7 @@ class ConcatModel(Model):
             if it is None:
                 it = cache[idx] = list(
                     self._iter_parameter_index(idx, linear_only=linear_only)
-                )  
+                )
         return it
 
     def _iter_parameter_index(self, idx, linear_only=False):
@@ -1016,10 +1018,10 @@ class ConcatModel(Model):
             yield idx
 
     @contextmanager
-    def cachingContext(self, field):
+    def cachingContext(self, cachename):
         with ExitStack() as stack:
-            ctx = super(ConcatModel, self).cachingContext(field)
+            ctx = super(ConcatModel, self).cachingContext(cachename)
             stack.enter_context(ctx)
             for m in self._models:
-                stack.enter_context(m.cachingContext(field))
+                stack.enter_context(m.cachingContext(cachename))
             yield
