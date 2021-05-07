@@ -421,24 +421,38 @@ class Model(Cached):
         :param bool full_output: add statistics to fitted parameters
         :returns dict:
         """
-        if self.niter_non_leastsquares:
-            keep = self.linear_parameters
-        try:
+        with self._linear_fit_context():
             b = self.yfitdata  # ndata
             for i in range(max(self.niter_non_leastsquares, 1)):
                 A = self.linear_derivatives_fitmodel().T  # ndata, nparams
-                result = lstsq(A, b.copy(), digested_output=full_output)
+                result = lstsq(
+                    A,
+                    b.copy(),
+                    uncertainties=True,
+                    covariances=False,
+                    digested_output=False,
+                )
                 if self.niter_non_leastsquares:
-                    self.linear_fit_parameters = result[0]
+                    if full_output:
+                        self.linear_fit_parameters = result[0]
+                    else:
+                        self.linear_fit_parameters = result["parameters"]
                     self.non_leastsquares_increment()
-        finally:
-            if self.niter_non_leastsquares:
-                self.linear_parameters = keep
         return {
             "linear": True,
             "parameters": self._fit_to_parameters(result[0]),
             "uncertainties": self._fit_to_uncertainties(result[1]),
         }
+
+    @contextmanager
+    def _linear_fit_context(self):
+        if self.niter_non_leastsquares:
+            keep = self.linear_parameters
+        try:
+            yield
+        finally:
+            if self.niter_non_leastsquares:
+                self.linear_parameters = keep
 
     @Cached.enableCaching("fit")
     def nonlinear_fit(self, full_output=False):
@@ -446,12 +460,11 @@ class Model(Cached):
         :param bool full_output: add statistics to fitted parameters
         :returns dict:
         """
-        keep = self.parameters
-        constraints = self.constraints
-        xdata = self.xdata
-        ydata = self.yfitdata
-        ystd = self.yfitstd
-        try:
+        with self._nonlinear_fit_context():
+            constraints = self.constraints
+            xdata = self.xdata
+            ydata = self.yfitdata
+            ystd = self.yfitstd
             for i in range(max(self.niter_non_leastsquares, 1)):
                 result = Gefit.LeastSquaresFit(
                     self._evaluate_fitmodel,
@@ -469,8 +482,6 @@ class Model(Cached):
                 if self.niter_non_leastsquares:
                     self.fit_parameters = result[0]
                     self.non_leastsquares_increment()
-        finally:
-            self.parameters = keep
         ret = {
             "linear": False,
             "parameters": self._fit_to_parameters(result[0]),
@@ -481,6 +492,14 @@ class Model(Cached):
             ret["niter"] = result[3]
             ret["lastdeltachi"] = result[4]
         return ret
+
+    @contextmanager
+    def _nonlinear_fit_context(self):
+        keep = self.parameters
+        try:
+            yield
+        finally:
+            self.parameters = keep
 
     def _ydata_to_fit(self, ydata, xdata=None):
         return ydata

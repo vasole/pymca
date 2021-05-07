@@ -611,7 +611,7 @@ class testXrf(unittest.TestCase):
         config1 = copy.deepcopy(mcaFitLegacy.config)
         config2 = copy.deepcopy(mcaFit.config)
 
-        # The new class removes invalid energies
+        # Remove expected differences
         n = len(config2["fit"]["energy"])
         for name in ["energy", "energyweight", "energyflag", "energyscatter"]:
             if config1["fit"][name] is None:
@@ -621,6 +621,7 @@ class testXrf(unittest.TestCase):
         if len(config1["attenuators"]["Matrix"]) == 6:
             lst = config1["attenuators"]["Matrix"]
             lst.extend([0, lst[-1]+lst[-2]])
+        config1["fit"]["continuum_name"] = config2["fit"]["continuum_name"]
 
         self._assertDeepEqual(config1, config2)
 
@@ -664,10 +665,12 @@ class testXrf(unittest.TestCase):
         mcaFit.setData(x, y,
                        xmin=configuration["fit"]["xmin"],
                        xmax=configuration["fit"]["xmax"])
+
+        mcaFit.estimate()
+
         if tmpflag:
             return configuration, None, None
 
-        mcaFit.estimate()
         fitResult1, result1 = mcaFit.startFit(digest=1)
         return configuration, fitResult1, result1
 
