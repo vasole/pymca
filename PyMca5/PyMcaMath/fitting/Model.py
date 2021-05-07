@@ -471,7 +471,7 @@ class Model(Cashed):
                     fulloutput=full_output,
                 )
                 if self.niter_non_leastsquares:
-                    self.fit_parameters = parameters
+                    self.fit_parameters = result[0]
                     self.non_leastsquares_increment()
         finally:
             self.parameters = keep

@@ -76,6 +76,8 @@ def defaultConfigFilename():
 
 
 class McaTheoryConfigApi:
+    """API on top of an MCA configuration"""
+
     def __init__(self, initdict=None, filelist=None, **kw):
         if initdict is None:
             initdict = defaultConfigFilename()
@@ -85,6 +87,7 @@ class McaTheoryConfigApi:
             raise IOError("File %s does not exist" % initdict)
         self._overwriteConfig(**kw)
         self.attflag = kw.get("attenuatorsflag", 1)
+        self.configure()
 
     def _overwriteConfig(self, **kw):
         if "config" in kw:
@@ -370,6 +373,12 @@ class McaTheoryConfigApi:
                 Elements.updateDict(energy=maxenergy)
                 break
 
+    def configure(self, newdict=None):
+        if newdict:
+            self.config.update(newdict)
+        self._initializeConfig()
+        return copy.deepcopy(self.config)
+
     def _initializeConfig(self):
         self._addMissingConfig()
         self._configureElementsModule()
@@ -452,29 +461,10 @@ class McaTheoryLegacyApi:
         return self.configure()
 
 
-class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
-    """Model for MCA data"""
-
-    BAND_GAP = 0.00385  # keV, silicon
-    GAUSS_SIGMA_TO_FWHM = 2.3548
-    MAX_ATTENUATION = 1.0e-300
-    SCATTER_ENERGY_THRESHOLD = 0.2  # keV
-
-    CONTINUUM_LIST = [
-        None,
-        "Constant",
-        "Linear",
-        "Parabolic",
-        "Linear Polynomial",
-        "Exp. Polynomial",
-    ]
+class McaTheoryDataApi(McaTheoryConfigApi):
+    """Add API for handling a single XRF spectrum (MCA data)"""
 
     def __init__(self, **kw):
-        super(McaTheory, self).__init__(**kw)
-        # TODO: done for some initialization of SpecfitFuns?
-        SpecfitFuns.fastagauss([1.0, 10.0, 1.0], numpy.arange(10.0))
-        self.useFisxEscape(False)
-
         # Original XRF spectrum
         self._ydata0 = None
         self._xdata0 = None
@@ -489,14 +479,378 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         self._std = None
         self._lastDataCacheParams = None
 
-        # XRF spectrum numerical background
+        super(McaTheoryDataApi, self).__init__(**kw)
+
+    @property
+    def xdata(self):
+        """Sorted and sliced view of xdata0"""
+        self._refreshDataCache()
+        return self._xdata
+
+    @property
+    def nchannels(self):
+        return len(self.xdata)
+
+    @property
+    def ydata(self):
+        """Sorted and sliced view of ydata0"""
+        self._refreshDataCache()
+        return self._ydata
+
+    @property
+    def ystd(self):
+        """Sorted and sliced view of ystd0"""
+        self._refreshDataCache()
+        return self._ystd
+
+    @property
+    def xdata0(self):
+        return self._xdata0
+
+    @property
+    def ydata0(self):
+        return self._ydata0
+
+    @property
+    def ystd0(self):
+        return self._ystd0
+
+    def setData(self, *var, **kw):
+        """
+        Method to update the data to be fitted.
+        It accepts several combinations of input arguments, the simplest to
+        take into account is:
+
+        setData(x, y, sigmay=None, xmin=None, xmax=None)
+
+        x corresponds to the spectrum channels
+        y corresponds to the spectrum counts
+        sigmay is the uncertainty associated to the counts. If not given,
+               Poisson statistics will be assumed. If the fit configuration
+               is set to no weight, it will not be used.
+        xmin and xmax define the limits to be considered for performing the fit.
+               If the fit configuration flag self.config['fit']['use_limit'] is
+               set, they will be ignored. If xmin and xmax are not given, the
+               whole given spectrum will be considered for fitting.
+        time (seconds) is the factor associated to the flux, only used when using
+               a strategy based on concentrations
+        """
+        if "y" in kw:
+            ydata0 = kw["y"]
+        elif len(var) > 1:
+            ydata0 = var[1]
+        elif len(var) == 1:
+            ydata0 = var[0]
+        else:
+            ydata0 = None
+
+        if ydata0 is None:
+            return 1
+        else:
+            ydata0 = numpy.ravel(ydata0)
+
+        if "x" in kw:
+            xdata0 = kw["x"]
+        elif len(var) > 1:
+            xdata0 = var[0]
+        else:
+            xdata0 = None
+
+        if xdata0 is None:
+            xdata0 = numpy.arange(len(ydata0))
+        else:
+            xdata0 = numpy.ravel(xdata0)
+
+        if "sigmay" in kw:
+            ystd0 = kw["sigmay"]
+        elif "stdy" in kw:
+            ystd0 = kw["stdy"]
+        elif len(var) > 2:
+            ystd0 = var[2]
+        else:
+            ystd0 = None
+
+        if ystd0 is None:
+            # Poisson noise
+            valid = ydata0 > 0
+            if valid.any():
+                ystd0 = numpy.sqrt(abs(ydata0))
+                ystd0[~valid] = ystd0[valid].min()
+            else:
+                ystd0 = numpy.ones_like(ydata0)
+        else:
+            ystd0 = numpy.ravel(ystd0)
+
+        timeFactor = kw.get("time", None)
+        self._expotime0 = timeFactor
+        if timeFactor is None:
+            if self.config["concentrations"].get("useautotime", False):
+                if not self.config["concentrations"]["usematrix"]:
+                    msg = "Requested to use time from data but not present!!"
+                    raise ValueError(msg)
+        elif self.config["concentrations"].get("useautotime", False):
+            self.config["concentrations"]["time"] = timeFactor
+
+        self._xmin0 = kw.get("xmin", self.xmin)
+        self._xmax0 = kw.get("xmax", self.xmax)
+        return self._refreshDataCache(xdata0=xdata0, ydata0=ydata0, ystd0=ystd0)
+
+    @property
+    def xmin(self):
+        """From config (if enabled) or the last `setData` call"""
+        cfgfit = self.config["fit"]
+        if cfgfit["use_limit"]:
+            return cfgfit["xmin"]
+        else:
+            return self._xmin0
+
+    @property
+    def xmax(self):
+        """From config (if enabled) or the last `setData` call"""
+        cfgfit = self.config["fit"]
+        if cfgfit["use_limit"]:
+            return cfgfit["xmax"]
+        else:
+            return self._xmax0
+
+    def getLastTime(self):
+        return self._expotime0
+
+    @property
+    def _dataCacheParams(self):
+        """Any change in these parameter will invalidate the cache"""
+        return self.xmin, self.xmax
+
+    def _refreshDataCache(self, xdata0=None, ydata0=None, ystd0=None):
+        """Cache sorted and sliced view of the original XRF spectrum data"""
+        params = self._dataCacheParams
+        if xdata0 is None and ydata0 is None and ystd0 is None:
+            if self._lastDataCacheParams == params:
+                return  # the cached data is still valid
+
+        # Original XRF spectrum
+        if xdata0 is None:
+            xdata0 = self.xdata0
+        if xdata0 is None or not xdata0.size:
+            return 1
+        if ydata0 is None:
+            ydata0 = self.ydata0
+        if ydata0 is None or ydata0.size != xdata0.size:
+            return 1
+        if ystd0 is None:
+            ystd0 = self.ystd0
+        if ystd0 is None or ystd0.size != xdata0.size:
+            return 1
+
+        # XRF spectrum view
+        selection = numpy.isfinite(ydata0)
+        xmin = self.xmin
+        if xmin is not None:
+            selection &= xdata0 >= xmin
+        xmax = self.xmax
+        if xmax is not None:
+            selection &= xdata0 <= xmax
+        if not selection.any():
+            return 1
+
+        # Cache the original XRF spectrum and its view
+        idx = numpy.argsort(xdata0)[selection]
+        self._xdata = xdata0[idx]
+        self._ydata = ydata0[idx]
+        self._ystd = ystd0[idx]
+        self._xdata0 = xdata0
+        self._ydata0 = ydata0
+        self._ystd0 = ystd0
+        self._lastDataCacheParams = params
+
+
+class McaTheoryBackground(McaTheoryDataApi):
+    """Model for the background of an XRF spectrum"""
+
+    CONTINUUM_LIST = [
+        None,
+        "Constant",
+        "Linear",
+        "Parabolic",
+        "Linear Polynomial",
+        "Exp. Polynomial",
+    ]
+
+    def __init__(self, **kw):
+        # Numerical background
         self._numBkg = None
         self._lastNumBkgCacheParams = None
 
-        # XRF spectrum analytical background
+        # Analytical background
         self._continuum = None
         self._continuumModel = None
         self._lastContinuumCacheParams = None
+
+        super(McaTheoryBackground, self).__init__(**kw)
+
+    def ynumbkg(self, xdata=None):
+        """Get the numerical background (as opposed to the analytical background)"""
+        ybkg = self._ynumbkg
+        if ybkg is None:
+            return ybkg
+        if xdata is not None:
+            try:
+                binterp = numpy.allclose(xdata, self.xdata)
+            except ValueError:
+                binterp = True
+            if binterp:
+                ybkg = numpy.interp(xdata, self.xdata, ybkg)
+        return ybkg
+
+    def ycontinuum(self, xdata=None):
+        """Get the analytical background (as opposed to the numerical background)"""
+        if xdata is None:
+            xdata = self.xdata
+        model = self.continuumModel
+        if model is None:
+            if xdata is None:
+                return None
+            else:
+                return numpy.zeros(len(xdata))
+        else:
+            return model.evaluate_fullmodel(xdata=xdata)
+
+    def ybackground(self, xdata=None):
+        """Get the total background"""
+        contbkg = self.ycontinuum(xdata=xdata)
+        numbkg = self.ynumbkg(xdata=xdata)
+        if numbkg is None:
+            return contbkg
+        else:
+            return contbkg + numbkg
+
+    @property
+    def _ynumbkg(self):
+        self._refreshNumBkgCache()
+        return self._numBkg
+
+    @property
+    def continuumModel(self):
+        self._refreshContinuumCache()
+        return self._continuumModel
+
+    @property
+    def _numBkgCacheParams(self):
+        """Any change in these parameter will invalidate the cache"""
+        cfg = self.config["fit"]
+        params = [
+            "stripflag",
+            "stripalgorithm",
+            "stripfilterwidth",
+            "stripanchorsflag",
+            "stripanchorslist",
+        ]
+        if cfg["stripalgorithm"] == 1:
+            params += ["snipwidth"]
+        else:
+            params += ["stripwidth", "stripconstant", "stripiterations"]
+        params = [cfg[p] for p in params]
+        params.append(id(self._lastDataCacheParams))
+        return params
+
+    def _refreshNumBkgCache(self):
+        """Cache numerical background"""
+        bkgparams = self._numBkgCacheParams
+        if self._lastNumBkgCacheParams == bkgparams:
+            return  # the cached data is still valid
+        elif self.ydata is None:
+            self._numBkg = None
+        elif self.config["fit"]["stripflag"]:
+            signal = self._smooth(self.ydata)
+            anchorslist = list(self._anchorsIndices())
+            if self.config["fit"]["stripalgorithm"] == 1:
+                self._numBkg = self._snip(signal, anchorslist)
+            else:
+                self._numBkg = self._strip(signal, anchorslist)
+        else:
+            self._numBkg = numpy.zeros_like(self.ydata)
+        self._lastNumBkgCacheParams = bkgparams
+
+    @property
+    def _continuumCacheParams(self):
+        cfgfit = self.config["fit"]
+        params = [id(self._lastDataCacheParams), cfgfit["continuum"]]
+        if cfgfit["continuum"] == "Linear Polynomial":
+            params.append(cfgfit["linpolorder"])
+        elif cfgfit["continuum"] == "Exp. Polynomial":
+            params.append(cfgfit["exppolorder"])
+        return params
+
+    def _refreshContinuumCache(self):
+        contparams = self._continuumCacheParams
+        if self._lastContinuumCacheParams == contparams:
+            return  # the cached data is still valid
+
+        # Instantiate the model
+        continuum = self.config["fit"]["continuum"]
+        if continuum is None or self._ynumbkg is None:
+            model = None
+        elif continuum == "Constant":
+            model = LinearPolynomialModel(degree=0, maxiter=10)
+        elif continuum == "Linear":
+            model = LinearPolynomialModel(degree=1, maxiter=10)
+        elif continuum == "Parabolic":
+            model = LinearPolynomialModel(degree=2, maxiter=10)
+        elif continuum == "Linear Polynomial":
+            model = LinearPolynomialModel(
+                degree=self.config["fit"]["linpolorder"], maxiter=10
+            )
+        elif continuum == "Exp. Polynomial":
+            model = ExponentialPolynomialModel(
+                degree=self.config["fit"]["exppolorder"], maxiter=40
+            )
+        else:
+            raise ValueError("Unknown continuum {}".format(continuum))
+        self._continuumModel = model
+
+        # Estimate the polynomial coefficients by fitting the numerical background
+        if model is not None:
+            model.xdata = self.xpol
+            model.ydata = self.ynumbkg()
+            result = model.fit()
+            model.use_fit_result(result)
+
+        self._lastContinuumCacheParams = contparams
+
+    @property
+    def xpol(self):
+        return self._channelsToXpol(self.xdata)
+
+    def _channelsToXpol(self, x):
+        raise NotImplementedError
+
+    @property
+    def continuum_coefficients(self):
+        model = self.continuumModel
+        if model is None:
+            return list()
+        else:
+            return model.parameters
+
+    @continuum_coefficients.setter
+    def continuum_coefficients(self, values):
+        model = self.continuumModel
+        if model is not None:
+            model.parameters = values
+
+
+class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
+    """Model for MCA data"""
+
+    BAND_GAP = 0.00385  # keV, silicon
+    GAUSS_SIGMA_TO_FWHM = 2 * numpy.sqrt(2 * numpy.log(2))  # 2.3548
+    FULL_ATTENUATION = 1.0e-300  # intensity assumed to be zero
+    SCATTER_ENERGY_THRESHOLD = 0.2  # keV
+
+    def __init__(self, **kw):
+        # TODO: done for some initialization of SpecfitFuns?
+        SpecfitFuns.fastagauss([1.0, 10.0, 1.0], numpy.arange(10.0))
+        self.useFisxEscape(flag=False, apply=False)
 
         # XRF line groups
         self._lineGroups = []
@@ -505,9 +859,9 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         self._escapeLineGroups = []
         self._lastAreasCacheParams = None
 
-        self.configure()
+        super(McaTheory, self).__init__(**kw)
 
-    def useFisxEscape(self, flag=None):
+    def useFisxEscape(self, flag=None, apply=True):
         """Make sure the model uses fisx to calculate the escape peaks
         when possible.
         """
@@ -523,22 +877,24 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
                 self._useFisxEscape = False
         else:
             self._useFisxEscape = False
+        if apply:
+            self.configure()
 
-    def configure(self, newdict=None):
-        if newdict:
-            self.config.update(newdict)
-        self._initializeConfig()
+    def _initializeConfig(self):
+        super(McaTheory, self)._initializeConfig()
         self._preCalculateParameterIndependent()
         self._preCalculateParameterDependent()
-        return copy.deepcopy(self.config)
 
     def _preCalculateParameterDependent(self):
+        """Pre-calculate things that depend on the fit parameters"""
         pass
 
     def _preCalculateParameterIndependent(self):
+        """Pre-calculate things that do not depend on the fit parameters"""
         self._preCalculateLineGroups()
 
     def _preCalculateLineGroups(self):
+        """Calculate fluorescence and escape rates for emission and scatter line groups"""
         self._fluoRates = self._calcFluoRates()
         self._calcFluoRateCorrections()
 
@@ -610,7 +966,7 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         parameters[:, 0] *= self.gain
 
         # FWHM
-        parameters[:, 2] = self._peak_fwhm(parameters[:, 1])
+        parameters[:, 2] = self._peakFWHM(parameters[:, 1])
 
         # Other peak shape parameters
         if hypermet:
@@ -669,13 +1025,13 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
                         if rate * escrate > selected_rate:
                             selected_energy = peakenergy
             if selected_energy:
-                height = ydata[(np.abs(xenergy - selected_energy)).argmin()]
-                fwhm = self._peak_fwhm(selected_energy)
+                height = ydata[(numpy.abs(xenergy - selected_energy)).argmin()]
+                fwhm = self._peakFWHM(selected_energy)
                 linegroup_areas[i] = height * fwhm * factor  # Gaussian
             else:
                 linegroup_areas[i] = 0  # Fixed at zero
 
-    def _total_peakgroup_profile(self, parameters, x, hypermet=None, fast=True):
+    def _totalPeakGroupProfile(self, parameters, x, hypermet=None, fast=True):
         """When providing parameters for more than one peak, the peak
         profiles are added.
 
@@ -697,7 +1053,7 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         else:
             return SpecfitFuns.apvoigt(parameters, x)
 
-    def _peak_fwhm(self, energy):
+    def _peakFWHM(self, energy):
         """Calculate the FWHM of a peak in the energy domain"""
         return numpy.sqrt(
             self.noise * self.noise
@@ -854,7 +1210,7 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         self._applyFunnyFilterAttenuation(peaks, symb)
         self._applyDetectorAttenuation(peaks, symb)
         for peak in peaks:
-            if peak[1] < self.MAX_ATTENUATION:
+            if peak[1] < self.FULL_ATTENUATION:
                 peak[1] = 0
 
     def _iterLinearAttenuation(self, energies, **kw):
@@ -1030,351 +1386,14 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         return escape_peaks
 
     @property
-    def xdata(self):
-        """Sorted and sliced view of xdata0"""
-        self._refreshDataCache()
-        return self._xdata
-
-    @property
     def xenergy(self):
-        return self._channels_to_energy(self.xdata)
+        return self._channelsToEnergy(self.xdata)
 
-    @property
-    def xpol(self):
-        return self._channels_to_xpol(self.xdata)
-
-    def _channels_to_energy(self, x):
+    def _channelsToEnergy(self, x):
         return self.zero + self.gain * x
 
-    def _channels_to_xpol(self, x):
+    def _channelsToXpol(self, x):
         return self.zero + self.gain * (x - x.mean())
-
-    @property
-    def nchannels(self):
-        return len(self.xdata)
-
-    @property
-    def ydata(self):
-        """Sorted and sliced view of ydata0"""
-        self._refreshDataCache()
-        return self._ydata
-
-    @property
-    def ystd(self):
-        """Sorted and sliced view of ystd0"""
-        self._refreshDataCache()
-        return self._ystd
-
-    def ynumbkg(self, xdata=None):
-        ybkg = self._ynumbkg
-        if ybkg is None:
-            return ybkg
-        if xdata is not None:
-            try:
-                binterp = numpy.allclose(xdata, self.xdata)
-            except ValueError:
-                binterp = True
-            if binterp:
-                ybkg = numpy.interp(xdata, self.xdata, ybkg)
-        return ybkg
-
-    def ycontinuum(self, xdata=None):
-        """Get the analytical background (as opposed to the numerical background)"""
-        if xdata is None:
-            xdata = self.xdata
-        model = self.continuumModel
-        if model is None:
-            if xdata is None:
-                return None
-            else:
-                return numpy.zeros(len(xdata))
-        else:
-            return model.evaluate_fullmodel(xdata=xdata)
-
-    def ybackground(self, xdata=None):
-        contbkg = self.ycontinuum(xdata=xdata)
-        numbkg = self.ynumbkg(xdata=xdata)
-        if numbkg is None:
-            return contbkg
-        else:
-            return contbkg + numbkg
-
-    @property
-    def _ynumbkg(self):
-        self._refreshNumBkgCache()
-        return self._numBkg
-
-    @property
-    def continuumModel(self):
-        self._refreshContinuumCache()
-        return self._continuumModel
-
-    @property
-    def xdata0(self):
-        return self._xdata0
-
-    @property
-    def ydata0(self):
-        return self._ydata0
-
-    @property
-    def ystd0(self):
-        return self._ystd0
-
-    def setData(self, *var, **kw):
-        """
-        Method to update the data to be fitted.
-        It accepts several combinations of input arguments, the simplest to
-        take into account is:
-
-        setData(x, y, sigmay=None, xmin=None, xmax=None)
-
-        x corresponds to the spectrum channels
-        y corresponds to the spectrum counts
-        sigmay is the uncertainty associated to the counts. If not given,
-               Poisson statistics will be assumed. If the fit configuration
-               is set to no weight, it will not be used.
-        xmin and xmax define the limits to be considered for performing the fit.
-               If the fit configuration flag self.config['fit']['use_limit'] is
-               set, they will be ignored. If xmin and xmax are not given, the
-               whole given spectrum will be considered for fitting.
-        time (seconds) is the factor associated to the flux, only used when using
-               a strategy based on concentrations
-        """
-        if "y" in kw:
-            ydata0 = kw["y"]
-        elif len(var) > 1:
-            ydata0 = var[1]
-        elif len(var) == 1:
-            ydata0 = var[0]
-        else:
-            ydata0 = None
-
-        if ydata0 is None:
-            return 1
-        else:
-            ydata0 = numpy.ravel(ydata0)
-
-        if "x" in kw:
-            xdata0 = kw["x"]
-        elif len(var) > 1:
-            xdata0 = var[0]
-        else:
-            xdata0 = None
-
-        if xdata0 is None:
-            xdata0 = numpy.arange(len(ydata0))
-        else:
-            xdata0 = numpy.ravel(xdata0)
-
-        if "sigmay" in kw:
-            ystd0 = kw["sigmay"]
-        elif "stdy" in kw:
-            ystd0 = kw["stdy"]
-        elif len(var) > 2:
-            ystd0 = var[2]
-        else:
-            ystd0 = None
-
-        if ystd0 is None:
-            # Poisson noise
-            valid = ydata0 > 0
-            if valid.any():
-                ystd0 = numpy.sqrt(abs(ydata0))
-                ystd0[~valid] = ystd0[valid].min()
-            else:
-                ystd0 = numpy.ones_like(ydata0)
-        else:
-            ystd0 = numpy.ravel(ystd0)
-
-        timeFactor = kw.get("time", None)
-        self._expotime0 = timeFactor
-        if timeFactor is None:
-            cfgfit = self.config["fit"]
-            if self.config["concentrations"].get("useautotime", False):
-                if not self.config["concentrations"]["usematrix"]:
-                    msg = "Requested to use time from data but not present!!"
-                    raise ValueError(msg)
-        elif self.config["concentrations"].get("useautotime", False):
-            self.config["concentrations"]["time"] = timeFactor
-
-        self._xmin0 = kw.get("xmin", self.xmin)
-        self._xmax0 = kw.get("xmax", self.xmax)
-        return self._refreshDataCache(xdata0=xdata0, ydata0=ydata0, ystd0=ystd0)
-
-    @property
-    def xmin(self):
-        """From config (if enabled) or the last `setData` call"""
-        cfgfit = self.config["fit"]
-        if cfgfit["use_limit"]:
-            return cfgfit["xmin"]
-        else:
-            return self._xmin0
-
-    @property
-    def xmax(self):
-        """From config (if enabled) or the last `setData` call"""
-        cfgfit = self.config["fit"]
-        if cfgfit["use_limit"]:
-            return cfgfit["xmax"]
-        else:
-            return self._xmax0
-
-    @property
-    def emin(self):
-        return self._channels_to_energy(self.xmin)
-
-    @property
-    def emax(self):
-        return self._channels_to_energy(self.xmax)
-
-    def getLastTime(self):
-        return self._expotime0
-
-    @property
-    def _dataCacheParams(self):
-        """Any change in these parameter will invalidate the cache"""
-        return self.xmin, self.xmax
-
-    def _refreshDataCache(self, xdata0=None, ydata0=None, ystd0=None):
-        """Cache sorted and sliced view of the original XRF spectrum data"""
-        params = self._dataCacheParams
-        if xdata0 is None and ydata0 is None and ystd0 is None:
-            if self._lastDataCacheParams == params:
-                return  # the cached data is still valid
-
-        # Original XRF spectrum
-        if xdata0 is None:
-            xdata0 = self.xdata0
-        if xdata0 is None or not xdata0.size:
-            return 1
-        if ydata0 is None:
-            ydata0 = self.ydata0
-        if ydata0 is None or ydata0.size != xdata0.size:
-            return 1
-        if ystd0 is None:
-            ystd0 = self.ystd0
-        if ystd0 is None or ystd0.size != xdata0.size:
-            return 1
-
-        # XRF spectrum view
-        selection = numpy.isfinite(ydata0)
-        xmin = self.xmin
-        if xmin is not None:
-            selection &= xdata0 >= xmin
-        xmax = self.xmax
-        if xmax is not None:
-            selection &= xdata0 <= xmax
-        if not selection.any():
-            return 1
-
-        # Cache the original XRF spectrum and its view
-        idx = numpy.argsort(xdata0)[selection]
-        self._xdata = xdata0[idx]
-        self._ydata = ydata0[idx]
-        self._ystd = ystd0[idx]
-        self._xdata0 = xdata0
-        self._ydata0 = ydata0
-        self._ystd0 = ystd0
-        self._lastDataCacheParams = params
-
-    @property
-    def _numBkgCacheParams(self):
-        """Any change in these parameter will invalidate the cache"""
-        cfg = self.config["fit"]
-        params = [
-            "stripflag",
-            "stripalgorithm",
-            "stripfilterwidth",
-            "stripanchorsflag",
-            "stripanchorslist",
-        ]
-        if cfg["stripalgorithm"] == 1:
-            params += ["snipwidth"]
-        else:
-            params += ["stripwidth", "stripconstant", "stripiterations"]
-        params = [cfg[p] for p in params]
-        params.append(id(self._lastDataCacheParams))
-        return params
-
-    def _refreshNumBkgCache(self):
-        """Cache numerical background"""
-        bkgparams = self._numBkgCacheParams
-        if self._lastNumBkgCacheParams == bkgparams:
-            return  # the cached data is still valid
-        elif self.ydata is None:
-            self._numBkg = None
-        elif self.config["fit"]["stripflag"]:
-            signal = self._smooth(self.ydata)
-            anchorslist = list(self._anchorsIndices())
-            if self.config["fit"]["stripalgorithm"] == 1:
-                self._numBkg = self._snip(signal, anchorslist)
-            else:
-                self._numBkg = self._strip(signal, anchorslist)
-        else:
-            self._numBkg = numpy.zeros_like(self.ydata)
-        self._lastNumBkgCacheParams = bkgparams
-
-    @property
-    def _continuumCacheParams(self):
-        cfgfit = self.config["fit"]
-        params = [id(self._lastDataCacheParams), cfgfit["continuum"]]
-        if cfgfit["continuum"] == "Linear Polynomial":
-            params.append(cfgfit["linpolorder"])
-        elif cfgfit["continuum"] == "Exp. Polynomial":
-            params.append(cfgfit["exppolorder"])
-        return params
-
-    def _refreshContinuumCache(self):
-        contparams = self._continuumCacheParams
-        if self._lastContinuumCacheParams == contparams:
-            return  # the cached data is still valid
-
-        # Instantiate the model
-        continuum = self.config["fit"]["continuum"]
-        if continuum is None or self._ynumbkg is None:
-            model = None
-        elif continuum == "Constant":
-            model = LinearPolynomialModel(degree=0, maxiter=10)
-        elif continuum == "Linear":
-            model = LinearPolynomialModel(degree=1, maxiter=10)
-        elif continuum == "Parabolic":
-            model = LinearPolynomialModel(degree=2, maxiter=10)
-        elif continuum == "Linear Polynomial":
-            model = LinearPolynomialModel(
-                degree=self.config["fit"]["linpolorder"], maxiter=10
-            )
-        elif continuum == "Exp. Polynomial":
-            model = ExponentialPolynomialModel(
-                degree=self.config["fit"]["exppolorder"], maxiter=40
-            )
-        else:
-            raise ValueError("Unknown continuum {}".format(continuum))
-        self._continuumModel = model
-
-        # Estimate the polynomial coefficients by fitting the numerical background
-        if model is not None:
-            x = self.xdata
-            model.xdata = self.xpol
-            model.ydata = self.ynumbkg()
-            result = model.fit()
-            model.use_fit_result(result)
-
-        self._lastContinuumCacheParams = contparams
-
-    @property
-    def continuum_coefficients(self):
-        model = self.continuumModel
-        if model is None:
-            return list()
-        else:
-            return model.parameters
-
-    @continuum_coefficients.setter
-    def continuum_coefficients(self, values):
-        model = self.continuumModel
-        if model is not None:
-            model.parameters = values
 
     @property
     def linpol_coefficients(self):
@@ -1757,26 +1776,29 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
     def mcatheory(
         self, parameters, xdata=None, hypermet=None, continuum=None, summing=None
     ):
+        """The parameters are the raw peak parameters, not the fit parameters"""
         # Evaluation domain
         if xdata is None:
             xdata = self.xdata
-        energy = self._channels_to_energy(xdata)
+        energy = self._channelsToEnergy(xdata)
 
         # Emission lines, scatter peaks and escape peaks
-        y = self._total_peakgroup_profile(parameters, energy, hypermet=hypermet)
+        y = self._totalPeakGroupProfile(parameters, energy, hypermet=hypermet)
 
         # Analytical background
         if continuum or continuum is None:
             model = self.continuumModel
             if model is not None:
-                xpol = self._channels_to_xpol(xdata)
+                xpol = self._channelsToXpol(xdata)
                 y += model.evaluate_fullmodel(xdata=xpol)
 
         # Pile-up
         if summing or summing is None:
             pileupfactor = self.sum
             if pileupfactor:
-                y *= pileupfactor * SpecfitFuns.pileup(y, min(xdata), zero, gain)
+                y *= pileupfactor * SpecfitFuns.pileup(
+                    y, min(xdata), self.zero, self.gain
+                )
 
         return y
 
@@ -1799,9 +1821,9 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         """The numerical background is not included in the fit model"""
         ybkg = self.ynumbkg(xdata=xdata)
         if ybkg is None:
-            return ydata
+            return yfit
         else:
-            return ydata + ybkg
+            return yfit + ybkg
 
     def linear_derivatives_fitmodel(self, xdata=None):
         """Derivates to all linear parameters
@@ -1811,7 +1833,7 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         """
         if xdata is None:
             xdata = self.xdata
-        energy = self._channels_to_energy(xdata)
+        energy = self._channelsToEnergy(xdata)
         raise NotImplementedError
 
     def derivative_fitmodel(self, param_idx, xdata=None):
@@ -1822,6 +1844,7 @@ class McaTheory(McaTheoryConfigApi, McaTheoryLegacyApi, Model):
         :returns array: nxdata
         """
         name, pgroupi = self._parameter_name_from_index(param_idx)
+        hypermet = self.hypermet
         if name == "zero":
             raise NotImplementedError
         elif name == "gain":
