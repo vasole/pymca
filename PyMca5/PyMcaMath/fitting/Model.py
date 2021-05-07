@@ -40,54 +40,48 @@ from PyMca5.PyMcaMath.linalg import lstsq
 from PyMca5.PyMcaMath.fitting import Gefit
 
 
-def enable_caching(method):
-    @functools.wraps(method)
-    def cache_wrapper(self, *args, **kw):
-        with self.caching_context():
-            return method(self, *args, **kw)
-
-    return cache_wrapper
-
-
-def memoize(method):
-    @functools.wraps(method)
-    def cache_wrapper(self):
-        if self.caching_enabled:
-            name = method.__qualname__
-            if name in self._cache:
-                return self._cache[name]
-            else:
-                r = self._cache[name] = method(self)
-                return r
-
-    return cache_wrapper
-
-
-def memoize_property(method):
-    return property(memoize(method))
-
-
-class Cashed(object):
+class Cached(object):
     def __init__(self):
-        self._cache = None
+        self._cache = dict()
 
     @contextmanager
-    def caching_context(self):
-        reset = self._cache is None
+    def cachingContext(self, field):
+        reset = not self.cachingEnabled(field)
         if reset:
-            self._cache = {}
+            self._cache[field] = dict()
         try:
             yield
         finally:
             if reset:
-                self._cache = None
+                del self._cache[field]
 
-    @property
-    def caching_enabled(self):
-        return self._cache is not None
+    def cachingEnabled(self, field):
+        return field in self._cache
+
+    def getCache(self, field, *subfields):
+        if field in self._cache:
+            ret = self._cache[field]
+            for field in subfields:
+                if field in ret:
+                    ret = ret[field]
+                else:
+                    ret = ret[field] = dict()
+            return ret
+        else:
+            return None
+
+    @staticmethod
+    def enableCaching(field):
+        def decorator(method):
+            @functools.wraps(method)
+            def cache_wrapper(self, *args, **kw):
+                with self.cachingContext(field):
+                    return method(self, *args, **kw)
+            return cache_wrapper
+        return decorator
 
 
-class Model(Cashed):
+class Model(Cached):
     """Evaluation and derivatives of a model to be used in least-squares fitting."""
 
     def __init__(self):
@@ -357,8 +351,10 @@ class Model(Cashed):
         :param bool linear_only:
         :returns iterable(str, int): group name, nb. parameters in the group
         """
-        if self.caching_enabled:
-            cache = self._cache.setdefault("parameter_groups", {})
+        cache = self.getCache("fit", "parameter_groups")
+        if cache is None:
+            it = self._iter_parameter_groups(linear_only=linear_only)
+        else:
             a = self.included_parameters
             b = self.excluded_parameters
             if a is not None:
@@ -371,8 +367,6 @@ class Model(Cashed):
                 it = cache[key] = list(
                     self._iter_parameter_groups(linear_only=linear_only)
                 )
-        else:
-            it = self._iter_parameter_groups(linear_only=linear_only)
         return it
 
     def _iter_parameter_names(self, linear_only=False):
@@ -419,7 +413,7 @@ class Model(Cashed):
         else:
             return self.nonlinear_fit(full_output=full_output)
 
-    @enable_caching
+    @Cached.enableCaching("fit")
     def linear_fit(self, full_output=False):
         """
         :param bool full_output: add statistics to fitted parameters
@@ -444,7 +438,7 @@ class Model(Cashed):
             "uncertainties": self._fit_to_uncertainties(result[1]),
         }
 
-    @enable_caching
+    @Cached.enableCaching("fit")
     def nonlinear_fit(self, full_output=False):
         """
         :param bool full_output: add statistics to fitted parameters
@@ -828,15 +822,15 @@ class ConcatModel(Model):
         :param int idx:
         :returns iterable(tuple): model index, parameter index in this model
         """
-        if self.caching_enabled:
-            cache = self._cache.setdefault("parameter_model_index", {})
+        cache = self.getCache("fit", "parameter_model_index")
+        if cache is None:
+            it = self._iter_parameter_index(idx, linear_only=linear_only)
+        else:
             it = cache.get(idx)
             if it is None:
                 it = cache[idx] = list(
                     self._iter_parameter_index(idx, linear_only=linear_only)
-                )
-        else:
-            it = self._iter_parameter_index(idx, linear_only=linear_only)
+                )  
         return it
 
     def _iter_parameter_index(self, idx, linear_only=False):
@@ -985,14 +979,14 @@ class ConcatModel(Model):
         :param int nconcat:
         :returns list(slice):
         """
-        if self.caching_enabled:
-            cache = self._cache.setdefault("idx_channels", {})
+        cache = self.getCache("fit", "idx_channels")
+        if cache is None:
+            return list(self._generate_idx_channels(nconcat))
+        else:
             if nconcat != cache.get("nconcat"):
                 cache["idx"] = list(self._generate_idx_channels(nconcat))
                 cache["nconcat"] = nconcat
             return cache["idx"]
-        else:
-            return list(self._generate_idx_channels(nconcat))
 
     def _generate_idx_channels(self, nconcat, stride=None):
         """Yield slice of the concatenated data for each model.
@@ -1022,10 +1016,10 @@ class ConcatModel(Model):
             yield idx
 
     @contextmanager
-    def caching_context(self):
+    def cachingContext(self, field):
         with ExitStack() as stack:
-            ctx = super(ConcatModel, self).caching_context()
+            ctx = super(ConcatModel, self).cachingContext(field)
             stack.enter_context(ctx)
             for m in self._models:
-                stack.enter_context(m.caching_context())
+                stack.enter_context(m.cachingContext(field))
             yield
