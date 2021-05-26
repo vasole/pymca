@@ -364,6 +364,10 @@ class McaTheoryConfigApi:
             else:
                 yield [Z, symb, peaks]
 
+    @property
+    def emissionGroupNames(self):
+        return [symb + " " + line for _, symb, line in sorted(self._emissionGroups())]
+
     def _configureElementsModule(self):
         """Configure the globals in the Elements module"""
         for material, info in self.config["materials"].items():
@@ -800,10 +804,10 @@ class McaTheoryBackground(McaTheoryDataApi):
         try:
             return self.config["fit"]["continuum_name"]
         except AttributeError:
-            return self.CONTINUUM_LIST[value]
+            return self.CONTINUUM_LIST[self.continuum]
 
     @continuum_name.setter
-    def continuum_name(self, value):
+    def continuum_name(self, name):
         self.config["fit"]["continuum"] = self.CONTINUUM_LIST.index(name)
         self.config["fit"]["continuum_name"] = name
 
@@ -827,7 +831,7 @@ class McaTheoryBackground(McaTheoryDataApi):
         if self._lastContinuumCacheParams == contparams:
             return  # the cached data is still valid
 
-        # Instantiate the model
+        # Instantiate the continuum model
         continuum = self.continuum_name
         if continuum is None:
             model = None
@@ -1800,32 +1804,86 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
                 yield name, 1
             elif name == "sum":
                 yield name, 1
-            elif name == "st_arearatio" and hypermet:
-                yield name, 1
-            elif name == "st_sloperatio" and hypermet:
-                yield name, 1
-            elif name == "lt_arearatio" and hypermet:
-                yield name, 1
-            elif name == "lt_sloperatio" and hypermet:
-                yield name, 1
-            elif name == "step_heightratio" and hypermet:
-                yield name, 1
-            elif name == "eta_factor" and not hypermet:
-                yield name, 1
+            elif name == "st_arearatio":
+                if hypermet:
+                    yield name, 1
+            elif name == "st_sloperatio":
+                if hypermet:
+                    yield name, 1
+            elif name == "lt_arearatio":
+                if hypermet:
+                    yield name, 1
+            elif name == "lt_sloperatio":
+                if hypermet:
+                    yield name, 1
+            elif name == "step_heightratio":
+                if hypermet:
+                    yield name, 1
+            elif name == "eta_factor":
+                if not hypermet:
+                    yield name, 1
             elif name == "linegroup_areas":
                 n = len(self.linegroup_areas)
                 if n:
                     yield name, n
-            elif name == "linpol":
+            elif name == "linpol_coefficients":
                 n = len(self.linpol_coefficients)
                 if n:
                     yield name, n
-            elif name == "exppol":
+            elif name == "exppol_coefficients":
                 n = len(self.exppol_coefficients)
                 if n:
                     yield name, n
             else:
                 raise ValueError(name)
+
+    def _convert_parameter_names(self, names):
+        linegroup_names = None
+        for name in names:
+            if "linegroup_areas" in name:
+                if not linegroup_names:
+                    linegroup_names = self.emissionGroupNames
+                idx = int(name.replace("linegroup_areas", ""))
+                yield linegroup_names[idx]
+            elif "linpol_coefficients" in name:
+                if self.continuum < self.CONTINUUM_LIST.index("Linear Polynomial"):
+                    idx = int(name.replace("linpol_coefficients", ""))
+                    if idx == 0:
+                        yield "Constant"
+                    elif idx == 1:
+                        yield "1st Order"
+                    elif idx == 2:
+                        yield "2nd Order"
+                else:
+                    yield name.replace("linpol_coefficients", "A")
+            elif "exppol_coefficients" in name:
+                yield name.replace("linpol_coefficients", "A")
+            elif name == "st_arearatio":
+                yield "ST AreaR"
+            elif name == "st_sloperatio":
+                yield "ST SlopeR"
+            elif name == "lt_arearatio":
+                yield "LT AreaR"
+            elif name == "lt_sloperatio":
+                yield "LT SlopeR"
+            elif name == "step_heightratio":
+                yield "STEP HeightR"
+            elif name == "eta_factor":
+                yield "Eta Factor"
+            else:
+                yield name.capitalize()
+
+    @property
+    def parameter_names(self):
+        return list(
+            self._convert_parameter_names(super(McaTheory, self).parameter_names)
+        )
+
+    @property
+    def linear_parameter_names(self):
+        return list(
+            self._convert_parameter_names(super(McaTheory, self).linear_parameter_names)
+        )
 
     def evaluate_fitmodel(self, xdata=None):
         return self.mcatheory(xdata=xdata)
@@ -1834,8 +1892,8 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
         self,
         xdata=None,
         hypermet=None,
-        continuum=None,
-        summing=None,
+        continuum=True,
+        summing=True,
         selected_groups=None,
         normalized_peakgroups=False,
     ):
@@ -1871,11 +1929,11 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
         )
 
         # Analytical background
-        if continuum or continuum is None:
+        if continuum and self.continuumModel is not None:
             y += self.ycontinuum(xdata=xdata)
 
         # Pile-up
-        if summing or summing is None:
+        if summing and self.sum:
             y += self.ypileup(y, xdata=xdata)
 
         return y
@@ -1947,7 +2005,6 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
         :returns array: nxdata
         """
         name, pgroupi = self._parameter_name_from_index(param_idx)
-        hypermet = self.hypermet
         if name == "zero":
             raise NotImplementedError
         elif name == "gain":
@@ -1958,17 +2015,17 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
             raise NotImplementedError
         elif name == "sum":
             raise NotImplementedError
-        elif name == "st_arearatio" and hypermet:
+        elif name == "st_arearatio":
             raise NotImplementedError
-        elif name == "st_sloperatio" and hypermet:
+        elif name == "st_sloperatio":
             raise NotImplementedError
-        elif name == "lt_arearatio" and hypermet:
+        elif name == "lt_arearatio":
             raise NotImplementedError
-        elif name == "lt_sloperatio" and hypermet:
+        elif name == "lt_sloperatio":
             raise NotImplementedError
-        elif name == "step_heightratio" and hypermet:
+        elif name == "step_heightratio":
             raise NotImplementedError
-        elif name == "eta_factor" and not hypermet:
+        elif name == "eta_factor":
             raise NotImplementedError
         elif name == "linegroup_areas":
             return self.mcatheory(
@@ -1978,15 +2035,18 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
                 continuum=False,
             )
         elif name == "linpol":
+            # TODO: subtract param
             return self.continuumModel.derivative_fitmodel(param_idx, xdata=xdata)
         elif name == "exppol":
+            # TODO: subtract param
             return self.continuumModel.derivative_fitmodel(param_idx, xdata=xdata)
         else:
             raise ValueError(name)
 
     def _numerical_derivative(self, index, xdata=None):
         keep = self.parameters
-        p0 = self.parameters[index]
+        parameters = keep.copy()
+        p0 = parameters[index]
         try:
             delta = (p0[index] + p0[index]) * 0.00001
             parameters[index] = p0 + delta
@@ -1996,7 +2056,7 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
             self.parameters = parameters
             f2 = self.evaluate_fitmodel(xdata=xdata)
         finally:
-            parameters = keep
+            self.parameters = keep
         return (f1 - f2) / (2.0 * delta)
 
     @property
@@ -2027,14 +2087,47 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
             yield
 
     def startFit(self, digest=0, linear=None):
+        """Fit with legacy output"""
         if linear is not None:
             keep = self.linear
             self.linear = linear
-        result = super(McaTheory, self).fit(full_output=digest)
+        result = super(McaTheory, self).fit(full_output=True)
+
         if linear is not None:
             self.linear = linear
-        # TODO digest result
-        return None, None
+
+        self._last_fit_result = result
+        if digest:
+            return self._legacyresult(result), self.digestresult()
+        else:
+            return self._legacyresult(result)
+
+    @staticmethod
+    def _legacyresult(result):
+        if result["linear"]:
+            return (
+                result["parameters"].tolist(),
+                numpy.nan,
+                result["uncertainties"].tolist(),
+                1,
+                numpy.nan,
+            )
+        else:
+            return (
+                result["parameters"].tolist(),
+                result["chi2_red"],
+                result["uncertainties"].tolist(),
+                result["niter"],
+                result["lastdeltachi"],
+            )
+
+    def digestresult(self):
+        with self.use_fit_result_context(self._last_fit_result):
+            return dict()
+
+    def imagingDigestResult(self):
+        with self.use_fit_result_context(self._last_fit_result):
+            return dict()
 
 
 class MultiMcaTheory(ConcatModel):

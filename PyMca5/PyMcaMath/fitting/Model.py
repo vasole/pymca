@@ -84,11 +84,57 @@ class Cached(object):
 
 
 class Model(Cached):
-    """Evaluation and derivatives of a model to be used in least-squares fitting."""
+    """Evaluation and derivatives of a model to be used in least-squares fitting.
+
+    Each group of fit parameters is exposed as a property. Associated fit contraints
+    are optional properties.
+
+    There is a "fit model" and a "full model". The full model describes the data,
+    the fit model describes the pre-processed data (for example smoothed,
+    numerical back subtracted, ...). By default the full model and the fit model
+    are identical.
+
+    Fitting is done with linear least-squares optimization (no iterations) or
+    non-linear least-squares optimization (iterative). In addition a
+    non-least-squares optimization loop can be added on top (iterative).
+
+    The abstract class provides the following abstract methods/properties:
+        * Data to fit:
+            * xdata:
+            * ydata:
+            * ystd:
+        * Fit Model:
+            * linear: linear or non-linear fitting
+            * evaluate_fitmodel:
+            * derivative_fitmodel: derivatives of all parameters
+            * linear_derivatives_fitmodel: derivatives of the linear parameters
+            * non_leastsquares_increment: non-least-squares optimization step
+        * Model parameters:
+            * _parameter_group_names: names of all parameter groups
+            * _linear_parameter_group_names: names of the linear parameter groups
+            * _iter_parameter_groups: provides parameter group names and number of parameters
+
+    Example:
+
+    ```python
+        model = MyModel()
+        model.xdata = xdata
+        model.ydata = ydata
+        model.ystd = ydata**0.5
+
+        plt.plot(model.xdata, model.ydata, label="data")
+        plt.plot(model.xdata, model.ymodel, label="initial")
+
+        result = model.fit()
+        model.use_fit_result(result)
+
+        plt.plot(model.xdata, model.ymodel, label="fit")
+    ```
+    """
 
     def __init__(self):
-        self.included_parameters = None
-        self.excluded_parameters = None
+        self._included_parameters = None  # for model concatenation
+        self._excluded_parameters = None  # for model concatenation
         super(Model, self).__init__()
 
     @property
@@ -126,20 +172,20 @@ class Model(Cached):
         return len(self.xdata)
 
     @property
-    def fit_parameters(self):
-        return self._get_parameters(fitting=True)
-
-    @fit_parameters.setter
-    def fit_parameters(self, values):
-        return self._set_parameters(values, fitting=True)
-
-    @property
     def parameters(self):
         return self._get_parameters(fitting=False)
 
     @parameters.setter
     def parameters(self, values):
         return self._set_parameters(values, fitting=False)
+
+    @property
+    def fit_parameters(self):
+        return self._get_parameters(fitting=True)
+
+    @fit_parameters.setter
+    def fit_parameters(self, values):
+        return self._set_parameters(values, fitting=True)
 
     @property
     def constraints(self):
@@ -162,20 +208,20 @@ class Model(Cached):
         raise AttributeError from NotImplementedError
 
     @property
-    def linear_fit_parameters(self):
-        return self._get_parameters(linear_only=True, fitting=True)
-
-    @linear_fit_parameters.setter
-    def linear_fit_parameters(self, params):
-        return self._set_parameters(params, linear_only=True, fitting=True)
-
-    @property
     def linear_parameters(self):
         return self._get_parameters(linear_only=True, fitting=False)
 
     @linear_parameters.setter
     def linear_parameters(self, params):
         return self._set_parameters(params, linear_only=True, fitting=False)
+
+    @property
+    def linear_fit_parameters(self):
+        return self._get_parameters(linear_only=True, fitting=True)
+
+    @linear_fit_parameters.setter
+    def linear_fit_parameters(self, params):
+        return self._set_parameters(params, linear_only=True, fitting=True)
 
     @property
     def linear_constraints(self):
@@ -256,8 +302,8 @@ class Model(Cached):
             i += n
 
     def _filter_parameter_names(self, names):
-        included = self.included_parameters
-        excluded = self.excluded_parameters
+        included = self._included_parameters
+        excluded = self._excluded_parameters
         if included is None:
             included = names
         if excluded is None:
@@ -357,8 +403,8 @@ class Model(Cached):
         if cache is None:
             it = self._iter_parameter_groups(linear_only=linear_only)
         else:
-            a = self.included_parameters
-            b = self.excluded_parameters
+            a = self._included_parameters
+            b = self._excluded_parameters
             if a is not None:
                 a = tuple(sorted(a))
             if b is not None:
@@ -430,19 +476,16 @@ class Model(Cached):
                     b.copy(),
                     uncertainties=True,
                     covariances=False,
-                    digested_output=False,
+                    digested_output=True,
                 )
                 if self.niter_non_leastsquares:
-                    if full_output:
-                        self.linear_fit_parameters = result[0]
-                    else:
-                        self.linear_fit_parameters = result["parameters"]
+                    self.linear_fit_parameters = result["parameters"]
                     self.non_leastsquares_increment()
-        return {
-            "linear": True,
-            "parameters": self._fit_to_parameters(result[0]),
-            "uncertainties": self._fit_to_uncertainties(result[1]),
-        }
+        result["linear"] = True
+        result["parameters"] = self._fit_to_parameters(result["parameters"])
+        result["uncertainties"] = self._fit_to_uncertainties(result["uncertainties"])
+        result.pop("svd")
+        return result
 
     @contextmanager
     def _linear_fit_context(self):
@@ -567,6 +610,21 @@ class Model(Cached):
         else:
             self.parameters = result["parameters"]
 
+    @contextmanager
+    def use_fit_result_context(self, result):
+        if result["linear"]:
+            keep = self.linear_parameters
+        else:
+            keep = self.parameters
+        self.use_fit_result(result)
+        try:
+            yield
+        finally:
+            if result["linear"]:
+                self.linear_parameters = keep
+            else:
+                self.parameters = keep
+
     @property
     def niter_non_leastsquares(self):
         return 0
@@ -587,8 +645,8 @@ class ConcatModel(Model):
         self._models = models
         self.__fixed_shared_attributes = {
             "linear",
-            "included_parameters",
-            "excluded_parameters",
+            "_included_parameters",
+            "_excluded_parameters",
         }
         self.shared_attributes = shared_attributes
         super(ConcatModel, self).__init__()
@@ -683,7 +741,7 @@ class ConcatModel(Model):
         if nmodels == 0:
             return 0
         else:
-            return sum([m.ndata for m in self._models])
+            return sum(m.ndata for m in self._models)
 
     @property
     def xdata(self):
@@ -744,25 +802,25 @@ class ConcatModel(Model):
 
     @contextmanager
     def _filter_parameter_context(self, shared=True):
-        keepex = self.excluded_parameters
-        keepinc = self.included_parameters
+        keepex = self._excluded_parameters
+        keepin = self._included_parameters
         try:
             if shared:
-                if keepinc:
-                    self.included_parameters = list(
-                        set(keepinc) - set(self.shared_attributes)
+                if keepin:
+                    self._included_parameters = list(
+                        set(keepin) - set(self.shared_attributes)
                     )
                 else:
-                    self.included_parameters = self.shared_attributes
+                    self._included_parameters = self.shared_attributes
             else:
                 if keepex:
-                    self.excluded_parameters.extend(self.shared_attributes)
+                    self._excluded_parameters.extend(self.shared_attributes)
                 else:
-                    self.excluded_parameters = self.shared_attributes
+                    self._excluded_parameters = self.shared_attributes
             yield
         finally:
-            self.excluded_parameters = keepex
-            self.included_parameters = keepinc
+            self._excluded_parameters = keepex
+            self._included_parameters = keepin
 
     @property
     def nparameters(self):
