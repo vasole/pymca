@@ -425,7 +425,7 @@ class testXrf(unittest.TestCase):
         self.assertTrue( testValue > 0.30,
             "Expected Cr concentration above 0.30 got %.3f" % testValue)
 
-        # chek the sum of concentration of main components is above 1
+        # check the sum of concentration of main components is above 1
         # because of neglecting higher order excitations
         elements = ["Cr K", "V K", "Mn K", "Fe Ka", "Ni K"]
         total = 0.0
@@ -448,7 +448,7 @@ class testXrf(unittest.TestCase):
             abs(concentrationsResult["mass fraction"]["Fe Ka"] - 0.65) < 0.03,
             "Invalid Fe Concentration Using Tertiary Excitation")
 
-        # chek the sum of concentration of main components is above 1
+        # check the sum of concentration of main components is above 1
         elements = ["Cr K", "Mn K", "Fe Ka", "Ni K"]
         total = 0.0
         for element in elements:
@@ -529,7 +529,7 @@ class testXrf(unittest.TestCase):
                     fluorates = mcaFit._fluoRates,
                     addinfo=True)
 
-        # chek the sum of concentration of main components is above 1
+        # check the sum of concentration of main components is above 1
         elements = ["Cr K", "Mn K", "Fe Ka", "Ni K"]
         total = 0.0
         for element in elements:
@@ -544,19 +544,19 @@ class testXrf(unittest.TestCase):
                 "Strategy: Element %s discrepancy too large %.1f %%" % \
                   (element.split()[0], delta))
 
-    def testLegacyMcaTheory(self):
+    def testCompareLegacyMcaTheory(self):
         x, y, configuration = self._readTrainingData()
-        self._testLegacyMcaTheory(x, y, configuration)
+        self._testCompareLegacyMcaTheory(x, y, configuration)
 
         x, y, configuration = self._readStainlessSteelData()
 
         configuration["concentrations"]['usematrix'] = 0
         configuration["concentrations"]["usemultilayersecondary"] = 0
-        self._testLegacyMcaTheory(x, y, configuration)
+        self._testCompareLegacyMcaTheory(x, y, configuration)
 
         configuration["concentrations"]['usematrix'] = 1
         configuration["concentrations"]["usemultilayersecondary"] = 2
-        self._testLegacyMcaTheory(x, y, configuration)
+        self._testCompareLegacyMcaTheory(x, y, configuration)
 
         configuration["concentrations"]['usematrix'] = 0
         configuration["concentrations"]["usemultilayersecondary"] = 2
@@ -577,9 +577,9 @@ class testXrf(unittest.TestCase):
                                                          "Mn", "Fe",
                                                          "Ni", "-", "-",
                                                          "-","-","-"]
-        self._testLegacyMcaTheory(x, y, configuration)
+        self._testCompareLegacyMcaTheory(x, y, configuration)
 
-    def _testLegacyMcaTheory(self, x, y, configuration):
+    def _testCompareLegacyMcaTheory(self, x, y, configuration):
         from PyMca5.PyMcaPhysics.xrf import LegacyMcaTheory
         from PyMca5.PyMcaPhysics.xrf import NewClassMcaTheory
 
@@ -595,6 +595,35 @@ class testXrf(unittest.TestCase):
         mcaFit = NewClassMcaTheory.McaTheory()
         _, fitResult2, result2 = self._configAndFit(
             x, y, copy.deepcopy(configuration), mcaFit, tmpflag=True)
+
+        import matplotlib.pyplot as plt
+        from pprint import pprint
+
+        if False:
+            mcaFit.linear = False
+            print(mcaFit.linegroup_areas)
+            result = mcaFit.fit(full_output=True)
+            pprint(result["niter"])
+            mcaFit.use_fit_result(result)
+            print(mcaFit.linegroup_areas)
+
+        if False:
+            plt.plot(mcaFit.ydata, label="data")
+            plt.plot(mcaFit.ynumbkg(), label="ynumbkg")
+            plt.plot(mcaFit.yfullmodel, label="model")
+            plt.yscale("log")
+            plt.legend()
+            plt.show()
+
+        if False:
+            for i, name in enumerate(mcaFit.parameter_names):
+                yd = mcaFit.derivative_fitmodel(i)
+                yd_num = mcaFit._numerical_derivative(i)
+                plt.plot(yd, label="yd")
+                plt.plot(yd_num, label="yd_num")
+                plt.legend()
+                plt.title(name)
+                plt.show()
 
         t2 = time.time()
 
@@ -677,22 +706,23 @@ class testXrf(unittest.TestCase):
         fitResult1, result1 = mcaFit.startFit(digest=1)
         return configuration, fitResult1, result1
 
-    def _assertDeepEqual(self, obj1, obj2):
+    def _assertDeepEqual(self, obj1, obj2, _nodes=tuple()):
         """Better verbosity than assertEqual for deep structures
         """
+        err_msg = "->".join(_nodes)
         if isinstance(obj1, dict):
-            self.assertEqual(set(obj1.keys()), set(obj2.keys()))
+            self.assertEqual(set(obj1.keys()), set(obj2.keys()), err_msg)
             for k in obj1:
-                self._assertDeepEqual(obj1[k], obj2[k])
+                self._assertDeepEqual(obj1[k], obj2[k], _nodes=_nodes+(k,))
         elif isinstance(obj1, (list, tuple)):
             if isinstance(obj1[0], (list, tuple, numpy.ndarray)):
-                self._assertDeepEqual(obj1, obj2)
+                self._assertDeepEqual(obj1, obj2, _nodes=_nodes+(len(_nodes),))
             else:
-                self.assertEqual(obj1, obj2)
+                self.assertEqual(obj1, obj2, err_msg)
         elif isinstance(obj1, numpy.ndarray):
-            numpy.testing.assert_allclose(obj1, obj2, rtol=0)
+            numpy.testing.assert_allclose(obj1, obj2, rtol=0, err_msg=err_msg)
         else:
-            self.assertEqual(obj1, obj2)
+            self.assertEqual(obj1, obj2, err_msg)
 
 
 def getSuite(auto=True):
@@ -705,6 +735,7 @@ def getSuite(auto=True):
         testSuite.addTest(testXrf("testTrainingDataFilePresence"))
         testSuite.addTest(testXrf("testTrainingDataFit"))
         testSuite.addTest(testXrf("testStainlessSteelDataFit"))
+        testSuite.addTest(testXrf("testCompareLegacyMcaTheory"))
     return testSuite
 
 def test(auto=False):

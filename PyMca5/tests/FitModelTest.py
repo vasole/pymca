@@ -52,14 +52,16 @@ def with_model(nmodels):
 
 class testFitModel(unittest.TestCase):
     def setUp(self):
-        self.random_state = numpy.random.RandomState(seed=0)
+        self.random_state = numpy.random.RandomState(seed=100)
 
     def create_model(self, nmodels):
+        self.nmodels = nmodels
+        self.is_concat = nmodels != 1
         if nmodels == 1:
             self.fitmodel = SimpleModel.SimpleModel()
         else:
             self.fitmodel = SimpleModel.SimpleConcatModel(ndetectors=nmodels)
-        assert not self.fitmodel.linear
+        self.assertTrue(not self.fitmodel.linear)
         self.init_random()
         ydata = self.fitmodel.yfullmodel.copy()
         self.fitmodel.ydata = ydata
@@ -69,7 +71,7 @@ class testFitModel(unittest.TestCase):
         self.validate_model()
 
     def init_random(self, **kw):
-        if isinstance(self.fitmodel, SimpleModel.SimpleConcatModel):
+        if self.is_concat:
             for model in self.fitmodel._models:
                 self._init_random(model, **kw)
             self.fitmodel.shared_attributes = self.fitmodel.shared_attributes
@@ -78,8 +80,8 @@ class testFitModel(unittest.TestCase):
 
     def _init_random(self, model, npeaks=10, nchannels=2048, border=0.1):
         """Peaks close to the border will cause the nlls to fail"""
-        self.nnonglobals = 4  # zero, gain, wzero, wgain
-        self.nglobals = npeaks  # concentrations
+        self.npeaks = npeaks  # concentrations
+        self.nshapeparams = 4  # zero, gain, wzero, wgain
         model.xdata_raw = numpy.arange(nchannels)
         model.ydata_raw = numpy.full(nchannels, numpy.nan)
         model.ybkg = 10
@@ -99,52 +101,55 @@ class testFitModel(unittest.TestCase):
         model.efficiency = self.random_state.uniform(low=5000, high=6000, size=npeaks)
 
     def modify_random(self, only_linear=False):
-        if isinstance(self.fitmodel, SimpleModel.SimpleConcatModel):
-            self._modify_random_concat(only_linear=only_linear)
-        else:
-            self._modify_random(only_linear=only_linear)
+        self._modify_random(only_linear=only_linear)
         self.validate_model()
         # self.plot()
 
     def _modify_random(self, only_linear=False):
+        porg = self.fitmodel.parameters.copy()
+        plinorg = self.fitmodel.linear_parameters.copy()
         if only_linear:
-            p = self.fitmodel.parameters
             plin = self.fitmodel.linear_parameters
-            plin *= numpy.random.uniform(0.5, 0.8, len(plin))
+            plin *= self.random_state.uniform(0.5, 0.8, len(plin))
+            self.fitmodel.linear_parameters = plin
+            numpy.testing.assert_array_equal(self.fitmodel.linear_parameters, plin)
+            p = self.fitmodel.parameters
         else:
             p = self.fitmodel.parameters
-            plin = self.fitmodel.linear_parameters
-            p *= numpy.random.uniform(0.95, 1, len(p))
-            plin *= numpy.random.uniform(0.5, 0.8, len(plin))
+            p *= self.random_state.uniform(0.95, 1, len(p))
             self.fitmodel.parameters = p
-            assert numpy.array_equal(self.fitmodel.parameters, p)
-        self.fitmodel.linear_parameters = plin
-        assert numpy.array_equal(self.fitmodel.linear_parameters, plin)
+            numpy.testing.assert_array_equal(self.fitmodel.parameters, p)
+            plin = self.fitmodel.linear_parameters
+
+        for param_idx, param_name in enumerate(self.fitmodel.parameter_names):
+            if "concentration" in param_name or not only_linear:
+                self.assertNotEqual(p[param_idx], porg[param_idx], msg=param_name)
+            else:
+                self.assertEqual(p[param_idx], porg[param_idx], msg=param_name)
+
+        for param_idx, param_name in enumerate(self.fitmodel.linear_parameter_names):
+            self.assertNotEqual(plin[param_idx], plinorg[param_idx], msg=param_name)
+
         return p
 
-    def _modify_random_concat(self, only_linear=False):
-        p = self._modify_random(only_linear=only_linear)
-        assert not numpy.array_equal(
-            self.fitmodel.parameters[: self.nglobals], p[: self.nglobals]
-        )
-        assert numpy.array_equal(
-            self.fitmodel.parameters[self.nglobals :], p[self.nglobals :]
-        )
-
     def validate_model(self):
-        self._validate_model(self.fitmodel)
-        if isinstance(self.fitmodel, SimpleModel.SimpleConcatModel):
+        self._validate_model(self.fitmodel, self.is_concat)
+        if self.is_concat:
             for model in self.fitmodel._models:
-                self._validate_model(model)
+                self._validate_model(model, False)
 
-    def _validate_model(self, model):
-        is_concat = isinstance(model, SimpleModel.SimpleConcatModel)
-
-        assert not model.excluded_parameters
-        assert not model.included_parameters
-        assert model.ndata == len(model.xdata)
-        assert model.nparameters == len(model.parameters)
-        assert model.nlinear_parameters == len(model.linear_parameters)
+    def _validate_model(self, model, is_concat):
+        if not is_concat:
+            # Alphabetic order
+            expected = ["concentrations", "gain", "wgain", "wzero", "zero"]
+            self.assertEqual(model.all_parameter_group_names, expected)
+            expected = ["concentrations"]
+            self.assertEqual(model.all_linear_parameter_group_names, expected)
+        self.assertTrue(not model._excluded_parameters)
+        self.assertTrue(not model._included_parameters)
+        self.assertEqual(model.ndata, len(model.xdata))
+        self.assertEqual(model.nparameters, len(model.parameters))
+        self.assertEqual(model.nlinear_parameters, len(model.linear_parameters))
 
         arr1 = model.evaluate_fullmodel()
         arr2 = model.evaluate_linear_fullmodel()
@@ -160,29 +165,28 @@ class testFitModel(unittest.TestCase):
         numpy.testing.assert_allclose(arr1, arr3)
         numpy.testing.assert_allclose(arr1, arr4)
 
-        nonlin_names = ["zero", "gain", "wzero", "wgain"]
-        lin_names = ["concentrations" + str(i) for i in range(self.nglobals)]
-        names = nonlin_names + lin_names
+        # Alphabetic order
+        nonlin_names = ["gain", "wgain", "wzero", "zero"]
+        lin_names = ["concentrations" + str(i) for i in range(self.npeaks)]
+        names = lin_names + nonlin_names
         if is_concat:
             model.validate_shared_attributes()
-            assert model.nshared_parameters == self.nglobals
-            assert model.nshared_linear_parameters == self.nglobals
+            self.assertEqual(model.nshared_parameters, self.npeaks)
+            self.assertEqual(model.nshared_linear_parameters, self.npeaks)
             nmodels = model.nmodels
-            nonglobal_names = [
+            names = lin_names + [
                 name + str(i) for i in range(nmodels) for name in nonlin_names
             ]
-            global_names = lin_names
-            names = global_names + nonglobal_names
-            n = self.nglobals + self.nnonglobals * nmodels
-            assert model.nparameters == n
-            assert model.nlinear_parameters == self.nglobals
-            assert model.parameter_names == names
-            assert model.linear_parameter_names == lin_names
+            n = self.npeaks + self.nshapeparams * nmodels
+            self.assertEqual(model.nparameters, n)
+            self.assertEqual(model.nlinear_parameters, self.npeaks)
+            self.assertEqual(model.parameter_names, names)
+            self.assertEqual(model.linear_parameter_names, lin_names)
         else:
-            assert model.nparameters == self.nglobals + self.nnonglobals
-            assert model.nlinear_parameters == self.nglobals
-            assert model.parameter_names == names
-            assert model.linear_parameter_names == lin_names
+            self.assertEqual(model.nparameters, self.npeaks + self.nshapeparams)
+            self.assertEqual(model.nlinear_parameters, self.npeaks)
+            self.assertEqual(model.parameter_names, names)
+            self.assertEqual(model.linear_parameter_names, lin_names)
 
     def plot(self):
         import matplotlib.pyplot as plt
@@ -216,8 +220,10 @@ class testFitModel(unittest.TestCase):
 
         result = self.fitmodel.fit()
         self.assert_result(result, expected)
-        assert not numpy.allclose(self.fitmodel.ydata, self.fitmodel.yfullmodel)
-        assert not numpy.allclose(self.fitmodel.linear_parameters, expected)
+        self.assertTrue(
+            not numpy.allclose(self.fitmodel.ydata, self.fitmodel.yfullmodel)
+        )
+        self.assertTrue(not numpy.allclose(self.fitmodel.linear_parameters, expected))
 
         self.fitmodel.use_fit_result(result)
         numpy.testing.assert_allclose(self.fitmodel.ydata, self.fitmodel.yfullmodel)
@@ -238,14 +244,17 @@ class testFitModel(unittest.TestCase):
         self.modify_random(only_linear=False)
 
         # from PyMca5.PyMcaMisc.ProfilingUtils import profile
-        # with profile(memory=False, filename="testNonLinearFit.pyprof"):
+        # filename = "testNonLinearFit{}.pyprof".format(self.nmodels)
+        # with profile(memory=False, filename=filename):
         result = self.fitmodel.fit(full_output=True)
 
         # TODO: non-linear parameters not precise
         # self.assert_result(result, expected1)
-        assert not numpy.allclose(self.fitmodel.ydata, self.fitmodel.yfullmodel)
-        assert not numpy.allclose(self.fitmodel.parameters, expected1)
-        assert not numpy.allclose(self.fitmodel.linear_parameters, expected2)
+        self.assertTrue(
+            not numpy.allclose(self.fitmodel.ydata, self.fitmodel.yfullmodel)
+        )
+        self.assertTrue(not numpy.allclose(self.fitmodel.parameters, expected1))
+        self.assertTrue(not numpy.allclose(self.fitmodel.linear_parameters, expected2))
 
         self.fitmodel.use_fit_result(result)
         # self.plot()
@@ -253,7 +262,7 @@ class testFitModel(unittest.TestCase):
         # TODO: non-linear parameters not precise
         # numpy.testing.assert_allclose(self.fitmodel.parameters, expected1)
         numpy.testing.assert_allclose(
-            self.fitmodel.linear_parameters, expected2, rtol=1e-5
+            self.fitmodel.linear_parameters, expected2, rtol=1e-3
         )
 
     def assert_result(self, result, expected):
@@ -261,47 +270,53 @@ class testFitModel(unittest.TestCase):
         pstd = numpy.asarray(result["uncertainties"])
         ll = p - 3 * pstd
         ul = p + 3 * pstd
-        assert all((expected >= ll) & (expected <= ul))
+        self.assertTrue(all((expected >= ll) & (expected <= ul)))
 
     def assert_ymodel(self):
         a = self.fitmodel.ydata
         b = self.fitmodel.yfullmodel
         mask = (a > 1) & (b > 1)
-        assert mask.any()
+        self.assertTrue(mask.any())
         numpy.testing.assert_allclose(a[mask], b[mask], rtol=1e-3)
 
     @with_model(8)
     def testParameterIndex(self):
         # Test parameter index conversion from concatenated model to single model
         nmodels = self.fitmodel.nmodels
-        nglobals = self.nglobals
+        npeaks = self.npeaks
         for linear in [False, True]:
             self.fitmodel.linear = linear
             if linear:
-                nnonglobals = 0
+                nshapeparams = 0
             else:
-                nnonglobals = self.nnonglobals
+                nshapeparams = self.nshapeparams
             imodels = []
             iparams = []
-            for param_idx in range(self.fitmodel.nparameters):
+            for param_idx, param_name in enumerate(self.fitmodel.parameter_names):
                 lst = list(
                     self.fitmodel._parameter_model_index(param_idx, linear_only=linear)
                 )
+                # imodel: model indices
+                # iparam: index of the parameter in the corresponing models
                 if lst:
                     imodel, iparam = list(zip(*lst))
                 else:
                     imodel, iparam = tuple(), tuple()
-                if param_idx < nglobals:
-                    assert imodel == tuple(range(nmodels))
-                    assert iparam == tuple([nnonglobals + param_idx] * nmodels)
+                if "concentrations" in param_name:
+                    offset = 0
+                    # Shared parameters
+                    self.assertEqual(imodel, tuple(range(nmodels)))
+                    self.assertEqual(iparam, (param_idx - offset,) * nmodels)
                 else:
+                    # Non-shared peak shape parameters
+                    offset = npeaks
                     imodels.extend(imodel)
-                    iparams.extend(iparam)
-            assert len(imodels) == nnonglobals * nmodels
-            expected = numpy.repeat(list(range(nmodels)), nnonglobals)
-            assert imodels == expected.tolist()
-            expected = numpy.tile(list(range(nnonglobals)), nmodels)
-            assert iparams == expected.tolist()
+                    iparams.extend(i - offset for i in iparam)
+            self.assertEqual(len(imodels), nshapeparams * nmodels)
+            expected = numpy.repeat(list(range(nmodels)), nshapeparams)
+            self.assertEqual(imodels, expected.tolist())
+            expected = numpy.tile(list(range(nshapeparams)), nmodels)
+            self.assertEqual(iparams, expected.tolist())
 
     @with_model(8)
     def testChannelIndex(self):
@@ -317,8 +332,8 @@ class testFitModel(unittest.TestCase):
             for idx in self.fitmodel._generate_idx_channels(len(x2), stride=vstride):
                 chunk = x2[idx]
                 access_cnt[idx] += 1
-                assert all(numpy.diff(chunk) == stride)
-            assert all(access_cnt == 1)
+                self.assertTrue(all(numpy.diff(chunk) == stride))
+            self.assertTrue(all(access_cnt == 1))
 
 
 def getSuite(auto=True):

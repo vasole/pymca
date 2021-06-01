@@ -46,23 +46,30 @@ class testFitPolModel(unittest.TestCase):
         model.xdata = fitmodel.xdata = numpy.linspace(0, 100, 100)
 
         for degree in [0, 1, 5]:
-            ncoeff = degree + 1
-            expected = self.random_state.uniform(low=-5, high=5, size=ncoeff)
-            model.coefficients = expected
-            fitmodel.ydata = model.yfullmodel
+            with self.subTest(degree=degree):
+                model.degree = degree
+                fitmodel.degree = degree
+                ncoeff = degree + 1
+                expected = self.random_state.uniform(low=-5, high=5, size=ncoeff)
+                model.coefficients = expected
+                self.assertEqual(model.all_parameter_group_names, ["coefficients"])
+                self.assertEqual(
+                    model.all_linear_parameter_group_names, ["coefficients"]
+                )
+                numpy.testing.assert_array_equal(model.parameters, expected)
 
-            numpy.testing.assert_array_equal(model.parameters, expected)
-            numpy.testing.assert_array_equal(fitmodel.ydata, model.yfullmodel)
-            numpy.testing.assert_array_equal(fitmodel.yfitdata, model.yfitmodel)
-            numpy.testing.assert_array_equal(model.yfitmodel, model.yfullmodel)
+                fitmodel.ydata = model.yfullmodel
+                numpy.testing.assert_array_equal(fitmodel.ydata, model.yfullmodel)
+                numpy.testing.assert_array_equal(fitmodel.yfitdata, model.yfitmodel)
+                numpy.testing.assert_array_equal(model.yfitmodel, model.yfullmodel)
 
-            for linear in [True, False]:
-                with self.subTest(degree=degree, linear=linear):
-                    fitmodel.linear = linear
-                    fitmodel.coefficients = numpy.zeros_like(expected)
-                    self.assertEqual(fitmodel.degree, degree)
-                    result = fitmodel.fit()["parameters"]
-                    numpy.testing.assert_allclose(result, expected, rtol=1e-4)
+                for linear in [True, False]:
+                    with self.subTest(degree=degree, linear=linear):
+                        fitmodel.linear = linear
+                        fitmodel.coefficients = numpy.zeros_like(expected)
+                        self.assertEqual(fitmodel.degree, degree)
+                        result = fitmodel.fit()["parameters"]
+                        numpy.testing.assert_allclose(result, expected, rtol=1e-4)
 
     def testExpPol(self):
         model = PolynomialModels.ExponentialPolynomialModel()
@@ -70,25 +77,30 @@ class testFitPolModel(unittest.TestCase):
         model.xdata = fitmodel.xdata = numpy.linspace(-0.5, 0.5, 100)
 
         for degree in [0, 1, 5]:
-            ncoeff = degree + 1
-            expected = self.random_state.uniform(low=-5, high=5, size=ncoeff)
-            model.coefficients = expected
-            fitmodel.ydata = model.yfullmodel
+            with self.subTest(degree=degree):
+                model.degree = degree
+                fitmodel.degree = degree
+                ncoeff = degree + 1
+                expected = self.random_state.uniform(low=-5, high=5, size=ncoeff)
+                model.coefficients = expected
+                numpy.testing.assert_array_equal(model.parameters, expected)
 
-            numpy.testing.assert_array_equal(model.parameters, expected)
-            numpy.testing.assert_array_equal(fitmodel.ydata, model.yfullmodel)
-            numpy.testing.assert_allclose(fitmodel.yfitdata, model.yfitmodel)
-            numpy.testing.assert_allclose(model.yfitmodel, numpy.log(model.yfullmodel))
+                fitmodel.ydata = model.yfullmodel
+                numpy.testing.assert_array_equal(fitmodel.ydata, model.yfullmodel)
+                numpy.testing.assert_allclose(fitmodel.yfitdata, model.yfitmodel)
+                numpy.testing.assert_allclose(
+                    model.yfitmodel, numpy.log(model.yfullmodel)
+                )
 
-            for linear in [True, False]:
-                with self.subTest(degree=degree, linear=linear):
-                    fitmodel.linear = linear
-                    fitmodel.coefficients = numpy.zeros_like(expected)
-                    if not linear:
-                        fitmodel.coefficients[0] = 0.1
-                    self.assertEqual(fitmodel.degree, degree)
-                    result = fitmodel.fit()["parameters"]
-                    numpy.testing.assert_allclose(result, expected)
+                for linear in [True, False]:
+                    with self.subTest(degree=degree, linear=linear):
+                        fitmodel.linear = linear
+                        fitmodel.coefficients = numpy.zeros_like(expected)
+                        if not linear:
+                            fitmodel.coefficients[0] = 0.1
+                        self.assertEqual(fitmodel.degree, degree)
+                        result = fitmodel.fit()["parameters"]
+                        numpy.testing.assert_allclose(result, expected)
 
 
 def getSuite(auto=True):

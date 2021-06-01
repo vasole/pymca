@@ -43,9 +43,13 @@ from PyMca5 import PyMcaDataDir
 from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaMath.fitting import SpecfitFuns
 from PyMca5.PyMcaMath.fitting import Gefit
-from PyMca5.PyMcaMath.fitting.Model import Model, ConcatModel
+from PyMca5.PyMcaMath.fitting.Model import Model
+from PyMca5.PyMcaMath.fitting.Model import ConcatModel
+from PyMca5.PyMcaMath.fitting.Model import parameter
+from PyMca5.PyMcaMath.fitting.Model import linear_parameter
 from PyMca5.PyMcaMath.fitting.PolynomialModels import LinearPolynomialModel
 from PyMca5.PyMcaMath.fitting.PolynomialModels import ExponentialPolynomialModel
+
 
 from . import Elements
 from . import ConcentrationsTool
@@ -969,6 +973,12 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
     ):
         """Raw parameters of emission/scatter/escape peaks. All parameters are
         defined in the energy domain (X-axis is energy, not channels).
+
+        :param int hypermet:
+        :param list or None selected_groups: all groups when `None`
+                                             no groups when empty list (npeaks == 0)
+        :param bool normalized_peakgroups:
+        :returns array: npeaks x npeakparams
         """
         lineGroups = self._lineGroups
         escapeLineGroups = self._escapeLineGroups
@@ -1035,10 +1045,24 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
 
         return parameters
 
-    @property
+    @linear_parameter
     def linegroup_areas(self):
         self._refreshAreasCache()
         return self._lineGroupAreas
+
+    @linegroup_areas.setter
+    def linegroup_areas(self, values):
+        self._lineGroupAreas[:] = values
+
+    @linegroup_areas.counter
+    def linegroup_areas(self):
+        return self._nLineGroups
+
+    @linegroup_areas.constraints
+    def linegroup_areas(self):
+        fixed = Gefit.CFIXED, 0, 0
+        positive = Gefit.CPOSITIVE, 0, 0
+        return [positive if area else fixed for area in self.linegroup_areas]
 
     def _refreshAreasCache(self):
         params = self._areasCacheParams
@@ -1060,7 +1084,10 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
         xenergy = self.xenergy
         emin = xenergy.min()
         emax = xenergy.max()
-        factor = self.GAUSS_SIGMA_TO_FWHM * numpy.sqrt(2 * numpy.pi)
+        factor = numpy.sqrt(2 * numpy.pi) / self.GAUSS_SIGMA_TO_FWHM
+        gain = self.gain
+
+        keep = list()
 
         lineGroups = self._lineGroups
         escapeLineGroups = self._escapeLineGroups
@@ -1079,11 +1106,23 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
                         if rate * escrate > selected_rate:
                             selected_energy = peakenergy
             if selected_energy:
-                height = ydata[(numpy.abs(xenergy - selected_energy)).argmin()]
+                chan = (numpy.abs(xenergy - selected_energy)).argmin()
+                height = ydata[chan]
+                keep.append((chan, height))
                 fwhm = self._peakFWHM(selected_energy)
                 linegroup_areas[i] = height * fwhm * factor  # Gaussian
             else:
                 linegroup_areas[i] = 0  # Fixed at zero
+
+        if False:
+            print(linegroup_areas)
+            import matplotlib.pyplot as plt
+
+            plt.figure()
+            plt.plot(ydata)
+            x, y = zip(*keep)
+            plt.plot(x, y, "o")
+            plt.show()
 
     def _evaluatePeakProfiles(
         self,
@@ -1097,7 +1136,7 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
 
         :param array xdata: 1D array
         :param int or None hypermet:
-        :param bool fast: ???
+        :param bool fast: use lookup table for calculating exponentials
         :param bool selected_groups:
         :param bool normalized_peakgroups:
         :returns array: same shape as x
@@ -1467,7 +1506,7 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
     def _channelsToXpol(self, x):
         return self.zero + self.gain * (x - x.mean())
 
-    @property
+    @linear_parameter
     def linpol_coefficients(self):
         if isinstance(self.continuumModel, LinearPolynomialModel):
             return self.continuum_coefficients
@@ -1479,7 +1518,7 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
         if isinstance(self.continuumModel, LinearPolynomialModel):
             self.continuum_coefficients = values
 
-    @property
+    @parameter
     def exppol_coefficients(self):
         if isinstance(self.continuumModel, ExponentialPolynomialModel):
             return self.continuum_coefficients
@@ -1564,7 +1603,7 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
             ysmooth[-1] = 0.5 * (ysmooth[-1] + ysmooth[-2])
         return ysmooth
 
-    @property
+    @parameter
     def zero(self):
         return self.config["detector"]["zero"]
 
@@ -1572,7 +1611,16 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
     def zero(self, value):
         self.config["detector"]["zero"] = value
 
-    @property
+    @zero.constraints
+    def zero(self):
+        if self.config["detector"]["fixedzero"]:
+            return Gefit.CFIXED, 0, 0
+        else:
+            value = self.zero
+            delta = self.config["detector"]["deltazero"]
+            return Gefit.CQUOTED, value - delta, value + delta
+
+    @parameter
     def gain(self):
         return self.config["detector"]["gain"]
 
@@ -1580,7 +1628,16 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
     def gain(self, value):
         self.config["detector"]["gain"] = value
 
-    @property
+    @gain.constraints
+    def gain(self):
+        if self.config["detector"]["fixedgain"]:
+            return Gefit.CFIXED, 0, 0
+        else:
+            value = self.gain
+            delta = self.config["detector"]["deltagain"]
+            return Gefit.CQUOTED, value - delta, value + delta
+
+    @parameter
     def noise(self):
         return self.config["detector"]["noise"]
 
@@ -1588,7 +1645,7 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
     def noise(self, value):
         self.config["detector"]["noise"] = value
 
-    @property
+    @parameter
     def fano(self):
         return self.config["detector"]["fano"]
 
@@ -1596,7 +1653,16 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
     def fano(self, value):
         self.config["detector"]["fano"] = value
 
-    @property
+    @fano.constraints
+    def fano(self):
+        if self.config["detector"]["fixedfano"]:
+            return Gefit.CFIXED, 0, 0
+        else:
+            value = self.fano
+            delta = self.config["detector"]["deltafano"]
+            return Gefit.CQUOTED, value - delta, value + delta
+
+    @parameter
     def sum(self):
         if self.config["fit"]["sumflag"]:
             return self.config["detector"]["sum"]
@@ -1607,7 +1673,16 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
     def sum(self, value):
         self.config["detector"]["sum"] = value
 
-    @property
+    @sum.constraints
+    def sum(self):
+        if self.config["detector"]["fixedsum"] or not self.config["fit"]["sumflag"]:
+            return Gefit.CFIXED, 0, 0
+        else:
+            value = self.sum
+            delta = self.config["detector"]["deltasum"]
+            return Gefit.CQUOTED, value - delta, value + delta
+
+    @parameter
     def eta_factor(self):
         return self.config["peakshape"]["eta_factor"]
 
@@ -1615,7 +1690,23 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
     def eta_factor(self, value):
         self.config["peakshape"]["eta_factor"] = value
 
-    @property
+    @eta_factor.counter
+    def eta_factor(self):
+        if self._hypermet:
+            return 0
+        else:
+            return 1
+
+    @eta_factor.constraints
+    def eta_factor(self):
+        if self.config["peakshape"]["fixedeta_factor"]:
+            return Gefit.CFIXED, 0, 0
+        else:
+            value = self.eta_factor
+            delta = self.config["peakshape"]["deltaeta_factor"]
+            return Gefit.CQUOTED, value - delta, value + delta
+
+    @parameter
     def step_heightratio(self):
         if self._hypermetStep:
             return self.config["peakshape"]["step_heightratio"]
@@ -1626,15 +1717,47 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
     def step_heightratio(self, value):
         self.config["peakshape"]["step_heightratio"] = value
 
-    @property
+    @step_heightratio.counter
+    def step_heightratio(self):
+        if self._hypermet:
+            return 1
+        else:
+            return 0
+
+    @step_heightratio.constraints
+    def step_heightratio(self):
+        if self.config["peakshape"]["fixedstep_heightratio"] or not self._hypermetStep:
+            return Gefit.CFIXED, 0, 0
+        else:
+            value = self.step_heightratio
+            delta = self.config["peakshape"]["deltastep_heightratio"]
+            return Gefit.CQUOTED, value - delta, value + delta
+
+    @parameter
     def lt_sloperatio(self):
         return self.config["peakshape"]["lt_sloperatio"]
 
     @lt_sloperatio.setter
     def lt_sloperatio(self, value):
-        self.config["detector"]["lt_sloperatio"] = value
+        self.config["peakshape"]["lt_sloperatio"] = value
 
-    @property
+    @lt_sloperatio.counter
+    def lt_sloperatio(self):
+        if self._hypermet:
+            return 1
+        else:
+            return 0
+
+    @lt_sloperatio.constraints
+    def lt_sloperatio(self):
+        if self.config["peakshape"]["fixedlt_sloperatio"] or not self._hypermetLongTail:
+            return Gefit.CFIXED, 0, 0
+        else:
+            value = self.lt_sloperatio
+            delta = self.config["peakshape"]["deltalt_sloperatio"]
+            return Gefit.CQUOTED, value - delta, value + delta
+
+    @parameter
     def lt_arearatio(self):
         if self._hypermetLongTail:
             return self.config["peakshape"]["lt_arearatio"]
@@ -1645,7 +1768,23 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
     def lt_arearatio(self, value):
         self.config["peakshape"]["lt_arearatio"] = value
 
-    @property
+    @lt_arearatio.counter
+    def lt_arearatio(self):
+        if self._hypermet:
+            return 1
+        else:
+            return 0
+
+    @lt_arearatio.constraints
+    def lt_arearatio(self):
+        if self.config["peakshape"]["fixedlt_arearatio"] or not self._hypermetLongTail:
+            return Gefit.CFIXED, 0, 0
+        else:
+            value = self.lt_arearatio
+            delta = self.config["peakshape"]["deltalt_arearatio"]
+            return Gefit.CQUOTED, value - delta, value + delta
+
+    @parameter
     def st_sloperatio(self):
         return self.config["peakshape"]["st_sloperatio"]
 
@@ -1653,7 +1792,26 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
     def st_sloperatio(self, value):
         self.config["peakshape"]["st_sloperatio"] = value
 
-    @property
+    @st_sloperatio.counter
+    def st_sloperatio(self):
+        if self._hypermet:
+            return 1
+        else:
+            return 0
+
+    @st_sloperatio.constraints
+    def st_sloperatio(self):
+        if (
+            self.config["peakshape"]["fixedst_sloperatio"]
+            or not self._hypermetShortTail
+        ):
+            return Gefit.CFIXED, 0, 0
+        else:
+            value = self.st_sloperatio
+            delta = self.config["peakshape"]["deltast_sloperatio"]
+            return Gefit.CQUOTED, value - delta, value + delta
+
+    @parameter
     def st_arearatio(self):
         if self._hypermetShortTail:
             return self.config["peakshape"]["st_arearatio"]
@@ -1664,178 +1822,21 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
     def st_arearatio(self, value):
         self.config["peakshape"]["st_arearatio"] = value
 
-    @property
-    def zero_constraint(self):
-        if self.config["detector"]["fixedzero"]:
-            return Gefit.CFIXED, 0, 0
+    @st_arearatio.counter
+    def st_arearatio(self):
+        if self._hypermet:
+            return 1
         else:
-            value = self.zero
-            delta = self.config["detector"]["deltazero"]
-            return Gefit.CQUOTED, value + delta, value - delta
+            return 0
 
-    @property
-    def gain_constraint(self):
-        if self.config["detector"]["fixedgain"]:
-            return Gefit.CFIXED, 0, 0
-        else:
-            value = self.gain
-            delta = self.config["detector"]["deltagain"]
-            return Gefit.CQUOTED, value + delta, value - delta
-
-    @property
-    def fano_constraint(self):
-        if self.config["detector"]["fixedfano"]:
-            return Gefit.CFIXED, 0, 0
-        else:
-            value = self.fano
-            delta = self.config["detector"]["deltafano"]
-            return Gefit.CQUOTED, value + delta, value - delta
-
-    @property
-    def sum_constraint(self):
-        if self.config["detector"]["fixedsum"] or not self.config["fit"]["sumflag"]:
-            return Gefit.CFIXED, 0, 0
-        else:
-            value = self.sum
-            delta = self.config["detector"]["deltasum"]
-            return Gefit.CQUOTED, value + delta, value - delta
-
-    @property
-    def eta_factor_constraint(self):
-        if self.config["detector"]["fixedeta_factor"]:
-            return Gefit.CFIXED, 0, 0
-        else:
-            value = self.eta_factor
-            delta = self.config["detector"]["deltaeta_factor"]
-            return Gefit.CQUOTED, value + delta, value - delta
-
-    @property
-    def step_heightratio_constraint(self):
-        if self.config["detector"]["fixedstep_heightratio"] or not self._hypermetStep:
-            return Gefit.CFIXED, 0, 0
-        else:
-            value = self.step_heightratio
-            delta = self.config["detector"]["deltastep_heightratio"]
-            return Gefit.CQUOTED, value + delta, value - delta
-
-    @property
-    def lt_sloperatio_constraint(self):
-        if self.config["detector"]["fixedlt_sloperatio"] or not self._hypermetLongTail:
-            return Gefit.CFIXED, 0, 0
-        else:
-            value = self.lt_sloperatio
-            delta = self.config["detector"]["deltalt_sloperatio"]
-            return Gefit.CQUOTED, value + delta, value - delta
-
-    @property
-    def lt_arearatio_constraint(self):
-        if self.config["detector"]["fixedlt_arearatio"] or not self._hypermetLongTail:
-            return Gefit.CFIXED, 0, 0
-        else:
-            value = self.lt_arearatio
-            delta = self.config["detector"]["deltalt_arearatio"]
-            return Gefit.CQUOTED, value + delta, value - delta
-
-    @property
-    def st_sloperatio_constraint(self):
-        if self.config["detector"]["fixedst_sloperatio"] or not self._hypermetShortTail:
-            return Gefit.CFIXED, 0, 0
-        else:
-            value = self.st_sloperatio
-            delta = self.config["detector"]["deltast_sloperatio"]
-            return Gefit.CQUOTED, value + delta, value - delta
-
-    @property
-    def st_arearatio_constraint(self):
-        if self.config["detector"]["fixedst_arearatio"] or not self._hypermetShortTail:
+    @st_arearatio.constraints
+    def st_arearatio(self):
+        if self.config["peakshape"]["fixedst_arearatio"] or not self._hypermetShortTail:
             return Gefit.CFIXED, 0, 0
         else:
             value = self.st_arearatio
-            delta = self.config["detector"]["deltast_arearatio"]
-            return Gefit.CQUOTED, value + delta, value - delta
-
-    @property
-    def linegroup_areas_constraint(self):
-        fixed = Gefit.CFIXED, 0, 0
-        positive = Gefit.CPOSITIVE, 0, 0
-        return [positive if area else fixed for area in self.linegroup_areas]
-
-    @property
-    def _parameter_group_names(self):
-        return [
-            "zero",
-            "gain",
-            "noise",
-            "fano",
-            "sum",
-            "st_arearatio",
-            "st_sloperatio",
-            "lt_arearatio",
-            "lt_sloperatio",
-            "step_heightratio",
-            "eta_factor",
-            "linegroup_areas",
-            "linpol_coefficients",
-            "exppol_coefficients",
-        ]
-
-    @property
-    def _linear_parameter_group_names(self):
-        return ["linegroup_areas", "linpol_coefficients"]
-
-    def _iter_parameter_groups(self, linear_only=False):
-        """
-        :param bool linear_only:
-        :yields (str, int): group name, nb. parameters in the group
-        """
-        if linear_only:
-            names = self.linear_parameter_group_names
-        else:
-            names = self.parameter_group_names
-        hypermet = self._hypermet
-        for name in names:
-            if name == "zero":
-                yield name, 1
-            elif name == "gain":
-                yield name, 1
-            elif name == "noise":
-                yield name, 1
-            elif name == "fano":
-                yield name, 1
-            elif name == "sum":
-                yield name, 1
-            elif name == "st_arearatio":
-                if hypermet:
-                    yield name, 1
-            elif name == "st_sloperatio":
-                if hypermet:
-                    yield name, 1
-            elif name == "lt_arearatio":
-                if hypermet:
-                    yield name, 1
-            elif name == "lt_sloperatio":
-                if hypermet:
-                    yield name, 1
-            elif name == "step_heightratio":
-                if hypermet:
-                    yield name, 1
-            elif name == "eta_factor":
-                if not hypermet:
-                    yield name, 1
-            elif name == "linegroup_areas":
-                n = len(self.linegroup_areas)
-                if n:
-                    yield name, n
-            elif name == "linpol_coefficients":
-                n = len(self.linpol_coefficients)
-                if n:
-                    yield name, n
-            elif name == "exppol_coefficients":
-                n = len(self.exppol_coefficients)
-                if n:
-                    yield name, n
-            else:
-                raise ValueError(name)
+            delta = self.config["peakshape"]["deltast_arearatio"]
+            return Gefit.CQUOTED, value - delta, value + delta
 
     def _convert_parameter_names(self, names):
         linegroup_names = None
@@ -1899,7 +1900,7 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
     ):
         """Evaluate to MCA model (does not include the numerical background)
 
-        y(x) = ycont(P(x)) + A1*G1(E(x)) + A2*G2(E(x)) + ...
+        y(x) = ycont(P(x)) + A1*F1(E(x)) + A2*F2(E(x)) + ...
 
             x: MCA channels (positive integers)
 
@@ -1910,7 +1911,26 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
             E(x) = zero + gain*x
             P(x) = E(x - <x>)
 
-            Gi(x): several peaks with normalized total area
+            Fi(x): emission, scatter or escape peak
+
+        Hypermet:
+
+            F(x) =   A * Gnorm(x, u, s)
+                   + st_arearatio*A * Tnorm(x, u, s, st_sloperatio)
+                   + lt_arearatio*A * Tnorm(x, u, s, lt_sloperatio)
+                   + step_heightratio*A * u/(sqrt(2*pi)*s) * Snorm(x, u, s)
+
+            A: the area of the gaussian part, not the entire peak
+
+            Gaussian is normalized in ]-inf, inf[
+            Gnorm(x, u, s) = exp[-(x-u)^2/(2*s^2)] / (sqrt(2*pi)*s)
+
+            Step is normalized in [0, inf[
+            Snorm(x, u, s) = erfc[(x-u)/(sqrt(2)*s)] / (2 * u)
+
+            Tail is normalized in ]-inf, inf[
+            Tnorm(x, u, s, r) =   erfc[(x-u)/(sqrt(2)*s) + s/(sqrt(2)*r)]
+                                * exp[(x-u)/r + (s/r)^2/2] / (2 * r)
 
         :param array xdata:
         :param int hypermet:
@@ -1939,7 +1959,9 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
         return y
 
     def ypileup(self, ymodel, xdata=None):
-        """The model contains the peaks and the continuum"""
+        """The ymodel contains the peaks and the continuum.
+        Pileup is
+        """
         pileupfactor = self.sum
         if not pileupfactor:
             if xdata is None:
@@ -1949,17 +1971,16 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
         if xdata is None:
             xdata = self.xdata
         return pileupfactor * SpecfitFuns.pileup(
-            ymodel, min(xdata), self.zero, self.gain
+            ymodel, min(xdata), self.zero, self.gain, 0
         )
 
     def _ydata_to_fit(self, ydata, xdata=None):
         """The fitting is done after subtracting the numerical background"""
         if self.hasNumBkg:
             ydata = ydata - self.ynumbkg(xdata=xdata)
-        if self.linear:
-            if self.hasPileUp:
-                ymodel = self.mcatheory(xdata=xdata, summing=False)
-                ydata = ydata - self.ypileup(ymodel, xdata=xdata)
+        if self.linear and self.hasPileUp:
+            ymodel = self.mcatheory(xdata=xdata, summing=False)
+            ydata = ydata - self.ypileup(ymodel, xdata=xdata)
         return ydata
 
     @property
@@ -1997,6 +2018,15 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
             derivatives += arr.tolist()
         return numpy.array(derivatives)
 
+    @contextmanager
+    def _keep_parameters(self):
+        # TODO: wait for parameters refactoring
+        keep = self.parameters
+        try:
+            yield
+        finally:
+            self.parameters = keep
+
     def derivative_fitmodel(self, param_idx, xdata=None):
         """Derivate to a specific parameter
 
@@ -2004,60 +2034,65 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
         :param array xdata: length nxdata
         :returns array: nxdata
         """
-        name, pgroupi = self._parameter_name_from_index(param_idx)
-        if name == "zero":
-            raise NotImplementedError
-        elif name == "gain":
-            raise NotImplementedError
-        elif name == "noise":
-            raise NotImplementedError
-        elif name == "fano":
-            raise NotImplementedError
-        elif name == "sum":
-            raise NotImplementedError
-        elif name == "st_arearatio":
-            raise NotImplementedError
-        elif name == "st_sloperatio":
-            raise NotImplementedError
-        elif name == "lt_arearatio":
-            raise NotImplementedError
-        elif name == "lt_sloperatio":
-            raise NotImplementedError
-        elif name == "step_heightratio":
-            raise NotImplementedError
-        elif name == "eta_factor":
-            raise NotImplementedError
-        elif name == "linegroup_areas":
-            return self.mcatheory(
-                selected_groups=[pgroupi],
-                normalized_peakgroups=True,
-                xdata=xdata,
-                continuum=False,
+        with self._keep_parameters():
+            name, pgroupi = self._parameter_name_from_index(param_idx)
+            print(
+                name,
+                "index=",
+                param_idx,
+                "index in group=",
+                pgroupi,
+                "value=",
+                self.parameters[param_idx],
             )
-        elif name == "linpol":
-            # TODO: subtract param
-            return self.continuumModel.derivative_fitmodel(param_idx, xdata=xdata)
-        elif name == "exppol":
-            # TODO: subtract param
-            return self.continuumModel.derivative_fitmodel(param_idx, xdata=xdata)
-        else:
-            raise ValueError(name)
+            if name == "st_arearatio":
+                self.parameters[param_idx] = 1
+                return self.mcatheory(xdata=xdata, hypermet=2, continuum=False)
+            elif name == "lt_arearatio":
+                self.parameters[param_idx] = 1
+                return self.mcatheory(xdata=xdata, hypermet=4, continuum=False)
+            elif name == "step_heightratio":
+                self.parameters[param_idx] = 1
+                return self.mcatheory(xdata=xdata, hypermet=8, continuum=False)
+            elif name == "linegroup_areas":
+                self.parameters[param_idx] = 1
+                return self.mcatheory(
+                    selected_groups=[pgroupi],
+                    xdata=xdata,
+                    continuum=False,
+                )
+            elif name == "linpol":
+                # TODO: subtract param
+                return self.continuumModel.derivative_fitmodel(param_idx, xdata=xdata)
+            elif name == "exppol":
+                # TODO: subtract param
+                return self.continuumModel.derivative_fitmodel(param_idx, xdata=xdata)
+            else:
+                return self._numerical_derivative(param_idx, xdata=xdata)
 
-    def _numerical_derivative(self, index, xdata=None):
-        keep = self.parameters
-        parameters = keep.copy()
-        p0 = parameters[index]
-        try:
-            delta = (p0[index] + p0[index]) * 0.00001
-            parameters[index] = p0 + delta
+    def _numerical_derivative(self, param_idx, xdata=None):
+        with self._keep_parameters():
+            parameters = self.parameters
+            p0 = parameters[param_idx]
+
+            # Choose delta to be a small fraction of the
+            # parameter value but not too small, otherwise
+            # the derivative is zero.
+            delta = p0 * 1e-5
+            if delta < 0:
+                delta = min(delta, -1e-12)
+            else:
+                delta = max(delta, 1e-12)
+
+            parameters[param_idx] = p0 + delta
             self.parameters = parameters
             f1 = self.evaluate_fitmodel(xdata=xdata)
-            parameters[index] = p0 - delta
+
+            parameters[param_idx] = p0 - delta
             self.parameters = parameters
             f2 = self.evaluate_fitmodel(xdata=xdata)
-        finally:
-            self.parameters = keep
-        return (f1 - f2) / (2.0 * delta)
+
+            return (f1 - f2) / (2.0 * delta)
 
     @property
     def maxiter(self):

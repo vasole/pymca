@@ -32,8 +32,8 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 import numpy
-from PyMca5.PyMcaMath.fitting import Gefit
 from PyMca5.PyMcaMath.fitting.Model import Model
+from PyMca5.PyMcaMath.fitting.Model import linear_parameter
 
 
 class PolynomialModel(Model):
@@ -48,19 +48,21 @@ class PolynomialModel(Model):
 
     @property
     def degree(self):
-        return self.coefficients.size - 1
+        return self._coefficients.size - 1
 
     @degree.setter
     def degree(self, n):
-        self.coefficients = numpy.zeros(n + 1)
+        if n < 0:
+            raise ValueError("degree must be a positive integer")
+        self._coefficients = numpy.zeros(n + 1)
 
-    @property
+    @linear_parameter
     def coefficients(self):
         return self._coefficients
 
     @coefficients.setter
     def coefficients(self, values):
-        self._coefficients = numpy.atleast_1d(values)
+        self._coefficients[:] = values
 
     @property
     def xdata(self):
@@ -101,27 +103,6 @@ class PolynomialModel(Model):
 
 class LinearPolynomialModel(PolynomialModel):
     """y = c0 + c1*x + c2*x^2 + ..."""
-
-    @property
-    def _parameter_group_names(self):
-        return ["coefficients"]
-
-    @property
-    def _linear_parameter_group_names(self):
-        return ["coefficients"]
-
-    def _iter_parameter_groups(self, linear_only=False):
-        """
-        :param bool linear_only:
-        :yields (str, int): group name, nb. parameters in the group
-        """
-        if linear_only:
-            names = self.linear_parameter_group_names
-        else:
-            names = self.parameter_group_names
-        for name in names:
-            if name == "coefficients":
-                yield name, self.degree + 1
 
     def evaluate_fitmodel(self, xdata=None):
         """Evaluate the fit model, not the full model.

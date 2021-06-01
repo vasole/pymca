@@ -62,10 +62,11 @@ class Cached(object):
         if cachename in self._cache:
             ret = self._cache[cachename]
             for cachename in subnames:
-                if cachename in ret:
+                try:
                     ret = ret[cachename]
-                else:
-                    ret = ret[cachename] = dict()
+                except KeyError:
+                    ret[cachename] = dict()
+                    ret = ret[cachename]
             return ret
         else:
             return None
@@ -83,11 +84,87 @@ class Cached(object):
         return decorator
 
 
+class parameter(property):
+    """Usages:
+
+    .. highlight:: python
+    .. code-block:: python
+
+        class MyClass(Model):
+
+            def __init__(self):
+                self._myparam = 0.
+
+            @parameter
+            def myparam(self):
+                return self._myparam
+
+            @myparam.setter  # optional
+            def myparam(self, value):
+                self._myparam = value
+
+            @myparam.counter  # optional
+            def myparam(self):
+                return 1
+
+            @myparam.constraints  # optional
+            def myparam(self):
+                return 1, 0, 0
+    """
+
+    def __init__(self, fget=None, fset=None, fdel=None, doc=""):
+        if fget is not None:
+            fget = self._param_getter(fget)
+        if fset is not None:
+            fset = self._param_setter(fset)
+        super().__init__(fget=fget, fset=fset, fdel=fdel, doc=doc)
+        self.fcount = lambda _: None
+        self.fconstraints = lambda _: None
+
+    def getter(self, fget):
+        if fget is not None:
+            fget = self._param_getter(fget)
+        return super().getter(fget)
+
+    def setter(self, fset):
+        if fset is not None:
+            fset = self._param_setter(fset)
+        return super().setter(fset)
+
+    def counter(self, fcount):
+        self.fcount = fcount
+        return self
+
+    def constraints(self, fconstraints):
+        self.fconstraints = fconstraints
+        return self
+
+    @classmethod
+    def _param_getter(cls, fget):
+        @functools.wraps(fget)
+        def wrapper(self):
+            return fget(self)
+
+        return wrapper
+
+    @classmethod
+    def _param_setter(cls, fset):
+        @functools.wraps(fset)
+        def wrapper(self, value):
+            return fset(self, value)
+
+        return wrapper
+
+
+class linear_parameter(parameter):
+    pass
+
+
 class Model(Cached):
     """Evaluation and derivatives of a model to be used in least-squares fitting.
 
-    Each group of fit parameters is exposed as a property. Associated fit contraints
-    are optional properties.
+    The `parameter` and `linear_parameter` work like python's `property` decorator.
+    Associated fit contraints are optional properties.
 
     There is a "fit model" and a "full model". The full model describes the data,
     the fit model describes the pre-processed data (for example smoothed,
@@ -109,10 +186,6 @@ class Model(Cached):
             * derivative_fitmodel: derivatives of all parameters
             * linear_derivatives_fitmodel: derivatives of the linear parameters
             * non_leastsquares_increment: non-least-squares optimization step
-        * Model parameters:
-            * _parameter_group_names: names of all parameter groups
-            * _linear_parameter_group_names: names of the linear parameter groups
-            * _iter_parameter_groups: provides parameter group names and number of parameters
 
     Example:
 
@@ -136,6 +209,17 @@ class Model(Cached):
         self._included_parameters = None  # for model concatenation
         self._excluded_parameters = None  # for model concatenation
         super(Model, self).__init__()
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        allp = cls._PARAMETER_GROUP_NAMES = list()
+        linp = cls._LINEAR_PARAMETER_GROUP_NAMES = list()
+        for name in sorted(dir(cls)):
+            attr = getattr(cls, name)
+            if isinstance(attr, parameter):
+                allp.append(name)
+                if isinstance(attr, linear_parameter):
+                    linp.append(name)
 
     @property
     def xdata(self):
@@ -173,6 +257,7 @@ class Model(Cached):
 
     @property
     def parameters(self):
+        """Only enabled parameters"""
         return self._get_parameters(fitting=False)
 
     @parameters.setter
@@ -181,6 +266,7 @@ class Model(Cached):
 
     @property
     def fit_parameters(self):
+        """Only enabled parameters"""
         return self._get_parameters(fitting=True)
 
     @fit_parameters.setter
@@ -189,26 +275,27 @@ class Model(Cached):
 
     @property
     def constraints(self):
+        """Only enabled parameters"""
         return self._get_constraints()
 
     @property
     def nparameters(self):
+        """Only enabled parameters"""
         return sum(tpl[1] for tpl in self._parameter_groups())
 
     @property
     def parameter_names(self):
+        """Only enabled parameters"""
         return list(self._iter_parameter_names())
 
     @property
-    def parameter_group_names(self):
-        return self._filter_parameter_names(self._parameter_group_names)
-
-    @property
-    def _parameter_group_names(self):
-        raise AttributeError from NotImplementedError
+    def all_parameter_group_names(self):
+        """All parameters, not only the enabled ones"""
+        return list(self._filter_parameter_names(self._PARAMETER_GROUP_NAMES))
 
     @property
     def linear_parameters(self):
+        """Only enabled parameters"""
         return self._get_parameters(linear_only=True, fitting=False)
 
     @linear_parameters.setter
@@ -217,6 +304,7 @@ class Model(Cached):
 
     @property
     def linear_fit_parameters(self):
+        """Only enabled parameters"""
         return self._get_parameters(linear_only=True, fitting=True)
 
     @linear_fit_parameters.setter
@@ -225,23 +313,23 @@ class Model(Cached):
 
     @property
     def linear_constraints(self):
+        """Only enabled parameters"""
         return self._get_constraints(linear_only=True)
 
     @property
     def nlinear_parameters(self):
+        """Only enabled parameters"""
         return sum(tpl[1] for tpl in self._parameter_groups(linear_only=True))
 
     @property
     def linear_parameter_names(self):
+        """Only enabled parameters"""
         return list(self._iter_parameter_names(linear_only=True))
 
     @property
-    def linear_parameter_group_names(self):
-        return self._filter_parameter_names(self._linear_parameter_group_names)
-
-    @property
-    def _linear_parameter_group_names(self):
-        raise AttributeError from NotImplementedError
+    def all_linear_parameter_group_names(self):
+        """All parameters, not only the enabled ones"""
+        return list(self._filter_parameter_names(self._LINEAR_PARAMETER_GROUP_NAMES))
 
     def _get_parameters(self, linear_only=False, fitting=True):
         """
@@ -249,12 +337,12 @@ class Model(Cached):
         :param bool fitting:
         :returns array:
         """
-        i = 0
         if linear_only:
             nparams = self.nlinear_parameters
         else:
             nparams = self.nparameters
         params = numpy.zeros(nparams)
+        i = 0
         for name, n in self._parameter_groups(linear_only=linear_only):
             params[i : i + n] = getattr(self, name)
             i += n
@@ -266,25 +354,20 @@ class Model(Cached):
     def _get_constraints(self, linear_only=False):
         """
         :param bool linear_only:
-        :returns array:
+        :returns array: nparams x 3
         """
-        i = 0
         if linear_only:
             nparams = self.nlinear_parameters
         else:
             nparams = self.nparameters
         codes = numpy.zeros((nparams, 3), numpy.float64)
-        bspecified = False
+        i = 0
         for name, n in self._parameter_groups(linear_only=linear_only):
-            name += "_constraint"
-            if hasattr(self, name):
-                bspecified = True
-                codes[i : i + n] = getattr(self, name)
+            constraints = getattr(self.__class__, name).fconstraints(self)
+            if constraints is not None:
+                codes[i : i + n] = constraints
             i += n
-        if bspecified:
-            return codes.T
-        else:
-            return None
+        return codes
 
     def _set_parameters(self, params, linear_only=False, fitting=False):
         """
@@ -304,11 +387,12 @@ class Model(Cached):
     def _filter_parameter_names(self, names):
         included = self._included_parameters
         excluded = self._excluded_parameters
-        if included is None:
-            included = names
-        if excluded is None:
-            excluded = []
-        return [name for name in names if name in included and name not in excluded]
+        for name in names:
+            if included is not None and name not in included:
+                continue
+            if excluded is not None and name in excluded:
+                continue
+            yield name
 
     def evaluate_fullmodel(self, xdata=None):
         """Evaluate the full model.
@@ -387,15 +471,9 @@ class Model(Cached):
     def linear(self):
         raise AttributeError from NotImplementedError
 
-    def _iter_parameter_groups(self, linear_only=False):
-        """
-        :param bool linear_only:
-        :yields (str, int): group name, nb. parameters in the group
-        """
-        raise NotImplementedError
-
     def _parameter_groups(self, linear_only=False):
-        """
+        """Returns an iterator over name and count of enabled parameters
+
         :param bool linear_only:
         :returns iterable(str, int): group name, nb. parameters in the group
         """
@@ -417,8 +495,31 @@ class Model(Cached):
                 )
         return it
 
-    def _iter_parameter_names(self, linear_only=False):
+    def _iter_parameter_groups(self, linear_only=False):
+        """Helper for `_parameter_groups`.
+
+        :param bool linear_only:
+        :yields (str, int): group name, nb. parameters in the group
         """
+        if linear_only:
+            names = self.all_linear_parameter_group_names
+        else:
+            names = self.all_parameter_group_names
+        for name in names:
+            param = getattr(self.__class__, name)
+            n = param.fcount(self)
+            if n is None:
+                value = getattr(self, name)
+                try:
+                    n = len(value)
+                except TypeError:
+                    n = 1
+            if n:
+                yield name, n
+
+    def _iter_parameter_names(self, linear_only=False):
+        """Only enabled parameters
+
         :param bool linear_only:
         :yields str:
         """
@@ -504,7 +605,7 @@ class Model(Cached):
         :returns dict:
         """
         with self._nonlinear_fit_context():
-            constraints = self.constraints
+            constraints = self.constraints.T
             xdata = self.xdata
             ydata = self.yfitdata
             ystd = self.yfitstd
@@ -642,6 +743,8 @@ class ConcatModel(Model):
         for model in models:
             if not isinstance(model, Model):
                 raise ValueError("'models' must be a list of type 'Model'")
+        if len(set(type(m) for m in models)) > 1:
+            raise ValueError("Multiple model types are currently not supported")
         self._models = models
         self.__fixed_shared_attributes = {
             "linear",
@@ -650,6 +753,19 @@ class ConcatModel(Model):
         }
         self.shared_attributes = shared_attributes
         super(ConcatModel, self).__init__()
+
+    @contextmanager
+    def cachingContext(self, cachename):
+        with ExitStack() as stack:
+            ctx = super(ConcatModel, self).cachingContext(cachename)
+            stack.enter_context(ctx)
+            for m in self._models:
+                stack.enter_context(m.cachingContext(cachename))
+            yield
+
+    @property
+    def nmodels(self):
+        return len(self._models)
 
     @property
     def model(self):
@@ -663,7 +779,7 @@ class ConcatModel(Model):
         raise AttributeError(name)
 
     def __setattr__(self, name, value):
-        """Set shared attribute"""
+        """Set the attributed of the models when shared"""
         if (
             name != "_models"
             and self.nmodels
@@ -730,10 +846,6 @@ class ConcatModel(Model):
         for model in self._models[1:]:
             for name, value in adict.items():
                 setattr(model, name, value)
-
-    @property
-    def nmodels(self):
-        return len(self._models)
 
     @property
     def ndata(self):
@@ -822,6 +934,21 @@ class ConcatModel(Model):
             self._excluded_parameters = keepex
             self._included_parameters = keepin
 
+    def _iter_parameter_models(self):
+        with self._filter_parameter_context(shared=True):
+            yield self.model
+        with self._filter_parameter_context(shared=False):
+            for m in self._models:
+                yield m
+
+    def _iter_models_types(self):
+        modeltypes = set()
+        for model in self._models:
+            modeltype = type(model)
+            if modeltype not in modeltypes:
+                modeltypes.add(modeltype)
+                yield model
+
     @property
     def nparameters(self):
         return sum(m.nparameters for m in self._iter_parameter_models())
@@ -869,16 +996,17 @@ class ConcatModel(Model):
                 )
                 i += n
 
-    def _iter_parameter_models(self):
-        """Iterate over models which are temporarily configured so that
-        after iterations, all parameters provided.
-        :yields Model:
+    def _get_constraints(self, linear_only=False):
         """
-        with self._filter_parameter_context(shared=True):
-            yield self.model
-        with self._filter_parameter_context(shared=False):
-            for m in self._models:
-                yield m
+        :param bool linear_only:
+        :returns array: nparams x 3
+        """
+        return numpy.concatenate(
+            [
+                m._get_constraints(linear_only=linear_only)
+                for m in self._iter_parameter_models()
+            ]
+        )
 
     def _parameter_groups(self, linear_only=False):
         """
@@ -1093,12 +1221,3 @@ class ConcatModel(Model):
                 offset -= n
             start = stop
             yield idx
-
-    @contextmanager
-    def cachingContext(self, cachename):
-        with ExitStack() as stack:
-            ctx = super(ConcatModel, self).cachingContext(cachename)
-            stack.enter_context(ctx)
-            for m in self._models:
-                stack.enter_context(m.cachingContext(cachename))
-            yield

@@ -34,7 +34,10 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 import numpy
 from PyMca5.PyMcaMath.fitting import SpecfitFuns
-from PyMca5.PyMcaMath.fitting.Model import Model, ConcatModel
+from PyMca5.PyMcaMath.fitting.Model import Model
+from PyMca5.PyMcaMath.fitting.Model import ConcatModel
+from PyMca5.PyMcaMath.fitting.Model import parameter
+from PyMca5.PyMcaMath.fitting.Model import linear_parameter
 
 
 class SimpleModel(Model):
@@ -60,7 +63,7 @@ class SimpleModel(Model):
             self.__class__, self.npeaks, self.zero, self.gain, self.wzero, self.wgain
         )
 
-    @property
+    @parameter
     def zero(self):
         return self.config["detector"]["zero"]
 
@@ -68,7 +71,7 @@ class SimpleModel(Model):
     def zero(self, value):
         self.config["detector"]["zero"] = value
 
-    @property
+    @parameter
     def gain(self):
         return self.config["detector"]["gain"]
 
@@ -76,7 +79,7 @@ class SimpleModel(Model):
     def gain(self, value):
         self.config["detector"]["gain"] = value
 
-    @property
+    @parameter
     def wzero(self):
         return self.config["detector"]["wzero"]
 
@@ -84,7 +87,7 @@ class SimpleModel(Model):
     def wzero(self, value):
         self.config["detector"]["wzero"] = value
 
-    @property
+    @parameter
     def wgain(self):
         return self.config["detector"]["wgain"]
 
@@ -117,7 +120,7 @@ class SimpleModel(Model):
     def areas(self):
         return self.efficiency * self.concentrations
 
-    @property
+    @linear_parameter
     def concentrations(self):
         return self.config["matrix"]["concentrations"]
 
@@ -187,37 +190,6 @@ class SimpleModel(Model):
     @property
     def npeaks(self):
         return len(self.concentrations)
-
-    @property
-    def _parameter_group_names(self):
-        return ["zero", "gain", "wzero", "wgain", "concentrations"]
-
-    @property
-    def _linear_parameter_group_names(self):
-        return ["concentrations"]
-
-    def _iter_parameter_groups(self, linear_only=False):
-        """
-        :param bool linear_only:
-        :yields (str, int): group name, nb. parameters in the group
-        """
-        if linear_only:
-            names = self.linear_parameter_group_names
-        else:
-            names = self.parameter_group_names
-        for name in names:
-            if name == "zero":
-                yield name, 1
-            elif name == "gain":
-                yield name, 1
-            elif name == "wzero":
-                yield name, 1
-            elif name == "wgain":
-                yield name, 1
-            elif name == "concentrations":
-                yield name, self.npeaks
-            else:
-                raise ValueError(name)
 
     def evaluate_fitmodel(self, xdata=None):
         """Evaluate model
