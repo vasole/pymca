@@ -2168,7 +2168,7 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
 class MultiMcaTheory(ConcatModel):
     def __init__(self, ndetectors=1):
         models = [McaTheory() for i in range(ndetectors)]
-        shared_attributes = []
+        shared_attributes = []  # nothing shared yet
         super(MultiMcaTheory, self).__init__(
             models, shared_attributes=shared_attributes
         )

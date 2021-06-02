@@ -165,3 +165,9 @@ class ExponentialPolynomialModel(LinearPolynomialModel):
         parameters = parameters.copy()
         parameters[0] = numpy.exp(parameters[0])
         return parameters
+
+    def _linear_parameters_to_fit(self, parameters):
+        return self._parameters_to_fit(parameters)
+
+    def _fit_to_linear_parameters(self, parameters):
+        return self._fit_to_parameters(parameters)

@@ -40,10 +40,9 @@ def with_model(nmodels):
     def inner1(method):
         def inner2(self, *args, **kw):
             self.create_model(nmodels=nmodels)
-            try:
-                return method(self, *args, **kw)
-            finally:
-                self.validate_model()
+            result = method(self, *args, **kw)
+            self.validate_model()
+            return result
 
         return inner2
 
@@ -142,9 +141,9 @@ class testFitModel(unittest.TestCase):
         if not is_concat:
             # Alphabetic order
             expected = ["concentrations", "gain", "wgain", "wzero", "zero"]
-            self.assertEqual(model.all_parameter_group_names, expected)
+            self.assertEqual(model.parameter_group_names, expected)
             expected = ["concentrations"]
-            self.assertEqual(model.all_linear_parameter_group_names, expected)
+            self.assertEqual(model.linear_parameter_group_names, expected)
         self.assertTrue(not model._excluded_parameters)
         self.assertTrue(not model._included_parameters)
         self.assertEqual(model.ndata, len(model.xdata))
@@ -329,7 +328,9 @@ class testFitModel(unittest.TestCase):
             vstride = stride
             if stride < 1000:
                 vstride = None
-            for idx in self.fitmodel._generate_idx_channels(len(x2), stride=vstride):
+            for idx in self.fitmodel._generate_model_data_slices(
+                len(x2), stride=vstride
+            ):
                 chunk = x2[idx]
                 access_cnt[idx] += 1
                 self.assertTrue(all(numpy.diff(chunk) == stride))
