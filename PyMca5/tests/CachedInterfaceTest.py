@@ -1,5 +1,6 @@
 import unittest
 import numpy
+import functools
 from collections import Counter
 from PyMca5.PyMcaMath.fitting.CachedInterface import CachedPropertiesInterface
 from PyMca5.PyMcaMath.fitting.CachedInterface import CacheInterface
@@ -59,9 +60,95 @@ class ExternalCached(CacheInterface):
         return numpy.zeros(3, dtype=float)
 
 
+def external_subtests(method):
+    @functools.wraps(method)
+    def wrapper(self):
+        with self.subTest("no external cache"):
+            method(self)
+        with self.subTest("with external cache"):
+            self.cached_object = Cached()
+            self.cached_object.cache_object = ExternalCached()
+            method(self)
+
+    return wrapper
+
+
 class testCachedInterface(unittest.TestCase):
     def setUp(self):
         self.cached_object = Cached()
+
+    @external_subtests
+    def test_get_without_caching(self):
+        for i in range(5):
+            self.assertEqual(self.cached_object.var1, 1)
+            self.assertEqual(self.cached_object.var2, 2)
+            self._assertGetSetCount("var1", i + 1, 0)
+            self._assertGetSetCount("var2", i + 1, 0)
+
+    @external_subtests
+    def test_set_without_caching(self):
+        for i in range(5):
+            self.cached_object.var1 = 100
+            self.cached_object.var2 = 200
+            self._assertGetSetCount("var1", 0, i + 1)
+            self._assertGetSetCount("var2", 0, i + 1)
+        self._assertVarValues(100, 200)
+
+    @external_subtests
+    def test_get_with_caching(self):
+        with self.cached_object.propertyCachingContext() as cache:
+            self._assertCache(cache, [1, 2])
+            for i in range(5):
+                self.assertEqual(self.cached_object.var1, 1)
+                self.assertEqual(self.cached_object.var2, 2)
+        self._assertGetSetCount("var1", 1, 0)
+        self._assertGetSetCount("var2", 1, 0)
+
+    @external_subtests
+    def test_set_with_caching(self):
+        with self.cached_object.propertyCachingContext() as cache:
+            for i in range(5):
+                self.cached_object.var1 = 100
+                self.cached_object.var2 = 200
+                self.assertEqual(self.cached_object.var1, 100)
+                self.assertEqual(self.cached_object.var2, 200)
+                self._assertCache(cache, [100, 200])
+        self._assertGetSetCount("var1", 1, 0)
+        self._assertGetSetCount("var2", 1, 0)
+        self._assertVarValues(1, 2)
+
+    @external_subtests
+    def test_set_with_persistent_caching(self):
+        with self.cached_object.propertyCachingContext(persist=True) as cache:
+            for i in range(5):
+                self.cached_object.var1 = 100
+                self.cached_object.var2 = 200
+                self.assertEqual(self.cached_object.var1, 100)
+                self.assertEqual(self.cached_object.var2, 200)
+                self._assertCache(cache, [100, 200])
+        self._assertGetSetCount("var1", 1, 1)
+        self._assertGetSetCount("var2", 1, 1)
+        self._assertVarValues(100, 200)
+
+    @external_subtests
+    def test_start_cache(self):
+        with self.cached_object.propertyCachingContext(start_cache=[100, 200]) as cache:
+            self.assertEqual(cache, [100, 200])
+            self.assertEqual(self.cached_object.var1, 100)
+            self.assertEqual(self.cached_object.var2, 200)
+        self._assertGetSetCount("var1", 0, 0)
+        self._assertGetSetCount("var2", 0, 0)
+        self._assertVarValues(1, 2)
+
+    @external_subtests
+    def test_persistent_start_cache(self):
+        with self.cached_object.propertyCachingContext(
+            start_cache=[100, 200], persist=True
+        ) as cache:
+            self.assertEqual(cache, [100, 200])
+        self._assertGetSetCount("var1", 0, 1)
+        self._assertGetSetCount("var2", 0, 1)
+        self._assertVarValues(100, 200)
 
     def _assertGetSetCount(self, name, getcount, setcount):
         self.assertEqual(self.cached_object.get_counter[name], getcount)
@@ -76,77 +163,3 @@ class testCachedInterface(unittest.TestCase):
             self.assertEqual(cache.tolist(), values)
         else:
             self.assertEqual(cache.tolist(), values + [0])
-
-    def test_get_without_caching(self):
-        for i in range(5):
-            self.assertEqual(self.cached_object.var1, 1)
-            self.assertEqual(self.cached_object.var2, 2)
-            self._assertGetSetCount("var1", i + 1, 0)
-            self._assertGetSetCount("var2", i + 1, 0)
-
-    def test_set_without_caching(self):
-        for i in range(5):
-            self.cached_object.var1 = 100
-            self.cached_object.var2 = 200
-            self._assertGetSetCount("var1", 0, i + 1)
-            self._assertGetSetCount("var2", 0, i + 1)
-        self._assertVarValues(100, 200)
-
-    def test_get_with_caching(self):
-        with self.subTest("no external cache"):
-            self._test_get_with_caching()
-        with self.subTest("with external cache"):
-            self.cached_object = Cached()
-            self.cached_object.cache_object = ExternalCached()
-            self._test_get_with_caching()
-
-    def _test_get_with_caching(self):
-        with self.cached_object.propertyCachingContext() as cache:
-            self._assertCache(cache, [1, 2])
-            for i in range(5):
-                self.assertEqual(self.cached_object.var1, 1)
-                self.assertEqual(self.cached_object.var2, 2)
-        self._assertGetSetCount("var1", 1, 0)
-        self._assertGetSetCount("var2", 1, 0)
-
-    def test_set_with_caching(self):
-        with self.cached_object.propertyCachingContext() as cache:
-            for i in range(5):
-                self.cached_object.var1 = 100
-                self.cached_object.var2 = 200
-                self.assertEqual(self.cached_object.var1, 100)
-                self.assertEqual(self.cached_object.var2, 200)
-                self._assertCache(cache, [100, 200])
-        self._assertGetSetCount("var1", 1, 0)
-        self._assertGetSetCount("var2", 1, 0)
-        self._assertVarValues(1, 2)
-
-    def test_set_with_persistent_caching(self):
-        with self.cached_object.propertyCachingContext(persist=True) as cache:
-            for i in range(5):
-                self.cached_object.var1 = 100
-                self.cached_object.var2 = 200
-                self.assertEqual(self.cached_object.var1, 100)
-                self.assertEqual(self.cached_object.var2, 200)
-                self._assertCache(cache, [100, 200])
-        self._assertGetSetCount("var1", 1, 1)
-        self._assertGetSetCount("var2", 1, 1)
-        self._assertVarValues(100, 200)
-
-    def test_start_cache(self):
-        with self.cached_object.propertyCachingContext(start_cache=[100, 200]) as cache:
-            self.assertEqual(cache, [100, 200])
-            self.assertEqual(self.cached_object.var1, 100)
-            self.assertEqual(self.cached_object.var2, 200)
-        self._assertGetSetCount("var1", 0, 0)
-        self._assertGetSetCount("var2", 0, 0)
-        self._assertVarValues(1, 2)
-
-    def test_persistent_start_cache(self):
-        with self.cached_object.propertyCachingContext(
-            start_cache=[100, 200], persist=True
-        ) as cache:
-            self.assertEqual(cache, [100, 200])
-        self._assertGetSetCount("var1", 0, 1)
-        self._assertGetSetCount("var2", 0, 1)
-        self._assertVarValues(100, 200)

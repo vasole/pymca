@@ -81,7 +81,7 @@ class testLinkedInterface(unittest.TestCase):
     def setUp(self):
         self.concat_model = ConcatModel()
 
-    def test_instances(self):
+    def test_links(self):
         """establish links
         """
         nlinked = len(self.concat_model.linked_instances) - 1
