@@ -1,11 +1,12 @@
 import unittest
 import numpy
 from collections import Counter
-from PyMca5.PyMcaMath.fitting.CachedInterface import CachedInterface
+from PyMca5.PyMcaMath.fitting.CachedInterface import CachedPropertiesInterface
+from PyMca5.PyMcaMath.fitting.CachedInterface import CacheInterface
 from PyMca5.PyMcaMath.fitting.CachedInterface import cached_property
 
 
-class Cached(CachedInterface):
+class Cached(CachedPropertiesInterface):
     def __init__(self):
         super().__init__()
         self._cfg = {"var1": 1, "var2": 2}
@@ -41,11 +42,21 @@ class Cached(CachedInterface):
         else:
             return 1
 
-    def _property_cache_key(self, **_):
-        return None
-
     def _create_empty_cache(self, key, **_):
         return numpy.zeros(2, dtype=float)
+
+
+class ExternalCached(CacheInterface):
+    def _property_cache_index(self, name):
+        if name == "var1":
+            return 0
+        elif name == "var2":
+            return 1
+        else:
+            return 2
+
+    def _create_empty_cache(self, key, **_):
+        return numpy.zeros(3, dtype=float)
 
 
 class testCachedInterface(unittest.TestCase):
@@ -59,6 +70,12 @@ class testCachedInterface(unittest.TestCase):
     def _assertVarValues(self, v1, v2):
         self.assertEqual(self.cached_object.var1, v1)
         self.assertEqual(self.cached_object.var2, v2)
+
+    def _assertCache(self, cache, values):
+        if self.cached_object.cache_object is self.cached_object:
+            self.assertEqual(cache.tolist(), values)
+        else:
+            self.assertEqual(cache.tolist(), values + [0])
 
     def test_get_without_caching(self):
         for i in range(5):
@@ -76,11 +93,19 @@ class testCachedInterface(unittest.TestCase):
         self._assertVarValues(100, 200)
 
     def test_get_with_caching(self):
+        with self.subTest("no external cache"):
+            self._test_get_with_caching()
+        with self.subTest("with external cache"):
+            self.cached_object = Cached()
+            self.cached_object.cache_object = ExternalCached()
+            self._test_get_with_caching()
+
+    def _test_get_with_caching(self):
         with self.cached_object.propertyCachingContext() as cache:
+            self._assertCache(cache, [1, 2])
             for i in range(5):
                 self.assertEqual(self.cached_object.var1, 1)
                 self.assertEqual(self.cached_object.var2, 2)
-            self.assertEqual(cache.tolist(), [1, 2])
         self._assertGetSetCount("var1", 1, 0)
         self._assertGetSetCount("var2", 1, 0)
 
@@ -91,7 +116,7 @@ class testCachedInterface(unittest.TestCase):
                 self.cached_object.var2 = 200
                 self.assertEqual(self.cached_object.var1, 100)
                 self.assertEqual(self.cached_object.var2, 200)
-                self.assertEqual(cache.tolist(), [100, 200])
+                self._assertCache(cache, [100, 200])
         self._assertGetSetCount("var1", 1, 0)
         self._assertGetSetCount("var2", 1, 0)
         self._assertVarValues(1, 2)
@@ -103,7 +128,7 @@ class testCachedInterface(unittest.TestCase):
                 self.cached_object.var2 = 200
                 self.assertEqual(self.cached_object.var1, 100)
                 self.assertEqual(self.cached_object.var2, 200)
-                self.assertEqual(cache.tolist(), [100, 200])
+                self._assertCache(cache, [100, 200])
         self._assertGetSetCount("var1", 1, 1)
         self._assertGetSetCount("var2", 1, 1)
         self._assertVarValues(100, 200)
