@@ -33,6 +33,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 import numpy
 from PyMca5.PyMcaMath.fitting.Model import Model
+from PyMca5.PyMcaMath.fitting.Model import parameter
 from PyMca5.PyMcaMath.fitting.Model import linear_parameter
 
 
@@ -44,7 +45,7 @@ class PolynomialModel(Model):
         self._linear = True
         self.degree = degree
         self.maxiter = maxiter
-        super(PolynomialModel, self).__init__()
+        super().__init__()
 
     @property
     def degree(self):
@@ -56,7 +57,7 @@ class PolynomialModel(Model):
             raise ValueError("degree must be a positive integer")
         self._coefficients = numpy.zeros(n + 1)
 
-    @linear_parameter
+    @property
     def coefficients(self):
         return self._coefficients
 
@@ -104,6 +105,14 @@ class PolynomialModel(Model):
 class LinearPolynomialModel(PolynomialModel):
     """y = c0 + c1*x + c2*x^2 + ..."""
 
+    @linear_parameter
+    def fitmodel_coefficients(self):
+        return self.coefficients
+
+    @fitmodel_coefficients.setter
+    def fitmodel_coefficients(self, values):
+        self.coefficients = values
+
     def evaluate_fitmodel(self, xdata=None):
         """Evaluate the fit model, not the full model.
 
@@ -112,23 +121,11 @@ class LinearPolynomialModel(PolynomialModel):
         """
         if xdata is None:
             xdata = self.xdata
-        coeff = self.fit_parameters
+        coeff = numpy.atleast_1d(self.fitmodel_coefficients)
         y = coeff[0] * numpy.ones_like(xdata)
         for i in range(1, len(coeff)):
             y += coeff[i] * (xdata ** i)
         return y
-
-    def linear_derivatives_fitmodel(self, xdata=None):
-        """Derivates to all linear parameters
-
-        :param array xdata: length nxdata
-        :returns array: nparams x nxdata
-        """
-        if xdata is None:
-            xdata = self.xdata
-        return numpy.array(
-            [self.derivative_fitmodel(i, xdata=xdata) for i in range(self.degree + 1)]
-        )
 
     def derivative_fitmodel(self, param_idx, xdata=None):
         """Derivate to a specific parameter
@@ -150,24 +147,20 @@ class ExponentialPolynomialModel(LinearPolynomialModel):
     yfit = log(y) = log(c1) + c1*x + c2*x^2 + ...
     """
 
-    def _ydata_to_fit(self, ydata, xdata=None):
-        return numpy.log(ydata)
+    @linear_parameter
+    def fitmodel_coefficients(self):
+        coefficients = self.coefficients.copy()
+        coefficients[0] = numpy.log(coefficients[0])
+        return coefficients
 
-    def _fit_to_ydata(self, yfit, xdata=None):
-        return numpy.exp(yfit)
+    @fitmodel_coefficients.setter
+    def fitmodel_coefficients(self, values):
+        values = numpy.atleast_1d(values).copy()
+        values[0] = numpy.exp(values[0])
+        self.coefficients = values
 
-    def _parameters_to_fit(self, parameters):
-        parameters = parameters.copy()
-        parameters[0] = numpy.log(parameters[0])
-        return parameters
+    def _y_full_to_fit(self, y, xdata=None):
+        return numpy.log(y)
 
-    def _fit_to_parameters(self, parameters):
-        parameters = parameters.copy()
-        parameters[0] = numpy.exp(parameters[0])
-        return parameters
-
-    def _linear_parameters_to_fit(self, parameters):
-        return self._parameters_to_fit(parameters)
-
-    def _fit_to_linear_parameters(self, parameters):
-        return self._fit_to_parameters(parameters)
+    def _y_fit_to_full(self, y, xdata=None):
+        return numpy.exp(y)

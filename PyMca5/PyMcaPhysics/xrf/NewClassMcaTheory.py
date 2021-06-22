@@ -1974,25 +1974,25 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
             ymodel, min(xdata), self.zero, self.gain, 0
         )
 
-    def _ydata_to_fit(self, ydata, xdata=None):
+    def _y_full_to_fit(self, y, xdata=None):
         """The fitting is done after subtracting the numerical background"""
         if self.hasNumBkg:
-            ydata = ydata - self.ynumbkg(xdata=xdata)
+            y = y - self.ynumbkg(xdata=xdata)
         if self.linear and self.hasPileUp:
             ymodel = self.mcatheory(xdata=xdata, summing=False)
-            ydata = ydata - self.ypileup(ymodel, xdata=xdata)
-        return ydata
+            y = y - self.ypileup(ymodel, xdata=xdata)
+        return y
 
     @property
     def hasPileUp(self):
         return bool(self.sum)
 
-    def _fit_to_ydata(self, yfit, xdata=None):
+    def _y_fit_to_full(self, y, xdata=None):
         """The numerical background is not included in the fit model"""
         if self.hasNumBkg:
-            return yfit + self.ynumbkg(xdata=xdata)
+            return y + self.ynumbkg(xdata=xdata)
         else:
-            return yfit
+            return y
 
     def linear_derivatives_fitmodel(self, xdata=None):
         """Derivates to all linear parameters

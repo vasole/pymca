@@ -66,7 +66,7 @@ class testFitModel(unittest.TestCase):
         self.fitmodel.ydata = ydata
         numpy.testing.assert_array_equal(self.fitmodel.ydata, ydata)
         numpy.testing.assert_array_equal(self.fitmodel.yfullmodel, ydata)
-        numpy.testing.assert_allclose(self.fitmodel.yfitmodel, ydata - 10)
+        numpy.testing.assert_allclose(self.fitmodel.yfitmodel, ydata - 10, atol=1e-12)
         self.validate_model()
 
     def init_random(self, **kw):
@@ -102,7 +102,6 @@ class testFitModel(unittest.TestCase):
     def modify_random(self, only_linear=False):
         self._modify_random(only_linear=only_linear)
         self.validate_model()
-        # self.plot()
 
     def _modify_random(self, only_linear=False):
         porg = self.fitmodel.parameters.copy()
@@ -134,10 +133,15 @@ class testFitModel(unittest.TestCase):
     def validate_model(self):
         self._validate_model(self.fitmodel, self.is_concat)
         if self.is_concat:
-            for model in self.fitmodel._models:
+            for i, model in enumerate(self.fitmodel._models):
                 self._validate_model(model, False)
+            self.fitmodel.share_attributes()  # TODO: find a better way of sharing
+        self._validate_model(self.fitmodel, self.is_concat)
 
     def _validate_model(self, model, is_concat):
+        keep_parameters = model.parameters.copy()
+        keep_linear_parameters = model.linear_parameters.copy()
+
         if not is_concat:
             # Alphabetic order
             expected = ["concentrations", "gain", "wgain", "wzero", "zero"]
@@ -160,6 +164,7 @@ class testFitModel(unittest.TestCase):
         arr2 = model.evaluate_linear_fitmodel()
         arr3 = model.yfitmodel
         arr4 = sum(model.linear_decomposition_fitmodel())
+
         numpy.testing.assert_allclose(arr1, arr2)
         numpy.testing.assert_allclose(arr1, arr3)
         numpy.testing.assert_allclose(arr1, arr4)
@@ -187,22 +192,19 @@ class testFitModel(unittest.TestCase):
             self.assertEqual(model.parameter_names, names)
             self.assertEqual(model.linear_parameter_names, lin_names)
 
-    def plot(self):
-        import matplotlib.pyplot as plt
+        if not is_concat:
+            for linear in [not model.linear, model.linear]:
+                model.linear = linear
+                for param_name, calc, numerical in model.compare_derivatives():
+                    err_msg = "[linear={}] Analytical and numerical derivative of {} are not equal".format(
+                        linear, repr(param_name)
+                    )
+                    numpy.testing.assert_allclose(
+                        calc, numerical, err_msg=err_msg, rtol=1e-3, atol=1e-6
+                    )
 
-        m = self.fitmodel
-        derivatives = m.derivatives()
-        names = m.parameter_names
-        plt.figure()
-        plt.plot(m.ydata, label="data")
-        plt.plot(m.yfitmodel, label="model")
-        plt.legend()
-        plt.figure()
-        for y, name in zip(derivatives, names):
-            plt.plot(y, label=name)
-        plt.title("Derivatives")
-        plt.legend()
-        plt.show()
+        numpy.testing.assert_array_equal(keep_parameters, model.parameters)
+        numpy.testing.assert_array_equal(keep_linear_parameters, model.linear_parameters)
 
     @with_model(1)
     def testLinearFit(self):
@@ -218,7 +220,11 @@ class testFitModel(unittest.TestCase):
         self.modify_random(only_linear=True)
 
         result = self.fitmodel.fit()
-        self.assert_result(result, expected)
+        try:
+            self.assert_result(result, expected)
+        except Exception:
+            breakpoint()
+            raise
         self.assertTrue(
             not numpy.allclose(self.fitmodel.ydata, self.fitmodel.yfullmodel)
         )
@@ -255,11 +261,28 @@ class testFitModel(unittest.TestCase):
         self.assertTrue(not numpy.allclose(self.fitmodel.parameters, expected1))
         self.assertTrue(not numpy.allclose(self.fitmodel.linear_parameters, expected2))
 
+        if False:
+            import matplotlib.pyplot as plt
+
+            plt.plot(self.fitmodel.ydata)
+            plt.plot(self.fitmodel.yfullmodel)
+            plt.show()
+
         self.fitmodel.use_fit_result(result)
-        # self.plot()
-        self.assert_ymodel()
+        if self.is_concat:
+            self.fitmodel.share_attributes()
+
         # TODO: non-linear parameters not precise
         # numpy.testing.assert_allclose(self.fitmodel.parameters, expected1)
+        if True:
+            import matplotlib.pyplot as plt
+
+            plt.plot(self.fitmodel.ydata)
+            plt.plot(self.fitmodel.yfullmodel)
+            plt.show()
+        numpy.testing.assert_allclose(
+            self.fitmodel.ydata, self.fitmodel.yfullmodel, rtol=1e-3
+        )
         numpy.testing.assert_allclose(
             self.fitmodel.linear_parameters, expected2, rtol=1e-3
         )
@@ -270,13 +293,6 @@ class testFitModel(unittest.TestCase):
         ll = p - 3 * pstd
         ul = p + 3 * pstd
         self.assertTrue(all((expected >= ll) & (expected <= ul)))
-
-    def assert_ymodel(self):
-        a = self.fitmodel.ydata
-        b = self.fitmodel.yfullmodel
-        mask = (a > 1) & (b > 1)
-        self.assertTrue(mask.any())
-        numpy.testing.assert_allclose(a[mask], b[mask], rtol=1e-3)
 
     @with_model(8)
     def testParameterIndex(self):
@@ -292,9 +308,7 @@ class testFitModel(unittest.TestCase):
             imodels = []
             iparams = []
             for param_idx, param_name in enumerate(self.fitmodel.parameter_names):
-                lst = list(
-                    self.fitmodel._parameter_model_index(param_idx, linear_only=linear)
-                )
+                lst = list(self.fitmodel._parameter_model_index(param_idx))
                 # imodel: model indices
                 # iparam: index of the parameter in the corresponing models
                 if lst:

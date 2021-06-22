@@ -43,6 +43,8 @@ from PyMca5.PyMcaMath.fitting.Model import linear_parameter
 class SimpleModel(Model):
     """Model MCA data using a fixed list of peak positions and efficiencies"""
 
+    SIGMA_TO_FWHM = 2 * numpy.sqrt(2 * numpy.log(2))
+
     def __init__(self):
         self.config = {
             "detector": {"zero": 0.0, "gain": 1.0, "wzero": 0.0, "wgain": 1.0},
@@ -55,8 +57,7 @@ class SimpleModel(Model):
         self.ydata_raw = None
         self.ystd_raw = None
         self.ybkg = 0
-        self.sigma_to_fwhm = 2 * numpy.sqrt(2 * numpy.log(2))
-        super(SimpleModel, self).__init__()
+        super().__init__()
 
     def __str__(self):
         return "{}(npeaks={}, zero={}, gain={}, wzero={}, wgain={})".format(
@@ -114,7 +115,7 @@ class SimpleModel(Model):
 
     @property
     def fwhms(self):
-        return self.zero + self.gain * self.positions
+        return self.wzero + self.wgain * self.positions
 
     @property
     def areas(self):
@@ -155,11 +156,11 @@ class SimpleModel(Model):
     def xenergy(self):
         return self.zero + self.gain * self.xdata
 
-    def _ydata_to_fit(self, ydata, xdata=None):
-        return ydata - self.ybkg
+    def _y_full_to_fit(self, y, xdata=None):
+        return y - self.ybkg
 
-    def _fit_to_ydata(self, yfit, xdata=None):
-        return yfit + self.ybkg
+    def _y_fit_to_full(self, y, xdata=None):
+        return y + self.ybkg
 
     @property
     def ydata(self):
@@ -201,20 +202,7 @@ class SimpleModel(Model):
             xdata = self.xdata
         x = self.zero + self.gain * xdata
         p = list(zip(self.areas, self.positions, self.fwhms))
-        y = SpecfitFuns.agauss(p, x)
-        return y
-
-    def linear_derivatives_fitmodel(self, xdata=None):
-        """Derivates to all linear parameters
-
-        :param array xdata: length nxdata
-        :returns array: nparams x nxdata
-        """
-        if xdata is None:
-            xdata = self.xdata
-        x = self.zero + self.gain * xdata
-        it = zip(self.efficiency, self.positions, self.fwhms)
-        return numpy.array([SpecfitFuns.agauss([a, p, w], x) for a, p, w in it])
+        return SpecfitFuns.agauss(p, x)
 
     def derivative_fitmodel(self, param_idx, xdata=None):
         """Derivate to a specific parameter
@@ -226,30 +214,33 @@ class SimpleModel(Model):
         if xdata is None:
             xdata = self.xdata
         x = self.zero + self.gain * xdata
+
         name, i = self._parameter_name_from_index(param_idx)
         if name == "concentrations":
             p = self.positions[i]
             a = self.efficiency[i]
             w = self.wzero + self.wgain * p
-            y = SpecfitFuns.agauss([a, p, w], x)
-        else:
-            fwhms = self.fwhms
-            sigmas = fwhms / self.sigma_to_fwhm
-            y = x * 0.0
-            for p, a, w, s in zip(self.positions, self.areas, fwhms, sigmas):
-                if name in ("zero", "gain"):
-                    # Derivative to position
-                    m = -(x - p) / s ** 2
-                    # Derivative to position param
-                    if name == "gain":
-                        m *= xdata
-                else:
-                    # Derivative to FWHM
-                    m = ((x - p) ** 2 / s ** 2 - 1) / (self.sigma_to_fwhm * s)
-                    # Derivative to FWHM param
-                    if name == "wgain":
-                        m *= p
-                y += m * SpecfitFuns.agauss([a, p, w], x)
+            return SpecfitFuns.agauss([a, p, w], x)
+
+        fwhms = self.fwhms
+        sigmas = fwhms / self.SIGMA_TO_FWHM
+        y = x * 0.0
+        for p, a, w, s in zip(self.positions, self.areas, fwhms, sigmas):
+            if name in ("zero", "gain"):
+                # Derivative to position
+                m = -(x - p) / s ** 2
+                # Derivative to position param
+                if name == "gain":
+                    m *= xdata
+            elif name in ("wzero", "wgain"):
+                # Derivative to FWHM
+                m = ((x - p) ** 2 / s ** 2 - 1) / (self.SIGMA_TO_FWHM * s)
+                # Derivative to FWHM param
+                if name == "wgain":
+                    m *= p
+            else:
+                raise ValueError(name)
+            y += m * SpecfitFuns.agauss([a, p, w], x)
         return y
 
 
@@ -257,6 +248,4 @@ class SimpleConcatModel(ConcatModel):
     def __init__(self, ndetectors=1):
         models = [SimpleModel() for i in range(ndetectors)]
         shared_attributes = ["concentrations", "positions"]
-        super(SimpleConcatModel, self).__init__(
-            models, shared_attributes=shared_attributes
-        )
+        super().__init__(models, shared_attributes=shared_attributes)

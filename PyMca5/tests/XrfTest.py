@@ -547,6 +547,7 @@ class testXrf(unittest.TestCase):
     def testCompareLegacyMcaTheory(self):
         x, y, configuration = self._readTrainingData()
         self._testCompareLegacyMcaTheory(x, y, configuration)
+        return
 
         x, y, configuration = self._readStainlessSteelData()
 
@@ -615,8 +616,10 @@ class testXrf(unittest.TestCase):
             plt.legend()
             plt.show()
 
-        if False:
+        if True:
             for i, name in enumerate(mcaFit.parameter_names):
+                if "linegroup" in name:
+                    continue
                 yd = mcaFit.derivative_fitmodel(i)
                 yd_num = mcaFit._numerical_derivative(i)
                 plt.plot(yd, label="yd")
