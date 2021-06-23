@@ -289,6 +289,7 @@ class HDF5Stack1D(DataObject.DataObject):
         considerAsImages = False
         dim0, dim1, mcaDim = self.getDimensions(nFiles, nScans, shape,
                                                 index=mcaIndex)
+        _logger.debug("Returned dimensions = %d, %d, %d" % (dim0, dim1, mcaDim))
         try:
             if self.__dtype in [numpy.float32, numpy.int32]:
                 bytefactor = 4
@@ -329,7 +330,8 @@ class HDF5Stack1D(DataObject.DataObject):
                         raise MemoryError("Force dynamic loading")
                 else:
                     raise MemoryError("Force dynamic loading")
-            if (mcaIndex == 0) and ( nFiles == 1) and (nScans == 1):
+            if (mcaIndex == 0) and ( nFiles == 1) and (nScans == 1) \
+                and (len(yDataset.shape) > 1):
                 #keep the original arrangement but in memory
                 self.data = numpy.zeros(yDataset.shape, self.__dtype)
                 considerAsImages = True
