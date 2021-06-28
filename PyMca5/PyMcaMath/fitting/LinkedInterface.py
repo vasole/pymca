@@ -7,19 +7,24 @@ class linked_property(wrapped_property):
     """Setting a linked property of one object
     will set that property for all linked objects
     """
+
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+        self.propagate = False
+
     def _wrap_setter(self, fset):
         propname = fset.__name__
         fset = super()._wrap_setter(fset)
 
         @functools.wraps(fset)
         def wrapper(oself, value):
-            ret = fset(oself, value)
-            if oself.propagation_is_enabled(propname):
-                for instance in oself._filter_class_has_linked_property(
+            fset(oself, value)
+            if not self.propagate:
+                return
+            for instance in oself._filter_class_has_linked_property(
                     oself._non_propagating_instances, propname
                 ):
                     setattr(instance, propname, value)
-            return ret
 
         return wrapper
 
@@ -51,28 +56,41 @@ class LinkedInterface:
     to derived from this class.
     """
     def __init__(self):
-        self.__enabled_linked_properties = dict()
         self.__linked_instances = list()
         self.__propagate = True
         super().__init__()
 
-    def propagation_is_enabled(self, name):
-        if not self.__linked_instances:
-            return False
-        return self.property_is_linked(name)
-    
-    def property_is_linked(self, name):
-        return self.__enabled_linked_properties.get(name, False)
+    @classmethod
+    def get_linked_property(cls, prop_name):
+        prop = getattr(cls, prop_name, None)
+        if isinstance(prop, linked_property):
+            return prop
+        return None
 
-    def disable_property_link(self, *names):
-        for name in names:
-            if self.has_linked_property(name):
-                self.__enabled_linked_properties[name] = False
+    @classmethod
+    def has_linked_property(cls, prop_name):
+        return cls.get_linked_property(prop_name) is not None
 
-    def enable_property_link(self, *names):
-        for name in names:
-            if self.has_linked_property(name):
-                self.__enabled_linked_properties[name] = True
+    @classmethod
+    def property_is_linked(cls, prop_name):
+        prop = cls.get_linked_property(prop_name)
+        if prop is None:
+            return None
+        return prop.propagate
+
+    @classmethod
+    def disable_property_link(cls, *prop_names):
+        for prop_name in prop_names:
+            prop = cls.get_linked_property(prop_name)
+            if prop is not None:
+                prop.propagate = False
+
+    @classmethod
+    def enable_property_link(cls, *prop_names):
+        for prop_name in prop_names:
+            prop = cls.get_linked_property(prop_name)
+            if prop is not None:
+                prop.propagate = True
 
     @property
     def linked_instances(self):
@@ -80,9 +98,6 @@ class LinkedInterface:
 
     @linked_instances.setter
     def linked_instances(self, instances):
-        self._propagated_linked_instances_setter(instances)
-
-    def _propagated_linked_instances_setter(self, instances):
         others = list()
         for instance in instances:
             if instance is self:
@@ -113,11 +128,6 @@ class LinkedInterface:
             yield
         finally:
             self.__propagate = keep
-
-    @classmethod
-    def has_linked_property(cls, prop_name):
-        prop = getattr(cls, prop_name, None)
-        return isinstance(prop, linked_property)
 
     @staticmethod
     def _filter_class_has_linked_property(instances, prop_name):
@@ -151,13 +161,13 @@ class LinkedContainerInterface:
             return instance
         return None
 
-    def get_linked_property(self, prop_name):
+    def get_linked_property_value(self, prop_name):
         instance = self.instance_with_linked_property(prop_name)
         if instance is None:
             raise ValueError(f"No instance has linked property {repr(prop_name)}")
         return getattr(instance, prop_name)
 
-    def set_linked_property(self, prop_name, value):
+    def set_linked_property_value(self, prop_name, value):
         instance = self.instance_with_linked_property(prop_name)
         if instance is None:
             raise ValueError(f"No instance has linked property {repr(prop_name)}")
@@ -170,7 +180,7 @@ class LinkedContainerInterface:
 
     def enable_property_link(self, *names):
         for name in names:
-            value = self.get_linked_property(name)
-            for i, instance in enumerate(self.instances_with_linked_property(name)):
+            value = self.get_linked_property_value(name)
+            for instance in self.instances_with_linked_property(name):
                 instance.enable_property_link(name)
-            self.set_linked_property(name, value)
+            self.set_linked_property_value(name, value)

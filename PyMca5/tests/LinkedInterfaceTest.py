@@ -65,8 +65,8 @@ class ConcatModel(LinkedContainerInterface, ModelBase):
             Model2(cfg2a), Model2(cfg2b)])
 
     def reset_counters(self):
-        for m in self.linked_instances:
-            m.reset_counters()
+        for model in self.linked_instances:
+            model.reset_counters()
 
     def link(self):
         self.enable_property_link("var1", "var2")
@@ -85,8 +85,8 @@ class testLinkedInterface(unittest.TestCase):
         """establish links
         """
         nlinked = len(self.concat_model.linked_instances) - 1
-        for m in self.concat_model.linked_instances:
-            self.assertEqual(len(m.linked_instances),  nlinked)
+        for model in self.concat_model.linked_instances:
+            self.assertEqual(len(model.linked_instances),  nlinked)
 
     def test_init_properties(self):
         """initial property values
@@ -97,20 +97,35 @@ class testLinkedInterface(unittest.TestCase):
     def test_enable_property_link_syncing(self):
         """maximal 1 get/set of a linked property when enabling linking
         """
-        self.concat_model.enable_property_link("var1", "var2")
-        for name in ("var1", "var2"):
-            for m in self.concat_model.linked_instances:
-                self.assertTrue(m.get_counter[name] <= 1)
-                self.assertTrue(m.set_counter[name] <= 1)
-        self.assert_synced_values()
+        for i, model in enumerate(self.concat_model.linked_instances):
+            model.var1 = 100 + i
+            if model.has_linked_property("var2"):
+                model.var2 = 200 + i
+        self.assert_property_values("var1", 100, [100, 101, 102, 103])
+        self.assert_property_values("var2", 202, [202, 203])
+        self.concat_model.reset_counters()
+
+        self.concat_model.enable_property_link("var1")
+        getmodel = self.concat_model.instance_with_linked_property("var1")
+        for model in self.concat_model.linked_instances:
+            if model is getmodel:
+                self.assertEqual(model.get_counter["var1"], 1)
+                self.assertTrue(model.set_counter["var1"] <= 1)
+            else:
+                self.assertEqual(model.get_counter["var1"], 0)
+                self.assertEqual(model.set_counter["var1"], 1)
+            self.assertEqual(model.get_counter["var2"], 0)
+            self.assertEqual(model.set_counter["var2"], 0)
+        self.assert_property_values("var1", 100)
+        self.assert_property_values("var2", 202, [202, 203])
 
     def test_contexts_concat(self):
         """entering a linked context manager of a container
         """
         self.concat_model.fit()
         self.assertEqual(self.concat_model.context_counter,  1)
-        for m in self.concat_model.linked_instances:
-            m.context_counter,  1
+        for model in self.concat_model.linked_instances:
+            model.context_counter,  1
 
     def test_contexts_single(self):
         """entering a linked context manager of a single instance
@@ -118,17 +133,17 @@ class testLinkedInterface(unittest.TestCase):
         model = self.concat_model.linked_instances[2]
         model.fit()
         self.assertEqual(model.context_counter,  1)
-        for m in self.concat_model.linked_instances:
-            m.context_counter,  1
+        for model in self.concat_model.linked_instances:
+            model.context_counter,  1
 
     def test_get_var1_concat(self):
         """getting a linked property (present in all models) from a container
         """
         self.concat_model.link()
-        self.assertEqual(self.concat_model.get_linked_property("var1"),  1)
-        for i, m in enumerate(self.concat_model.linked_instances):
-            self.assertEqual(m.get_counter["var1"], 1 if i == 0 else 0, msg=f"model{i}")
-            self.assertEqual(m.set_counter["var1"], 0, msg=f"model{i}")
+        self.assertEqual(self.concat_model.get_linked_property_value("var1"),  1)
+        for i, model in enumerate(self.concat_model.linked_instances):
+            self.assertEqual(model.get_counter["var1"], 1 if i == 0 else 0, msg=f"model{i}")
+            self.assertEqual(model.set_counter["var1"], 0, msg=f"model{i}")
 
     def test_get_var1_single(self):
         """getting a linked property (present in all models) from a single instance
@@ -136,18 +151,18 @@ class testLinkedInterface(unittest.TestCase):
         self.concat_model.link()
         model = self.concat_model.linked_instances[2]
         self.assertEqual(model.var1, 1)
-        for i, m in enumerate(self.concat_model.linked_instances):
-            self.assertEqual(m.get_counter["var1"], 1 if i == 2 else 0, msg=f"model{i}")
-            self.assertEqual(m.set_counter["var1"], 0, msg=f"model{i}")
+        for i, model in enumerate(self.concat_model.linked_instances):
+            self.assertEqual(model.get_counter["var1"], 1 if i == 2 else 0, msg=f"model{i}")
+            self.assertEqual(model.set_counter["var1"], 0, msg=f"model{i}")
 
     def test_get_var2_concat(self):
         """getting a linked property (present in some models) from a container
         """
         self.concat_model.link()
-        self.assertEqual(self.concat_model.get_linked_property("var2"),  4)
-        for i, m in enumerate(self.concat_model.linked_instances):
-            self.assertEqual(m.get_counter["var2"], 1 if i == 2 else 0, msg=f"model{i}")
-            self.assertEqual(m.set_counter["var2"], 0, msg=f"model{i}")
+        self.assertEqual(self.concat_model.get_linked_property_value("var2"),  4)
+        for i, model in enumerate(self.concat_model.linked_instances):
+            self.assertEqual(model.get_counter["var2"], 1 if i == 2 else 0, msg=f"model{i}")
+            self.assertEqual(model.set_counter["var2"], 0, msg=f"model{i}")
 
     def test_get_var2_single(self):
         """getting a linked property (present in some models) from a single instance
@@ -155,19 +170,19 @@ class testLinkedInterface(unittest.TestCase):
         self.concat_model.link()
         model = self.concat_model.linked_instances[2]
         self.assertEqual(model.var2, 4)
-        for i, m in enumerate(self.concat_model.linked_instances):
-            self.assertEqual(m.get_counter["var2"], 1 if i == 2 else 0, msg=f"model{i}")
-            self.assertEqual(m.set_counter["var2"], 0, msg=f"model{i}")
+        for i, model in enumerate(self.concat_model.linked_instances):
+            self.assertEqual(model.get_counter["var2"], 1 if i == 2 else 0, msg=f"model{i}")
+            self.assertEqual(model.set_counter["var2"], 0, msg=f"model{i}")
 
     def test_set_var1_concat(self):
         """setting a linked property (present in all models) from a container
         """
         self.concat_model.link()
-        self.concat_model.set_linked_property("var1", 100)
-        for i, m in enumerate(self.concat_model.linked_instances):
-            self.assertEqual(m.get_counter["var1"], 0, msg=f"model{i}")
-            self.assertEqual(m.set_counter["var1"], 1, msg=f"model{i}")
-        self.assert_synced_values(var1=100)
+        self.concat_model.set_linked_property_value("var1", 100)
+        for i, model in enumerate(self.concat_model.linked_instances):
+            self.assertEqual(model.get_counter["var1"], 0, msg=f"model{i}")
+            self.assertEqual(model.set_counter["var1"], 1, msg=f"model{i}")
+        self.assert_property_values("var1", 100)
 
     def test_set_var1_single(self):
         """setting a linked property (present in all models) from a single instance
@@ -175,19 +190,19 @@ class testLinkedInterface(unittest.TestCase):
         self.concat_model.link()
         model = self.concat_model.linked_instances[2]
         model.var1 = 1
-        for i, m in enumerate(self.concat_model.linked_instances):
-            self.assertEqual(m.get_counter["var1"], 0, msg=f"model{i}")
-            self.assertEqual(m.set_counter["var1"], 1, msg=f"model{i}")
+        for i, model in enumerate(self.concat_model.linked_instances):
+            self.assertEqual(model.get_counter["var1"], 0, msg=f"model{i}")
+            self.assertEqual(model.set_counter["var1"], 1, msg=f"model{i}")
 
     def test_set_var2_concat(self):
         """setting a linked property (present in some models) from a container
         """
         self.concat_model.link()
-        self.concat_model.set_linked_property("var2",  100)
-        for i, m in enumerate(self.concat_model.linked_instances):
-            self.assertEqual(m.get_counter["var2"], 0, msg=f"model{i}")
-            self.assertEqual(m.set_counter["var2"], 1 if i > 1 else 0, msg=f"model{i}")
-        self.assert_synced_values(var2=100)
+        self.concat_model.set_linked_property_value("var2",  100)
+        for i, model in enumerate(self.concat_model.linked_instances):
+            self.assertEqual(model.get_counter["var2"], 0, msg=f"model{i}")
+            self.assertEqual(model.set_counter["var2"], 1 if i > 1 else 0, msg=f"model{i}")
+        self.assert_property_values("var2", 100)
 
     def test_set_var2_single(self):
         """setting a linked property (present in some models) from a single instance
@@ -195,17 +210,13 @@ class testLinkedInterface(unittest.TestCase):
         self.concat_model.link()
         model = self.concat_model.linked_instances[2]
         model.var2 =  100
-        for i, m in enumerate(self.concat_model.linked_instances):
-            self.assertEqual(m.get_counter["var2"], 0, msg=f"model{i}")
-            self.assertEqual(m.set_counter["var2"], 1 if i > 1 else 0, msg=f"model{i}")
-
-    def assert_synced_values(self, var1=1, var2=4):
-        self.assert_property_values("var1", var1)
-        self.assert_property_values("var2", var2)
+        for i, model in enumerate(self.concat_model.linked_instances):
+            self.assertEqual(model.get_counter["var2"], 0, msg=f"model{i}")
+            self.assertEqual(model.set_counter["var2"], 1 if i > 1 else 0, msg=f"model{i}")
 
     def assert_property_values(self, name, value, values=None):
-        self.assertEqual(self.concat_model.get_linked_property(name), value, msg=name)
-        if values is None:
+        self.assertEqual(self.concat_model.get_linked_property_value(name), value, msg=name)
+        if not isinstance(values, list):
             values = [value] * len(self.concat_model.linked_instances)
-        for m, v in zip(self.concat_model.instances_with_linked_property(name), values):
-            self.assertEqual(getattr(m, name), v, msg=name)
+        for model, v in zip(self.concat_model.instances_with_linked_property(name), values):
+            self.assertEqual(getattr(model, name), v, msg=name)
