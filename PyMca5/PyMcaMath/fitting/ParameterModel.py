@@ -149,12 +149,11 @@ class ParameterModelBase(CachedPropertiesModel):
         """
         group_names = self._iter_parameter_group_names(**paramtype)
         for group_name in group_names:
-            paramprop = self._get_parameter_group_property(group_name)
-            n = paramprop.fcount(self)
+            n = self._get_parameter_group_count(group_name)
             if n:
                 yield group_name, n
 
-    def _get_parameter_group_property(self, group_name):
+    def _get_parameter_group_count(self, group_name):
         """
         :yield parameter_group:
         """
@@ -192,11 +191,11 @@ class ParameterModel(ParameterModelBase, LinkedModel):
             else:
                 yield group_name
 
-    def _get_parameter_group_property(self, group_name):
+    def _get_parameter_group_count(self, group_name):
         """
-        :yield parameter_group:
+        :returns int:
         """
-        return getattr(type(self), group_name)
+        return getattr(type(self), group_name).fcount(self)
 
     @classmethod
     def _parameter_group_is_linear(cls, group_name):
@@ -240,14 +239,14 @@ class ParameterModelContainer(ParameterModelBase, LinkedModelContainer):
         """
         # Shared parameters
         encountered = set()
-        for model in self.models:
+        for i, model in enumerate(self.models):
             for group_name in model._iter_parameter_group_names(
                 linked=True, **paramtype
             ):
                 if group_name in encountered:
                     continue
                 encountered.add(group_name)
-                yield group_name
+                yield f"model{i}:{group_name}"
         # Non-shared parameters
         for i, model in enumerate(self.models):
             for group_name in model._iter_parameter_group_names(
@@ -255,13 +254,11 @@ class ParameterModelContainer(ParameterModelBase, LinkedModelContainer):
             ):
                 yield f"model{i}:{group_name}"
 
-    def _get_parameter_group_property(self, group_name):
+    def _get_parameter_group_count(self, group_name):
         """
-        :yield parameter_group:
+        :returns int:
         """
-        if ":" in group_name:
-            model_name, group_name = group_name.split(":")
-            i = int(model_name.replace("model", ""))
-            return self.models[i]._get_parameter_group_property(group_name)
-        else:
-            return self._get_linked_property(group_name)
+        model_name, group_name = group_name.split(":")
+        i = int(model_name.replace("model", ""))
+        model = self.models[i]
+        return model._get_parameter_group_count(group_name)

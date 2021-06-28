@@ -108,7 +108,7 @@ class LinkedModel:
                     type(instance), "can only link objects of the 'LinkedModel' type"
                 )
             others.append(instance)
-        self.__linked_instances = others
+        self.__linked_instances = tuple(others)
         for instance in others:
             instance._unpropagated_linked_instances_setter(instances)
 
@@ -153,9 +153,10 @@ class LinkedModelContainer:
         return self.__linked_instances
 
     @_linked_instances.setter
-    def _linked_instances(self, _linked_instances):
-        _linked_instances[0]._linked_instances = _linked_instances
-        self.__linked_instances = _linked_instances
+    def _linked_instances(self, linked_instances):
+        linked_instances = tuple(linked_instances)
+        linked_instances[0]._linked_instances = linked_instances
+        self.__linked_instances = linked_instances
 
     def _instances_with_linked_property(self, prop_name):
         yield from LinkedModel._filter_class_has_linked_property(
