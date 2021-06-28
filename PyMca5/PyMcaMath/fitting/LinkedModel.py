@@ -22,9 +22,9 @@ class linked_property(wrapped_property):
             if not self.propagate:
                 return
             for instance in oself._filter_class_has_linked_property(
-                    oself._non_propagating_instances, propname
-                ):
-                    setattr(instance, propname, value)
+                oself._non_propagating_instances, propname
+            ):
+                setattr(instance, propname, value)
 
         return wrapper
 
@@ -51,10 +51,11 @@ def linked_contextmanager(method):
     return contextmanager(wrapper)
 
 
-class LinkedInterface:
+class LinkedModel:
     """Every class that uses the link decorators needs
     to derived from this class.
     """
+
     def __init__(self):
         self.__linked_instances = list()
         self.__propagate = True
@@ -102,8 +103,10 @@ class LinkedInterface:
         for instance in instances:
             if instance is self:
                 continue
-            if not isinstance(instance, LinkedInterface):
-                raise TypeError(type(instance), "can only link objects of the 'LinkedInterface' type")
+            if not isinstance(instance, LinkedModel):
+                raise TypeError(
+                    type(instance), "can only link objects of the 'LinkedModel' type"
+                )
             others.append(instance)
         self.__linked_instances = others
         for instance in others:
@@ -136,10 +139,11 @@ class LinkedInterface:
                 yield instance
 
 
-class LinkedContainerInterface:
-    """Classes that manage LinkedInterface objects should
+class LinkedModelContainer:
+    """Classes that manage LinkedModel objects should
     derive from this class.
     """
+
     def __init__(self, linked_instances):
         self.linked_instances = linked_instances
         super().__init__()
@@ -154,7 +158,9 @@ class LinkedContainerInterface:
         self.__linked_instances = linked_instances
 
     def instances_with_linked_property(self, prop_name):
-        yield from LinkedInterface._filter_class_has_linked_property(self.linked_instances, prop_name)
+        yield from LinkedModel._filter_class_has_linked_property(
+            self.linked_instances, prop_name
+        )
 
     def instance_with_linked_property(self, prop_name):
         for instance in self.instances_with_linked_property(prop_name):

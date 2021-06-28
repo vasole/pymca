@@ -1,9 +1,9 @@
 from contextlib import contextmanager
 import numpy
-from PyMca5.PyMcaMath.fitting.LinkedInterface import LinkedInterface
-from PyMca5.PyMcaMath.fitting.LinkedInterface import LinkedContainerInterface
-from PyMca5.PyMcaMath.fitting.LinkedInterface import linked_property
-from PyMca5.PyMcaMath.fitting.LinkedInterface import linked_contextmanager
+from PyMca5.PyMcaMath.fitting.LinkedModel import LinkedModel
+from PyMca5.PyMcaMath.fitting.LinkedModel import LinkedModelContainer
+from PyMca5.PyMcaMath.fitting.LinkedModel import linked_property
+from PyMca5.PyMcaMath.fitting.LinkedModel import linked_contextmanager
 
 
 class parameter_group(linked_property):
@@ -144,9 +144,7 @@ class ModelParameterInterfaceBase:
         key = self._parameters_cache_key(**paramtype)
         it = cache.get(key)
         if it is None:
-            it = cache[key] = list(
-                self._parameter_groups_notcached(**paramtype)
-            )
+            it = cache[key] = list(self._parameter_groups_notcached(**paramtype))
         yield from it
 
     def _parameter_groups_notcached(self, **paramtype):
@@ -186,7 +184,7 @@ class ModelParameterInterfaceBase:
         raise NotImplementedError
 
 
-class ModelParameterInterface(LinkedInterface, ModelParameterInterfaceBase):
+class ModelParameterInterface(LinkedModel, ModelParameterInterfaceBase):
     _PARAMETERS = tuple()
 
     def __init_subclass__(cls, **kwargs):
@@ -308,7 +306,7 @@ class ModelParameterInterface(LinkedInterface, ModelParameterInterfaceBase):
                     yield name
 
 
-class ConcatModelParameterInterface(LinkedContainerInterface, ModelParameterInterfaceBase):
+class ConcatModelParameterInterface(LinkedModelContainer, ModelParameterInterfaceBase):
     @property
     def models(self):
         return self.linked_instances
@@ -349,5 +347,5 @@ class ConcatModelParameterInterface(LinkedContainerInterface, ModelParameterInte
         i = 0
         for instance in self.linked_instances:
             n = instance.get_n_parameters(**paramtype)
-            instance.set_parameter_values(values[i: i+n], **paramtype)
+            instance.set_parameter_values(values[i : i + n], **paramtype)
             i += n
