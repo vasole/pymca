@@ -62,43 +62,43 @@ class LinkedModel:
         super().__init__()
 
     @classmethod
-    def get_linked_property(cls, prop_name):
+    def _get_linked_property(cls, prop_name):
         prop = getattr(cls, prop_name, None)
         if isinstance(prop, linked_property):
             return prop
         return None
 
     @classmethod
-    def has_linked_property(cls, prop_name):
-        return cls.get_linked_property(prop_name) is not None
+    def _has_linked_property(cls, prop_name):
+        return cls._get_linked_property(prop_name) is not None
 
     @classmethod
-    def property_is_linked(cls, prop_name):
-        prop = cls.get_linked_property(prop_name)
+    def _property_is_linked(cls, prop_name):
+        prop = cls._get_linked_property(prop_name)
         if prop is None:
             return None
         return prop.propagate
 
     @classmethod
-    def disable_property_link(cls, *prop_names):
+    def _disable_property_link(cls, *prop_names):
         for prop_name in prop_names:
-            prop = cls.get_linked_property(prop_name)
+            prop = cls._get_linked_property(prop_name)
             if prop is not None:
                 prop.propagate = False
 
     @classmethod
-    def enable_property_link(cls, *prop_names):
+    def _enable_property_link(cls, *prop_names):
         for prop_name in prop_names:
-            prop = cls.get_linked_property(prop_name)
+            prop = cls._get_linked_property(prop_name)
             if prop is not None:
                 prop.propagate = True
 
     @property
-    def linked_instances(self):
+    def _linked_instances(self):
         return self.__linked_instances
 
-    @linked_instances.setter
-    def linked_instances(self, instances):
+    @_linked_instances.setter
+    def _linked_instances(self, instances):
         others = list()
         for instance in instances:
             if instance is self:
@@ -119,7 +119,7 @@ class LinkedModel:
     def _non_propagating_instances(self):
         if not self.__propagate:
             return
-        for instance in self.linked_instances:
+        for instance in self._linked_instances:
             with instance._disable_propagation():
                 yield instance
 
@@ -135,7 +135,7 @@ class LinkedModel:
     @staticmethod
     def _filter_class_has_linked_property(instances, prop_name):
         for instance in instances:
-            if instance.has_linked_property(prop_name):
+            if instance._has_linked_property(prop_name):
                 yield instance
 
 
@@ -145,48 +145,48 @@ class LinkedModelContainer:
     """
 
     def __init__(self, linked_instances):
-        self.linked_instances = linked_instances
+        self._linked_instances = linked_instances
         super().__init__()
 
     @property
-    def linked_instances(self):
+    def _linked_instances(self):
         return self.__linked_instances
 
-    @linked_instances.setter
-    def linked_instances(self, linked_instances):
-        linked_instances[0].linked_instances = linked_instances
-        self.__linked_instances = linked_instances
+    @_linked_instances.setter
+    def _linked_instances(self, _linked_instances):
+        _linked_instances[0]._linked_instances = _linked_instances
+        self.__linked_instances = _linked_instances
 
-    def instances_with_linked_property(self, prop_name):
+    def _instances_with_linked_property(self, prop_name):
         yield from LinkedModel._filter_class_has_linked_property(
-            self.linked_instances, prop_name
+            self._linked_instances, prop_name
         )
 
-    def instance_with_linked_property(self, prop_name):
-        for instance in self.instances_with_linked_property(prop_name):
+    def _instance_with_linked_property(self, prop_name):
+        for instance in self._instances_with_linked_property(prop_name):
             return instance
         return None
 
-    def get_linked_property_value(self, prop_name):
-        instance = self.instance_with_linked_property(prop_name)
+    def _get_linked_property_value(self, prop_name):
+        instance = self._instance_with_linked_property(prop_name)
         if instance is None:
             raise ValueError(f"No instance has linked property {repr(prop_name)}")
         return getattr(instance, prop_name)
 
-    def set_linked_property_value(self, prop_name, value):
-        instance = self.instance_with_linked_property(prop_name)
+    def _set_linked_property_value(self, prop_name, value):
+        instance = self._instance_with_linked_property(prop_name)
         if instance is None:
             raise ValueError(f"No instance has linked property {repr(prop_name)}")
         setattr(instance, prop_name, value)
 
-    def disable_property_link(self, *names):
+    def _disable_property_link(self, *names):
         for name in names:
-            for instance in self.instances_with_linked_property(name):
-                instance.disable_property_link(name)
+            for instance in self._instances_with_linked_property(name):
+                instance._disable_property_link(name)
 
-    def enable_property_link(self, *names):
+    def _enable_property_link(self, *names):
         for name in names:
-            value = self.get_linked_property_value(name)
-            for instance in self.instances_with_linked_property(name):
-                instance.enable_property_link(name)
-            self.set_linked_property_value(name, value)
+            value = self._get_linked_property_value(name)
+            for instance in self._instances_with_linked_property(name):
+                instance._enable_property_link(name)
+            self._set_linked_property_value(name, value)

@@ -76,11 +76,11 @@ class ConcatModel(ConcatModelParameterInterface):
             }
             cfgs.append(cfg)
         super().__init__([Model(cfg) for cfg in cfgs])
-        self.enable_property_link("shared_param", "shared_linear_param")
+        self._enable_property_link("shared_param", "shared_linear_param")
         self.reset_counters()
 
     def reset_counters(self):
-        for m in self.linked_instances:
+        for m in self._linked_instances:
             m.reset_counters()
 
 

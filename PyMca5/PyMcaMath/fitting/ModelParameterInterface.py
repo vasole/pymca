@@ -309,20 +309,20 @@ class ModelParameterInterface(LinkedModel, ModelParameterInterfaceBase):
 class ConcatModelParameterInterface(LinkedModelContainer, ModelParameterInterfaceBase):
     @property
     def models(self):
-        return self.linked_instances
+        return self._linked_instances
 
     @property
     def nmodels(self):
-        return len(self.linked_instances)
+        return len(self._linked_instances)
 
     def iter_parameter_group_names(self, **paramtype):
         """
         :yield str:
         """
         encountered = set()
-        for i, instance in enumerate(self.linked_instances):
+        for i, instance in enumerate(self._linked_instances):
             for name in instance.iter_parameter_group_names(**paramtype):
-                if instance.property_is_linked(name):
+                if instance._property_is_linked(name):
                     if name not in encountered:
                         encountered.add(name)
                         yield name
@@ -335,7 +335,7 @@ class ConcatModelParameterInterface(LinkedModelContainer, ModelParameterInterfac
         :returns array:
         """
         values = list()
-        for instance in self.linked_instances:
+        for instance in self._linked_instances:
             ivalues = instance.get_parameter_values(**paramtype)
             values.append(ivalues)
         return numpy.concatenate(values)
@@ -345,7 +345,7 @@ class ConcatModelParameterInterface(LinkedModelContainer, ModelParameterInterfac
         :returns array:
         """
         i = 0
-        for instance in self.linked_instances:
+        for instance in self._linked_instances:
             n = instance.get_n_parameters(**paramtype)
             instance.set_parameter_values(values[i : i + n], **paramtype)
             i += n
