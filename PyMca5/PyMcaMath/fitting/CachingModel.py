@@ -130,9 +130,7 @@ class CachedPropertiesModel(CachingModel):
                 yield values_cache
 
             if persist:
-                for name in self._cached_properties():
-                    index = self._get_property_cache_index(name, **cacheoptions)
-                    setattr(self, name, values_cache[index])
+                self._persist_property_values(values_cache, **cacheoptions)
 
     def _get_property_values_cache(self, **cacheoptions):
         caches = self._getCache("_cached_properties")
@@ -144,10 +142,11 @@ class CachedPropertiesModel(CachingModel):
     def _set_property_values_cache(self, values_cache, **cacheoptions):
         caches = self._getCache("_cached_properties")
         if caches is None:
-            return
+            return False
         _cache_manager = self._cache_manager
         key = _cache_manager._property_cache_key(**cacheoptions)
         caches[key] = values_cache
+        return True
 
     def _create_start_property_values_cache(self, **cacheoptions):
         # Fill and empty cache with property values
@@ -160,6 +159,22 @@ class CachedPropertiesModel(CachingModel):
             index = self._get_property_cache_index(name, **cacheoptions)
             values_cache[index] = getattr(self, name)
         return values_cache
+
+    def _get_property_values(self, **cacheoptions):
+        values = self._get_property_values_cache(**cacheoptions)
+        if values is None:
+            return self._create_start_property_values_cache(**cacheoptions)
+        return values
+
+    def _set_property_values(self, values, **cacheoptions):
+        success = self._set_property_values_cache(values, **cacheoptions)
+        if not success:
+            self._persist_property_values(values)
+
+    def _persist_property_values(self, values, **cacheoptions):
+        for name in self._cached_properties():
+            index = self._get_property_cache_index(name, **cacheoptions)
+            setattr(self, name, values[index])
 
     def _get_property_indices_cache(self, **cacheoptions):
         caches = self._getCache("_cached_property_indices")
