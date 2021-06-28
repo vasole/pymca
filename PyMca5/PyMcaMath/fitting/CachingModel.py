@@ -143,8 +143,7 @@ class CachedPropertiesModel(CachingModel):
         caches = self._getCache("_cached_properties")
         if caches is None:
             return False
-        _cache_manager = self._cache_manager
-        key = _cache_manager._property_cache_key(**cacheoptions)
+        key = self._cache_manager._property_cache_key(**cacheoptions)
         caches[key] = values_cache
         return True
 
