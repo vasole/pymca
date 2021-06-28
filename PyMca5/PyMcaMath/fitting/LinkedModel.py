@@ -56,10 +56,10 @@ class LinkedModel:
     to derived from this class.
     """
 
-    def __init__(self):
+    def __init__(self, *args, **kw):
         self.__linked_instances = list()
         self.__propagate = True
-        super().__init__()
+        super().__init__(*args, **kw)
 
     @classmethod
     def _get_linked_property(cls, prop_name):
@@ -144,9 +144,9 @@ class LinkedModelContainer:
     derive from this class.
     """
 
-    def __init__(self, linked_instances):
+    def __init__(self, linked_instances=tuple(), *args, **kw):
         self._linked_instances = linked_instances
-        super().__init__()
+        super().__init__(*args, **kw)
 
     @property
     def _linked_instances(self):
@@ -166,6 +166,12 @@ class LinkedModelContainer:
         for instance in self._instances_with_linked_property(prop_name):
             return instance
         return None
+
+    def _get_linked_property(self, prop_name):
+        instance = self._instance_with_linked_property(prop_name)
+        if instance is None:
+            raise ValueError(f"No instance has linked property {repr(prop_name)}")
+        return getattr(type(instance), prop_name)
 
     def _get_linked_property_value(self, prop_name):
         instance = self._instance_with_linked_property(prop_name)

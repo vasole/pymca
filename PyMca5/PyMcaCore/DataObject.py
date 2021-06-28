@@ -1,4 +1,4 @@
-#/*##########################################################################
+# /*##########################################################################
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
@@ -32,8 +32,9 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import numpy
 
+
 class DataObject(object):
-    '''
+    """
     Simple container of an array and associated information.
     Basically it has the members:
     info: A dictionary
@@ -47,15 +48,16 @@ class DataObject(object):
     x: A list containing arrays to be considered axes
     y: A list of data to be considered as signals
     m: A list containing the monitor data
-    '''
+    """
+
     GETINFO_DEPRECATION_WARNING = True
     GETDATA_DEPRECATION_WARNING = True
     SELECT_DEPRECATION_WARNING = True
 
     def __init__(self):
-        '''
+        """
         Default Constructor
-        '''
+        """
         self.info = {}
         self.data = numpy.array([])
 
@@ -68,7 +70,7 @@ class DataObject(object):
         """
         if DataObject.GETINFO_DEPRECATION_WARNING:
             print("DEPRECATION WARNING: DataObject.getInfo()")
-            DataObject.GETINFO_DEPRECATION_WARNING  = False
+            DataObject.GETINFO_DEPRECATION_WARNING = False
         return self.info
 
     def getData(self):
@@ -77,7 +79,7 @@ class DataObject(object):
         """
         if DataObject.GETDATA_DEPRECATION_WARNING:
             print("DEPRECATION WARNING: DataObject.getData()")
-            DataObject.GETDATA_DEPRECATION_WARNING  = False
+            DataObject.GETDATA_DEPRECATION_WARNING = False
         return self.data
 
     def select(self, selection=None):
@@ -89,78 +91,79 @@ class DataObject(object):
             DataObject.SELECT_DEPRECATION_WARNING = False
         dataObject = DataObject()
         dataObject.info = self.info
-        dataObject.info['selection'] = selection
+        dataObject.info["selection"] = selection
         if selection is None:
             dataObject.data = self.data
             return dataObject
         if type(selection) == dict:
-            #dataObject.data = self.data #should I set it to none???
+            # dataObject.data = self.data #should I set it to none???
             dataObject.data = None
-            if 'rows' in selection:
+            if "rows" in selection:
                 dataObject.x = None
                 dataObject.y = None
                 dataObject.m = None
-                if 'x' in selection['rows']:
-                    for rownumber in selection['rows']['x']:
+                if "x" in selection["rows"]:
+                    for rownumber in selection["rows"]["x"]:
                         if rownumber is None:
                             continue
                         if dataObject.x is None:
                             dataObject.x = []
                         dataObject.x.append(self.data[rownumber, :])
 
-                if 'y' in selection['rows']:
-                    for rownumber in selection['rows']['y']:
+                if "y" in selection["rows"]:
+                    for rownumber in selection["rows"]["y"]:
                         if rownumber is None:
                             continue
                         if dataObject.y is None:
                             dataObject.y = []
                         dataObject.y.append(self.data[rownumber, :])
 
-                if 'm' in selection['rows']:
-                    for rownumber in selection['rows']['m']:
+                if "m" in selection["rows"]:
+                    for rownumber in selection["rows"]["m"]:
                         if rownumber is None:
                             continue
                         if dataObject.m is None:
                             dataObject.m = []
                         dataObject.m.append(self.data[rownumber, :])
-            elif ('cols' in selection) or ('columns' in selection):
-                if 'cols' in selection:
-                    key = 'cols'
+            elif ("cols" in selection) or ("columns" in selection):
+                if "cols" in selection:
+                    key = "cols"
                 else:
-                    key = 'columns'
+                    key = "columns"
                 dataObject.x = None
                 dataObject.y = None
                 dataObject.m = None
-                if 'x' in selection[key]:
-                    for rownumber in selection[key]['x']:
+                if "x" in selection[key]:
+                    for rownumber in selection[key]["x"]:
                         if rownumber is None:
                             continue
                         if dataObject.x is None:
                             dataObject.x = []
                         dataObject.x.append(self.data[:, rownumber])
 
-                if 'y' in selection[key]:
-                    for rownumber in selection[key]['y']:
+                if "y" in selection[key]:
+                    for rownumber in selection[key]["y"]:
                         if rownumber is None:
                             continue
                         if dataObject.y is None:
                             dataObject.y = []
                         dataObject.y.append(self.data[:, rownumber])
 
-                if 'm' in selection[key]:
-                    for rownumber in selection[key]['m']:
+                if "m" in selection[key]:
+                    for rownumber in selection[key]["m"]:
                         if rownumber is None:
                             continue
                         if dataObject.m is None:
                             dataObject.m = []
                         dataObject.m.append(self.data[:, rownumber])
             if dataObject.x is None:
-                if 'Channel0' in dataObject.info:
-                    ch0 = int(dataObject.info['Channel0'])
+                if "Channel0" in dataObject.info:
+                    ch0 = int(dataObject.info["Channel0"])
                 else:
                     ch0 = 0
-                dataObject.x = [numpy.arange(ch0,
-                             ch0 + len(dataObject.y[0])).astype(numpy.float64)]
+                dataObject.x = [
+                    numpy.arange(ch0, ch0 + len(dataObject.y[0])).astype(numpy.float64)
+                ]
             if not ("selectiontype" in dataObject.info):
                 dataObject.info["selectiontype"] = "%dD" % len(dataObject.y)
             return dataObject
