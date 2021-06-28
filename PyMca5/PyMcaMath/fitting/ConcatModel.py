@@ -305,7 +305,7 @@ class ConcatModel(LinkedModelContainer, ModelInterface):
         :param int idx:
         :yields (int, int): model index, parameter index in this model
         """
-        cache = self.getCache("fit", "parameter_model_index")
+        cache = self._getCache("fit", "parameter_model_index")
         if cache is None:
             yield from self._iter_parameter_index(idx, linear_only=linear_only)
             return
@@ -464,7 +464,7 @@ class ConcatModel(LinkedModelContainer, ModelInterface):
         :param int nconcat:
         :returns list(slice):
         """
-        cache = self.getCache("fit", "model_data_slices")
+        cache = self._getCache("fit", "model_data_slices")
         if cache is None:
             return list(self._generate_model_data_slices(nconcat))
         else:

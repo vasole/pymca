@@ -74,8 +74,8 @@ class ModelParameterInterfaceBase:
         super().__init__()
 
     @linked_contextmanager
-    def cachingContext(self, cachename):
-        reset = not self.cachingEnabled(cachename)
+    def _cachingContext(self, cachename):
+        reset = not self._cachingEnabled(cachename)
         if reset:
             self.__cache[cachename] = dict()
         try:
@@ -84,10 +84,10 @@ class ModelParameterInterfaceBase:
             if reset:
                 del self.__cache[cachename]
 
-    def cachingEnabled(self, cachename):
+    def _cachingEnabled(self, cachename):
         return cachename in self.__cache
 
-    def getCache(self, cachename, *subnames):
+    def _getCache(self, cachename, *subnames):
         if cachename in self.__cache:
             ret = self.__cache[cachename]
             for cachename in subnames:
@@ -136,7 +136,7 @@ class ModelParameterInterfaceBase:
         :param bool linear_only:
         :yields str, int: group name, nb. parameters in the group
         """
-        cache = self.getCache("iter_parameter_groups")
+        cache = self._getCache("iter_parameter_groups")
         if cache is None:
             yield from self._parameter_groups_notcached(**paramtype)
             return
@@ -209,7 +209,7 @@ class ModelParameterInterface(LinkedModel, ModelParameterInterfaceBase):
 
         :returns array:
         """
-        cache = self.getCache("_parameters")
+        cache = self._getCache("_parameters")
         if cache is None:
             return self._get_parameter_values_notcached(**paramtype)
 
@@ -223,7 +223,7 @@ class ModelParameterInterface(LinkedModel, ModelParameterInterfaceBase):
         """
         :returns array:
         """
-        cache = self.getCache("_parameters")
+        cache = self._getCache("_parameters")
         if cache is None:
             self._set_parameter_values_notcached(values, **paramtype)
         else:
@@ -246,7 +246,7 @@ class ModelParameterInterface(LinkedModel, ModelParameterInterfaceBase):
             setattr(self, group_name, values[idx])
 
     def _get_parameter(self, fget):
-        parameters = self.getCache("_parameters")
+        parameters = self._getCache("_parameters")
         if parameters is None:
             return fget(self)
 
@@ -261,7 +261,7 @@ class ModelParameterInterface(LinkedModel, ModelParameterInterfaceBase):
         return parameters[idx]
 
     def _set_parameter(self, fset, value):
-        parameters = self.getCache("_parameters")
+        parameters = self._getCache("_parameters")
         if parameters is None:
             return fset(self, value)
 

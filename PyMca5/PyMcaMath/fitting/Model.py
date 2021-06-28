@@ -95,7 +95,7 @@ class Model(ModelInterface, ModelParameterInterface):
         :param bool linear_only:
         :returns array:
         """
-        cache = self.getCache("parameters")
+        cache = self._getCache("parameters")
         if cache is None:
             return self._get_parameters_notcached(linear_only=linear_only)
 
@@ -111,7 +111,7 @@ class Model(ModelInterface, ModelParameterInterface):
         """
         :param bool linear_only:
         """
-        cache = self.getCache("parameters")
+        cache = self._getCache("parameters")
         if cache is None:
             self._set_parameters_notcached(params, linear_only=linear_only)
         else:
@@ -141,7 +141,7 @@ class Model(ModelInterface, ModelParameterInterface):
 
     def _get_parameter(self, fget):
         """Helper for parameter getters."""
-        parameters = self.getCache("parameters")
+        parameters = self._getCache("parameters")
         if parameters is None:
             return fget(self)
 
@@ -157,7 +157,7 @@ class Model(ModelInterface, ModelParameterInterface):
 
     def _set_parameter(self, fset, value):
         """Helper for parameter setters"""
-        parameters = self.getCache("parameters")
+        parameters = self._getCache("parameters")
         if parameters is None:
             return fset(self, value)
 
@@ -177,7 +177,7 @@ class Model(ModelInterface, ModelParameterInterface):
         :param bool linear_only:
         :yields str, int: group name, nb. parameters in the group
         """
-        cache = self.getCache("fit", "parameter_groups")
+        cache = self._getCache("fit", "parameter_groups")
         if cache is None:
             yield from self._parameter_groups_notcached(linear_only=linear_only)
             return

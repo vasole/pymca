@@ -67,7 +67,7 @@ def external_subtests(method):
             method(self)
         with self.subTest("with external cache"):
             self.cached_object = Cached()
-            self.cached_object.cache_object = ExternalCached()
+            self.cached_object._cache_manager = ExternalCached()
             method(self)
 
     return wrapper
@@ -97,7 +97,7 @@ class testCachedInterface(unittest.TestCase):
     @external_subtests
     def test_get_with_caching(self):
         """verify property get/set count when getting a cached property value"""
-        with self.cached_object.propertyCachingContext() as cache:
+        with self.cached_object._propertyCachingContext() as cache:
             self._assertCache(cache, [1, 2])
             for i in range(5):
                 self.assertEqual(self.cached_object.var1, 1)
@@ -107,7 +107,7 @@ class testCachedInterface(unittest.TestCase):
     @external_subtests
     def test_set_with_caching(self):
         """verify property get/set count when setting a cached property value"""
-        with self.cached_object.propertyCachingContext() as cache:
+        with self.cached_object._propertyCachingContext() as cache:
             for i in range(5):
                 self.cached_object.var1 = 100
                 self.assertEqual(self.cached_object.var1, 100)
@@ -119,7 +119,7 @@ class testCachedInterface(unittest.TestCase):
     @external_subtests
     def test_set_with_persistent_caching(self):
         """verify cache persistency"""
-        with self.cached_object.propertyCachingContext(persist=True) as cache:
+        with self.cached_object._propertyCachingContext(persist=True) as cache:
             for i in range(5):
                 self.cached_object.var1 = 100
                 self.assertEqual(self.cached_object.var1, 100)
@@ -131,7 +131,7 @@ class testCachedInterface(unittest.TestCase):
     @external_subtests
     def test_start_cache(self):
         """verify cache initialization"""
-        with self.cached_object.propertyCachingContext(
+        with self.cached_object._propertyCachingContext(
             start_cache=self._start_cache([100, 200]),
         ) as cache:
             self._assertCache(cache, [100, 200])
@@ -144,7 +144,7 @@ class testCachedInterface(unittest.TestCase):
     @external_subtests
     def test_persistent_start_cache(self):
         """verify cache persistency"""
-        with self.cached_object.propertyCachingContext(
+        with self.cached_object._propertyCachingContext(
             start_cache=self._start_cache([100, 200]), persist=True
         ) as cache:
             self._assertCache(cache, [100, 200])
@@ -163,13 +163,13 @@ class testCachedInterface(unittest.TestCase):
     def _assertCache(self, cache, values):
         if not isinstance(cache, list):
             cache = cache.tolist()
-        if self.cached_object.cache_object is self.cached_object:
+        if self.cached_object._cache_manager is self.cached_object:
             self.assertEqual(cache, values)
         else:
             self.assertEqual(cache, [0, 0] + values)
 
     def _start_cache(self, start_cache):
-        if self.cached_object.cache_object is self.cached_object:
+        if self.cached_object._cache_manager is self.cached_object:
             return start_cache
         else:
             return [0, 0] + start_cache

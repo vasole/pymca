@@ -29,25 +29,25 @@ class CachingModel(CacheManager):
     """
 
     def __init__(self):
-        self.cache_object = None
+        self._cache_manager = None
         super().__init__()
 
     @property
-    def cache_object(self):
-        if self.__external_cache_object is None:
+    def _cache_manager(self):
+        if self.__external_cache_manager is None:
             return self
         else:
-            return self.__external_cache_object
+            return self.__external_cache_manager
 
-    @cache_object.setter
-    def cache_object(self, obj):
+    @_cache_manager.setter
+    def _cache_manager(self, obj):
         if obj is not None and not isinstance(obj, CacheManager):
             raise TypeError(obj, type(obj))
-        self.__external_cache_object = obj
+        self.__external_cache_manager = obj
 
     @contextmanager
-    def cachingContext(self, cachename):
-        cache_root = self.cache_object._cache_root
+    def _cachingContext(self, cachename):
+        cache_root = self._cache_manager._cache_root
         new_context_entry = cachename not in cache_root
         if new_context_entry:
             cache_root[cachename] = dict()
@@ -57,11 +57,11 @@ class CachingModel(CacheManager):
             if new_context_entry:
                 del cache_root[cachename]
 
-    def cachingEnabled(self, cachename):
-        return cachename in self.cache_object._cache_root
+    def _cachingEnabled(self, cachename):
+        return cachename in self._cache_manager._cache_root
 
-    def getCache(self, cachename, *subnames):
-        cache_root = self.cache_object._cache_root
+    def _getCache(self, cachename, *subnames):
+        cache_root = self._cache_manager._cache_root
         if cachename not in cache_root:
             return None
         ret = cache_root[cachename]
@@ -112,7 +112,7 @@ class CachedPropertiesModel(CachingModel):
         return self._CACHED_PROPERTIES
 
     @contextmanager
-    def propertyCachingContext(self, persist=False, start_cache=None, **cacheoptions):
+    def _propertyCachingContext(self, persist=False, start_cache=None, **cacheoptions):
         values_cache = self._get_property_values_cache(**cacheoptions)
         if values_cache is not None:
             # Re-entering this context should not affect anything
@@ -121,19 +121,19 @@ class CachedPropertiesModel(CachingModel):
 
         if start_cache is None:
             # Fill and empty cache with property values
-            cache_object = self.cache_object
-            key = cache_object._property_cache_key(**cacheoptions)
-            values_cache = cache_object._create_empty_cache(key, **cacheoptions)
+            _cache_manager = self._cache_manager
+            key = _cache_manager._property_cache_key(**cacheoptions)
+            values_cache = _cache_manager._create_empty_cache(key, **cacheoptions)
             nameindexmap = dict()
             for name in self._cached_properties():
-                index = cache_object._property_cache_index(name)
+                index = _cache_manager._property_cache_index(name)
                 nameindexmap[name] = index
                 values_cache[index] = getattr(self, name)
         else:
             values_cache = start_cache
             nameindexmap = None
 
-        with self.cachingContext("_cached_properties"):
+        with self._cachingContext("_cached_properties"):
             # Initialize the property values cache
             self._set_property_values_cache(values_cache, **cacheoptions)
             yield values_cache
@@ -141,39 +141,39 @@ class CachedPropertiesModel(CachingModel):
         if persist:
             # Set property values to the cached values
             if nameindexmap is None:
-                cache_object = self.cache_object
+                _cache_manager = self._cache_manager
                 for name in self._cached_properties():
-                    index = cache_object._property_cache_index(name)
+                    index = _cache_manager._property_cache_index(name)
                     setattr(self, name, values_cache[index])
             else:
                 for name, index in nameindexmap.items():
                     setattr(self, name, values_cache[index])
 
     def _get_property_values_cache(self, **cacheoptions):
-        caches = self.getCache("_cached_properties")
+        caches = self._getCache("_cached_properties")
         if caches is None:
             return None
-        key = self.cache_object._property_cache_key(**cacheoptions)
+        key = self._cache_manager._property_cache_key(**cacheoptions)
         return caches.get(key, None)
 
     def _set_property_values_cache(self, values_cache, **cacheoptions):
-        caches = self.getCache("_cached_properties")
+        caches = self._getCache("_cached_properties")
         if caches is None:
             return
-        cache_object = self.cache_object
-        key = cache_object._property_cache_key(**cacheoptions)
+        _cache_manager = self._cache_manager
+        key = _cache_manager._property_cache_key(**cacheoptions)
         caches[key] = values_cache
 
     def _cached_property_fget(self, fget):
         values_cache = self._get_property_values_cache()
         if values_cache is None:
             return fget(self)
-        index = self.cache_object._property_cache_index(fget.__name__)
+        index = self._cache_manager._property_cache_index(fget.__name__)
         return values_cache[index]
 
     def _cached_property_fset(self, fset, value):
         values_cache = self._get_property_values_cache()
         if values_cache is None:
             return fset(self, value)
-        index = self.cache_object._property_cache_index(fset.__name__)
+        index = self._cache_manager._property_cache_index(fset.__name__)
         values_cache[index] = value

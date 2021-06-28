@@ -321,11 +321,11 @@ class ModelInterface(ModelParameterInterface, ModelUserInterface):
     @contextmanager
     def __linear_fit_context(self):
         with ExitStack() as stack:
-            ctx = self.cachingContext("fit")
+            ctx = self._cachingContext("fit")
             stack.enter_context(ctx)
             ctx = self._linear_context(True)
             stack.enter_context(ctx)
-            ctx = self.cachingContext("parameters")
+            ctx = self._cachingContext("parameters")
             stack.enter_context(ctx)
             ctx = self._linear_fit_context()
             yield
@@ -333,11 +333,11 @@ class ModelInterface(ModelParameterInterface, ModelUserInterface):
     @contextmanager
     def __nonlinear_fit_context(self):
         with ExitStack() as stack:
-            ctx = self.cachingContext("fit")
+            ctx = self._cachingContext("fit")
             stack.enter_context(ctx)
             ctx = self._linear_context(False)
             stack.enter_context(ctx)
-            ctx = self.cachingContext("parameters")
+            ctx = self._cachingContext("parameters")
             stack.enter_context(ctx)
             ctx = self._nonlinear_fit_context()
             yield
@@ -394,7 +394,7 @@ class ModelInterface(ModelParameterInterface, ModelUserInterface):
     @contextmanager
     def use_fit_result_context(self, result):
         with self._linear_context(result["linear"]):
-            with self.cachingContext("parameters"):
+            with self._cachingContext("parameters"):
                 self.use_fit_result(result)
                 yield
 
