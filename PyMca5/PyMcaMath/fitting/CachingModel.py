@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from PyMca5.PyMcaMath.fitting.PropertyUtils import wrapped_property
 
 
-class CacheManagerInterface:
+class CacheManager:
     """Object that manages a cache"""
 
     def __init__(self):
@@ -23,7 +23,7 @@ class CacheManagerInterface:
         return None
 
 
-class CacheInterface(CacheManagerInterface):
+class CachingModel(CacheManager):
     """Object that manages and uses an internal cache (default) or
     uses an external cache.
     """
@@ -41,7 +41,7 @@ class CacheInterface(CacheManagerInterface):
 
     @cache_object.setter
     def cache_object(self, obj):
-        if obj is not None and not isinstance(obj, CacheManagerInterface):
+        if obj is not None and not isinstance(obj, CacheManager):
             raise TypeError(obj, type(obj))
         self.__external_cache_object = obj
 
@@ -94,7 +94,7 @@ class cached_property(wrapped_property):
         return wrapper
 
 
-class CachedPropertiesInterface(CacheInterface):
+class CachedPropertiesModel(CachingModel):
     """Object with cached properties when enabled."""
 
     _CACHED_PROPERTIES = tuple()

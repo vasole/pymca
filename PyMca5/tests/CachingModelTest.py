@@ -2,12 +2,12 @@ import unittest
 import numpy
 import functools
 from collections import Counter
-from PyMca5.PyMcaMath.fitting.CachedInterface import CachedPropertiesInterface
-from PyMca5.PyMcaMath.fitting.CachedInterface import CacheInterface
-from PyMca5.PyMcaMath.fitting.CachedInterface import cached_property
+from PyMca5.PyMcaMath.fitting.CachingModel import CachedPropertiesModel
+from PyMca5.PyMcaMath.fitting.CachingModel import CachingModel
+from PyMca5.PyMcaMath.fitting.CachingModel import cached_property
 
 
-class Cached(CachedPropertiesInterface):
+class Cached(CachedPropertiesModel):
     def __init__(self):
         super().__init__()
         self._cfg = {"var1": 1, "var2": 2}
@@ -47,7 +47,7 @@ class Cached(CachedPropertiesInterface):
         return numpy.zeros(2, dtype=float)
 
 
-class ExternalCached(CacheInterface):
+class ExternalCached(CachingModel):
     def _property_cache_index(self, name):
         if name == "var1":
             return 2
@@ -79,8 +79,7 @@ class testCachedInterface(unittest.TestCase):
 
     @external_subtests
     def test_get_without_caching(self):
-        """verify property get/set count when getting a cached property value
-        """
+        """verify property get/set count when getting a cached property value"""
         for i in range(5):
             self.assertEqual(self.cached_object.var1, 1)
             self._assertGetSetCount("var1", i + 1, 0)
@@ -88,8 +87,7 @@ class testCachedInterface(unittest.TestCase):
 
     @external_subtests
     def test_set_without_caching(self):
-        """verify property get/set count when setting a cached property value
-        """
+        """verify property get/set count when setting a cached property value"""
         for i in range(5):
             self.cached_object.var1 = 100
             self._assertGetSetCount("var1", 0, i + 1)
@@ -98,8 +96,7 @@ class testCachedInterface(unittest.TestCase):
 
     @external_subtests
     def test_get_with_caching(self):
-        """verify property get/set count when getting a cached property value
-        """
+        """verify property get/set count when getting a cached property value"""
         with self.cached_object.propertyCachingContext() as cache:
             self._assertCache(cache, [1, 2])
             for i in range(5):
@@ -109,8 +106,7 @@ class testCachedInterface(unittest.TestCase):
 
     @external_subtests
     def test_set_with_caching(self):
-        """verify property get/set count when setting a cached property value
-        """
+        """verify property get/set count when setting a cached property value"""
         with self.cached_object.propertyCachingContext() as cache:
             for i in range(5):
                 self.cached_object.var1 = 100
@@ -122,8 +118,7 @@ class testCachedInterface(unittest.TestCase):
 
     @external_subtests
     def test_set_with_persistent_caching(self):
-        """verify cache persistency
-        """
+        """verify cache persistency"""
         with self.cached_object.propertyCachingContext(persist=True) as cache:
             for i in range(5):
                 self.cached_object.var1 = 100
@@ -135,8 +130,7 @@ class testCachedInterface(unittest.TestCase):
 
     @external_subtests
     def test_start_cache(self):
-        """verify cache initialization
-        """
+        """verify cache initialization"""
         with self.cached_object.propertyCachingContext(
             start_cache=self._start_cache([100, 200]),
         ) as cache:
@@ -149,8 +143,7 @@ class testCachedInterface(unittest.TestCase):
 
     @external_subtests
     def test_persistent_start_cache(self):
-        """verify cache persistency
-        """
+        """verify cache persistency"""
         with self.cached_object.propertyCachingContext(
             start_cache=self._start_cache([100, 200]), persist=True
         ) as cache:
