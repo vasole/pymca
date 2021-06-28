@@ -95,7 +95,7 @@ class ParameterModelBase(CachedPropertiesModel):
             linear = self.linear
         return linear
 
-    def _create_empty_cache(self, key, **paramtype):
+    def _create_empty_property_values_cache(self, key, **paramtype):
         return numpy.zeros(self.get_n_parameters(**paramtype))
 
     def _property_cache_index(self, group_name, **paramtype):

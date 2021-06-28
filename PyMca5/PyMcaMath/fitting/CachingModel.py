@@ -10,7 +10,7 @@ class CacheManager:
         self._cache_root = dict()
         super().__init__(*args, **kw)
 
-    def _create_empty_cache(self, key, **cacheoptions):
+    def _create_empty_property_values_cache(self, key, **cacheoptions):
         # By default the property cache is a dictionary
         return dict()
 
@@ -119,20 +119,13 @@ class CachedPropertiesModel(CachingModel):
             yield values_cache
             return
 
-        with self._cachingContext("_cached_property_indices") as nameindexmap:
-            _cache_manager = self._cache_manager
+        with self._cachingContext("_cached_property_indices"):
             if start_cache is None:
-                # Fill and empty cache with property values
-                key = _cache_manager._property_cache_key(**cacheoptions)
-                values_cache = _cache_manager._create_empty_cache(key, **cacheoptions)
-                for name in self._cached_properties():
-                    index = self._get_property_cache_index(name, **cacheoptions)
-                    values_cache[index] = getattr(self, name)
+                values_cache = self._create_start_property_values_cache(**cacheoptions)
             else:
                 values_cache = start_cache
 
             with self._cachingContext("_cached_properties"):
-                # Initialize the property values cache
                 self._set_property_values_cache(values_cache, **cacheoptions)
                 yield values_cache
 
@@ -155,6 +148,18 @@ class CachedPropertiesModel(CachingModel):
         _cache_manager = self._cache_manager
         key = _cache_manager._property_cache_key(**cacheoptions)
         caches[key] = values_cache
+
+    def _create_start_property_values_cache(self, **cacheoptions):
+        # Fill and empty cache with property values
+        _cache_manager = self._cache_manager
+        key = _cache_manager._property_cache_key(**cacheoptions)
+        values_cache = _cache_manager._create_empty_property_values_cache(
+            key, **cacheoptions
+        )
+        for name in self._cached_properties():
+            index = self._get_property_cache_index(name, **cacheoptions)
+            values_cache[index] = getattr(self, name)
+        return values_cache
 
     def _get_property_indices_cache(self, **cacheoptions):
         caches = self._getCache("_cached_property_indices")

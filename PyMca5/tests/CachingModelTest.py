@@ -43,7 +43,7 @@ class Cached(CachedPropertiesModel):
         else:
             return 1
 
-    def _create_empty_cache(self, key, **_):
+    def _create_empty_property_values_cache(self, key, **_):
         return numpy.zeros(2, dtype=float)
 
 
@@ -56,7 +56,7 @@ class ExternalCached(CachingModel):
         else:
             raise ValueError(name)
 
-    def _create_empty_cache(self, key, **_):
+    def _create_empty_property_values_cache(self, key, **_):
         return numpy.zeros(4, dtype=float)
 
 
