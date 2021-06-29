@@ -1,5 +1,7 @@
 import functools
 from contextlib import ExitStack, contextmanager
+from collections.abc import Mapping
+from typing import Type
 from PyMca5.PyMcaMath.fitting.PropertyUtils import wrapped_property
 
 
@@ -57,7 +59,7 @@ class LinkedModel:
     """
 
     def __init__(self, *args, **kw):
-        self.__linked_instances = list()
+        self._link_manager = None
         self.__propagate = True
         super().__init__(*args, **kw)
 
@@ -94,26 +96,28 @@ class LinkedModel:
                 prop.propagate = True
 
     @property
+    def _link_manager(self):
+        return self.__link_manager
+
+    @_link_manager.setter
+    def _link_manager(self, obj):
+        if obj is not None and not isinstance(obj, LinkedModelManager):
+            raise TypeError(obj, type(obj))
+        self.__link_manager = obj
+
+    @property
     def _linked_instances(self):
-        return self.__linked_instances
+        if self._link_manager is None:
+            return
+        for instance in self._link_manager._linked_instances:
+            if instance is not self:
+                yield instance
 
-    @_linked_instances.setter
-    def _linked_instances(self, instances):
-        others = list()
-        for instance in instances:
-            if instance is self:
-                continue
-            if not isinstance(instance, LinkedModel):
-                raise TypeError(
-                    type(instance), "can only link objects of the 'LinkedModel' type"
-                )
-            others.append(instance)
-        self.__linked_instances = tuple(others)
-        for instance in others:
-            instance._unpropagated_linked_instances_setter(instances)
-
-    def _unpropagated_linked_instances_setter(self, instances):
-        self.__linked_instances = [i for i in instances if i is not self]
+    @property
+    def _linked_instance_to_key(self):
+        if self._link_manager is None:
+            return None
+        return self._link_manager._linked_instance_to_key(self)
 
     @property
     def _non_propagating_instances(self):
@@ -139,24 +143,46 @@ class LinkedModel:
                 yield instance
 
 
-class LinkedModelContainer:
+class LinkedModelManager:
     """Classes that manage LinkedModel objects should
     derive from this class.
     """
 
-    def __init__(self, linked_instances=tuple(), *args, **kw):
-        self._linked_instances = linked_instances
+    def __init__(self, linked_instances=None, *args, **kw):
         super().__init__(*args, **kw)
+        self._linked_instance_mapping = linked_instances
 
     @property
     def _linked_instances(self):
-        return self.__linked_instances
+        return self.__linked_instance_mapping.values()
 
-    @_linked_instances.setter
-    def _linked_instances(self, linked_instances):
-        linked_instances = tuple(linked_instances)
-        linked_instances[0]._linked_instances = linked_instances
-        self.__linked_instances = linked_instances
+    @property
+    def _linked_instance_mapping(self):
+        return self.__linked_instance_mapping
+
+    @_linked_instance_mapping.setter
+    def _linked_instance_mapping(self, instances):
+        if instances is None:
+            instances = dict()
+        elif not isinstance(instances, Mapping):
+            raise TypeError(instances, "Linked instance must be a 'Mapping'")
+        for instance in instances.values():
+            if not isinstance(instance, LinkedModel):
+                raise TypeError(
+                    instance, "Linked instance must be of type 'LinkedModel'"
+                )
+        self.__linked_instance_mapping = instances
+        for instance in instances.values():
+            instance._link_manager = self
+
+    def _linked_instance_to_key(self, instance):
+        for name, _instance in self._linked_instance_mapping.items():
+            if _instance is instance:
+                return name
+        return None
+
+    def _linked_key_to_instance(self, name):
+        return self._linked_instance_mapping[name]
 
     def _instances_with_linked_property(self, prop_name):
         yield from LinkedModel._filter_class_has_linked_property(

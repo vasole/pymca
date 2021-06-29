@@ -30,6 +30,9 @@ class Model1(ParameterModel):
     def var1_lin(self):
         return 2
 
+    def __getitem__(self, index):
+        return self._linked_instance_mapping[index]
+
 
 class Model2(Model1):
     @parameter_group
@@ -65,8 +68,19 @@ class ConcatModel(ParameterModelContainer):
             "var2_lin": 61,
             "var2_nonlin": 62,
         }
-        super().__init__([Model1(cfg1a), Model1(cfg1b), Model2(cfg2a), Model2(cfg2b)])
+        models = {
+            "model0": Model1(cfg1a),
+            "model1": Model1(cfg1b),
+            "model2": Model2(cfg2a),
+            "model3": Model2(cfg2b),
+        }
+        super().__init__(models)
         self._enable_property_link("var1_lin", "var1_nonlin", "var2_lin", "var2_nonlin")
+
+    def __getitem__(self, index):
+        while index < 0:
+            index += len(self._linked_instance_mapping)
+        return self._linked_instance_mapping[f"model{index}"]
 
 
 class testParameterModel(unittest.TestCase):
@@ -88,20 +102,20 @@ class testParameterModel(unittest.TestCase):
             self.assertFalse(model.linear)
 
     def test_parameter_group_names(self):
-        names = self.concat_model.models[0].get_parameter_group_names()
+        names = self.concat_model[0].get_parameter_group_names()
         expected = ("var1_lin", "var1_nonlin")
         self.assertEqual(set(names), set(expected))
 
-        names = self.concat_model.models[-1].get_parameter_group_names()
+        names = self.concat_model[-1].get_parameter_group_names()
         expected = ("var1_lin", "var1_nonlin", "var2_lin", "var2_nonlin")
         self.assertEqual(set(names), set(expected))
 
         names = self.concat_model.get_parameter_group_names()
         expected = (
-            "model0:var1_lin",
-            "model0:var1_nonlin",
-            "model2:var2_lin",
-            "model2:var2_nonlin",
+            "var1_lin",
+            "var1_nonlin",
+            "var2_lin",
+            "var2_nonlin",
         )
         self.assertEqual(set(names), set(expected))
 
@@ -109,26 +123,26 @@ class testParameterModel(unittest.TestCase):
         names = self.concat_model.get_parameter_group_names()
         expected = (
             "model0:var1_lin",
-            "model0:var1_nonlin",
             "model1:var1_lin",
             "model2:var1_lin",
-            "model2:var2_lin",
-            "model2:var2_nonlin",
             "model3:var1_lin",
+            "var1_nonlin",
+            "var2_lin",
+            "var2_nonlin",
         )
         self.assertEqual(set(names), set(expected))
 
     def test_linear_parameter_group_names(self):
-        names = self.concat_model.models[0].get_parameter_group_names(linear=True)
+        names = self.concat_model[0].get_parameter_group_names(linear=True)
         expected = ("var1_lin",)
         self.assertEqual(set(names), set(expected))
 
-        names = self.concat_model.models[-1].get_parameter_group_names(linear=True)
+        names = self.concat_model[-1].get_parameter_group_names(linear=True)
         expected = ("var1_lin", "var2_lin")
         self.assertEqual(set(names), set(expected))
 
         names = self.concat_model.get_parameter_group_names(linear=True)
-        expected = ("model0:var1_lin", "model2:var2_lin")
+        expected = ("var1_lin", "var2_lin")
         self.assertEqual(set(names), set(expected))
 
         self.concat_model._disable_property_link("var1_lin")
@@ -137,28 +151,22 @@ class testParameterModel(unittest.TestCase):
             "model0:var1_lin",
             "model1:var1_lin",
             "model2:var1_lin",
-            "model2:var2_lin",
             "model3:var1_lin",
+            "var2_lin",
         )
         self.assertEqual(set(names), set(expected))
 
     def test_parameter_names(self):
-        names = self.concat_model.models[0].get_parameter_names()
+        names = self.concat_model[0].get_parameter_names()
         expected = ("var1_lin0", "var1_lin1", "var1_nonlin")
         self.assertEqual(set(names), set(expected))
 
-        names = self.concat_model.models[-1].get_parameter_names()
+        names = self.concat_model[-1].get_parameter_names()
         expected = ("var1_lin0", "var1_lin1", "var1_nonlin", "var2_lin", "var2_nonlin")
         self.assertEqual(set(names), set(expected))
 
         names = self.concat_model.get_parameter_names()
-        expected = (
-            "model0:var1_lin0",
-            "model0:var1_lin1",
-            "model0:var1_nonlin",
-            "model2:var2_lin",
-            "model2:var2_nonlin",
-        )
+        expected = ("var1_lin0", "var1_lin1", "var1_nonlin", "var2_lin", "var2_nonlin")
         self.assertEqual(set(names), set(expected))
 
         self.concat_model._disable_property_link("var1_lin")
@@ -166,29 +174,29 @@ class testParameterModel(unittest.TestCase):
         expected = (
             "model0:var1_lin0",
             "model0:var1_lin1",
-            "model0:var1_nonlin",
             "model1:var1_lin0",
             "model1:var1_lin1",
             "model2:var1_lin0",
             "model2:var1_lin1",
-            "model2:var2_lin",
-            "model2:var2_nonlin",
             "model3:var1_lin0",
             "model3:var1_lin1",
+            "var1_nonlin",
+            "var2_lin",
+            "var2_nonlin",
         )
         self.assertEqual(set(names), set(expected))
 
     def test_linear_parameter_names(self):
-        names = self.concat_model.models[0].get_parameter_names(linear=True)
+        names = self.concat_model[0].get_parameter_names(linear=True)
         expected = ("var1_lin0", "var1_lin1")
         self.assertEqual(set(names), set(expected))
 
-        names = self.concat_model.models[-1].get_parameter_names(linear=True)
+        names = self.concat_model[-1].get_parameter_names(linear=True)
         expected = ("var1_lin0", "var1_lin1", "var2_lin")
         self.assertEqual(set(names), set(expected))
 
         names = self.concat_model.get_parameter_names(linear=True)
-        expected = ("model0:var1_lin0", "model0:var1_lin1", "model2:var2_lin")
+        expected = ("var1_lin0", "var1_lin1", "var2_lin")
         self.assertEqual(set(names), set(expected))
 
         self.concat_model._disable_property_link("var1_lin")
@@ -200,17 +208,17 @@ class testParameterModel(unittest.TestCase):
             "model1:var1_lin1",
             "model2:var1_lin0",
             "model2:var1_lin1",
-            "model2:var2_lin",
             "model3:var1_lin0",
             "model3:var1_lin1",
+            "var2_lin",
         )
         self.assertEqual(set(names), set(expected))
 
     def test_n_parameter(self):
-        n = self.concat_model.models[0].get_n_parameters()
+        n = self.concat_model[0].get_n_parameters()
         self.assertEqual(n, 3)
 
-        n = self.concat_model.models[-1].get_n_parameters()
+        n = self.concat_model[-1].get_n_parameters()
         self.assertEqual(n, 5)
 
         n = self.concat_model.get_n_parameters()
@@ -221,10 +229,10 @@ class testParameterModel(unittest.TestCase):
         self.assertEqual(n, 11)
 
     def test_n_linear_parameter(self):
-        n = self.concat_model.models[0].get_n_parameters(linear=True)
+        n = self.concat_model[0].get_n_parameters(linear=True)
         self.assertEqual(n, 2)
 
-        n = self.concat_model.models[-1].get_n_parameters(linear=True)
+        n = self.concat_model[-1].get_n_parameters(linear=True)
         self.assertEqual(n, 3)
 
         n = self.concat_model.get_n_parameters(linear=True)
@@ -233,3 +241,33 @@ class testParameterModel(unittest.TestCase):
         self.concat_model._disable_property_link("var1_lin")
         n = self.concat_model.get_n_parameters(linear=True)
         self.assertEqual(n, 9)
+
+    def test_get_parameter_values(self):
+        values = self.concat_model[0].get_parameter_values()
+        self.assertEqual(values.tolist(), [11, 11, 12, 0, 0])
+
+        values = self.concat_model[-1].get_parameter_values()
+        self.assertEqual(values.tolist(), [11, 11, 12, 41, 42])
+
+        values = self.concat_model.get_parameter_values()
+        self.assertEqual(values.tolist(), [11, 11, 12, 41, 42])
+
+        self.concat_model._disable_property_link("var1_lin")
+        values = self.concat_model.get_parameter_values()
+        self.assertEqual(values.tolist(), [12, 41, 42] + [11] * 8)
+
+    def test_get_parameter_values_in_caching_context(self):
+        with self.concat_model._propertyCachingContext():
+            values = self.concat_model[0].get_parameter_values()
+            self.assertEqual(values.tolist(), [11, 11, 12, 41, 42])
+
+            values = self.concat_model[-1].get_parameter_values()
+            self.assertEqual(values.tolist(), [11, 11, 12, 41, 42])
+
+            values = self.concat_model.get_parameter_values()
+            self.assertEqual(values.tolist(), [11, 11, 12, 41, 42])
+
+        self.concat_model._disable_property_link("var1_lin")
+        with self.concat_model._propertyCachingContext():
+            values = self.concat_model.get_parameter_values()
+            self.assertEqual(values.tolist(), [12, 41, 42] + [11] * 8)

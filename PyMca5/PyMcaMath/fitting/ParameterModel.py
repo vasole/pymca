@@ -1,7 +1,9 @@
+import typing
+from dataclasses import dataclass, field
 from contextlib import contextmanager
 import numpy
 from PyMca5.PyMcaMath.fitting.LinkedModel import LinkedModel
-from PyMca5.PyMcaMath.fitting.LinkedModel import LinkedModelContainer
+from PyMca5.PyMcaMath.fitting.LinkedModel import LinkedModelManager
 from PyMca5.PyMcaMath.fitting.LinkedModel import linked_property
 from PyMca5.PyMcaMath.fitting.CachingModel import CachedPropertiesModel
 from PyMca5.PyMcaMath.fitting.CachingModel import cached_property
@@ -68,6 +70,25 @@ class linear_parameter_group(parameter_group):
     pass
 
 
+@dataclass(frozen=True, eq=True)
+class ParameterGroupId:
+    name: str
+    linear: bool = field(compare=False, hash=False)
+    linked: bool = field(compare=False, hash=False)
+    count: int = field(compare=False, hash=False)
+    start_index: int = field(compare=False, hash=False)
+    index: "typing.Any" = field(compare=False, hash=False)
+    property_name: str = field(compare=False, hash=False)
+    instance_key: "typing.Any" = field(compare=False, hash=False)
+
+    def _iter_parameter_names(self):
+        if self.count > 1:
+            for i in range(self.count):
+                yield self.name + str(i)
+        elif self.count == 1:
+            yield self.name
+
+
 class ParameterModelBase(CachedPropertiesModel):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
@@ -98,108 +119,117 @@ class ParameterModelBase(CachedPropertiesModel):
     def _create_empty_property_values_cache(self, key, **paramtype):
         return numpy.zeros(self.get_n_parameters(**paramtype))
 
-    def _property_cache_index(self, group_name, **paramtype):
-        return self._parameter_group_index(group_name, **paramtype)
-
-    def _parameter_group_index(self, group_name, **paramtype):
-        """Parameter group index in the parameter sequence
-
-        :returns int or slice or None:
-        """
-        for name, idx in self._parameter_group_indices(**paramtype):
-            if group_name == name:
-                return idx
-        return None
-
-    def _parameter_group_indices(self, **paramtype):
-        """Index of each parameter group in the parameter sequence
-
-        :yields int or slice: index of parameter group in all parameters
-        """
-        i = 0
-        for group_name, n in self._iter_parameter_group_count(**paramtype):
-            if n == 1:
-                yield group_name, i
-            else:
-                yield group_name, slice(i, i + n)
-            i += n
-
-    def get_parameter_group_names(self, **paramtype):
-        return tuple(self._iter_parameter_group_names(**paramtype))
+    def _property_cache_index(self, group, **paramtype):
+        return group.index
 
     def get_parameter_names(self, **paramtype):
         return tuple(self._iter_parameter_names(**paramtype))
 
-    def get_n_parameters(self, **paramtype):
-        return sum(n for _, n in self._iter_parameter_group_count(**paramtype))
-
     def _iter_parameter_names(self, **paramtype):
-        for group_name, n in self._iter_parameter_group_count(**paramtype):
-            if n > 1:
-                for i in range(n):
-                    yield group_name + str(i)
-            else:
-                yield group_name
+        for group in self._iter_parameter_group_ids(**paramtype):
+            yield from group._iter_parameter_names()
 
-    def _iter_parameter_group_count(self, **paramtype):
-        """Yield name and count of enabled parameter groups
+    def get_n_parameters(self, **paramtype):
+        return sum(group.count for group in self._iter_parameter_group_ids(**paramtype))
 
-        :param bool linear_only:
-        :yields str, int: group name, nb. parameters in the group
+    def get_parameter_values(self, **paramtype):
+        return self._get_property_values(**paramtype)
+
+    def set_parameter_values(self, values, **paramtype):
+        self._set_property_values(values, **paramtype)
+
+    def get_parameter_group_value(self, group, **paramtype):
+        return self._get_property_value(group)
+
+    def set_parameter_group_value(self, group, value, **paramtype):
+        self._set_property_value(group, value)
+
+    def get_parameter_groups(self, **paramtype):
+        return tuple(self._iter_parameter_group_ids(**paramtype))
+
+    def get_parameter_group_names(self, **paramtype):
+        return tuple(
+            group.name for group in self._iter_parameter_group_ids(**paramtype)
+        )
+
+    def _iter_parameter_group_ids(self, **paramtype):
         """
-        group_names = self._iter_parameter_group_names(**paramtype)
-        for group_name in group_names:
-            n = self._get_parameter_group_count(group_name)
-            if n:
-                yield group_name, n
-
-    def _get_parameter_group_count(self, group_name):
-        """
-        :yield parameter_group:
+        :yield ParameterGroupId:
         """
         raise NotImplementedError
 
-    def _iter_parameter_group_names(self, **paramtype):
-        """
-        :yield str:
-        """
-        raise NotImplementedError
+    def _cached_properties(self):
+        yield from self._iter_parameter_group_ids()
 
 
 class ParameterModel(ParameterModelBase, LinkedModel):
-    _PARAMETER_GROUP_NAMES = tuple()
+    @classmethod
+    def _get_parameter_property(cls, property_name):
+        prop = getattr(cls, property_name, None)
+        if isinstance(prop, parameter_group):
+            return prop
+        return None
 
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
-        allp = list()
-        for group_name in sorted(dir(cls)):  # TODO: how to keep order of declaration?
-            attr = getattr(cls, group_name)
-            if isinstance(attr, parameter_group):
-                allp.append(group_name)
-        cls._PARAMETER_GROUP_NAMES = tuple(allp)
+    def _iter_parameter_group_ids(self, linear=None, linked=None, tracker=None):
+        """
+        :yields ParameterGroupId:
+        """
+        count = None
+        index = None
+        if tracker is None:
+            start_index = 0
+        else:
+            start_index = tracker.start_index
+        for property_name in self._cached_property_names():
+            prop = self._get_parameter_property(property_name)
+            if prop is None:
+                continue
 
-    def _iter_parameter_group_names(self, linear=None, linked=None):
-        for group_name in self._PARAMETER_GROUP_NAMES:
+            group_is_linked = prop.propagate
             if linked is not None:
-                if self._property_is_linked(group_name) is not linked:
+                if group_is_linked is not linked:
                     continue
+
+            group_is_linear = isinstance(prop, linear_parameter_group)
             if linear is None:
                 linear = self.linear
             if linear:
-                if self._parameter_group_is_linear(group_name):
-                    yield group_name
+                if not group_is_linear:
+                    continue
+
+            count = prop.fcount(self)
+            if not count:
+                continue
+
+            if count > 1:
+                index = slice(start_index, start_index + count)
+            elif count == 1:
+                index = start_index
             else:
-                yield group_name
+                index = None
 
-    def _get_parameter_group_count(self, group_name):
-        """
-        :returns int:
-        """
-        return getattr(type(self), group_name).fcount(self)
+            instance_key = self._linked_instance_to_key
+            if group_is_linked:
+                name = property_name
+            else:
+                name = f"{instance_key}:{property_name}"
 
-    @classmethod
-    def _parameter_group_is_linear(cls, group_name):
-        return isinstance(getattr(cls, group_name, None), linear_parameter_group)
+            group = ParameterGroupId(
+                name=name,
+                linear=group_is_linear,
+                linked=group_is_linked,
+                property_name=property_name,
+                instance_key=instance_key,
+                count=count,
+                start_index=start_index,
+                index=index,
+            )
+            if tracker is None:
+                yield group
+                start_index += count
+            elif tracker.is_new_group(group):
+                yield group
+                start_index = tracker.start_index
 
     @linked_property
     def linear(self):
@@ -209,8 +239,31 @@ class ParameterModel(ParameterModelBase, LinkedModel):
     def linear(self, value):
         self._linear = value
 
+    def _get_noncached_property_value(self, group):
+        return getattr(self, group.property_name)
 
-class ParameterModelContainer(ParameterModelBase, LinkedModelContainer):
+    def _set_noncached_property_value(self, group, value):
+        setattr(self, group.property_name, value)
+
+
+class Tracker:
+    def __init__(self):
+        self._start_index = 0
+        self._encountered = set()
+
+    @property
+    def start_index(self):
+        return self._start_index
+
+    def is_new_group(self, group):
+        if group in self._encountered:
+            return False
+        self._encountered.add(group)
+        self._start_index += group.count
+        return True
+
+
+class ParameterModelContainer(ParameterModelBase, LinkedModelManager):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         self._enable_property_link("linear")
@@ -222,8 +275,12 @@ class ParameterModelContainer(ParameterModelBase, LinkedModelContainer):
         return self._linked_instances
 
     @property
+    def model_mapping(self):
+        return self._linked_instance_mapping
+
+    @property
     def nmodels(self):
-        return len(self._linked_instances)
+        return len(self.model_mapping)
 
     @property
     def linear(self):
@@ -233,32 +290,27 @@ class ParameterModelContainer(ParameterModelBase, LinkedModelContainer):
     def linear(self, value):
         self._set_linked_property_value("linear", value)
 
-    def _iter_parameter_group_names(self, **paramtype):
+    def _iter_parameter_group_ids(self, **paramtype):
         """
-        :yield str:
+        :yields ParameterGroupId:
         """
         # Shared parameters
-        encountered = set()
-        for i, model in enumerate(self.models):
-            for group_name in model._iter_parameter_group_names(
-                linked=True, **paramtype
-            ):
-                if group_name in encountered:
-                    continue
-                encountered.add(group_name)
-                yield f"model{i}:{group_name}"
+        tracker = Tracker()
+        start_index = 0
+        for model in self.models:
+            yield from model._iter_parameter_group_ids(
+                linked=True, tracker=tracker, **paramtype
+            )
         # Non-shared parameters
-        for i, model in enumerate(self.models):
-            for group_name in model._iter_parameter_group_names(
-                linked=False, **paramtype
-            ):
-                yield f"model{i}:{group_name}"
+        for model in self.models:
+            yield from model._iter_parameter_group_ids(
+                linked=False, tracker=tracker, **paramtype
+            )
 
-    def _get_parameter_group_count(self, group_name):
-        """
-        :returns int:
-        """
-        model_name, group_name = group_name.split(":")
-        i = int(model_name.replace("model", ""))
-        model = self.models[i]
-        return model._get_parameter_group_count(group_name)
+    def _get_noncached_property_value(self, group):
+        instance = self._linked_key_to_instance(group.instance_key)
+        return getattr(instance, group.property_name)
+
+    def _set_noncached_property_value(self, group, value):
+        instance = self._linked_key_to_instance(group.instance_key)
+        setattr(instance, group.property_name, value)

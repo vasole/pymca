@@ -1,7 +1,7 @@
 import unittest
 from collections import Counter
 from PyMca5.PyMcaMath.fitting.LinkedModel import LinkedModel
-from PyMca5.PyMcaMath.fitting.LinkedModel import LinkedModelContainer
+from PyMca5.PyMcaMath.fitting.LinkedModel import LinkedModelManager
 from PyMca5.PyMcaMath.fitting.LinkedModel import linked_contextmanager
 from PyMca5.PyMcaMath.fitting.LinkedModel import linked_property
 
@@ -55,13 +55,22 @@ class Model2(Model1):
         self._cfg["var2"] = value
 
 
-class ConcatModel(LinkedModelContainer, ModelBase):
+class ConcatModel(LinkedModelManager, ModelBase):
     def __init__(self):
         cfg1a = {"var1": 1}
         cfg1b = {"var1": 2}
         cfg2a = {"var1": 3, "var2": 4}
         cfg2b = {"var1": 5, "var2": 6}
-        super().__init__([Model1(cfg1a), Model1(cfg1b), Model2(cfg2a), Model2(cfg2b)])
+        instances = {
+            0: Model1(cfg1a),
+            1: Model1(cfg1b),
+            2: Model2(cfg2a),
+            3: Model2(cfg2b),
+        }
+        super().__init__(instances)
+
+    def __getitem__(self, index):
+        return self._linked_instance_mapping[index]
 
     def reset_counters(self):
         for model in self._linked_instances:
@@ -84,7 +93,7 @@ class testLinkedModel(unittest.TestCase):
         """establish links"""
         nlinked = len(self.concat_model._linked_instances) - 1
         for model in self.concat_model._linked_instances:
-            self.assertEqual(len(model._linked_instances), nlinked)
+            self.assertEqual(len(list(model._linked_instances)), nlinked)
 
     def test_init_properties(self):
         """initial property values"""
@@ -124,7 +133,7 @@ class testLinkedModel(unittest.TestCase):
 
     def test_contexts_single(self):
         """entering a linked context manager of a single instance"""
-        model = self.concat_model._linked_instances[2]
+        model = self.concat_model[2]
         model.fit()
         self.assertEqual(model.context_counter, 1)
         for model in self.concat_model._linked_instances:
@@ -143,7 +152,7 @@ class testLinkedModel(unittest.TestCase):
     def test_get_var1_single(self):
         """getting a linked property (present in all models) from a single instance"""
         self.concat_model.link()
-        model = self.concat_model._linked_instances[2]
+        model = self.concat_model[2]
         self.assertEqual(model.var1, 1)
         for i, model in enumerate(self.concat_model._linked_instances):
             self.assertEqual(
@@ -164,7 +173,7 @@ class testLinkedModel(unittest.TestCase):
     def test_get_var2_single(self):
         """getting a linked property (present in some models) from a single instance"""
         self.concat_model.link()
-        model = self.concat_model._linked_instances[2]
+        model = self.concat_model[2]
         self.assertEqual(model.var2, 4)
         for i, model in enumerate(self.concat_model._linked_instances):
             self.assertEqual(
@@ -184,7 +193,7 @@ class testLinkedModel(unittest.TestCase):
     def test_set_var1_single(self):
         """setting a linked property (present in all models) from a single instance"""
         self.concat_model.link()
-        model = self.concat_model._linked_instances[2]
+        model = self.concat_model[2]
         model.var1 = 1
         for i, model in enumerate(self.concat_model._linked_instances):
             self.assertEqual(model.get_counter["var1"], 0, msg=f"model{i}")
@@ -204,7 +213,7 @@ class testLinkedModel(unittest.TestCase):
     def test_set_var2_single(self):
         """setting a linked property (present in some models) from a single instance"""
         self.concat_model.link()
-        model = self.concat_model._linked_instances[2]
+        model = self.concat_model[2]
         model.var2 = 100
         for i, model in enumerate(self.concat_model._linked_instances):
             self.assertEqual(model.get_counter["var2"], 0, msg=f"model{i}")

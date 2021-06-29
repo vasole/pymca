@@ -1,11 +1,11 @@
 import numpy
 from collections.abc import Sequence, MutableMapping
-from PyMca5.PyMcaMath.fitting.LinkedModel import LinkedModelContainer
+from PyMca5.PyMcaMath.fitting.LinkedModel import LinkedModelManager
 from PyMca5.PyMcaMath.fitting.ModelInterface import ModelInterface
 from PyMca5.PyMcaMath.fitting.Model import Model
 
 
-class ConcatModel(LinkedModelContainer, ModelInterface):
+class ConcatModel(LinkedModelManager, ModelInterface):
     """Concatenated model with shared parameters"""
 
     def __init__(self, models, shared_attributes=None):
