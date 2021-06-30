@@ -111,7 +111,7 @@ class ParameterModelBase(CachedPropertiesModel):
         finally:
             self.linear = keep
 
-    def _property_cache_key(self, linear=None):
+    def _property_cache_key(self, linear=None, **paramtype):
         if linear is None:
             linear = self.linear
         return linear
@@ -126,11 +126,11 @@ class ParameterModelBase(CachedPropertiesModel):
         return tuple(self._iter_parameter_names(**paramtype))
 
     def _iter_parameter_names(self, **paramtype):
-        for group in self._iter_parameter_group_ids(**paramtype):
+        for group in self._iter_parameter_groups(**paramtype):
             yield from group._iter_parameter_names()
 
     def get_n_parameters(self, **paramtype):
-        return sum(group.count for group in self._iter_parameter_group_ids(**paramtype))
+        return sum(group.count for group in self._iter_parameter_groups(**paramtype))
 
     def get_parameter_values(self, **paramtype):
         return self._get_property_values(**paramtype)
@@ -139,38 +139,26 @@ class ParameterModelBase(CachedPropertiesModel):
         self._set_property_values(values, **paramtype)
 
     def get_parameter_group_value(self, group, **paramtype):
-        return self._get_property_value(group)
+        return self._get_property_value(group, **paramtype)
 
     def set_parameter_group_value(self, group, value, **paramtype):
-        self._set_property_value(group, value)
+        self._set_property_value(group, value, **paramtype)
 
     def get_parameter_groups(self, **paramtype):
-        return tuple(self._iter_parameter_group_ids(**paramtype))
+        return tuple(self._iter_parameter_groups(**paramtype))
 
     def get_parameter_group_names(self, **paramtype):
-        return tuple(
-            group.name for group in self._iter_parameter_group_ids(**paramtype)
-        )
+        return tuple(group.name for group in self._iter_parameter_groups(**paramtype))
 
-    def _iter_parameter_group_ids(self, **paramtype):
+    def _iter_parameter_groups(self, **paramtype):
         """
-        :yield ParameterGroupId:
+        :yields ParameterGroupId:
         """
-        raise NotImplementedError
-
-    def _cached_properties(self):
-        yield from self._iter_parameter_group_ids()
+        yield from self._iter_cached_property_names(**paramtype)
 
 
 class ParameterModel(ParameterModelBase, LinkedModel):
-    @classmethod
-    def _get_parameter_property(cls, property_name):
-        prop = getattr(cls, property_name, None)
-        if isinstance(prop, parameter_group):
-            return prop
-        return None
-
-    def _iter_parameter_group_ids(self, linear=None, linked=None, tracker=None):
+    def _instance_cached_property_names(self, linear=None, linked=None, tracker=None):
         """
         :yields ParameterGroupId:
         """
@@ -180,10 +168,13 @@ class ParameterModel(ParameterModelBase, LinkedModel):
             start_index = 0
         else:
             start_index = tracker.start_index
+        cls = type(self)
         for property_name in self._cached_property_names():
-            prop = self._get_parameter_property(property_name)
-            if prop is None:
-                continue
+            prop = getattr(cls, property_name)
+            if not isinstance(prop, parameter_group):
+                raise TypeError(
+                    "Currently only 'parameter_group' properties support caching"
+                )
 
             group_is_linked = prop.propagate
             if linked is not None:
@@ -290,7 +281,7 @@ class ParameterModelContainer(ParameterModelBase, LinkedModelManager):
     def linear(self, value):
         self._set_linked_property_value("linear", value)
 
-    def _iter_parameter_group_ids(self, **paramtype):
+    def _instance_cached_property_names(self, **paramtype):
         """
         :yields ParameterGroupId:
         """
@@ -298,12 +289,12 @@ class ParameterModelContainer(ParameterModelBase, LinkedModelManager):
         tracker = Tracker()
         start_index = 0
         for model in self.models:
-            yield from model._iter_parameter_group_ids(
+            yield from model._iter_parameter_groups(
                 linked=True, tracker=tracker, **paramtype
             )
         # Non-shared parameters
         for model in self.models:
-            yield from model._iter_parameter_group_ids(
+            yield from model._iter_parameter_groups(
                 linked=False, tracker=tracker, **paramtype
             )
 

@@ -109,15 +109,20 @@ class CachedPropertiesModel(CachingModel):
 
     @classmethod
     def _cached_property_names(cls):
+        """All property names for this class"""
         return cls._CACHED_PROPERTIES
 
-    def _cached_properties(self, **cacheoptions):
+    def _instance_cached_property_names(self, **cacheoptions):
+        """All property names for this instance and the provided options"""
         return self._cached_property_names()
 
-    def __iter_cached_property_names(self, **cacheoptions):
+    def _iter_cached_property_names(self, **cacheoptions):
+        """To be used when iterating over all property names
+        of this instance.
+        """
         name_to_index = self._get_property_indices_cache(**cacheoptions)
         if name_to_index is None:
-            yield from self._cached_properties(**cacheoptions)
+            yield from self._instance_cached_property_names(**cacheoptions)
         else:
             yield from name_to_index.keys()
 
@@ -135,7 +140,7 @@ class CachedPropertiesModel(CachingModel):
             else:
                 values_cache = start_cache
 
-            with self._cachingContext("_cached_properties"):
+            with self._cachingContext("_instance_cached_property_names"):
                 self._set_property_values_cache(values_cache, **cacheoptions)
                 yield values_cache
 
@@ -143,14 +148,14 @@ class CachedPropertiesModel(CachingModel):
                 self._persist_property_values(values_cache, **cacheoptions)
 
     def _get_property_values_cache(self, **cacheoptions):
-        caches = self._getCache("_cached_properties")
+        caches = self._getCache("_instance_cached_property_names")
         if caches is None:
             return None
         key = self._cache_manager._property_cache_key(**cacheoptions)
         return caches.get(key, None)
 
     def _set_property_values_cache(self, values_cache, **cacheoptions):
-        caches = self._getCache("_cached_properties")
+        caches = self._getCache("_instance_cached_property_names")
         if caches is None:
             return False
         key = self._cache_manager._property_cache_key(**cacheoptions)
@@ -164,7 +169,7 @@ class CachedPropertiesModel(CachingModel):
         values_cache = _cache_manager._create_empty_property_values_cache(
             key, **cacheoptions
         )
-        for name in self.__iter_cached_property_names():
+        for name in self._iter_cached_property_names(**cacheoptions):
             index = self._get_property_cache_index(name, **cacheoptions)
             values_cache[index] = self._get_noncached_property_value(name)
         return values_cache
@@ -183,7 +188,7 @@ class CachedPropertiesModel(CachingModel):
             self._persist_property_values(values)
 
     def _persist_property_values(self, values, **cacheoptions):
-        for name in self.__iter_cached_property_names():
+        for name in self._iter_cached_property_names(**cacheoptions):
             index = self._get_property_cache_index(name, **cacheoptions)
             self._set_noncached_property_value(name, values[index])
 

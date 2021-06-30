@@ -1,4 +1,5 @@
 import unittest
+from contextlib import contextmanager
 from PyMca5.PyMcaMath.fitting.ParameterModel import ParameterModel
 from PyMca5.PyMcaMath.fitting.ParameterModel import ParameterModelContainer
 from PyMca5.PyMcaMath.fitting.ParameterModel import parameter_group
@@ -102,172 +103,246 @@ class testParameterModel(unittest.TestCase):
             self.assertFalse(model.linear)
 
     def test_parameter_group_names(self):
-        names = self.concat_model[0].get_parameter_group_names()
-        expected = ("var1_lin", "var1_nonlin")
-        self.assertEqual(set(names), set(expected))
+        for cacheoptions in self._parameterize_nonlinear_test():
+            names = self.concat_model[0].get_parameter_group_names(**cacheoptions)
+            expected = ("var1_lin", "var1_nonlin")
+            self.assertEqual(set(names), set(expected))
 
-        names = self.concat_model[-1].get_parameter_group_names()
-        expected = ("var1_lin", "var1_nonlin", "var2_lin", "var2_nonlin")
-        self.assertEqual(set(names), set(expected))
+            names = self.concat_model[-1].get_parameter_group_names(**cacheoptions)
+            expected = ("var1_lin", "var1_nonlin", "var2_lin", "var2_nonlin")
+            self.assertEqual(set(names), set(expected))
 
-        names = self.concat_model.get_parameter_group_names()
-        expected = (
-            "var1_lin",
-            "var1_nonlin",
-            "var2_lin",
-            "var2_nonlin",
-        )
-        self.assertEqual(set(names), set(expected))
+            names = self.concat_model.get_parameter_group_names(**cacheoptions)
+            expected = (
+                "var1_lin",
+                "var1_nonlin",
+                "var2_lin",
+                "var2_nonlin",
+            )
+            self.assertEqual(set(names), set(expected))
 
-        self.concat_model._disable_property_link("var1_lin")
-        names = self.concat_model.get_parameter_group_names()
-        expected = (
-            "model0:var1_lin",
-            "model1:var1_lin",
-            "model2:var1_lin",
-            "model3:var1_lin",
-            "var1_nonlin",
-            "var2_lin",
-            "var2_nonlin",
-        )
-        self.assertEqual(set(names), set(expected))
+            with self._unlink_var1_lin():
+                names = self.concat_model.get_parameter_group_names(**cacheoptions)
+                expected = (
+                    "model0:var1_lin",
+                    "model1:var1_lin",
+                    "model2:var1_lin",
+                    "model3:var1_lin",
+                    "var1_nonlin",
+                    "var2_lin",
+                    "var2_nonlin",
+                )
+                self.assertEqual(set(names), set(expected))
 
     def test_linear_parameter_group_names(self):
-        names = self.concat_model[0].get_parameter_group_names(linear=True)
-        expected = ("var1_lin",)
-        self.assertEqual(set(names), set(expected))
+        for cacheoptions in self._parameterize_linear_test():
+            names = self.concat_model[0].get_parameter_group_names(**cacheoptions)
+            expected = ("var1_lin",)
+            self.assertEqual(set(names), set(expected))
 
-        names = self.concat_model[-1].get_parameter_group_names(linear=True)
-        expected = ("var1_lin", "var2_lin")
-        self.assertEqual(set(names), set(expected))
+            names = self.concat_model[-1].get_parameter_group_names(**cacheoptions)
+            expected = ("var1_lin", "var2_lin")
+            self.assertEqual(set(names), set(expected))
 
-        names = self.concat_model.get_parameter_group_names(linear=True)
-        expected = ("var1_lin", "var2_lin")
-        self.assertEqual(set(names), set(expected))
+            names = self.concat_model.get_parameter_group_names(**cacheoptions)
+            expected = ("var1_lin", "var2_lin")
+            self.assertEqual(set(names), set(expected))
 
-        self.concat_model._disable_property_link("var1_lin")
-        names = self.concat_model.get_parameter_group_names(linear=True)
-        expected = (
-            "model0:var1_lin",
-            "model1:var1_lin",
-            "model2:var1_lin",
-            "model3:var1_lin",
-            "var2_lin",
-        )
-        self.assertEqual(set(names), set(expected))
+            with self._unlink_var1_lin():
+                names = self.concat_model.get_parameter_group_names(**cacheoptions)
+                expected = (
+                    "model0:var1_lin",
+                    "model1:var1_lin",
+                    "model2:var1_lin",
+                    "model3:var1_lin",
+                    "var2_lin",
+                )
+                self.assertEqual(set(names), set(expected))
 
     def test_parameter_names(self):
-        names = self.concat_model[0].get_parameter_names()
-        expected = ("var1_lin0", "var1_lin1", "var1_nonlin")
-        self.assertEqual(set(names), set(expected))
+        for cacheoptions in self._parameterize_nonlinear_test():
+            names = self.concat_model[0].get_parameter_names(**cacheoptions)
+            expected = ("var1_lin0", "var1_lin1", "var1_nonlin")
+            self.assertEqual(set(names), set(expected))
 
-        names = self.concat_model[-1].get_parameter_names()
-        expected = ("var1_lin0", "var1_lin1", "var1_nonlin", "var2_lin", "var2_nonlin")
-        self.assertEqual(set(names), set(expected))
+            names = self.concat_model[-1].get_parameter_names(**cacheoptions)
+            expected = (
+                "var1_lin0",
+                "var1_lin1",
+                "var1_nonlin",
+                "var2_lin",
+                "var2_nonlin",
+            )
+            self.assertEqual(set(names), set(expected))
 
-        names = self.concat_model.get_parameter_names()
-        expected = ("var1_lin0", "var1_lin1", "var1_nonlin", "var2_lin", "var2_nonlin")
-        self.assertEqual(set(names), set(expected))
+            names = self.concat_model.get_parameter_names(**cacheoptions)
+            expected = (
+                "var1_lin0",
+                "var1_lin1",
+                "var1_nonlin",
+                "var2_lin",
+                "var2_nonlin",
+            )
+            self.assertEqual(set(names), set(expected))
 
-        self.concat_model._disable_property_link("var1_lin")
-        names = self.concat_model.get_parameter_names()
-        expected = (
-            "model0:var1_lin0",
-            "model0:var1_lin1",
-            "model1:var1_lin0",
-            "model1:var1_lin1",
-            "model2:var1_lin0",
-            "model2:var1_lin1",
-            "model3:var1_lin0",
-            "model3:var1_lin1",
-            "var1_nonlin",
-            "var2_lin",
-            "var2_nonlin",
-        )
-        self.assertEqual(set(names), set(expected))
+            with self._unlink_var1_lin():
+                names = self.concat_model.get_parameter_names(**cacheoptions)
+                expected = (
+                    "model0:var1_lin0",
+                    "model0:var1_lin1",
+                    "model1:var1_lin0",
+                    "model1:var1_lin1",
+                    "model2:var1_lin0",
+                    "model2:var1_lin1",
+                    "model3:var1_lin0",
+                    "model3:var1_lin1",
+                    "var1_nonlin",
+                    "var2_lin",
+                    "var2_nonlin",
+                )
+                self.assertEqual(set(names), set(expected))
 
     def test_linear_parameter_names(self):
-        names = self.concat_model[0].get_parameter_names(linear=True)
-        expected = ("var1_lin0", "var1_lin1")
-        self.assertEqual(set(names), set(expected))
+        for cacheoptions in self._parameterize_linear_test():
+            names = self.concat_model[0].get_parameter_names(**cacheoptions)
+            expected = ("var1_lin0", "var1_lin1")
+            self.assertEqual(set(names), set(expected))
 
-        names = self.concat_model[-1].get_parameter_names(linear=True)
-        expected = ("var1_lin0", "var1_lin1", "var2_lin")
-        self.assertEqual(set(names), set(expected))
+            names = self.concat_model[-1].get_parameter_names(**cacheoptions)
+            expected = ("var1_lin0", "var1_lin1", "var2_lin")
+            self.assertEqual(set(names), set(expected))
 
-        names = self.concat_model.get_parameter_names(linear=True)
-        expected = ("var1_lin0", "var1_lin1", "var2_lin")
-        self.assertEqual(set(names), set(expected))
+            names = self.concat_model.get_parameter_names(**cacheoptions)
+            expected = ("var1_lin0", "var1_lin1", "var2_lin")
+            self.assertEqual(set(names), set(expected))
 
-        self.concat_model._disable_property_link("var1_lin")
-        names = self.concat_model.get_parameter_names(linear=True)
-        expected = (
-            "model0:var1_lin0",
-            "model0:var1_lin1",
-            "model1:var1_lin0",
-            "model1:var1_lin1",
-            "model2:var1_lin0",
-            "model2:var1_lin1",
-            "model3:var1_lin0",
-            "model3:var1_lin1",
-            "var2_lin",
-        )
-        self.assertEqual(set(names), set(expected))
+            with self._unlink_var1_lin():
+                names = self.concat_model.get_parameter_names(**cacheoptions)
+                expected = (
+                    "model0:var1_lin0",
+                    "model0:var1_lin1",
+                    "model1:var1_lin0",
+                    "model1:var1_lin1",
+                    "model2:var1_lin0",
+                    "model2:var1_lin1",
+                    "model3:var1_lin0",
+                    "model3:var1_lin1",
+                    "var2_lin",
+                )
+                self.assertEqual(set(names), set(expected))
 
     def test_n_parameter(self):
-        n = self.concat_model[0].get_n_parameters()
-        self.assertEqual(n, 3)
+        for cacheoptions in self._parameterize_nonlinear_test():
+            n = self.concat_model[0].get_n_parameters(**cacheoptions)
+            self.assertEqual(n, 3)
 
-        n = self.concat_model[-1].get_n_parameters()
-        self.assertEqual(n, 5)
+            n = self.concat_model[-1].get_n_parameters(**cacheoptions)
+            self.assertEqual(n, 5)
 
-        n = self.concat_model.get_n_parameters()
-        self.assertEqual(n, 5)
+            n = self.concat_model.get_n_parameters(**cacheoptions)
+            self.assertEqual(n, 5)
 
-        self.concat_model._disable_property_link("var1_lin")
-        n = self.concat_model.get_n_parameters()
-        self.assertEqual(n, 11)
+            with self._unlink_var1_lin():
+                n = self.concat_model.get_n_parameters(**cacheoptions)
+                self.assertEqual(n, 11)
 
     def test_n_linear_parameter(self):
-        n = self.concat_model[0].get_n_parameters(linear=True)
-        self.assertEqual(n, 2)
+        for cacheoptions in self._parameterize_linear_test():
+            n = self.concat_model[0].get_n_parameters(**cacheoptions)
+            self.assertEqual(n, 2)
 
-        n = self.concat_model[-1].get_n_parameters(linear=True)
-        self.assertEqual(n, 3)
+            n = self.concat_model[-1].get_n_parameters(**cacheoptions)
+            self.assertEqual(n, 3)
 
-        n = self.concat_model.get_n_parameters(linear=True)
-        self.assertEqual(n, 3)
+            n = self.concat_model.get_n_parameters(**cacheoptions)
+            self.assertEqual(n, 3)
 
-        self.concat_model._disable_property_link("var1_lin")
-        n = self.concat_model.get_n_parameters(linear=True)
-        self.assertEqual(n, 9)
+            with self._unlink_var1_lin():
+                n = self.concat_model.get_n_parameters(**cacheoptions)
+                self.concat_model._enable_property_link("var1_lin")
+                self.assertEqual(n, 9)
 
     def test_get_parameter_values(self):
-        values = self.concat_model[0].get_parameter_values()
-        self.assertEqual(values.tolist(), [11, 11, 12, 0, 0])
+        for cacheoptions in self._parameterize_nonlinear_test():
+            values = self.concat_model[0].get_parameter_values(**cacheoptions)
+            self.assertEqual(values.tolist(), [11, 11, 12, 0, 0])
 
-        values = self.concat_model[-1].get_parameter_values()
-        self.assertEqual(values.tolist(), [11, 11, 12, 41, 42])
+            values = self.concat_model[-1].get_parameter_values(**cacheoptions)
+            self.assertEqual(values.tolist(), [11, 11, 12, 41, 42])
 
-        values = self.concat_model.get_parameter_values()
-        self.assertEqual(values.tolist(), [11, 11, 12, 41, 42])
+            values = self.concat_model.get_parameter_values(**cacheoptions)
+            self.assertEqual(values.tolist(), [11, 11, 12, 41, 42])
 
-        self.concat_model._disable_property_link("var1_lin")
-        values = self.concat_model.get_parameter_values()
-        self.assertEqual(values.tolist(), [12, 41, 42] + [11] * 8)
+            with self._unlink_var1_lin():
+                values = self.concat_model.get_parameter_values(**cacheoptions)
+                self.assertEqual(values.tolist(), [12, 41, 42] + [11] * 8)
 
     def test_get_parameter_values_in_caching_context(self):
-        with self.concat_model._propertyCachingContext():
-            values = self.concat_model[0].get_parameter_values()
-            self.assertEqual(values.tolist(), [11, 11, 12, 41, 42])
+        for cacheoptions in self._parameterize_nonlinear_test():
+            with self.concat_model._propertyCachingContext(**cacheoptions):
+                values = self.concat_model[0].get_parameter_values(**cacheoptions)
+                self.assertEqual(values.tolist(), [11, 11, 12, 41, 42])
 
-            values = self.concat_model[-1].get_parameter_values()
-            self.assertEqual(values.tolist(), [11, 11, 12, 41, 42])
+                values = self.concat_model[-1].get_parameter_values(**cacheoptions)
+                self.assertEqual(values.tolist(), [11, 11, 12, 41, 42])
 
-            values = self.concat_model.get_parameter_values()
-            self.assertEqual(values.tolist(), [11, 11, 12, 41, 42])
+                values = self.concat_model.get_parameter_values(**cacheoptions)
+                self.assertEqual(values.tolist(), [11, 11, 12, 41, 42])
 
+            with self._unlink_var1_lin():
+                with self.concat_model._propertyCachingContext(**cacheoptions):
+                    values = self.concat_model.get_parameter_values(**cacheoptions)
+                    self.assertEqual(values.tolist(), [12, 41, 42] + [11] * 8)
+
+    def test_get_linear_parameter_values(self):
+        for cacheoptions in self._parameterize_linear_test():
+            values = self.concat_model[0].get_parameter_values(**cacheoptions)
+            self.assertEqual(values.tolist(), [11, 11, 0])
+
+            values = self.concat_model[-1].get_parameter_values(**cacheoptions)
+            self.assertEqual(values.tolist(), [11, 11, 41])
+
+            values = self.concat_model.get_parameter_values(**cacheoptions)
+            self.assertEqual(values.tolist(), [11, 11, 41])
+
+            with self._unlink_var1_lin():
+                values = self.concat_model.get_parameter_values(**cacheoptions)
+                self.concat_model._enable_property_link("var1_lin")
+                self.assertEqual(values.tolist(), [41] + [11] * 8)
+
+    def test_get_linear_parameter_values_in_caching_context(self):
+        for cacheoptions in self._parameterize_linear_test():
+            with self.concat_model._propertyCachingContext(**cacheoptions):
+                values = self.concat_model[0].get_parameter_values(**cacheoptions)
+                self.assertEqual(values.tolist(), [11, 11, 41])
+
+                values = self.concat_model[-1].get_parameter_values(**cacheoptions)
+                self.assertEqual(values.tolist(), [11, 11, 41])
+
+                values = self.concat_model.get_parameter_values(**cacheoptions)
+                self.assertEqual(values.tolist(), [11, 11, 41])
+
+            with self._unlink_var1_lin():
+                with self.concat_model._propertyCachingContext(**cacheoptions):
+                    values = self.concat_model.get_parameter_values(**cacheoptions)
+                self.assertEqual(values.tolist(), [41] + [11] * 8)
+
+    def _parameterize_linear_test(self):
+        for local_linear, global_linear in [[True, False], [None, True]]:
+            with self.subTest(local_linear=local_linear, global_linear=global_linear):
+                self.concat_model.linear = global_linear
+                yield {"linear": local_linear}
+
+    def _parameterize_nonlinear_test(self):
+        for local_linear, global_linear in [[False, True], [None, False]]:
+            with self.subTest(local_linear=local_linear, global_linear=global_linear):
+                self.concat_model.linear = global_linear
+                yield {"linear": local_linear}
+
+    @contextmanager
+    def _unlink_var1_lin(self):
         self.concat_model._disable_property_link("var1_lin")
-        with self.concat_model._propertyCachingContext():
-            values = self.concat_model.get_parameter_values()
-            self.assertEqual(values.tolist(), [12, 41, 42] + [11] * 8)
+        try:
+            yield
+        finally:
+            self.concat_model._enable_property_link("var1_lin")
