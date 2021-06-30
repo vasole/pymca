@@ -1,12 +1,12 @@
-import typing
+from typing import Any
 from dataclasses import dataclass, field
 from contextlib import contextmanager
 import numpy
-from PyMca5.PyMcaMath.fitting.LinkedModel import LinkedModel
-from PyMca5.PyMcaMath.fitting.LinkedModel import LinkedModelManager
-from PyMca5.PyMcaMath.fitting.LinkedModel import linked_property
-from PyMca5.PyMcaMath.fitting.CachingModel import CachedPropertiesModel
-from PyMca5.PyMcaMath.fitting.CachingModel import cached_property
+from PyMca5.PyMcaMath.fitting.model.LinkedModel import LinkedModel
+from PyMca5.PyMcaMath.fitting.model.LinkedModel import LinkedModelManager
+from PyMca5.PyMcaMath.fitting.model.LinkedModel import linked_property
+from PyMca5.PyMcaMath.fitting.model.CachingModel import CachedPropertiesModel
+from PyMca5.PyMcaMath.fitting.model.CachingModel import cached_property
 
 
 class parameter_group(cached_property, linked_property):
@@ -76,10 +76,12 @@ class ParameterGroupId:
     linear: bool = field(compare=False, hash=False)
     linked: bool = field(compare=False, hash=False)
     count: int = field(compare=False, hash=False)
+    constraints: Any = field(compare=False, hash=False)
     start_index: int = field(compare=False, hash=False)
-    index: "typing.Any" = field(compare=False, hash=False)
+    stop_index: int = field(compare=False, hash=False)
+    index: Any = field(compare=False, hash=False)
     property_name: str = field(compare=False, hash=False)
-    instance_key: "typing.Any" = field(compare=False, hash=False)
+    instance_key: Any = field(compare=False, hash=False)
 
     def _iter_parameter_names(self):
         if self.count > 1:
@@ -90,6 +92,8 @@ class ParameterGroupId:
 
 
 class ParameterModelBase(CachedPropertiesModel):
+    """Interface for all models that manage fit parameters"""
+
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         self._linear = False
@@ -138,6 +142,14 @@ class ParameterModelBase(CachedPropertiesModel):
     def set_parameter_values(self, values, **paramtype):
         self._set_property_values(values, **paramtype)
 
+    def get_parameter_constraints(self, **paramtype):
+        """
+        :returns array: nparams x 3
+        """
+        return numpy.vstack(
+            group.constraints for group in self._iter_parameter_groups(**paramtype)
+        )
+
     def get_parameter_group_value(self, group, **paramtype):
         return self._get_property_value(group, **paramtype)
 
@@ -156,8 +168,15 @@ class ParameterModelBase(CachedPropertiesModel):
         """
         yield from self._iter_cached_property_names(**paramtype)
 
+    def _group_from_parameter_index(self, param_idx, **paramtype):
+        for group in self._iter_parameter_groups(**paramtype):
+            if group.start_index <= param_idx < group.stop_index:
+                return group
+
 
 class ParameterModel(ParameterModelBase, LinkedModel):
+    """Model that implements fit parameters"""
+
     def _instance_cached_property_names(self, linear=None, linked=None, tracker=None):
         """
         :yields ParameterGroupId:
@@ -192,12 +211,15 @@ class ParameterModel(ParameterModelBase, LinkedModel):
             if not count:
                 continue
 
+            stop_index = start_index + count
             if count > 1:
-                index = slice(start_index, start_index + count)
+                index = slice(start_index, stop_index)
             elif count == 1:
                 index = start_index
             else:
                 index = None
+
+            constraints = prop.fconstraints(self)
 
             instance_key = self._linked_instance_to_key
             if group_is_linked:
@@ -213,7 +235,9 @@ class ParameterModel(ParameterModelBase, LinkedModel):
                 instance_key=instance_key,
                 count=count,
                 start_index=start_index,
+                stop_index=stop_index,
                 index=index,
+                constraints=constraints,
             )
             if tracker is None:
                 yield group
@@ -237,7 +261,7 @@ class ParameterModel(ParameterModelBase, LinkedModel):
         setattr(self, group.property_name, value)
 
 
-class Tracker:
+class _IterGroupTracker:
     def __init__(self):
         self._start_index = 0
         self._encountered = set()
@@ -254,7 +278,9 @@ class Tracker:
         return True
 
 
-class ParameterModelContainer(ParameterModelBase, LinkedModelManager):
+class ParameterModelManager(ParameterModelBase, LinkedModelManager):
+    """Model that manages linked models that implement fit parameters."""
+
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         self._enable_property_link("linear")
@@ -286,7 +312,7 @@ class ParameterModelContainer(ParameterModelBase, LinkedModelManager):
         :yields ParameterGroupId:
         """
         # Shared parameters
-        tracker = Tracker()
+        tracker = _IterGroupTracker()
         start_index = 0
         for model in self.models:
             yield from model._iter_parameter_groups(

@@ -2,9 +2,9 @@ import unittest
 import numpy
 import functools
 from collections import Counter
-from PyMca5.PyMcaMath.fitting.CachingModel import CachedPropertiesModel
-from PyMca5.PyMcaMath.fitting.CachingModel import CachingModel
-from PyMca5.PyMcaMath.fitting.CachingModel import cached_property
+from PyMca5.PyMcaMath.fitting.model.CachingModel import CachedPropertiesModel
+from PyMca5.PyMcaMath.fitting.model.CachingModel import CachingModel
+from PyMca5.PyMcaMath.fitting.model.CachingModel import cached_property
 
 
 class Cached(CachedPropertiesModel):

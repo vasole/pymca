@@ -1,6 +1,6 @@
 import functools
 from contextlib import contextmanager
-from PyMca5.PyMcaMath.fitting.PropertyUtils import wrapped_property
+from PyMca5.PyMcaMath.fitting.model.PropertyUtils import wrapped_property
 
 
 class CacheManager:
@@ -24,8 +24,8 @@ class CacheManager:
 
 
 class CachingModel(CacheManager):
-    """Object that manages and uses an internal cache (default) or
-    uses an external cache.
+    """Model that manages and uses an internal cache (default)
+    or uses an external cache.
     """
 
     def __init__(self, *args, **kw):
@@ -75,6 +75,10 @@ class CachingModel(CacheManager):
 
 
 class cached_property(wrapped_property):
+    """Property getter/setter may get/set from
+    a cache when enabled.
+    """
+
     def _wrap_getter(self, fget):
         fget = super()._wrap_getter(fget)
 
@@ -95,7 +99,7 @@ class cached_property(wrapped_property):
 
 
 class CachedPropertiesModel(CachingModel):
-    """Object with cached properties when enabled."""
+    """Model that implements cached properties"""
 
     _CACHED_PROPERTIES = tuple()
 

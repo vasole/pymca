@@ -1,8 +1,7 @@
 import functools
 from contextlib import ExitStack, contextmanager
 from collections.abc import Mapping
-from typing import Type
-from PyMca5.PyMcaMath.fitting.PropertyUtils import wrapped_property
+from PyMca5.PyMcaMath.fitting.model.PropertyUtils import wrapped_property
 
 
 class linked_property(wrapped_property):
@@ -54,8 +53,8 @@ def linked_contextmanager(method):
 
 
 class LinkedModel:
-    """Every class that uses the link decorators needs
-    to derived from this class.
+    """Model with properties and context's that are linked to other
+    LinkedModel instances.
     """
 
     def __init__(self, *args, **kw):
@@ -144,9 +143,7 @@ class LinkedModel:
 
 
 class LinkedModelManager:
-    """Classes that manage LinkedModel objects should
-    derive from this class.
-    """
+    """Model that manages linked LinkedModel objects"""
 
     def __init__(self, linked_instances=None, *args, **kw):
         super().__init__(*args, **kw)

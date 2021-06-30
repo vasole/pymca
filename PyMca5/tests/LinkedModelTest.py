@@ -1,9 +1,9 @@
 import unittest
 from collections import Counter
-from PyMca5.PyMcaMath.fitting.LinkedModel import LinkedModel
-from PyMca5.PyMcaMath.fitting.LinkedModel import LinkedModelManager
-from PyMca5.PyMcaMath.fitting.LinkedModel import linked_contextmanager
-from PyMca5.PyMcaMath.fitting.LinkedModel import linked_property
+from PyMca5.PyMcaMath.fitting.model.LinkedModel import LinkedModel
+from PyMca5.PyMcaMath.fitting.model.LinkedModel import LinkedModelManager
+from PyMca5.PyMcaMath.fitting.model.LinkedModel import linked_contextmanager
+from PyMca5.PyMcaMath.fitting.model.LinkedModel import linked_property
 
 
 class ModelBase(LinkedModel):

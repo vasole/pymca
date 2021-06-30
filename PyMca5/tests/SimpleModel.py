@@ -34,13 +34,13 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 import numpy
 from PyMca5.PyMcaMath.fitting import SpecfitFuns
-from PyMca5.PyMcaMath.fitting.Model import Model
-from PyMca5.PyMcaMath.fitting.Model import ConcatModel
-from PyMca5.PyMcaMath.fitting.Model import parameter
-from PyMca5.PyMcaMath.fitting.Model import linear_parameter
+from PyMca5.PyMcaMath.fitting.model import parameter_group
+from PyMca5.PyMcaMath.fitting.model import linear_parameter_group
+from PyMca5.PyMcaMath.fitting.model import LeastSquaresFitModel
+from PyMca5.PyMcaMath.fitting.model import LeastSquaresCombinedFitModel
 
 
-class SimpleModel(Model):
+class SimpleModel(LeastSquaresFitModel):
     """Model MCA data using a fixed list of peak positions and efficiencies"""
 
     SIGMA_TO_FWHM = 2 * numpy.sqrt(2 * numpy.log(2))
@@ -64,7 +64,7 @@ class SimpleModel(Model):
             self.__class__, self.npeaks, self.zero, self.gain, self.wzero, self.wgain
         )
 
-    @parameter
+    @parameter_group
     def zero(self):
         return self.config["detector"]["zero"]
 
@@ -72,7 +72,7 @@ class SimpleModel(Model):
     def zero(self, value):
         self.config["detector"]["zero"] = value
 
-    @parameter
+    @parameter_group
     def gain(self):
         return self.config["detector"]["gain"]
 
@@ -80,7 +80,7 @@ class SimpleModel(Model):
     def gain(self, value):
         self.config["detector"]["gain"] = value
 
-    @parameter
+    @parameter_group
     def wzero(self):
         return self.config["detector"]["wzero"]
 
@@ -88,7 +88,7 @@ class SimpleModel(Model):
     def wzero(self, value):
         self.config["detector"]["wzero"] = value
 
-    @parameter
+    @parameter_group
     def wgain(self):
         return self.config["detector"]["wgain"]
 
@@ -121,7 +121,7 @@ class SimpleModel(Model):
     def areas(self):
         return self.efficiency * self.concentrations
 
-    @linear_parameter
+    @linear_parameter_group
     def concentrations(self):
         return self.config["matrix"]["concentrations"]
 
@@ -205,7 +205,7 @@ class SimpleModel(Model):
         return SpecfitFuns.agauss(p, x)
 
     def derivative_fitmodel(self, param_idx, xdata=None):
-        """Derivate to a specific parameter
+        """Derivate to a specific parameter_group
 
         :param int param_idx:
         :param array xdata: length nxdata
@@ -244,8 +244,8 @@ class SimpleModel(Model):
         return y
 
 
-class SimpleConcatModel(ConcatModel):
+class SimpleConcatModel(LeastSquaresCombinedFitModel):
     def __init__(self, ndetectors=1):
-        models = [SimpleModel() for i in range(ndetectors)]
-        shared_attributes = ["concentrations", "positions"]
-        super().__init__(models, shared_attributes=shared_attributes)
+        models = {f"detector{i}":SimpleModel() for i in range(ndetectors)}
+        super().__init__(models)
+        self._enable_property_link("concentrations", "positions")

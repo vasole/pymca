@@ -24,22 +24,19 @@ class wrapped_property(property):
         )
 
     def getter(self, fget):
-        """Decorator to change fget after property instantiation
-        """
+        """Decorator to change fget after property instantiation"""
         if fget is not None:
             fget = self._wrap_getter(fget)
         return super().getter(fget)
 
     def setter(self, fset):
-        """Decorator to change fset after property instantiation
-        """
+        """Decorator to change fset after property instantiation"""
         if fset is not None:
             fset = self._wrap_setter(fset)
         return super().setter(fset)
 
     def deleter(self, fdel):
-        """Decorator to change fdel after property instantiation
-        """
+        """Decorator to change fdel after property instantiation"""
         if fdel is not None:
             fget = self._wrap_deleter(fdel)
         return super().deleter(fdel)

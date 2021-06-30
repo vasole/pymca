@@ -1,9 +1,9 @@
 import unittest
 from contextlib import contextmanager
-from PyMca5.PyMcaMath.fitting.ParameterModel import ParameterModel
-from PyMca5.PyMcaMath.fitting.ParameterModel import ParameterModelContainer
-from PyMca5.PyMcaMath.fitting.ParameterModel import parameter_group
-from PyMca5.PyMcaMath.fitting.ParameterModel import linear_parameter_group
+from PyMca5.PyMcaMath.fitting.model.ParameterModel import ParameterModel
+from PyMca5.PyMcaMath.fitting.model.ParameterModel import ParameterModelManager
+from PyMca5.PyMcaMath.fitting.model.ParameterModel import parameter_group
+from PyMca5.PyMcaMath.fitting.model.ParameterModel import linear_parameter_group
 
 
 class Model1(ParameterModel):
@@ -53,7 +53,7 @@ class Model2(Model1):
         self._cfg["var2_lin"] = value
 
 
-class ConcatModel(ParameterModelContainer):
+class ConcatModel(ParameterModelManager):
     def __init__(self):
         cfg1a = {"var1_lin": [11, 11], "var1_nonlin": 12}
         cfg1b = {"var1_lin": [21, 21], "var1_nonlin": 22}
@@ -261,6 +261,37 @@ class testParameterModel(unittest.TestCase):
                 n = self.concat_model.get_n_parameters(**cacheoptions)
                 self.concat_model._enable_property_link("var1_lin")
                 self.assertEqual(n, 9)
+
+    def test_parameter_constraints(self):
+        for cacheoptions in self._parameterize_nonlinear_test():
+            arr = self.concat_model[0].get_parameter_constraints(**cacheoptions)
+            self.assertEqual(arr.shape, (3, 3))
+
+            arr = self.concat_model[-1].get_parameter_constraints(**cacheoptions)
+            self.assertEqual(arr.shape, (5, 3))
+
+            arr = self.concat_model.get_parameter_constraints(**cacheoptions)
+            self.assertEqual(arr.shape, (5, 3))
+
+            with self._unlink_var1_lin():
+                arr = self.concat_model.get_parameter_constraints(**cacheoptions)
+                self.assertEqual(arr.shape, (11, 3))
+
+    def test_linear_parameter_contraints(self):
+        for cacheoptions in self._parameterize_linear_test():
+            arr = self.concat_model[0].get_parameter_constraints(**cacheoptions)
+            self.assertEqual(arr.shape, (2, 3))
+
+            arr = self.concat_model[-1].get_parameter_constraints(**cacheoptions)
+            self.assertEqual(arr.shape, (3, 3))
+
+            arr = self.concat_model.get_parameter_constraints(**cacheoptions)
+            self.assertEqual(arr.shape, (3, 3))
+
+            with self._unlink_var1_lin():
+                arr = self.concat_model.get_parameter_constraints(**cacheoptions)
+                self.concat_model._enable_property_link("var1_lin")
+                self.assertEqual(arr.shape, (9, 3))
 
     def test_get_parameter_values(self):
         for cacheoptions in self._parameterize_nonlinear_test():
