@@ -83,7 +83,7 @@ class ParameterGroupId:
     property_name: str = field(compare=False, hash=False)
     instance_key: Any = field(compare=False, hash=False)
 
-    def _iter_parameter_names(self):
+    def parameter_names(self):
         if self.count > 1:
             for i in range(self.count):
                 yield self.name + str(i)
@@ -115,10 +115,10 @@ class ParameterModelBase(CachedPropertiesModel):
         finally:
             self.linear = keep
 
-    def _property_cache_key(self, linear=None, **paramtype):
-        if linear is None:
-            linear = self.linear
-        return linear
+    def _property_cache_key(self, only_linear=None, **paramtype):
+        if only_linear is None:
+            only_linear = self.linear
+        return only_linear
 
     def _create_empty_property_values_cache(self, key, **paramtype):
         return numpy.zeros(self.get_n_parameters(**paramtype))
@@ -131,7 +131,7 @@ class ParameterModelBase(CachedPropertiesModel):
 
     def _iter_parameter_names(self, **paramtype):
         for group in self._iter_parameter_groups(**paramtype):
-            yield from group._iter_parameter_names()
+            yield from group.parameter_names()
 
     def get_n_parameters(self, **paramtype):
         return sum(group.count for group in self._iter_parameter_groups(**paramtype))
@@ -147,8 +147,17 @@ class ParameterModelBase(CachedPropertiesModel):
         :returns array: nparams x 3
         """
         return numpy.vstack(
-            group.constraints for group in self._iter_parameter_groups(**paramtype)
+            self._normalize_constraints(group.constraints) for group in self._iter_parameter_groups(**paramtype)
         )
+
+    @staticmethod
+    def _normalize_constraints(constraints):
+        constraints = numpy.atleast_1d(constraints)
+        if constraints.ndim not in (1, 2):
+            raise ValueError("Parameter group constraints must be of shape (3,) or (nparams, 3)")
+        if constraints.shape[-1] != 3:
+            raise ValueError("Parameter group constraints must be of shape (3,) or (nparams, 3)")
+        return constraints.tolist()
 
     def get_parameter_group_value(self, group, **paramtype):
         return self._get_property_value(group, **paramtype)
@@ -163,7 +172,8 @@ class ParameterModelBase(CachedPropertiesModel):
         return tuple(group.name for group in self._iter_parameter_groups(**paramtype))
 
     def _iter_parameter_groups(self, **paramtype):
-        """
+        """This will only yield the groups with count > 0.
+
         :yields ParameterGroupId:
         """
         yield from self._iter_cached_property_names(**paramtype)
@@ -177,7 +187,7 @@ class ParameterModelBase(CachedPropertiesModel):
 class ParameterModel(ParameterModelBase, LinkedModel):
     """Model that implements fit parameters"""
 
-    def _instance_cached_property_names(self, linear=None, linked=None, tracker=None):
+    def _instance_cached_property_names(self, only_linear=None, linked=None, tracker=None):
         """
         :yields ParameterGroupId:
         """
@@ -201,9 +211,9 @@ class ParameterModel(ParameterModelBase, LinkedModel):
                     continue
 
             group_is_linear = isinstance(prop, linear_parameter_group)
-            if linear is None:
-                linear = self.linear
-            if linear:
+            if only_linear is None:
+                only_linear = self.linear
+            if only_linear:
                 if not group_is_linear:
                     continue
 
