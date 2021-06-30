@@ -362,13 +362,13 @@ class testParameterModel(unittest.TestCase):
         for local_linear, global_linear in [[True, False], [None, True]]:
             with self.subTest(local_linear=local_linear, global_linear=global_linear):
                 self.concat_model.linear = global_linear
-                yield {"linear": local_linear}
+                yield {"only_linear": local_linear}
 
     def _parameterize_nonlinear_test(self):
         for local_linear, global_linear in [[False, True], [None, False]]:
             with self.subTest(local_linear=local_linear, global_linear=global_linear):
                 self.concat_model.linear = global_linear
-                yield {"linear": local_linear}
+                yield {"only_linear": local_linear}
 
     @contextmanager
     def _unlink_var1_lin(self):

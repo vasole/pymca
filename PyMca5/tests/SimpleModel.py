@@ -244,7 +244,7 @@ class SimpleModel(LeastSquaresFitModel):
         return y
 
 
-class SimpleConcatModel(LeastSquaresCombinedFitModel):
+class SimpleCombinedModel(LeastSquaresCombinedFitModel):
     def __init__(self, ndetectors=1):
         models = {f"detector{i}":SimpleModel() for i in range(ndetectors)}
         super().__init__(models)
