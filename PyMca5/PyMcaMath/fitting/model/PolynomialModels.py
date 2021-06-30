@@ -32,12 +32,12 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 import numpy
-from PyMca5.PyMcaMath.fitting.Model import Model
-from PyMca5.PyMcaMath.fitting.Model import parameter
-from PyMca5.PyMcaMath.fitting.Model import linear_parameter
+from PyMca5.PyMcaMath.fitting.model import LeastSquaresFitModel
+from PyMca5.PyMcaMath.fitting.model import parameter_group
+from PyMca5.PyMcaMath.fitting.model import linear_parameter_group
 
 
-class PolynomialModel(Model):
+class PolynomialModel(LeastSquaresFitModel):
     def __init__(self, degree=0, maxiter=100):
         self._xdata = None
         self._ydata = None
@@ -105,7 +105,7 @@ class PolynomialModel(Model):
 class LinearPolynomialModel(PolynomialModel):
     """y = c0 + c1*x + c2*x^2 + ..."""
 
-    @linear_parameter
+    @linear_parameter_group
     def fitmodel_coefficients(self):
         return self.coefficients
 
@@ -116,8 +116,8 @@ class LinearPolynomialModel(PolynomialModel):
     def evaluate_fitmodel(self, xdata=None):
         """Evaluate the fit model, not the full model.
 
-        :param array xdata: length nxdata
-        :returns array: nxdata
+        :param array xdata: shape (ndata,)
+        :returns array: shape (ndata,)
         """
         if xdata is None:
             xdata = self.xdata
@@ -131,8 +131,8 @@ class LinearPolynomialModel(PolynomialModel):
         """Derivate to a specific parameter
 
         :param int param_idx:
-        :param array xdata: length nxdata
-        :returns array: nxdata
+        :param array xdata: shape (ndata,)
+        :returns array: shape (ndata,)
         """
         if xdata is None:
             xdata = self.xdata
@@ -147,7 +147,7 @@ class ExponentialPolynomialModel(LinearPolynomialModel):
     yfit = log(y) = log(c1) + c1*x + c2*x^2 + ...
     """
 
-    @linear_parameter
+    @linear_parameter_group
     def fitmodel_coefficients(self):
         coefficients = self.coefficients.copy()
         coefficients[0] = numpy.log(coefficients[0])

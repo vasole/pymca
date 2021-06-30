@@ -33,7 +33,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 import unittest
 import numpy
-from PyMca5.PyMcaMath.fitting import PolynomialModels
+from PyMca5.PyMcaMath.fitting.model import PolynomialModels
 
 
 class testFitPolModel(unittest.TestCase):
