@@ -147,16 +147,21 @@ class ParameterModelBase(CachedPropertiesModel):
         :returns array: nparams x 3
         """
         return numpy.vstack(
-            self._normalize_constraints(group.constraints) for group in self._iter_parameter_groups(**paramtype)
+            self._normalize_constraints(group.constraints)
+            for group in self._iter_parameter_groups(**paramtype)
         )
 
     @staticmethod
     def _normalize_constraints(constraints):
         constraints = numpy.atleast_1d(constraints)
         if constraints.ndim not in (1, 2):
-            raise ValueError("Parameter group constraints must be of shape (3,) or (nparams, 3)")
+            raise ValueError(
+                "Parameter group constraints must be of shape (3,) or (nparams, 3)"
+            )
         if constraints.shape[-1] != 3:
-            raise ValueError("Parameter group constraints must be of shape (3,) or (nparams, 3)")
+            raise ValueError(
+                "Parameter group constraints must be of shape (3,) or (nparams, 3)"
+            )
         return constraints.tolist()
 
     def get_parameter_group_value(self, group, **paramtype):
@@ -187,7 +192,9 @@ class ParameterModelBase(CachedPropertiesModel):
 class ParameterModel(ParameterModelBase, LinkedModel):
     """Model that implements fit parameters"""
 
-    def _instance_cached_property_names(self, only_linear=None, linked=None, tracker=None):
+    def _instance_cached_property_names(
+        self, only_linear=None, linked=None, tracker=None
+    ):
         """
         :yields ParameterGroupId:
         """
