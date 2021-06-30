@@ -32,22 +32,10 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 import unittest
+from contextlib import contextmanager
 import numpy
 from PyMca5.tests.SimpleModel import SimpleModel
 from PyMca5.tests.SimpleModel import SimpleCombinedModel
-
-
-def with_model(nmodels):
-    def inner1(method):
-        def inner2(self, *args, **kw):
-            self.create_model(nmodels=nmodels)
-            result = method(self, *args, **kw)
-            self.validate_model()
-            return result
-
-        return inner2
-
-    return inner1
 
 
 class testFitModel(unittest.TestCase):
@@ -76,7 +64,9 @@ class testFitModel(unittest.TestCase):
     def testNonLinearFit(self):
         with self._fit_model_subtests():
             self.fitmodel.linear = False
-            expected_nonlin = self.fitmodel.get_parameter_values(only_linear=False).copy()
+            expected_nonlin = self.fitmodel.get_parameter_values(
+                only_linear=False
+            ).copy()
             expected_lin = self.fitmodel.get_parameter_values(only_linear=True).copy()
             self.modify_random(only_linear=False)
 
@@ -128,15 +118,16 @@ class testFitModel(unittest.TestCase):
         ul = p + 3 * pstd
         self.assertTrue(all((expected >= ll) & (expected <= ul)))
 
+    @contextmanager
     def _fit_model_subtests(self):
         for nmodels in (1, 8):
             with self.subTest(nmodels=nmodels):
-                self.create_model(nmodels=nmodels)
+                self._create_model(nmodels=nmodels)
                 self.validate_model()
                 yield
                 self.validate_model()
 
-    def create_model(self, nmodels):
+    def _create_model(self, nmodels):
         self.nmodels = nmodels
         self.is_combined_model = nmodels != 1
         if nmodels == 1:
@@ -144,18 +135,23 @@ class testFitModel(unittest.TestCase):
         else:
             self.fitmodel = SimpleCombinedModel(ndetectors=nmodels)
         self.assertTrue(not self.fitmodel.linear)
+
         self.init_random()
+
         ydata = self.fitmodel.yfullmodel.copy()
         self.fitmodel.ydata = ydata
         numpy.testing.assert_array_equal(self.fitmodel.ydata, ydata)
         numpy.testing.assert_array_equal(self.fitmodel.yfullmodel, ydata)
-        numpy.testing.assert_allclose(self.fitmodel.yfitmodel, ydata - 10, atol=1e-12)
+        numpy.testing.assert_allclose(
+            self.fitmodel.yfitmodel, ydata - self.background, atol=1e-12
+        )
 
     def init_random(self, **kw):
-        self.npeaks = 10  # concentrations
+        self.npeaks = 13  # concentrations
         self.nshapeparams = 4  # zero, gain, wzero, wgain
         self.nchannels = 2048
         self.border = 0.1  # peak positions not within this border fraction
+        self.background = 10
         if self.is_combined_model:
             for model in self.fitmodel.models:
                 self._init_random(model)
@@ -166,7 +162,7 @@ class testFitModel(unittest.TestCase):
         nchannels = self.nchannels
         model.xdata_raw = numpy.arange(nchannels)
         model.ydata_raw = numpy.full(nchannels, numpy.nan)
-        model.ybkg = 10
+        model.ybkg = self.background
         model.xmin = self.random_state.randint(low=0, high=10)
         model.xmax = self.random_state.randint(low=nchannels - 10, high=nchannels)
         model.zero = self.random_state.uniform(low=1, high=1.5)
@@ -231,16 +227,24 @@ class testFitModel(unittest.TestCase):
         keep_linear_parameters = model.get_parameter_values(only_linear=True).copy()
 
         if not is_combined_model:
-            # Alphabetic order
+            names = model.get_parameter_group_names(only_linear=False)
             expected = ["concentrations", "gain", "wgain", "wzero", "zero"]
-            self.assertEqual(model.parameter_group_names, expected)
+            self.assertEqual(names, expected)
+            names = model.get_parameter_group_names(only_linear=True)
             expected = ["concentrations"]
-            self.assertEqual(model.linear_parameter_group_names, expected)
-        self.assertTrue(not model._excluded_parameters)
-        self.assertTrue(not model._included_parameters)
-        self.assertEqual(model.ndata, len(model.xdata))
-        self.assertEqual(model.nparameters, len(model.parameters))
-        self.assertEqual(model.nlinear_parameters, len(model.linear_parameters))
+            self.assertEqual(names, expected)
+
+        n = model.ndata
+        nexpected = len(model.xdata)
+        self.assertEqual(n, nexpected)
+
+        n = model.get_n_parameters(only_linear=False)
+        nexpected = len(model.get_parameter_values(only_linear=False))
+        self.assertEqual(n, nexpected)
+
+        n = model.get_n_parameters(only_linear=True)
+        nexpected = len(model.get_parameter_values(only_linear=True))
+        self.assertEqual(n, nexpected)
 
         arr1 = model.evaluate_fullmodel()
         arr2 = model.evaluate_linear_fullmodel()
@@ -252,12 +256,10 @@ class testFitModel(unittest.TestCase):
         arr2 = model.evaluate_linear_fitmodel()
         arr3 = model.yfitmodel
         arr4 = sum(model.linear_decomposition_fitmodel())
-
         numpy.testing.assert_allclose(arr1, arr2)
         numpy.testing.assert_allclose(arr1, arr3)
         numpy.testing.assert_allclose(arr1, arr4)
 
-        # Alphabetic order
         nonlin_names = ["gain", "wgain", "wzero", "zero"]
         lin_names = ["concentrations" + str(i) for i in range(self.npeaks)]
         names = lin_names + nonlin_names
@@ -292,5 +294,6 @@ class testFitModel(unittest.TestCase):
                     )
 
         numpy.testing.assert_array_equal(keep_parameters, model.parameters)
-        numpy.testing.assert_array_equal(keep_linear_parameters, model.linear_parameters)
-
+        numpy.testing.assert_array_equal(
+            keep_linear_parameters, model.linear_parameters
+        )

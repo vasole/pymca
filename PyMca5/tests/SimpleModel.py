@@ -31,7 +31,6 @@ __contact__ = "wout.de_nolf@esrf.eu"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
-
 import numpy
 from PyMca5.PyMcaMath.fitting import SpecfitFuns
 from PyMca5.PyMcaMath.fitting.model import parameter_group
@@ -41,7 +40,7 @@ from PyMca5.PyMcaMath.fitting.model import LeastSquaresCombinedFitModel
 
 
 class SimpleModel(LeastSquaresFitModel):
-    """Model MCA data using a fixed list of peak positions and efficiencies"""
+    """Simplfied MCA model a fixed list of peak positions and efficiencies"""
 
     SIGMA_TO_FWHM = 2 * numpy.sqrt(2 * numpy.log(2))
 
@@ -195,8 +194,8 @@ class SimpleModel(LeastSquaresFitModel):
     def evaluate_fitmodel(self, xdata=None):
         """Evaluate model
 
-        :param array xdata: length nxdata
-        :returns array: nxdata
+        :param array xdata: shape (ndata,)
+        :returns array: shape (ndata,)
         """
         if xdata is None:
             xdata = self.xdata
@@ -208,8 +207,8 @@ class SimpleModel(LeastSquaresFitModel):
         """Derivate to a specific parameter_group
 
         :param int param_idx:
-        :param array xdata: length nxdata
-        :returns array: nxdata
+        :param array xdata: shape (ndata,)
+        :returns array: shape (ndata,)
         """
         if xdata is None:
             xdata = self.xdata
@@ -246,6 +245,6 @@ class SimpleModel(LeastSquaresFitModel):
 
 class SimpleCombinedModel(LeastSquaresCombinedFitModel):
     def __init__(self, ndetectors=1):
-        models = {f"detector{i}":SimpleModel() for i in range(ndetectors)}
+        models = {f"detector{i}": SimpleModel() for i in range(ndetectors)}
         super().__init__(models)
         self._enable_property_link("concentrations", "positions")
