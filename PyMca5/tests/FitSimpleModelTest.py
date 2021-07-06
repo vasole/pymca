@@ -84,9 +84,9 @@ class testFitModel(unittest.TestCase):
             self.assertTrue(not numpy.allclose(parameters, expected_lin))
 
             self.fitmodel.use_fit_result(result)
-
             # TODO: non-linear parameters not precise
             # numpy.testing.assert_allclose(self.fitmodel.parameters, expected_nonlin)
+            self._vis(self.fitmodel.ydata, self.fitmodel.yfullmodel)
             numpy.testing.assert_allclose(
                 self.fitmodel.ydata, self.fitmodel.yfullmodel, rtol=1e-3
             )
@@ -212,7 +212,6 @@ class testFitModel(unittest.TestCase):
         return p
 
     def validate_model(self):
-        return
         self._validate_model(self.fitmodel, self.is_combined_model)
         if self.is_combined_model:
             for model in self.fitmodel.models:

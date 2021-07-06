@@ -82,7 +82,7 @@ class ParameterGroupId:
     stop_index: int = field(compare=False, hash=False)
     index: Any = field(compare=False, hash=False)
     instance_key: Any = field(compare=False, hash=False)
-    constraints: Any = field(compare=False, hash=False, repr=False)
+    get_constraints: Any = field(compare=False, hash=False, repr=False)
 
     def parameter_names(self):
         if self.count > 1:
@@ -103,20 +103,13 @@ class ParameterGroupId:
 class ParameterModelBase(CachedPropertiesModel):
     """Interface for all models that manage fit parameters"""
 
-    def __init__(self, *args, **kw):
-        super().__init__(*args, **kw)
-        self._linear = False
-
-        for prop in self._cached_property_names():
-            prop.count
-
     @property
     def linear(self):
-        return self._linear
+        raise NotImplementedError
 
     @linear.setter
     def linear(self, value):
-        self._linear = value
+        raise NotImplementedError
 
     @contextmanager
     def linear_context(self, linear):
@@ -163,7 +156,7 @@ class ParameterModelBase(CachedPropertiesModel):
         """
         return numpy.vstack(
             tuple(
-                self._normalize_constraints(group.constraints())
+                self._normalize_constraints(group.get_constraints())
                 for group in self._iter_parameter_groups(**paramtype)
             )
         )
@@ -215,6 +208,10 @@ class ParameterModelBase(CachedPropertiesModel):
 class ParameterModel(ParameterModelBase, LinkedModel):
     """Model that implements fit parameters"""
 
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+        self._linear= False
+
     def _iter_parameter_group_properties(self):
         cls = type(self)
         for property_name in self._cached_property_names():
@@ -264,7 +261,7 @@ class ParameterModel(ParameterModelBase, LinkedModel):
             else:
                 index = None
 
-            def constraints():
+            def get_constraints():
                 return prop.fconstraints(self)
 
             instance_key = self._linked_instance_to_key
@@ -283,7 +280,7 @@ class ParameterModel(ParameterModelBase, LinkedModel):
                 start_index=start_index,
                 stop_index=stop_index,
                 index=index,
-                constraints=constraints,
+                get_constraints=get_constraints,
             )
             if tracker is None:
                 yield group
