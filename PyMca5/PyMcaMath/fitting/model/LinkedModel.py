@@ -10,12 +10,11 @@ class linked_property(wrapped_property):
     """
 
     def __init__(self, *args, **kw):
-        super().__init__(*args, **kw)
         self.propagate = False
+        super().__init__(*args, **kw)
 
     def _wrap_setter(self, fset):
         propname = fset.__name__
-        fset = super()._wrap_setter(fset)
 
         @functools.wraps(fset)
         def wrapper(oself, value):
@@ -27,7 +26,7 @@ class linked_property(wrapped_property):
             ):
                 setattr(instance, propname, value)
 
-        return wrapper
+        return super()._wrap_setter(wrapper)
 
 
 def linked_contextmanager(method):

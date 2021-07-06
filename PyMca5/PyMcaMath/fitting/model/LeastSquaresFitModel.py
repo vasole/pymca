@@ -45,14 +45,15 @@ class LeastSquaresFitModelInterface:
         """
         raise NotImplementedError
 
-    def derivative_fitmodel(self, param_idx, xdata=None, linear=None):
+    def derivative_fitmodel(self, param_idx, xdata=None, **paramtype):
         """Derivate to a specific parameter of the fit model.
 
         Only required when you want to implement analytical derivatives
         of the fit model. Numerical derivatives are used by default.
 
-        Note that the numerical derivatives for non-linear fitting
-        are approximations. They are exact for linear fitting.
+        Note that the numerical derivatives for non-linear parameters
+        are approximations. They are exact with arithmetic precission
+        for linear parameters.
 
         :param int param_idx:
         :param array xdata: shape (ndata,)
@@ -119,7 +120,7 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
         :returns array: nparams x ndata
         """
         derivatives = self.linear_derivatives_fitmodel(xdata=xdata)
-        parameters = self.get_parameter_values(linear=True)
+        parameters = self.get_parameter_values(only_linear=True)
         return parameters[:, numpy.newaxis] * derivatives
 
     @property
@@ -225,7 +226,7 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
     @contextmanager
     def __linear_fit_context(self):
         with ExitStack() as stack:
-            ctx = self._linear_context(True)
+            ctx = self.linear_context(True)
             stack.enter_context(ctx)
             ctx = self._propertyCachingContext()
             stack.enter_context(ctx)
@@ -236,7 +237,7 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
     @contextmanager
     def __nonlinear_fit_context(self):
         with ExitStack() as stack:
-            ctx = self._linear_context(False)
+            ctx = self.linear_context(False)
             stack.enter_context(ctx)
             ctx = self._propertyCachingContext()
             stack.enter_context(ctx)
@@ -273,13 +274,13 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
         :returns array: shape (ndata,)
         """
         self.set_parameter_values(parameters)
-        return self.derivative_fitmodel(param_idx, xdata=xdata, linear=False)
+        return self.derivative_fitmodel(param_idx, xdata=xdata)
 
     def use_fit_result(self, result):
         """
         :param dict result:
         """
-        self.set_parameter_values(result["parameters"], linear=result["linear"])
+        self.set_parameter_values(result["parameters"], only_linear=result["linear"])
 
     @contextmanager
     def use_fit_result_context(self, result):
@@ -287,7 +288,7 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
 
         :param dict result:
         """
-        with self._linear_context(result["linear"]):
+        with self.linear_context(result["linear"]):
             with self._propertyCachingContext():
                 self.use_fit_result(result)
                 yield
@@ -375,7 +376,7 @@ class LeastSquaresFitModel(LeastSquaresFitModelBase, ParameterModel):
         :returns array: shape (ndata,)
         """
         derivatives = self.linear_derivatives_fitmodel(xdata=xdata)
-        parameters = self.get_parameter_values(linear=True)
+        parameters = self.get_parameter_values(only_linear=True)
         return parameters.dot(derivatives)
 
     def linear_derivatives_fitmodel(self, xdata=None):
@@ -384,57 +385,64 @@ class LeastSquaresFitModel(LeastSquaresFitModelBase, ParameterModel):
         :param array xdata: shape (ndata,)
         :returns array: shape (nparams, ndata)
         """
-        nparams = self.get_n_parameters(linear=True)
+        nparams = self.get_n_parameters(only_linear=True)
         return numpy.array(
             [
-                self.derivative_fitmodel(i, xdata=xdata, linear=True)
+                self.derivative_fitmodel(i, xdata=xdata, only_linear=True)
                 for i in range(nparams)
             ]
         )
 
-    def derivative_fitmodel(self, param_idx, xdata=None, linear=None):
+    def derivative_fitmodel(self, param_idx, xdata=None, **paramtype):
         """Derivate to a specific parameter of the fit model.
 
         :param int param_idx:
         :param array xdata: shape (ndata,)
         :returns array: shape (ndata,)
         """
-        return self.numerical_derivative_fitmodel(param_idx, xdata=xdata, linear=linear)
+        return self.numerical_derivative_fitmodel(param_idx, xdata=xdata, **paramtype)
 
-    def numerical_derivative_fitmodel(self, param_idx, xdata=None, linear=None):
+    def numerical_derivative_fitmodel(self, param_idx, xdata=None, **paramtype):
         """Derivate to a specific parameter of the fit model.
 
         :param int param_idx:
         :param array xdata: shape (ndata,)
         :returns array: shape (ndata,)
         """
-        if linear is None:
-            linear = self.linear
-        parameters = self.get_parameter_values(linear=linear)
+        group = self._group_from_parameter_index(param_idx, **paramtype)
+        param_is_linear = group.linear
+        parameters = self.get_parameter_values(**paramtype)
         try:
-            if linear:
+            if param_is_linear:
                 return self._numerical_derivative_linear_param(
-                    parameters, param_idx, xdata=xdata
+                    parameters, param_idx, xdata=xdata, **paramtype
                 )
             else:
                 return self._numerical_derivative_nonlinear_param(
-                    parameters, param_idx, xdata=xdata
+                    parameters, param_idx, xdata=xdata, **paramtype
                 )
         finally:
-            self.set_parameter_values(parameters, linear=linear)
+            self.set_parameter_values(parameters, **paramtype)
 
-    def _numerical_derivative_linear_param(self, parameters, param_idx, xdata=None):
-        """The numerical derivative to a linear parameter is exact so
-        far as the calculation of the fit model itself is exact.
+    def _numerical_derivative_linear_param(
+        self, parameters, param_idx, xdata=None, **paramtype
+    ):
+        """The numerical derivative to a linear parameter is exact
+        within arithmetic precision.
         """
         # y(x) = p0*f0(x) + ... + pi*fi(x) + ...
         # dy/dpi(x) = fi(x)
-        parameters = numpy.zeros_like(parameters)
+        parameters = parameters.copy()
+        for group in self._iter_parameter_groups(**paramtype):
+            if group.linear:
+                parameters[group.index] = 0
         parameters[param_idx] = 1
-        self.set_parameter_values(parameters)
+        self.set_parameter_values(parameters, **paramtype)
         return self.evaluate_fitmodel(xdata=xdata)
 
-    def _numerical_derivative_nonlinear_param(self, parameters, param_idx, xdata=None):
+    def _numerical_derivative_nonlinear_param(
+        self, parameters, param_idx, xdata=None, **paramtype
+    ):
         """The numerical derivative to a non-linear parameter is an approximation"""
         # Choose delta to be a small fraction of the parameter value but not too small,
         # otherwise the derivative is zero.
@@ -447,25 +455,25 @@ class LeastSquaresFitModel(LeastSquaresFitModelBase, ParameterModel):
 
         parameters = parameters.copy()
         parameters[param_idx] = p0 + delta
-        self.set_parameter_values(parameters)
+        self.set_parameter_values(parameters, **paramtype)
         f1 = self.evaluate_fitmodel(xdata=xdata)
 
         parameters[param_idx] = p0 - delta
-        self.set_parameter_values(parameters)
+        self.set_parameter_values(parameters, **paramtype)
         f2 = self.evaluate_fitmodel(xdata=xdata)
 
         return (f1 - f2) / (2.0 * delta)
 
-    def compare_derivatives(self, xdata=None, linear=None):
+    def compare_derivatives(self, xdata=None, **paramtype):
         """Compare analytical and numerical derivatives. Useful to
         validate the user defined `derivative_fitmodel`.
 
         :yields str, array, array: parameter name, analytical, numerical
         """
-        for param_idx, name in enumerate(self.fit_parameter_names):
-            ycalderiv = self.derivative_fitmodel(param_idx, xdata=xdata, linear=linear)
+        for param_idx, name in enumerate(self.get_parameter_names(**paramtype)):
+            ycalderiv = self.derivative_fitmodel(param_idx, xdata=xdata, **paramtype)
             ynumderiv = self.numerical_derivative_fitmodel(
-                param_idx, xdata=xdata, linear=linear
+                param_idx, xdata=xdata, **paramtype
             )
             yield name, ycalderiv, ynumderiv
 

@@ -14,9 +14,9 @@ class CacheManager:
         # By default the property cache is a dictionary
         return dict()
 
-    def _property_cache_index(self, name, **cacheoptions):
-        # By default the property cache index is its name
-        return name
+    def _property_index_from_id(self, propid, **cacheoptions):
+        # By default the property cache index is its propid
+        return propid
 
     def _property_cache_key(self, **cacheoptions):
         # By default we only manage 1 cache (None)
@@ -80,22 +80,24 @@ class cached_property(wrapped_property):
     """
 
     def _wrap_getter(self, fget):
-        fget = super()._wrap_getter(fget)
-
         @functools.wraps(fget)
-        def wrapper(oself):
-            return oself._cached_property_fget(fget)
+        def wrapper(oself, nocache=False):
+            if nocache:
+                return fget(oself)
+            else:
+                return oself._cached_property_fget(fget)
 
-        return wrapper
+        return super()._wrap_getter(wrapper)
 
     def _wrap_setter(self, fset):
-        fset = super()._wrap_setter(fset)
-
         @functools.wraps(fset)
-        def wrapper(oself, value):
-            return oself._cached_property_fset(fset, value)
+        def wrapper(oself, value, nocache=False):
+            if nocache:
+                return fset(oself, value)
+            else:
+                return oself._cached_property_fset(fset, value)
 
-        return wrapper
+        return super()._wrap_setter(wrapper)
 
 
 class CachedPropertiesModel(CachingModel):
@@ -116,19 +118,21 @@ class CachedPropertiesModel(CachingModel):
         """All property names for this class"""
         return cls._CACHED_PROPERTIES
 
-    def _instance_cached_property_names(self, **cacheoptions):
-        """All property names for this instance and the provided options"""
+    def _instance_cached_property_ids(self, **cacheoptions):
+        """All property id's for this instance and the provided cache options"""
         return self._cached_property_names()
 
-    def _iter_cached_property_names(self, **cacheoptions):
-        """To be used when iterating over all property names
+    def _iter_cached_property_ids(self, **cacheoptions):
+        """To be used when iterating over all property id's
         of this instance.
         """
-        name_to_index = self._get_property_indices_cache(**cacheoptions)
-        if name_to_index is None:
-            yield from self._instance_cached_property_names(**cacheoptions)
+        propid_to_index = self._get_property_mapping_cache(
+            "_propid_to_index", **cacheoptions
+        )
+        if propid_to_index is None:
+            yield from self._instance_cached_property_ids(**cacheoptions)
         else:
-            yield from name_to_index.keys()
+            yield from propid_to_index.keys()
 
     @contextmanager
     def _propertyCachingContext(self, persist=False, start_cache=None, **cacheoptions):
@@ -138,13 +142,13 @@ class CachedPropertiesModel(CachingModel):
             yield values_cache
             return
 
-        with self._cachingContext("_cached_property_indices"):
+        with self._cachingContext("_propid"):
             if start_cache is None:
                 values_cache = self._create_start_property_values_cache(**cacheoptions)
             else:
                 values_cache = start_cache
 
-            with self._cachingContext("_instance_cached_property_names"):
+            with self._cachingContext("_property_values"):
                 self._set_property_values_cache(values_cache, **cacheoptions)
                 yield values_cache
 
@@ -152,14 +156,14 @@ class CachedPropertiesModel(CachingModel):
                 self._persist_property_values(values_cache, **cacheoptions)
 
     def _get_property_values_cache(self, **cacheoptions):
-        caches = self._getCache("_instance_cached_property_names")
+        caches = self._getCache("_property_values")
         if caches is None:
             return None
         key = self._cache_manager._property_cache_key(**cacheoptions)
         return caches.get(key, None)
 
     def _set_property_values_cache(self, values_cache, **cacheoptions):
-        caches = self._getCache("_instance_cached_property_names")
+        caches = self._getCache("_property_values")
         if caches is None:
             return False
         key = self._cache_manager._property_cache_key(**cacheoptions)
@@ -173,9 +177,9 @@ class CachedPropertiesModel(CachingModel):
         values_cache = _cache_manager._create_empty_property_values_cache(
             key, **cacheoptions
         )
-        for name in self._iter_cached_property_names(**cacheoptions):
-            index = self._get_property_cache_index(name, **cacheoptions)
-            values_cache[index] = self._get_noncached_property_value(name)
+        for propid in self._iter_cached_property_ids(**cacheoptions):
+            index = self._propid_to_index(propid, **cacheoptions)
+            values_cache[index] = self._get_noncached_property_value(propid)
         return values_cache
 
     def _get_property_values(self, **cacheoptions):
@@ -189,68 +193,92 @@ class CachedPropertiesModel(CachingModel):
         """Set the cache when enabled, set instance property values when disabled"""
         success = self._set_property_values_cache(values, **cacheoptions)
         if not success:
-            self._persist_property_values(values)
+            self._persist_property_values(values, **cacheoptions)
 
     def _persist_property_values(self, values, **cacheoptions):
-        for name in self._iter_cached_property_names(**cacheoptions):
-            index = self._get_property_cache_index(name, **cacheoptions)
-            self._set_noncached_property_value(name, values[index])
+        for propid in self._iter_cached_property_ids(**cacheoptions):
+            index = self._propid_to_index(propid, **cacheoptions)
+            self._set_noncached_property_value(propid, values[index])
 
-    def _get_property_value(self, name, **cacheoptions):
+    def _get_property_value(self, propid, **cacheoptions):
         """Get the value from the cache or from the property"""
         values_cache = self._get_property_values_cache(**cacheoptions)
         if values_cache is None:
-            return self._get_noncached_property_value(name)
-        index = self._get_property_cache_index(name, **cacheoptions)
+            return self._get_noncached_property_value(propid)
+        index = self._propid_to_index(propid, **cacheoptions)
         return values_cache[index]
 
-    def _cached_property_fget(self, fget):
-        """Same as _get_property_value but well have the property object
-        instead of the name
-        """
-        values_cache = self._get_property_values_cache()
-        if values_cache is None:
-            return fget(self)
-        index = self._get_property_cache_index(fget.__name__)
-        return values_cache[index]
+    def _get_noncached_property_value(self, propid):
+        name = self._property_name_from_id(propid)
+        return getattr(self, name)
 
-    def _set_property_value(self, name, value, **cacheoptions):
+    def _set_property_value(self, propid, value, **cacheoptions):
         """Set the value in the cache or the property"""
         values_cache = self._get_property_values_cache(**cacheoptions)
         if values_cache is None:
-            return self._set_noncached_property_value(name, value)
-        index = self._get_property_cache_index(name, **cacheoptions)
+            return self._set_noncached_property_value(propid, value)
+        index = self._propid_to_index(propid, **cacheoptions)
         values_cache[index] = value
 
-    def _cached_property_fset(self, fset, value):
-        """Same as _set_property_value but well have the property object
-        instead of the name
-        """
-        values_cache = self._get_property_values_cache()
-        if values_cache is None:
-            return fset(self, value)
-        index = self._get_property_cache_index(fset.__name__)
-        values_cache[index] = value
-
-    def _get_property_cache_index(self, name, **cacheoptions):
-        name_to_index = self._get_property_indices_cache(**cacheoptions)
-        if name_to_index is None:
-            return self._cache_manager._property_cache_index(name, **cacheoptions)
-        if name in name_to_index:
-            return self.name_to_index[name]
-        index = self._cache_manager._property_cache_index(name, **cacheoptions)
-        self.name_to_index[name] = index
-        return index
-
-    def _get_noncached_property_value(self, name):
-        return getattr(self, name)
-
-    def _set_noncached_property_value(self, name, value):
+    def _set_noncached_property_value(self, propid, value):
+        name = self._property_name_from_id(propid)
         setattr(self, name, value)
 
-    def _get_property_indices_cache(self, **cacheoptions):
-        caches = self._getCache("_cached_property_indices")
+    def _cached_property_fget(self, fget):
+        """Same as _get_property_value but we have the property object
+        instead of the propid
+        """
+        values_cache = self._get_property_values_cache()
+        propid = self._name_to_propid(fget.__name__)
+        if values_cache is None or propid is None:
+            return fget(self)
+        index = self._propid_to_index(propid)
+        return values_cache[index]
+
+    def _cached_property_fset(self, fset, value):
+        """Same as _set_property_value but we have the property object
+        instead of the propid
+        """
+        values_cache = self._get_property_values_cache()
+        propid = self._name_to_propid(fset.__name__)
+        if values_cache is None or propid is None:
+            return fset(self, value)
+        index = self._propid_to_index(propid)
+        values_cache[index] = value
+
+    def _get_property_mapping_cache(self, *subnames, **cacheoptions):
+        caches = self._getCache("_propid", *subnames)
         if caches is None:
             return None
         key = self._cache_manager._property_cache_key(**cacheoptions)
         return caches.get(key, None)
+
+    def _propid_to_index(self, propid, **cacheoptions):
+        propid_to_index = self._get_property_mapping_cache(
+            "_propid_to_index", **cacheoptions
+        )
+        if propid_to_index is None:
+            return self._cache_manager._property_index_from_id(propid, **cacheoptions)
+        if propid in propid_to_index:
+            return propid_to_index[propid]
+        index = self._cache_manager._property_index_from_id(propid, **cacheoptions)
+        propid_to_index[propid] = index
+        return index
+
+    def _name_to_propid(self, property_name, **cacheoptions):
+        name_to_propid = self._get_property_mapping_cache(
+            "_name_to_propid", **cacheoptions
+        )
+        if name_to_propid is None:
+            return self._property_id_from_name(property_name)
+        if property_name in name_to_propid:
+            return name_to_propid[property_name]
+        propid = self._property_id_from_name(property_name)
+        name_to_propid[property_name] = propid
+        return propid
+
+    def _property_id_from_name(self, property_name):
+        return property_name
+
+    def _property_name_from_id(self, propid):
+        return propid

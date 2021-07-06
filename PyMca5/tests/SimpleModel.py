@@ -37,6 +37,7 @@ from PyMca5.PyMcaMath.fitting.model import parameter_group
 from PyMca5.PyMcaMath.fitting.model import linear_parameter_group
 from PyMca5.PyMcaMath.fitting.model import LeastSquaresFitModel
 from PyMca5.PyMcaMath.fitting.model import LeastSquaresCombinedFitModel
+from PyMca5.PyMcaMath.fitting.model.LinkedModel import linked_property
 
 
 class SimpleModel(LeastSquaresFitModel):
@@ -104,7 +105,7 @@ class SimpleModel(LeastSquaresFitModel):
         arr = self.config["matrix"]["efficiency"]
         self.config["matrix"]["efficiency"] = value
 
-    @property
+    @linked_property
     def positions(self):
         return self.config["matrix"]["positions"]
 
@@ -203,7 +204,7 @@ class SimpleModel(LeastSquaresFitModel):
         p = list(zip(self.areas, self.positions, self.fwhms))
         return SpecfitFuns.agauss(p, x)
 
-    def derivative_fitmodel(self, param_idx, xdata=None):
+    def derivative_fitmodel(self, param_idx, xdata=None, **paramtype):
         """Derivate to a specific parameter_group
 
         :param int param_idx:
@@ -214,8 +215,10 @@ class SimpleModel(LeastSquaresFitModel):
             xdata = self.xdata
         x = self.zero + self.gain * xdata
 
-        name, i = self._parameter_name_from_index(param_idx)
+        group = self._group_from_parameter_index(param_idx, **paramtype)
+        name = group.property_name
         if name == "concentrations":
+            i = group.parameter_index_in_group(param_idx)
             p = self.positions[i]
             a = self.efficiency[i]
             w = self.wzero + self.wgain * p

@@ -37,7 +37,7 @@ class Cached(CachedPropertiesModel):
         self.set_counter["var2"] += 1
         self._cfg["var2"] = value
 
-    def _property_cache_index(self, name):
+    def _property_index_from_id(self, name):
         if name == "var1":
             return 0
         else:
@@ -48,7 +48,7 @@ class Cached(CachedPropertiesModel):
 
 
 class ExternalCached(CachingModel):
-    def _property_cache_index(self, name):
+    def _property_index_from_id(self, name):
         if name == "var1":
             return 2
         elif name == "var2":

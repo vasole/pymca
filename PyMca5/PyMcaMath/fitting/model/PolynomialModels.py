@@ -127,7 +127,7 @@ class LinearPolynomialModel(PolynomialModel):
             y += coeff[i] * (xdata ** i)
         return y
 
-    def derivative_fitmodel(self, param_idx, xdata=None):
+    def derivative_fitmodel(self, param_idx, xdata=None, **paramtype):
         """Derivate to a specific parameter
 
         :param int param_idx:

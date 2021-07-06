@@ -38,9 +38,9 @@ class parameter_group(cached_property, linked_property):
     """
 
     def __init__(self, *args, **kw):
-        super().__init__(*args, **kw)
         self.fcount = self._fcount_default()
         self.fconstraints = self._fconstraints_default()
+        super().__init__(*args, **kw)
 
     def counter(self, fcount):
         self.fcount = fcount
@@ -52,8 +52,9 @@ class parameter_group(cached_property, linked_property):
 
     def _fcount_default(self):
         def fcount(oself):
+            values = self.fget(oself, nocache=True)
             try:
-                return len(self.fget(oself))
+                return len(values)
             except TypeError:
                 return 1
 
@@ -73,15 +74,15 @@ class linear_parameter_group(parameter_group):
 @dataclass(frozen=True, eq=True)
 class ParameterGroupId:
     name: str
+    property_name: str = field(compare=False, hash=False)
     linear: bool = field(compare=False, hash=False)
     linked: bool = field(compare=False, hash=False)
     count: int = field(compare=False, hash=False)
-    constraints: Any = field(compare=False, hash=False)
     start_index: int = field(compare=False, hash=False)
     stop_index: int = field(compare=False, hash=False)
     index: Any = field(compare=False, hash=False)
-    property_name: str = field(compare=False, hash=False)
     instance_key: Any = field(compare=False, hash=False)
+    constraints: Any = field(compare=False, hash=False, repr=False)
 
     def parameter_names(self):
         if self.count > 1:
@@ -90,6 +91,14 @@ class ParameterGroupId:
         elif self.count == 1:
             yield self.name
 
+    def contains_parameter_index(self, param_idx):
+        return self.start_index <= param_idx < self.stop_index
+
+    def parameter_index_in_group(self, param_idx):
+        if self.contains_parameter_index(param_idx):
+            return param_idx - self.start_index
+        return None
+
 
 class ParameterModelBase(CachedPropertiesModel):
     """Interface for all models that manage fit parameters"""
@@ -97,6 +106,9 @@ class ParameterModelBase(CachedPropertiesModel):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         self._linear = False
+
+        for prop in self._cached_property_names():
+            prop.count
 
     @property
     def linear(self):
@@ -123,8 +135,11 @@ class ParameterModelBase(CachedPropertiesModel):
     def _create_empty_property_values_cache(self, key, **paramtype):
         return numpy.zeros(self.get_n_parameters(**paramtype))
 
-    def _property_cache_index(self, group, **paramtype):
+    def _property_index_from_id(self, group, **cacheoptions):
         return group.index
+
+    def _property_name_from_id(self, group):
+        return group.property_name
 
     def get_parameter_names(self, **paramtype):
         return tuple(self._iter_parameter_names(**paramtype))
@@ -147,8 +162,10 @@ class ParameterModelBase(CachedPropertiesModel):
         :returns array: nparams x 3
         """
         return numpy.vstack(
-            self._normalize_constraints(group.constraints)
-            for group in self._iter_parameter_groups(**paramtype)
+            tuple(
+                self._normalize_constraints(group.constraints())
+                for group in self._iter_parameter_groups(**paramtype)
+            )
         )
 
     @staticmethod
@@ -173,6 +190,12 @@ class ParameterModelBase(CachedPropertiesModel):
     def get_parameter_groups(self, **paramtype):
         return tuple(self._iter_parameter_groups(**paramtype))
 
+    def _property_id_from_name(self, property_name):
+        for group in self._iter_parameter_groups():
+            if group.property_name == property_name:
+                return group
+        return None
+
     def get_parameter_group_names(self, **paramtype):
         return tuple(group.name for group in self._iter_parameter_groups(**paramtype))
 
@@ -181,7 +204,7 @@ class ParameterModelBase(CachedPropertiesModel):
 
         :yields ParameterGroupId:
         """
-        yield from self._iter_cached_property_names(**paramtype)
+        yield from self._iter_cached_property_ids(**paramtype)
 
     def _group_from_parameter_index(self, param_idx, **paramtype):
         for group in self._iter_parameter_groups(**paramtype):
@@ -192,10 +215,23 @@ class ParameterModelBase(CachedPropertiesModel):
 class ParameterModel(ParameterModelBase, LinkedModel):
     """Model that implements fit parameters"""
 
-    def _instance_cached_property_names(
+    def _iter_parameter_group_properties(self):
+        cls = type(self)
+        for property_name in self._cached_property_names():
+            prop = getattr(cls, property_name)
+            if not isinstance(prop, parameter_group):
+                raise TypeError(
+                    "Currently only 'parameter_group' properties support caching"
+                )
+            yield property_name, prop
+
+    def _instance_cached_property_ids(
         self, only_linear=None, linked=None, tracker=None
     ):
         """
+        :param only_linear bool: all parameters (linear and non-linear) or only linear parameters
+        :param linked bool: linked parameters or unlinked parameters
+        :param tracker _IterGroupTracker:
         :yields ParameterGroupId:
         """
         count = None
@@ -204,14 +240,7 @@ class ParameterModel(ParameterModelBase, LinkedModel):
             start_index = 0
         else:
             start_index = tracker.start_index
-        cls = type(self)
-        for property_name in self._cached_property_names():
-            prop = getattr(cls, property_name)
-            if not isinstance(prop, parameter_group):
-                raise TypeError(
-                    "Currently only 'parameter_group' properties support caching"
-                )
-
+        for property_name, prop in self._iter_parameter_group_properties():
             group_is_linked = prop.propagate
             if linked is not None:
                 if group_is_linked is not linked:
@@ -220,9 +249,8 @@ class ParameterModel(ParameterModelBase, LinkedModel):
             group_is_linear = isinstance(prop, linear_parameter_group)
             if only_linear is None:
                 only_linear = self.linear
-            if only_linear:
-                if not group_is_linear:
-                    continue
+            if only_linear and not group_is_linear:
+                continue
 
             count = prop.fcount(self)
             if not count:
@@ -236,10 +264,11 @@ class ParameterModel(ParameterModelBase, LinkedModel):
             else:
                 index = None
 
-            constraints = prop.fconstraints(self)
+            def constraints():
+                return prop.fconstraints(self)
 
             instance_key = self._linked_instance_to_key
-            if group_is_linked:
+            if group_is_linked or instance_key is None:
                 name = property_name
             else:
                 name = f"{instance_key}:{property_name}"
@@ -324,7 +353,7 @@ class ParameterModelManager(ParameterModelBase, LinkedModelManager):
     def linear(self, value):
         self._set_linked_property_value("linear", value)
 
-    def _instance_cached_property_names(self, **paramtype):
+    def _instance_cached_property_ids(self, **paramtype):
         """
         :yields ParameterGroupId:
         """

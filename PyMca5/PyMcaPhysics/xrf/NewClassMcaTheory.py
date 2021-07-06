@@ -2027,7 +2027,7 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
         finally:
             self.parameters = keep
 
-    def derivative_fitmodel(self, param_idx, xdata=None):
+    def derivative_fitmodel(self, param_idx, xdata=None, **paramtype):
         """Derivate to a specific parameter
 
         :param int param_idx:
