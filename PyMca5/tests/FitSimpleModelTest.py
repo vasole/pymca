@@ -279,7 +279,7 @@ class testFitModel(unittest.TestCase):
                         linear, repr(param_name)
                     )
                     numpy.testing.assert_allclose(
-                        calc, numerical, err_msg=err_msg, rtol=1e-3, atol=1e-6
+                        calc, numerical, err_msg=err_msg, rtol=1e-4
                     )
 
         parameters = model.get_parameter_values(only_linear=False)
@@ -287,7 +287,7 @@ class testFitModel(unittest.TestCase):
         parameters = model.get_parameter_values(only_linear=True)
         numpy.testing.assert_array_equal(keep_linear_parameters, parameters)
 
-    def _vis(self, a, b):
+    def _vis_compare(self, a, b):
         import matplotlib.pyplot as plt
 
         plt.plot(a)
