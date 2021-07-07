@@ -54,7 +54,7 @@ class testFitModel(unittest.TestCase):
         self.fitmodel.linear = linear
         refined_params = self.fitmodel.get_parameter_values(only_linear=False).copy()
         lin_refined_params = self.fitmodel.get_parameter_values(only_linear=True).copy()
-        self.modify_random(only_linear=linear)
+        self._modify_random(only_linear=linear)
 
         before = self.fitmodel.get_parameter_values(only_linear=False)
         lin_before = self.fitmodel.get_parameter_values(only_linear=True)
@@ -95,12 +95,12 @@ class testFitModel(unittest.TestCase):
 
     @contextmanager
     def _fit_model_subtests(self):
-        for nmodels in (1,):
+        for nmodels in (2,):
             with self.subTest(nmodels=nmodels):
                 self._create_model(nmodels=nmodels)
-                self.validate_model()
+                self._validate_model()
                 yield
-                self.validate_model()
+                self._validate_model()
 
     def _create_model(self, nmodels):
         self.nmodels = nmodels
@@ -111,7 +111,7 @@ class testFitModel(unittest.TestCase):
             self.fitmodel = SimpleCombinedModel(ndetectors=nmodels)
         self.assertTrue(not self.fitmodel.linear)
 
-        self.init_random()
+        self._init_random()
 
         ydata = self.fitmodel.yfullmodel.copy()
         self.fitmodel.ydata = ydata
@@ -121,7 +121,7 @@ class testFitModel(unittest.TestCase):
             self.fitmodel.yfitmodel, ydata - self.background, atol=1e-12
         )
 
-    def init_random(self, **kw):
+    def _init_random(self, **kw):
         self.npeaks = 13  # concentrations
         self.nshapeparams = 4  # zero, gain, wzero, wgain
         self.nchannels = 2048
@@ -129,11 +129,11 @@ class testFitModel(unittest.TestCase):
         self.background = 10
         if self.is_combined_model:
             for model in self.fitmodel.models:
-                self._init_random(model)
+                self._init_random_model(model)
         else:
-            self._init_random(self.fitmodel)
+            self._init_random_model(self.fitmodel)
 
-    def _init_random(self, model):
+    def _init_random_model(self, model):
         nchannels = self.nchannels
         model.xdata_raw = numpy.arange(nchannels)
         model.ydata_raw = numpy.full(nchannels, numpy.nan)
@@ -157,20 +157,20 @@ class testFitModel(unittest.TestCase):
         model.concentrations = self.random_state.uniform(low=0.5, high=1, size=npeaks)
         model.efficiency = self.random_state.uniform(low=5000, high=6000, size=npeaks)
 
-    def modify_random(self, only_linear=False):
-        self._modify_random(only_linear=only_linear)
-        self.validate_model()
-
     def _modify_random(self, only_linear=False):
-        porg = self.fitmodel.get_parameter_values(only_linear=False).copy()
+        self._modify_random_model(only_linear=only_linear)
+        self._validate_model()
+
+    def _modify_random_model(self, only_linear=False):
+        pallorg = self.fitmodel.get_parameter_values(only_linear=False).copy()
         plinorg = self.fitmodel.get_parameter_values(only_linear=True).copy()
 
         if not only_linear:
-            p = porg.copy()
-            p *= self.random_state.uniform(0.95, 1, len(p))
-            self.fitmodel.set_parameter_values(p, only_linear=False)
+            pall = pallorg.copy()
+            pall *= self.random_state.uniform(0.95, 1, len(pall))
+            self.fitmodel.set_parameter_values(pall, only_linear=False)
             parameters = self.fitmodel.get_parameter_values(only_linear=False)
-            numpy.testing.assert_array_equal(parameters, p)
+            numpy.testing.assert_array_equal(parameters, pall)
 
         plin = plinorg.copy()
         plin *= self.random_state.uniform(0.5, 0.8, len(plin))
@@ -179,11 +179,11 @@ class testFitModel(unittest.TestCase):
         numpy.testing.assert_array_equal(parameters, plin)
 
         if only_linear:
-            p = self.fitmodel.get_parameter_values(only_linear=False)
+            pall = self.fitmodel.get_parameter_values(only_linear=False)
 
         for group in self.fitmodel.get_parameter_groups(only_linear=False):
-            current = p[group.index]
-            expected = porg[group.index]
+            current = pall[group.index]
+            expected = pallorg[group.index]
             if only_linear and not group.linear:
                 if group.count == 1:
                     self.assertEqual(current, expected, msg=group.name)
@@ -203,26 +203,52 @@ class testFitModel(unittest.TestCase):
             else:
                 self.assertFalse(all(current == expected), msg=group.name)
 
-        return p
+        return pall
 
-    def validate_model(self):
-        self._validate_model(self.fitmodel, self.is_combined_model)
+    def _validate_model(self):
+        self._validate_submodel(self.fitmodel, self.is_combined_model)
         if self.is_combined_model:
             for model in self.fitmodel.models:
-                self._validate_model(model, False)
-        self._validate_model(self.fitmodel, self.is_combined_model)
+                self._validate_submodel(model, False)
+        self._validate_submodel(self.fitmodel, self.is_combined_model)
 
-    def _validate_model(self, model, is_combined_model):
+    def _validate_submodel(self, model, is_combined_model):
         keep_parameters = model.get_parameter_values(only_linear=False).copy()
         keep_linear_parameters = model.get_parameter_values(only_linear=True).copy()
 
-        if not is_combined_model:
-            names = model.get_parameter_group_names(only_linear=False)
-            expected = {"concentrations", "zero", "gain", "wzero", "wgain"}
-            self.assertEqual(set(names), expected)
-            names = model.get_parameter_group_names(only_linear=True)
-            expected = {"concentrations"}
-            self.assertEqual(set(names), expected)
+        lin_expected = {"concentrations"}
+        expected = {"concentrations"}
+        if is_combined_model:
+            for i in range(self.nmodels):
+                expected |= {
+                    f"detector{i}:zero",
+                    f"detector{i}:gain",
+                    f"detector{i}:wzero",
+                    f"detector{i}:wgain",
+                }
+        else:
+            expected |= {"zero", "gain", "wzero", "wgain"}
+        names = model.get_parameter_group_names(only_linear=False)
+        self.assertEqual(set(names), expected)
+        names = model.get_parameter_group_names(only_linear=True)
+        self.assertEqual(set(names), lin_expected)
+
+        lin_expected = {f"concentrations{i}" for i in range(self.npeaks)}
+        expected = {f"concentrations{i}" for i in range(self.npeaks)}
+        if is_combined_model:
+            for i in range(self.nmodels):
+                expected |= {
+                    f"detector{i}:zero",
+                    f"detector{i}:gain",
+                    f"detector{i}:wzero",
+                    f"detector{i}:wgain",
+                }
+        else:
+            expected |= {"zero", "gain", "wzero", "wgain"}
+        names = model.get_parameter_names(only_linear=False)
+        self.assertEqual(set(names), expected)
+        names = model.get_parameter_names(only_linear=True)
+        self.assertEqual(set(names), lin_expected)
 
         n = model.ndata
         nexpected = len(model.xdata)
@@ -250,13 +276,13 @@ class testFitModel(unittest.TestCase):
         numpy.testing.assert_allclose(arr1, arr3)
         numpy.testing.assert_allclose(arr1, arr4)
 
-        nonlin_names = {"gain", "wgain", "wzero", "zero"}
+        all_names = {"gain", "wgain", "wzero", "zero"}
         lin_names = {"concentrations" + str(i) for i in range(self.npeaks)}
-        names = lin_names | nonlin_names
+        names = lin_names | all_names
         if is_combined_model:
             nmodels = model.nmodels
             names = lin_names + [
-                name + str(i) for i in range(nmodels) for name in nonlin_names
+                name + str(i) for i in range(nmodels) for name in all_names
             ]
             nexpected = self.npeaks + self.nshapeparams * nmodels
         else:
@@ -271,9 +297,8 @@ class testFitModel(unittest.TestCase):
         mnames = model.get_parameter_names(only_linear=True)
         self.assertEqual(set(mnames), lin_names)
 
-        if not is_combined_model:
-            for linear in [not model.linear, model.linear]:
-                model.linear = linear
+        for linear in (True, False):
+            with model.linear_context(linear):
                 for param_name, calc, numerical in model.compare_derivatives():
                     err_msg = "[only_linear={}] Analytical and numerical derivative of {} are not equal".format(
                         linear, repr(param_name)

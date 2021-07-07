@@ -129,7 +129,7 @@ class SimpleModel(LeastSquaresFitModel):
     def concentrations(self, value):
         self.config["matrix"]["concentrations"] = value
 
-    @property
+    @linked_property
     def linear(self):
         return self.config["fit"]["linear"]
 

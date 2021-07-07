@@ -31,7 +31,7 @@ class LeastSquaresFitModelInterface:
 
     @property
     def ystd(self):
-        raise NotImplementedError
+        return None
 
     @ystd.setter
     def ystd(self, value):
@@ -343,12 +343,15 @@ class LeastSquaresFitModel(LeastSquaresFitModelBase, ParameterModel):
         return self._ystd_full_to_fit(self.ystd)
 
     def _y_full_to_fit(self, y, xdata=None):
+        """Convert data from full model to fit model"""
         return y
 
     def _ystd_full_to_fit(self, ystd, xdata=None):
+        """Convert standard deviation from full model to fit model"""
         return ystd
 
     def _y_fit_to_full(self, y, xdata=None):
+        """Convert data from fit model to full model"""
         return y
 
     def evaluate_fullmodel(self, xdata=None):
@@ -552,11 +555,16 @@ class LeastSquaresCombinedFitModel(LeastSquaresFitModelBase, ParameterModelManag
     def _get_concatenated_data(self, attr):
         """
         :param str attr:
-        :returns array:
+        :returns array or None:
         """
         if self.nmodels == 0:
             return None
-        return numpy.concatenate([getattr(model, attr) for model in self.models])
+        data = [getattr(model, attr) for model in self.models]
+        isnone = [d is None for d in data]
+        if any(isnone):
+            assert all(isnone)
+            return None
+        return numpy.concatenate(data)
 
     def _set_concatenated_data(self, attr, values):
         """
