@@ -44,55 +44,47 @@ class testFitModel(unittest.TestCase):
 
     def testLinearFit(self):
         with self._fit_model_subtests():
-            self.fitmodel.linear = True
-            expected = self.fitmodel.get_parameter_values().copy()
-            self.modify_random(only_linear=True)
-
-            with self._profile("test"):
-                result = self.fitmodel.fit()
-            self._assert_fit_result(result, expected)
-            self.assertTrue(
-                not numpy.allclose(self.fitmodel.ydata, self.fitmodel.yfullmodel)
-            )
-            parameters = self.fitmodel.get_parameter_values(only_linear=True)
-            self.assertTrue(not numpy.allclose(parameters, expected))
-
-            self.fitmodel.use_fit_result(result)
-            numpy.testing.assert_allclose(self.fitmodel.ydata, self.fitmodel.yfullmodel)
-            parameters = self.fitmodel.get_parameter_values(only_linear=True)
-            numpy.testing.assert_allclose(parameters, expected)
+            self._test_fit(True)
 
     def testNonLinearFit(self):
         with self._fit_model_subtests():
-            self.fitmodel.linear = False
-            expected_nonlin = self.fitmodel.get_parameter_values(
-                only_linear=False
-            ).copy()
-            expected_lin = self.fitmodel.get_parameter_values(only_linear=True).copy()
-            self.modify_random(only_linear=False)
+            self._test_fit(False)
 
-            result = self.fitmodel.fit(full_output=True)
+    def _test_fit(self, linear):
+        self.fitmodel.linear = linear
+        refined_params = self.fitmodel.get_parameter_values(only_linear=False).copy()
+        lin_refined_params = self.fitmodel.get_parameter_values(only_linear=True).copy()
+        self.modify_random(only_linear=linear)
 
-            # TODO: non-linear parameters not precise
-            # self._assert_fit_result(result, expected_nonlin)
-            self.assertTrue(
-                not numpy.allclose(self.fitmodel.ydata, self.fitmodel.yfullmodel)
-            )
-            parameters = self.fitmodel.get_parameter_values(only_linear=False)
-            self.assertTrue(not numpy.allclose(parameters, expected_nonlin))
-            parameters = self.fitmodel.get_parameter_values(only_linear=True)
-            self.assertTrue(not numpy.allclose(parameters, expected_lin))
+        before = self.fitmodel.get_parameter_values(only_linear=False)
+        lin_before = self.fitmodel.get_parameter_values(only_linear=True)
 
-            self.fitmodel.use_fit_result(result)
-            # TODO: non-linear parameters not precise
-            # numpy.testing.assert_allclose(self.fitmodel.parameters, expected_nonlin)
-            self._vis(self.fitmodel.ydata, self.fitmodel.yfullmodel)
-            numpy.testing.assert_allclose(
-                self.fitmodel.ydata, self.fitmodel.yfullmodel, rtol=1e-3
-            )
-            numpy.testing.assert_allclose(
-                self.fitmodel.linear_parameters, expected_lin, rtol=1e-3
-            )
+        result = self.fitmodel.fit(full_output=True)
+
+        after = self.fitmodel.get_parameter_values(only_linear=False)
+        lin_after = self.fitmodel.get_parameter_values(only_linear=True)
+        numpy.testing.assert_array_equal(before, after)
+        numpy.testing.assert_array_equal(lin_before, lin_after)
+
+        self._assert_model_not_refined(refined_params, lin_refined_params)
+        self.fitmodel.use_fit_result(result)
+        self._assert_model_refined(refined_params, lin_refined_params)
+
+    def _assert_model_not_refined(self, refined_params, lin_refined_params):
+        self.assertTrue(
+            not numpy.allclose(self.fitmodel.ydata, self.fitmodel.yfullmodel)
+        )
+        parameters = self.fitmodel.get_parameter_values(only_linear=False)
+        self.assertTrue(not numpy.allclose(parameters, refined_params))
+        parameters = self.fitmodel.get_parameter_values(only_linear=True)
+        self.assertTrue(not numpy.allclose(parameters, lin_refined_params))
+
+    def _assert_model_refined(self, refined_params, lin_refined_params):
+        numpy.testing.assert_allclose(self.fitmodel.ydata, self.fitmodel.yfullmodel)
+        parameters = self.fitmodel.get_parameter_values(only_linear=False)
+        numpy.testing.assert_allclose(parameters, refined_params)
+        parameters = self.fitmodel.get_parameter_values(only_linear=True)
+        numpy.testing.assert_allclose(parameters, lin_refined_params)
 
     def _assert_fit_result(self, result, expected):
         p = numpy.asarray(result["parameters"])
@@ -172,20 +164,22 @@ class testFitModel(unittest.TestCase):
     def _modify_random(self, only_linear=False):
         porg = self.fitmodel.get_parameter_values(only_linear=False).copy()
         plinorg = self.fitmodel.get_parameter_values(only_linear=True).copy()
-        if only_linear:
-            plin = self.fitmodel.get_parameter_values(only_linear=True)
-            plin *= self.random_state.uniform(0.5, 0.8, len(plin))
-            self.fitmodel.set_parameter_values(plin, only_linear=True)
-            parameters = self.fitmodel.get_parameter_values(only_linear=True)
-            numpy.testing.assert_array_equal(parameters, plin)
-            p = self.fitmodel.get_parameter_values(only_linear=False)
-        else:
-            p = self.fitmodel.get_parameter_values(only_linear=False)
+
+        if not only_linear:
+            p = porg.copy()
             p *= self.random_state.uniform(0.95, 1, len(p))
             self.fitmodel.set_parameter_values(p, only_linear=False)
             parameters = self.fitmodel.get_parameter_values(only_linear=False)
             numpy.testing.assert_array_equal(parameters, p)
-            plin = self.fitmodel.get_parameter_values(only_linear=True)
+
+        plin = plinorg.copy()
+        plin *= self.random_state.uniform(0.5, 0.8, len(plin))
+        self.fitmodel.set_parameter_values(plin, only_linear=True)
+        parameters = self.fitmodel.get_parameter_values(only_linear=True)
+        numpy.testing.assert_array_equal(parameters, plin)
+
+        if only_linear:
+            p = self.fitmodel.get_parameter_values(only_linear=False)
 
         for group in self.fitmodel.get_parameter_groups(only_linear=False):
             current = p[group.index]
