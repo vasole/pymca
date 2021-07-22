@@ -206,47 +206,40 @@ class testFitModel(unittest.TestCase):
         return pall
 
     def _validate_model(self):
-        self._validate_submodel(self.fitmodel, self.is_combined_model)
+        self._validate_submodel(self.fitmodel)
         if self.is_combined_model:
-            for model in self.fitmodel.models:
-                self._validate_submodel(model, False)
-        self._validate_submodel(self.fitmodel, self.is_combined_model)
+            for model_idx, model in enumerate(self.fitmodel.models):
+                self._validate_submodel(model, model_idx)
+        self._validate_submodel(self.fitmodel)
 
-    def _validate_submodel(self, model, is_combined_model):
+    def _validate_submodel(self, model, model_idx=None):
+        is_combined_model = self.is_combined_model and model_idx is None
         keep_parameters = model.get_parameter_values(only_linear=False).copy()
         keep_linear_parameters = model.get_parameter_values(only_linear=True).copy()
 
-        lin_expected = {"concentrations"}
-        expected = {"concentrations"}
-        if is_combined_model:
-            for i in range(self.nmodels):
-                expected |= {
-                    f"detector{i}:zero",
-                    f"detector{i}:gain",
-                    f"detector{i}:wzero",
-                    f"detector{i}:wgain",
+        nonlin_expected = {"gain", "wgain", "wzero", "zero"}
+        if self.is_combined_model:
+            if is_combined_model:
+                nonlin_expected = {
+                    f"detector{model_idx}:{name}"
+                    for model_idx in range(self.nmodels)
+                    for name in nonlin_expected
                 }
-        else:
-            expected |= {"zero", "gain", "wzero", "wgain"}
+            else:
+                nonlin_expected = {
+                    f"detector{model_idx}:{name}" for name in nonlin_expected
+                }
+        lin_expected = {"concentrations"}
+        all_expected = lin_expected | nonlin_expected
         names = model.get_parameter_group_names(only_linear=False)
-        self.assertEqual(set(names), expected)
+        self.assertEqual(set(names), all_expected)
         names = model.get_parameter_group_names(only_linear=True)
         self.assertEqual(set(names), lin_expected)
 
         lin_expected = {f"concentrations{i}" for i in range(self.npeaks)}
-        expected = {f"concentrations{i}" for i in range(self.npeaks)}
-        if is_combined_model:
-            for i in range(self.nmodels):
-                expected |= {
-                    f"detector{i}:zero",
-                    f"detector{i}:gain",
-                    f"detector{i}:wzero",
-                    f"detector{i}:wgain",
-                }
-        else:
-            expected |= {"zero", "gain", "wzero", "wgain"}
+        all_expected = lin_expected | nonlin_expected
         names = model.get_parameter_names(only_linear=False)
-        self.assertEqual(set(names), expected)
+        self.assertEqual(set(names), all_expected)
         names = model.get_parameter_names(only_linear=True)
         self.assertEqual(set(names), lin_expected)
 
@@ -276,26 +269,15 @@ class testFitModel(unittest.TestCase):
         numpy.testing.assert_allclose(arr1, arr3)
         numpy.testing.assert_allclose(arr1, arr4)
 
-        all_names = {"gain", "wgain", "wzero", "zero"}
-        lin_names = {"concentrations" + str(i) for i in range(self.npeaks)}
-        names = lin_names | all_names
         if is_combined_model:
             nmodels = model.nmodels
-            names = lin_names + [
-                name + str(i) for i in range(nmodels) for name in all_names
-            ]
             nexpected = self.npeaks + self.nshapeparams * nmodels
         else:
             nexpected = self.npeaks + self.nshapeparams
-
         n = model.get_n_parameters(only_linear=False)
         self.assertEqual(n, nexpected)
         n = model.get_n_parameters(only_linear=True)
         self.assertEqual(n, self.npeaks)
-        mnames = model.get_parameter_names(only_linear=False)
-        self.assertEqual(set(mnames), names)
-        mnames = model.get_parameter_names(only_linear=True)
-        self.assertEqual(set(mnames), lin_names)
 
         for linear in (True, False):
             with model.linear_context(linear):

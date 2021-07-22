@@ -101,17 +101,47 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
         """Evaluate the fit model.
 
         :param array xdata: shape (ndata,)
-        :returns array: n x ndata
+        :returns array: shape (ndata,)
         """
-        raise NotImplementedError
+        derivatives = self.linear_derivatives_fitmodel(xdata=xdata)
+        parameters = self.get_parameter_values(only_linear=True)
+        return parameters.dot(derivatives)
 
     def linear_derivatives_fitmodel(self, xdata=None):
         """Derivates to all linear parameters
 
         :param array xdata: shape (ndata,)
-        :returns array: nparams x ndata
+        :returns array: shape (nparams, ndata)
+        """
+        nparams = self.get_n_parameters(only_linear=True)
+        return numpy.array(
+            [
+                self.derivative_fitmodel(i, xdata=xdata, only_linear=True)
+                for i in range(nparams)
+            ]
+        )
+
+    def numerical_derivative_fitmodel(self, param_idx, xdata=None, **paramtype):
+        """Derivate to a specific parameter of the fit model.
+
+        :param int param_idx:
+        :param array xdata: shape (ndata,)
+        :returns array: shape (ndata,)
         """
         raise NotImplementedError
+
+    def compare_derivatives(self, xdata=None, **paramtype):
+        """Compare analytical and numerical derivatives. Useful to
+        validate the user defined `derivative_fitmodel`.
+
+        :yields str, array, array: parameter name, analytical, numerical
+        """
+        for param_idx, name in enumerate(self.get_parameter_names(**paramtype)):
+            ycalderiv = self.derivative_fitmodel(param_idx, xdata=xdata, **paramtype)
+            ynumderiv = self.numerical_derivative_fitmodel(
+                param_idx, xdata=xdata, **paramtype
+            )
+            yield name, ycalderiv, ynumderiv
 
     def linear_decomposition_fitmodel(self, xdata=None):
         """Linear decomposition of the fit model.
@@ -372,30 +402,6 @@ class LeastSquaresFitModel(LeastSquaresFitModelBase, ParameterModel):
         y = self.evaluate_linear_fitmodel(xdata=xdata)
         return self._y_fit_to_full(y, xdata=xdata)
 
-    def evaluate_linear_fitmodel(self, xdata=None):
-        """Evaluate the fit model.
-
-        :param array xdata: shape (ndata,)
-        :returns array: shape (ndata,)
-        """
-        derivatives = self.linear_derivatives_fitmodel(xdata=xdata)
-        parameters = self.get_parameter_values(only_linear=True)
-        return parameters.dot(derivatives)
-
-    def linear_derivatives_fitmodel(self, xdata=None):
-        """Derivates to all linear parameters
-
-        :param array xdata: shape (ndata,)
-        :returns array: shape (nparams, ndata)
-        """
-        nparams = self.get_n_parameters(only_linear=True)
-        return numpy.array(
-            [
-                self.derivative_fitmodel(i, xdata=xdata, only_linear=True)
-                for i in range(nparams)
-            ]
-        )
-
     def derivative_fitmodel(self, param_idx, xdata=None, **paramtype):
         """Derivate to a specific parameter of the fit model.
 
@@ -544,13 +550,27 @@ class LeastSquaresCombinedFitModel(LeastSquaresFitModelBase, ParameterModelManag
         """
         return self._concatenate_evaluation("evaluate_fitmodel", xdata=xdata)
 
-    def evaluate_linear_fitmodel(self, xdata=None):
-        """Evaluate the fit model.
+    def derivative_fitmodel(self, param_idx, xdata=None, **paramtype):
+        """Derivate to a specific parameter of the fit model.
 
-        :param array xdata: shape (ndata,) or (nmodels, ndatai)
-        :returns array: shape (ndata,) or (sum(ndatai),)
+        :param int param_idx:
+        :param array xdata: shape (ndata,)
+        :returns array: shape (ndata,)
         """
-        return self._concatenate_evaluation("evaluate_linear_fitmodel", xdata=xdata)
+        return self._get_concatenated_derivative(
+            "derivative_fitmodel", param_idx, xdata=xdata, **paramtype
+        )
+
+    def numerical_derivative_fitmodel(self, param_idx, xdata=None, **paramtype):
+        """Derivate to a specific parameter of the fit model.
+
+        :param int param_idx:
+        :param array xdata: shape (ndata,)
+        :returns array: shape (ndata,)
+        """
+        return self._get_concatenated_derivative(
+            "numerical_derivative_fitmodel", param_idx, xdata=xdata, **paramtype
+        )
 
     def _get_concatenated_data(self, attr):
         """
@@ -588,6 +608,43 @@ class LeastSquaresCombinedFitModel(LeastSquaresFitModelBase, ParameterModelManag
             ret[idx] = func(xdata=xdata)
         return ret
 
+    def _get_concatenated_derivative(
+        self, funcname, param_idx, xdata=None, **paramtype
+    ):
+        """Derivate to a specific parameter of the fit model.
+
+        :param int param_idx:
+        :param array xdata: shape (ndata,)
+        :returns array: shape (ndata,)
+        """
+        if xdata is None:
+            n = self.ndata
+        else:
+            # Note: RestreinedLeastSquaresFit strides the data on the first iteration
+            n = len(xdata)
+        ret = numpy.zeros(n)
+        group = self._group_from_parameter_index(param_idx, **paramtype)
+        model = self._linked_key_to_instance(group.instance_key)
+
+        param_idx0 = param_idx
+        cached = self._in_property_caching_context()
+        if not cached:
+            parameter_index_in_group = group.parameter_index_in_group(param_idx0)
+        for modeli, xdata, idx in self._iter_model_data_slices(xdata, strided=True):
+            if not group.linked and modeli is not model:
+                continue
+            if cached:
+                param_idx = param_idx0
+            else:
+                groupi = modeli._group_from_parameter_name(
+                    group.property_name, **paramtype
+                )
+                param_idx = groupi.start_index + parameter_index_in_group
+            func = getattr(modeli, funcname)
+            ret[idx] = func(param_idx, xdata=xdata, **paramtype)
+
+        return ret
+
     def _get_ndata(self, data):
         """
         :param array data: shape (ndata,) or (nmodels, ndatai)
@@ -602,9 +659,10 @@ class LeastSquaresCombinedFitModel(LeastSquaresFitModelBase, ParameterModelManag
                 raise ValueError(f"Expected {self.nmodels} data arrays")
             return sum(len(x) for x in data)
 
-    def _iter_model_data_slices(self, data):
+    def _iter_model_data_slices(self, data, strided=False):
         """
         :param array data: shape (ndata,) or (nmodels, ndatai)
+        :param bool strided:
         :yields tuple: model, datai, slice
         """
         i = 0
@@ -619,6 +677,10 @@ class LeastSquaresCombinedFitModel(LeastSquaresFitModelBase, ParameterModelManag
                 idx = slice(i, i + n)
                 yield model, data[idx], idx
                 i += n
+        elif strided:
+            indices = self.__model_indices_after_slicing(data)
+            for model, idx in zip(self.models, indices):
+                yield model, data[idx], idx
         else:
             if len(data) != self.nmodels:
                 raise ValueError(f"Expected {self.nmodels} data arrays")
@@ -626,3 +688,26 @@ class LeastSquaresCombinedFitModel(LeastSquaresFitModelBase, ParameterModelManag
                 n = len(xdata_model)
                 yield model, xdata_model, slice(i, i + n)
                 i += n
+
+    def __model_indices_after_slicing(self, data):
+        ndata_models = [model.ndata for model in self.models]
+        stride, remain = divmod(sum(ndata_models), len(data))
+        stride += remain > 0
+        start = 0
+        offset = 0
+        i = 0
+        for n in ndata_models:
+            # Index of model in concatenated xdata due to slicing
+            stop = start + n
+            lst = list(range(start + offset, stop, stride))
+            nlst = len(lst)
+            # Index of model in concatenated xdata after slicing
+            idx = slice(i, i + nlst)
+            i += nlst
+            # Prepare for next model
+            if lst:
+                offset = lst[-1] + stride - stop
+            else:
+                offset -= n
+            start = stop
+            yield idx

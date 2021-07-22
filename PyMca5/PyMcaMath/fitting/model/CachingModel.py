@@ -155,6 +155,9 @@ class CachedPropertiesModel(CachingModel):
             if persist:
                 self._persist_property_values(values_cache, **cacheoptions)
 
+    def _in_property_caching_context(self):
+        return self._getCache("_property_values") is not None
+
     def _get_property_values_cache(self, **cacheoptions):
         caches = self._getCache("_property_values")
         if caches is None:

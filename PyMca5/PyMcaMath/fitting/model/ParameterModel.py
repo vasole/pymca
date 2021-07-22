@@ -144,11 +144,25 @@ class ParameterModelBase(CachedPropertiesModel):
     def get_n_parameters(self, **paramtype):
         return sum(group.count for group in self._iter_parameter_groups(**paramtype))
 
+    @contextmanager
+    def __parameter_values_context(self):
+        not_cached = not self._in_property_caching_context()
+        if not_cached:
+            keep = self._cache_manager
+            self._cache_manager = self
+        try:
+            yield
+        finally:
+            if not_cached:
+                self._cache_manager = keep
+
     def get_parameter_values(self, **paramtype):
-        return self._get_property_values(**paramtype)
+        with self.__parameter_values_context():
+            return self._get_property_values(**paramtype)
 
     def set_parameter_values(self, values, **paramtype):
-        self._set_property_values(values, **paramtype)
+        with self.__parameter_values_context():
+            self._set_property_values(values, **paramtype)
 
     def get_parameter_constraints(self, **paramtype):
         """
@@ -204,13 +218,18 @@ class ParameterModelBase(CachedPropertiesModel):
             if group.start_index <= param_idx < group.stop_index:
                 return group
 
+    def _group_from_parameter_name(self, prop_name, **paramtype):
+        for group in self._iter_parameter_groups(**paramtype):
+            if group.property_name == prop_name:
+                return group
+
 
 class ParameterModel(ParameterModelBase, LinkedModel):
     """Model that implements fit parameters"""
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self._linear= False
+        self._linear = False
 
     def _iter_parameter_group_properties(self):
         cls = type(self)
@@ -356,7 +375,6 @@ class ParameterModelManager(ParameterModelBase, LinkedModelManager):
         """
         # Shared parameters
         tracker = _IterGroupTracker()
-        start_index = 0
         for model in self.models:
             yield from model._iter_parameter_groups(
                 linked=True, tracker=tracker, **paramtype
