@@ -94,6 +94,10 @@ class LinkedModel:
                 prop.propagate = True
 
     @property
+    def is_linked(self):
+        return self._link_manager is not None
+
+    @property
     def _link_manager(self):
         return self.__link_manager
 

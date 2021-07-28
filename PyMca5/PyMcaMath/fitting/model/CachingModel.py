@@ -122,18 +122,6 @@ class CachedPropertiesModel(CachingModel):
         """All property id's for this instance and the provided cache options"""
         return self._cached_property_names()
 
-    def _iter_cached_property_ids(self, **cacheoptions):
-        """To be used when iterating over all property id's
-        of this instance.
-        """
-        propid_to_index = self._get_property_mapping_cache(
-            "_propid_to_index", **cacheoptions
-        )
-        if propid_to_index is None:
-            yield from self._instance_cached_property_ids(**cacheoptions)
-        else:
-            yield from propid_to_index.keys()
-
     @contextmanager
     def _propertyCachingContext(self, persist=False, start_cache=None, **cacheoptions):
         values_cache = self._get_property_values_cache(**cacheoptions)
@@ -249,16 +237,30 @@ class CachedPropertiesModel(CachingModel):
         index = self._propid_to_index(propid)
         values_cache[index] = value
 
-    def _get_property_mapping_cache(self, *subnames, **cacheoptions):
+    def _get_from_propid_cache(self, *subnames, dtype=dict, **cacheoptions):
         caches = self._getCache("_propid", *subnames)
         if caches is None:
             return None
         key = self._cache_manager._property_cache_key(**cacheoptions)
-        return caches.get(key, None)
+        return caches.setdefault(key, dtype())
+
+    def _iter_cached_property_ids(self, **cacheoptions):
+        """To be used when iterating over all property id's
+        of this instance.
+        """
+        propid_list = self._get_from_propid_cache(
+            "_propid_list", dtype=list, **cacheoptions
+        )
+        if propid_list is None:
+            yield from self._instance_cached_property_ids(**cacheoptions)
+            return
+        if not propid_list:
+            propid_list.extend(self._instance_cached_property_ids(**cacheoptions))
+        yield from propid_list
 
     def _propid_to_index(self, propid, **cacheoptions):
-        propid_to_index = self._get_property_mapping_cache(
-            "_propid_to_index", **cacheoptions
+        propid_to_index = self._get_from_propid_cache(
+            "_propid_to_index", dtype=dict, **cacheoptions
         )
         if propid_to_index is None:
             return self._cache_manager._property_index_from_id(propid, **cacheoptions)
@@ -269,8 +271,8 @@ class CachedPropertiesModel(CachingModel):
         return index
 
     def _name_to_propid(self, property_name, **cacheoptions):
-        name_to_propid = self._get_property_mapping_cache(
-            "_name_to_propid", **cacheoptions
+        name_to_propid = self._get_from_propid_cache(
+            "_name_to_propid", dtype=dict, **cacheoptions
         )
         if name_to_propid is None:
             return self._property_id_from_name(property_name)
