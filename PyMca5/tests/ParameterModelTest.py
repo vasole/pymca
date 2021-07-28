@@ -296,7 +296,7 @@ class testParameterModel(unittest.TestCase):
     def test_get_parameter_values(self):
         for cacheoptions in self._parameterize_nonlinear_test():
             values = self.concat_model[0].get_parameter_values(**cacheoptions)
-            self.assertEqual(values.tolist(), [11, 11, 12, 0, 0])
+            self.assertEqual(values.tolist(), [11, 11, 12])
 
             values = self.concat_model[-1].get_parameter_values(**cacheoptions)
             self.assertEqual(values.tolist(), [11, 11, 12, 41, 42])
@@ -328,7 +328,7 @@ class testParameterModel(unittest.TestCase):
     def test_get_linear_parameter_values(self):
         for cacheoptions in self._parameterize_linear_test():
             values = self.concat_model[0].get_parameter_values(**cacheoptions)
-            self.assertEqual(values.tolist(), [11, 11, 0])
+            self.assertEqual(values.tolist(), [11, 11])
 
             values = self.concat_model[-1].get_parameter_values(**cacheoptions)
             self.assertEqual(values.tolist(), [11, 11, 41])
