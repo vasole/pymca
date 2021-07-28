@@ -44,6 +44,9 @@ class CachedPropertiesLinkModel(CachedPropertiesModel, LinkedModel):
                 n = len(gvalues[index])
             except TypeError:
                 n = 1
-            gvalues[index] = values[i : i + n]
+            if n == 1:
+                gvalues[index] = values[i]
+            else:
+                gvalues[index] = values[i : i + n]
             i += n
         return gvalues

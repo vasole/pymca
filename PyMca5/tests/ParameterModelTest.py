@@ -1,4 +1,5 @@
 import unittest
+import numpy
 from contextlib import contextmanager
 from PyMca5.PyMcaMath.fitting.model.ParameterModel import ParameterModel
 from PyMca5.PyMcaMath.fitting.model.ParameterModel import ParameterModelManager
@@ -320,21 +321,51 @@ class testParameterModel(unittest.TestCase):
                     values = self.concat_model.get_parameter_values(**cacheoptions)
                     self.assertEqual(values.tolist(), [12, 41, 42] + [11] * 8)
 
-    def test_get_linear_parameter_values(self):
-        for cacheoptions in self._parameterize_linear_test():
-            values = self.concat_model[0].get_parameter_values(**cacheoptions)
-            self.assertEqual(values.tolist(), [11, 11])
-
-            values = self.concat_model[-1].get_parameter_values(**cacheoptions)
-            self.assertEqual(values.tolist(), [11, 11, 41])
-
-            values = self.concat_model.get_parameter_values(**cacheoptions)
-            self.assertEqual(values.tolist(), [11, 11, 41])
-
+    def test_parameter_values(self):
+        for cacheoptions in self._parameterize_nonlinear_test():
+            self._assert_set_get_parameter_values(
+                self.concat_model[0], [11, 11, 12], **cacheoptions
+            )
+            self._assert_set_get_parameter_values(
+                self.concat_model[-1], [11, 11, 12, 41, 42], **cacheoptions
+            )
+            self._assert_set_get_parameter_values(
+                self.concat_model, [11, 11, 12, 41, 42], **cacheoptions
+            )
             with self._unlink_var1_lin() as unlinked:
                 if unlinked:
-                    values = self.concat_model.get_parameter_values(**cacheoptions)
-                    self.assertEqual(values.tolist(), [41] + [11] * 8)
+                    self._assert_set_get_parameter_values(
+                        self.concat_model, [12, 41, 42] + [11] * 8, **cacheoptions
+                    )
+
+    def test_linear_parameter_values(self):
+        for cacheoptions in self._parameterize_linear_test():
+            self._assert_set_get_parameter_values(
+                self.concat_model[0], [11, 11], **cacheoptions
+            )
+            self._assert_set_get_parameter_values(
+                self.concat_model[-1], [11, 11, 41], **cacheoptions
+            )
+            self._assert_set_get_parameter_values(
+                self.concat_model, [11, 11, 41], **cacheoptions
+            )
+            with self._unlink_var1_lin() as unlinked:
+                if unlinked:
+                    self._assert_set_get_parameter_values(
+                        self.concat_model, [41] + [11] * 8, **cacheoptions
+                    )
+
+    def _assert_set_get_parameter_values(self, model, expected, **cacheoptions):
+        self._assert_get_parameter_values(model, expected, **cacheoptions)
+        with self._protect_parameter_values(**cacheoptions):
+            expected2 = list(range(len(expected)))
+            model.set_parameter_values(numpy.array(expected2), **cacheoptions)
+            self._assert_get_parameter_values(model, expected2, **cacheoptions)
+        self._assert_get_parameter_values(model, expected, **cacheoptions)
+
+    def _assert_get_parameter_values(self, model, expected, **cacheoptions):
+        values = model.get_parameter_values(**cacheoptions)
+        self.assertEqual(values.tolist(), expected)
 
     def _parameterize_linear_test(self):
         yield from self._parameterize_tests([[True, False], [None, True]])
@@ -369,3 +400,11 @@ class testParameterModel(unittest.TestCase):
                 yield True
             finally:
                 self.concat_model._enable_property_link("var1_lin")
+
+    @contextmanager
+    def _protect_parameter_values(self, **cacheoptions):
+        values = self.concat_model.get_parameter_values(**cacheoptions).copy()
+        try:
+            yield
+        finally:
+            self.concat_model.set_parameter_values(values, **cacheoptions)
