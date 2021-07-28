@@ -293,7 +293,7 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
         :returns array: shape (ndata,)
         """
         self.set_parameter_values(parameters)
-        return self.evaluate_fitmodel(xdata=xdata, strided=True)
+        return self.evaluate_fitmodel(xdata=xdata)
 
     def _gefit_derivative_fitmodel(self, parameters, param_idx, xdata):
         """Update parameters and return derivate to a specific parameter
@@ -304,7 +304,7 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
         :returns array: shape (ndata,)
         """
         self.set_parameter_values(parameters)
-        return self.derivative_fitmodel(param_idx, xdata=xdata, strided=True)
+        return self.derivative_fitmodel(param_idx, xdata=xdata)
 
     def use_fit_result(self, result):
         """
@@ -542,27 +542,27 @@ class LeastSquaresCombinedFitModel(LeastSquaresFitModelBase, ParameterModelManag
         """
         return self._concatenate_evaluation("evaluate_linear_fullmodel", xdata=xdata)
 
-    def evaluate_fitmodel(self, xdata=None, strided=False):
+    def evaluate_fitmodel(self, xdata=None, _strided=False):
         """Evaluate the fit model.
 
         :param array xdata: shape (ndata,) or (nmodels, ndatai)
-        :param bool strided:
+        :param bool _strided:
         :returns array: shape (ndata,) or (sum(ndatai),)
         """
         return self._concatenate_evaluation(
-            "evaluate_fitmodel", xdata=xdata, strided=strided
+            "evaluate_fitmodel", xdata=xdata, strided=_strided
         )
 
-    def derivative_fitmodel(self, param_idx, xdata=None, strided=False, **paramtype):
+    def derivative_fitmodel(self, param_idx, xdata=None, _strided=False, **paramtype):
         """Derivate to a specific parameter of the fit model.
 
         :param int param_idx:
         :param array xdata: shape (ndata,)
-        :param bool strided:
+        :param bool _strided:
         :returns array: shape (ndata,)
         """
         return self._get_concatenated_derivative(
-            "derivative_fitmodel", param_idx, xdata=xdata, strided=strided, **paramtype
+            "derivative_fitmodel", param_idx, xdata=xdata, strided=_strided, **paramtype
         )
 
     def numerical_derivative_fitmodel(self, param_idx, xdata=None, **paramtype):
@@ -575,6 +575,27 @@ class LeastSquaresCombinedFitModel(LeastSquaresFitModelBase, ParameterModelManag
         return self._get_concatenated_derivative(
             "numerical_derivative_fitmodel", param_idx, xdata=xdata, **paramtype
         )
+
+    def _gefit_evaluate_fitmodel(self, parameters, xdata):
+        """Update parameters and evaluate model
+
+        :param array parameters: shape (nparams,)
+        :param array xdata: shape (ndata,)
+        :returns array: shape (ndata,)
+        """
+        self.set_parameter_values(parameters)
+        return self.evaluate_fitmodel(xdata=xdata, _strided=True)
+
+    def _gefit_derivative_fitmodel(self, parameters, param_idx, xdata):
+        """Update parameters and return derivate to a specific parameter
+
+        :param array parameters: shape (nparams,)
+        :param int param_idx:
+        :param array xdata: shape (ndata,)
+        :returns array: shape (ndata,)
+        """
+        self.set_parameter_values(parameters)
+        return self.derivative_fitmodel(param_idx, xdata=xdata, _strided=True)
 
     def _get_concatenated_data(self, attr):
         """
@@ -630,7 +651,6 @@ class LeastSquaresCombinedFitModel(LeastSquaresFitModelBase, ParameterModelManag
 
         param_idx0 = param_idx
         cached = self._in_property_caching_context()
-        cached = False
         if not cached:
             parameter_index_in_group = group.parameter_index_in_group(param_idx0)
         for modeli, xdata, idx in self._iter_model_data_slices(xdata, strided=strided):

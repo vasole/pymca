@@ -59,16 +59,26 @@ class testFitModel(unittest.TestCase):
         before = self.fitmodel.get_parameter_values(only_linear=False)
         lin_before = self.fitmodel.get_parameter_values(only_linear=True)
 
+        #with self._profile("test"):
         result = self.fitmodel.fit(full_output=True)
 
+        # Verify the expected fit parameters
+        rtol = 1e-3
+        if result["linear"]:
+            numpy.testing.assert_allclose(result["parameters"], lin_refined_params, rtol=rtol)
+        else:
+            numpy.testing.assert_allclose(result["parameters"], refined_params, rtol=rtol)
+
+        # Check that the model has not been affected
         after = self.fitmodel.get_parameter_values(only_linear=False)
         lin_after = self.fitmodel.get_parameter_values(only_linear=True)
         numpy.testing.assert_array_equal(before, after)
         numpy.testing.assert_array_equal(lin_before, lin_after)
 
+        # Modify the fit model
         self._assert_model_not_refined(refined_params, lin_refined_params)
         self.fitmodel.use_fit_result(result)
-        self._assert_model_refined(refined_params, lin_refined_params)
+        self._assert_model_refined(refined_params, lin_refined_params, rtol=rtol)
 
     def _assert_model_not_refined(self, refined_params, lin_refined_params):
         self.assertTrue(
@@ -79,12 +89,12 @@ class testFitModel(unittest.TestCase):
         parameters = self.fitmodel.get_parameter_values(only_linear=True)
         self.assertTrue(not numpy.allclose(parameters, lin_refined_params))
 
-    def _assert_model_refined(self, refined_params, lin_refined_params):
-        numpy.testing.assert_allclose(self.fitmodel.ydata, self.fitmodel.yfullmodel)
+    def _assert_model_refined(self, refined_params, lin_refined_params, rtol=1e-7):
         parameters = self.fitmodel.get_parameter_values(only_linear=False)
-        numpy.testing.assert_allclose(parameters, refined_params)
+        numpy.testing.assert_allclose(parameters, refined_params, rtol=rtol)
         parameters = self.fitmodel.get_parameter_values(only_linear=True)
-        numpy.testing.assert_allclose(parameters, lin_refined_params)
+        numpy.testing.assert_allclose(parameters, lin_refined_params, rtol=rtol)
+        numpy.testing.assert_allclose(self.fitmodel.ydata, self.fitmodel.yfullmodel)
 
     def _assert_fit_result(self, result, expected):
         p = numpy.asarray(result["parameters"])
@@ -95,7 +105,7 @@ class testFitModel(unittest.TestCase):
 
     @contextmanager
     def _fit_model_subtests(self):
-        for nmodels in (2,):
+        for nmodels in (8,):
             with self.subTest(nmodels=nmodels):
                 self._create_model(nmodels=nmodels)
                 self._validate_model()
@@ -286,7 +296,7 @@ class testFitModel(unittest.TestCase):
                         linear, repr(param_name)
                     )
                     numpy.testing.assert_allclose(
-                        calc, numerical, err_msg=err_msg, rtol=1e-4
+                        calc, numerical, err_msg=err_msg, rtol=1e-3
                     )
 
         parameters = model.get_parameter_values(only_linear=False)
