@@ -238,6 +238,9 @@ class CachedPropertiesModel(CachingModel):
         values_cache[index] = value
 
     def _get_from_propid_cache(self, *subnames, dtype=dict, **cacheoptions):
+        """Returns the cache when propid caching is enabled, potentially initialized
+        by instantiating `dtype`. Returns `None` when propid caching is disabled.
+        """
         caches = self._getCache("_propid", *subnames)
         if caches is None:
             return None
@@ -271,6 +274,8 @@ class CachedPropertiesModel(CachingModel):
         return index
 
     def _name_to_propid(self, property_name, **cacheoptions):
+        return self._property_id_from_name(property_name)
+        # TODO: duplicate names for linked models
         name_to_propid = self._get_from_propid_cache(
             "_name_to_propid", dtype=dict, **cacheoptions
         )

@@ -184,10 +184,7 @@ class ParameterModelBase(CachedPropertiesModel):
         return tuple(self._iter_parameter_groups(**paramtype))
 
     def _property_id_from_name(self, property_name):
-        for group in self._iter_parameter_groups():
-            if group.property_name == property_name:
-                return group
-        return None
+        return self._group_from_parameter_name(property_name)
 
     def get_parameter_group_names(self, **paramtype):
         return tuple(group.name for group in self._iter_parameter_groups(**paramtype))
@@ -204,10 +201,11 @@ class ParameterModelBase(CachedPropertiesModel):
             if group.start_index <= param_idx < group.stop_index:
                 return group
 
-    def _group_from_parameter_name(self, prop_name, **paramtype):
+    def _group_from_parameter_name(self, property_name, **paramtype):
         for group in self._iter_parameter_groups(**paramtype):
-            if group.property_name == prop_name:
+            if group.property_name == property_name:
                 return group
+        return None
 
 
 class ParameterModel(CachedPropertiesLinkModel, ParameterModelBase):
@@ -216,6 +214,12 @@ class ParameterModel(CachedPropertiesLinkModel, ParameterModelBase):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         self._linear = False
+
+    def _iter_cached_property_ids(self, **paramtype):
+        instance_key = self._linked_instance_to_key
+        for propid in super()._iter_cached_property_ids(**paramtype):
+            if propid.linked or propid.instance_key == instance_key:
+                yield propid
 
     def __iter_parameter_group_properties(self):
         cls = type(self)
