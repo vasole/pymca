@@ -52,11 +52,12 @@ class testFitPolModel(unittest.TestCase):
                 ncoeff = degree + 1
                 expected = self.random_state.uniform(low=-5, high=5, size=ncoeff)
                 model.coefficients = expected
-                self.assertEqual(model.parameter_group_names, ["fitmodel_coefficients"])
-                self.assertEqual(
-                    model.linear_parameter_group_names, ["fitmodel_coefficients"]
-                )
-                numpy.testing.assert_array_equal(model.parameters, expected)
+                actual = model.get_parameter_values()
+                numpy.testing.assert_array_equal(actual, expected)
+
+                names = model.get_parameter_group_names()
+                expected_names = "fitmodel_coefficients",
+                self.assertEqual(names, expected_names)
 
                 fitmodel.ydata = model.yfullmodel
                 numpy.testing.assert_array_equal(fitmodel.ydata, model.yfullmodel)
@@ -84,7 +85,8 @@ class testFitPolModel(unittest.TestCase):
                 expected = self.random_state.uniform(low=-5, high=5, size=ncoeff)
                 model.coefficients = expected
                 expected[0] = numpy.log(expected[0])
-                numpy.testing.assert_array_equal(model.parameters, expected)
+                actual = model.get_parameter_values()
+                numpy.testing.assert_array_equal(actual, expected)
 
                 fitmodel.ydata = model.yfullmodel
                 numpy.testing.assert_array_equal(fitmodel.ydata, model.yfullmodel)
