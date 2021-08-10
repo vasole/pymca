@@ -43,11 +43,11 @@ class testFitModel(unittest.TestCase):
         self.random_state = numpy.random.RandomState(seed=100)
 
     def testLinearFit(self):
-        with self._fit_model_subtests():
+        for _ in self._fit_model_subtests():
             self._test_fit(True)
 
     def testNonLinearFit(self):
-        with self._fit_model_subtests():
+        for _ in self._fit_model_subtests():
             self._test_fit(False)
 
     def _test_fit(self, linear):
@@ -59,15 +59,19 @@ class testFitModel(unittest.TestCase):
         before = self.fitmodel.get_parameter_values(only_linear=False)
         lin_before = self.fitmodel.get_parameter_values(only_linear=True)
 
-        #with self._profile("test"):
+        # with self._profile("test"):
         result = self.fitmodel.fit(full_output=True)
 
         # Verify the expected fit parameters
         rtol = 1e-3
         if result["linear"]:
-            numpy.testing.assert_allclose(result["parameters"], lin_refined_params, rtol=rtol)
+            numpy.testing.assert_allclose(
+                result["parameters"], lin_refined_params, rtol=rtol
+            )
         else:
-            numpy.testing.assert_allclose(result["parameters"], refined_params, rtol=rtol)
+            numpy.testing.assert_allclose(
+                result["parameters"], refined_params, rtol=rtol
+            )
 
         # Check that the model has not been affected
         after = self.fitmodel.get_parameter_values(only_linear=False)
@@ -103,14 +107,13 @@ class testFitModel(unittest.TestCase):
         ul = p + 3 * pstd
         self.assertTrue(all((expected >= ll) & (expected <= ul)))
 
-    @contextmanager
     def _fit_model_subtests(self):
-        for nmodels in (8,):
+        for nmodels in [1, 4]:
             with self.subTest(nmodels=nmodels):
                 self._create_model(nmodels=nmodels)
-                self._validate_model()
+                self._validate_models()
                 yield
-                self._validate_model()
+                self._validate_models()
 
     def _create_model(self, nmodels):
         self.nmodels = nmodels
@@ -169,7 +172,7 @@ class testFitModel(unittest.TestCase):
 
     def _modify_random(self, only_linear=False):
         self._modify_random_model(only_linear=only_linear)
-        self._validate_model()
+        self._validate_models()
 
     def _modify_random_model(self, only_linear=False):
         pallorg = self.fitmodel.get_parameter_values(only_linear=False).copy()
@@ -215,17 +218,17 @@ class testFitModel(unittest.TestCase):
 
         return pall
 
-    def _validate_model(self):
-        self._validate_submodel(self.fitmodel)
+    def _validate_models(self):
+        self._validate_model(self.fitmodel)
         if self.is_combined_model:
             for model_idx, model in enumerate(self.fitmodel.models):
-                self._validate_submodel(model, model_idx)
-        self._validate_submodel(self.fitmodel)
+                self._validate_model(model, model_idx)
+        self._validate_model(self.fitmodel)
 
-    def _validate_submodel(self, model, model_idx=None):
+    def _validate_model(self, model, model_idx=None):
         is_combined_model = self.is_combined_model and model_idx is None
-        keep_parameters = model.get_parameter_values(only_linear=False).copy()
-        keep_linear_parameters = model.get_parameter_values(only_linear=True).copy()
+        original_parameters = model.get_parameter_values(only_linear=False).copy()
+        original_linear_parameters = model.get_parameter_values(only_linear=True).copy()
 
         nonlin_expected = {"gain", "wgain", "wzero", "zero"}
         if self.is_combined_model:
@@ -257,12 +260,12 @@ class testFitModel(unittest.TestCase):
         nexpected = len(model.xdata)
         self.assertEqual(n, nexpected)
 
-        n = model.get_n_parameters(only_linear=False)
         nexpected = len(model.get_parameter_values(only_linear=False))
+        n = model.get_n_parameters(only_linear=False)
         self.assertEqual(n, nexpected)
 
-        n = model.get_n_parameters(only_linear=True)
         nexpected = len(model.get_parameter_values(only_linear=True))
+        n = model.get_n_parameters(only_linear=True)
         self.assertEqual(n, nexpected)
 
         arr1 = model.evaluate_fullmodel()
@@ -289,20 +292,37 @@ class testFitModel(unittest.TestCase):
         n = model.get_n_parameters(only_linear=True)
         self.assertEqual(n, self.npeaks)
 
+        rtol = 1e-3
         for linear in (True, False):
             with model.linear_context(linear):
-                for param_name, calc, numerical in model.compare_derivatives():
-                    err_msg = "[only_linear={}] Analytical and numerical derivative of {} are not equal".format(
-                        linear, repr(param_name)
+                noncached = list(model.compare_derivatives())
+                cached = list(model.compare_derivatives())
+                err_fmt = "[only_linear={}] {{}} and {{}} derivative of '{{}}' (model: {}) are not equal".format(
+                    linear, model_idx
+                )
+                for deriv, deriv_cached in zip(noncached, cached):
+                    param_name, calc, numerical = deriv
+                    param_name_cached, calc_cached, numerical_cached = deriv_cached
+                    err_msg = err_fmt.format("analytical", "numerical", param_name)
+                    self.assertEqual(param_name, param_name_cached)
+                    numpy.testing.assert_allclose(
+                        calc, numerical, err_msg=err_msg, rtol=rtol
+                    )
+                    err_msg = err_fmt.format(
+                        "cached analytical", "numerical", param_name_cached
                     )
                     numpy.testing.assert_allclose(
-                        calc, numerical, err_msg=err_msg, rtol=1e-3
+                        calc_cached, numerical_cached, err_msg=err_msg, rtol=rtol
+                    )
+                    err_msg = err_fmt.format("cached", "non-cached ", param_name)
+                    numpy.testing.assert_allclose(
+                        calc, calc_cached, err_msg=err_msg, rtol=rtol
                     )
 
         parameters = model.get_parameter_values(only_linear=False)
-        numpy.testing.assert_array_equal(keep_parameters, parameters)
+        numpy.testing.assert_array_equal(original_parameters, parameters)
         parameters = model.get_parameter_values(only_linear=True)
-        numpy.testing.assert_array_equal(keep_linear_parameters, parameters)
+        numpy.testing.assert_array_equal(original_linear_parameters, parameters)
 
     def _vis_compare(self, a, b):
         import matplotlib.pyplot as plt

@@ -200,6 +200,7 @@ class ParameterModelBase(CachedPropertiesModel):
         for group in self._iter_parameter_groups(**paramtype):
             if group.start_index <= param_idx < group.stop_index:
                 return group
+        return None
 
     def _group_from_parameter_name(self, property_name, **paramtype):
         for group in self._iter_parameter_groups(**paramtype):

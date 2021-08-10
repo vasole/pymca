@@ -1,5 +1,6 @@
 from contextlib import contextmanager, ExitStack
 import numpy
+
 from PyMca5.PyMcaMath.linalg import lstsq
 from PyMca5.PyMcaMath.fitting import Gefit
 
@@ -325,22 +326,22 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
 
 
 class LeastSquaresFitModel(LeastSquaresFitModelBase, ParameterModel):
-    """A least-squares parameter model which implement the fit model
+    """A least-squares parameter model
 
     Derived classes:
 
         * implement the LeastSquaresFitModelInterface.
-        * add parameter like a python property by using the `parameter_group` or
+        * add fit parameters as python properties by using the `parameter_group` or
           `linear_parameter_group` decorators instead of the `property` decorator.
 
     There is a "fit model" and a "full model". The full model describes the data,
     the fit model describes the pre-processed data (for example smoothed,
-    numerical back subtracted, ...). By default the full model and the fit model
+    background subtracted, ...). By default the full model and the fit model
     are identical.
 
-    Fitting is done with linear least-squares optimization (not iterative)
+    Fitting is done with linear least-squares optimization (non iterative)
     or non-linear least-squares optimization (iterative). An outer loop of
-    non-least-squares optimization can be enabled (iterative).
+    non-least-squares optimization can be enabled for either (iterative).
 
     Example:
 
@@ -647,14 +648,16 @@ class LeastSquaresCombinedFitModel(LeastSquaresFitModelBase, ParameterModelManag
         n = self._get_ndata(xdata, strided=strided)
         ret = numpy.zeros(n)
         group = self._group_from_parameter_index(param_idx, **paramtype)
-        model = self._linked_key_to_instance(group.instance_key)
 
         param_idx0 = param_idx
         cached = self._in_property_caching_context()
         if not cached:
-            parameter_index_in_group = group.parameter_index_in_group(param_idx0)
+            param_group_idx = group.parameter_index_in_group(param_idx0)
         for modeli, xdata, idx in self._iter_model_data_slices(xdata, strided=strided):
-            if not group.linked and modeli is not model:
+            if (
+                not group.linked
+                and modeli._linked_instance_to_key != group.instance_key
+            ):
                 continue
             if cached:
                 param_idx = param_idx0
@@ -662,14 +665,9 @@ class LeastSquaresCombinedFitModel(LeastSquaresFitModelBase, ParameterModelManag
                 groupi = modeli._group_from_parameter_name(
                     group.property_name, **paramtype
                 )
-                param_idx = groupi.start_index + parameter_index_in_group
-            func = getattr(modeli, funcname)
-
-            tmpgroup = modeli._group_from_parameter_index(param_idx, **paramtype)
-            if tmpgroup is None:
-                breakpoint()
+                param_idx = groupi.start_index + param_group_idx
+            func = getattr(modeli, funcname, funcname)
             ret[idx] = func(param_idx, xdata=xdata, **paramtype)
-
         return ret
 
     def _get_ndata(self, data, strided=False):
