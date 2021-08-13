@@ -1,7 +1,7 @@
 import numpy
 
 from .LeastSquaresFitModel import LeastSquaresFitModel
-from .ParameterModel import linear_parameter_group
+from .ParameterModel import independent_linear_parameter_group
 
 
 class PolynomialModel(LeastSquaresFitModel):
@@ -9,7 +9,6 @@ class PolynomialModel(LeastSquaresFitModel):
         self._xdata = None
         self._ydata = None
         self._mask = None
-        self._linear = True
         self.degree = degree
         self.maxiter = maxiter
         super().__init__()
@@ -53,14 +52,6 @@ class PolynomialModel(LeastSquaresFitModel):
         return None
 
     @property
-    def linear(self):
-        return self._linear
-
-    @linear.setter
-    def linear(self, value):
-        self._linear = value
-
-    @property
     def maxiter(self):
         return self._maxiter
 
@@ -72,7 +63,7 @@ class PolynomialModel(LeastSquaresFitModel):
 class LinearPolynomialModel(PolynomialModel):
     """y = c0 + c1*x + c2*x^2 + ..."""
 
-    @linear_parameter_group
+    @independent_linear_parameter_group
     def fitmodel_coefficients(self):
         return self.coefficients
 
@@ -114,7 +105,7 @@ class ExponentialPolynomialModel(LinearPolynomialModel):
     yfit = log(y) = log(c1) + c1*x + c2*x^2 + ...
     """
 
-    @linear_parameter_group
+    @independent_linear_parameter_group
     def fitmodel_coefficients(self):
         coefficients = self.coefficients.copy()
         coefficients[0] = numpy.log(coefficients[0])

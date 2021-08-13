@@ -2,6 +2,7 @@ from typing import Any
 from dataclasses import dataclass, field
 from contextlib import contextmanager
 import numpy
+from enum import Enum
 
 from .CachingLinkedModel import CachedPropertiesLinkModel
 from .LinkedModel import LinkedModelManager
@@ -10,7 +11,10 @@ from .CachingModel import CachedPropertiesModel
 from .CachingModel import cached_property
 
 
-class parameter_group(cached_property, linked_property):
+ParameterType = Enum("ParameterType", "non_linear dependent_linear independent_linear")
+
+
+class _parameter_group(cached_property, linked_property):
     """Usage:
 
     .. highlight:: python
@@ -21,7 +25,7 @@ class parameter_group(cached_property, linked_property):
             def __init__(self):
                 self._myparam = 0.
 
-            @parameter_group
+            @nonlinear_parameter_group
             def myparam(self):
                 return self._myparam
 
@@ -37,6 +41,8 @@ class parameter_group(cached_property, linked_property):
             def myparam(self):
                 return 1, 0, 0
     """
+
+    TYPE = NotImplemented
 
     def __init__(self, *args, **kw):
         self.fcount = self._fcount_default()
@@ -68,15 +74,23 @@ class parameter_group(cached_property, linked_property):
         return fconstraints
 
 
-class linear_parameter_group(parameter_group):
-    pass
+class nonlinear_parameter_group(_parameter_group):
+    TYPE = ParameterType.non_linear
+
+
+class dependent_linear_parameter_group(_parameter_group):
+    TYPE = ParameterType.dependent_linear
+
+
+class independent_linear_parameter_group(_parameter_group):
+    TYPE = ParameterType.independent_linear
 
 
 @dataclass(frozen=True, eq=True)
 class ParameterGroupId:
     name: str
     property_name: str = field(compare=False, hash=False)
-    linear: bool = field(compare=False, hash=False)
+    type: ParameterType = field(compare=False, hash=False)
     linked: bool = field(compare=False, hash=False)
     count: int = field(compare=False, hash=False)
     start_index: int = field(compare=False, hash=False)
@@ -100,31 +114,46 @@ class ParameterGroupId:
             return param_idx - self.start_index
         return None
 
+    @property
+    def is_linear(self):
+        return self.type != ParameterType.non_linear
+
+    @property
+    def is_independent_linear(self):
+        return self.type == ParameterType.independent_linear
+
 
 class ParameterModelBase(CachedPropertiesModel):
     """Interface for all models that manage fit parameters"""
 
     @property
-    def linear(self):
+    def parameter_type(self):
         raise NotImplementedError
 
-    @linear.setter
-    def linear(self, value):
+    @parameter_type.setter
+    def parameter_type(self, value):
         raise NotImplementedError
+
+    @property
+    def only_linear_parameters(self):
+        return self.parameter_type in (
+            ParameterType.dependent_linear,
+            ParameterType.independent_linear,
+        )
 
     @contextmanager
-    def linear_context(self, linear):
-        keep = self.linear
-        self.linear = linear
+    def parameter_type_context(self, value):
+        keep = self.parameter_type
+        self.parameter_type = value
         try:
             yield
         finally:
-            self.linear = keep
+            self.parameter_type = keep
 
-    def _property_cache_key(self, only_linear=None, **paramtype):
-        if only_linear is None:
-            only_linear = self.linear
-        return only_linear
+    def _property_cache_key(self, parameter_type=NotImplemented, **paramtype):
+        if parameter_type is NotImplemented:
+            parameter_type = self.parameter_type
+        return parameter_type
 
     def _create_empty_property_values_cache(self, key, **paramtype):
         return numpy.zeros(self.get_n_parameters(**paramtype))
@@ -215,7 +244,7 @@ class ParameterModel(CachedPropertiesLinkModel, ParameterModelBase):
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self._linear = False
+        self._parameter_type = None
 
     def _iter_cached_property_ids(self, **paramtype):
         instance_key = self._linked_instance_to_key
@@ -227,17 +256,17 @@ class ParameterModel(CachedPropertiesLinkModel, ParameterModelBase):
         cls = type(self)
         for property_name in self._cached_property_names():
             prop = getattr(cls, property_name)
-            if not isinstance(prop, parameter_group):
+            if not isinstance(prop, _parameter_group):
                 raise TypeError(
-                    "Currently only 'parameter_group' properties support caching"
+                    "Currently only parameter _group properties support caching"
                 )
             yield property_name, prop
 
     def _instance_cached_property_ids(
-        self, only_linear=None, linked=None, tracker=None
+        self, parameter_type=NotImplemented, linked=None, tracker=None
     ):
         """
-        :param only_linear bool: all parameters (linear and non-linear) or only linear parameters
+        :param parameter_type bool: only this parameter type
         :param linked bool: linked parameters or unlinked parameters
         :param tracker _IterGroupTracker:
         :yields ParameterGroupId:
@@ -254,10 +283,9 @@ class ParameterModel(CachedPropertiesLinkModel, ParameterModelBase):
                 if group_is_linked is not linked:
                     continue
 
-            group_is_linear = isinstance(prop, linear_parameter_group)
-            if only_linear is None:
-                only_linear = self.linear
-            if only_linear and not group_is_linear:
+            if parameter_type is NotImplemented:
+                parameter_type = self.parameter_type
+            if parameter_type is not None and prop.TYPE != parameter_type:
                 continue
 
             count = prop.fcount(self)
@@ -272,9 +300,6 @@ class ParameterModel(CachedPropertiesLinkModel, ParameterModelBase):
             else:
                 index = None
 
-            def get_constraints():
-                return prop.fconstraints(self)
-
             instance_key = self._linked_instance_to_key
             if group_is_linked or instance_key is None:
                 name = property_name
@@ -283,7 +308,7 @@ class ParameterModel(CachedPropertiesLinkModel, ParameterModelBase):
 
             group = ParameterGroupId(
                 name=name,
-                linear=group_is_linear,
+                type=prop.TYPE,
                 linked=group_is_linked,
                 property_name=property_name,
                 instance_key=instance_key,
@@ -307,12 +332,12 @@ class ParameterModel(CachedPropertiesLinkModel, ParameterModelBase):
         return get_constraints
 
     @linked_property
-    def linear(self):
-        return self._linear
+    def parameter_type(self):
+        return self._parameter_type
 
-    @linear.setter
-    def linear(self, value):
-        self._linear = value
+    @parameter_type.setter
+    def parameter_type(self, value):
+        self._parameter_type = value
 
     def _get_noncached_property_value(self, group):
         return getattr(self, group.property_name)
@@ -343,7 +368,7 @@ class ParameterModelManager(ParameterModelBase, LinkedModelManager):
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self._enable_property_link("linear")
+        self._enable_property_link("parameter_type")
         for model in self.models:
             model._cache_manager = self
 
@@ -360,12 +385,12 @@ class ParameterModelManager(ParameterModelBase, LinkedModelManager):
         return len(self.model_mapping)
 
     @property
-    def linear(self):
-        return self._get_linked_property_value("linear")
+    def parameter_type(self):
+        return self._get_linked_property_value("parameter_type")
 
-    @linear.setter
-    def linear(self, value):
-        self._set_linked_property_value("linear", value)
+    @parameter_type.setter
+    def parameter_type(self, value):
+        self._set_linked_property_value("parameter_type", value)
 
     def _instance_cached_property_ids(self, **paramtype):
         """

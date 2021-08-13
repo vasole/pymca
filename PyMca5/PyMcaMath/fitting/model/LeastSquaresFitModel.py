@@ -7,6 +7,7 @@ from PyMca5.PyMcaMath.fitting import Gefit
 from .ParameterModel import ParameterModelBase
 from .ParameterModel import ParameterModel
 from .ParameterModel import ParameterModelManager
+from .ParameterModel import ParameterType
 
 
 class LeastSquaresFitModelInterface:
@@ -82,6 +83,22 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
     def yfitstd(self):
         raise NotImplementedError
 
+    @property
+    def yfit_weighted_residuals(self):
+        return (self.yfitdata - self.yfitmodel) / self.yfitstd
+
+    @property
+    def chi_squared(self):
+        return (self.yfit_weighted_residuals ** 2).sum()
+
+    @property
+    def reduced_chi_squared(self):
+        return self.chi_squared / self.degrees_of_freedom
+
+    @property
+    def degrees_of_freedom(self):
+        return self.ndata - self.get_n_parameters()
+
     def evaluate_fullmodel(self, xdata=None):
         """Evaluate the full model.
 
@@ -90,7 +107,7 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
         """
         raise NotImplementedError
 
-    def evaluate_linear_fullmodel(self, xdata=None):
+    def evaluate_decomposed_fullmodel(self, xdata=None):
         """Evaluate the full model.
 
         :param array xdata: shape (ndata,)
@@ -98,26 +115,30 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
         """
         raise NotImplementedError
 
-    def evaluate_linear_fitmodel(self, xdata=None):
+    def evaluate_decomposed_fitmodel(self, xdata=None):
         """Evaluate the fit model.
 
         :param array xdata: shape (ndata,)
         :returns array: shape (ndata,)
         """
-        derivatives = self.linear_derivatives_fitmodel(xdata=xdata)
-        parameters = self.get_parameter_values(only_linear=True)
+        derivatives = self.independent_linear_derivatives_fitmodel(xdata=xdata)
+        parameters = self.get_parameter_values(
+            parameter_type=ParameterType.independent_linear
+        )
         return parameters.dot(derivatives)
 
-    def linear_derivatives_fitmodel(self, xdata=None):
-        """Derivates to all linear parameters
+    def independent_linear_derivatives_fitmodel(self, xdata=None):
+        """Derivates to all independent linear parameters
 
         :param array xdata: shape (ndata,)
         :returns array: shape (nparams, ndata)
         """
-        nparams = self.get_n_parameters(only_linear=True)
+        nparams = self.get_n_parameters(parameter_type=ParameterType.independent_linear)
         return numpy.array(
             [
-                self.derivative_fitmodel(i, xdata=xdata, only_linear=True)
+                self.derivative_fitmodel(
+                    i, xdata=xdata, parameter_type=ParameterType.independent_linear
+                )
                 for i in range(nparams)
             ]
         )
@@ -150,8 +171,10 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
         :param array xdata: shape (ndata,)
         :returns array: nparams x ndata
         """
-        derivatives = self.linear_derivatives_fitmodel(xdata=xdata)
-        parameters = self.get_parameter_values(only_linear=True)
+        derivatives = self.independent_linear_derivatives_fitmodel(xdata=xdata)
+        parameters = self.get_parameter_values(
+            parameter_type=ParameterType.independent_linear
+        )
         return parameters[:, numpy.newaxis] * derivatives
 
     @property
@@ -169,42 +192,45 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
         :param bool full_output: add statistics to fitted parameters
         :returns dict:
         """
-        if self.linear:
-            return self.linear_fit(full_output=full_output)
+        if self.parameter_type == ParameterType.independent_linear:
+            return self.non_iterative_optimization(full_output=full_output)
         else:
-            return self.nonlinear_fit(full_output=full_output)
+            return self.iterative_optimization(full_output=full_output)
 
-    def linear_fit(self, full_output=False):
+    def non_iterative_optimization(self, full_output=False):
         """
         :param bool full_output: add statistics to fitted parameters
         :returns dict:
         """
-        with self._linear_fit_context():
+        with self._non_iterative_optimization_context():
             b = self.yfitdata
+            sigma_b = self.yfitstd
             for i in range(max(self.niter_non_leastsquares, 1)):
-                A = self.linear_derivatives_fitmodel()
+                A = self.independent_linear_derivatives_fitmodel()
                 result = lstsq(
                     A.T,  # ndata, nparams
                     b.copy(),  # ndata
                     uncertainties=True,
                     covariances=False,
                     digested_output=True,
+                    sigma_b=sigma_b,
+                    weight=self.weightflag,
                 )
                 if self.niter_non_leastsquares:
                     self.set_parameter_values(result["parameters"])
                     self.non_leastsquares_increment()
-        result["linear"] = True
-        result["parameters"] = result["parameters"]
-        result["uncertainties"] = result["uncertainties"]
-        result.pop("svd")
-        return result
+            result["parameter_type"] = self.parameter_type
+            result["parameters"] = result["parameters"]
+            result["uncertainties"] = result["uncertainties"]
+            result.pop("svd")
+            return result
 
-    def nonlinear_fit(self, full_output=False):
+    def iterative_optimization(self, full_output=False):
         """
         :param bool full_output: add statistics to fitted parameters
         :returns dict:
         """
-        with self._nonlinear_fit_context():
+        with self._iterative_optimization_context():
             constraints = self.get_parameter_constraints().T
             xdata = self.xdata
             ydata = self.yfitdata
@@ -223,20 +249,21 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
                     weightflag=self.weightflag,
                     deltachi=self.deltachi,
                     fulloutput=full_output,
+                    linear=self.only_linear_parameters,
                 )
                 if self.niter_non_leastsquares:
                     self.set_parameter_values(result[0])
                     self.non_leastsquares_increment()
-        ret = {
-            "linear": False,
-            "parameters": result[0],
-            "uncertainties": result[2],
-            "chi2_red": result[1],
-        }
-        if full_output:
-            ret["niter"] = result[3]
-            ret["lastdeltachi"] = result[4]
-        return ret
+            ret = {
+                "parameter_type": self.parameter_type,
+                "parameters": result[0],
+                "uncertainties": result[2],
+                "chi2_red": result[1],
+            }
+            if full_output:
+                ret["niter"] = result[3]
+                ret["lastdeltachi"] = result[4]
+            return ret
 
     @property
     def maxiter(self):
@@ -255,34 +282,32 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
         return 0
 
     @contextmanager
-    def _linear_fit_context(self):
+    def _non_iterative_optimization_context(self):
         with ExitStack() as stack:
-            ctx = self.linear_context(True)
+            ctx = self.parameter_type_context(ParameterType.independent_linear)
             stack.enter_context(ctx)
             ctx = self._propertyCachingContext()
             stack.enter_context(ctx)
-            ctx = self._custom_linear_fit_context()
+            ctx = self._custom_non_iterative_optimization_context()
             stack.enter_context(ctx)
             yield
 
     @contextmanager
-    def _nonlinear_fit_context(self):
+    def _iterative_optimization_context(self):
         with ExitStack() as stack:
-            ctx = self.linear_context(False)
-            stack.enter_context(ctx)
             ctx = self._propertyCachingContext()
             stack.enter_context(ctx)
-            ctx = self._custom_nonlinear_fit_context()
+            ctx = self._custom_iterative_optimization_context()
             stack.enter_context(ctx)
             yield
 
     @contextmanager
-    def _custom_linear_fit_context(self):
+    def _custom_non_iterative_optimization_context(self):
         """To allow derived classes to add context"""
         yield
 
     @contextmanager
-    def _custom_nonlinear_fit_context(self):
+    def _custom_iterative_optimization_context(self):
         """To allow derived classes to add context"""
         yield
 
@@ -311,7 +336,9 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
         """
         :param dict result:
         """
-        self.set_parameter_values(result["parameters"], only_linear=result["linear"])
+        self.set_parameter_values(
+            result["parameters"], parameter_type=result["parameter_type"]
+        )
 
     @contextmanager
     def use_fit_result_context(self, result):
@@ -319,7 +346,7 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
 
         :param dict result:
         """
-        with self.linear_context(result["linear"]):
+        with self.parameter_type_context(result["parameter_type"]):
             with self._propertyCachingContext():
                 self.use_fit_result(result)
                 yield
@@ -331,8 +358,8 @@ class LeastSquaresFitModel(LeastSquaresFitModelBase, ParameterModel):
     Derived classes:
 
         * implement the LeastSquaresFitModelInterface.
-        * add fit parameters as python properties by using the `parameter_group` or
-          `linear_parameter_group` decorators instead of the `property` decorator.
+        * add fit parameters as python properties by using the `nonlinear_parameter_group` or
+          `independent_linear_parameter_group` decorators instead of the `property` decorator.
 
     There is a "fit model" and a "full model". The full model describes the data,
     the fit model describes the pre-processed data (for example smoothed,
@@ -394,13 +421,13 @@ class LeastSquaresFitModel(LeastSquaresFitModelBase, ParameterModel):
         y = self.evaluate_fitmodel(xdata=xdata)
         return self._y_fit_to_full(y, xdata=xdata)
 
-    def evaluate_linear_fullmodel(self, xdata=None):
+    def evaluate_decomposed_fullmodel(self, xdata=None):
         """Evaluate the full model.
 
         :param array xdata: shape (ndata,)
         :returns array: shape (ndata,)
         """
-        y = self.evaluate_linear_fitmodel(xdata=xdata)
+        y = self.evaluate_decomposed_fitmodel(xdata=xdata)
         return self._y_fit_to_full(y, xdata=xdata)
 
     def derivative_fitmodel(self, param_idx, xdata=None, **paramtype):
@@ -420,10 +447,9 @@ class LeastSquaresFitModel(LeastSquaresFitModelBase, ParameterModel):
         :returns array: shape (ndata,)
         """
         group = self._group_from_parameter_index(param_idx, **paramtype)
-        param_is_linear = group.linear
         parameters = self.get_parameter_values(**paramtype)
         try:
-            if param_is_linear:
+            if group.is_linear:
                 return self._numerical_derivative_linear_param(
                     parameters, param_idx, xdata=xdata, **paramtype
                 )
@@ -444,7 +470,7 @@ class LeastSquaresFitModel(LeastSquaresFitModelBase, ParameterModel):
         # dy/dpi(x) = fi(x)
         parameters = parameters.copy()
         for group in self._iter_parameter_groups(**paramtype):
-            if group.linear:
+            if group.is_independent_linear:
                 parameters[group.index] = 0
         parameters[param_idx] = 1
         self.set_parameter_values(parameters, **paramtype)
@@ -535,13 +561,15 @@ class LeastSquaresCombinedFitModel(LeastSquaresFitModelBase, ParameterModelManag
         """
         return self._concatenate_evaluation("evaluate_fullmodel", xdata=xdata)
 
-    def evaluate_linear_fullmodel(self, xdata=None):
+    def evaluate_decomposed_fullmodel(self, xdata=None):
         """Evaluate the full model.
 
         :param array xdata: shape (ndata,) or (nmodels, ndatai)
         :returns array: shape (ndata,) or (sum(ndatai),)
         """
-        return self._concatenate_evaluation("evaluate_linear_fullmodel", xdata=xdata)
+        return self._concatenate_evaluation(
+            "evaluate_decomposed_fullmodel", xdata=xdata
+        )
 
     def evaluate_fitmodel(self, xdata=None, _strided=False):
         """Evaluate the fit model.

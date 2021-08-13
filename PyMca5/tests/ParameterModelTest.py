@@ -3,8 +3,11 @@ import numpy
 from contextlib import contextmanager
 from PyMca5.PyMcaMath.fitting.model.ParameterModel import ParameterModel
 from PyMca5.PyMcaMath.fitting.model.ParameterModel import ParameterModelManager
-from PyMca5.PyMcaMath.fitting.model.ParameterModel import parameter_group
-from PyMca5.PyMcaMath.fitting.model.ParameterModel import linear_parameter_group
+from PyMca5.PyMcaMath.fitting.model.ParameterModel import nonlinear_parameter_group
+from PyMca5.PyMcaMath.fitting.model.ParameterModel import (
+    independent_linear_parameter_group,
+)
+from PyMca5.PyMcaMath.fitting.model.ParameterModel import ParameterType
 
 
 class Model1(ParameterModel):
@@ -12,7 +15,7 @@ class Model1(ParameterModel):
         super().__init__()
         self._cfg = cfg
 
-    @parameter_group
+    @nonlinear_parameter_group
     def var1_nonlin(self):
         return self._cfg["var1_nonlin"]
 
@@ -20,7 +23,7 @@ class Model1(ParameterModel):
     def var1_nonlin(self, value):
         self._cfg["var1_nonlin"] = value
 
-    @linear_parameter_group
+    @independent_linear_parameter_group
     def var1_lin(self):
         return self._cfg["var1_lin"]
 
@@ -32,7 +35,7 @@ class Model1(ParameterModel):
     def var1_lin(self):
         return 2
 
-    @parameter_group
+    @nonlinear_parameter_group
     def var3_nonlin(self):
         return self._cfg["var3_nonlin"]
 
@@ -40,7 +43,7 @@ class Model1(ParameterModel):
     def var3_nonlin(self, value):
         self._cfg["var3_nonlin"] = value
 
-    @linear_parameter_group
+    @independent_linear_parameter_group
     def var3_lin(self):
         return self._cfg["var3_lin"]
 
@@ -53,7 +56,7 @@ class Model1(ParameterModel):
 
 
 class Model2(Model1):
-    @parameter_group
+    @nonlinear_parameter_group
     def var2_nonlin(self):
         return self._cfg["var2_nonlin"]
 
@@ -61,7 +64,7 @@ class Model2(Model1):
     def var2_nonlin(self, value):
         self._cfg["var2_nonlin"] = value
 
-    @linear_parameter_group
+    @independent_linear_parameter_group
     def var2_lin(self):
         return self._cfg["var2_lin"]
 
@@ -120,18 +123,30 @@ class testParameterModel(unittest.TestCase):
         self.concat_model = ConcatModel()
 
     def test_instantiation(self):
-        self.assertFalse(self.concat_model.linear)
+        self.assertEqual(self.concat_model.parameter_type, None)
         self.assertEqual(self.concat_model.nmodels, 4)
 
-    def test_linear_context(self):
-        with self.concat_model.linear_context(True):
-            self.assertTrue(self.concat_model.linear)
-            for model in self.concat_model.models:
-                self.assertTrue(model.linear)
+    def test_parameter_type(self):
+        for parameter_type in ParameterType:
+            for group in self.concat_model.get_parameter_groups(
+                parameter_type=parameter_type
+            ):
+                self.assertEqual(group.type, parameter_type)
+        types = set(group.type for group in self.concat_model.get_parameter_groups())
+        expected = {ParameterType.independent_linear, ParameterType.non_linear}
+        self.assertEqual(types, expected)
 
-        self.assertFalse(self.concat_model.linear)
+    def test_parameter_type_context(self):
+        with self.concat_model.parameter_type_context(ParameterType.independent_linear):
+            self.assertEqual(
+                self.concat_model.parameter_type, ParameterType.independent_linear
+            )
+            for model in self.concat_model.models:
+                self.assertTrue(model.parameter_type, ParameterType.independent_linear)
+
+        self.assertEqual(self.concat_model.parameter_type, None)
         for model in self.concat_model.models:
-            self.assertFalse(model.linear)
+            self.assertEqual(model.parameter_type, None)
 
     def test_parameter_group_names(self):
         for cacheoptions in self._parameterize_nonlinear_test():
@@ -194,7 +209,7 @@ class testParameterModel(unittest.TestCase):
                     )
                     self.assertEqual(tuple(names), expected)
 
-    def test_linear_parameter_group_names(self):
+    def test_independent_linear_parameter_group_names(self):
         for cacheoptions in self._parameterize_linear_test():
             names = self.concat_model[0].get_parameter_group_names(**cacheoptions)
             expected = ("var1_lin", "model0:var3_lin")
@@ -549,21 +564,28 @@ class testParameterModel(unittest.TestCase):
             self.assertEqual(values, expected)
 
     def _parameterize_linear_test(self):
-        yield from self._parameterize_tests([[True, False], [None, True]])
+        yield from self._parameterize_tests(
+            [
+                [ParameterType.independent_linear, None],
+                [NotImplemented, ParameterType.independent_linear],
+            ]
+        )
 
     def _parameterize_nonlinear_test(self):
-        yield from self._parameterize_tests([[False, True], [None, False]])
+        yield from self._parameterize_tests(
+            [[None, ParameterType.independent_linear], [NotImplemented, None]]
+        )
 
     def _parameterize_tests(self, linear_options):
-        for local_linear, global_linear in linear_options:
+        for local_type, global_type in linear_options:
             for cached in [True, False]:
                 with self.subTest(
-                    local_linear=local_linear,
-                    global_linear=global_linear,
+                    local_type=local_type,
+                    global_type=global_type,
                     cached=cached,
                 ):
-                    self.concat_model.linear = global_linear
-                    cacheoptions = {"only_linear": local_linear}
+                    self.concat_model.parameter_type = global_type
+                    cacheoptions = {"parameter_type": local_type}
                     self._cached = cached
                     if cached:
                         with self.concat_model._propertyCachingContext(**cacheoptions):

@@ -1,40 +1,7 @@
-# /*##########################################################################
-#
-# The PyMca X-Ray Fluorescence Toolkit
-#
-# Copyright (c) 2020 European Synchrotron Radiation Facility
-#
-# This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
-#
-#############################################################################*/
-__author__ = "Wout De Nolf"
-__contact__ = "wout.de_nolf@esrf.eu"
-__license__ = "MIT"
-__copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-
 import numpy
 from PyMca5.PyMcaMath.fitting import SpecfitFuns
-from PyMca5.PyMcaMath.fitting.model import parameter_group
-from PyMca5.PyMcaMath.fitting.model import linear_parameter_group
+from PyMca5.PyMcaMath.fitting.model import nonlinear_parameter_group
+from PyMca5.PyMcaMath.fitting.model import independent_linear_parameter_group
 from PyMca5.PyMcaMath.fitting.model import LeastSquaresFitModel
 from PyMca5.PyMcaMath.fitting.model import LeastSquaresCombinedFitModel
 from PyMca5.PyMcaMath.fitting.model.LinkedModel import linked_property
@@ -49,7 +16,7 @@ class SimpleModel(LeastSquaresFitModel):
         self.config = {
             "detector": {"zero": 0.0, "gain": 1.0, "wzero": 0.0, "wgain": 1.0},
             "matrix": {"positions": [], "concentrations": [], "efficiency": []},
-            "fit": {"linear": False},
+            "fit": {"parameter_type": None},
             "xmin": 0.0,
             "xmax": 1.0,
         }
@@ -64,7 +31,7 @@ class SimpleModel(LeastSquaresFitModel):
             self.__class__, self.npeaks, self.zero, self.gain, self.wzero, self.wgain
         )
 
-    @parameter_group
+    @nonlinear_parameter_group
     def zero(self):
         return self.config["detector"]["zero"]
 
@@ -72,7 +39,7 @@ class SimpleModel(LeastSquaresFitModel):
     def zero(self, value):
         self.config["detector"]["zero"] = value
 
-    @parameter_group
+    @nonlinear_parameter_group
     def gain(self):
         return self.config["detector"]["gain"]
 
@@ -80,7 +47,7 @@ class SimpleModel(LeastSquaresFitModel):
     def gain(self, value):
         self.config["detector"]["gain"] = value
 
-    @parameter_group
+    @nonlinear_parameter_group
     def wzero(self):
         return self.config["detector"]["wzero"]
 
@@ -88,7 +55,7 @@ class SimpleModel(LeastSquaresFitModel):
     def wzero(self, value):
         self.config["detector"]["wzero"] = value
 
-    @parameter_group
+    @nonlinear_parameter_group
     def wgain(self):
         return self.config["detector"]["wgain"]
 
@@ -121,7 +88,7 @@ class SimpleModel(LeastSquaresFitModel):
     def areas(self):
         return self.efficiency * self.concentrations
 
-    @linear_parameter_group
+    @independent_linear_parameter_group
     def concentrations(self):
         return self.config["matrix"]["concentrations"]
 
@@ -130,12 +97,12 @@ class SimpleModel(LeastSquaresFitModel):
         self.config["matrix"]["concentrations"] = value
 
     @linked_property
-    def linear(self):
-        return self.config["fit"]["linear"]
+    def parameter_type(self):
+        return self.config["fit"]["parameter_type"]
 
-    @linear.setter
-    def linear(self, value):
-        self.config["fit"]["linear"] = value
+    @parameter_type.setter
+    def parameter_type(self, value):
+        self.config["fit"]["parameter_type"] = value
 
     @property
     def idx_channels(self):
@@ -205,7 +172,7 @@ class SimpleModel(LeastSquaresFitModel):
         return SpecfitFuns.agauss(p, x)
 
     def derivative_fitmodel(self, param_idx, xdata=None, **paramtype):
-        """Derivate to a specific parameter_group
+        """Derivate to a specific nonlinear_parameter_group
 
         :param int param_idx:
         :param array xdata: shape (ndata,)
