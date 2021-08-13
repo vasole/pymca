@@ -4,9 +4,9 @@ import numpy
 from PyMca5.PyMcaMath.linalg import lstsq
 from PyMca5.PyMcaMath.fitting import Gefit
 
-from PyMca5.PyMcaMath.fitting.model.ParameterModel import ParameterModelBase
-from PyMca5.PyMcaMath.fitting.model.ParameterModel import ParameterModel
-from PyMca5.PyMcaMath.fitting.model.ParameterModel import ParameterModelManager
+from .ParameterModel import ParameterModelBase
+from .ParameterModel import ParameterModel
+from .ParameterModel import ParameterModelManager
 
 
 class LeastSquaresFitModelInterface:
@@ -179,7 +179,7 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
         :param bool full_output: add statistics to fitted parameters
         :returns dict:
         """
-        with self.__linear_fit_context():
+        with self._linear_fit_context():
             b = self.yfitdata
             for i in range(max(self.niter_non_leastsquares, 1)):
                 A = self.linear_derivatives_fitmodel()
@@ -204,7 +204,7 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
         :param bool full_output: add statistics to fitted parameters
         :returns dict:
         """
-        with self.__nonlinear_fit_context():
+        with self._nonlinear_fit_context():
             constraints = self.get_parameter_constraints().T
             xdata = self.xdata
             ydata = self.yfitdata
@@ -255,34 +255,34 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
         return 0
 
     @contextmanager
-    def __linear_fit_context(self):
+    def _linear_fit_context(self):
         with ExitStack() as stack:
             ctx = self.linear_context(True)
             stack.enter_context(ctx)
             ctx = self._propertyCachingContext()
             stack.enter_context(ctx)
-            ctx = self._linear_fit_context()
+            ctx = self._custom_linear_fit_context()
             stack.enter_context(ctx)
             yield
 
     @contextmanager
-    def __nonlinear_fit_context(self):
+    def _nonlinear_fit_context(self):
         with ExitStack() as stack:
             ctx = self.linear_context(False)
             stack.enter_context(ctx)
             ctx = self._propertyCachingContext()
             stack.enter_context(ctx)
-            ctx = self._nonlinear_fit_context()
+            ctx = self._custom_nonlinear_fit_context()
             stack.enter_context(ctx)
             yield
 
     @contextmanager
-    def _linear_fit_context(self):
+    def _custom_linear_fit_context(self):
         """To allow derived classes to add context"""
         yield
 
     @contextmanager
-    def _nonlinear_fit_context(self):
+    def _custom_nonlinear_fit_context(self):
         """To allow derived classes to add context"""
         yield
 

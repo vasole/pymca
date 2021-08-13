@@ -2,11 +2,12 @@ from typing import Any
 from dataclasses import dataclass, field
 from contextlib import contextmanager
 import numpy
-from PyMca5.PyMcaMath.fitting.model.CachingLinkedModel import CachedPropertiesLinkModel
-from PyMca5.PyMcaMath.fitting.model.LinkedModel import LinkedModelManager
-from PyMca5.PyMcaMath.fitting.model.LinkedModel import linked_property
-from PyMca5.PyMcaMath.fitting.model.CachingModel import CachedPropertiesModel
-from PyMca5.PyMcaMath.fitting.model.CachingModel import cached_property
+
+from .CachingLinkedModel import CachedPropertiesLinkModel
+from .LinkedModel import LinkedModelManager
+from .LinkedModel import linked_property
+from .CachingModel import CachedPropertiesModel
+from .CachingModel import cached_property
 
 
 class parameter_group(cached_property, linked_property):

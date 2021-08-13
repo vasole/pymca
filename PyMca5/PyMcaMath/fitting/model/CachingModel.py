@@ -1,6 +1,7 @@
 import functools
 from contextlib import contextmanager
-from PyMca5.PyMcaMath.fitting.model.PropertyUtils import wrapped_property
+
+from .PropertyUtils import wrapped_property
 
 
 class CacheManager:

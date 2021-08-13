@@ -1,7 +1,8 @@
 import functools
 from contextlib import ExitStack, contextmanager
 from collections.abc import Mapping
-from PyMca5.PyMcaMath.fitting.model.PropertyUtils import wrapped_property
+
+from .PropertyUtils import wrapped_property
 
 
 class linked_property(wrapped_property):

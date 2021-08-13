@@ -1,6 +1,7 @@
 import numpy
-from PyMca5.PyMcaMath.fitting.model.LinkedModel import LinkedModel
-from PyMca5.PyMcaMath.fitting.model.CachingModel import CachedPropertiesModel
+
+from .LinkedModel import LinkedModel
+from .CachingModel import CachedPropertiesModel
 
 
 class CachedPropertiesLinkModel(CachedPropertiesModel, LinkedModel):
