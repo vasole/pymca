@@ -1072,12 +1072,6 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, LeastSquaresFitModel):
         self._estimateLineGroupAreas()
         self._lastAreasCacheParams = params
 
-        import matplotlib.pyplot as plt
-
-        plt.plot(self.yfitdata)
-        plt.plot(self.yfitmodel)
-        plt.show()
-
     @property
     def _areasCacheParams(self):
         """Any change in these parameter will invalidate the cache"""
@@ -1095,38 +1089,87 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, LeastSquaresFitModel):
         emin = xenergy.min()
         emax = xenergy.max()
         factor = numpy.sqrt(2 * numpy.pi) / self.GAUSS_SIGMA_TO_FWHM / self.gain
-
-        import matplotlib.pyplot as plt
-
-        plt.figure()
-        plt.plot(xenergy, ydata)
         zeroarea = max(ydata) * 1e-7
 
         lineGroups = self._lineGroups
         escapeLineGroups = self._escapeLineGroups
         linegroup_areas = self._lineGroupAreas
         for i, (group, escgroup) in enumerate(zip(lineGroups, escapeLineGroups)):
-            if not escgroup:
-                escgroup = [[]] * len(group)
-            selected_energy = 0
-            selected_rate = 0
-            for (peakenergy, rate, _), esclines in zip(group, escgroup):
-                if peakenergy >= emin and peakenergy <= emax:
-                    if rate > selected_rate:
-                        selected_energy = peakenergy
-                for peakenergy, escrate, _ in esclines:
-                    if peakenergy >= emin and peakenergy <= emax:
-                        if rate * escrate > selected_rate:
-                            selected_energy = peakenergy
+            selected_energy, _ = self.__select_highest_peak(group, escgroup, emin, emax)
             if selected_energy:
                 chan = numpy.abs(xenergy - selected_energy).argmin()
-                height = ydata[chan]
-                plt.plot([selected_energy, selected_energy], [0, height])
+                height = ydata[chan]  # omit dividing by the rate
                 fwhm = self._peakFWHM(selected_energy)  # energy domain
                 linegroup_areas[i] = height * fwhm * factor  # Gaussian
             else:
-                linegroup_areas[i] = zeroarea
-        plt.title(f"NEW ESTIMATE {self.zero} {self.gain}")
+                linegroup_areas[i] = 0  # no peak within [emin, emax]
+
+    def __select_highest_peak(self, group, escgroup, emin, emax):
+        if not escgroup:
+            escgroup = [[]] * len(group)
+        selected_energy = 0
+        selected_rate = 0
+        for (peakenergy, rate, _), esclines in zip(group, escgroup):
+            if peakenergy >= emin and peakenergy <= emax:
+                if rate > selected_rate:
+                    selected_energy = peakenergy
+                    selected_rate = rate
+            for peakenergy, escrate, _ in esclines:
+                if peakenergy >= emin and peakenergy <= emax:
+                    if rate * escrate > selected_rate:
+                        selected_energy = peakenergy
+                        selected_rate = rate * escrate
+        return selected_energy, selected_rate
+
+    def klm_markers(self, xenergy=None):
+        if xenergy is None:
+            xenergy = self.xenergy
+        emin = xenergy.min()
+        emax = xenergy.max()
+        factor = numpy.sqrt(2 * numpy.pi) / self.GAUSS_SIGMA_TO_FWHM / self.gain
+
+        lineGroups = self._lineGroups
+        escapeLineGroups = self._escapeLineGroups
+        linegroup_areas = self._lineGroupAreas
+        linegroup_names = self._lineGroupNames
+
+        for group, escgroup, label, area in zip(
+            lineGroups, escapeLineGroups, linegroup_names, linegroup_areas
+        ):
+            if not escgroup:
+                escgroup = [[]] * len(group)
+            peakenergy, rate = self.__select_highest_peak(group, escgroup, emin, emax)
+            if not peakenergy:
+                continue  # no peak within [emin, emax]
+            fwhm = self._peakFWHM(peakenergy)  # energy domain
+            height = (rate * area) / (fwhm * factor)
+            yield peakenergy, height, label
+            for (peakenergy, rate, _), esclines in zip(group, escgroup):
+                fwhm = self._peakFWHM(peakenergy)  # energy domain
+                height = (rate * area) / (fwhm * factor)
+                yield peakenergy, height, None
+                for peakenergy, escrate, _ in esclines:
+                    fwhm = self._peakFWHM(peakenergy)  # energy domain
+                    height = (rate * escrate * area) / (fwhm * factor)
+                    yield peakenergy, height, None
+
+    def plot(self, title=None, markers=False):
+        import matplotlib.pyplot as plt
+
+        plt.plot(self.xenergy, self.yfitdata, label="data")
+        plt.plot(self.xenergy, self.yfitmodel, label="fit")
+        if markers:
+            from matplotlib.pyplot import cm
+
+            colors = iter(cm.rainbow(numpy.linspace(0, 1, self._nLineGroups)))
+            for energy, height, label in self.klm_markers():
+                if label:
+                    color = next(colors)
+                    plt.text(energy, height, label, color=color)
+                plt.plot([energy, energy], [0, height], label=label, color=color)
+        plt.legend()
+        if title:
+            plt.title(title)
         plt.show()
 
     def estimate(self):

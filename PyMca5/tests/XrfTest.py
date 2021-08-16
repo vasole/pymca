@@ -698,14 +698,15 @@ class testXrf(unittest.TestCase):
                         calc, numerical, err_msg=param_name, rtol=1e-3
                     )
 
+        if hasattr(mcaFit, "parameter_types") and False:
+            mcaFit.plot(title="estimated", markers=True)
+
         fitResult1, result1 = mcaFit.startFit(digest=1)
 
-        if True:
-            import matplotlib.pyplot as plt
-            plt.plot(result1["ydata"])
-            plt.plot(result1["yfit"])
-            plt.title(str(mcaFit))
-            plt.show()
+        if hasattr(mcaFit, "parameter_types") and False:
+            with mcaFit.use_fit_result_context(mcaFit._last_fit_result):
+                mcaFit.plot(title="fitted", markers=True)
+
         return configuration, fitResult1, result1
 
     def _vis_compare(self, a, b, title):
