@@ -2057,8 +2057,6 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, LeastSquaresFitModel):
         :param array xdata: shape (ndata,)
         :returns array: shape (ndata,)
         """
-        return self.numerical_derivative_fitmodel(param_idx, xdata=xdata, **paramtype)
-
         group = self._group_from_parameter_index(param_idx, **paramtype)
         name = group.property_name
         if name == "st_arearatio":
