@@ -123,7 +123,7 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
         """
         derivatives = self.independent_linear_derivatives_fitmodel(xdata=xdata)
         parameters = self.get_parameter_values(
-            parameter_type=ParameterType.independent_linear
+            parameter_types=ParameterType.independent_linear
         )
         return parameters.dot(derivatives)
 
@@ -133,11 +133,13 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
         :param array xdata: shape (ndata,)
         :returns array: shape (nparams, ndata)
         """
-        nparams = self.get_n_parameters(parameter_type=ParameterType.independent_linear)
+        nparams = self.get_n_parameters(
+            parameter_types=ParameterType.independent_linear
+        )
         return numpy.array(
             [
                 self.derivative_fitmodel(
-                    i, xdata=xdata, parameter_type=ParameterType.independent_linear
+                    i, xdata=xdata, parameter_types=ParameterType.independent_linear
                 )
                 for i in range(nparams)
             ]
@@ -173,7 +175,7 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
         """
         derivatives = self.independent_linear_derivatives_fitmodel(xdata=xdata)
         parameters = self.get_parameter_values(
-            parameter_type=ParameterType.independent_linear
+            parameter_types=ParameterType.independent_linear
         )
         return parameters[:, numpy.newaxis] * derivatives
 
@@ -192,7 +194,7 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
         :param bool full_output: add statistics to fitted parameters
         :returns dict:
         """
-        if self.parameter_type == ParameterType.independent_linear:
+        if self.parameter_types == ParameterType.independent_linear:
             return self.non_iterative_optimization(full_output=full_output)
         else:
             return self.iterative_optimization(full_output=full_output)
@@ -219,10 +221,14 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
                 if self.niter_non_leastsquares:
                     self.set_parameter_values(result["parameters"])
                     self.non_leastsquares_increment()
-            result["parameter_type"] = self.parameter_type
+            result["parameter_types"] = self.parameter_types
             result["parameters"] = result["parameters"]
             result["uncertainties"] = result["uncertainties"]
+            result["chi2_red"] = numpy.nan
             result.pop("svd")
+            if full_output:
+                result["niter"] = 1
+                result["lastdeltachi"] = numpy.nan
             return result
 
     def iterative_optimization(self, full_output=False):
@@ -255,7 +261,7 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
                     self.set_parameter_values(result[0])
                     self.non_leastsquares_increment()
             ret = {
-                "parameter_type": self.parameter_type,
+                "parameter_types": self.parameter_types,
                 "parameters": result[0],
                 "uncertainties": result[2],
                 "chi2_red": result[1],
@@ -284,7 +290,7 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
     @contextmanager
     def _non_iterative_optimization_context(self):
         with ExitStack() as stack:
-            ctx = self.parameter_type_context(ParameterType.independent_linear)
+            ctx = self.parameter_types_context(ParameterType.independent_linear)
             stack.enter_context(ctx)
             ctx = self._propertyCachingContext()
             stack.enter_context(ctx)
@@ -337,7 +343,7 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
         :param dict result:
         """
         self.set_parameter_values(
-            result["parameters"], parameter_type=result["parameter_type"]
+            result["parameters"], parameter_types=result["parameter_types"]
         )
 
     @contextmanager
@@ -346,7 +352,7 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
 
         :param dict result:
         """
-        with self.parameter_type_context(result["parameter_type"]):
+        with self.parameter_types_context(result["parameter_types"]):
             with self._propertyCachingContext():
                 self.use_fit_result(result)
                 yield
@@ -449,22 +455,22 @@ class LeastSquaresFitModel(LeastSquaresFitModelBase, ParameterModel):
         group = self._group_from_parameter_index(param_idx, **paramtype)
         parameters = self.get_parameter_values(**paramtype)
         try:
-            if group.is_linear:
-                return self._numerical_derivative_linear_param(
+            if group.is_independent_linear:
+                return self._numerical_derivative_independent_linear_param(
                     parameters, param_idx, xdata=xdata, **paramtype
                 )
             else:
-                return self._numerical_derivative_nonlinear_param(
+                return self._numerical_derivative_param(
                     parameters, param_idx, xdata=xdata, **paramtype
                 )
         finally:
             self.set_parameter_values(parameters, **paramtype)
 
-    def _numerical_derivative_linear_param(
+    def _numerical_derivative_independent_linear_param(
         self, parameters, param_idx, xdata=None, **paramtype
     ):
-        """The numerical derivative to a linear parameter is exact
-        within arithmetic precision.
+        """The numerical derivative to an independent linear parameter
+        is exact within arithmetic precision.
         """
         # y(x) = p0*f0(x) + ... + pi*fi(x) + ...
         # dy/dpi(x) = fi(x)
@@ -476,12 +482,14 @@ class LeastSquaresFitModel(LeastSquaresFitModelBase, ParameterModel):
         self.set_parameter_values(parameters, **paramtype)
         return self.evaluate_fitmodel(xdata=xdata)
 
-    def _numerical_derivative_nonlinear_param(
+    def _numerical_derivative_param(
         self, parameters, param_idx, xdata=None, **paramtype
     ):
-        """The numerical derivative to a non-linear parameter is an approximation"""
-        # Choose delta to be a small fraction of the parameter value but not too small,
-        # otherwise the derivative is zero.
+        """The numerical derivative to a non-linear or dependent-linear
+        parameter is an approximation.
+        """
+        # Choose delta to be a small fraction of the parameter value but
+        # not too small, otherwise the derivative is zero.
         p0 = parameters[param_idx]
         delta = p0 * 1e-5
         if delta < 0:
@@ -500,13 +508,17 @@ class LeastSquaresFitModel(LeastSquaresFitModelBase, ParameterModel):
 
         return (f1 - f2) / (2.0 * delta)
 
-    def compare_derivatives(self, xdata=None, **paramtype):
+    def compare_derivatives(self, xdata=None, exclude_fixed=False, **paramtype):
         """Compare analytical and numerical derivatives. Useful to
         validate the user defined `derivative_fitmodel`.
 
         :yields str, array, array: parameter name, analytical, numerical
         """
-        for param_idx, name in enumerate(self.get_parameter_names(**paramtype)):
+        names = self.get_parameter_names(**paramtype)
+        constraints = self.get_parameter_constraints(**paramtype)
+        for param_idx, (name, constraint) in enumerate(zip(names, constraints)):
+            if exclude_fixed and constraint[0] == Gefit.CFIXED:
+                continue
             ycalderiv = self.derivative_fitmodel(param_idx, xdata=xdata, **paramtype)
             ynumderiv = self.numerical_derivative_fitmodel(
                 param_idx, xdata=xdata, **paramtype

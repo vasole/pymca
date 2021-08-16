@@ -4,6 +4,7 @@ import numpy
 from PyMca5.tests.SimpleModel import SimpleModel
 from PyMca5.tests.SimpleModel import SimpleCombinedModel
 from PyMca5.PyMcaMath.fitting.model.ParameterModel import ParameterType
+from PyMca5.PyMcaMath.fitting.model.ParameterModel import AllParameterTypes
 
 
 class testFitModel(unittest.TestCase):
@@ -16,19 +17,21 @@ class testFitModel(unittest.TestCase):
 
     def testNonLinearFit(self):
         for _ in self._fit_model_subtests():
-            self._test_fit(None)
+            self._test_fit(AllParameterTypes)
 
-    def _test_fit(self, parameter_type):
-        self.fitmodel.parameter_type = parameter_type
-        refined_params = self.fitmodel.get_parameter_values(parameter_type=None).copy()
-        lin_refined_params = self.fitmodel.get_parameter_values(
-            parameter_type=ParameterType.independent_linear
+    def _test_fit(self, parameter_types):
+        self.fitmodel.parameter_types = parameter_types
+        refined_params = self.fitmodel.get_parameter_values(
+            parameter_types=AllParameterTypes
         ).copy()
-        self._modify_random(parameter_type=parameter_type)
+        lin_refined_params = self.fitmodel.get_parameter_values(
+            parameter_types=ParameterType.independent_linear
+        ).copy()
+        self._modify_random(parameter_types=parameter_types)
 
-        before = self.fitmodel.get_parameter_values(parameter_type=None)
+        before = self.fitmodel.get_parameter_values(parameter_types=AllParameterTypes)
         lin_before = self.fitmodel.get_parameter_values(
-            parameter_type=ParameterType.independent_linear
+            parameter_types=ParameterType.independent_linear
         )
 
         # with self._profile("test"):
@@ -36,19 +39,19 @@ class testFitModel(unittest.TestCase):
 
         # Verify the expected fit parameters
         rtol = 1e-3
-        if result["parameter_type"]:
-            numpy.testing.assert_allclose(
-                result["parameters"], lin_refined_params, rtol=rtol
-            )
-        else:
+        if result["parameter_types"] == AllParameterTypes:
             numpy.testing.assert_allclose(
                 result["parameters"], refined_params, rtol=rtol
             )
+        else:
+            numpy.testing.assert_allclose(
+                result["parameters"], lin_refined_params, rtol=rtol
+            )
 
         # Check that the model has not been affected
-        after = self.fitmodel.get_parameter_values(parameter_type=None)
+        after = self.fitmodel.get_parameter_values(parameter_types=AllParameterTypes)
         lin_after = self.fitmodel.get_parameter_values(
-            parameter_type=ParameterType.independent_linear
+            parameter_types=ParameterType.independent_linear
         )
         numpy.testing.assert_array_equal(before, after)
         numpy.testing.assert_array_equal(lin_before, lin_after)
@@ -62,18 +65,22 @@ class testFitModel(unittest.TestCase):
         self.assertTrue(
             not numpy.allclose(self.fitmodel.ydata, self.fitmodel.yfullmodel)
         )
-        parameters = self.fitmodel.get_parameter_values(parameter_type=None)
+        parameters = self.fitmodel.get_parameter_values(
+            parameter_types=AllParameterTypes
+        )
         self.assertTrue(not numpy.allclose(parameters, refined_params))
         parameters = self.fitmodel.get_parameter_values(
-            parameter_type=ParameterType.independent_linear
+            parameter_types=ParameterType.independent_linear
         )
         self.assertTrue(not numpy.allclose(parameters, lin_refined_params))
 
     def _assert_model_refined(self, refined_params, lin_refined_params, rtol=1e-7):
-        parameters = self.fitmodel.get_parameter_values(parameter_type=None)
+        parameters = self.fitmodel.get_parameter_values(
+            parameter_types=AllParameterTypes
+        )
         numpy.testing.assert_allclose(parameters, refined_params, rtol=rtol)
         parameters = self.fitmodel.get_parameter_values(
-            parameter_type=ParameterType.independent_linear
+            parameter_types=ParameterType.independent_linear
         )
         numpy.testing.assert_allclose(parameters, lin_refined_params, rtol=rtol)
         numpy.testing.assert_allclose(self.fitmodel.ydata, self.fitmodel.yfullmodel)
@@ -100,7 +107,7 @@ class testFitModel(unittest.TestCase):
             self.fitmodel = SimpleModel()
         else:
             self.fitmodel = SimpleCombinedModel(ndetectors=nmodels)
-        self.assertTrue(not self.fitmodel.parameter_type)
+        self.assertTrue(self.fitmodel.parameter_types, AllParameterTypes)
 
         self._init_random()
 
@@ -148,46 +155,50 @@ class testFitModel(unittest.TestCase):
         model.concentrations = self.random_state.uniform(low=0.5, high=1, size=npeaks)
         model.efficiency = self.random_state.uniform(low=5000, high=6000, size=npeaks)
 
-    def _modify_random(self, parameter_type):
-        self._modify_random_model(parameter_type)
+    def _modify_random(self, parameter_types):
+        self._modify_random_model(parameter_types)
         self._validate_models()
 
-    def _modify_random_model(self, parameter_type):
-        self.assertIn(parameter_type, (None, ParameterType.independent_linear))
+    def _modify_random_model(self, parameter_types):
+        self.assertIn(
+            parameter_types, (AllParameterTypes, ParameterType.independent_linear)
+        )
         pnonlinorg = self.fitmodel.get_parameter_values(
-            parameter_type=ParameterType.non_linear
+            parameter_types=ParameterType.non_linear
         )
         plinorg = self.fitmodel.get_parameter_values(
-            parameter_type=ParameterType.independent_linear
+            parameter_types=ParameterType.independent_linear
         )
-        pallorg = self.fitmodel.get_parameter_values(parameter_type=None)
+        pallorg = self.fitmodel.get_parameter_values(parameter_types=AllParameterTypes)
 
-        if parameter_type is None:
+        if parameter_types is AllParameterTypes:
             pmod = pnonlinorg.copy()
             pmod *= self.random_state.uniform(0.95, 1, len(pmod))
             self.fitmodel.set_parameter_values(
-                pmod, parameter_type=ParameterType.non_linear
+                pmod, parameter_types=ParameterType.non_linear
             )
             parameters = self.fitmodel.get_parameter_values(
-                parameter_type=ParameterType.non_linear
+                parameter_types=ParameterType.non_linear
             )
             numpy.testing.assert_array_equal(parameters, pmod)
 
         pmod = plinorg.copy()
         pmod *= self.random_state.uniform(0.5, 0.8, len(pmod))
         self.fitmodel.set_parameter_values(
-            pmod, parameter_type=ParameterType.independent_linear
+            pmod, parameter_types=ParameterType.independent_linear
         )
         parameters = self.fitmodel.get_parameter_values(
-            parameter_type=ParameterType.independent_linear
+            parameter_types=ParameterType.independent_linear
         )
         numpy.testing.assert_array_equal(parameters, pmod)
 
-        pall = self.fitmodel.get_parameter_values(parameter_type=None)
-        for group in self.fitmodel.get_parameter_groups(parameter_type=None):
+        pall = self.fitmodel.get_parameter_values(parameter_types=AllParameterTypes)
+        for group in self.fitmodel.get_parameter_groups(
+            parameter_types=AllParameterTypes
+        ):
             current = pall[group.index]
             expected = pallorg[group.index]
-            if parameter_type is None or group.is_independent_linear:
+            if parameter_types is AllParameterTypes or group.is_independent_linear:
                 # Values are expected to be modified
                 if group.count == 1:
                     self.assertNotEqual(current, expected, msg=group.name)
@@ -209,9 +220,11 @@ class testFitModel(unittest.TestCase):
 
     def _validate_model(self, model, model_idx=None):
         is_combined_model = self.is_combined_model and model_idx is None
-        original_parameters = model.get_parameter_values(parameter_type=None).copy()
+        original_parameters = model.get_parameter_values(
+            parameter_types=AllParameterTypes
+        ).copy()
         original_linear_parameters = model.get_parameter_values(
-            parameter_type=ParameterType.independent_linear
+            parameter_types=ParameterType.independent_linear
         ).copy()
 
         nonlin_expected = {"gain", "wgain", "wzero", "zero"}
@@ -228,19 +241,19 @@ class testFitModel(unittest.TestCase):
                 }
         lin_expected = {"concentrations"}
         all_expected = lin_expected | nonlin_expected
-        names = model.get_parameter_group_names(parameter_type=None)
+        names = model.get_parameter_group_names(parameter_types=AllParameterTypes)
         self.assertEqual(set(names), all_expected)
         names = model.get_parameter_group_names(
-            parameter_type=ParameterType.independent_linear
+            parameter_types=ParameterType.independent_linear
         )
         self.assertEqual(set(names), lin_expected)
 
         lin_expected = {f"concentrations{i}" for i in range(self.npeaks)}
         all_expected = lin_expected | nonlin_expected
-        names = model.get_parameter_names(parameter_type=None)
+        names = model.get_parameter_names(parameter_types=AllParameterTypes)
         self.assertEqual(set(names), all_expected)
         names = model.get_parameter_names(
-            parameter_type=ParameterType.independent_linear
+            parameter_types=ParameterType.independent_linear
         )
         self.assertEqual(set(names), lin_expected)
 
@@ -248,14 +261,14 @@ class testFitModel(unittest.TestCase):
         nexpected = len(model.xdata)
         self.assertEqual(n, nexpected)
 
-        nexpected = len(model.get_parameter_values(parameter_type=None))
-        n = model.get_n_parameters(parameter_type=None)
+        nexpected = len(model.get_parameter_values(parameter_types=AllParameterTypes))
+        n = model.get_n_parameters(parameter_types=AllParameterTypes)
         self.assertEqual(n, nexpected)
 
         nexpected = len(
-            model.get_parameter_values(parameter_type=ParameterType.independent_linear)
+            model.get_parameter_values(parameter_types=ParameterType.independent_linear)
         )
-        n = model.get_n_parameters(parameter_type=ParameterType.independent_linear)
+        n = model.get_n_parameters(parameter_types=ParameterType.independent_linear)
         self.assertEqual(n, nexpected)
 
         arr1 = model.evaluate_fullmodel()
@@ -277,18 +290,18 @@ class testFitModel(unittest.TestCase):
             nexpected = self.npeaks + self.nshapeparams * nmodels
         else:
             nexpected = self.npeaks + self.nshapeparams
-        n = model.get_n_parameters(parameter_type=None)
+        n = model.get_n_parameters(parameter_types=AllParameterTypes)
         self.assertEqual(n, nexpected)
-        n = model.get_n_parameters(parameter_type=ParameterType.independent_linear)
+        n = model.get_n_parameters(parameter_types=ParameterType.independent_linear)
         self.assertEqual(n, self.npeaks)
 
         rtol = 1e-3
-        for parameter_type in (ParameterType.independent_linear, None):
-            with model.parameter_type_context(parameter_type):
-                noncached = list(model.compare_derivatives())
-                cached = list(model.compare_derivatives())
-                err_fmt = "[parameter_type={}] {{}} and {{}} derivative of '{{}}' (model: {}) are not equal".format(
-                    parameter_type, model_idx
+        for parameter_types in (ParameterType.independent_linear, AllParameterTypes):
+            with model.parameter_types_context(parameter_types):
+                noncached = model.compare_derivatives()
+                cached = model.compare_derivatives()
+                err_fmt = "[parameter_types={}] {{}} and {{}} derivative of '{{}}' (model: {}) are not equal".format(
+                    parameter_types, model_idx
                 )
                 for deriv, deriv_cached in zip(noncached, cached):
                     param_name, calc, numerical = deriv
@@ -309,10 +322,10 @@ class testFitModel(unittest.TestCase):
                         calc, calc_cached, err_msg=err_msg, rtol=rtol
                     )
 
-        parameters = model.get_parameter_values(parameter_type=None)
+        parameters = model.get_parameter_values(parameter_types=AllParameterTypes)
         numpy.testing.assert_array_equal(original_parameters, parameters)
         parameters = model.get_parameter_values(
-            parameter_type=ParameterType.independent_linear
+            parameter_types=ParameterType.independent_linear
         )
         numpy.testing.assert_array_equal(original_linear_parameters, parameters)
 

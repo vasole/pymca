@@ -2,6 +2,7 @@ import unittest
 import numpy
 from PyMca5.PyMcaMath.fitting.model import PolynomialModels
 from PyMca5.PyMcaMath.fitting.model.ParameterModel import ParameterType
+from PyMca5.PyMcaMath.fitting.model.ParameterModel import AllParameterTypes
 
 
 class testFitPolModel(unittest.TestCase):
@@ -32,9 +33,12 @@ class testFitPolModel(unittest.TestCase):
                 numpy.testing.assert_array_equal(fitmodel.yfitdata, model.yfitmodel)
                 numpy.testing.assert_array_equal(model.yfitmodel, model.yfullmodel)
 
-                for parameter_type in [ParameterType.independent_linear, None]:
-                    with self.subTest(degree=degree, parameter_type=parameter_type):
-                        fitmodel.parameter_type = parameter_type
+                for parameter_types in [
+                    ParameterType.independent_linear,
+                    AllParameterTypes,
+                ]:
+                    with self.subTest(degree=degree, parameter_types=parameter_types):
+                        fitmodel.parameter_types = parameter_types
                         fitmodel.coefficients = numpy.zeros_like(expected)
                         self.assertEqual(fitmodel.degree, degree)
                         result = fitmodel.fit()["parameters"]
@@ -63,11 +67,14 @@ class testFitPolModel(unittest.TestCase):
                     model.yfitmodel, numpy.log(model.yfullmodel)
                 )
 
-                for parameter_type in [ParameterType.independent_linear, None]:
-                    with self.subTest(degree=degree, parameter_type=parameter_type):
-                        fitmodel.parameter_type = parameter_type
+                for parameter_types in [
+                    ParameterType.independent_linear,
+                    AllParameterTypes,
+                ]:
+                    with self.subTest(degree=degree, parameter_types=parameter_types):
+                        fitmodel.parameter_types = parameter_types
                         fitmodel.coefficients = numpy.zeros_like(expected)
-                        if parameter_type is None:
+                        if parameter_types == AllParameterTypes:
                             fitmodel.coefficients[0] = 0.1
                         self.assertEqual(fitmodel.degree, degree)
                         result = fitmodel.fit()["parameters"]

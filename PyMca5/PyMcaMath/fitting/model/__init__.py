@@ -3,6 +3,7 @@
 
 from PyMca5.PyMcaMath.fitting.model.ParameterModel import (
     nonlinear_parameter_group,
+    dependent_linear_parameter_group,
     independent_linear_parameter_group,
 )
 from PyMca5.PyMcaMath.fitting.model.LeastSquaresFitModel import (

@@ -8,6 +8,7 @@ from PyMca5.PyMcaMath.fitting.model.ParameterModel import (
     independent_linear_parameter_group,
 )
 from PyMca5.PyMcaMath.fitting.model.ParameterModel import ParameterType
+from PyMca5.PyMcaMath.fitting.model.ParameterModel import AllParameterTypes
 
 
 class Model1(ParameterModel):
@@ -123,30 +124,34 @@ class testParameterModel(unittest.TestCase):
         self.concat_model = ConcatModel()
 
     def test_instantiation(self):
-        self.assertEqual(self.concat_model.parameter_type, None)
         self.assertEqual(self.concat_model.nmodels, 4)
+        self.assertEqual(self.concat_model.parameter_types, AllParameterTypes)
+        for model in self.concat_model.models:
+            self.assertEqual(model.parameter_types, AllParameterTypes)
 
     def test_parameter_type(self):
-        for parameter_type in ParameterType:
+        for parameter_types in ParameterType:
             for group in self.concat_model.get_parameter_groups(
-                parameter_type=parameter_type
+                parameter_types=parameter_types
             ):
-                self.assertEqual(group.type, parameter_type)
+                self.assertEqual(group.type, parameter_types)
         types = set(group.type for group in self.concat_model.get_parameter_groups())
         expected = {ParameterType.independent_linear, ParameterType.non_linear}
         self.assertEqual(types, expected)
 
     def test_parameter_type_context(self):
-        with self.concat_model.parameter_type_context(ParameterType.independent_linear):
+        with self.concat_model.parameter_types_context(
+            ParameterType.independent_linear
+        ):
             self.assertEqual(
-                self.concat_model.parameter_type, ParameterType.independent_linear
+                self.concat_model.parameter_types, ParameterType.independent_linear
             )
             for model in self.concat_model.models:
-                self.assertTrue(model.parameter_type, ParameterType.independent_linear)
+                self.assertTrue(model.parameter_types, ParameterType.independent_linear)
 
-        self.assertEqual(self.concat_model.parameter_type, None)
+        self.assertEqual(self.concat_model.parameter_types, AllParameterTypes)
         for model in self.concat_model.models:
-            self.assertEqual(model.parameter_type, None)
+            self.assertEqual(model.parameter_types, AllParameterTypes)
 
     def test_parameter_group_names(self):
         for cacheoptions in self._parameterize_nonlinear_test():
@@ -566,26 +571,29 @@ class testParameterModel(unittest.TestCase):
     def _parameterize_linear_test(self):
         yield from self._parameterize_tests(
             [
-                [ParameterType.independent_linear, None],
-                [NotImplemented, ParameterType.independent_linear],
+                [None, ParameterType.independent_linear],
+                [ParameterType.independent_linear, AllParameterTypes],
             ]
         )
 
     def _parameterize_nonlinear_test(self):
         yield from self._parameterize_tests(
-            [[None, ParameterType.independent_linear], [NotImplemented, None]]
+            [
+                [None, AllParameterTypes],
+                [AllParameterTypes, ParameterType.independent_linear],
+            ]
         )
 
-    def _parameterize_tests(self, linear_options):
-        for local_type, global_type in linear_options:
-            for cached in [True, False]:
+    def _parameterize_tests(self, types):
+        for local_type, global_type in types:
+            for cached in [False, True]:
                 with self.subTest(
                     local_type=local_type,
                     global_type=global_type,
                     cached=cached,
                 ):
-                    self.concat_model.parameter_type = global_type
-                    cacheoptions = {"parameter_type": local_type}
+                    self.concat_model.parameter_types = global_type
+                    cacheoptions = {"parameter_types": local_type}
                     self._cached = cached
                     if cached:
                         with self.concat_model._propertyCachingContext(**cacheoptions):

@@ -2,7 +2,7 @@ from typing import Any
 from dataclasses import dataclass, field
 from contextlib import contextmanager
 import numpy
-from enum import Enum
+from enum import Flag
 
 from .CachingLinkedModel import CachedPropertiesLinkModel
 from .LinkedModel import LinkedModelManager
@@ -11,11 +11,23 @@ from .CachingModel import CachedPropertiesModel
 from .CachingModel import cached_property
 
 
-ParameterType = Enum("ParameterType", "non_linear dependent_linear independent_linear")
+ParameterType = Flag("ParameterType", "non_linear dependent_linear independent_linear")
+LinearParameterTypes = ParameterType.dependent_linear | ParameterType.independent_linear
+AllParameterTypes = (
+    ParameterType.non_linear
+    | ParameterType.dependent_linear
+    | ParameterType.independent_linear
+)
 
 
 class _parameter_group(cached_property, linked_property):
-    """Usage:
+    """Specify a getter and setter for a group of fit parameters.
+    The counter and constraints are optional. When the counter
+    returns zero, the variable is excluded from the fit parameters.
+    Use CFIXED in the constraints if the parameters should be
+    included but not optimized.
+
+    Usage:
 
     .. highlight:: python
     .. code-block:: python
@@ -127,33 +139,33 @@ class ParameterModelBase(CachedPropertiesModel):
     """Interface for all models that manage fit parameters"""
 
     @property
-    def parameter_type(self):
+    def parameter_types(self):
         raise NotImplementedError
 
-    @parameter_type.setter
-    def parameter_type(self, value):
+    @parameter_types.setter
+    def parameter_types(self, value):
         raise NotImplementedError
 
     @property
     def only_linear_parameters(self):
-        return self.parameter_type in (
-            ParameterType.dependent_linear,
-            ParameterType.independent_linear,
-        )
+        return not bool(self.parameter_types & ParameterType.non_linear)
 
     @contextmanager
-    def parameter_type_context(self, value):
-        keep = self.parameter_type
-        self.parameter_type = value
+    def parameter_types_context(self, value=None):
+        keep = self.parameter_types
+        if value is not None:
+            self.parameter_types = value
         try:
             yield
         finally:
-            self.parameter_type = keep
+            self.parameter_types = keep
 
-    def _property_cache_key(self, parameter_type=NotImplemented, **paramtype):
-        if parameter_type is NotImplemented:
-            parameter_type = self.parameter_type
-        return parameter_type
+    def _property_cache_key(self, parameter_types=None, **paramtype):
+        if parameter_types is None:
+            parameter_types = self.parameter_types
+        elif not isinstance(parameter_types, ParameterType):
+            raise TypeError(parameter_types, "must be None or ParameterType")
+        return parameter_types
 
     def _create_empty_property_values_cache(self, key, **paramtype):
         return numpy.zeros(self.get_n_parameters(**paramtype))
@@ -244,7 +256,7 @@ class ParameterModel(CachedPropertiesLinkModel, ParameterModelBase):
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self._parameter_type = None
+        self.__parameter_types = AllParameterTypes
 
     def _iter_cached_property_ids(self, **paramtype):
         instance_key = self._linked_instance_to_key
@@ -263,14 +275,18 @@ class ParameterModel(CachedPropertiesLinkModel, ParameterModelBase):
             yield property_name, prop
 
     def _instance_cached_property_ids(
-        self, parameter_type=NotImplemented, linked=None, tracker=None
+        self, parameter_types=None, linked=None, tracker=None
     ):
         """
-        :param parameter_type bool: only this parameter type
+        :param parameter_types ParameterType: only these parameter types
         :param linked bool: linked parameters or unlinked parameters
         :param tracker _IterGroupTracker:
         :yields ParameterGroupId:
         """
+        if parameter_types is None:
+            parameter_types = self.parameter_types
+        elif not isinstance(parameter_types, ParameterType):
+            raise TypeError(parameter_types, "must be of type ParameterType")
         count = None
         index = None
         if tracker is None:
@@ -283,9 +299,7 @@ class ParameterModel(CachedPropertiesLinkModel, ParameterModelBase):
                 if group_is_linked is not linked:
                     continue
 
-            if parameter_type is NotImplemented:
-                parameter_type = self.parameter_type
-            if parameter_type is not None and prop.TYPE != parameter_type:
+            if not (parameter_types & prop.TYPE):
                 continue
 
             count = prop.fcount(self)
@@ -332,12 +346,14 @@ class ParameterModel(CachedPropertiesLinkModel, ParameterModelBase):
         return get_constraints
 
     @linked_property
-    def parameter_type(self):
-        return self._parameter_type
+    def parameter_types(self):
+        return self.__parameter_types
 
-    @parameter_type.setter
-    def parameter_type(self, value):
-        self._parameter_type = value
+    @parameter_types.setter
+    def parameter_types(self, value):
+        if not isinstance(value, ParameterType):
+            raise TypeError(value, "must be None or ParameterType")
+        self.__parameter_types = value
 
     def _get_noncached_property_value(self, group):
         return getattr(self, group.property_name)
@@ -368,7 +384,7 @@ class ParameterModelManager(ParameterModelBase, LinkedModelManager):
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self._enable_property_link("parameter_type")
+        self._enable_property_link("parameter_types")
         for model in self.models:
             model._cache_manager = self
 
@@ -385,12 +401,12 @@ class ParameterModelManager(ParameterModelBase, LinkedModelManager):
         return len(self.model_mapping)
 
     @property
-    def parameter_type(self):
-        return self._get_linked_property_value("parameter_type")
+    def parameter_types(self):
+        return self._get_linked_property_value("parameter_types")
 
-    @parameter_type.setter
-    def parameter_type(self, value):
-        self._set_linked_property_value("parameter_type", value)
+    @parameter_types.setter
+    def parameter_types(self, value):
+        self._set_linked_property_value("parameter_types", value)
 
     def _instance_cached_property_ids(self, **paramtype):
         """

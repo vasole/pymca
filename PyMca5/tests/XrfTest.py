@@ -321,7 +321,6 @@ class testXrf(unittest.TestCase):
         return x, y, configuration
 
     def testTrainingDataFit(self):
-        from PyMca5.PyMcaIO import specfilewrapper as specfile
         from PyMca5.PyMcaPhysics.xrf import LegacyMcaTheory
         from PyMca5.PyMcaPhysics.xrf import ConcentrationsTool
 
@@ -544,20 +543,20 @@ class testXrf(unittest.TestCase):
                 "Strategy: Element %s discrepancy too large %.1f %%" % \
                   (element.split()[0], delta))
 
-    def testCompareLegacyMcaTheory(self):
+    def testTrainingDataFitCompareLegacy(self):
         x, y, configuration = self._readTrainingData()
-        self._testCompareLegacyMcaTheory(x, y, configuration)
-        return
+        self._compareLegacyMcaTheory(x, y, configuration)
 
+    def testStainlessSteelDataFitCompareLegacy(self):
         x, y, configuration = self._readStainlessSteelData()
 
         configuration["concentrations"]['usematrix'] = 0
         configuration["concentrations"]["usemultilayersecondary"] = 0
-        self._testCompareLegacyMcaTheory(x, y, configuration)
+        self._compareLegacyMcaTheory(x, y, configuration)
 
         configuration["concentrations"]['usematrix'] = 1
         configuration["concentrations"]["usemultilayersecondary"] = 2
-        self._testCompareLegacyMcaTheory(x, y, configuration)
+        self._compareLegacyMcaTheory(x, y, configuration)
 
         configuration["concentrations"]['usematrix'] = 0
         configuration["concentrations"]["usemultilayersecondary"] = 2
@@ -578,9 +577,9 @@ class testXrf(unittest.TestCase):
                                                          "Mn", "Fe",
                                                          "Ni", "-", "-",
                                                          "-","-","-"]
-        self._testCompareLegacyMcaTheory(x, y, configuration)
+        self._compareLegacyMcaTheory(x, y, configuration)
 
-    def _testCompareLegacyMcaTheory(self, x, y, configuration):
+    def _compareLegacyMcaTheory(self, x, y, configuration):
         from PyMca5.PyMcaPhysics.xrf import LegacyMcaTheory
         from PyMca5.PyMcaPhysics.xrf import NewClassMcaTheory
 
@@ -588,45 +587,19 @@ class testXrf(unittest.TestCase):
         t0 = time.time()
 
         mcaFitLegacy = LegacyMcaTheory.LegacyMcaTheory()
+        mcaFitLegacy.enableOptimizedLinearFit()
         _, fitResult1, result1 = self._configAndFit(
-            x, y, copy.deepcopy(configuration), mcaFitLegacy, tmpflag=True)
+            x, y, copy.deepcopy(configuration), mcaFitLegacy)
+
+        legacy_linear = mcaFitLegacy.config['fit'].get("linearfitflag", 0) and mcaFitLegacy._batchFlag and (mcaFitLegacy.linearMatrix is not None)
 
         t1 = time.time()
 
         mcaFit = NewClassMcaTheory.McaTheory()
+        configuration2 = copy.deepcopy(configuration)
+        configuration2["fit"]["linearfitflag"] = int(legacy_linear)
         _, fitResult2, result2 = self._configAndFit(
-            x, y, copy.deepcopy(configuration), mcaFit, tmpflag=True)
-
-        import matplotlib.pyplot as plt
-        from pprint import pprint
-
-        if False:
-            mcaFit.linear = False
-            print(mcaFit.linegroup_areas)
-            result = mcaFit.fit(full_output=True)
-            pprint(result["niter"])
-            mcaFit.use_fit_result(result)
-            print(mcaFit.linegroup_areas)
-
-        if False:
-            plt.plot(mcaFit.ydata, label="data")
-            plt.plot(mcaFit.ynumbkg(), label="ynumbkg")
-            plt.plot(mcaFit.yfullmodel, label="model")
-            plt.yscale("log")
-            plt.legend()
-            plt.show()
-
-        if True:
-            for i, name in enumerate(mcaFit.parameter_names):
-                if "linegroup" in name:
-                    continue
-                yd = mcaFit.derivative_fitmodel(i)
-                yd_num = mcaFit._numerical_derivative(i)
-                plt.plot(yd, label="yd")
-                plt.plot(yd_num, label="yd_num")
-                plt.legend()
-                plt.title(name)
-                plt.show()
+            x, y, configuration2, mcaFit)
 
         t2 = time.time()
 
@@ -654,7 +627,7 @@ class testXrf(unittest.TestCase):
             lst = config1["attenuators"]["Matrix"]
             lst.extend([0, lst[-1]+lst[-2]])
         config1["fit"]["continuum_name"] = config2["fit"]["continuum_name"]
-
+        config1["fit"]["linearfitflag"] = config2["fit"]["linearfitflag"]
         self._assertDeepEqual(config1, config2)
 
         # Compare fluo rate dictionaries
@@ -689,25 +662,59 @@ class testXrf(unittest.TestCase):
                     self.assertEqual(line1[2], line2[2])
 
         # Compares parameter names
-        #self.assertEqual(mcaFitLegacy.PARAMETERS, mcaFit.parameter_names)
+        names = mcaFit.get_parameter_names()
+        legacy_names = mcaFitLegacy.PARAMETERS
+        if mcaFit.continuum > 2:
+            self.assertEqual(set(legacy_names), set(names))
+        else:
+            self.assertEqual(set(legacy_names), set(names)|{"Constant", "1st Order"})
 
         # Compare fit results
-        #self.assertEqual(fitResult1[0], fitResult2[0])
+        parameters1 = dict(zip(legacy_names, fitResult1[0]))
+        parameters2 = dict(zip(legacy_names, fitResult2[0]))
+        uncertainties1 = dict(zip(legacy_names, fitResult1[2]))
+        uncertainties2 = dict(zip(legacy_names, fitResult2[2]))
+        print(parameters1["Cu K"], parameters2["Cu K"])
+        for name in names:
+            self.assertEqual(parameters1[name], parameters2[name], name)
+            self.assertEqual(uncertainties1[name], uncertainties2[name], name)
+
+        # Compare digested results
         #self.assertEqual(result1, result2)
 
-    def _configAndFit(self, x, y, configuration, mcaFit, tmpflag=False):
+    def _configAndFit(self, x, y, configuration, mcaFit):
         configuration = mcaFit.configure(configuration)
         mcaFit.setData(x, y,
                        xmin=configuration["fit"]["xmin"],
                        xmax=configuration["fit"]["xmax"])
-
         mcaFit.estimate()
 
-        if tmpflag:
-            return configuration, None, None
+        if hasattr(mcaFit, "parameter_types") and False:
+            mcaFit.continuum_name = "Parabolic"
+            print(mcaFit.get_parameter_names())
+            for param_name, calc, numerical in mcaFit.compare_derivatives(exclude_fixed=True):
+                self._vis_compare(calc, numerical, param_name)
+                numpy.testing.assert_allclose(
+                        calc, numerical, err_msg=param_name, rtol=1e-3
+                    )
 
         fitResult1, result1 = mcaFit.startFit(digest=1)
+
+        if True:
+            import matplotlib.pyplot as plt
+            plt.plot(result1["ydata"])
+            plt.plot(result1["yfit"])
+            plt.title(str(mcaFit))
+            plt.show()
         return configuration, fitResult1, result1
+
+    def _vis_compare(self, a, b, title):
+        import matplotlib.pyplot as plt
+
+        plt.plot(a)
+        plt.plot(b)
+        plt.title(title)
+        plt.show()
 
     def _assertDeepEqual(self, obj1, obj2, _nodes=tuple()):
         """Better verbosity than assertEqual for deep structures
@@ -738,11 +745,14 @@ def getSuite(auto=True):
         testSuite.addTest(testXrf("testTrainingDataFilePresence"))
         testSuite.addTest(testXrf("testTrainingDataFit"))
         testSuite.addTest(testXrf("testStainlessSteelDataFit"))
-        testSuite.addTest(testXrf("testCompareLegacyMcaTheory"))
+        testSuite.addTest(testXrf("testTrainingDataFitCompareLegacy"))
+        testSuite.addTest(testXrf("testStainlessSteelDataFitCompareLegacy"))
     return testSuite
+
 
 def test(auto=False):
     return unittest.TextTestRunner(verbosity=2).run(getSuite(auto=auto))
+
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:

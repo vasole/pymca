@@ -5,6 +5,7 @@ from PyMca5.PyMcaMath.fitting.model import independent_linear_parameter_group
 from PyMca5.PyMcaMath.fitting.model import LeastSquaresFitModel
 from PyMca5.PyMcaMath.fitting.model import LeastSquaresCombinedFitModel
 from PyMca5.PyMcaMath.fitting.model.LinkedModel import linked_property
+from PyMca5.PyMcaMath.fitting.model.ParameterModel import AllParameterTypes
 
 
 class SimpleModel(LeastSquaresFitModel):
@@ -16,7 +17,7 @@ class SimpleModel(LeastSquaresFitModel):
         self.config = {
             "detector": {"zero": 0.0, "gain": 1.0, "wzero": 0.0, "wgain": 1.0},
             "matrix": {"positions": [], "concentrations": [], "efficiency": []},
-            "fit": {"parameter_type": None},
+            "fit": {"parameter_types": AllParameterTypes},
             "xmin": 0.0,
             "xmax": 1.0,
         }
@@ -97,12 +98,12 @@ class SimpleModel(LeastSquaresFitModel):
         self.config["matrix"]["concentrations"] = value
 
     @linked_property
-    def parameter_type(self):
-        return self.config["fit"]["parameter_type"]
+    def parameter_types(self):
+        return self.config["fit"]["parameter_types"]
 
-    @parameter_type.setter
-    def parameter_type(self, value):
-        self.config["fit"]["parameter_type"] = value
+    @parameter_types.setter
+    def parameter_types(self, value):
+        self.config["fit"]["parameter_types"] = value
 
     @property
     def idx_channels(self):

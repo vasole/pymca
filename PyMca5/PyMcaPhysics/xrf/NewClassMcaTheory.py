@@ -1,36 +1,3 @@
-# /*##########################################################################
-#
-# The PyMca X-Ray Fluorescence Toolkit
-#
-# Copyright (c) 2020 European Synchrotron Radiation Facility
-#
-# This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
-#
-#############################################################################*/
-__author__ = "Wout De Nolf"
-__contact__ = "wout.de_nolf@esrf.eu"
-__license__ = "MIT"
-__copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-
 import os
 import sys
 import copy
@@ -43,13 +10,16 @@ from PyMca5 import PyMcaDataDir
 from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaMath.fitting import SpecfitFuns
 from PyMca5.PyMcaMath.fitting import Gefit
-from PyMca5.PyMcaMath.fitting.Model import Model
-from PyMca5.PyMcaMath.fitting.Model import ConcatModel
-from PyMca5.PyMcaMath.fitting.Model import parameter
-from PyMca5.PyMcaMath.fitting.Model import linear_parameter
-from PyMca5.PyMcaMath.fitting.PolynomialModels import LinearPolynomialModel
-from PyMca5.PyMcaMath.fitting.PolynomialModels import ExponentialPolynomialModel
-
+from PyMca5.PyMcaMath.fitting.model import nonlinear_parameter_group
+from PyMca5.PyMcaMath.fitting.model import independent_linear_parameter_group
+from PyMca5.PyMcaMath.fitting.model import dependent_linear_parameter_group
+from PyMca5.PyMcaMath.fitting.model import LeastSquaresFitModel
+from PyMca5.PyMcaMath.fitting.model import LeastSquaresCombinedFitModel
+from PyMca5.PyMcaMath.fitting.model.PolynomialModels import LinearPolynomialModel
+from PyMca5.PyMcaMath.fitting.model.PolynomialModels import ExponentialPolynomialModel
+from PyMca5.PyMcaMath.fitting.model.LinkedModel import linked_property
+from PyMca5.PyMcaMath.fitting.model.ParameterModel import ParameterType
+from PyMca5.PyMcaMath.fitting.model.ParameterModel import AllParameterTypes
 
 from . import Elements
 from . import ConcentrationsTool
@@ -93,7 +63,7 @@ class McaTheoryConfigApi:
         self._overwriteConfig(**kw)
         self.attflag = kw.get("attenuatorsflag", 1)
         self.configure()
-        super(McaTheoryConfigApi, self).__init__()
+        super().__init__()
 
     def _overwriteConfig(self, **kw):
         if "config" in kw:
@@ -191,7 +161,7 @@ class McaTheoryConfigApi:
                 yield energy, weight, scatter and scatterflag
 
     def _scatterLines(self):
-        """Source lines that are included in the fir model
+        """Source lines that are included in the fit model
 
         :yields tuple: (energy, weight)
         """
@@ -368,10 +338,6 @@ class McaTheoryConfigApi:
             else:
                 yield [Z, symb, peaks]
 
-    @property
-    def emissionGroupNames(self):
-        return [symb + " " + line for _, symb, line in sorted(self._emissionGroups())]
-
     def _configureElementsModule(self):
         """Configure the globals in the Elements module"""
         for material, info in self.config["materials"].items():
@@ -470,8 +436,21 @@ class McaTheoryLegacyApi:
         """
         return self.configure()
 
-    def estimate(self):
-        warnings.warn("McaTheory.estimate is deprecated (does nothing)", FutureWarning)
+    def enableOptimizedLinearFit(self):
+        warnings.warn(
+            "McaTheory.enableOptimizedLinearFit is deprecated (does nothing)",
+            FutureWarning,
+        )
+
+    def disableOptimizedLinearFit(self):
+        warnings.warn(
+            "McaTheory.enableOptimizedLinearFit is deprecated (does nothing)",
+            FutureWarning,
+        )
+
+    @property
+    def codes(self):
+        return self.get_parameter_constraints()
 
     def specfitestimate(self, x, y, z, xscaling=1.0, yscaling=1.0):
         warnings.warn(
@@ -497,7 +476,7 @@ class McaTheoryDataApi(McaTheoryConfigApi):
         self._std = None
         self._lastDataCacheParams = None
 
-        super(McaTheoryDataApi, self).__init__(**kw)
+        super().__init__(**kw)
 
     @property
     def xdata(self):
@@ -700,7 +679,7 @@ class McaTheoryBackground(McaTheoryDataApi):
         self._continuumModel = None
         self._lastContinuumCacheParams = None
 
-        super(McaTheoryBackground, self).__init__(**kw)
+        super().__init__(**kw)
 
     @property
     def hasNumBkg(self):
@@ -816,7 +795,7 @@ class McaTheoryBackground(McaTheoryDataApi):
         self.config["fit"]["continuum_name"] = name
 
     def _initializeConfig(self):
-        super(McaTheoryBackground, self)._initializeConfig()
+        super()._initializeConfig()
         self.continuum = self.continuum  # verify continuum name and index
 
     @property
@@ -879,16 +858,16 @@ class McaTheoryBackground(McaTheoryDataApi):
         if model is None:
             return list()
         else:
-            return model.parameters
+            return model.get_parameter_values()
 
     @continuum_coefficients.setter
     def continuum_coefficients(self, values):
         model = self.continuumModel
         if model is not None:
-            model.parameters = values
+            model.set_parameter_values(values)
 
 
-class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
+class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, LeastSquaresFitModel):
     """Model for MCA data"""
 
     BAND_GAP = 0.00385  # keV, silicon
@@ -909,7 +888,10 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
         self._escapeLineGroups = []
         self._lastAreasCacheParams = None
 
-        super(McaTheory, self).__init__(**kw)
+        # Misc
+        self._last_fit_result = None
+
+        super().__init__(**kw)
 
     def useFisxEscape(self, flag=None, apply=True):
         """Make sure the model uses fisx to calculate the escape peaks
@@ -931,7 +913,10 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
             self.configure()
 
     def _initializeConfig(self):
-        super(McaTheory, self)._initializeConfig()
+        super()._initializeConfig()
+        self.linearfitflag = self.config["fit"][
+            "linearfitflag"
+        ]  # synchronize parameter_types
         self._preCalculateParameterIndependent()
         self._preCalculateParameterDependent()
 
@@ -955,6 +940,8 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
         # This is a filtered and normalized form of `_fluoRates`
         self._lineGroups = list(self._getEmissionLines())
         self._lineGroups.extend(self._getScatterLines())
+        self._lineGroupNames = list(self._getEmissionLineNames())
+        self._lineGroupNames.extend(self._getScatterNames())
         self._nLineGroups = len(self._lineGroups)
         self._lineGroupAreas = numpy.ones(self._nLineGroups)
 
@@ -969,15 +956,15 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
         ]
 
     def _peakProfileParams(
-        self, hypermet=None, selected_groups=None, normalized_peakgroups=False
+        self, hypermet=None, selected_groups=None, normalized_fit_parameters=False
     ):
-        """Raw parameters of emission/scatter/escape peaks. All parameters are
-        defined in the energy domain (X-axis is energy, not channels).
+        """Raw peak profile parameters of emission/scatter/escape peaks.
+        All parameters are defined in the energy domain.
 
         :param int hypermet:
         :param list or None selected_groups: all groups when `None`
                                              no groups when empty list (npeaks == 0)
-        :param bool normalized_peakgroups:
+        :param bool normalized_fit_parameters:
         :returns array: npeaks x npeakparams
         """
         lineGroups = self._lineGroups
@@ -991,7 +978,7 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
             linegroup_areas = [linegroup_areas[i] for i in selected_groups]
         if hypermet is None:
             hypermet = self._hypermet
-        if normalized_peakgroups:
+        if normalized_fit_parameters:
             linegroup_areas = numpy.ones(len(linegroup_areas))
 
         npeaks = sum(len(group) for group in lineGroups)
@@ -1026,18 +1013,27 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
         # Area parameters from channel to energy domain
         parameters[:, 0] *= self.gain
 
-        # FWHM
+        # FWHM in the energy domain
         parameters[:, 2] = self._peakFWHM(parameters[:, 1])
 
         # Other peak shape parameters
         if hypermet:
-            shapeparams = [
-                self.st_arearatio,
-                self.st_sloperatio,
-                self.lt_arearatio,
-                self.lt_sloperatio,
-                self.step_heightratio,
-            ]
+            if normalized_fit_parameters:
+                shapeparams = [
+                    1,
+                    self.st_sloperatio,
+                    1,
+                    self.lt_sloperatio,
+                    1,
+                ]
+            else:
+                shapeparams = [
+                    self.st_arearatio,
+                    self.st_sloperatio,
+                    self.lt_arearatio,
+                    self.lt_sloperatio,
+                    self.step_heightratio,
+                ]
         else:
             shapeparams = [self.eta_factor]
         for i, param in enumerate(shapeparams, 3):
@@ -1045,8 +1041,9 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
 
         return parameters
 
-    @linear_parameter
+    @independent_linear_parameter_group
     def linegroup_areas(self):
+        """line group areas in the channel domain"""
         self._refreshAreasCache()
         return self._lineGroupAreas
 
@@ -1064,19 +1061,32 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
         positive = Gefit.CPOSITIVE, 0, 0
         return [positive if area else fixed for area in self.linegroup_areas]
 
-    def _refreshAreasCache(self):
+    @property
+    def linegroup_names(self):
+        return self._lineGroupNames
+
+    def _refreshAreasCache(self, force=False):
         params = self._areasCacheParams
-        if self._lastAreasCacheParams == params:
+        if self._lastAreasCacheParams == params and not force:
             return  # the cached data is still valid
         self._estimateLineGroupAreas()
         self._lastAreasCacheParams = params
 
+        import matplotlib.pyplot as plt
+
+        plt.plot(self.yfitdata)
+        plt.plot(self.yfitmodel)
+        plt.show()
+
     @property
     def _areasCacheParams(self):
         """Any change in these parameter will invalidate the cache"""
-        return id(self._dataCacheParams), id(self._lineGroupAreas)
+        zero = int(self.zero * 1000)
+        gain = int(self.gain * 1000)
+        return self._dataCacheParams + (zero, gain, id(self._lineGroupAreas))
 
     def _estimateLineGroupAreas(self):
+        """Estimated line group areas in the channel domain"""
         if self.hasBackground:
             ydata = self.ydata - self.ybackground()
         else:
@@ -1084,10 +1094,13 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
         xenergy = self.xenergy
         emin = xenergy.min()
         emax = xenergy.max()
-        factor = numpy.sqrt(2 * numpy.pi) / self.GAUSS_SIGMA_TO_FWHM
-        gain = self.gain
+        factor = numpy.sqrt(2 * numpy.pi) / self.GAUSS_SIGMA_TO_FWHM / self.gain
 
-        keep = list()
+        import matplotlib.pyplot as plt
+
+        plt.figure()
+        plt.plot(xenergy, ydata)
+        zeroarea = max(ydata) * 1e-7
 
         lineGroups = self._lineGroups
         escapeLineGroups = self._escapeLineGroups
@@ -1106,23 +1119,18 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
                         if rate * escrate > selected_rate:
                             selected_energy = peakenergy
             if selected_energy:
-                chan = (numpy.abs(xenergy - selected_energy)).argmin()
+                chan = numpy.abs(xenergy - selected_energy).argmin()
                 height = ydata[chan]
-                keep.append((chan, height))
-                fwhm = self._peakFWHM(selected_energy)
+                plt.plot([selected_energy, selected_energy], [0, height])
+                fwhm = self._peakFWHM(selected_energy)  # energy domain
                 linegroup_areas[i] = height * fwhm * factor  # Gaussian
             else:
-                linegroup_areas[i] = 0  # Fixed at zero
+                linegroup_areas[i] = zeroarea
+        plt.title(f"NEW ESTIMATE {self.zero} {self.gain}")
+        plt.show()
 
-        if False:
-            print(linegroup_areas)
-            import matplotlib.pyplot as plt
-
-            plt.figure()
-            plt.plot(ydata)
-            x, y = zip(*keep)
-            plt.plot(x, y, "o")
-            plt.show()
+    def estimate(self):
+        self._refreshAreasCache(force=True)
 
     def _evaluatePeakProfiles(
         self,
@@ -1130,7 +1138,7 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
         hypermet=None,
         fast=True,
         selected_groups=None,
-        normalized_peakgroups=False,
+        normalized_fit_parameters=False,
     ):
         """Summed peak profiles of emission/scatter/escape peaks
 
@@ -1138,13 +1146,13 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
         :param int or None hypermet:
         :param bool fast: use lookup table for calculating exponentials
         :param bool selected_groups:
-        :param bool normalized_peakgroups:
+        :param bool normalized_fit_parameters:
         :returns array: same shape as x
         """
         parameters = self._peakProfileParams(
             hypermet=hypermet,
             selected_groups=selected_groups,
-            normalized_peakgroups=normalized_peakgroups,
+            normalized_fit_parameters=normalized_fit_parameters,
         )
         if parameters.size == 0:
             if xdata is None:
@@ -1186,6 +1194,10 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
         for group in sorted(self._emissionGroups()):
             yield self._getGroupEmissionLines(*group)
 
+    def _getEmissionLineNames(self):
+        for _, symb, line in sorted(self._emissionGroups()):
+            yield symb + " " + line
+
     def _getScatterLines(self):
         """Yields a list for scattering lines for each source line.
 
@@ -1195,9 +1207,13 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
         angleFactor = 1.0 - numpy.cos(scatteringAngle)
         for i, (en_elastic, _) in enumerate(self._scatterLines()):
             en_inelastic = en_elastic / (1.0 + (en_elastic / 511.0) * angleFactor)
-            name = "Scatter %03d" % i
-            yield [[en_elastic, 1.0, name]]
-            yield [[en_inelastic, 1.0, name]]
+            yield [[en_elastic, 1.0, "Scatter %03d" % i]]
+            yield [[en_inelastic, 1.0, "Scatter %03d" % i]]
+
+    def _getScatterNames(self):
+        for i in range(self._nRayleighLines):
+            yield "elastic" + str(i)
+            yield "inelastic" + str(i)
 
     def _calcFluoRates(self):
         """Fluorescence rate for each emission line of each element.
@@ -1506,7 +1522,7 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
     def _channelsToXpol(self, x):
         return self.zero + self.gain * (x - x.mean())
 
-    @linear_parameter
+    @independent_linear_parameter_group
     def linpol_coefficients(self):
         if isinstance(self.continuumModel, LinearPolynomialModel):
             return self.continuum_coefficients
@@ -1518,7 +1534,23 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
         if isinstance(self.continuumModel, LinearPolynomialModel):
             self.continuum_coefficients = values
 
-    @parameter
+    @linpol_coefficients.counter
+    def linpol_coefficients(self):
+        continuum = self.continuum_name
+        if continuum is None:
+            return 0
+        elif continuum == "Constant":
+            return 1
+        elif continuum == "Linear":
+            return 2
+        elif continuum == "Parabolic":
+            return 3
+        elif continuum == "Linear Polynomial":
+            return self.config["fit"]["linpolorder"] + 1
+        else:
+            return 0
+
+    @nonlinear_parameter_group
     def exppol_coefficients(self):
         if isinstance(self.continuumModel, ExponentialPolynomialModel):
             return self.continuum_coefficients
@@ -1529,6 +1561,13 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
     def exppol_coefficients(self, values):
         if isinstance(self.continuumModel, ExponentialPolynomialModel):
             self.continuum_coefficients = values
+
+    @exppol_coefficients.counter
+    def exppol_coefficients(self):
+        if self.continuum_name == "Exp. Polynomial":
+            return self.config["fit"]["exppolorder"] + 1
+        else:
+            return 0
 
     def _snip(self, signal, anchorslist):
         """Apply SNIP filtering to a signal"""
@@ -1603,7 +1642,7 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
             ysmooth[-1] = 0.5 * (ysmooth[-1] + ysmooth[-2])
         return ysmooth
 
-    @parameter
+    @nonlinear_parameter_group
     def zero(self):
         return self.config["detector"]["zero"]
 
@@ -1620,7 +1659,7 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
             delta = self.config["detector"]["deltazero"]
             return Gefit.CQUOTED, value - delta, value + delta
 
-    @parameter
+    @nonlinear_parameter_group
     def gain(self):
         return self.config["detector"]["gain"]
 
@@ -1637,7 +1676,7 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
             delta = self.config["detector"]["deltagain"]
             return Gefit.CQUOTED, value - delta, value + delta
 
-    @parameter
+    @nonlinear_parameter_group
     def noise(self):
         return self.config["detector"]["noise"]
 
@@ -1645,7 +1684,16 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
     def noise(self, value):
         self.config["detector"]["noise"] = value
 
-    @parameter
+    @noise.constraints
+    def noise(self):
+        if self.config["detector"]["fixednoise"]:
+            return Gefit.CFIXED, 0, 0
+        else:
+            value = self.noise
+            delta = self.config["detector"]["deltanoise"]
+            return Gefit.CQUOTED, value - delta, value + delta
+
+    @nonlinear_parameter_group
     def fano(self):
         return self.config["detector"]["fano"]
 
@@ -1662,7 +1710,7 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
             delta = self.config["detector"]["deltafano"]
             return Gefit.CQUOTED, value - delta, value + delta
 
-    @parameter
+    @dependent_linear_parameter_group
     def sum(self):
         if self.config["fit"]["sumflag"]:
             return self.config["detector"]["sum"]
@@ -1682,7 +1730,7 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
             delta = self.config["detector"]["deltasum"]
             return Gefit.CQUOTED, value - delta, value + delta
 
-    @parameter
+    @nonlinear_parameter_group
     def eta_factor(self):
         return self.config["peakshape"]["eta_factor"]
 
@@ -1706,7 +1754,7 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
             delta = self.config["peakshape"]["deltaeta_factor"]
             return Gefit.CQUOTED, value - delta, value + delta
 
-    @parameter
+    @dependent_linear_parameter_group
     def step_heightratio(self):
         if self._hypermetStep:
             return self.config["peakshape"]["step_heightratio"]
@@ -1733,7 +1781,7 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
             delta = self.config["peakshape"]["deltastep_heightratio"]
             return Gefit.CQUOTED, value - delta, value + delta
 
-    @parameter
+    @nonlinear_parameter_group
     def lt_sloperatio(self):
         return self.config["peakshape"]["lt_sloperatio"]
 
@@ -1757,7 +1805,7 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
             delta = self.config["peakshape"]["deltalt_sloperatio"]
             return Gefit.CQUOTED, value - delta, value + delta
 
-    @parameter
+    @dependent_linear_parameter_group
     def lt_arearatio(self):
         if self._hypermetLongTail:
             return self.config["peakshape"]["lt_arearatio"]
@@ -1784,7 +1832,7 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
             delta = self.config["peakshape"]["deltalt_arearatio"]
             return Gefit.CQUOTED, value - delta, value + delta
 
-    @parameter
+    @dependent_linear_parameter_group
     def st_sloperatio(self):
         return self.config["peakshape"]["st_sloperatio"]
 
@@ -1811,7 +1859,7 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
             delta = self.config["peakshape"]["deltast_sloperatio"]
             return Gefit.CQUOTED, value - delta, value + delta
 
-    @parameter
+    @dependent_linear_parameter_group
     def st_arearatio(self):
         if self._hypermetShortTail:
             return self.config["peakshape"]["st_arearatio"]
@@ -1842,10 +1890,17 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
         linegroup_names = None
         for name in names:
             if "linegroup_areas" in name:
-                if not linegroup_names:
-                    linegroup_names = self.emissionGroupNames
+                if linegroup_names is None:
+                    linegroup_names = self.linegroup_names
                 idx = int(name.replace("linegroup_areas", ""))
-                yield linegroup_names[idx]
+                name = linegroup_names[idx]
+                if "inelastic" in name:
+                    i = int(name.replace("inelastic", ""))
+                    name = "Scatter Compton%03d" % i
+                elif "elastic" in name:
+                    i = int(name.replace("elastic", ""))
+                    name = "Scatter Peak%03d" % i
+                yield name
             elif "linpol_coefficients" in name:
                 if self.continuum < self.CONTINUUM_LIST.index("Linear Polynomial"):
                     idx = int(name.replace("linpol_coefficients", ""))
@@ -1874,16 +1929,9 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
             else:
                 yield name.capitalize()
 
-    @property
-    def parameter_names(self):
-        return list(
-            self._convert_parameter_names(super(McaTheory, self).parameter_names)
-        )
-
-    @property
-    def linear_parameter_names(self):
-        return list(
-            self._convert_parameter_names(super(McaTheory, self).linear_parameter_names)
+    def get_parameter_names(self, **paramtype):
+        return tuple(
+            self._convert_parameter_names(super().get_parameter_names(**paramtype))
         )
 
     def evaluate_fitmodel(self, xdata=None):
@@ -1896,7 +1944,7 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
         continuum=True,
         summing=True,
         selected_groups=None,
-        normalized_peakgroups=False,
+        normalized_fit_parameters=False,
     ):
         """Evaluate to MCA model (does not include the numerical background)
 
@@ -1915,10 +1963,10 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
 
         Hypermet:
 
-            F(x) =   A * Gnorm(x, u, s)
-                   + st_arearatio*A * Tnorm(x, u, s, st_sloperatio)
-                   + lt_arearatio*A * Tnorm(x, u, s, lt_sloperatio)
-                   + step_heightratio*A * u/(sqrt(2*pi)*s) * Snorm(x, u, s)
+            A*F(x) =   A * Gnorm(x, u, s)
+                     + st_arearatio*A * Tnorm(x, u, s, st_sloperatio)
+                     + lt_arearatio*A * Tnorm(x, u, s, lt_sloperatio)
+                     + step_heightratio*A * u/(sqrt(2*pi)*s) * Snorm(x, u, s)
 
             A: the area of the gaussian part, not the entire peak
 
@@ -1937,7 +1985,7 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
         :param bool continuum:
         :param bool summing:
         :param list selected_groups:
-        :param bool normalized_peakgroups:
+        :param bool normalized_fit_parameters:
         :returns array:
         """
         # Emission lines, scatter peaks and escape peaks
@@ -1945,7 +1993,7 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
             xdata=xdata,
             hypermet=hypermet,
             selected_groups=selected_groups,
-            normalized_peakgroups=normalized_peakgroups,
+            normalized_fit_parameters=normalized_fit_parameters,
         )
 
         # Analytical background
@@ -1954,11 +2002,11 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
 
         # Pile-up
         if summing and self.sum:
-            y += self.ypileup(y, xdata=xdata)
+            y += self.ypileup(ymodel=y, xdata=xdata)
 
         return y
 
-    def ypileup(self, ymodel, xdata=None):
+    def ypileup(self, ymodel=None, xdata=None, normalized_fit_parameters=False):
         """The ymodel contains the peaks and the continuum.
         Pileup is
         """
@@ -1968,19 +2016,27 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
                 return numpy.zeros(self.ndata)
             else:
                 return numpy.zeros(len(xdata))
+        if ymodel is None:
+            ymodel = self.mcatheory(xdata=xdata, summing=False)
         if xdata is None:
-            xdata = self.xdata
+            xmin = self.xmin
+        else:
+            xmin = min(xdata)
+        if normalized_fit_parameters:
+            pileupfactor = 1
         return pileupfactor * SpecfitFuns.pileup(
-            ymodel, min(xdata), self.zero, self.gain, 0
+            ymodel, int(xmin), self.zero, self.gain, 0
         )
 
     def _y_full_to_fit(self, y, xdata=None):
         """The fitting is done after subtracting the numerical background"""
         if self.hasNumBkg:
             y = y - self.ynumbkg(xdata=xdata)
-        if self.linear and self.hasPileUp:
-            ymodel = self.mcatheory(xdata=xdata, summing=False)
-            y = y - self.ypileup(ymodel, xdata=xdata)
+        if self.parameter_types == ParameterType.independent_linear and self.hasPileUp:
+            # Note: this is not strictly correct but we have
+            # no other choice until the pileup is implemented
+            # properly (emission line combinations instead of convolution)
+            y = y - self.ypileup(xdata=xdata)
         return y
 
     @property
@@ -1994,105 +2050,52 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
         else:
             return y
 
-    def linear_derivatives_fitmodel(self, xdata=None):
-        """Derivates to all linear parameters
-
-        :param array xdata: length nxdata
-        :returns array: nparams x nxdata
-        """
-        derivatives = []
-        # Derivatives to peak group areas
-        for pgroupi in range(self._nLineGroups):
-            derivatives.append(
-                self.mcatheory(
-                    xdata=xdata,
-                    selected_groups=[pgroupi],
-                    normalized_peakgroups=True,
-                    continuum=False,
-                    summing=False,
-                )
-            )
-        # Derivatives to polynomial coefficients
-        if isinstance(self.continuumModel, LinearPolynomialModel):
-            arr = self.continuumModel.linear_derivatives_fitmodel(xdata=xdata)
-            derivatives += arr.tolist()
-        return numpy.array(derivatives)
-
-    @contextmanager
-    def _keep_parameters(self):
-        # TODO: wait for parameters refactoring
-        keep = self.parameters
-        try:
-            yield
-        finally:
-            self.parameters = keep
-
     def derivative_fitmodel(self, param_idx, xdata=None, **paramtype):
-        """Derivate to a specific parameter
+        """Derivate to a specific nonlinear_parameter_group
 
         :param int param_idx:
-        :param array xdata: length nxdata
-        :returns array: nxdata
+        :param array xdata: shape (ndata,)
+        :returns array: shape (ndata,)
         """
-        with self._keep_parameters():
-            name, pgroupi = self._parameter_name_from_index(param_idx)
-            print(
-                name,
-                "index=",
-                param_idx,
-                "index in group=",
-                pgroupi,
-                "value=",
-                self.parameters[param_idx],
+        return self.numerical_derivative_fitmodel(param_idx, xdata=xdata, **paramtype)
+
+        group = self._group_from_parameter_index(param_idx, **paramtype)
+        name = group.property_name
+        if name == "st_arearatio":
+            return self.mcatheory(
+                xdata=xdata, hypermet=2, continuum=False, normalized_fit_parameters=True
             )
-            if name == "st_arearatio":
-                self.parameters[param_idx] = 1
-                return self.mcatheory(xdata=xdata, hypermet=2, continuum=False)
-            elif name == "lt_arearatio":
-                self.parameters[param_idx] = 1
-                return self.mcatheory(xdata=xdata, hypermet=4, continuum=False)
-            elif name == "step_heightratio":
-                self.parameters[param_idx] = 1
-                return self.mcatheory(xdata=xdata, hypermet=8, continuum=False)
-            elif name == "linegroup_areas":
-                self.parameters[param_idx] = 1
-                return self.mcatheory(
-                    selected_groups=[pgroupi],
-                    xdata=xdata,
-                    continuum=False,
-                )
-            elif name == "linpol":
-                # TODO: subtract param
-                return self.continuumModel.derivative_fitmodel(param_idx, xdata=xdata)
-            elif name == "exppol":
-                # TODO: subtract param
-                return self.continuumModel.derivative_fitmodel(param_idx, xdata=xdata)
-            else:
-                return self._numerical_derivative(param_idx, xdata=xdata)
-
-    def _numerical_derivative(self, param_idx, xdata=None):
-        with self._keep_parameters():
-            parameters = self.parameters
-            p0 = parameters[param_idx]
-
-            # Choose delta to be a small fraction of the
-            # parameter value but not too small, otherwise
-            # the derivative is zero.
-            delta = p0 * 1e-5
-            if delta < 0:
-                delta = min(delta, -1e-12)
-            else:
-                delta = max(delta, 1e-12)
-
-            parameters[param_idx] = p0 + delta
-            self.parameters = parameters
-            f1 = self.evaluate_fitmodel(xdata=xdata)
-
-            parameters[param_idx] = p0 - delta
-            self.parameters = parameters
-            f2 = self.evaluate_fitmodel(xdata=xdata)
-
-            return (f1 - f2) / (2.0 * delta)
+        elif name == "lt_arearatio":
+            return self.mcatheory(
+                xdata=xdata, hypermet=4, continuum=False, normalized_fit_parameters=True
+            )
+        elif name == "step_heightratio":
+            return self.mcatheory(
+                xdata=xdata, hypermet=8, continuum=False, normalized_fit_parameters=True
+            )
+        elif name == "linegroup_areas":
+            i = group.parameter_index_in_group(param_idx)
+            return self.mcatheory(
+                selected_groups=[i],
+                normalized_fit_parameters=True,
+                xdata=xdata,
+                continuum=False,
+            )
+        elif name == "sum":
+            return self.ypileup(xdata=xdata, normalized_fit_parameters=True)
+        elif name == "linpol" and False:
+            model = self.continuumModel
+            keep = model.get_parameter_values(**paramtype)
+            try:
+                model.set_parameter_values(self.continuum_coefficients, **paramtype)
+                i = group.parameter_index_in_group(param_idx)
+                return model.derivative_fitmodel(i, xdata=xdata, **paramtype)
+            finally:
+                model.set_parameter_values(keep, **paramtype)
+        else:
+            return self.numerical_derivative_fitmodel(
+                param_idx, xdata=xdata, **paramtype
+            )
 
     @property
     def maxiter(self):
@@ -2106,69 +2109,91 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, Model):
     def weightflag(self):
         return self.config["fit"]["fitweight"]
 
-    @property
-    def linear(self):
-        return self.config["fit"].get("linearfitflag", 0)
+    @linked_property
+    def linearfitflag(self):
+        linearfitflag = int(self.parameter_types == ParameterType.independent_linear)
+        self.config["fit"]["linearfitflag"] = linearfitflag
+        return linearfitflag
 
-    @linear.setter
-    def linear(self, value):
-        self.config["fit"]["linearfitflag"] = value
+    @linearfitflag.setter
+    def linearfitflag(self, value):
+        if value:
+            self.parameter_types = ParameterType.independent_linear
+        else:
+            self.parameter_types = AllParameterTypes
 
     @contextmanager
-    def _nonlinear_fit_context(self):
-        with super(McaTheory, self)._nonlinear_fit_context():
+    def linear_context(self, linear=None):
+        keep = self.linearfitflag
+        if linear is not None:
+            self.linearfitflag = linear
+        try:
+            yield
+        finally:
+            self.linearfitflag = keep
+
+    @property
+    def parameter_types(self):
+        return super(type(self), type(self)).parameter_types.fget(self)
+
+    @parameter_types.setter
+    def parameter_types(self, value):
+        super(type(self), type(self)).parameter_types.fset(self, value)
+        self.config["fit"]["linearfitflag"] = int(
+            bool(self.parameter_types & ParameterType.independent_linear)
+        )
+
+    @contextmanager
+    def _custom_iterative_optimization_context(self):
+        with super()._custom_iterative_optimization_context():
             if abs(self.zero) < 1.0e-10:
                 self.zero = 0.0
             yield
 
-    def startFit(self, digest=0, linear=None):
+    def startFit(self, digest=False, linear=None):
         """Fit with legacy output"""
-        if linear is not None:
-            keep = self.linear
-            self.linear = linear
-        result = super(McaTheory, self).fit(full_output=True)
-
-        if linear is not None:
-            self.linear = linear
-
-        self._last_fit_result = result
-        if digest:
-            return self._legacyresult(result), self.digestresult()
-        else:
-            return self._legacyresult(result)
+        with self.linear_context(linear=linear):
+            result = self.fit(full_output=True)
+            self._last_fit_result = result
+            if digest:
+                return self._legacyresult(result), self.digestresult()
+            else:
+                return self._legacyresult(result)
 
     @staticmethod
     def _legacyresult(result):
-        if result["linear"]:
-            return (
-                result["parameters"].tolist(),
-                numpy.nan,
-                result["uncertainties"].tolist(),
-                1,
-                numpy.nan,
-            )
-        else:
-            return (
-                result["parameters"].tolist(),
-                result["chi2_red"],
-                result["uncertainties"].tolist(),
-                result["niter"],
-                result["lastdeltachi"],
-            )
+        return (
+            result["parameters"],
+            result["chi2_red"],
+            result["uncertainties"],
+            result["niter"],
+            result["lastdeltachi"],
+        )
 
     def digestresult(self):
         with self.use_fit_result_context(self._last_fit_result):
-            return dict()
+            result = {
+                "xdata": self.xdata,
+                "energy": self.xenergy,
+                "ydata": self.ydata,
+                "continuum": self.ybackground(),
+                "yfit": self.yfullmodel,
+                "ypileup": self.ypileup(),
+                "parameters": self.get_parameter_names(),
+                "fittedpar": self._last_fit_result["parameters"],
+                "chisq": self._last_fit_result["chi2_red"],
+                "sigmapar": self._last_fit_result["uncertainties"],
+                "config": self.config.copy(),
+            }
+            return result
 
     def imagingDigestResult(self):
         with self.use_fit_result_context(self._last_fit_result):
             return dict()
 
 
-class MultiMcaTheory(ConcatModel):
+class MultiMcaTheory(LeastSquaresCombinedFitModel):
     def __init__(self, ndetectors=1):
-        models = [McaTheory() for i in range(ndetectors)]
-        shared_attributes = []  # nothing shared yet
-        super(MultiMcaTheory, self).__init__(
-            models, shared_attributes=shared_attributes
-        )
+        models = {f"detector{i}": McaTheory() for i in range(ndetectors)}
+        super().__init__(models)
+        # self._enable_property_link("concentrations")
