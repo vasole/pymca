@@ -97,7 +97,9 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
 
     @property
     def degrees_of_freedom(self):
-        return self.ndata - self.get_n_parameters()
+        constraints = self.get_parameter_constraints()
+        nfree = sum(constraints[:, 0] != Gefit.CFIXED, dtype=int)
+        return self.ndata - nfree
 
     def evaluate_fullmodel(self, xdata=None):
         """Evaluate the full model.
@@ -237,26 +239,35 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
         :returns dict:
         """
         with self._iterative_optimization_context():
-            constraints = self.get_parameter_constraints().T
+            constraints = self.get_parameter_constraints()
             xdata = self.xdata
             ydata = self.yfitdata
             ystd = self.yfitstd
             for i in range(max(self.niter_non_leastsquares, 1)):
                 parameters = self.get_parameter_values()
-                result = Gefit.LeastSquaresFit(
-                    self._gefit_evaluate_fitmodel,
-                    parameters,
-                    model_deriv=self._gefit_derivative_fitmodel,
-                    xdata=xdata,
-                    ydata=ydata,
-                    sigmadata=ystd,
-                    constrains=constraints,
-                    maxiter=self.maxiter,
-                    weightflag=self.weightflag,
-                    deltachi=self.deltachi,
-                    fulloutput=full_output,
-                    linear=self.only_linear_parameters,
-                )
+                try:
+                    result = Gefit.LeastSquaresFit(
+                        self._gefit_evaluate_fitmodel,
+                        parameters,
+                        model_deriv=self._gefit_derivative_fitmodel,
+                        xdata=xdata,
+                        ydata=ydata,
+                        sigmadata=ystd,
+                        constrains=constraints.T,
+                        maxiter=self.maxiter,
+                        weightflag=self.weightflag,
+                        deltachi=self.deltachi,
+                        fulloutput=full_output,
+                        linear=self.only_linear_parameters,
+                    )
+                except numpy.linalg.LinAlgError as e:
+                    if "singular matrix" in str(e).lower():
+                        reason = self.__singular_matrix_reason(
+                            xdata, parameters, constraints
+                        )
+                        if reason:
+                            raise RuntimeError(reason) from e
+                    raise
                 if self.niter_non_leastsquares:
                     self.set_parameter_values(result[0])
                     self.non_leastsquares_increment()
@@ -270,6 +281,38 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
                 ret["niter"] = result[3]
                 ret["lastdeltachi"] = result[4]
             return ret
+
+    def __singular_matrix_reason(self, xdata, parameters, constraints):
+        print("\n" * 3)
+        fitted = constraints[:, 0] != Gefit.CFIXED
+        fitted_indices = fitted.nonzero()[0].tolist()
+        derivatives = numpy.vstack(
+            self._gefit_derivative_fitmodel(parameters, i, xdata)
+            for i in fitted_indices
+        )
+        names = numpy.array(self.get_parameter_names())
+        names = names[fitted_indices].tolist()
+
+        allzeros = (numpy.abs(derivatives) < 1e-10).all(axis=1)
+        if allzeros.any():
+            names = [
+                name for i, name in enumerate(self.get_parameter_names()) if allzeros[i]
+            ]
+            return "Derivatives of {} are zero".format(names)
+
+        for i1, deriv1 in enumerate(derivatives):
+            for i2, deriv2 in enumerate(derivatives):
+                if i1 == i2:
+                    continue
+                if numpy.allclose(deriv1, deriv2):
+                    import matplotlib.pyplot as plt
+
+                    plt.plot(deriv1)
+                    plt.plot(deriv2)
+                    plt.show()
+                    return "Derivatives of '{}' and '{}' are equal".format(
+                        names[i1], names[i2]
+                    )
 
     @property
     def maxiter(self):

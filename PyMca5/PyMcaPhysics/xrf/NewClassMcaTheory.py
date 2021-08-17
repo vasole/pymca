@@ -716,6 +716,8 @@ class McaTheoryBackground(McaTheoryDataApi):
                 return numpy.zeros(self.ndata)
             else:
                 return numpy.zeros(len(xdata))
+        if xdata is not None:
+            xdata = self._channelsToXpol(xdata)
         return model.evaluate_fullmodel(xdata=xdata)
 
     @property
@@ -851,20 +853,6 @@ class McaTheoryBackground(McaTheoryDataApi):
 
     def _channelsToXpol(self, x):
         raise NotImplementedError
-
-    @property
-    def continuum_coefficients(self):
-        model = self.continuumModel
-        if model is None:
-            return list()
-        else:
-            return model.get_parameter_values()
-
-    @continuum_coefficients.setter
-    def continuum_coefficients(self, values):
-        model = self.continuumModel
-        if model is not None:
-            model.set_parameter_values(values)
 
 
 class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, LeastSquaresFitModel):
@@ -1088,8 +1076,12 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, LeastSquaresFitModel):
         xenergy = self.xenergy
         emin = xenergy.min()
         emax = xenergy.max()
-        factor = numpy.sqrt(2 * numpy.pi) / self.GAUSS_SIGMA_TO_FWHM / self.gain
-        zeroarea = max(ydata) * 1e-7
+        # Height of a peak with rate Ri and group area A (Gaussian approx.)
+        #   Hi(cts) = A(cts) * Ri / (sqrt(2*pi)*sigma(cts))
+        #   sigma(cts) = FWHM(keV) / (gain*GAUSS_SIGMA_TO_FWHM)
+        #   A(cts) = Hi(cts) / Ri * sqrt(2*pi) * FWHM(keV) / (gain*GAUSS_SIGMA_TO_FWHM)
+        #   A(cts) = Hi(cts) / Ri * FWHM(keV) * factor
+        factor = numpy.sqrt(2 * numpy.pi) / (self.GAUSS_SIGMA_TO_FWHM * self.gain)
 
         lineGroups = self._lineGroups
         escapeLineGroups = self._escapeLineGroups
@@ -1098,11 +1090,11 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, LeastSquaresFitModel):
             selected_energy, _ = self.__select_highest_peak(group, escgroup, emin, emax)
             if selected_energy:
                 chan = numpy.abs(xenergy - selected_energy).argmin()
-                height = ydata[chan]  # omit dividing by the rate
+                height = ydata[chan]  # omit rate to approx. compensate for peak overlap
                 fwhm = self._peakFWHM(selected_energy)  # energy domain
                 linegroup_areas[i] = height * fwhm * factor  # Gaussian
-            else:
-                linegroup_areas[i] = 0  # no peak within [emin, emax]
+            else:  # no peak within [emin, emax]
+                linegroup_areas[i] = 0  # fixed at zero (see constraints)
 
     def __select_highest_peak(self, group, escgroup, emin, emax):
         if not escgroup:
@@ -1158,6 +1150,7 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, LeastSquaresFitModel):
 
         plt.plot(self.xenergy, self.yfitdata, label="data")
         plt.plot(self.xenergy, self.yfitmodel, label="fit")
+        plt.plot(self.xenergy, self.ypileup(), label="pileup")
         if markers:
             from matplotlib.pyplot import cm
 
@@ -1167,6 +1160,10 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, LeastSquaresFitModel):
                     color = next(colors)
                     plt.text(energy, height, label, color=color)
                 plt.plot([energy, energy], [0, height], label=label, color=color)
+
+        plt.yscale("log")
+        plt.ylim(1, None)
+
         plt.legend()
         if title:
             plt.title(title)
@@ -1568,14 +1565,14 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, LeastSquaresFitModel):
     @independent_linear_parameter_group
     def linpol_coefficients(self):
         if isinstance(self.continuumModel, LinearPolynomialModel):
-            return self.continuum_coefficients
+            return self.continuumModel.coefficients
         else:
             return list()
 
     @linpol_coefficients.setter
     def linpol_coefficients(self, values):
         if isinstance(self.continuumModel, LinearPolynomialModel):
-            self.continuum_coefficients = values
+            self.continuumModel.coefficients = values
 
     @linpol_coefficients.counter
     def linpol_coefficients(self):
@@ -1595,15 +1592,17 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, LeastSquaresFitModel):
 
     @nonlinear_parameter_group
     def exppol_coefficients(self):
-        if isinstance(self.continuumModel, ExponentialPolynomialModel):
-            return self.continuum_coefficients
+        model = self.continuumModel
+        if isinstance(model, ExponentialPolynomialModel):
+            return model.coefficients
         else:
             return list()
 
     @exppol_coefficients.setter
     def exppol_coefficients(self, values):
-        if isinstance(self.continuumModel, ExponentialPolynomialModel):
-            self.continuum_coefficients = values
+        model = self.continuumModel
+        if isinstance(model, ExponentialPolynomialModel):
+            model.coefficients = values
 
     @exppol_coefficients.counter
     def exppol_coefficients(self):
@@ -1936,14 +1935,7 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, LeastSquaresFitModel):
                 if linegroup_names is None:
                     linegroup_names = self.linegroup_names
                 idx = int(name.replace("linegroup_areas", ""))
-                name = linegroup_names[idx]
-                if "inelastic" in name:
-                    i = int(name.replace("inelastic", ""))
-                    name = "Scatter Compton%03d" % i
-                elif "elastic" in name:
-                    i = int(name.replace("elastic", ""))
-                    name = "Scatter Peak%03d" % i
-                yield name
+                yield self._convert_line_name(linegroup_names[idx])
             elif "linpol_coefficients" in name:
                 if self.continuum < self.CONTINUUM_LIST.index("Linear Polynomial"):
                     idx = int(name.replace("linpol_coefficients", ""))
@@ -1971,6 +1963,15 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, LeastSquaresFitModel):
                 yield "Eta Factor"
             else:
                 yield name.capitalize()
+
+    def _convert_line_name(self, name):
+        if "inelastic" in name:
+            i = int(name.replace("inelastic", ""))
+            return "Scatter Compton%03d" % i
+        elif "elastic" in name:
+            i = int(name.replace("elastic", ""))
+            return "Scatter Peak%03d" % i
+        return name
 
     def get_parameter_names(self, **paramtype):
         return tuple(
@@ -2050,9 +2051,7 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, LeastSquaresFitModel):
         return y
 
     def ypileup(self, ymodel=None, xdata=None, normalized_fit_parameters=False):
-        """The ymodel contains the peaks and the continuum.
-        Pileup is
-        """
+        """The ymodel contains the peaks and the continuum."""
         pileupfactor = self.sum
         if not pileupfactor:
             if xdata is None:
@@ -2124,15 +2123,16 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, LeastSquaresFitModel):
             )
         elif name == "sum":
             return self.ypileup(xdata=xdata, normalized_fit_parameters=True)
-        elif name == "linpol" and False:
+        elif name == "linpol_coefficients":
             model = self.continuumModel
-            keep = model.get_parameter_values(**paramtype)
-            try:
-                model.set_parameter_values(self.continuum_coefficients, **paramtype)
-                i = group.parameter_index_in_group(param_idx)
-                return model.derivative_fitmodel(i, xdata=xdata, **paramtype)
-            finally:
-                model.set_parameter_values(keep, **paramtype)
+            i = group.parameter_index_in_group(param_idx)
+            xpol = xdata
+            if xpol is not None:
+                xpol = self._channelsToXpol(xpol)
+            deriv = model.derivative_fitmodel(i, xdata=xpol, **paramtype)
+            if self.sum:
+                deriv = deriv + self.ypileup(ymodel=deriv, xdata=xdata)
+            return deriv
         else:
             return self.numerical_derivative_fitmodel(
                 param_idx, xdata=xdata, **paramtype
@@ -2191,6 +2191,29 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, LeastSquaresFitModel):
                 self.zero = 0.0
             yield
 
+    @contextmanager
+    def _propertyCachingContext(self, **kw):
+        with super()._propertyCachingContext(**kw) as values_cache:
+            with self._link_continuum_model_cache():
+                yield values_cache
+
+    @contextmanager
+    def _link_continuum_model_cache(self):
+        model = self.continuumModel
+        if model is None:
+            yield
+            return
+        keep = model.coefficients
+        try:
+            # Replace the model's coefficient storage by the cache view
+            if isinstance(model, LinearPolynomialModel):
+                model._coefficients = self.linpol_coefficients
+            else:
+                model._coefficients = self.exppol_coefficients
+            yield
+        finally:
+            model._coefficients = keep
+
     def startFit(self, digest=False, linear=None):
         """Fit with legacy output"""
         with self.linear_context(linear=linear):
@@ -2219,13 +2242,21 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, LeastSquaresFitModel):
                 "ydata": self.ydata,
                 "continuum": self.ybackground(),
                 "yfit": self.yfullmodel,
-                "ypileup": self.ypileup(),
+                "pileup": self.ypileup(),
                 "parameters": self.get_parameter_names(),
                 "fittedpar": self._last_fit_result["parameters"],
                 "chisq": self._last_fit_result["chi2_red"],
+                "lastdeltachi": self._last_fit_result["lastdeltachi"],
+                "niter": self._last_fit_result["niter"],
                 "sigmapar": self._last_fit_result["uncertainties"],
                 "config": self.config.copy(),
             }
+            # TODO:
+            for name in self._lineGroupNames:
+                name = self._convert_line_name(name)
+                result[name] = None
+                result["y" + name] = None
+            result["groups"] = None
             return result
 
     def imagingDigestResult(self):

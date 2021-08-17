@@ -159,7 +159,11 @@ class CachedPropertiesModel(CachingModel):
         if caches is None:
             return False
         key = self._cache_manager._property_cache_key(**cacheoptions)
-        caches[key] = values_cache
+        cache = caches.get(key, None)
+        if cache is None:
+            caches[key] = values_cache
+        else:
+            cache[:] = values_cache
         return True
 
     def _create_start_property_values_cache(self, **cacheoptions):
