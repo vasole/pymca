@@ -1716,7 +1716,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         if selectable:
             picker = True
         else:
-            picker = None
+            picker = False
         scatterPlot = False
         if hasattr(color, "dtype"):
             if len(color) == len(x):
@@ -2094,7 +2094,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             line = self.ax.plot(x, y, label=legend,
                                       linestyle=" ",
                                       color=color,
-                                      picker=None,
+                                      picker=False,
                                       marker=symbol,
                                       markersize=markersize)[-1]
         if text is not None:
@@ -2605,7 +2605,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         if selectable or draggable:
             picker = True
         else:
-            picker = None
+            picker = False
         shape = data.shape
         if 0:
             # this supports non regularly spaced coordenates!!!!
