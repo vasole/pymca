@@ -96,10 +96,13 @@ class LeastSquaresFitModelBase(LeastSquaresFitModelInterface, ParameterModelBase
         return self.chi_squared / self.degrees_of_freedom
 
     @property
-    def degrees_of_freedom(self):
+    def nfree_parameters(self):
         constraints = self.get_parameter_constraints()
-        nfree = sum(constraints[:, 0] != Gefit.CFIXED, dtype=int)
-        return self.ndata - nfree
+        return numpy.sum(constraints[:, 0] < 3, dtype=int)
+
+    @property
+    def degrees_of_freedom(self):
+        return self.ndata - self.nfree_parameters
 
     def evaluate_fullmodel(self, xdata=None):
         """Evaluate the full model.

@@ -1122,8 +1122,8 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, LeastSquaresFitModel):
 
         lineGroups = self._lineGroups
         escapeLineGroups = self._escapeLineGroups
-        linegroup_areas = self._lineGroupAreas
-        linegroup_names = self._lineGroupNames
+        linegroup_areas = self.linegroup_areas
+        linegroup_names = self.linegroup_names
 
         for group, escgroup, label, area in zip(
             lineGroups, escapeLineGroups, linegroup_names, linegroup_areas
@@ -2235,81 +2235,189 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, LeastSquaresFitModel):
         )
 
     def digestresult(self, outfile=None, info=None):
+        return self._digestresult(outfile=outfile, info=info, full=True)
+
+    def imagingDigestResult(self):
+        return self._digestresult(full=False)
+
+    def _digestresult(self, outfile=None, info=None, full=True):
         with self.use_fit_result_context(self._last_fit_result):
-            result = {
-                "xdata": self.xdata,
-                "energy": self.xenergy,
-                "ydata": self.ydata,
-                "continuum": self.ybackground(),
-                "yfit": self.yfullmodel,
-                "pileup": self.ypileup(),
-                "parameters": self.get_parameter_names(),
-                "fittedpar": self._last_fit_result["parameters"],
-                "chisq": self._last_fit_result["chi2_red"],
-                "lastdeltachi": self._last_fit_result["lastdeltachi"],
-                "niter": self._last_fit_result["niter"],
-                "sigmapar": self._last_fit_result["uncertainties"],
-                "config": self.config.copy(),
-            }
-            self._digestLineResults(result)
+
+            parameter_names = self.get_parameter_names()
+            parameter_std = self._last_fit_result["uncertainties"]
+
+            chisq = self._last_fit_result["chi2_red"]
+
+            if full:
+                xenergy = self.xenergy
+                yfit = self.yfullmodel
+                ydata = self.ydata
+                weighted_residuals = (ydata - yfit) / self.ystd
+                prechisq = weighted_residuals ** 2
+
+                result = {
+                    "xdata": self.xdata,
+                    "energy": xenergy,
+                    "ydata": ydata,
+                    "continuum": self.ybackground(),
+                    "yfit": yfit,
+                    "pileup": self.ypileup(),
+                    "parameters": parameter_names,
+                    "fittedpar": self._last_fit_result["parameters"],
+                    "sigmapar": parameter_std,
+                    "chisq": chisq,
+                    "lastdeltachi": self._last_fit_result["lastdeltachi"],
+                    "niter": self._last_fit_result["niter"],
+                    "config": self.config.copy(),
+                }
+
+                statistics_info = {
+                    "xenergy": xenergy,
+                    "ydata": ydata,
+                    "yfit": yfit,
+                    "prechisq": prechisq,
+                }
+            else:
+                statistics_info = None
+                result = {"chisq": chisq}
+            linegroup_result = self._digestLineGroupResults(
+                parameter_names, parameter_std, statistics_info=statistics_info
+            )
+            result.update(linegroup_result)
             if outfile:
                 self.saveDigestedResult(result, outfile, info=info)
 
             return result
 
-    def imagingDigestResult(self):
-        with self.use_fit_result_context(self._last_fit_result):
-            result = {"chisq": self._last_fit_result["chi2_red"]}
-            self._digestLineResults(result, full=False)
-            return result
-
-    def _digestLineResults(self, result, full=True):
+    def _digestLineGroupResults(
+        self, parameter_names, parameter_std, statistics_info=None
+    ):
+        full = statistics_info is not None
+        result = dict()
         groups = result["groups"] = list()
         lineGroups = self._lineGroups
         escapeLineGroups = self._escapeLineGroups
-        linegroup_areas = self._lineGroupAreas
-        linegroup_names = self._lineGroupNames
+        linegroup_areas = self.linegroup_areas
+        linegroup_names = self.linegroup_names
 
-        for group, escgroup, groupname, area in zip(
-            lineGroups, escapeLineGroups, linegroup_names, linegroup_areas
+        area_multiplier = abs(1 + self.st_arearatio)
+        if statistics_info:
+            statistics_info["nfree_parameters"] = self.nfree_parameters
+            ndata = self.ndata
+
+        for igroup, (group, escgroup, groupname, area) in enumerate(
+            zip(lineGroups, escapeLineGroups, linegroup_names, linegroup_areas)
         ):
             groupname = self._convert_line_name(groupname)
             groups.append(groupname)
-            if full:
-                result["y" + groupname] = NotImplemented
-            result[groupname] = {
-                "fitarea": area,
-                "sigmaarea": NotImplemented,
-            }
-            if full:
-                result[groupname]["mcaarea"] = NotImplemented
-                result[groupname]["statistics"] = NotImplemented
-            peaks = result[groupname]["peaks"] = list()
 
-            if full:
-                escapepeaks = result[groupname]["escapepeaks"] = list()
-                if not escgroup:
-                    escgroup = [[]] * len(group)
-                for (energy, rate, linename), esclines in zip(group, escgroup):
-                    fwhm = self._peakFWHM(energy)
-                    peaks.append(linename)
-                    result[groupname][linename] = {
-                        "ratio": rate,
-                        "energy": energy,
-                        "fwhm": fwhm,
-                    }
-                    for escenergy, escrate, escname in esclines:
-                        escname = "{} {}".format(linename, escname.replace(" ", "_"))
-                        fwhm = self._peakFWHM(escenergy)
-                        escapepeaks.append(escname)
-                        escname += "esc"
-                        result[groupname][escname] = {
-                            "ratio": escrate,
-                            "energy": escenergy,
-                            "fwhm": fwhm,
-                        }
-            else:
-                peaks.extend(linename for (_, _, linename) in group)
+            # Total group area with error (in the channel domain)
+            pidx = parameter_names.index(groupname)
+            group_fitarea = area * area_multiplier
+            group_fitarea_std = parameter_std[pidx] * area_multiplier
+            result[groupname] = {
+                "fitarea": group_fitarea,
+                "sigmaarea": group_fitarea_std,
+            }
+            if not full:
+                result[groupname]["peaks"] = [linename for (_, _, linename) in group]
+                continue
+
+            # Total group spectrum
+            yfit_group = self.mcatheory(
+                selected_groups=[igroup],
+                continuum=False,
+            )
+            result["y" + groupname] = yfit_group
+
+            # Information per line
+            peaks = result[groupname]["peaks"] = list()
+            escapepeaks = result[groupname]["escapepeaks"] = list()
+            ydatarest_group = 0
+            group_channel_mask = numpy.zeros(ndata, dtype=bool)
+            if not escgroup:
+                escgroup = [[]] * len(group)
+            for (energy, rate, linename), esclines in zip(group, escgroup):
+                line_result, line_channel_mask, ydatarest_line = self._digestLineResult(
+                    energy,
+                    rate,
+                    yfit_group,
+                    group_fitarea,
+                    group_fitarea_std,
+                    statistics_info,
+                )
+                line_result["ratio"] = rate
+                peaks.append(linename)
+                result[groupname][linename] = line_result
+
+                group_channel_mask &= line_channel_mask
+                ydatarest_group += ydatarest_line
+
+                for escenergy, escrate, escname in esclines:
+                    (
+                        line_result,
+                        line_channel_mask,
+                        ydatarest_line,
+                    ) = self._digestLineResult(
+                        escenergy,
+                        escrate * rate,
+                        yfit_group,
+                        group_fitarea,
+                        group_fitarea_std,
+                        statistics_info,
+                    )
+                    line_result["ratio"] = escrate
+                    escname = "{} {}".format(linename, escname.replace(" ", "_"))
+                    escapepeaks.append(escname)
+                    escname += "esc"
+                    result[groupname][escname] = line_result
+
+                    group_channel_mask &= line_channel_mask
+                    ydatarest_group += ydatarest_line
+
+            # Line group statistics
+            yfitrest_group = statistics_info["yfit"] - yfit_group
+            ydata_group = statistics_info["ydata"] - yfitrest_group
+            group_dataarea = ydata_group[group_channel_mask].sum()
+            result[groupname]["mcaarea"] = group_dataarea
+            result[groupname]["statistics"] = ydatarest_group + max(
+                group_dataarea, group_fitarea
+            )
+
+        return result
+
+    def _digestLineResult(
+        self,
+        energy,
+        rate,
+        yfit_group,
+        group_fitarea,
+        group_fitarea_std,
+        statistics_info,
+    ):
+        fwhm = self._peakFWHM(energy)
+        denergy = 3 * fwhm / self.GAUSS_SIGMA_TO_FWHM
+        line_channel_mask = (statistics_info["xenergy"] >= (energy - denergy)) & (
+            statistics_info["xenergy"] <= (energy + denergy)
+        )
+
+        ndof = line_channel_mask.sum() - statistics_info["nfree_parameters"]
+        chisq = statistics_info["prechisq"][line_channel_mask].sum() / ndof
+
+        total_ydata_lineroi = statistics_info["ydata"][line_channel_mask].sum()
+        total_ygroup_lineroi = yfit_group[line_channel_mask].sum()
+        ydatarest_line = rate * abs(total_ydata_lineroi - total_ygroup_lineroi)
+
+        line_result = {
+            "energy": energy,
+            "fwhm": fwhm,
+            "fitarea": group_fitarea * rate,
+            "sigmaarea": group_fitarea_std * rate,
+            "statistics": total_ydata_lineroi,
+            "chisq": chisq,
+        }
+
+        return line_result, line_channel_mask, ydatarest_line
 
     @staticmethod
     def saveDigestedResult(result: dict, filename: str, info=None):

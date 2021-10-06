@@ -711,12 +711,12 @@ class testXrf(unittest.TestCase):
             for linename in group1["peaks"]:
                 line1 = group1[linename]
                 line2 = group2[linename]
-                self.assertEqual(line1.keys(), line1.keys())
+                self.assertEqual(line1.keys(), line2.keys())
             self.assertEqual(group1["escapepeaks"], group2["escapepeaks"])
             for linename in group1["escapepeaks"]:
                 line1 = group1[linename+"esc"]
                 line2 = group2[linename+"esc"]
-                self.assertEqual(line1.keys(), line1.keys())
+                self.assertEqual(line1.keys(), line2.keys())
 
         #self._vis_compare(digestedResult1["yfit"], digestedResult2["yfit"], "yfit")
         numpy.testing.assert_allclose(digestedResult1["xdata"], digestedResult2["xdata"])
