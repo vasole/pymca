@@ -545,7 +545,7 @@ class testXrf(unittest.TestCase):
 
     def testTrainingDataFitCompareLegacy(self):
         x, y, configuration = self._readTrainingData()
-        self._compareLegacyMcaTheory(x, y, configuration)
+        self._compareLegacyMcaTheory(x, y, configuration, "Training data")
 
     def testStainlessSteelDataFitCompareLegacy(self):
         x, y, configuration = self._readStainlessSteelData()
@@ -553,27 +553,27 @@ class testXrf(unittest.TestCase):
         with self.subTest("simple"):
             configuration["concentrations"]['usematrix'] = 0
             configuration["concentrations"]["usemultilayersecondary"] = 0
-            self._compareLegacyMcaTheory(x, y, configuration)
+            self._compareLegacyMcaTheory(x, y, configuration, "Stainless steal (simple)")
 
         with self.subTest("continuum"):
             configuration["fit"]["continuum"] = 3
-            self._compareLegacyMcaTheory(x, y, configuration)
+            self._compareLegacyMcaTheory(x, y, configuration, "Stainless steal (with continuum)")
             configuration["fit"]["continuum"] = 0
 
         with self.subTest("tails"):
             configuration["fit"]["fitfunction"] = 1|2|4|8
-            self._compareLegacyMcaTheory(x, y, configuration)
+            self._compareLegacyMcaTheory(x, y, configuration, "Stainless steal (with peak tails)")
             configuration["fit"]["fitfunction"] = 1
 
         with self.subTest("voigt"):
             configuration["fit"]["fitfunction"] = 0
-            self._compareLegacyMcaTheory(x, y, configuration)
+            self._compareLegacyMcaTheory(x, y, configuration, "Stainless steal (voigt)")
             configuration["fit"]["fitfunction"] = 1
 
         with self.subTest("usematrix"):
             configuration["concentrations"]['usematrix'] = 1
             configuration["concentrations"]["usemultilayersecondary"] = 2
-            self._compareLegacyMcaTheory(x, y, configuration)
+            self._compareLegacyMcaTheory(x, y, configuration, "Stainless steal (quantitative)")
 
         with self.subTest("strategy"):
             configuration["concentrations"]['usematrix'] = 0
@@ -595,9 +595,9 @@ class testXrf(unittest.TestCase):
                                                             "Mn", "Fe",
                                                             "Ni", "-", "-",
                                                             "-","-","-"]
-            self._compareLegacyMcaTheory(x, y, configuration)
+            self._compareLegacyMcaTheory(x, y, configuration, "Stainless steal (quantitative with strategy)")
 
-    def _compareLegacyMcaTheory(self, x, y, configuration):
+    def _compareLegacyMcaTheory(self, x, y, configuration, title):
         from PyMca5.PyMcaPhysics.xrf import LegacyMcaTheory
         from PyMca5.PyMcaPhysics.xrf import NewClassMcaTheory
 
@@ -606,7 +606,7 @@ class testXrf(unittest.TestCase):
 
         mcaFitLegacy = LegacyMcaTheory.LegacyMcaTheory()
         mcaFitLegacy.enableOptimizedLinearFit()
-        _, fitResult1, result1 = self._configAndFit(
+        _, fitResult1, digestedResult1, imagingDigestResult1 = self._configAndFit(
             x, y, copy.deepcopy(configuration), mcaFitLegacy)
 
         legacy_linear = mcaFitLegacy.config['fit'].get("linearfitflag", 0) and mcaFitLegacy._batchFlag and (mcaFitLegacy.linearMatrix is not None)
@@ -616,13 +616,15 @@ class testXrf(unittest.TestCase):
         mcaFit = NewClassMcaTheory.McaTheory()
         configuration2 = copy.deepcopy(configuration)
         configuration2["fit"]["linearfitflag"] = int(legacy_linear)
-        _, fitResult2, result2 = self._configAndFit(
+        _, fitResult2, digestedResult2, imagingDigestResult2 = self._configAndFit(
             x, y, configuration2, mcaFit)
 
         t2 = time.time()
 
-        print("\nLEGACY TIME", t1-t0)
-        print("NEW TIME", t2-t1)
+        print()
+        print(title)
+        print(" LEGACY TIME", t1-t0)
+        print(" NEW TIME", t2-t1)
 
         # Compare data
         numpy.testing.assert_array_equal(mcaFitLegacy.xdata.flat, mcaFit.xdata)
@@ -687,25 +689,52 @@ class testXrf(unittest.TestCase):
         else:
             self.assertEqual(set(legacy_names), set(names)|{"Constant", "1st Order"})
 
-        # Compare fit parameters
+        # Compare fit results
         parameters1 = dict(zip(legacy_names, fitResult1[0]))
         parameters2 = dict(zip(names, fitResult2[0]))
         uncertainties1 = dict(zip(legacy_names, fitResult1[2]))
         uncertainties2 = dict(zip(names, fitResult2[2]))
         if False:
             for name in names:
-                self.assertEqual(parameters1[name], parameters2[name], name)
-                self.assertEqual(uncertainties1[name], uncertainties2[name], name)
+                numpy.testing.assert_allclose(parameters1[name], parameters2[name], atol=1e-5, rtol=0.5, err_msg=name)
+                numpy.testing.assert_allclose(uncertainties1[name], uncertainties2[name], atol=1e-5, rtol=0.5, err_msg=name)
 
-        # Compare fit results
-        self.assertEqual(set(result1), set(result2))
-        self._vis_compare(result1["continuum"], result2["continuum"], "continuum")
-        numpy.testing.assert_allclose(result1["xdata"], result2["xdata"])
-        numpy.testing.assert_allclose(result1["ydata"], result2["ydata"])
-        numpy.testing.assert_allclose(result1["energy"], result2["energy"], rtol=1e-3)
-        numpy.testing.assert_allclose(result1["continuum"], result2["continuum"])
-        numpy.testing.assert_allclose(result1["yfit"], result2["yfit"], rtol=0.05)
-        numpy.testing.assert_allclose(result1["pileup"], result2["pileup"], atol=1, rtol=0.05)
+        # Compare digested results
+        self.assertEqual(set(digestedResult1), set(digestedResult2))
+
+        self.assertEqual(digestedResult1["groups"], digestedResult2["groups"])
+        for groupname in digestedResult1["groups"]:
+            group1 = digestedResult1[groupname]
+            group2 = digestedResult2[groupname]
+            self.assertEqual(group1.keys(), group2.keys())
+            self.assertEqual(group1["peaks"], group2["peaks"])
+            for linename in group1["peaks"]:
+                line1 = group1[linename]
+                line2 = group2[linename]
+                self.assertEqual(line1.keys(), line1.keys())
+            self.assertEqual(group1["escapepeaks"], group2["escapepeaks"])
+            for linename in group1["escapepeaks"]:
+                line1 = group1[linename+"esc"]
+                line2 = group2[linename+"esc"]
+                self.assertEqual(line1.keys(), line1.keys())
+
+        #self._vis_compare(digestedResult1["yfit"], digestedResult2["yfit"], "yfit")
+        numpy.testing.assert_allclose(digestedResult1["xdata"], digestedResult2["xdata"])
+        numpy.testing.assert_allclose(digestedResult1["ydata"], digestedResult2["ydata"])
+        numpy.testing.assert_allclose(digestedResult1["energy"], digestedResult2["energy"], rtol=1e-3)
+        numpy.testing.assert_allclose(digestedResult1["continuum"], digestedResult2["continuum"], atol=1, rtol=0.05)
+        numpy.testing.assert_allclose(digestedResult1["yfit"], digestedResult2["yfit"], atol=1, rtol=0.05)
+        numpy.testing.assert_allclose(digestedResult1["pileup"], digestedResult2["pileup"], atol=1, rtol=0.05)
+
+        # Compare image digested results
+        self.assertEqual(set(imagingDigestResult1), set(imagingDigestResult2))
+
+        self.assertEqual(imagingDigestResult1["groups"], imagingDigestResult2["groups"])
+        for groupname in imagingDigestResult1["groups"]:
+            group1 = imagingDigestResult1[groupname]
+            group2 = imagingDigestResult2[groupname]
+            self.assertEqual(group1.keys(), group2.keys())
+            self.assertEqual(group1["peaks"], group2["peaks"])
 
     def _configAndFit(self, x, y, configuration, mcaFit):
         configuration = mcaFit.configure(configuration)
@@ -713,28 +742,9 @@ class testXrf(unittest.TestCase):
                        xmin=configuration["fit"]["xmin"],
                        xmax=configuration["fit"]["xmax"])
         mcaFit.estimate()
-
-        if hasattr(mcaFit, "parameter_types"):
-            print(mcaFit.get_parameter_names())
-
-        if hasattr(mcaFit, "parameter_types") and configuration["fit"]["continuum"] and False:
-            xdata = mcaFit.xdata[10:-10]
-            for param_name, calc, numerical in mcaFit.compare_derivatives(xdata=xdata, exclude_fixed=True):
-                self._vis_compare(calc, numerical, param_name)
-                numpy.testing.assert_allclose(
-                        calc, numerical, err_msg=param_name, rtol=1e-3
-                    )
-
-        if hasattr(mcaFit, "parameter_types") and False:
-            mcaFit.plot(title="estimated", markers=True)
-
-        fitResult1, result1 = mcaFit.startFit(digest=1)
-
-        if hasattr(mcaFit, "parameter_types") and False:
-            with mcaFit.use_fit_result_context(mcaFit._last_fit_result):
-                mcaFit.plot(title="fitted", markers=True)
-
-        return configuration, fitResult1, result1
+        fitResult, digestedResult = mcaFit.startFit(digest=1)
+        imagingDigestResult = mcaFit.imagingDigestResult()
+        return configuration, fitResult, digestedResult, imagingDigestResult
 
     def _vis_compare(self, a, b, title):
         import matplotlib.pyplot as plt

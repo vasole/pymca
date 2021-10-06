@@ -51,7 +51,7 @@ def defaultConfigFilename():
 
 
 class McaTheoryConfigApi:
-    """API on top of an MCA configuration"""
+    """API on top of a ConfigDict for MCA configuration"""
 
     def __init__(self, initdict=None, filelist=None, **kw):
         if initdict is None:
@@ -904,7 +904,7 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, LeastSquaresFitModel):
         super()._initializeConfig()
         self.linearfitflag = self.config["fit"][
             "linearfitflag"
-        ]  # synchronize parameter_types
+        ]  # done to synchronize parameter_types
         self._preCalculateParameterIndependent()
         self._preCalculateParameterDependent()
 
@@ -2234,7 +2234,7 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, LeastSquaresFitModel):
             result["lastdeltachi"],
         )
 
-    def digestresult(self):
+    def digestresult(self, outfile=None, info=None):
         with self.use_fit_result_context(self._last_fit_result):
             result = {
                 "xdata": self.xdata,
@@ -2251,17 +2251,77 @@ class McaTheory(McaTheoryBackground, McaTheoryLegacyApi, LeastSquaresFitModel):
                 "sigmapar": self._last_fit_result["uncertainties"],
                 "config": self.config.copy(),
             }
-            # TODO:
-            for name in self._lineGroupNames:
-                name = self._convert_line_name(name)
-                result[name] = None
-                result["y" + name] = None
-            result["groups"] = None
+            self._digestLineResults(result)
+            if outfile:
+                self.saveDigestedResult(result, outfile, info=info)
+
             return result
 
     def imagingDigestResult(self):
         with self.use_fit_result_context(self._last_fit_result):
-            return dict()
+            result = {"chisq": self._last_fit_result["chi2_red"]}
+            self._digestLineResults(result, full=False)
+            return result
+
+    def _digestLineResults(self, result, full=True):
+        groups = result["groups"] = list()
+        lineGroups = self._lineGroups
+        escapeLineGroups = self._escapeLineGroups
+        linegroup_areas = self._lineGroupAreas
+        linegroup_names = self._lineGroupNames
+
+        for group, escgroup, groupname, area in zip(
+            lineGroups, escapeLineGroups, linegroup_names, linegroup_areas
+        ):
+            groupname = self._convert_line_name(groupname)
+            groups.append(groupname)
+            if full:
+                result["y" + groupname] = NotImplemented
+            result[groupname] = {
+                "fitarea": area,
+                "sigmaarea": NotImplemented,
+            }
+            if full:
+                result[groupname]["mcaarea"] = NotImplemented
+                result[groupname]["statistics"] = NotImplemented
+            peaks = result[groupname]["peaks"] = list()
+
+            if full:
+                escapepeaks = result[groupname]["escapepeaks"] = list()
+                if not escgroup:
+                    escgroup = [[]] * len(group)
+                for (energy, rate, linename), esclines in zip(group, escgroup):
+                    fwhm = self._peakFWHM(energy)
+                    peaks.append(linename)
+                    result[groupname][linename] = {
+                        "ratio": rate,
+                        "energy": energy,
+                        "fwhm": fwhm,
+                    }
+                    for escenergy, escrate, escname in esclines:
+                        escname = "{} {}".format(linename, escname.replace(" ", "_"))
+                        fwhm = self._peakFWHM(escenergy)
+                        escapepeaks.append(escname)
+                        escname += "esc"
+                        result[groupname][escname] = {
+                            "ratio": escrate,
+                            "energy": escenergy,
+                            "fwhm": fwhm,
+                        }
+            else:
+                peaks.extend(linename for (_, _, linename) in group)
+
+    @staticmethod
+    def saveDigestedResult(result: dict, filename: str, info=None):
+        try:
+            os.remove(filename)
+        except Exception:
+            pass
+        if info is None:
+            dcfg = ConfigDict.ConfigDict({"result": result})
+        else:
+            dcfg = ConfigDict.ConfigDict({"result": result, "info": info})
+        dcfg.write(filename)
 
 
 class MultiMcaTheory(LeastSquaresCombinedFitModel):
