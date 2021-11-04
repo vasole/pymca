@@ -49,10 +49,6 @@ def getSpectrumBackground(spectrum, width, roi_min=None, roi_max=None, smoothing
 getSnip1DBackground = getSpectrumBackground
 
 def subtractSnip1DBackgroundFromStack(stack, width, roi_min=None, roi_max=None,  smoothing=1):
-    if roi_min is None:
-        roi_min = 0
-    if roi_max is None:
-        roi_max = len(spectrum)
     mcaIndex = -1
     if hasattr(stack, "info") and hasattr(stack, "data"):
         data = stack.data
@@ -61,6 +57,12 @@ def subtractSnip1DBackgroundFromStack(stack, width, roi_min=None, roi_max=None, 
         data = stack
     if not isinstance(data, numpy.ndarray):
         raise TypeError("This Plugin only supports numpy arrays")
+
+    if roi_min is None:
+        roi_min = 0
+    if roi_max is None:
+        roi_max = data.shape[mcaIndex]
+
     oldShape = data.shape
     if mcaIndex in [-1, len(data.shape)-1]:
         data.shape = -1, oldShape[-1]
@@ -84,10 +86,6 @@ def subtractSnip1DBackgroundFromStack(stack, width, roi_min=None, roi_max=None, 
     return
 
 def replaceStackWithSnip1DBackground(stack, width, roi_min=None, roi_max=None,  smoothing=1):
-    if roi_min is None:
-        roi_min = 0
-    if roi_max is None:
-        roi_max = len(spectrum)
     mcaIndex = -1
     if hasattr(stack, "info") and hasattr(stack, "data"):
         data = stack.data
@@ -96,6 +94,12 @@ def replaceStackWithSnip1DBackground(stack, width, roi_min=None, roi_max=None,  
         data = stack
     if not isinstance(data, numpy.ndarray):
         raise TypeError("This Plugin only supports numpy arrays")
+
+    if roi_min is None:
+        roi_min = 0
+    if roi_max is None:
+        roi_max = data.shape[mcaIndex]
+
     oldShape = data.shape
     if mcaIndex in [-1, len(data.shape)-1]:
         data.shape = -1, oldShape[-1]
@@ -137,10 +141,6 @@ def subtractSnip2DBackgroundFromStack(stack, width, roi_min=None, roi_max=None, 
     """
     index is the dimension used to index the images
     """
-    if roi_min is None:
-        roi_min = (0, 0)
-    if roi_max is None:
-        roi_max = image.shape
     if hasattr(stack, "info") and hasattr(stack, "data"):
         data = stack.data
         if index is None:
@@ -151,6 +151,12 @@ def subtractSnip2DBackgroundFromStack(stack, width, roi_min=None, roi_max=None, 
         index = 2
     if not isinstance(data, numpy.ndarray):
         raise TypeError("This Plugin only supports numpy arrays")
+
+    if roi_min is None:
+        roi_min = (0, 0)
+    if roi_max is None:
+        roi_max = tuple(data.shape[i] for i in range(3) if i != index)
+
     shape = data.shape
     if index == 0:
         if (roi_min[0] > 0) or (roi_min[1] > 0):
