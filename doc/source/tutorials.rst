@@ -20,10 +20,9 @@ Their combination should provide a good starting point to use the program.
 Tutorials
 ---------
 
-The `Getting Started tutorial <http://www.esrf.fr/computing/bliss/downloads/pymca/PyMcaCHESS.pdf>`_
+The `Getting Started tutorial <http://ftp.esrf.fr/pub/scisoft/pymca/PyMcaCHESS.pdf>`_
 is a very old tutorial written by Darren Dale and initially tailored to `CHESS <http://www.chess.cornell.edu>`_
-users but usefull to everybody starting to use *PyMca*. In case the previous link is down, you can try
-this `alternative link <https://wiki.utep.edu/display/MASE6402MME4501/PyMCA+support>`_.
+users but usefull to everybody starting to use *PyMca*.
 
 `Calibration tutorial <http://ftp.esrf.fr/pub/scisoft/pymca/calibrationtutorial.htm>`_.
 To be used if you still have some doubts about how to calibrate your spectra.
