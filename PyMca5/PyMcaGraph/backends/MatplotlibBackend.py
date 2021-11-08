@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2021 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -639,7 +639,7 @@ class MatplotlibGraph(FigureCanvas):
                                 xData, yData = artist._constraint(xData, yData)
                             artist.set_xdata(xData)
                             artist.set_ydata(yData)
-                    if BLITTING:
+                    if BLITTING and hasattr(artist.figure, "canvas"):
                         canvas = artist.figure.canvas
                         axes = artist.axes
                         artist.set_animated(True)
@@ -679,6 +679,8 @@ class MatplotlibGraph(FigureCanvas):
                     else:
                         ddict['button'] = "right"
                     self._callback(ddict)
+                    if ddict['event'] == "markerClicked":
+                        self.__picking = False
                 return
             elif self._pickingInfo['type'] == "curve":
                 ddict = {}
@@ -1112,6 +1114,7 @@ class MatplotlibGraph(FigureCanvas):
                 ddict['xdata'] = artist.get_xdata()
                 ddict['ydata'] = artist.get_ydata()
                 self._callback(ddict)
+            self._pickingInfo = {}
             return
 
         if not hasattr(self, "__zoomstack"):
