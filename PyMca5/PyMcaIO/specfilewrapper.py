@@ -356,8 +356,13 @@ class specfilewrapper(object):
             ketek_keys = ["File Version = ",
                           "Livetime = ",
                           "Realtime = ",
+                          "Input Count Rate = ",
+                          "Output Count Rate = ",
                           "= KETEK"]
             ketek_counter = 0
+            icr = None
+            ocr = None
+            live_time = None
             live_time = None
             real_time = None
             for line in self.header:
@@ -367,18 +372,41 @@ class specfilewrapper(object):
                         if keylower.startswith("livetime ="):
                             tokens = line.split()
                             if tokens[-1] == "s":
-                                live_time = float(tokens[2] + "." + tokens[3])
+                                if "." in tokens[2]:
+                                    live_time = float(tokens[2])
+                                else:
+                                    live_time = float(tokens[2] + "." + tokens[3])
                         elif keylower.startswith("realtime ="):
                             tokens = line.split()
                             if tokens[-1] == "s":
-                                real_time = float(tokens[2] + "." + tokens[3]) 
+                                if "." in tokens[2]:
+                                    real_time = float(tokens[2]) 
+                                else:
+                                    real_time = float(tokens[2] + "." + tokens[3])
+                        elif keylower.startswith("input count rate = "):
+                            tokens = line.split(" = ")[-1].split()
+                            if "." in tokens[0]:
+                                icr = float(tokens[0]) 
+                            else:
+                                icr = float(tokens[0] + "." + tokens[1])
+                        elif keylower.startswith("output count rate = "):
+                            tokens = line.split(" = ")[-1].split()
+                            if "." in tokens[0]:
+                                ocr = float(tokens[0]) 
+                            else:
+                                ocr = float(tokens[0] + "." + tokens[1])                            
                         ketek_counter += 1
                         break
-            if ketek_counter == len(ketek_keys):
+            if ketek_counter >= 4:
                 self.ketek = 1
                 if real_time and live_time:
                     self._ketekHeader = {}
                     self._ketekHeader['S'] = '#S1 '+ " Unlabelled Spectrum"
+                    if ocr and icr:
+                        live_time = real_time * ocr / icr
+                        _logger.info("Taking live time =  real_time * ocr / icr")
+                    else:
+                        _logger.warning("Taking live time from file")
                     self._ketekHeader['@CTIME'] = ['#@CTIME %f %f %f' % (real_time,
                                                                          live_time,
                                                                          real_time)]
