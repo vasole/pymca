@@ -1,3 +1,12 @@
+VERSION 5.6.6
+-------------
+
+- Graphics. Recent versions of Matplotlib do not support picker=None.
+
+- IO. Support AXAS-D format independently of using ","  or "." as decimal separator.
+
+- IO. Calculate live time as elapsed time * OCR/ICR in AXAS-D format
+
 VERSION 5.6.5
 -------------
 
