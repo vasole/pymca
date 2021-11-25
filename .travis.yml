@@ -115,13 +115,8 @@ script:
     - pip install --upgrade pip
 
     # Dependencies
-    # too slow to build fisx
-    - if [ "$TRAVIS_CPU_ARCH" == "ppc64le" ];
-      then
-          pip install fisx --pre --trusted-host www.silx.org --find-links http://www.silx.org/pub/wheelhouse/;
-      else
-          pip install fisx;
-      fi
+    # fisx from PyPi
+    - pip install fisx;
     - if [ "$TRAVIS_CPU_ARCH" == "ppc64le" ];
       then
           pip install matplotlib --pre --trusted-host www.silx.org --find-links http://www.silx.org/pub/wheelhouse/;

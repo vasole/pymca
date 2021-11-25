@@ -1909,7 +1909,10 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             image = self.ax.images[i]
             image.remove()
             del image
-            del self.ax.images[i]
+            # in versions of matplotlib prior to 3.5.0
+            # the content of the if block was needed
+            if i < len(self.ax.images):
+                del self.ax.images[i]
 
         n = list(range(len(self.ax.artists)))
         n.reverse()
