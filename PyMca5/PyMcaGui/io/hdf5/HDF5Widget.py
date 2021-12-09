@@ -827,7 +827,10 @@ class HDF5Widget(FileView):
         ddict['dtype'] = item.dtype
         ddict['shape'] = item.shape
         ddict['color'] = item.color
-        ddict['mouse'] = self._lastMouse * 1
+        mouse = None
+        if hasattr(self, '_lastMouse'):
+            mouse = self._lastMouse * 1
+        ddict['mouse'] = mouse
         self.sigHDF5WidgetSignal.emit(ddict)
 
     def getSelectedEntries(self):
