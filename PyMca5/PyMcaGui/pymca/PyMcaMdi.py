@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2021 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -97,7 +97,9 @@ class PyMcaMdi(qt.QMainWindow):
         self.splitter.insertWidget(1, self.mdi)
         self.windowMapper = qt.QSignalMapper(self)
 
-        if QTVERSION > '5.0.0':
+        if QTVERSION > '6.0.0':
+            self.windowMapper.mappedObject[qt.QObject].connect(self.mdi.setActiveSubWindow)
+        elif QTVERSION > '5.0.0':
             self.windowMapper.mapped[qt.QWidget].connect(self.mdi.setActiveSubWindow)
         else:
             self.windowMapper.mapped[qt.QWidget].connect(self.mdi.setActiveWindow)
