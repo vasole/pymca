@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2019 European Synchrotron Radiation Facility
+# Copyright (c) 2019-2021 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -37,11 +37,17 @@ import weakref
 if 'PyQt5.QtCore' in sys.modules:
     from PyQt5 import QtCore
     from PyQt5.QtWidgets import QApplication
+elif 'PyQt6.QtCore' in sys.modules:
+    from PyQt6 import QtCore
+    from PyQt6.QtWidgets import QApplication
 elif 'PySide2.QtCore' in sys.modules:
     from PySide2 import QtCore
     from PySide2.QtWidgets import QApplication
+elif 'PySide6.QtCore' in sys.modules:
+    from PySide6 import QtCore
+    from PySide6.QtWidgets import QApplication
 else:
-    raise ImportError("This module expects PySide2 or PyQt5")
+    raise ImportError("This module expects PySide2, PySide6 or PyQt5")
 
 def patch_backend_qt():
     import matplotlib.backends.backend_qt5

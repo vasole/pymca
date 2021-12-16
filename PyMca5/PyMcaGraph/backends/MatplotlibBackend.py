@@ -87,6 +87,10 @@ elif 'PyQt5.QtCore' in sys.modules:
     matplotlib.rcParams['backend'] = 'Qt5Agg'
     from PyQt5 import QtCore, QtGui, QtWidgets
     QtGui.QApplication = QtWidgets.QApplication
+elif 'PySide6.QtCore' in sys.modules:
+    matplotlib.rcParams['backend'] = 'Qt5Agg'
+    from PySide6 import QtCore, QtGui, QtWidgets
+    QtGui.QApplication = QtWidgets.QApplication
 else:
     try:
         from PyQt4 import QtCore, QtGui
@@ -103,6 +107,12 @@ if ("PyQt4.QtCore" in sys.modules) or ("PySide.QtCore" in sys.modules):
     TK = False
     QT = True
 elif ("PyQt5.QtCore" in sys.modules) or ("PySide2.QtCore" in sys.modules):
+    from ._patch_matplotlib import patch_backend_qt
+    patch_backend_qt()
+    from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+    TK = False
+    QT = True
+elif ("PyQt6.QtCore" in sys.modules) or ("PySide6.QtCore" in sys.modules):
     from ._patch_matplotlib import patch_backend_qt
     patch_backend_qt()
     from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
