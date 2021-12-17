@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -89,8 +89,8 @@ class SpecfitGui(qt.QWidget):
             self.guiconfig.AutoScalingCheckBox.stateChanged[int].connect(self.autoscaleevent)
             self.guiconfig.ConfigureButton.clicked.connect(self.__configureGuiSlot)
             self.guiconfig.PrintPushButton.clicked.connect(self.printps)
-            self.guiconfig.BkgComBox.activated[str].connect(self.bkgevent)
-            self.guiconfig.FunComBox.activated[str].connect(self.funevent)
+            self.guiconfig.BkgComBox.textActivated[str].connect(self.bkgevent)
+            self.guiconfig.FunComBox.textActivated[str].connect(self.funevent)
             layout.addWidget(self.guiconfig)
 
         self.guiparameters = MultiParameters.ParametersTab(self)
