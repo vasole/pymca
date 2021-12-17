@@ -237,6 +237,15 @@ elif BINDING == 'PySide6':
     from PySide6.QtWidgets import *  # noqa
     from PySide6.QtPrintSupport import *  # noqa
 
+    class QDesktopWidget:
+        def height(self):
+            _logger.debug("Using obsolete classes")
+            return QScreen().size().height()
+
+        def width(self):
+            _logger.debug("Using obsolete classes")
+            return QScreen().size().width()
+
     try:
         from PySide6.QtOpenGL import *  # noqa
         from PySide6.QtOpenGLWidgets import QOpenGLWidget  # noqa
