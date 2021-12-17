@@ -1,7 +1,7 @@
 # coding: utf-8
 # /*##########################################################################
 #
-# Copyright (c) 2016-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2016-2022 European Synchrotron Radiation Facility
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -91,6 +91,10 @@ elif qt.BINDING == 'PyQt4':
         :rtype: bool
         """
         return not _isdeleted(obj)
+
+elif qt.BINDING == 'PySide6':
+    from PySide6.QtTest import QTest
+    from shiboken6 import isValid, createdByPython, ownedByPython
 else:
     raise ImportError('Unsupported Qt bindings')
 
@@ -219,7 +223,7 @@ class TestCaseQt(unittest.TestCase):
                        createdByPython(widget))]
         del self.__previousWidgets
 
-        if qt.BINDING in ('PySide', 'PySide2', 'PyQt5', 'PyQt4'):
+        if qt.BINDING in ('PySide', 'PySide2', 'PySide6', 'PyQt5', 'PyQt4'):
             # TODO: many leaks with PyQt5 as well...
             return  # Do not test for leaking widgets
 
