@@ -277,7 +277,7 @@ class Object3DScale(qt.QGroupBox):
             self.l.addWidget(lineEdit, i, 1)
             self.lineEditList.append(lineEdit)
             lineEdit.setText('1.0')
-            lineEdit.setFixedWidth(lineEdit.fontMetrics().width('######.#####'))
+            lineEdit.setFixedWidth(lineEdit.fontMetrics().maxWidth()*len('######.#####'))
             lineEdit.editingFinished.connect(self._lineSlotList[i])
             i+= 1
 

@@ -152,7 +152,7 @@ class ValueFilter(qt.QGroupBox):
 
         self.useCheckBox = qt.QCheckBox(self)
         self.minLineEdit = qt.QLineEdit(self)
-        w = self.minLineEdit.fontMetrics().width("#####.####")
+        w = self.minLineEdit.fontMetrics().maxWidth()*len("#####.####")
         self.minLineEdit.setFixedWidth(w)
         self.minLineEdit.setText("0.0")
         self.minLineEdit.validator = qt.CLocaleQDoubleValidator(self.minLineEdit)

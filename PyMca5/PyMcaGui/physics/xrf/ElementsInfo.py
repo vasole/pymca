@@ -161,7 +161,7 @@ class ElementsInfo(qt.QWidget):
         l1=qt.QLabel(hbox)
         l1.setText('<b><nobr>Excitation Energy (keV)</nobr></b>')
         self.energy=MyQLineEdit(hbox)
-        self.energy.setFixedWidth(self.energy.fontMetrics().width('#####.###'))
+        self.energy.setFixedWidth(self.energy.fontMetrics().maxWidth()*len('#####.###'))
         self.energy.setText("")
         hbox.layout.addWidget(l1)
         hbox.layout.addWidget(self.energy)

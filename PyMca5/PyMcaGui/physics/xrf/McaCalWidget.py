@@ -228,7 +228,7 @@ class McaCalWidget(qt.QDialog):
         self.xpos = qt.QLineEdit(toolbar)
         self.xpos.setText('------')
         self.xpos.setReadOnly(1)
-        self.xpos.setFixedWidth(self.xpos.fontMetrics().width('########'))
+        self.xpos.setFixedWidth(self.xpos.fontMetrics().maxWidth()*len('########'))
         self.toolbar.layout.addWidget(self.xpos)
         label=qt.QLabel(toolbar)
         label.setText('<b>Counts:</b>')
@@ -236,7 +236,7 @@ class McaCalWidget(qt.QDialog):
         self.ypos = qt.QLineEdit(toolbar)
         self.ypos.setText('------')
         self.ypos.setReadOnly(1)
-        self.ypos.setFixedWidth(self.ypos.fontMetrics().width('#########'))
+        self.ypos.setFixedWidth(self.ypos.fontMetrics().maxWidth()*len('#########'))
         self.toolbar.layout.addWidget(self.ypos)
         label=qt.QLabel(toolbar)
         if self.__xrdMode:
@@ -247,7 +247,7 @@ class McaCalWidget(qt.QDialog):
         self.epos = qt.QLineEdit(toolbar)
         self.epos.setText('------')
         self.epos.setReadOnly(1)
-        self.epos.setFixedWidth(self.epos.fontMetrics().width('#########'))
+        self.epos.setFixedWidth(self.epos.fontMetrics().maxWidth()*len('#########'))
         self.toolbar.layout.addWidget(self.epos)
 
         #rest

@@ -49,7 +49,7 @@ class Object3DSlider(qt.QWidget):
         self.slider.setOrientation(orientation)
         self.label  = qt.QLabel("0", self)
         self.label.setAlignment(alignment)
-        self.label.setFixedWidth(self.label.fontMetrics().width('100.99'))
+        self.label.setFixedWidth(self.label.fontMetrics().maxWidth()*len('100.99'))
 
         layout.addWidget(self.slider)
         layout.addWidget(self.label)

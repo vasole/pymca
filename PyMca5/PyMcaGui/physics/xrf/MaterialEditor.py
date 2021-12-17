@@ -567,7 +567,7 @@ class MaterialGUI(qt.QWidget):
             nameHBoxLayout.addWidget(self.__nameLine)
             self.__nameLine.setReadOnly(False)
             longtext="En un lugar de La Mancha, de cuyo nombre no quiero acordarme ..."
-            self.__nameLine.setFixedWidth(self.__nameLine.fontMetrics().width(longtext))
+            self.__nameLine.setFixedWidth(self.__nameLine.fontMetrics().maxWidth()*len(longtext))
             layout.addWidget(nameHBox)
 
         self.__numberSpin.valueChanged[int].connect(self.__numberSpinChanged)

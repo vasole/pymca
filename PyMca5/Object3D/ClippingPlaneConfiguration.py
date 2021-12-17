@@ -67,7 +67,7 @@ class ClippingPlaneConfiguration(qt.QGroupBox):
             use.clicked.connect(self._signalClickedSlot)
             for k in [0, 1, 2, 3]:
                 line = qt.QLineEdit(self)
-                line.setFixedWidth(line.fontMetrics().width('########'))
+                line.setFixedWidth(line.fontMetrics().maxWidth()*len('########'))
                 line.setText('0.0')
                 line.setReadOnly(True)
                 v = qt.CLocaleQDoubleValidator(line)

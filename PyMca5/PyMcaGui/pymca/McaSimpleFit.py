@@ -267,7 +267,7 @@ class McaSimpleFit(qt.QWidget):
                                 view,qt.QColorGroup())
                     view.moveBy(0, body.height())
                     painter.translate(0, -body.height())
-                    painter.drawText(view.right()  - painter.fontMetrics().width(qt.QString.number(page)),
+                    painter.drawText(view.right()  - painter.fontMetrics().maxWidth()*len(qt.QString.number(page)),
                                      view.bottom() - painter.fontMetrics().ascent() + 5,qt.QString.number(page))
                     if view.top() >= richtext.height():
                         break
