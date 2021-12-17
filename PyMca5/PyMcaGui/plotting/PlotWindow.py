@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -145,7 +145,13 @@ class PlotWindow(PlotWidget.PlotWidget):
             self._xPos = qt.QLineEdit(self.graphBottom)
             self._xPos.setText('------')
             self._xPos.setReadOnly(1)
-            self._xPos.setFixedWidth(self._xPos.fontMetrics().width('##############'))
+            fm = self._xPos.fontMetrics()
+            fmtext = '##############'
+            if hasattr(fm, "maxWidth"):
+                self._xPos.setFixedWidth(fm.maxWidth() * len(fmtext))
+            else:
+                _logger.debug("Using obsolete method")
+                self._xPos.setFixedWidth(fm.width(fmtext))
             self.graphBottomLayout.addWidget(self._xPos)
 
             label=qt.QLabel(self.graphBottom)
@@ -155,7 +161,13 @@ class PlotWindow(PlotWidget.PlotWidget):
             self._yPos = qt.QLineEdit(self.graphBottom)
             self._yPos.setText('------')
             self._yPos.setReadOnly(1)
-            self._yPos.setFixedWidth(self._yPos.fontMetrics().width('##############'))
+            fm = self._yPos.fontMetrics()
+            fmtext = '##############'
+            if hasattr(fm, "maxWidth"):
+                self._yPos.setFixedWidth(fm.maxWidth() * len(fmtext))
+            else:
+                _logger.debug("Using obsolete method")
+                self._yPos.setFixedWidth(fm.width(fmtext))
             self.graphBottomLayout.addWidget(self._yPos)
             self.graphBottomLayout.addWidget(qt.HorizontalSpacer(self.graphBottom))
         widget.layout().addWidget(self.graphBottom, 0)

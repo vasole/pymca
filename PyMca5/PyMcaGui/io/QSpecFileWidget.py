@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "E. Papillon, V.A. Sole - ESRF Software Group"
+__author__ = "E. Papillon, V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -151,7 +151,11 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             self.list.header().setSectionResizeMode(2, qt.QHeaderView.Interactive)
             self.list.header().setSectionResizeMode(3, qt.QHeaderView.Interactive)
             self.list.header().setSectionResizeMode(4, qt.QHeaderView.Interactive)
-            size = self.list.header().fontMetrics().width("X")
+            fm = self.list.header().fontMetrics()
+            if hasattr(fm, "width"):
+                size = fm.width("X")
+            else:
+                size = fm.maxWidth()
             self.list.header().setMinimumSectionSize(size)
             self.list.header().resizeSection(0, size)
             #    self.list.header().resizeSection(1, size * 4)
