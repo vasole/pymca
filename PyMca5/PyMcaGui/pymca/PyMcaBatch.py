@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2021 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -1980,7 +1980,7 @@ class McaBatchWindow(qt.QWidget):
                 if self.abortButton.text() == "OK":
                     # click for 100 milliseconds
                     _logger.debug("onEnd automatically clicking button")
-                    self.abortButton.animateClick(100)
+                    self.abortButton.animateClick()
         if self.exitonend:
             _logger.debug("onEnd close and not quit")
             self.close()

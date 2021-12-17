@@ -237,19 +237,6 @@ elif BINDING == 'PySide6':
     from PySide6.QtWidgets import *  # noqa
     from PySide6.QtPrintSupport import *  # noqa
 
-    # use a (bad) replacement for QDesktopWidget
-    class QDesktopWidget:
-        def height(self):
-            _logger.info("Using obsolete classes")
-            screen = QApplication.instance().primaryScreen() 
-            return screen.availableGeometry().height()
-
-
-        def width(self):
-            _logger.info("Using obsolete classes")
-            screen = QApplication.instance().primaryScreen() 
-            return screen.availableGeometry().width()
-
     try:
         from PySide6.QtOpenGL import *  # noqa
         from PySide6.QtOpenGLWidgets import QOpenGLWidget  # noqa
@@ -268,6 +255,20 @@ elif BINDING == 'PySide6':
         HAS_SVG = True
 
     pyqtSignal = Signal
+
+    # use a (bad) replacement for QDesktopWidget
+    class QDesktopWidget:
+        def height(self):
+            _logger.info("Using obsolete classes")
+            screen = QApplication.instance().primaryScreen() 
+            return screen.availableGeometry().height()
+
+
+        def width(self):
+            _logger.info("Using obsolete classes")
+            screen = QApplication.instance().primaryScreen() 
+            return screen.availableGeometry().width()
+
 else:
     raise ImportError('No Qt wrapper found. Install one of PyQt5, PyQt4, PySide or PySide2 (untested)')
 

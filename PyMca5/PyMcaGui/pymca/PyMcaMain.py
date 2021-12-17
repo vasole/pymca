@@ -252,6 +252,7 @@ try:
     OBJECT3D = False
     if ("PyQt4.QtOpenGL" in sys.modules) or \
        ("PySide.QtOpenGL") in sys.modules or \
+       ("PySide6.QtOpenGL") in sys.modules or \
        ("PySide2.QtOpenGL") in sys.modules or \
        ("PyQt5.QtOpenGL") in sys.modules:
         OBJECT3D = True

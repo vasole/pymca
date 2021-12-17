@@ -116,7 +116,7 @@ class QSourceSelector(qt.QWidget):
 
         specButton.clicked.connect(self.openBlissOrSpec)
         if hasattr(self.fileCombo, "textActivated"):
-            self.fileCombo.activated[str].connect(self._fileSelection)
+            self.fileCombo.textActivated[str].connect(self._fileSelection)
         else:
             _logger.debug("Using deprecated signal")
             self.fileCombo.activated[str].connect(self._fileSelection)
