@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2021 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -237,14 +237,18 @@ elif BINDING == 'PySide6':
     from PySide6.QtWidgets import *  # noqa
     from PySide6.QtPrintSupport import *  # noqa
 
+    # use a (bad) replacement for QDesktopWidget
     class QDesktopWidget:
         def height(self):
-            _logger.debug("Using obsolete classes")
-            return QScreen().size().height()
+            _logger.info("Using obsolete classes")
+            screen = QApplication.instance().primaryScreen() 
+            return screen.availableGeometry().height()
+
 
         def width(self):
-            _logger.debug("Using obsolete classes")
-            return QScreen().size().width()
+            _logger.info("Using obsolete classes")
+            screen = QApplication.instance().primaryScreen() 
+            return screen.availableGeometry().width()
 
     try:
         from PySide6.QtOpenGL import *  # noqa
