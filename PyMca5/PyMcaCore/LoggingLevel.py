@@ -1,10 +1,10 @@
 
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2018 European Synchrotron Radiation Facility
+# Copyright (C) 2018-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -79,7 +79,7 @@ def getLoggingLevel(opts):
         if opt == '--debug':
             # simpler option to choose between the default logging or DEBUG
             if arg.lower() in ["0", 0, "false"]:
-                logging_level = logging.INFO
+                logging_level = DEFAULT_LOGGING_LEVEL
             elif arg.lower() in ["1", 1, "true"]:
                 logging_level = logging.DEBUG
             else:
