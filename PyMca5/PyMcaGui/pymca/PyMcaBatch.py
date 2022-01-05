@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2021 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -1847,7 +1847,7 @@ class McaBatchWindow(qt.QWidget):
             except:
                 _logger.warning("ERROR on REPORT %s", sys.exc_info())
                 _logger.warning("%s", sys.exc_info()[1])
-                _logger.warning("filename = %s key =%s ", (filename, key))
+                _logger.warning("filename = %s key =%s " , filename, key)
                 _logger.warning("If your batch is stopped, please report this")
                 _logger.warning("error sending the above mentioned file and the")
                 _logger.warning("associated fit configuration file.")
