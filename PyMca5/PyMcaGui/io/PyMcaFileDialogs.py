@@ -57,6 +57,8 @@ def getExistingDirectory(parent=None, message=None, mode=None, currentdir=None):
         outfile.setDirectory(wdir)
         if hasattr(outfile, "Directory"):
             outfile.setFileMode(outfile.Directory)
+            if hasattr(outfile, "ShowDirsOnly"):
+                outfile.setOption(outfile.ShowDirsOnly)
         else:
             outfile.setFileMode(outfile.DirectoryOnly)
         ret = outfile.exec_()
