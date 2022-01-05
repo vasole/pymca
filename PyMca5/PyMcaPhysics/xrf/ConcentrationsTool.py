@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -67,12 +67,16 @@ class ConcentrationsConversion(object):
             text += "<br>"
             labels = ['Element', 'Group', 'Fit Area', 'Sigma Area']
             if mmolarflag:
-                labels += 'mM concentration'
+                labels += ['mM concentration']
             else:
-                labels += 'Mass fraction'
+                labels += ['Mass fraction']
 
             #the table
             if 'layerlist' in result:
+                # somehow the new McaAdvancedFitBatch sends an empty string
+                # instead of an empty list like the McaAdvancedFitWindow
+                if result['layerlist'] == "":
+                    result['layerlist'] = []
                 if type(result['layerlist']) != type([]):
                     result['layerlist'] = [result['layerlist']]
                 for label in result['layerlist']:
@@ -155,6 +159,8 @@ class ConcentrationsConversion(object):
             else:
                 labels += ['Mass_fraction']
             if 'layerlist' in result:
+                if result['layerlist'] == "":
+                    result['layerlist'] = []
                 if type(result['layerlist']) != type([]):
                     result['layerlist'] = [result['layerlist']]
                 for label in result['layerlist']:
