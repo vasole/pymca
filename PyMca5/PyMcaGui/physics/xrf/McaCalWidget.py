@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V. Armando Sole - ESRF Data Analysis"
+__author__ = "V. Armando Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -1066,10 +1066,14 @@ class CalibrationParameters(qt.QWidget):
         self.CText.editingFinished[()].connect(self._Cslot)
         self.CFixed.clicked.connect(self._CFixSlot)
 
-        self.orderbox.activated[str].connect(self.__orderbox)
+        if hasattr(self.orderbox, "textActivated"):
+            self.orderbox.textActivated[str].connect(self.__orderbox)
+            self.savebox.textActivated[str].connect(self.__savebox)
+        else:
+            self.orderbox.activated[str].connect(self.__orderbox)
+            self.savebox.activated[str].connect(self.__savebox)
         if hasattr(self.savebox.lineEdit(), "editingFinished"):
             self.savebox.lineEdit().editingFinished[()].connect(self.__savebox)
-        self.savebox.activated[str].connect(self.__savebox)
 
     def setParameters(self, pars):
         self.AText.setText("%.4g" % pars["A"])
