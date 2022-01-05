@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -279,7 +279,10 @@ class MaterialComboBox(qt.QComboBox):
         self.setEditable(True)
         self._line = self.lineEdit()
         self.lastText = "_U_N1iKeLyText"
-        self.activated[str].connect(self._mySignal)
+        if hasattr(self, "textActivated"):
+            self.textActivated[str].connect(self._mySignal)
+        else:
+            self.activated[str].connect(self._mySignal)
         self._line.editingFinished.connect(self._mySlot)
 
     def setCurrentText(self, qstring):
