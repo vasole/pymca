@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V. Armando Sole - ESRF Data Analysis"
+__author__ = "V. Armando Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -203,7 +203,7 @@ class QXTube(qt.QWidget):
         d["energylist"]  = energy
         d["weightlist"]  = energyweight
         d["scatterlist"] = energyscatter
-        d["flaglist"]    = numpy.ones(len(energy))
+        d["flaglist"]    = numpy.ones(len(energy), dtype=numpy.int32)
 
         self.sigQXTubeSignal.emit(d)
 
@@ -434,7 +434,10 @@ class MyQComboBox(qt.QComboBox):
         self.setOptions(options)
         self.setDuplicatesEnabled(False)
         self.setEditable(False)
-        self.activated[str].connect(self._mySignal)
+        if hasattr(self, "textActivated"):
+            self.textActivated[str].connect(self._mySignal)
+        else:
+            self.activated[str].connect(self._mySignal)
 
     def setOptions(self,options=['1','2','3']):
         self.clear()

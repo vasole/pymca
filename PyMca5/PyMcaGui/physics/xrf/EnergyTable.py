@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V. Armando Sole - ESRF Data Analysis"
+__author__ = "V. Armando Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -408,29 +408,30 @@ class EnergyTable(QTable):
 
     def setParameters(self, energylist, weightlist, flaglist, scatterlist=None):
         if isinstance(energylist, numpy.ndarray):
-            self.energyList=energylist.tolist()
+            self.energyList = energylist.tolist()
         elif type(energylist) != type([]):
-            self.energyList=[energylist]
+            self.energyList = [energylist]
         else:
-            self.energyList =energylist
+            self.energyList = energylist
 
-        if   isinstance(weightlist, numpy.ndarray):
-            self.weightList=weightlist.tolist()
+        if isinstance(weightlist, numpy.ndarray):
+            self.weightList = weightlist.tolist()
         elif type(weightlist) != type([]):
-            self.energyList=[weightlist]
+            self.energyList = [weightlist]
         else:
-            self.weightList =weightlist
+            self.weightList = weightlist
 
-        if   isinstance(flaglist, numpy.ndarray):
-            self.flagList=flaglist.tolist()
+        if isinstance(flaglist, numpy.ndarray):
+            self.flagList = flaglist.tolist()
         elif type(flaglist) != type([]):
-            self.flagList=[flaglist]
+            self.flagList = [flaglist]
         else:
-            self.flagList =flaglist
+            self.flagList = flaglist
 
 
         if scatterlist is None:
-            scatterlist = numpy.zeros(len(self.energyList)).tolist()
+            scatterlist = numpy.zeros(len(self.energyList),
+                                      dtype=numpy.int32).tolist()
             scatterlist[0] = 1
         if isinstance(scatterlist, numpy.ndarray):
             self.scatterList=scatterlist.tolist()
@@ -453,8 +454,8 @@ class EnergyTable(QTable):
         scatterList = []
         for idx in range(nrows):
             if idx >= (nrows/self.dataColumns):
-                rowoffset= (-int(idx/self.__rows))*(nrows/self.dataColumns)
-                coloffset=  3*int(idx/self.__rows)
+                rowoffset= (-int(idx/self.__rows)) * (nrows/self.dataColumns)
+                coloffset=  3 * int(idx/self.__rows)
             r = idx + rowoffset
             if QTVERSION < '4.0.0':
                 item = self.item(r,0+coloffset)
@@ -494,7 +495,7 @@ class EnergyTable(QTable):
                 energyweight = 0.0
             energyList.append(energy)
             weightList.append(energyweight)
-            flagList.append(energyflag)
+            flagList.append(int(energyflag))
             scatterList.append(scatterflag)
         return energyList, weightList, flagList, scatterList
 
@@ -636,7 +637,7 @@ def main(args):
     tab = EnergyTable(None)
     energy = numpy.arange(100.).astype(numpy.float64)+ 1.5
     weight = numpy.ones(len(energy), numpy.float64)
-    flag  = numpy.zeros(len(energy)).tolist()
+    flag  = numpy.zeros(len(energy), dtype=numpy.int32).tolist()
     scatterlist = numpy.zeros(len(energy))
     scatterlist[0:10] = 1
     tab.setParameters(energy, weight, flag, scatterlist)
