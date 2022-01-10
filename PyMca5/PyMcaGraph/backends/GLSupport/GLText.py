@@ -400,4 +400,4 @@ if __name__ == "__main__":
     widget1.show()
     widget2 = TestText()
     widget2.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
