@@ -1662,7 +1662,7 @@ def test(x,y,legend):
 if __name__ == '__main__':
     import os
     import getopt
-    from PyMca5 import specfilewrapper as specfile
+    from PyMca5.PyMcaIO import specfilewrapper as specfile
     options     = 'f:s:o'
     longoptions = ['file=','scan=','pkm=',
                     'output=','linear=','strip=',
