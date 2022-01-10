@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -98,6 +98,17 @@ class TestScanWindow(TestCaseQt):
         from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
         PyMcaPrintPreview.resetSingletonPrintPreview()
 
+class TestMcaCalWidget(TestCaseQt):
+    def setUp(self):
+        super().setUp()
+
+    def testShow(self):
+        from PyMca5.PyMcaGui.physics.xrf import McaCalWidget
+        widget = McaCalWidget.McaCalWidget(y=[1,2,3,4])
+        widget.show()
+        self.qapp.processEvents()
+        from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
+        PyMcaPrintPreview.resetSingletonPrintPreview()
 
 class TestMcaWindow(TestCaseQt):
     def setUp(self):
@@ -111,6 +122,35 @@ class TestMcaWindow(TestCaseQt):
         from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
         PyMcaPrintPreview.resetSingletonPrintPreview()
 
+class TestMaterialEditor(TestCaseQt):
+    def setUp(self):
+        super().setUp()
+
+    def testShow(self):
+        from PyMca5.PyMcaGui.physics.xrf import MaterialEditor
+        widget = MaterialEditor.MaterialEditor()
+        widget.show()
+        self.qapp.processEvents()
+
+class TestFitParam(TestCaseQt):
+    def setUp(self):
+        super().setUp()
+
+    def testShow(self):
+        from PyMca5.PyMcaGui.physics.xrf import FitParam
+        widget = FitParam.FitParamWidget()
+        widget.show()
+        self.qapp.processEvents()
+
+class TestPeakIdentifier(TestCaseQt):
+    def setUp(self):
+        super().setUp()
+
+    def testShow(self):
+        from PyMca5.PyMcaGui.physics.xrf import PeakIdentifier
+        widget = PeakIdentifier.PeakIdentifier()
+        widget.show()
+        self.qapp.processEvents()
 
 class TestMcaAdvancedFit(TestCaseQt):
     def setUp(self):
@@ -164,7 +204,11 @@ def getSuite(auto=True):
                         TestRGBCorrelatorGraph,
                         TestMaskImageWidget,
                         TestScanWindow,
+                        TestMcaCalWidget,
                         TestMcaWindow,
+                        TestMaterialEditor,
+                        TestFitParam,
+                        TestPeakIdentifier,
                         TestMcaAdvancedFit,
                         TestPyMcaMain,
                         ):
