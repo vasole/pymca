@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -210,9 +210,11 @@ class XRFMCProgramFile(GetFileList):
         if os.path.exists(fileList[0]):
             GetFileList.setFileList(self, fileList)
         if oldInputDir is not None:
-            xrfmc_dirs.inputDir = oldInputDir
+            if os.path.exists(oldInputDir):
+                xrfmc_dirs.inputDir = oldInputDir
         if oldOutputDir is not None:
-            xrfmc_dirs.outputDir = oldOutputDir
+            if os.path.exists(oldOutputDir):
+                xrfmc_dirs.outputDir = oldOutputDir
 
 class XRFMCIniFile(GetFileList):
     def __init__(self, parent=None):
