@@ -1,3 +1,10 @@
+VERSION 5.7.0
+-------------
+
+- Support PySide6.
+- Drop Qt4 support (PyQy4 and PySide)
+- Drop Object3D module.
+
 VERSION 5.6.7
 -------------
 
