@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Lesser General Public License as published by the
@@ -22,7 +22,7 @@
 # is a problem for you.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "LGPL2+"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -165,7 +165,7 @@ class TestWidget(_BaseOpenGLWidget):
 
     def resizeGL(self, width, height):
         side = min(width, height)
-        GL.glViewport((width - side) / 2, (height - side) / 2, side, side)
+        GL.glViewport((width - side) // 2, (height - side) // 2, side, side)
         GL.glMatrixMode(GL.GL_PROJECTION)
         GL.glLoadIdentity()
         GL.glOrtho(0.0, width, 0.0, height, -1.0, 1.0)
@@ -177,7 +177,7 @@ class TestWidget(_BaseOpenGLWidget):
         GL.glColor4f(1.0, 1.0, 1.0, 1.0)
         for i in range(32, 127, 32):
             teststring = ""
-            GL.glRasterPos2i(20, 200 -18 * i/32)
+            GL.glRasterPos2i(20, 200 -18 * i // 32)
             for j in range(32):
                 teststring += "%c" % (i+j)
                 self.redBookFont.printString(teststring)
