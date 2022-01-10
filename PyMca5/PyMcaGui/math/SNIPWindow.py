@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -34,18 +34,8 @@ IconDict = PyMca_Icons.IconDict
 from PyMca5.PyMcaGui import MaskImageWidget
 from PyMca5.PyMcaGui import ScanWindow
 from PyMca5.PyMcaMath import SNIPModule
+#TODO: Add this functionality using SilxGLWindow
 OBJECT3D = False
-try:
-    from PyMca5.Object3D import Object3DScene
-    OBJECT3D = True
-except:
-    try:
-        # Frozen version handling
-        from Object3D import Object3DScene
-        OBJECT3D = True
-    except:
-        OBJECT3D = False
-
 
 class SNIP1DParametersWidget(qt.QWidget):
     sigSNIPParametersSignal = qt.pyqtSignal(object)
@@ -298,18 +288,18 @@ class SNIPWindow(qt.QWidget):
                                                    smoothing=smoothing)
             difference = self.image-self.background
             self.graphWidget.setImageData(difference)
-            if OBJECT3D:
-                if self.o3dScene is None:
-                    self.o3dScene = Object3DScene.Object3DScene()
-                    self.o3dScene.show()
-                if 0:
-                    imageData =(self.image * 1).astype(numpy.float32)
-                    backgroundData = (self.background * 1).astype(numpy.float32)
-                    self.o3dScene.mesh(imageData,      z=imageData * 1, legend='Data', update_scene=True)
-                    self.o3dScene.mesh(backgroundData, z=backgroundData , legend='Background', update_scene=True)
-                else:
-                    self.o3dScene.mesh(difference, z=difference, legend='Data-Background')
-                self.o3dScene.show()
+            #if OBJECT3D:
+            #    if self.o3dScene is None:
+            #        self.o3dScene = Object3DScene.Object3DScene()
+            #        self.o3dScene.show()
+            #    if 0:
+            #        imageData =(self.image * 1).astype(numpy.float32)
+            #        backgroundData = (self.background * 1).astype(numpy.float32)
+            #        self.o3dScene.mesh(imageData,      z=imageData * 1, legend='Data', update_scene=True)
+            #        self.o3dScene.mesh(backgroundData, z=backgroundData , legend='Background', update_scene=True)
+            #    else:
+            #        self.o3dScene.mesh(difference, z=difference, legend='Data-Background')
+            #    self.o3dScene.show()
         else:
             self.background = SNIPModule.getSpectrumBackground(self.spectrum, width,
                                                    roi_min=roi_min,
