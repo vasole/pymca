@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2019 European Synchrotron Radiation Facility
+# Copyright (c) 2019-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -183,6 +183,7 @@ class TestMcaAdvancedFitWidget(TestCaseQt):
 
     @unittest.skipIf(ARM32, "OpenGL tests disabled on ARM-32 bit")
     @unittest.skipUnless(OPENGL, "OpenGL not imported or disabled")
+    @unittest.skipUnless(SILX, "silx not installed")
     def testInteractionOpenGL(self, backend="gl"):
         return self._workOnBackend(backend)
 
