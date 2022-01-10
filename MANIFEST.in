@@ -19,14 +19,6 @@ recursive-include doc/man *.1
 recursive-include icons *.icns *.ico *_256x256.png
 recursive-include PyMca5/EPDL97 *.DAT
 include PyMca5/EPDL97/LICENSE
-recursive-include PyMca5/Object3D/doc *.py
-recursive-include PyMca5/Object3D/Object3DQhull *.py *.c *.pyx *.pxd *.pxi
-recursive-include PyMca5/Object3D/Object3DCTools *.py *.c
-recursive-include PyMca5/Object3D/scripts *.py
-include PyMca5/Object3D/LICENSE.LGPL
-include PyMca5/Object3D/qtconffile
-include PyMca5/Object3D/README.txt
-include PyMca5/Object3D/scripts/ob_scene
 recursive-include PyMca5/PyMca *.py
 recursive-include PyMca5/PyMcaCore *.py
 recursive-include PyMca5/PyMcaData *.dict *.dat *.cfg *.png *.mat *.html *.pdf *.xml *.gif *.wmz *.mso *.DICT *.TXT *.lib *.mca *.spe
@@ -46,7 +38,5 @@ recursive-include PyMca5/PyMcaPhysics/xas *.pyx *.pxd *.c *.h
 recursive-include PyMca5/PyMcaPlugins *.py
 recursive-include PyMca5/scripts *
 recursive-include PyMca5/tests *.py
-recursive-include third-party/qhull *.c *.h *.txt
-recursive-include third-party/khronos_headers *.h
 recursive-include scripts *.py *.bat
 recursive-include package *
