@@ -247,8 +247,6 @@ try:
     #This is to make sure it is properly frozen
     #and that Object3D is fully supported
     import OpenGL.GL
-    #import Object3D.SceneGLWindow as SceneGLWindow
-    from PyMca5.PyMcaGui.pymca import PyMcaGLWindow
     OBJECT3D = False
     if ("PyQt4.QtOpenGL" in sys.modules) or \
        ("PySide.QtOpenGL") in sys.modules or \
@@ -260,7 +258,6 @@ except:
     _logger.info("pyopengl not installed")
     OBJECT3D = False
 
-
 # Silx OpenGL availability (former Object3D)
 try:
     import PyMca5.PyMcaGui.pymca.SilxGLWindow
@@ -270,8 +267,8 @@ except ImportError:
 
 if isSilxGLAvailable:
     SceneGLWindow = PyMca5.PyMcaGui.pymca.SilxGLWindow
-elif OBJECT3D:
-    SceneGLWindow = PyMcaGLWindow
+else:
+    SceneGLWindow = None
 
 try:
     from PyMca5.PyMcaGui.pymca import SilxScatterWindow
@@ -303,6 +300,8 @@ if OPENGL_DRIVERS_OK and isSilxGLAvailable:
     except:
         _logger.info("Cannot test OpenGL availability %s" % sys.exc_info()[1])
 
+# PyMca 3D disabled in favor of silx
+OBJECT3D = isSilxGLAvailable
 _logger.info("SilxGL availability: %s", isSilxGLAvailable)
 
 from PyMca5.PyMcaGui.pymca import QDispatcher
