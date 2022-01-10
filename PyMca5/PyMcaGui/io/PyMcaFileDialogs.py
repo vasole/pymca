@@ -61,7 +61,7 @@ def getExistingDirectory(parent=None, message=None, mode=None, currentdir=None):
                 outfile.setOption(outfile.ShowDirsOnly)
         else:
             outfile.setFileMode(outfile.DirectoryOnly)
-        ret = outfile.exec_()
+        ret = outfile.exec()
         if ret:
             outdir = qt.safe_str(outfile.selectedFiles()[0])
         else:
@@ -249,7 +249,7 @@ def getFileList(parent=None, filetypelist=None, message=None, currentdir=None,
             history = fdialog.history()
             if len(history) > 6:
                 fdialog.setHistory(history[-6:])
-        ret = fdialog.exec_()
+        ret = fdialog.exec()
         if ret != qt.QDialog.Accepted:
             fdialog.close()
             del fdialog
@@ -321,4 +321,4 @@ if __name__ == "__main__":
                       getfilter=True,
                       currentfilter='TIFF Files (*.tif *.tiff)',
                       single=False))
-    #app.exec_()
+    #app.exec()

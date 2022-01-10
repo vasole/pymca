@@ -356,7 +356,7 @@ def test():
     a.lastWindowClosed.connect(a.quit)
 
     w.show()
-    a.exec_()
+    a.exec()
 
 
 if __name__=="__main__":

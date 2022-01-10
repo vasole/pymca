@@ -523,4 +523,4 @@ if __name__ == "__main__":
     w = HDF5InfoWidget()
     w.setInfoDict(info)
     w.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
