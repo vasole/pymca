@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -150,7 +150,14 @@ class HKL(qt.QWidget):
         hlabel.setText('H:')
         self.h = qt.QLineEdit(self)
         self.h.setReadOnly(True)
-        width = self.h.fontMetrics().width('##.####')
+        fmetrics = self.h.fontMetrics()
+        fmtext = '##.####'
+        if hasattr(fmetrics, "maxWidth"):
+            width = fmetrics.maxWidth()*len(fmtext)
+        else:
+            #deprecated
+            _logger.info("Using deprecated method")
+            width = fmetrics.width(fmtext)
         self.h.setFixedWidth(width)
 
         klabel = qt.QLabel(self)

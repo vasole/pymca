@@ -1980,7 +1980,7 @@ class McaBatchWindow(qt.QWidget):
                 if self.abortButton.text() == "OK":
                     # click for 100 milliseconds
                     _logger.debug("onEnd automatically clicking button")
-                    self.abortButton.animateClick(100)
+                    self.abortButton.animateClick()
         if self.exitonend:
             _logger.debug("onEnd close and not quit")
             self.close()

@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2021 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -155,9 +155,8 @@ class QNexusWidget(qt.QWidget):
         #Enable 3D
         BUTTONS = self._BUTTONS
         if BUTTONS:
-            if ('PyMca.Object3D' in sys.modules) or \
-               ('Object3D' in sys.modules) or \
-               ('PyMca5.Object3D' in sys.modules):
+            if ('PyMca5.PyMcaGui.pymca.SilxGLWindow' in sys.modules) or \
+               ('PyMca5.PyMca.SilxGLWindow' in sys.modules):
                 self.buttons = Buttons(self, options=['SCAN', 'MCA', '2D', '3D'])
                 self.cntTable.set3DEnabled(True)
                 self.autoTable.set3DEnabled(True)
@@ -171,9 +170,8 @@ class QNexusWidget(qt.QWidget):
             self.mainLayout.addWidget(self.buttons)
         else:
             self.actions = QNexusWidgetActions.QNexusWidgetActions(self)
-            if ('PyMca.Object3D' in sys.modules) or \
-               ('Object3D' in sys.modules) or \
-               ('PyMca5.Object3D' in sys.modules):
+            if ('PyMca5.PyMcaGui.pymca.SilxGLWindow' in sys.modules) or \
+               ('PyMca5.PyMca.SilxGLWindow' in sys.modules):
                 self.actions.set3DEnabled(True)
             else:
                 self.actions.set3DEnabled(False)
@@ -1153,7 +1151,7 @@ if __name__ == "__main__":
     app = qt.QApplication(sys.argv)
     try:
         #this is to add the 3D buttons ...
-        from PyMca5 import Object3D
+        from PyMca5.PyMcaGui.pymca import SilxGLWindow
     except:
         pass
     w = QNexusWidget()

@@ -135,7 +135,8 @@ class Plot(PlotBase.PlotBase):
             if lowerCaseString in ["matplotlib", "mpl"]:
                 from .backends.MatplotlibBackend import MatplotlibBackend as be
             elif lowerCaseString in ["gl", "opengl"]:
-                from .backends.OpenGLBackend import OpenGLBackend as be
+                # from .backends.OpenGLBackend import OpenGLBackend as be
+                from .backends.SilxBackend import SilxBackend as be
             elif lowerCaseString in ["glut"]:
                 from .backends.GLUTOpenGLBackend import GLUTOpenGLBackend as be
             elif lowerCaseString in ["osmesa", "mesa"]:

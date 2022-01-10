@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V. Armando Sole - ESRF Data Analysis"
+__author__ = "V. Armando Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -181,11 +181,11 @@ class Concentrations(qt.QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         l1 = qt.QLabel(msg)
-        l1.setFixedWidth(l1.fontMetrics().width('##'))
+        l1.setFixedWidth(l1.fontMetrics().maxWidth()*len('##'))
         l2 = qt.QLabel(msg)
         l2.setText("%s" % message)
         l3 = qt.QLabel(msg)
-        l3.setFixedWidth(l3.fontMetrics().width('##'))
+        l3.setFixedWidth(l3.fontMetrics().maxWidth()*len('##'))
         layout.addWidget(l1)
         layout.addWidget(l2)
         layout.addWidget(l3)
@@ -286,8 +286,14 @@ class ConcentrationsWidget(qt.QWidget):
         #self.referenceCombo.insertItem('Auto')
         self.referenceLine = MyQLineEdit(wm)
         wm.layout.addWidget(self.referenceLine)
-        self.referenceLine.setFixedWidth(
-            self.referenceLine.fontMetrics().width('#######'))
+        fmetrics = self.referenceLine.fontMetrics()
+        fmtext = '#######'
+        if hasattr(fmetrics, "maxWidth"):
+            self.referenceLine.setFixedWidth(fmetrics.maxWidth()*len(fmtext))
+        else:
+            #deprecated
+            _logger.info("Using deprecated method")
+            self.referenceLine.setFixedWidth(fmetrics.width(fmtext))
 
         wm.layout.addWidget(qt.HorizontalSpacer(wm))
         self.referenceLine.sigMyQLineEditSignal.connect( \

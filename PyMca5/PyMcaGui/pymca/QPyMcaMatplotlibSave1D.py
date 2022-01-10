@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2021 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -40,6 +40,10 @@ IconDict = PyMca_Icons.IconDict
 from matplotlib import __version__ as matplotlib_version
 from matplotlib.font_manager import FontProperties
 if qt.BINDING in ["PyQt5", "PySide2"]:
+    import matplotlib
+    matplotlib.rcParams['backend']='Qt5Agg'
+    from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+elif qt.BINDING in ["PyQt6", "PySide6"]:
     import matplotlib
     matplotlib.rcParams['backend']='Qt5Agg'
     from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas

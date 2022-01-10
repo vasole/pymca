@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -228,12 +228,6 @@ class PyMcaNexusWidget(QNexusWidget.QNexusWidget):
         widget.show()
 
 if __name__ == "__main__":
-    try:
-        #this is to add the 3D buttons ...
-        from PyMca5 import Object3D
-    except:
-        #not a big deal for this tests
-        pass
     app = qt.QApplication(sys.argv)
     w = PyMcaNexusWidget()
     if 0:

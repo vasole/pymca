@@ -197,13 +197,13 @@ class FitPeakSelect(qt.QWidget):
         self.energyValue = None
         if energyTable is not None:
             text = '<b><nobr>Excitation Energy (keV)</nobr></b>'
-            l1.setFixedWidth(l1.fontMetrics().width("##"+text+"####"))
+            l1.setFixedWidth(l1.fontMetrics().maxWidth()*len("##"+text+"####"))
             l1.setText(text)
             self.energyTable = energyTable
             add = 0
             self.energy = MyQLabel(hbox)
             hboxLayout.addWidget(self.energy)
-            self.energy.setFixedWidth(self.energy.fontMetrics().width('########.###'))
+            self.energy.setFixedWidth(self.energy.fontMetrics().maxWidth()*len('########.###'))
             self.energy.setAlignment(qt.Qt.AlignLeft)
             #self.energy.setForegroundColor(qt.Qt.red)
         else:
@@ -212,7 +212,7 @@ class FitPeakSelect(qt.QWidget):
             add = 1
             self.energy = qt.QLineEdit(hbox)
             hboxLayout.addWidget(self.energy)
-            self.energy.setFixedWidth(self.energy.fontMetrics().width('########.###'))
+            self.energy.setFixedWidth(self.energy.fontMetrics().maxWidth()*len('########.###'))
             self.energyButton = qt.QPushButton(hbox)
             hboxLayout.addWidget(self.energyButton)
             self.energyButton.setText("Update")

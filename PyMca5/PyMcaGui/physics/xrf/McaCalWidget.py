@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V. Armando Sole - ESRF Data Analysis"
+__author__ = "V. Armando Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -228,7 +228,7 @@ class McaCalWidget(qt.QDialog):
         self.xpos = qt.QLineEdit(toolbar)
         self.xpos.setText('------')
         self.xpos.setReadOnly(1)
-        self.xpos.setFixedWidth(self.xpos.fontMetrics().width('########'))
+        self.xpos.setFixedWidth(self.xpos.fontMetrics().maxWidth()*len('########'))
         self.toolbar.layout.addWidget(self.xpos)
         label=qt.QLabel(toolbar)
         label.setText('<b>Counts:</b>')
@@ -236,7 +236,7 @@ class McaCalWidget(qt.QDialog):
         self.ypos = qt.QLineEdit(toolbar)
         self.ypos.setText('------')
         self.ypos.setReadOnly(1)
-        self.ypos.setFixedWidth(self.ypos.fontMetrics().width('#########'))
+        self.ypos.setFixedWidth(self.ypos.fontMetrics().maxWidth()*len('#########'))
         self.toolbar.layout.addWidget(self.ypos)
         label=qt.QLabel(toolbar)
         if self.__xrdMode:
@@ -247,7 +247,7 @@ class McaCalWidget(qt.QDialog):
         self.epos = qt.QLineEdit(toolbar)
         self.epos.setText('------')
         self.epos.setReadOnly(1)
-        self.epos.setFixedWidth(self.epos.fontMetrics().width('#########'))
+        self.epos.setFixedWidth(self.epos.fontMetrics().maxWidth()*len('#########'))
         self.toolbar.layout.addWidget(self.epos)
 
         #rest
@@ -1066,10 +1066,14 @@ class CalibrationParameters(qt.QWidget):
         self.CText.editingFinished[()].connect(self._Cslot)
         self.CFixed.clicked.connect(self._CFixSlot)
 
-        self.orderbox.activated[str].connect(self.__orderbox)
+        if hasattr(self.orderbox, "textActivated"):
+            self.orderbox.textActivated[str].connect(self.__orderbox)
+            self.savebox.textActivated[str].connect(self.__savebox)
+        else:
+            self.orderbox.activated[str].connect(self.__orderbox)
+            self.savebox.activated[str].connect(self.__savebox)
         if hasattr(self.savebox.lineEdit(), "editingFinished"):
             self.savebox.lineEdit().editingFinished[()].connect(self.__savebox)
-        self.savebox.activated[str].connect(self.__savebox)
 
     def setParameters(self, pars):
         self.AText.setText("%.4g" % pars["A"])
@@ -1658,7 +1662,7 @@ def test(x,y,legend):
 if __name__ == '__main__':
     import os
     import getopt
-    from PyMca5 import specfilewrapper as specfile
+    from PyMca5.PyMcaIO import specfilewrapper as specfile
     options     = 'f:s:o'
     longoptions = ['file=','scan=','pkm=',
                     'output=','linear=','strip=',

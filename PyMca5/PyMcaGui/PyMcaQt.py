@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -33,14 +33,14 @@ import traceback
 import logging
 
 """
-This module simplifies writing code that has to deal with with PySide and PyQt4.
+This module simplifies writing code that has to deal with with PySideX and PyQtX.
 
 """
 
 _logger = logging.getLogger(__name__)
 
 BINDING = None
-"""The name of the Qt binding in use: PyQt5, PyQt4 or PySide2."""
+"""The name of the Qt binding in use: PyQt5, PyQt4, PySide2, PySide6"""
 
 HAS_SVG = False
 """True if Qt provides support for Scalable Vector Graphics (QtSVG)."""
@@ -53,8 +53,8 @@ HAS_OPENGL = False
 if 'PySide2.QtCore' in sys.modules:
     BINDING = 'PySide2'
 
-elif 'PySide.QtCore' in sys.modules:
-    BINDING = 'PySide'
+elif 'PySide6.QtCore' in sys.modules:
+    BINDING = 'PySide6'
 
 elif 'PyQt5.QtCore' in sys.modules:
     BINDING = 'PyQt5'
@@ -65,9 +65,9 @@ elif 'PyQt4.QtCore' in sys.modules:
 elif hasattr(sys, 'argv') and ('--binding=PySide2' in sys.argv):
     BINDING = 'PySide2'
 
-elif hasattr(sys, 'argv') and ('--binding=PySide' in sys.argv):
+elif hasattr(sys, 'argv') and ('--binding=PySide6' in sys.argv):
     # argv might not be defined for embedded python (e.g., in Qt designer)
-    BINDING = 'PySide'
+    BINDING = 'PySide6'
 
 if BINDING is None: # Try the different bindings
     try:
@@ -98,11 +98,13 @@ if BINDING is None: # Try the different bindings
                     del sys.modules["sip"]
                     del sys.modules["PyQt4"]
                 try:
-                    import PySide.QtCore
-                    BINDING = "PySide"
+                    import PySide6.QtCore
+                    BINDING = "PySide6"
                 except ImportError:
+                    if 'PySide6' in sys.modules:
+                        del sys.modules["PySide6"]
                     raise ImportError(
-                        'No Qt wrapper found. Install PyQt5, PyQt4, PySide or PySide2.')
+                        'No Qt wrapper found. Install PyQt5, PyQt4, PySide2 or PySide6.')
 
 _logger.info("BINDING set to %s" % BINDING)
 
@@ -225,12 +227,54 @@ elif BINDING == "PySide2":
                                                 _platform_plugin_path
             _logger.info("QT_QPA_PLATFORM_PLUGIN_PATH set to <%s>" % \
                              _platform_plugin_path)
+elif BINDING == 'PySide6':
+    _logger.debug('Using PySide6 bindings')
+
+    import PySide6 as QtBinding  # noqa
+
+    from PySide6.QtCore import *  # noqa
+    from PySide6.QtGui import *  # noqa
+    from PySide6.QtWidgets import *  # noqa
+    from PySide6.QtPrintSupport import *  # noqa
+
+    try:
+        from PySide6.QtOpenGL import *  # noqa
+        from PySide6.QtOpenGLWidgets import QOpenGLWidget  # noqa
+    except ImportError:
+        _logger.info("PySide6.QtOpenGL not available")
+        HAS_OPENGL = False
+    else:
+        HAS_OPENGL = True
+
+    try:
+        from PySide6.QtSvg import *  # noqa
+    except ImportError:
+        _logger.info("PySide6.QtSvg not available")
+        HAS_SVG = False
+    else:
+        HAS_SVG = True
+
+    pyqtSignal = Signal
+
+    # use a (bad) replacement for QDesktopWidget
+    class QDesktopWidget:
+        def height(self):
+            _logger.info("Using obsolete classes")
+            screen = QApplication.instance().primaryScreen() 
+            return screen.availableGeometry().height()
+
+
+        def width(self):
+            _logger.info("Using obsolete classes")
+            screen = QApplication.instance().primaryScreen() 
+            return screen.availableGeometry().width()
+
 else:
     raise ImportError('No Qt wrapper found. Install one of PyQt5, PyQt4, PySide or PySide2 (untested)')
 
 # provide a exception handler but not implement it by default
 def exceptionHandler(type_, value, trace):
-    print("%s %s %s" % (type_, value, ''.join(traceback.format_tb(trace))))
+    _logger.error("%s %s %s", type_, value, ''.join(traceback.format_tb(trace)))
     if QApplication.instance():
         msg = QMessageBox()
         msg.setWindowTitle("Unhandled exception")
@@ -239,7 +283,10 @@ def exceptionHandler(type_, value, trace):
         msg.setDetailedText(("%s " % value) + \
                             ''.join(traceback.format_tb(trace)))
         msg.raise_()
-        msg.exec_()
+        if hasattr(msg, "exec"):
+            msg.exec()
+        else:
+            msg.exec_()
 
 # Overwrite the QFileDialog to make sure that by default it
 # returns non-native dialogs as it was the traditional behavior of Qt

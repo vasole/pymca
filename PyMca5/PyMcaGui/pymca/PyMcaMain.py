@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -247,18 +247,16 @@ try:
     #This is to make sure it is properly frozen
     #and that Object3D is fully supported
     import OpenGL.GL
-    #import Object3D.SceneGLWindow as SceneGLWindow
-    from PyMca5.PyMcaGui.pymca import PyMcaGLWindow
     OBJECT3D = False
     if ("PyQt4.QtOpenGL" in sys.modules) or \
        ("PySide.QtOpenGL") in sys.modules or \
+       ("PySide6.QtOpenGL") in sys.modules or \
        ("PySide2.QtOpenGL") in sys.modules or \
        ("PyQt5.QtOpenGL") in sys.modules:
         OBJECT3D = True
 except:
     _logger.info("pyopengl not installed")
     OBJECT3D = False
-
 
 # Silx OpenGL availability (former Object3D)
 try:
@@ -269,8 +267,8 @@ except ImportError:
 
 if isSilxGLAvailable:
     SceneGLWindow = PyMca5.PyMcaGui.pymca.SilxGLWindow
-elif OBJECT3D:
-    SceneGLWindow = PyMcaGLWindow
+else:
+    SceneGLWindow = None
 
 try:
     from PyMca5.PyMcaGui.pymca import SilxScatterWindow
@@ -302,6 +300,8 @@ if OPENGL_DRIVERS_OK and isSilxGLAvailable:
     except:
         _logger.info("Cannot test OpenGL availability %s" % sys.exc_info()[1])
 
+# PyMca 3D disabled in favor of silx
+OBJECT3D = isSilxGLAvailable
 _logger.info("SilxGL availability: %s", isSilxGLAvailable)
 
 from PyMca5.PyMcaGui.pymca import QDispatcher
@@ -339,7 +339,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 fl = qt.Qt.WA_DeleteOnClose
             PyMcaMdi.PyMcaMdi.__init__(self, parent, name, fl)
             maxheight = qt.QDesktopWidget().height()
-            if maxheight < 799:
+            if maxheight < 799 and maxheight > 0:
                 self.setMinimumHeight(int(0.8*maxheight))
                 self.setMaximumHeight(int(0.9*maxheight))
             self.setWindowTitle(name)
