@@ -189,10 +189,6 @@ packages = ['PyMca5', 'PyMca5.PyMcaPlugins', 'PyMca5.tests',
             'PyMca5.PyMcaGui.io.hdf5',
             'PyMca5.PyMcaGui.math',
             'PyMca5.PyMcaGui.math.fitting',
-            'PyMca5.Object3D',
-            'PyMca5.Object3D.Object3DPlugins',
-            'PyMca5.PyMcaGraph.backends.GLSupport',
-            'PyMca5.PyMcaGraph.backends.GLSupport.gl',
             'PyMca5.EPDL97']
 # more packages are appended later, when building extensions
 
@@ -359,58 +355,6 @@ def build__cython_kmeans(ext_modules):
                        include_dirs=[numpy.get_include()])
     ext_modules.append(module)
 
-def build_Object3DCTools(ext_modules):
-    includes = [numpy.get_include()]
-    if sys.platform == "win32":
-        libraries = ['opengl32', 'glu32']
-        # include headers missing in microsoft implementation of OpenGL
-        includes.append('third-party/khronos_headers')
-    elif sys.platform == "darwin":
-        libraries = []
-    else:
-        libraries = []
-        # it does not seem to be necessary to link to the library
-        # since it is dynamically provided. Uncomment next line if
-        # needed
-        # libraries = ['GL']
-
-    module = Extension(name='PyMca5.Object3D.Object3DCTools',
-                       sources=glob.glob('PyMca5/Object3D/Object3DCTools/*.c'),
-                       define_macros=define_macros,
-                       libraries=libraries,
-                       include_dirs=includes)
-    ext_modules.append(module)
-
-
-def build_Object3DQhull(extensions):
-    libraries = []
-    sources = ["PyMca5/Object3D/Object3DQhull/Object3DQhull.c"]
-    include_dirs = [numpy.get_include()]
-
-    # check if the user provide some information about a system qhull
-    # library
-    QHULL_CFLAGS = os.getenv("QHULL_CFLAGS")
-    QHULL_LIBS = os.getenv("QHULL_LIBS")
-
-    extra_compile_args = []
-    extra_link_args = []
-    if QHULL_CFLAGS and QHULL_LIBS:
-        extra_compile_args += [QHULL_CFLAGS]
-        extra_link_args += [QHULL_LIBS]
-    else:
-        sources += glob.glob("third-party/qhull/src/*.c")
-        include_dirs += ["third-party/qhull/src"]
-
-    module = Extension(name='PyMca5.Object3D.Object3DQhull',
-                       sources=sources,
-                       define_macros=define_macros,
-                       libraries=libraries,
-                       include_dirs=include_dirs,
-                       extra_compile_args=extra_compile_args,
-                       extra_link_args=extra_link_args)
-
-    extensions.append(module)
-
 
 def build_PyMcaSciPy(ext_modules):
     packages.append('PyMca5.PyMcaMath.PyMcaSciPy')
@@ -532,34 +476,6 @@ build_sps(ext_modules)
 build_PyMcaIOHelper(ext_modules)
 
 build__cython_kmeans(ext_modules)
-
-# the Object3D modules add little functionality to PyMca but require a
-# proper compilation environment to build PyMca.
-# In particular, the OpenGL header files have to be installed.
-# In Debian or Ubuntu the package mesa-common-dev (or equivalent) is
-# not installed by default
-HAS_OPENGL_HEADERS = True
-if sys.platform not in ["win32", "darwin"]:
-    import distutils.ccompiler
-    comp = distutils.ccompiler.get_default_compiler()
-    if comp == "unix":
-        import subprocess
-        if subprocess.call("gcc -v > /dev/null 2>&1", shell=True) == 0:
-            c_prog = "#include <stdint.h>\n int main()\n{return 0;}\n"
-            if subprocess.call("echo '%s' | gcc -x c - " % c_prog, shell=True) == 0:
-                c_prog = "#include <GL/gl.h>\n int main()\n{return 0;}\n"
-                if subprocess.call("echo '%s' | gcc -x c - " % c_prog, shell=True):
-                    HAS_OPENGL_HEADERS = False
-        gl_header_test = "a.out"
-        if os.path.exists(gl_header_test):
-            os.remove(gl_header_test)
-
-if HAS_OPENGL_HEADERS:
-    build_Object3DCTools(ext_modules)
-    build_Object3DQhull(ext_modules)
-else:
-    print("Missing <GL/gl.h> - OpenGL extensions disabled")
-    time.sleep(1)
 
 build_PyMcaSciPy(ext_modules)
 build_plotting_ctools(ext_modules)
