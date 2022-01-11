@@ -497,7 +497,7 @@ class QSpsWidget(qt.QWidget):
 
         refreshButton.clicked.connect(self.refreshSpecList)
         closeButton.clicked.connect(self.closeCurrentSpec)
-        if hasattr(self.specCombo, "textActivated")
+        if hasattr(self.specCombo, "textActivated"):
             self.specCombo.textActivated[str].connect(self.refreshArrayList)
         else:
             self.specCombo.activated[str].connect(self.refreshArrayList)
