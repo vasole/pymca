@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -335,7 +335,12 @@ class RGBCorrelatorWidget(qt.QWidget):
 
         self.tableWidget.sigRGBCorrelatorTableSignal.connect(self._tableSlot)
 
-        self.buttonGroup.buttonClicked[int].connect(self._colormapTypeChange)
+        if hasattr(self.buttonGroup, "idClicked"):
+            self.buttonGroup.idClicked[int].connect(self._colormapTypeChange)
+        else:
+            # deprecated
+            _logger.debug("Using deprecated signal")
+            self.buttonGroup.buttonClicked[int].connect(self._colormapTypeChange)
 
     def _showCalculationDialog(self):
         if (not NNMA) and (not PCA) and (not KMEANS):
