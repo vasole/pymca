@@ -87,7 +87,12 @@ class Buttons(qt.QWidget):
                 self.mainLayout.addWidget(button, row, col)
                 self.buttonGroup.addButton(button)
                 self.buttonList.append(button)
-        self.buttonGroup.buttonClicked[int].connect(self.emitSignal)
+        if hasattr(self.buttonGroup, "idClicked"):
+            self.buttonGroup.idClicked[int].connect(self.emitSignal)
+        else:
+            # deprecated
+            _logger.debug("Using deprecated signal")
+            self.buttonGroup.buttonClicked[int].connect(self.emitSignal)
 
     def emitSignal(self, idx):
         button = self.buttonGroup.button(idx)
