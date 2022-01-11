@@ -283,10 +283,7 @@ def exceptionHandler(type_, value, trace):
         msg.setDetailedText(("%s " % value) + \
                             ''.join(traceback.format_tb(trace)))
         msg.raise_()
-        if hasattr(msg, "exec"):
-            msg.exec()
-        else:
-            msg.exec_()
+        msg.exec()
 
 # Overwrite the QFileDialog to make sure that by default it
 # returns non-native dialogs as it was the traditional behavior of Qt
