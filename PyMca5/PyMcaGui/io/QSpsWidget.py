@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2016 E. Papillon, V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "E. Papillon, V.A. Sole - ESRF Software Group"
+__author__ = "E. Papillon, V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -357,12 +357,8 @@ class SPS_StandardArray(qt.QWidget):
         self.xCombo= qt.QComboBox(self)
         self.xCombo.setEditable(0)
 
-        if QTVERSION < '4.0.0':
-            self.yList= qt.QListBox(self)
-            self.yList.setSelectionMode(qt.QListBox.Multi)
-        else:
-            self.yList= qt.QListWidget(self)
-            self.yList.setSelectionMode(qt.QAbstractItemView.ExtendedSelection)
+        self.yList= qt.QListWidget(self)
+        self.yList.setSelectionMode(qt.QAbstractItemView.ExtendedSelection)
 
         layout.addWidget(self.plotCombo, 0, 1)
         layout.addWidget(self.xCombo, 1, 1)
@@ -501,7 +497,10 @@ class QSpsWidget(qt.QWidget):
 
         refreshButton.clicked.connect(self.refreshSpecList)
         closeButton.clicked.connect(self.closeCurrentSpec)
-        self.specCombo.activated[str].connect(self.refreshArrayList)
+        if hasattr(self.specCombo, "textActivated")
+            self.specCombo.textActivated[str].connect(self.refreshArrayList)
+        else:
+            self.specCombo.activated[str].connect(self.refreshArrayList)
 
         # --- splitter
         self.splitter= qt.QSplitter(self)
@@ -577,21 +576,13 @@ class QSpsWidget(qt.QWidget):
         self.specCombo.clear()
         if len(speclist):
             for spec in speclist:
-                if QTVERSION < '4.0.0':
-                    self.specCombo.insertItem(spec)
-                else:
-                    self.specCombo.addItem(spec)
+                self.specCombo.addItem(spec)
             self.selectSpec(selected or speclist[0])
 
     def selectSpec(self, specname=None):
-        if QTVERSION < '4.0.0':
-            for idx in range(self.specCombo.count()):
-                if str(self.specCombo.text(idx))==specname:
-                    self.specCombo.setCurrentItem(idx)
-        else:
-            for idx in range(self.specCombo.count()):
-                if str(self.specCombo.itemText(idx))==specname:
-                    self.specCombo.setCurrentIndex(idx)
+        for idx in range(self.specCombo.count()):
+            if str(self.specCombo.itemText(idx))==specname:
+                self.specCombo.setCurrentIndex(idx)
 
     def __getCurrentSpec(self):
         if self.specCombo.count():
