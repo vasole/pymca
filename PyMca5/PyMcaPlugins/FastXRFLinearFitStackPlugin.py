@@ -147,7 +147,7 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
         if self.configurationWidget is None:
             self.configurationWidget = \
                             FastXRFLinearFitWindow.FastXRFLinearFitDialog()
-        ret = self.configurationWidget.exec_()
+        ret = self.configurationWidget.exec()
         if ret:
             self._executeFunctionAndParameters()
 
@@ -217,7 +217,7 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setInformativeText(str(sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
-            msg.exec_()
+            msg.exec()
 
     def _threadFinished(self):
         result = self.thread.result

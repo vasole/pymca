@@ -180,4 +180,4 @@ if __name__ == "__main__":
         plot.setPluginDirectoryList([pluginDir])
         plot.getPlugins()
     plot.show()
-    app.exec_()
+    app.exec()
