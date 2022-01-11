@@ -292,7 +292,7 @@ def main():
     tab.build(["Cnt1", "Cnt2", "Cnt3"])
     tab.setCounterSelection({'x':[1, 2], 'y':[4], 'cntlist':["dummy", "Cnt0", "Cnt1", "Cnt2", "Cnt3"]})
     tab.show()
-    app.exec_()
+    app.exec()
 
 if __name__ == "__main__":
     main()

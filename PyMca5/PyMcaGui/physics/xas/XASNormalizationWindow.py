@@ -371,7 +371,7 @@ class XASNormalizationWindow(qt.QWidget):
             msg.setText("An error has occured while normalizing the data")
             msg.setInformativeText(str(sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
-            msg.exec_()
+            msg.exec()
             return
 
         nEnergy, nSpectrum, usedEdge, jump = normalizationResult[0:4]
@@ -540,7 +540,7 @@ if __name__ == "__main__":
         x = 8000. + numpy.arange(1500).astype(numpy.float64)
         y = SpecfitFuns.upstep([100, 8500., 50], x)
         w = XASNormalizationDialog(None, y + numpy.sqrt(y)* noise, energy=x)
-    ret=w.exec_()
+    ret=w.exec()
     if ret:
         print(w.getParameters())
 

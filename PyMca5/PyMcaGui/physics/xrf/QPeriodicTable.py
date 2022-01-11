@@ -551,7 +551,7 @@ def testwidget():
     c.sigSelectionChanged.connect(change)
 
     w.show()
-    a.exec_()
+    a.exec()
 
 if __name__ == "__main__":
     testwidget()

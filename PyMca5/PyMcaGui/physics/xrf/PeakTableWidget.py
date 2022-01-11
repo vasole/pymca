@@ -550,7 +550,7 @@ def main(args):
     tab.configure(name='1',number=24,channel='1234',use=1,
                   setenergy=12.5,calenergy=24.0)
     tab.show()
-    app.exec_()
+    app.exec()
 
 if __name__=="__main__":
     main(sys.argv)

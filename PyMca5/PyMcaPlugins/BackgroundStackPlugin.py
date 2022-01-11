@@ -115,7 +115,7 @@ class BackgroundStackPlugin(StackPluginBase.StackPluginBase):
         snipWindow.graph.setGraphYLabel(info['ylabel'])
         #snipWindow.setModal(True)
         snipWindow.show()
-        ret = snipWindow.exec_()
+        ret = snipWindow.exec()
         if ret:
             snipParametersDict = snipWindow.getParameters()
             snipWindow.close()
@@ -136,7 +136,7 @@ class BackgroundStackPlugin(StackPluginBase.StackPluginBase):
         snipWindow.graph.setGraphYLabel(info['ylabel'])
         #snipWindow.setModal(True)
         snipWindow.show()
-        ret = snipWindow.exec_()
+        ret = snipWindow.exec()
         if ret:
             snipParametersDict = snipWindow.getParameters()
             snipWindow.close()
@@ -160,7 +160,7 @@ class BackgroundStackPlugin(StackPluginBase.StackPluginBase):
                                            imageList[0] * 1)
         #snipWindow.setModal(True)
         snipWindow.show()
-        ret = snipWindow.exec_()
+        ret = snipWindow.exec()
         if ret:
             snipParametersDict = snipWindow.getParameters()
             snipWindow.close()

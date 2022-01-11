@@ -158,7 +158,7 @@ class Concentrations(qt.QWidget):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("%s" % sys.exc_info()[1])
-            msg.exec_()
+            msg.exec()
 
     def closeEvent(self, event):
         qt.QWidget.closeEvent(self, event)
@@ -426,7 +426,7 @@ class ConcentrationsWidget(qt.QWidget):
                 msg = qt.QMessageBox(self.referenceLine)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Invalid Element %s" % current)
-                msg.exec_()
+                msg.exec()
                 self.referenceLine.setFocus()
                 return
             if (current == '') or (current.upper() == 'AUTO'):
@@ -437,7 +437,7 @@ class ConcentrationsWidget(qt.QWidget):
                 msg = qt.QMessageBox(self.referenceLine)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Invalid Element %s" % current)
-                msg.exec_()
+                msg.exec()
                 self.referenceLine.setFocus()
             else:
                 self.referenceLine.setText(current)
@@ -487,7 +487,7 @@ class ConcentrationsWidget(qt.QWidget):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Cannot use automatic concentrations time setting!!!")
-                msg.exec_()
+                msg.exec()
             else:
                 ddict['time'] = float(self._liveTime)
         else:
@@ -903,13 +903,13 @@ class MyQComboBox(qt.QComboBox):
                 msg = qt.QMessageBox(self._lineEdit)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Invalid Element %s" % current)
-                msg.exec_()
+                msg.exec()
                 self._lineEdit.setFocus()
             if not Elements.isValidFormula(current):
                 msg = qt.QMessageBox(self._lineEdit)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Invalid Element %s" % current)
-                msg.exec_()
+                msg.exec()
                 self._lineEdit.setFocus()
             else:
                 self.setCurrentText(current)
@@ -956,7 +956,7 @@ if __name__ == "__main__":
                 Elements.Material[material] = copy.deepcopy(d['result']['config']['materials'][material])
             demo.processFitResult(fitresult=d, elementsfrommatrix=False)
         demo.show()
-        ret = app.exec_()
+        ret = app.exec()
         app = None
         sys.exit(ret)
     else:

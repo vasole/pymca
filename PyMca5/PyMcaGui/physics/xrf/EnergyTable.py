@@ -128,7 +128,7 @@ class EnergyTab(qt.QWidget):
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText("Error loading energy table: %s" % (sys.exc_info()[1]))
-                    msg.exec_()
+                    msg.exec()
 
     def loadEnergyTableParameters(self, filename):
         if sys.platform == "win32" and (sys.version < "3.0.0"):
@@ -238,7 +238,7 @@ class EnergyTab(qt.QWidget):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Input Output Error: %s" % (sys.exc_info()[1]))
-            msg.exec_()
+            msg.exec()
             return
         if "," in filterused[0]:
             csv = ","
@@ -533,7 +533,7 @@ class EnergyTable(QTable):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Invalid Float")
-                msg.exec_()
+                msg.exec()
                 return
         ddict = self._getDict()
         if ddict != {}:
@@ -605,7 +605,7 @@ class EnergyTable(QTable):
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText("EnergyTable: Error on energy %d" % i)
-                    msg.exec_()
+                    msg.exec()
                     return {}
         return ddict
 
@@ -643,7 +643,7 @@ def main(args):
     tab.setParameters(energy, weight, flag, scatterlist)
     tab.sigEnergyTableSignal.connect(dummy)
     tab.show()
-    app.exec_()
+    app.exec()
 
 if __name__=="__main__":
     main(sys.argv)

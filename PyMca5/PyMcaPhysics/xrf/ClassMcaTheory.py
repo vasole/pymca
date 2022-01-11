@@ -2953,7 +2953,7 @@ def test(inputfile=None,scankey=None,pkm=None,
                                     "Summing")
         graph.addCurve(mcafitresult['energy'],mcafitresult['continuum'],"Continuum")
         graph.show()
-        app.exec_()
+        app.exec()
 
 PROFILING = 0
 if __name__ == "__main__":

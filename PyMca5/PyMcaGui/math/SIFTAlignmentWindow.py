@@ -329,6 +329,6 @@ if __name__ == "__main__":
     app.lastWindowClosed.connect(app.quit)
     w = SIFTAlignmentDialog()
     w.setStack(stackData, index=0)
-    ret = w.exec_()
+    ret = w.exec()
     if ret:
         print(w.getParameters())

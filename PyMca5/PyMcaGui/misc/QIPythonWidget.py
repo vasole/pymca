@@ -111,7 +111,7 @@ class QIPythonWidget(RichIPythonWidget):
             msg.setText("Do you want to clean the console workspace?")
             msg.setStandardButtons(QMessageBox.No | QMessageBox.Yes)
             msg.setDefaultButton(QMessageBox.Yes)
-            ret = msg.exec_()
+            ret = msg.exec()
             try:
                 if ret == QMessageBox.Yes:
                     self.kernel_manager.kernel.shell.magic('reset -sf')
@@ -165,7 +165,7 @@ def main():
     app  = QApplication([])
     widget = ExampleWidget()
     widget.show()
-    app.exec_()
+    app.exec()
 
 if __name__ == '__main__':
     main()

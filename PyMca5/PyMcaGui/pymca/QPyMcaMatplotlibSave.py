@@ -179,7 +179,7 @@ class SaveImageSetup(qt.QWidget):
             msg.setInformativeText("%s" % sys.exc_info()[1])
             msg.setDetailedText(traceback.format_exc())
             msg.setWindowTitle('Matplotlib Save Image')
-            msg.exec_()
+            msg.exec()
 
     def printClicked(self):
         try:
@@ -193,7 +193,7 @@ class SaveImageSetup(qt.QWidget):
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Error printing image: %s" % sys.exc_info()[1])
             msg.setWindowTitle('Matplotlib Save Image')
-            msg.exec_()
+            msg.exec()
 
 
     def saveClicked(self):
@@ -220,7 +220,7 @@ class SaveImageSetup(qt.QWidget):
         outfile.setFileMode(outfile.AnyFile)
         outfile.setAcceptMode(qt.QFileDialog.AcceptSave)
         outfile.setDirectory(self.lastOutputDir)
-        ret = outfile.exec_()
+        ret = outfile.exec()
         if ret:
             if hasattr(outfile, "selectedFilter"):
                 filterused = qt.safe_str(outfile.selectedFilter()).split()
@@ -236,7 +236,7 @@ class SaveImageSetup(qt.QWidget):
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error saving image: %s" % sys.exc_info()[1])
                 msg.setWindowTitle('Matplotlib Save Image')
-                msg.exec_()
+                msg.exec()
             try:
                 outputDir  = os.path.dirname(outstr)
                 self.lastOutputDir = outputDir
@@ -268,7 +268,7 @@ class SaveImageSetup(qt.QWidget):
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Cannot overwrite file: %s" % sys.exc_info()[1])
                 msg.setWindowTitle('Matplotlib Save Image')
-                msg.exec_()
+                msg.exec()
                 return
         try:
             self.imageWidget.print_figure(finalFile,
@@ -290,7 +290,7 @@ class SaveImageSetup(qt.QWidget):
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error saving file: %s" % sys.exc_info()[1])
                 msg.setWindowTitle('Matplotlib Save Image')
-                msg.exec_()
+                msg.exec()
 
 class SimpleComboBox(qt.QComboBox):
     def __init__(self, parent=None, options=['1', '2', '3']):
@@ -987,7 +987,7 @@ def test():
     ddict["colorbar"] = "vertical"
     w.setParameters(ddict)
     w.show()
-    app.exec_()
+    app.exec()
 
 if __name__ == "__main__":
     test()

@@ -109,7 +109,7 @@ class FileListPage(qt.QWizardPage):
                                        "HDF5 Files (*)"])
         filedialog.setModal(1)
         filedialog.setFileMode(filedialog.ExistingFiles)
-        ret = filedialog.exec_()
+        ret = filedialog.exec()
         if  ret == qt.QDialog.Accepted:
             filelist0=filedialog.selectedFiles()
         else:
@@ -347,7 +347,7 @@ class DatasetSelectionPage(qt.QWizardPage):
         msg = qt.QMessageBox(self)
         msg.setIcon(qt.QMessageBox.Information)
         msg.setText(text)
-        msg.exec_()
+        msg.exec()
 
 
 class ShapePage(qt.QWizardPage):
@@ -421,6 +421,6 @@ if __name__ == "__main__":
     import sys
     app = qt.QApplication(sys.argv)
     w = QHDF5StackWizard()
-    ret = w.exec_()
+    ret = w.exec()
     if ret == qt.QDialog.Accepted:
         print(w.getParameters())

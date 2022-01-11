@@ -263,4 +263,4 @@ if __name__ == "__main__":
                     selectable=False, draggable=True)
 
     w.getWidgetHandle().show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

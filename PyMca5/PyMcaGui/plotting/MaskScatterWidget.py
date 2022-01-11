@@ -1009,5 +1009,5 @@ if __name__ == "__main__":
     w.setPolygonSelectionMode()
     w.sigMaskScatterWidgetSignal.connect(receivingSlot)
     w.show()
-    app.exec_()
+    app.exec()
 

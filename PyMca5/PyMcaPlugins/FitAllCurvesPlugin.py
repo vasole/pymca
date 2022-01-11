@@ -65,7 +65,7 @@ class FitAllCurvesPlugin(Plugin1DBase.Plugin1DBase):
             msg.setIcon(qt.QMessageBox.Warning)
             msg.setText("There are no curves to be fitted on this plot.")
             msg.setStandardButtons(qt.QMessageBox.Ok)
-            msg.exec_()
+            msg.exec()
             return
         if activeCurve is None:
             activeCurve = allCurves[0]

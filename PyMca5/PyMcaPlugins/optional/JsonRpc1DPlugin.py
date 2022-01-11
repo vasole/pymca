@@ -324,7 +324,7 @@ class PyMcaJsonRpc1DPlugin(Plugin1DBase.Plugin1DBase):
 
     def applyMethod(self, methodName):
         dialogBox = _DialogBox(None, self)
-        dialogBox.exec_()
+        dialogBox.exec()
 
     def load(self):
         try:
@@ -586,7 +586,7 @@ Options: plugin, demoServer demoClient, auto
             clientDemo = _DemoClientModeAuto(plugin, onFinish=serverDemo.start)
             clientDemo.start()
 
-        app.exec_()
+        app.exec()
 
     elif sys.argv[1] == 'demoServer':
         httpdServer = _testServer(('localhost', 8000))

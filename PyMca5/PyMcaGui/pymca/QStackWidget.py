@@ -299,7 +299,7 @@ class QStackWidget(StackBase.StackBase,
             oldshape = self._stack.data.shape
             dialog = ImageShapeDialog(self, shape=oldshape[0:2])
             dialog.setModal(True)
-            ret = dialog.exec_()
+            ret = dialog.exec()
             if ret:
                 shape = dialog.getImageShape()
                 dialog.close()
@@ -381,7 +381,7 @@ class QStackWidget(StackBase.StackBase,
                 msg.setWindowTitle("Encoding error")
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Please use ASCII characters in file name and path")
-                msg.exec_()
+                msg.exec()
         return ""
 
     def _getOutputTiffFilename(self):
@@ -412,7 +412,7 @@ class QStackWidget(StackBase.StackBase,
                 msg.setWindowTitle("Encoding error")
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Please use ASCII characters in file name and path")
-                msg.exec_()
+                msg.exec()
         return ""
 
     def saveStackAsMonochromaticTiffImages(self, dtype=None):
@@ -552,7 +552,7 @@ class QStackWidget(StackBase.StackBase,
             msg.setText("An error has occured while saving the data:")
             msg.setInformativeText(qt.safe_str(sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
-            msg.exec_()
+            msg.exec()
 
     def saveStackAsNeXusSpectra(self, compression=False):
         self.saveStackAsNeXus(interpretation="spectrum",
@@ -672,7 +672,7 @@ class QStackWidget(StackBase.StackBase,
                     msg.setText("An error has occurred while summing the master and slave stacks")
                     msg.setInformativeText(qt.safe_str(sys.exc_info()[1]))
                     msg.setDetailedText(traceback.format_exc())
-                    msg.exec_()
+                    msg.exec()
                 if "McaLiveTime" in masterStackDataObject.info:
                     try:
                         for slave in self._slaveList:
@@ -694,7 +694,7 @@ class QStackWidget(StackBase.StackBase,
                         msg.setText(txt)
                         msg.setInformativeText(qt.safe_str(sys.exc_info()[1]))
                         msg.setDetailedText(traceback.format_exc())
-                        msg.exec_()
+                        msg.exec()
                 self._closeSlave()
                 self.setStack(masterStackDataObject)
                 return
@@ -715,7 +715,7 @@ class QStackWidget(StackBase.StackBase,
             msg.setWindowTitle("Error loading slave stack")
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("%s: %s" % (sys.exc_info()[0], sys.exc_info()[1]))
-            msg.exec_()
+            msg.exec()
             return
         if stack is None:
             return
@@ -841,7 +841,7 @@ class QStackWidget(StackBase.StackBase,
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Information)
                 msg.setText("Problem loading plugins")
-                msg.exec_()
+                msg.exec()
             return
         if idx == 1:
             dirName = qt.safe_str(qt.QFileDialog.getExistingDirectory(self,
@@ -900,7 +900,7 @@ class QStackWidget(StackBase.StackBase,
             msg.setText("An error has occured while executing the plugin:")
             msg.setInformativeText(qt.safe_str(sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
-            msg.exec_()
+            msg.exec()
             if _logger.getEffectiveLevel() == logging.DEBUG:
                 raise
 
@@ -1014,7 +1014,7 @@ class QStackWidget(StackBase.StackBase,
         text = "Your data contain infinite values or nans.\n"
         text += "Pixels containing those values will be ignored."
         msg.setText(text)
-        msg.exec_()
+        msg.exec()
         return
 
     def calculateROIImages(self, index1, index2, imiddle=None, energy=None):
@@ -1027,7 +1027,7 @@ class QStackWidget(StackBase.StackBase,
             msg.setWindowTitle("No active curve selected")
             text = "Please select the MCA active curve."
             msg.setText(text)
-            msg.exec_()
+            msg.exec()
             return
         x, y, legend, info = activeCurve[:4]
         return StackBase.StackBase.calculateROIImages(self,
@@ -1298,7 +1298,7 @@ class QStackWidget(StackBase.StackBase,
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Please select an active curve")
-            msg.exec_()
+            msg.exec()
             return
         x, y, legend, info = self.mcaWidget.getActiveCurve()[:4]
         return x, y, legend, info
@@ -1441,6 +1441,6 @@ if __name__ == "__main__":
     else:
         widget.setStack(stack)
     widget.show()
-    app.exec_()
+    app.exec()
     app = None
 

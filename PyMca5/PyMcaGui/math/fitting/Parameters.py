@@ -850,7 +850,7 @@ def main(args):
     tab.fillfromfit(fit.paramlist)
     tab.show()
     app.lastWindowClosed.connect(app.quit)
-    app.exec_()
+    app.exec()
 
 if __name__ == "__main__":
     main(sys.argv)

@@ -298,7 +298,7 @@ def main():
     def slot(ddict):
         print("Received = ", ddict)
     tab.sigHDF5McaTableSignal.connect(slot)
-    app.exec_()
+    app.exec()
 
 if __name__ == "__main__":
     main()

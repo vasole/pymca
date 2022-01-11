@@ -119,7 +119,7 @@ class BackgroundScanPlugin(Plugin1DBase.Plugin1DBase):
         snipWindow.graph.setGraphYLabel(info['ylabel'])
         #snipWindow.setModal(True)
         snipWindow.show()
-        ret = snipWindow.exec_()
+        ret = snipWindow.exec()
         if ret:
             ydata = snipWindow.parametersWidget.background
             xdata = snipWindow.parametersWidget.xValues
@@ -140,7 +140,7 @@ class BackgroundScanPlugin(Plugin1DBase.Plugin1DBase):
         snipWindow.graph.setGraphXLabel(info['xlabel'])
         snipWindow.graph.setGraphYLabel(info['ylabel'])
         snipWindow.show()
-        ret = snipWindow.exec_()
+        ret = snipWindow.exec()
         if ret:
             ydata = snipWindow.parametersWidget.spectrum -\
                     snipWindow.parametersWidget.background
@@ -168,7 +168,7 @@ class BackgroundScanPlugin(Plugin1DBase.Plugin1DBase):
         snipWindow.graph.setGraphXLabel(info['xlabel'])
         snipWindow.graph.setGraphYLabel(info['ylabel'])
         snipWindow.show()
-        ret = snipWindow.exec_()
+        ret = snipWindow.exec()
         if ret:
             ydata = snipWindow.parametersWidget.background
             xdata = snipWindow.parametersWidget.xValues

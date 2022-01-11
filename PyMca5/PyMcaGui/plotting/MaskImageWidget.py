@@ -2024,7 +2024,7 @@ class MaskImageWidget(qt.QWidget):
             filedialog.setNameFilters(strlist)
             filedialog.selectNameFilter(self._saveFilter)
         filedialog.setDirectory(initdir)
-        ret = filedialog.exec_()
+        ret = filedialog.exec()
         if not ret:
             return ""
         filename = filedialog.selectedFiles()[0]
@@ -2185,7 +2185,7 @@ def getImageMask(image, mask=None):
     Functional interface to interactively define a mask
     """
     w = MaskImageDialog(image=image, mask=mask)
-    ret = w.exec_()
+    ret = w.exec()
     if ret:
         mask = w.getMask()
     w = None
@@ -2256,7 +2256,7 @@ def test(filename=None, backend=None):
         print(ddict['event'])
 
     container.sigMaskImageWidgetSignal.connect(theSlot)
-    app.exec_()
+    app.exec()
     print(container.getSelectionMask())
 
 if __name__ == "__main__":

@@ -237,14 +237,14 @@ class QNexusWidget(qt.QWidget):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Information)
             msg.setText("File does not contain HDF5 configuration")
-            msg.exec_()
+            msg.exec()
             return None
 
         if 'WidgetConfiguration' not in ddict['HDF5'].keys():
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Information)
             msg.setText("File does not contain HDF5 WidgetConfiguration")
-            msg.exec_()
+            msg.exec()
             return None
 
         ddict =ddict['HDF5']['WidgetConfiguration']
@@ -255,14 +255,14 @@ class QNexusWidget(qt.QWidget):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Information)
             msg.setText("File does not contain HDF5 counters information")
-            msg.exec_()
+            msg.exec()
             return None
 
         if len(ddict['counters']) != len(ddict['aliases']):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Number of counters does not match number of aliases")
-            msg.exec_()
+            msg.exec()
             return None
 
         return ddict
@@ -1071,7 +1071,7 @@ class QNexusWidget(qt.QWidget):
                             msg = qt.QMessageBox(self)
                             msg.setIcon(qt.QMessageBox.Information)
                             msg.setText("Multidimensional data set as MCA. Using Average. You should use ROI Imaging")
-                            msg.exec_()
+                            msg.exec()
                             self._messageShown = True
                         sel['selection']['mcaselectiontype'] = "avg"
                 else:
@@ -1176,5 +1176,5 @@ if __name__ == "__main__":
     w.sigAddSelection.connect(addSelection)
     w.sigRemoveSelection.connect(removeSelection)
     w.sigReplaceSelection.connect(replaceSelection)
-    ret = app.exec_()
+    ret = app.exec()
     sys.exit(ret)

@@ -140,7 +140,7 @@ def main():
     if transpose:
         w.transposeImages()
     w.show()
-    app.exec_()
+    app.exec()
 
 
 if __name__ == "__main__":

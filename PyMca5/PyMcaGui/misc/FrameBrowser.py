@@ -302,7 +302,7 @@ def test1(args):
     w.valueChanged[int].connect(slot)
     w.setRange(8, 20)
     w.show()
-    app.exec_()
+    app.exec()
 
 
 def test2(args):
@@ -314,7 +314,7 @@ def test2(args):
     if len(args) > 1:
         w.setLimits(8, 20)
     w.show()
-    app.exec_()
+    app.exec()
 
 
 if __name__=="__main__":

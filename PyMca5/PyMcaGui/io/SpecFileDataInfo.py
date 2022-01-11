@@ -311,7 +311,7 @@ def test():
     app= qt.QApplication([])
     wid= SpecFileDataInfo(info)
     wid.show()
-    app.exec_()
+    app.exec()
 
 if __name__ == "__main__":
     test()

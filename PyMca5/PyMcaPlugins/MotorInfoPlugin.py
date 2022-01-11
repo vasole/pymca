@@ -151,4 +151,4 @@ if __name__ == "__main__":
     plugin = getPlugin1DInstance(plot)
     plugin.applyMethod(plugin.getMethods()[0])
 
-    app.exec_()
+    app.exec()

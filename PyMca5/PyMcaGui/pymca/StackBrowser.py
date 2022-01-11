@@ -318,4 +318,4 @@ if __name__ == "__main__":
     w = StackBrowser()
     w.setStackDataObject(stackData, index=0)
     w.show()
-    app.exec_()
+    app.exec()

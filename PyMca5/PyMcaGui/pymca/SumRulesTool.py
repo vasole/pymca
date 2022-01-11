@@ -1016,7 +1016,7 @@ class SumRulesWindow(qt.QMainWindow):
     def loadData(self):
         dial = LoadDichorismDataDialog()
         dial.setDirectory(PyMcaDirs.outputDir)
-        if dial.exec_():
+        if dial.exec():
             dataDict = dial.dataDict
         else:
             return
@@ -1055,7 +1055,7 @@ class SumRulesWindow(qt.QMainWindow):
             msg.setWindowTitle('Sum Rules Analysis Error')
             msg.setIcon(qt.QMessageBox.Warning)
             msg.setText('Analysis incomplete!\nCannot save generated data')
-            msg.exec_()
+            msg.exec()
             return False
 
         if self.__savedData and self.baseFilename:
@@ -1092,7 +1092,7 @@ class SumRulesWindow(qt.QMainWindow):
             msg.setWindowTitle('Sum Rules Analysis Error')
             msg.setIcon(qt.QMessageBox.Warning)
             msg.setText('Unable to open file \'%s\''%specFilename)
-            msg.exec_()
+            msg.exec()
             return False
 
         delim   = ' '
@@ -1182,7 +1182,7 @@ class SumRulesWindow(qt.QMainWindow):
             msg.setWindowTitle('Sum Rules Analysis Error')
             msg.setIcon(qt.QMessageBox.Warning)
             msg.setText('Unable to write configuration to \'%s\''%filename)
-            msg.exec_()
+            msg.exec()
             return False
         self.__savedConf = True
         return True
@@ -1236,7 +1236,7 @@ class SumRulesWindow(qt.QMainWindow):
             msg.setIcon(qt.QMessageBox.Warning)
             msg.setText('The configuration has changed!\nAre you shure you want to close the window?')
             msg.setStandardButtons(qt.QMessageBox.Cancel | qt.QMessageBox.Discard)
-            if msg.exec_() == qt.QMessageBox.Cancel:
+            if msg.exec() == qt.QMessageBox.Cancel:
                 return
         qt.QMainWindow.close(self)
 
@@ -1981,7 +1981,7 @@ class LoadDichorismDataDialog(qt.QFileDialog):
         box.setWindowTitle('Sum Rules Load Data Error')
         box.setIcon(qt.QMessageBox.Warning)
         box.setText(msg)
-        box.exec_()
+        box.exec()
 
 if __name__ == '__main__':
 
@@ -1999,4 +1999,4 @@ if __name__ == '__main__':
     #win.setRawData(x,xas, identifier='xas')
     #win = LoadDichorismDataDialog()
     win.show()
-    app.exec_()
+    app.exec()

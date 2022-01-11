@@ -329,7 +329,7 @@ class FastXRFLinearFitDialog(qt.QDialog):
 if __name__ == "__main__":
     app = qt.QApplication([])
     w = FastXRFLinearFitDialog()
-    ret = w.exec_()
+    ret = w.exec()
     if ret:
         print(w.getParameters())
     app = None

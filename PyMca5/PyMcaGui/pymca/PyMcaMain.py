@@ -557,7 +557,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             msg.setText("Error: %s" % sys.exc_info()[1])
             msg.setInformativeText(str(sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
-            msg.exec_()
+            msg.exec()
 
     def _dispatcherAddSelectionSlot(self, dictOrList):
         _logger.info("self._dispatcherAddSelectionSlot(ddict), ddict = %s",
@@ -686,7 +686,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             txt = "Error: %s" % sys.exc_info()[1]
             msg.setInformativeText(txt)
             msg.setDetailedText(traceback.format_exc())
-            msg.exec_()
+            msg.exec()
 
     def _dispatcherRemoveSelectionSlot(self, dictOrList):
         _logger.debug("self.dispatcherRemoveSelectionSlot(ddict), ddict = %s", dictOrList)
@@ -719,7 +719,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             txt = "Error: %s" % sys.exc_info()[1]
             msg.setInformativeText(txt)
             msg.setDetailedText(traceback.format_exc())
-            msg.exec_()
+            msg.exec()
 
     def _dispatcherReplaceSelectionSlot(self, dictOrList):
         _logger.debug("self.dispatcherReplaceSelectionSlot(ddict), ddict = %s",
@@ -983,7 +983,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                                 txt = "Error: %s\n opening file %s" % (sys.exc_info()[1],SourceName )
                                 msg.setInformativeText(txt)
                                 msg.setDetailedText(traceback.format_exc())
-                                msg.exec_()
+                                msg.exec()
 
                 if 'WidgetConfiguration' in ddict[source]:
                     selectorWidget = self.sourceWidget.selectorWidget[source]
@@ -996,7 +996,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                             txt = "Error: %s\n configuring %s widget" % (sys.exc_info()[1], source )
                             msg.setInformativeText(txt)
                             msg.setDetailedText(traceback.format_exc())
-                            msg.exec_()
+                            msg.exec()
         if "McaWindow" in ddict:
             self.mcaWindow.setCalibrations(ddict["McaWindow"]["calibrations"])
 
@@ -1366,7 +1366,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 txt = "This functionality requires tomogui, silx and FreeART"
                 msg.setInformativeText(txt)
                 msg.setDetailedText(traceback.format_exc())
-                msg.exec_()
+                msg.exec()
                 return
             self.__reconsWidget = TomoguiProjectWindow()
         if self.__reconsWidget.isHidden():
@@ -1429,7 +1429,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 history = fdialog.history()
                 if len(history) > 6:
                     fdialog.setHistory(history[-6:])
-            ret = fdialog.exec_()
+            ret = fdialog.exec()
             if ret == qt.QDialog.Accepted:
                 filelist = fdialog.selectedFiles()
                 if getfilter:
@@ -1473,7 +1473,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 txt = "Input Output Error: %s" % (sys.exc_info()[1])
                 msg.setInformativeText(txt)
                 msg.setDetailedText(traceback.format_exc())
-                msg.exec_()
+                msg.exec()
                 return
             except:
                 widget = None
@@ -1484,7 +1484,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 txt = "Error info = %s" % (sys.exc_info()[1])
                 msg.setInformativeText(txt)
                 msg.setDetailedText(traceback.format_exc())
-                msg.exec_()
+                msg.exec()
                 return
         else:
             widget = self._widgetDict[self.__imagingTool]
@@ -1570,7 +1570,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         if os.path.exists(self.configDir):
             cwd =self.configDir
         outfile.setDirectory(cwd)
-        ret = outfile.exec_()
+        ret = outfile.exec()
         if ret:
             if hasattr(outfile, "selectedFilter"):
                 filterused = qt.safe_str(outfile.selectedFilter()).split()
@@ -1607,7 +1607,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 txt = "Input Output Error: %s" % (sys.exc_info()[1])
                 msg.setInformativeText(txt)
                 msg.setDetailedText(traceback.format_exc())
-                msg.exec_()
+                msg.exec()
                 return
         try:
             self._saveAs(filename)
@@ -1616,7 +1616,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Error Saving Configuration: %s" % (sys.exc_info()[1]))
-            msg.exec_()
+            msg.exec()
             return
 
     def _saveAs(self, filename=None):
@@ -1658,7 +1658,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 msg.setText("Cannot open data source")
             msg.setInformativeText(str(sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
-            msg.exec_()
+            msg.exec()
 
     def openSource(self,index=0):
         _logger.debug("index = %d ", index)
@@ -1672,7 +1672,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             else:
                 outfile.setNameFilters(['PyMca  *.ini'])
             outfile.setFileMode(outfile.ExistingFile)
-            ret = outfile.exec_()
+            ret = outfile.exec()
             if ret:
                 filename = qt.safe_str(outfile.selectedFiles()[0])
                 outfile.close()
@@ -1931,14 +1931,14 @@ if __name__ == '__main__':
         msg.setText("Cannot open data source %s" % source)
         msg.setInformativeText(str(sys.exc_info()[1]))
         msg.setDetailedText(traceback.format_exc())
-        msg.exec_()
+        msg.exec()
 
     if PROFILING:
-        profile.run('sys.exit(app.exec_())',"test")
+        profile.run('sys.exit(app.exec())',"test")
         p=pstats.Stats("test")
         p.strip_dirs().sort_stats(-1).print_stats()
     else:
-        ret = app.exec_()
+        ret = app.exec()
         app = None
         sys.exit(ret)
 

@@ -1510,4 +1510,4 @@ if __name__ == "__main__":
     ft.resetZoom()
     ft.show()
     #"""
-    app.exec_()
+    app.exec()

@@ -3014,4 +3014,4 @@ if __name__ == "__main__":
         Tk.mainloop()
     else:
         widget.show()
-        app.exec_()
+        app.exec()

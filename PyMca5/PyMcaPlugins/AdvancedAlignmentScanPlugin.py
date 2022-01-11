@@ -302,7 +302,7 @@ class AlignmentWidget(qt.QDialog):
             msg.setText("An error has occured while executing the plugin:")
             msg.setInformativeText(str(sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
-            msg.exec_()
+            msg.exec()
 
     def store(self):
         self.done(self._storeCode)
@@ -327,7 +327,7 @@ class AlignmentWidget(qt.QDialog):
             msg = qt.QMessageBox()
             msg.setTitle('FFTAlignment Load Error')
             msg.setText('Unable to read shifts form file \'%s\''%filename)
-            msg.exec_()
+            msg.exec()
             return
         if 'Shifts' not in inDict.keys():
             # Only if the shift file consists exclusively of ShiftList
@@ -338,7 +338,7 @@ class AlignmentWidget(qt.QDialog):
                 msg = qt.QMessageBox()
                 msg.setWindowTitle('FFTAlignment Load Error')
                 msg.setText('No shift information found in file \'%s\''%filename)
-                msg.exec_()
+                msg.exec()
             ddict = dict(zip(orderedLegends, shiftList))
             llist = self.plugin.getOrder()
         else:
@@ -377,7 +377,7 @@ class AlignmentWidget(qt.QDialog):
             msg = qt.QMessageBox()
             msg.setWindowTitle('FFTAlignment Save Error')
             msg.setText('Unable to write configuration to \'%s\''%filename)
-            msg.exec_()
+            msg.exec()
         return True
 
     def getAlignmentMethodName(self):
@@ -651,7 +651,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
                 msg.setWindowTitle('Alignment Error')
                 msg.setText('Singular matrix encountered during least squares fit.')
                 msg.setStandardButtons(qt.QMessageBox.Ok)
-                msg.exec_()
+                msg.exec()
                 shift = float('NaN')
                 fitp, chisq, sigma = [None, None, None], 0., 0.
             key = legend
@@ -799,7 +799,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
             msg.setWindowTitle('Alignment Error')
             msg.setText('No shift data present.')
             msg.setStandardButtons(qt.QMessageBox.Ok)
-            msg.exec_()
+            msg.exec()
             return False
 
         # Check if interpolation is needed
@@ -818,7 +818,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
             msg.setStandardButtons(qt.QMessageBox.Ok | qt.QMessageBox.Cancel)
             msg.setDefaultButton(qt.QMessageBox.Ok)
 
-            if msg.exec_() != qt.QMessageBox.Ok:
+            if msg.exec() != qt.QMessageBox.Ok:
                 return False
 
         _logger.debug('applyShifts -- Shifting ...')
@@ -880,7 +880,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
         """
         # Empty shift table in the beginning
         widget = AlignmentWidget(None, self.shiftDict, self.shiftList, self)
-        ret = widget.exec_()
+        ret = widget.exec()
         if ret == 1:
             # Result code Apply
             self.shiftList, self.shiftDict = widget.getDict()
@@ -1151,7 +1151,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
             msg = qt.QMessageBox()
             msg.setWindowTitle('Alignment Scan Error')
             msg.setText('No help file found.')
-            msg.exec_()
+            msg.exec()
             _logger.debug('XMCDWindow -- init: Unable to read help file')
             self.helpFileBrowser = None
         if self.helpFileBrowser is not None:
@@ -1173,4 +1173,4 @@ if __name__ == "__main__":
     y1 = 1.0 + 50.0 * numpy.exp(-0.001*(x-500)**2) + 2.*numpy.random.random(250)
     y2 = 1.0 + 20.5 * numpy.exp(-0.005*(x-600)**2) + 2.*numpy.random.random(250)
 
-    app.exec_()
+    app.exec()

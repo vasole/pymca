@@ -341,7 +341,7 @@ def test():
     w=QScriptOption(name='QScriptOptions',sheets=(sheet1,sheet2),
                             default={'radio':1,'entry':'type here','label':1})
     w.show()
-    a.exec_()
+    a.exec()
     print(w.output)
 
 if __name__ == "__main__":

@@ -390,5 +390,5 @@ if __name__ == "__main__":
         counter += 1
 
     loop = TimerLoop(function = function, period = period)
-    ret = app.exec_()
+    ret = app.exec()
     sys.exit(ret)

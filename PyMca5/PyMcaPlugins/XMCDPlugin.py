@@ -119,4 +119,4 @@ if __name__ == "__main__":
     plugin = getPlugin1DInstance(swin)
     plugin.applyMethod(plugin.getMethods()[0])
 
-    app.exec_()
+    app.exec()

@@ -427,7 +427,7 @@ class McaAdvancedFit(qt.QWidget):
             #dialog.fitparam.regionCheck.setDisabled(True)
             #dialog.fitparam.minSpin.setDisabled(True)
             #dialog.fitparam.maxSpin.setDisabled(True)
-            ret = dialog.exec_()
+            ret = dialog.exec()
             if dialog.initDir is not None:
                 self.configDir = 1 * dialog.initDir
             else:
@@ -445,7 +445,7 @@ class McaAdvancedFit(qt.QWidget):
                 msg.setText("Error occured getting parameters:")
                 msg.setInformativeText(str(sys.exc_info()[1]))
                 msg.setDetailedText(traceback.format_exc())
-                msg.exec_()
+                msg.exec()
                 return
             config.update(npar)
             dialog.close()
@@ -509,7 +509,7 @@ class McaAdvancedFit(qt.QWidget):
                 msg.setText("Error configuring fit:")
                 msg.setInformativeText(str(sys.exc_info()[1]))
                 msg.setDetailedText(traceback.format_exc())
-                msg.exec_()
+                msg.exec()
                 return
         else:
             try:
@@ -526,7 +526,7 @@ class McaAdvancedFit(qt.QWidget):
                 msg.setText("Error configuring fit:")
                 msg.setInformativeText(str(sys.exc_info()[1]))
                 msg.setDetailedText(traceback.format_exc())
-                msg.exec_()
+                msg.exec()
                 return
 
         #update graph
@@ -672,7 +672,7 @@ class McaAdvancedFit(qt.QWidget):
                 msg.setText("Error configuring fit:")
                 msg.setInformativeText(str(sys.exc_info()[1]))
                 msg.setDetailedText(traceback.format_exc())
-                msg.exec_()
+                msg.exec()
                 return
         else:
             try:
@@ -686,7 +686,7 @@ class McaAdvancedFit(qt.QWidget):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error: %s" % (sys.exc_info()[1]))
-                msg.exec_()
+                msg.exec()
                 return
 
     def _tabChanged(self, value):
@@ -712,7 +712,7 @@ class McaAdvancedFit(qt.QWidget):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Concentrations error: %s" % sys.exc_info()[1])
-                msg.exec_()
+                msg.exec()
                 self.mainTab.setCurrentIndex(0)
         elif str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == "TABLE":
             self.printButton.setEnabled(True)
@@ -768,7 +768,7 @@ class McaAdvancedFit(qt.QWidget):
         caldialog.calpar.orderbox.setEnabled(0)
         caldialog.calpar.CText.setEnabled(0)
         caldialog.calpar.savebox.setEnabled(0)
-        ret = caldialog.exec_()
+        ret = caldialog.exec()
         if ret == qt.QDialog.Accepted:
             ddict = caldialog.getDict()
             config['detector']['zero'] = ddict[legend]['A']
@@ -819,7 +819,7 @@ class McaAdvancedFit(qt.QWidget):
             msg.setIcon(qt.QMessageBox.Critical)
             text = "Sorry. You need to perform a fit first.\n"
             msg.setText(text)
-            msg.exec_()
+            msg.exec()
             if str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == "DIAGNOSTICS":
                 self.mainTab.setCurrentIndex(0)
             return
@@ -967,7 +967,7 @@ class McaAdvancedFit(qt.QWidget):
             msg.setIcon(qt.QMessageBox.Critical)
             text = "Sorry, You need to perform a fit first.\n"
             msg.setText(text)
-            msg.exec_()
+            msg.exec()
             if str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == "CONCENTRATIONS":
                 self.mainTab.setCurrentIndex(0)
             return
@@ -1001,7 +1001,7 @@ class McaAdvancedFit(qt.QWidget):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Error processing fit result: %s" % (sys.exc_info()[1]))
-            msg.exec_()
+            msg.exec()
             if str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == 'CONCENTRATIONS':
                 self.mainTab.setCurrentIndex(0)
             return
@@ -1048,7 +1048,7 @@ class McaAdvancedFit(qt.QWidget):
             text+= "in order to calculate the spectrum derived from the matrix.\n"
             text+= "Background and detector parameters are taken from last fit"
             msg.setText(text)
-            msg.exec_()
+            msg.exec()
             return
         #fitresult = self.dict['result']
         fitresult = self.dict
@@ -1089,7 +1089,7 @@ class McaAdvancedFit(qt.QWidget):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error: %s" % (sys.exc_info()[1]))
-                msg.exec_()
+                msg.exec()
                 return
         else:
             try:
@@ -1108,7 +1108,7 @@ class McaAdvancedFit(qt.QWidget):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error: %s" % (sys.exc_info()[1]))
-                msg.exec_()
+                msg.exec()
                 return
 
         self._concentrationsInfo = info
@@ -1196,7 +1196,7 @@ class McaAdvancedFit(qt.QWidget):
             msg.setIcon(qt.QMessageBox.Critical)
             text = "Sorry, current implementation requires you to perform a fit first\n"
             msg.setText(text)
-            msg.exec_()
+            msg.exec()
             return
         self._xrfmcMatrixSpectra = None
         fitresult = self.dict
@@ -1289,7 +1289,7 @@ class McaAdvancedFit(qt.QWidget):
             msg.setIcon(qt.QMessageBox.Critical)
             text = "Sorry, current implementation requires you to perform a fit first\n"
             msg.setText(text)
-            msg.exec_()
+            msg.exec()
             return
         fitresult = self.dict
         self._xrfmcMatrixSpectra = None
@@ -1389,7 +1389,7 @@ class McaAdvancedFit(qt.QWidget):
                 for line in ddict['message']:
                     text += line
                 msg.setText(text)
-                msg.exec_()
+                msg.exec()
                 return
 
             xmsoFile = self._xrfmcFileNamesDict['xmso']
@@ -1437,7 +1437,7 @@ class McaAdvancedFit(qt.QWidget):
             msg.setIcon(qt.QMessageBox.Critical)
             text = "You need to perform a fit first\n"
             msg.setText(text)
-            msg.exec_()
+            msg.exec()
             return
         #fitresult = self.dict['result']
         fitresult = self.dict
@@ -1488,7 +1488,7 @@ class McaAdvancedFit(qt.QWidget):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("You should perform a fit \nfirst,\n shouldn't you?")
-            msg.exec_()
+            msg.exec()
             return
         oldoutdir = self.outdir
         if self.outdir is None:
@@ -1513,7 +1513,7 @@ class McaAdvancedFit(qt.QWidget):
             msg.setText("Input Output Error: %s" % (sys.exc_info()[1]))
             msg.setInformativeText(str(sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
-            msg.exec_()
+            msg.exec()
 
     def __htmlReport(self,outfile=None):
         report = QtMcaAdvancedFitReport.QtMcaAdvancedFitReport(fitfile=None,
@@ -1702,7 +1702,7 @@ class McaAdvancedFit(qt.QWidget):
         return
         printer = qt.QPrinter()
         printDialog = qt.QPrintDialog(printer, self)
-        if printDialog.exec_():
+        if printDialog.exec():
             if 0:
                 #this was crashing in Qt 4.2.2
                 #with the PyQt snapshot of 20061203
@@ -1789,7 +1789,7 @@ class McaAdvancedFit(qt.QWidget):
                             txt = "No time information associated to spectrum but requested in configuration.\n"
                             txt += "Please correct the acquisition time in your configuration."
                             msg.setText(txt)
-                            msg.exec_()
+                            msg.exec()
                             self.mcafit.config["concentrations"] ["useautotime"] = 0
                             kw["time"] = None
                             self.mcafit.setData(*var, **kw)
@@ -1870,7 +1870,7 @@ class McaAdvancedFit(qt.QWidget):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Information)
             msg.setText("No peaks defined.\nPlease configure peaks")
-            msg.exec_()
+            msg.exec()
             return
         if _logger.getEffectiveLevel() == logging.DEBUG:
             _logger.debug("calling estimate")
@@ -1909,7 +1909,7 @@ class McaAdvancedFit(qt.QWidget):
                 msg.setText("Error on fit:")
                 msg.setInformativeText(str(sys.exc_info()[1]))
                 msg.setDetailedText(traceback.format_exc())
-                msg.exec_()
+                msg.exec()
                 return
             try:
                 #self.mcatable.fillfrommca(self.mcafit.result)
@@ -1918,7 +1918,7 @@ class McaAdvancedFit(qt.QWidget):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error filling Table: %s" % (sys.exc_info()[1]))
-                msg.exec_()
+                msg.exec()
                 return
         else:
             try:
@@ -1940,7 +1940,7 @@ class McaAdvancedFit(qt.QWidget):
                 msg.setText("Error on fit:")
                 msg.setInformativeText(str(sys.exc_info()[1]))
                 msg.setDetailedText(traceback.format_exc())
-                msg.exec_()
+                msg.exec()
                 return
             try:
                 #self.mcatable.fillfrommca(self.mcafit.result)
@@ -1949,7 +1949,7 @@ class McaAdvancedFit(qt.QWidget):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error filling Table: %s" % (sys.exc_info()[1]))
-                msg.exec_()
+                msg.exec()
                 return
 
         dict={}
@@ -1991,7 +1991,7 @@ class McaAdvancedFit(qt.QWidget):
                         msg = qt.QMessageBox(self)
                         msg.setIcon(qt.QMessageBox.Critical)
                         msg.setText("Concentrations Error: %s" % (sys.exc_info()[1]))
-                        msg.exec_()
+                        msg.exec()
                         return
         if str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == 'DIAGNOSTICS':
             try:
@@ -2000,7 +2000,7 @@ class McaAdvancedFit(qt.QWidget):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Diagnostics Error: %s" % (sys.exc_info()[1]))
-                msg.exec_()
+                msg.exec()
                 return
 
         return self.__anasignal(dict)
@@ -2168,7 +2168,7 @@ class McaAdvancedFit(qt.QWidget):
                 msg.setIcon(qt.QMessageBox.Critical)
                 text = "Sorry, You need to perform a fit first.\n"
                 msg.setText(text)
-                msg.exec_()
+                msg.exec()
                 return
         if dict is None:
             #everything
@@ -2353,7 +2353,7 @@ class McaAdvancedFit(qt.QWidget):
                 mtplt.setYLabel('Counts')
                 mtplt.plotLegends()
                 if self.matplotlibDialog is not None:
-                    ret = self.matplotlibDialog.exec_()
+                    ret = self.matplotlibDialog.exec()
                     if ret == qt.QDialog.Accepted:
                         mtplt.saveFile(specFile)
                 else:
@@ -2365,7 +2365,7 @@ class McaAdvancedFit(qt.QWidget):
             msg.setInformativeText("Matplotlib or Input Output Error: %s" \
                                    % (sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
-            msg.exec_()
+            msg.exec()
             return
         try:
             if sys.version < "3.0":
@@ -2378,7 +2378,7 @@ class McaAdvancedFit(qt.QWidget):
             msg.setInformativeText("Input Output Error: %s" % \
                                    (sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
-            msg.exec_()
+            msg.exec()
             return
         try:
             if filetype == 'ASCII':
@@ -2937,14 +2937,14 @@ def test(ffile='03novs060sum.mca', cfg=None):
     xmax = demo.mcafit.config['fit']['xmax']
     demo.setData(x,y0,xmin=xmin,xmax=xmax,sourcename=ffile)
     demo.show()
-    app.exec_()
+    app.exec()
 
 
 def main():
     app = qt.QApplication([])
     form = McaAdvancedFit(top=False)
     form.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":

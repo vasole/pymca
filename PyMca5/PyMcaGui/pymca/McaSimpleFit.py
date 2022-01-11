@@ -289,4 +289,4 @@ if __name__ == "__main__":
     app = qt.QApplication(sys.argv)
     demo = McaSimpleFit()
     demo.show()
-    app.exec_()
+    app.exec()

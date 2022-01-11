@@ -149,7 +149,7 @@ class XASPlugin(Plugin1DBase.Plugin1DBase):
         self.widget.setSpectrum(x, y)
         oldConfiguration = self.analyzer.getConfiguration()
         self.widget.setConfiguration(oldConfiguration)
-        ret = self.widget.exec_()
+        ret = self.widget.exec()
         if ret:
             # it should be already configured
             pass
@@ -396,5 +396,5 @@ if __name__ == "__main__":
     for method in plugin.getMethods():
         print(method, ":", plugin.getMethodToolTip(method))
     #plugin.applyMethod(plugin.getMethods()[1])    
-    app.exec_()
+    app.exec()
 

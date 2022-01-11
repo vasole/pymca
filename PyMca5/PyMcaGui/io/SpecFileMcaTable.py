@@ -192,7 +192,7 @@ def test():
     tab.build(info)
     tab.setSelectedMca(["1.1"])
     tab.show()
-    app.exec_()
+    app.exec()
 
 if __name__ == "__main__":
     test()

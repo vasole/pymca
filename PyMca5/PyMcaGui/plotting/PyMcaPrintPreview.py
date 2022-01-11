@@ -105,11 +105,11 @@ def testPreview():
     if 0:
         w2 = PyMcaPrintPreview( parent = None, printer = p, name = '2Print Prev',
                       modal = 0, fl = 0)
-        w.exec_()
+        w.exec()
         w2.resize(100,100)
         w2.show()
-        sys.exit(w2.exec_())
-    sys.exit(w.exec_())
+        sys.exit(w2.exec())
+    sys.exit(w.exec())
 
 if  __name__ == '__main__':
     testPreview()

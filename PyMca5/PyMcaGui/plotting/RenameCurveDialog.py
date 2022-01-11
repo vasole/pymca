@@ -67,7 +67,7 @@ class RenameCurveDialog(qt.QDialog):
         msg.setWindowTitle(text)
         text += "\n%s" % addedText
         msg.setText(text)
-        msg.exec_()
+        msg.exec()
 
     def getText(self):
         return str(self.lineEdit.text())
@@ -76,7 +76,7 @@ class RenameCurveDialog(qt.QDialog):
 if __name__ == "__main__":
    app = qt.QApplication([])
    w=RenameCurveDialog(None, 'curve1', ['curve1', 'curve2', 'curve3'])
-   ret = w.exec_()
+   ret = w.exec()
    if ret == qt.QDialog.Accepted:
        print("newcurve = %s" % str(w.lineEdit.text()))
    else:

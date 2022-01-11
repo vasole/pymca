@@ -342,4 +342,4 @@ if __name__ == "__main__":
     app.lastWindowClosed.connect(app.quit)
     w = FFTAlignmentDialog()
     w.setStack(stackData, index=0)
-    w.exec_()
+    w.exec()
