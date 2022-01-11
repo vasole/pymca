@@ -82,7 +82,8 @@ class TestXASNormalizationWindow(TestCaseQt):
 
     def testShow(self):
         from PyMca5.PyMcaGui.physics.xas import XASNormalizationWindow
-        widget = XASNormalizationWindow.XASNormalizationWindow(None, [1,2,3,4])
+        spectrum = [1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 5, 5, 5, 5, 5,  5]
+        widget = XASNormalizationWindow.XASNormalizationWindow(None, spectrum)
         widget.show()
         self.qapp.processEvents()
         from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
