@@ -294,4 +294,4 @@ if __name__ == "__main__":
     w = XASFourierTransformParameters()
     w.show()
     w.sigFTParametersSignal.connect(mySlot)
-    app.exec_()
+    app.exec()
