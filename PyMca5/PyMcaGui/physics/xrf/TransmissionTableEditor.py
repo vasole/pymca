@@ -150,7 +150,7 @@ class TransmissionTableEditor(qt.QWidget):
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText("Error transmission table: %s" % (sys.exc_info()[1]))
-                    msg.exec_()
+                    msg.exec()
                     return
 
     def loadTransmissionTable(self, filename):
@@ -242,7 +242,7 @@ class TransmissionTableEditor(qt.QWidget):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Input Output Error: %s" % (sys.exc_info()[1]))
-            msg.exec_()
+            msg.exec()
             return
 
     def _showSlot(self):
@@ -301,7 +301,7 @@ class TransmissionTableEditor(qt.QWidget):
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setInformativeText(str(sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
-            msg.exec_()
+            msg.exec()
         self.update()
 
     def _validateDict(self, ddict):
@@ -367,7 +367,7 @@ class TransmissionTableEditor(qt.QWidget):
 
     def showPlot(self):
         self.plot()
-        self.plotDialog.exec_()
+        self.plotDialog.exec()
 
     def getTransmissionTable(self):
         return copy.deepcopy(self._transmissionTable)
@@ -379,5 +379,5 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         demo.loadTransmissionTable(sys.argv[1])
     demo.show()
-    ret  = app.exec_()
+    ret  = app.exec()
     app = None

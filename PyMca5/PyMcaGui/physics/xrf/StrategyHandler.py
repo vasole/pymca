@@ -689,7 +689,7 @@ def main(fileName=None):
         d["SingleLayerStrategy"]["materials"] = "-", "Goethite", "-", "Goethite"
         d["SingleLayerStrategy"]["completer"] = "Mo"
         w.setFitConfiguration(d)
-    if w.exec_() == qt.QDialog.Accepted:
+    if w.exec() == qt.QDialog.Accepted:
         print(w.getParameters())
 
 

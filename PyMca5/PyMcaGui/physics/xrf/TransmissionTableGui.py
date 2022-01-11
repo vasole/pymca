@@ -101,5 +101,5 @@ if __name__ == "__main__":
     app.lastWindowClosed.connect(app.quit)
     demo = TransmissionTableGui()
     demo.show()
-    ret  = app.exec_()
+    ret  = app.exec()
     app = None
