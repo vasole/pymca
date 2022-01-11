@@ -519,7 +519,7 @@ class PlotWindow(PlotWidget.PlotWidget):
         oldConfig = self.getPrintConfiguration()
         self._printConfigurationDialog.setPrintConfiguration(oldConfig,
                                                     printer=self._printer)
-        if self._printConfigurationDialog.exec_():
+        if self._printConfigurationDialog.exec():
             self.setPrintConfiguration(\
                 self._printConfigurationDialog.getPrintConfiguration())
 
@@ -966,7 +966,7 @@ class PlotWindow(PlotWidget.PlotWidget):
                 msg.setWindowTitle("No plugins")
                 msg.setInformativeText(" Problem loading plugins ")
                 msg.setDetailedText(message)
-                msg.exec_()
+                msg.exec()
             return
         if idx == 1:
             dirName = qt.safe_str(qt.QFileDialog.getExistingDirectory(self,
@@ -1022,7 +1022,7 @@ class PlotWindow(PlotWidget.PlotWidget):
             msg.setText("An error has occured while executing the plugin:")
             msg.setInformativeText(str(sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
-            msg.exec_()
+            msg.exec()
 
     def _actionHovered(self, action):
         tip = action.toolTip()
@@ -1361,7 +1361,7 @@ class PlotWindow(PlotWidget.PlotWidget):
             dialog = RenameCurveDialog.RenameCurveDialog(self,
                                                          oldLegend,
                                                          curveList)
-            ret = dialog.exec_()
+            ret = dialog.exec()
             if ret:
                 newLegend = dialog.getText()
                 self.renameCurve(oldLegend, newLegend, replot=True)
@@ -1509,7 +1509,7 @@ class PlotWindow(PlotWidget.PlotWidget):
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setInformativeText(str(sys.exc_info()[1]))
                 msg.setDetailedText(traceback.format_exc())
-                msg.exec_()
+                msg.exec()
             return
         try:
             if sys.version_info.major >= 3:
@@ -1521,7 +1521,7 @@ class PlotWindow(PlotWidget.PlotWidget):
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setInformativeText("Input Output Error: %s" % (sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
-            msg.exec_()
+            msg.exec()
             return
         try:
             if not len(self._curveList):
@@ -1529,7 +1529,7 @@ class PlotWindow(PlotWidget.PlotWidget):
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setInformativeText("No curve to be saved")
                 msg.setDetailedText(traceback.format_exc())
-                msg.exec_()
+                msg.exec()
                 return
             activeCurve = self.getActiveCurve()
             if activeCurve is None:
@@ -1603,7 +1603,7 @@ class PlotWindow(PlotWidget.PlotWidget):
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setInformativeText("Error while saving: %s" % (sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
-            msg.exec_()
+            msg.exec()
 
     def _getOutputFileName(self):
         outfile = qt.QFileDialog(self)
@@ -1625,7 +1625,7 @@ class PlotWindow(PlotWidget.PlotWidget):
             outfile.setNameFilters(filterlist)
         outfile.setFileMode(outfile.AnyFile)
         outfile.setAcceptMode(outfile.AcceptSave)
-        ret = outfile.exec_()
+        ret = outfile.exec()
         if not ret:
             return None
         if hasattr(outfile, "selectedFilter"):
@@ -1694,5 +1694,5 @@ if __name__ == "__main__":
     #plot.removeCurve("dummy")
     #plot.addCurve(x, 2 * y, "dummy 2")
     #print("All curves = ",   plot.getAllCurves())
-    app.exec_()
+    app.exec()
     app = None

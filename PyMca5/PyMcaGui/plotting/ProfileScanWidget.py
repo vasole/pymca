@@ -131,7 +131,7 @@ def test():
     w.sigRemoveClicked.connect(testSlot)
     w.sigReplaceClicked.connect(testSlot)
     w.show()
-    app.exec_()
+    app.exec()
 
 if __name__ == "__main__":
     DEBUG = 1

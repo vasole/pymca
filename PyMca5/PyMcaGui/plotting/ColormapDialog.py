@@ -619,7 +619,7 @@ def test():
 
     demo.setAutoscale(1)
     demo.show()
-    app.exec_()
+    app.exec()
 
 
 if __name__ == "__main__":
