@@ -168,7 +168,7 @@ class StackXASBatchDialog(qt.QDialog):
 if __name__ == "__main__":
     app = qt.QApplication([])
     w = StackXASBatchDialog()
-    ret = w.exec_()
+    ret = w.exec()
     if ret:
         print(w.getParameters())
-    #app.exec_()
+    #app.exec()

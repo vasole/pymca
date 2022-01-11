@@ -172,7 +172,7 @@ class StackSimpleFitWindow(qt.QWidget):
                 msg.setIcon(qt.QMessageBox.Information)
                 msg.setText("Do you want to delete current output files?")
                 msg.setStandardButtons(qt.QMessageBox.Yes|qt.QMessageBox.No)
-                answer=msg.exec_()
+                answer=msg.exec()
                 if answer == qt.QMessageBox.Yes:
                     deleteFiles = True
                 else:
@@ -205,7 +205,7 @@ class StackSimpleFitWindow(qt.QWidget):
             msg.setText("Error has occured while processing the data")
             msg.setInformativeText(safe_str(sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
-            msg.exec_()
+            msg.exec()
         finally:
             self.progressBar.hide()
             self.setEnabled(True)
@@ -266,4 +266,4 @@ if __name__ == "__main__":
     #w.importFunctions(Functions.__file__)
     #w.fitModule.setFitFunction('Gaussians')
     w.show()
-    app.exec_()
+    app.exec()

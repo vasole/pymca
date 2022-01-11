@@ -371,7 +371,7 @@ class RGBCorrelatorWidget(qt.QWidget):
 
         assert(TOMOGUI_FLAG is True)
         diag = TomoReconsDialog(entries=self._imageList)
-        if diag.exec_():
+        if diag.exec():
             if self._tomoguiWindow is None:
                 self._tomoguiWindow = TomoguiProjWindow()
 
@@ -704,7 +704,7 @@ class RGBCorrelatorWidget(qt.QWidget):
     def _imageResizeSlot(self):
         dialog = ImageShapeDialog(self, shape = self.__imageShape)
         dialog.setModal(True)
-        ret = dialog.exec_()
+        ret = dialog.exec()
         if ret:
             shape = dialog.getImageShape()
             dialog.close()
@@ -718,7 +718,7 @@ class RGBCorrelatorWidget(qt.QWidget):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error reshaping: %s" % sys.exc_info()[1])
-                msg.exec_()
+                msg.exec()
 
 
     def setImageShape(self, shape):
@@ -857,7 +857,7 @@ class RGBCorrelatorWidget(qt.QWidget):
             filedialog.setNameFilters(strlist)
             filedialog.selectNameFilter(self._saveFilter)
         filedialog.setDirectory(initdir)
-        ret = filedialog.exec_()
+        ret = filedialog.exec()
         if not ret: return ""
         filename = filedialog.selectedFiles()[0]
         if len(filename):
@@ -903,7 +903,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         else:
             filedialog.setNameFilters(strlist)
         filedialog.setDirectory(initdir)
-        ret = filedialog.exec_()
+        ret = filedialog.exec()
         if not ret:
             if getfilter:
                 return [""], None
@@ -948,7 +948,7 @@ class RGBCorrelatorWidget(qt.QWidget):
             msg.setText("Error adding file: %s" % sys.exc_info()[1])
             msg.setInformativeText(str(sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
-            msg.exec_()
+            msg.exec()
             if _logger.getEffectiveLevel() == logging.DEBUG:
                 raise
 
@@ -965,7 +965,7 @@ class RGBCorrelatorWidget(qt.QWidget):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("%s does not exist" % filename)
-            msg.exec_()
+            msg.exec()
             return
         if filterused is None:
             filterused = ''
@@ -1013,7 +1013,7 @@ class RGBCorrelatorWidget(qt.QWidget):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Cannot read file %s (h5py is missing)" % filename)
-            msg.exec_()
+            msg.exec()
             return
         # URI exists?
         if h5path:
@@ -1049,13 +1049,13 @@ class RGBCorrelatorWidget(qt.QWidget):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("No (valid) datasets were found in '{}::{}'".format(filename, h5path))
-                msg.exec_()
+                msg.exec()
                 self._addHf5File(filename, ignoreStDev=ignoreStDev)
             elif len({dset.size for dset in datasets}) > 1:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("'{}::{}' contains datasets with different sizes. Select datasets separately.".format(filename, h5path))
-                msg.exec_()
+                msg.exec()
                 self._addHf5File(filename, ignoreStDev=ignoreStDev)
             else:
                 for dset in datasets:
@@ -1070,7 +1070,7 @@ class RGBCorrelatorWidget(qt.QWidget):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Cannot read file %s as an image" % filename)
-            msg.exec_()
+            msg.exec()
         else:
             #add as black and white
             self.addImage(makeQimageBW(qimage), os.path.basename(filename))
@@ -1560,14 +1560,14 @@ class ImageShapeDialog(qt.QDialog):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Invalid shape %d x %d" % (nrows, ncolumns))
-                msg.exec_()
+                msg.exec()
         except:
             self.rows.setText("%g" % self._shape[0])
             self.columns.setText("%g" % self._shape[1])
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Error reshaping: %s" % sys.exc_info()[1])
-            msg.exec_()
+            msg.exec()
 
 
 class MyQLabel(qt.QLabel):
@@ -1644,7 +1644,7 @@ def main():
     #containerLayout.addWidget(w)
     #containerLayout.addWidget(graph)
     container.show()
-    app.exec_()
+    app.exec()
 
 if __name__ == "__main__":
     main()

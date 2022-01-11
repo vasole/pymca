@@ -58,7 +58,7 @@ def test():
         log = ChangeLog(textfile='changelog.txt')
     w.setDocument(log)
     w.show()
-    app.exec_()
+    app.exec()
 
 if __name__ == "__main__":
     test()

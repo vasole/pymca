@@ -271,7 +271,7 @@ def test():
 
     container.sigMaskImageWidget.connect(theSlot)
 
-    app.exec_()
+    app.exec()
 
 if __name__ == "__main__":
     test()

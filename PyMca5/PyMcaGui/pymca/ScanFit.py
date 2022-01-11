@@ -333,7 +333,7 @@ def main():
     w = ScanFit()
     app.lastWindowClosed.connect(app.quit)
     w.show()
-    app.exec_()
+    app.exec()
 
 if __name__ == "__main__":
     main()

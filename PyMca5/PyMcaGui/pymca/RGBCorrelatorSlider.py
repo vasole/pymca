@@ -196,7 +196,7 @@ def test():
     w = RGBCorrelatorSlider()
     w.sigRGBCorrelatorSliderSignal.connect(slot)
     w.show()
-    app.exec_()
+    app.exec()
 
 if __name__ == "__main__":
     test()
