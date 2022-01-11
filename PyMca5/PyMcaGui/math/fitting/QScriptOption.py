@@ -340,13 +340,8 @@ def test():
                            ["RadioField",'radio',('Button1','hmmm','3')])}
     w=QScriptOption(name='QScriptOptions',sheets=(sheet1,sheet2),
                             default={'radio':1,'entry':'type here','label':1})
-    if QTVERSION < '4.0.0':
-        a.setMainWidget(w)
-        w.show()
-        a.exec_loop()
-    else:
-        w.show()
-        a.exec_()
+    w.show()
+    a.exec()
     print(w.output)
 
 if __name__ == "__main__":

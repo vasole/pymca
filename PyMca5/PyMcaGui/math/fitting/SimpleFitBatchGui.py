@@ -132,7 +132,7 @@ class SimpleFitBatchParameters(qt.QWidget):
         msg.setIcon(qt.QMessageBox.Information)
         msg.setText("Do you want to delete current file list?")
         msg.setStandardButtons(qt.QMessageBox.Yes|qt.QMessageBox.No)
-        answer=msg.exec_()
+        answer=msg.exec()
         if answer == qt.QMessageBox.Yes:
             append = False
         else:
@@ -263,4 +263,4 @@ if __name__ == "__main__":
     app = qt.QApplication([])
     w = SimpleFitBatchGui()
     w.show()
-    app.exec_()
+    app.exec()

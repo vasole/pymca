@@ -106,7 +106,7 @@ class PCADialog(qt.QDialog):
             msg.setWindowTitle("No data")
             msg.setIcon(qt.QMessageBox.Information)
             msg.setText("No data to perform calculation")
-            msg.exec_()
+            msg.exec()
             return
 
         if not self.pcaParametersDialogInitialized:
@@ -118,7 +118,7 @@ class PCADialog(qt.QDialog):
                      'method': 0}
             self.pcaParametersDialog.setParameters(ddict)
             self.pcaParametersDialogInitialized = True
-        ret = self.pcaParametersDialog.exec_()
+        ret = self.pcaParametersDialog.exec()
         if ret:
             t0 = time.time()
             pcaParameters = self.pcaParametersDialog.getParameters()
@@ -136,7 +136,7 @@ class PCADialog(qt.QDialog):
                     msg.setWindowTitle("Not enough data")
                     msg.setIcon(qt.QMessageBox.Information)
                     msg.setText("Number of components too high")
-                    msg.exec_()
+                    msg.exec()
                     return
             if _logger.getEffectiveLevel() == logging.DEBUG:
                 images, eigenvalues, eigenvectors = function(data,
@@ -165,7 +165,7 @@ class PCADialog(qt.QDialog):
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText("%s" % sys.exc_info()[1])
-                    msg.exec_()
+                    msg.exec()
                     return
             if isinstance(self._data, numpy.ndarray):
                 self._data.shape = old_shape
@@ -305,4 +305,4 @@ if __name__ == "__main__":
     if len(imageList):
         d.setData(imageList)
     d.show()
-    app.exec_()
+    app.exec()
