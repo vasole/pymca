@@ -109,7 +109,6 @@ class XASNormalizationParametersWidget(qt.QWidget):
             buttonGroup.idClicked[int].connect(self._buttonClicked)
         else:
             # deprecated
-            _logger.debug("Using deprecated signal")
             buttonGroup.buttonClicked[int].connect(self._buttonClicked)
 
         self.userEdgeEnergy.editingFinished.connect(self._userEdgeEnergyEditingFinished)

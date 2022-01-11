@@ -89,8 +89,12 @@ class SpecfitGui(qt.QWidget):
             self.guiconfig.AutoScalingCheckBox.stateChanged[int].connect(self.autoscaleevent)
             self.guiconfig.ConfigureButton.clicked.connect(self.__configureGuiSlot)
             self.guiconfig.PrintPushButton.clicked.connect(self.printps)
+        if hasattr(self.guiconfig.BkgComBox, "textActivated"):
             self.guiconfig.BkgComBox.textActivated[str].connect(self.bkgevent)
             self.guiconfig.FunComBox.textActivated[str].connect(self.funevent)
+        else:
+            self.guiconfig.BkgComBox.activated[str].connect(self.bkgevent)
+            self.guiconfig.FunComBox.activated[str].connect(self.funevent)            
             layout.addWidget(self.guiconfig)
 
         self.guiparameters = MultiParameters.ParametersTab(self)
