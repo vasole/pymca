@@ -201,6 +201,6 @@ if __name__ == "__main__":
         y=numpy.arange(1000.)
         w = SGDialog(None, y+numpy.sqrt(y)* noise)
     w.show()
-    ret = w.exec()
+    ret = w.exec_()
     if ret:
         print(w.getParameters())

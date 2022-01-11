@@ -367,7 +367,7 @@ class XiaOutputWidget(qt.QWizardPage):
         outfile.setModal(1)
         outfile.setDirectory(wdir)
         outfile.setFileMode(outfile.DirectoryOnly)
-        ret = outfile.exec()
+        ret = outfile.exec_()
         directory = None
         if ret:
             directory = qt.safe_str(outfile.selectedFiles()[0])
@@ -520,6 +520,6 @@ if __name__=="__main__":
     app.setMainWidget(wid)
     app.lastWindowClosed.connect(app.quit)
     wid.show()
-    app.exec()
+    app.exec_()
     print(wid.get())
 

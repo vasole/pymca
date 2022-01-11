@@ -162,4 +162,4 @@ if __name__ == "__main__":
                replot=False, colormap=colormap)
 
     w.getWidgetHandle().show()
-    sys.exit(app.exec())
+    sys.exit(app.exec_())

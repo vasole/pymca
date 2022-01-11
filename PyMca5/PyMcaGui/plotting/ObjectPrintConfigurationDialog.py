@@ -202,5 +202,5 @@ class ObjectPrintConfigurationDialog(qt.QDialog):
 if __name__ == "__main__":
     app = qt.QApplication([])
     w = ObjectPrintConfigurationDialog()
-    if w.exec():
+    if w.exec_():
         print(w.getPrintConfiguration())

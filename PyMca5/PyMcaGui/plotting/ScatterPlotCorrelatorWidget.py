@@ -188,4 +188,4 @@ if __name__ == "__main__":
 
     w.sigMaskScatterWidgetSignal.connect(theSlot)
 
-    app.exec()
+    app.exec_()

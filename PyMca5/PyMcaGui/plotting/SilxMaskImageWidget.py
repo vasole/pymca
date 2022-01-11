@@ -293,7 +293,7 @@ class SaveImageListAction(qt.QAction):
             filedialog.setNameFilters(strlist)
             filedialog.selectNameFilter(saveFilter)
         filedialog.setDirectory(initdir)
-        ret = filedialog.exec()
+        ret = filedialog.exec_()
         if not ret:
             return "", ""
         filename = filedialog.selectedFiles()[0]
@@ -1162,4 +1162,4 @@ if __name__ == "__main__":
     w = SilxMaskImageWidget()
     w.show()
     w.plot.addImage([[0, 1, 2], [2, 1, -1]])
-    app.exec()
+    app.exec_()

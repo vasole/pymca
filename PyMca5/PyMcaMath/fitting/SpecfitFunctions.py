@@ -1305,7 +1305,7 @@ def test(a):
     w.addCurve(x, y + 1, "Data + 1")
     w.addCurve(x, yfit, "Fit")
     w.show()
-    app.exec()
+    app.exec_()
 
 
 if __name__ == "__main__":

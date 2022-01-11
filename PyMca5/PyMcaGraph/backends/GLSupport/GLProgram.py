@@ -286,4 +286,4 @@ if __name__ == "__main__":
     app = QApplication([])
     widget = Test()
     widget.show()
-    sys.exit(app.exec())
+    sys.exit(app.exec_())

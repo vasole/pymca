@@ -431,7 +431,7 @@ def test():
 
     if not container._dynamic:
         container.sigMaskImageWidgetSignal.connect(theSlot)
-    app.exec()
+    app.exec_()
 
 if __name__ == "__main__":
     test()

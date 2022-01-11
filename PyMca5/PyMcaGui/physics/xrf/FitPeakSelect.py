@@ -482,5 +482,5 @@ if __name__ == "__main__":
     w.addTab(f, "QPeriodicTable")
     f.sigFitPeakSelect.connect(change)
     w.show()
-    a.exec()
+    a.exec_()
     a = None

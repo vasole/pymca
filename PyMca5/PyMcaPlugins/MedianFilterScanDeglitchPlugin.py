@@ -147,7 +147,7 @@ class MedianFilterScanDeglitchPlugin(Plugin1DBase.Plugin1DBase):
             self._widget = msg
             self._widget.buttonActive = buttonActive
             self._widget.buttonAll = buttonAll
-        if self._widget.exec():
+        if self._widget.exec_():
             self.threshold = float(self._widget.inputThreshold.value())
             self.width = int(self._widget.inputWidth.value())
             if not (self.width%2):
@@ -232,4 +232,4 @@ if __name__ == "__main__":
     plugin.configureFilter()
 
     sw.show()
-    app.exec()
+    app.exec_()

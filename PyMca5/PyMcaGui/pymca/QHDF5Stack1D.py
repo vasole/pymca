@@ -42,7 +42,7 @@ class QHDF5Stack1D(HDF5Stack1D.HDF5Stack1D):
             if filelist is not None:
                 wizard.setFileList(filelist)
                 wizard.setStartId(1)
-            ret = wizard.exec()
+            ret = wizard.exec_()
             if ret != qt.QDialog.Accepted:
                 raise ValueError("Incomplete selection")
             filelist, selection, scanlist = wizard.getParameters()

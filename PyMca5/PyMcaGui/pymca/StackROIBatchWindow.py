@@ -300,7 +300,7 @@ class StackROIBatchDialog(qt.QDialog):
 if __name__ == "__main__":
     app = qt.QApplication([])
     w = StackROIBatchDialog()
-    ret = w.exec()
+    ret = w.exec_()
     if ret:
         print(w.getParameters())
-    #app.exec()
+    #app.exec_()

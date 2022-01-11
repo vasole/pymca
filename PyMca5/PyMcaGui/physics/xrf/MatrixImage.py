@@ -712,5 +712,5 @@ if __name__ == '__main__':
     else:
         w=MatrixImage()
     w.show()
-    a.exec()
+    a.exec_()
     a = None

@@ -307,4 +307,4 @@ if __name__ == "__main__":
     text.setReadOnly(1)
     l.addWidget(text)
     w.show()
-    app.exec()
+    app.exec_()

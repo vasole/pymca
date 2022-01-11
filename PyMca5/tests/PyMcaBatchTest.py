@@ -362,7 +362,7 @@ class testPyMcaBatch(TestCaseQt):
         self._waitForFitResult(result)
         widget.close()
         self.qapp.processEvents()
-        #self.qapp.exec()  # block for debugging
+        #self.qapp.exec_()  # block for debugging
         return result
 
     def _fitResultFileName(self, filelist, outputdir, fast=False,

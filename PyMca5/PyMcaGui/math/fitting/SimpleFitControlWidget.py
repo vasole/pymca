@@ -567,7 +567,7 @@ def test():
     ddict['xmax'] = 1024
     wid.setConfiguration(ddict)
     wid.show()
-    app.exec()
+    app.exec_()
 
 if __name__=="__main__":
     test()

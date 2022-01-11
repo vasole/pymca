@@ -599,7 +599,7 @@ class RGBCorrelatorGraph(qt.QWidget):
         outfile.setFileMode(outfile.AnyFile)
         outfile.setAcceptMode(qt.QFileDialog.AcceptSave)
         outfile.setDirectory(self.saveDirectory)
-        ret = outfile.exec()
+        ret = outfile.exec_()
 
         if not ret:
             return
@@ -728,7 +728,7 @@ def test():
 
     container = RGBCorrelatorGraph()
     container.show()
-    app.exec()
+    app.exec_()
 
 if __name__ == "__main__":
     test()

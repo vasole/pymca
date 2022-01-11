@@ -976,4 +976,4 @@ if __name__ == '__main__':
     win.clear()
     win.setLegendList(llist)
 
-    app.exec()
+    app.exec_()

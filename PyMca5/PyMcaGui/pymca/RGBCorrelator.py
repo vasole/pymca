@@ -213,7 +213,7 @@ def test():
         w.addImage(array3)
         w.setImageShape([100, 100])
     w.show()
-    app.exec()
+    app.exec_()
 
 if __name__ == "__main__":
     test()

@@ -253,7 +253,7 @@ class SpecFileStack(DataObject.DataObject):
                                      int(numberofmca/numberofdetectors)
                         dialog = ImageShapeDialog(None, shape = stackImageShape)
                         dialog.setModal(True)
-                        ret = dialog.exec()
+                        ret = dialog.exec_()
                         if ret:
                             stackImageShape = dialog.getImageShape()
                             dialog.close()

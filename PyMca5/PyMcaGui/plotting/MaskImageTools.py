@@ -262,4 +262,4 @@ if __name__ == "__main__":
     image = getPixmapFromData(data, mask=mask)
     w.addImage(image, mask=mask)
     w.show()
-    app.exec()
+    app.exec_()

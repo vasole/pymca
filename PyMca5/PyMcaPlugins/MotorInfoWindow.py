@@ -316,7 +316,7 @@ def main():
     app = qt.QApplication(sys.argv)
     w = MotorInfoDialog(None, legends, motors)
     w.show()
-    app.exec()
+    app.exec_()
 
 if __name__ == '__main__':
     main()

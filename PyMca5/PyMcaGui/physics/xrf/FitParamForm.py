@@ -848,5 +848,5 @@ if __name__ == "__main__":
     a.lastWindowClosed.connect(a.quit)
     w = FitParamForm()
     w.show()
-    a.exec()
+    a.exec_()
     a = None

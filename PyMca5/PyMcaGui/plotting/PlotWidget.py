@@ -143,7 +143,7 @@ class PlotWidget(qt.QMainWindow, Plot.Plot):
         if (printer is None) or dialog:
             # allow printer selection/configuration
             printDialog = qt.QPrintDialog(printer, self)
-            actualPrint = printDialog.exec()
+            actualPrint = printDialog.exec_()
         else:
             actualPrint = True
         if actualPrint:
@@ -351,5 +351,5 @@ if __name__ == "__main__":
         plot.insertXMarker(5., legend="X", text="X", draggable=True)
         plot.insertYMarker(5., legend="Y", text="Y", draggable=True)
     print("All curves = ", plot.getAllCurves(just_legend=True))
-    app.exec()
+    app.exec_()
     app = None

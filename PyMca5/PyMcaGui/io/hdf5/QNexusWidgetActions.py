@@ -233,5 +233,5 @@ if __name__ == "__main__":
     w.sigRemoveSelection.connect(removeSelection)
     w.sigReplaceSelection.connect(replaceSelection)
     w.sigActionsConfigurationChanged.connect(configurationChanged)
-    sys.exit(app.exec())
+    sys.exit(app.exec_())
 

@@ -98,7 +98,7 @@ class NNMADialog(qt.QDialog):
             msg.setWindowTitle("No data")
             msg.setIcon(qt.QMessageBox.Information)
             msg.setText("No data to perform calculation")
-            msg.exec()
+            msg.exec_()
             return
 
         if self.nnmaParametersDialog is None:
@@ -107,7 +107,7 @@ class NNMADialog(qt.QDialog):
             self.nnmaParametersDialog.nPC.setValue(min(10, self._spectrumLength))
             ddict = {'options':self._binningOptions, 'binning': 1, 'method': 0}
             self.nnmaParametersDialog.setParameters(ddict)
-        ret = self.nnmaParametersDialog.exec()
+        ret = self.nnmaParametersDialog.exec_()
         if ret:
             t0 = time.time()
             nnmaParameters = self.nnmaParametersDialog.getParameters()
@@ -143,7 +143,7 @@ class NNMADialog(qt.QDialog):
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText("%s" % sys.exc_info()[1])
-                    msg.exec()
+                    msg.exec_()
                     return
             if isinstance(self._data, numpy.ndarray):
                 self._data.shape = old_shape
@@ -257,4 +257,4 @@ if __name__ == "__main__":
     if len(imageList):
         d.setData(imageList)
     d.show()
-    app.exec()
+    app.exec_()

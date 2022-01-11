@@ -243,7 +243,7 @@ def main():
     tab.build(["Cnt1", "Cnt2", "Cnt3"])
     tab.setElementSelection({'r':[1], 'g':[4], 'elementlist':["dummy", "Ca K", "Fe K", "Pb M", "U l"]})
     tab.show()
-    app.exec()
+    app.exec_()
 
 if __name__ == "__main__":
     main()

@@ -174,7 +174,7 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
         self.configurationWidget.setSpectrum(x, y, legend=legend, info=info)
         self.configurationWidget.show()
         self.configurationWidget.raise_()
-        ret = self.configurationWidget.exec()
+        ret = self.configurationWidget.exec_()
         if ret:
             self._executeFunctionAndParameters()
 

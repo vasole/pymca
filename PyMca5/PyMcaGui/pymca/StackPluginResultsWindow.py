@@ -376,7 +376,7 @@ def test():
         print(ddict['event'])
 
     container.sigMaskImageWidgetSignal.connect(theSlot)
-    app.exec()
+    app.exec_()
 
 if __name__ == "__main__":
     import numpy

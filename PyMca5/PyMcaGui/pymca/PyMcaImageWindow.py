@@ -505,4 +505,4 @@ if __name__ == "__main__":
         counter += 1
 
     loop = TimerLoop(function = function, period = period)
-    sys.exit(app.exec())
+    sys.exit(app.exec_())

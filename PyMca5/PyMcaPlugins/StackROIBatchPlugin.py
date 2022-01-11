@@ -147,7 +147,7 @@ class StackROIBatchPlugin(StackPluginBase.StackPluginBase):
         if self.configurationWidget is None:
             self.configurationWidget = \
                             StackROIBatchWindow.StackROIBatchDialog()
-        ret = self.configurationWidget.exec()
+        ret = self.configurationWidget.exec_()
         if ret:
             self._executeFunctionAndParameters()
 
@@ -202,7 +202,7 @@ class StackROIBatchPlugin(StackPluginBase.StackPluginBase):
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setInformativeText(str(sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
-            msg.exec()
+            msg.exec_()
 
     def _threadFinished(self):
         result = self.thread.result

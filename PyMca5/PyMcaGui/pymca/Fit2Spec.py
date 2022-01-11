@@ -393,7 +393,7 @@ if __name__ == "__main__":
         w = Fit2SpecGUI(actions=1)
         app.setMainWidget(w)
         w.show()
-        app.exec()
+        app.exec_()
     else:
         text = "Batch from %s to %s" % (os.path.basename(filelist[0]), os.path.basename(filelist[-1]))
         window =  Fit2SpecWindow(name=text,actions=1)
@@ -418,7 +418,7 @@ if __name__ == "__main__":
         window.show()
         b.start()
         app.setMainWidget(window)
-        app.exec()
+        app.exec_()
 
 
 

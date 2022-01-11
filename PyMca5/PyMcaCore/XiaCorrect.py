@@ -398,7 +398,7 @@ def mainGUI(app=None):
         app= qt.QApplication(sys.argv)
 
     wid= XiaCorrectWizard.XiaCorrectWizard()
-    ret= wid.exec()
+    ret= wid.exec_()
 
     if ret==qt.QDialog.Accepted:
         options= wid.get()

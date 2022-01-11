@@ -176,7 +176,7 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
         y = spectrum
         self.configurationWidget.setSpectrum(x, y, legend=legend, info=info)
         self.configurationWidget.show()
-        ret = self.configurationWidget.exec()
+        ret = self.configurationWidget.exec_()
         if ret:
             self._kMeansWidget = None
             self._executeFunctionAndParameters()

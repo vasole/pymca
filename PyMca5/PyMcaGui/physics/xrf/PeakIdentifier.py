@@ -155,7 +155,7 @@ class PeakIdentifier(qt.QWidget):
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid Float")
             msg.setWindowTitle("Invalid entry")
-            msg.exec()
+            msg.exec_()
             self.energy.setFocus()
             return
 
@@ -175,7 +175,7 @@ class PeakIdentifier(qt.QWidget):
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Invalid Energy Value")
                 msg.setWindowTitle("Invalid energy")
-                msg.exec()
+                msg.exec_()
                 self.energy.setFocus()
                 return
 
@@ -298,7 +298,7 @@ def main():
     l.addWidget(w)
     mw.setWindowTitle("Peak Identifier")
     mw.show()
-    app.exec()
+    app.exec_()
 
 if __name__ == "__main__":
     main()

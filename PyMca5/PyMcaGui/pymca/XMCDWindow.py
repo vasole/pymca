@@ -277,7 +277,7 @@ class XMCDOptions(qt.QDialog):
             msg = qt.QMessageBox()
             msg.setWindowTitle('XLD/XMCD Options Error')
             msg.setText('Unable to write configuration to \'%s\''%filename)
-            msg.exec()
+            msg.exec_()
         self.saved = True
         return True
 
@@ -310,7 +310,7 @@ class XMCDOptions(qt.QDialog):
             msg = qt.QMessageBox()
             msg.setWindowTitle('XMCD Options Error')
             msg.setText('Configuration file \'%s\' corruted' % filename)
-            msg.exec()
+            msg.exec_()
             return
         except KeyError as e:
             _logger.debug('loadOptions -- invalid identifier:\n'
@@ -319,7 +319,7 @@ class XMCDOptions(qt.QDialog):
             msg = qt.QMessageBox()
             msg.setWindowTitle('XMCD Options Error')
             msg.setText('Configuration file \'%s\' corruted' % filename)
-            msg.exec()
+            msg.exec_()
             return
         self.saved = True
 
@@ -995,7 +995,7 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
                 seperateFile = None
         except IOError:
             msg = qt.QMessageBox(text="Unable to open '%s'"%filename)
-            msg.exec()
+            msg.exec_()
             return
 
         title = ''
@@ -1344,7 +1344,7 @@ class XMCDTreeWidget(qt.QTreeWidget):
                 invalidMsg = qt.QMessageBox(None)
                 invalidMsg.setText('Invalid identifier. Try again.')
                 invalidMsg.setStandardButtons(qt.QMessageBox.Ok)
-                invalidMsg.exec()
+                invalidMsg.exec_()
                 return
         if len(sel) != len(seq):
             # Assume pattern and repeat
@@ -1352,7 +1352,7 @@ class XMCDTreeWidget(qt.QTreeWidget):
             #invalidMsg = qt.QMessageBox(None)
             #invalidMsg.setText('Sequence length does not match item count.')
             #invalidMsg.setStandardButtons(qt.QMessageBox.Ok)
-            #invalidMsg.exec()
+            #invalidMsg.exec_()
         for (idx, item) in zip(seq, sel):
             if idx == self.groupList[-1]:
                 idx = ''
@@ -1683,7 +1683,7 @@ class XMCDWidget(qt.QWidget):
         if chk and (not exp.isEmpty()):
             exp = str(exp)
             opts = XMCDOptions(self, self.motorNamesList, False)
-            if opts.exec():
+            if opts.exec_():
                 self.experimentsDict[exp] = opts.getOptions()
                 cBox = self.expCBox
                 new = [cBox.itemText(i) for i in range(cBox.count())][0:-2]
@@ -1704,7 +1704,7 @@ class XMCDWidget(qt.QWidget):
             self.expCBox.setCurrentIndex(idx)
 
     def showOptionsWindow(self):
-        if self.optsWindow.exec():
+        if self.optsWindow.exec_():
             options = self.optsWindow.getOptions()
             self.analysisWindow.processOptions(options)
 
@@ -1713,7 +1713,7 @@ class XMCDWidget(qt.QWidget):
             msg = qt.QMessageBox()
             msg.setWindowTitle('XLD/XMCD Error')
             msg.setText('No help file found.')
-            msg.exec()
+            msg.exec_()
             return
         else:
             self.helpFileBrowser.show()
@@ -2058,7 +2058,7 @@ def getSaveFileName(parent, caption, directory, filter):
     append = None
     comment = None
     files = []
-    if dial.exec():
+    if dial.exec_():
         append  = dial.appendBox.isChecked()
         comment = str(dial.commentBox.toPlainText())
         if comment == 'Enter comment':
@@ -2106,7 +2106,7 @@ def main():
 #    helpFileBrowser.setHtml(helpFileHTML)
 #    helpFileBrowser.show()
 
-    app.exec()
+    app.exec_()
 
 if __name__ == '__main__':
     main()

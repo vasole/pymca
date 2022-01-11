@@ -261,7 +261,7 @@ class TomoReconsDialog(qt.QDialog):
             name = list(mSelections.keys())[0]
             diag = self.SinogramHasMultipleRoleInfoMessage(sinoName=name,
                                                            roles=mSelections[name])
-            if diag.exec():
+            if diag.exec_():
                 return diag.result() == qt.QDialogButtonBox.Ignore
             else:
                 return False
@@ -366,4 +366,4 @@ if __name__ == '__main__':
     app = qt.QApplication([])
     widget = TomoReconsDialog(entries=["Cnt1", "Cnt2", "Cnt3", "Cnt4", "Cnt5"])
     widget.show()
-    app.exec()
+    app.exec_()

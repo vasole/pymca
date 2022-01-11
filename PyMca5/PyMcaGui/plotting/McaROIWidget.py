@@ -225,7 +225,7 @@ class McaROIWidget(qt.QWidget):
         outfile.setFileMode(outfile.AnyFile)
         outfile.setAcceptMode(qt.QFileDialog.AcceptSave)
         outfile.setDirectory(self.roiDir)
-        ret = outfile.exec()
+        ret = outfile.exec_()
         if not ret:
             outfile.close()
             del outfile
@@ -246,7 +246,7 @@ class McaROIWidget(qt.QWidget):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Input Output Error: %s" % (sys.exc_info()[1]))
-                msg.exec()
+                msg.exec_()
                 return
         self.roiDir = os.path.dirname(outputFile)
         self.save(outputFile)
@@ -668,5 +668,5 @@ if __name__ == '__main__':
     app = qt.QApplication([])
     demo = McaROIWidget()
     demo.show()
-    app.exec()
+    app.exec_()
 

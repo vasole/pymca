@@ -99,7 +99,7 @@ class XASSelfattenuationPlugin(Plugin1DBase.Plugin1DBase):
     def configure(self):
         if self.widget is None:
             self.widget = XASSelfattenuationWindow.XASSelfattenuationDialog()
-        ret = self.widget.exec()
+        ret = self.widget.exec_()
         if ret:
             self.configuration = self.widget.getConfiguration()
             self.instance.setConfiguration(self.configuration)

@@ -128,7 +128,7 @@ def test():
     app.lastWindowClosed.connect(app.quit)
     w = DoubleSlider()
     w.show()
-    app.exec()
+    app.exec_()
 
 if __name__ == "__main__":
     test()

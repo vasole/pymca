@@ -254,4 +254,4 @@ if __name__ == "__main__":
                       'y': [4],
                       'legend': ["dummy", "Ca K", "Fe K", "Pb M", "U l"]})
     tab.show()
-    app.exec()
+    app.exec_()

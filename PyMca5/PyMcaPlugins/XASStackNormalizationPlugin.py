@@ -162,7 +162,7 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
             if abs(oldEMin - x.min()) < 1:
                 if abs(oldEMax - x.max()) < 1:
                     self.widget.setParameters(oldParameters)
-        ret = self.widget.exec()
+        ret = self.widget.exec_()
         if ret:
             parameters = self.widget.getParameters()
             # TODO: this dictionary adaptation should be made

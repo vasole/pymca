@@ -238,4 +238,4 @@ if __name__ == "__main__":
         w.setSpectrum(energy, mu)
     except:
         print("ERROR: ", sys.exc_info())
-    app.exec()
+    app.exec_()

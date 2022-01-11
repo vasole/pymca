@@ -245,6 +245,7 @@ class HorizontalSliderWithBrowser(qt.QAbstractSlider):
         self.mainLayout = qt.QHBoxLayout(self)
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(2)
+        self.headingLabel = None
         self._slider  = qt.QSlider(self)
         self._slider.setOrientation(qt.Qt.Horizontal)
         self._browser = FrameBrowser(self)
@@ -253,6 +254,11 @@ class HorizontalSliderWithBrowser(qt.QAbstractSlider):
         self._slider.valueChanged[int].connect(self._sliderSlot)
         self._browser.sigIndexChanged.connect(self._browserSlot)
 
+    def setHeadingLabelText(self, text):
+        if self.headingLabel is None:
+            self.headingLabel = qt.QLabel(self)
+            self.mainLayout.insertWidget(0, self.headingLabel)
+        self.headingLabel.setText(text)
 
     def setMinimum(self, value):
         self._slider.setMinimum(value)
@@ -296,7 +302,7 @@ def test1(args):
     w.valueChanged[int].connect(slot)
     w.setRange(8, 20)
     w.show()
-    app.exec()
+    app.exec_()
 
 
 def test2(args):
@@ -308,7 +314,7 @@ def test2(args):
     if len(args) > 1:
         w.setLimits(8, 20)
     w.show()
-    app.exec()
+    app.exec_()
 
 
 if __name__=="__main__":

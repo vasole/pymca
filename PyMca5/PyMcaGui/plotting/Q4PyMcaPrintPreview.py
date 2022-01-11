@@ -465,7 +465,7 @@ class PyMcaPrintPreview(qt.QDialog):
             self.printer = qt.QPrinter()
         if (self.printDialog is None) or (not self.isReady()):
             self.printDialog = qt.QPrintDialog(self.printer, self)
-        if self.printDialog.exec():
+        if self.printDialog.exec_():
             if (self.printer.width() <= 0) or (self.printer.height() <= 0):
                 self.message = qt.QMessageBox(self)
                 self.message.setIcon(qt.QMessageBox.Critical)
@@ -739,7 +739,7 @@ def testPreview():
             item = qt.QGraphicsSvgItem(filename, w.page)
             item.setFlag(qt.QGraphicsItem.ItemIsMovable, True)
             item.setCacheMode(qt.QGraphicsItem.NoCache)
-        sys.exit(w.exec())
+        sys.exit(w.exec_())
 
     w = PyMcaPrintPreview( parent = None, modal=0)
     # we need to initialize a printer to get a proper page
@@ -754,7 +754,7 @@ def testPreview():
                 commentPosition="CENTER")
     w.addImage(qt.QImage(filename), comment=comment, commentPosition="LEFT")
     #w.addImage(qt.QImage(filename))
-    w.exec()
+    w.exec_()
 
 def testSimple():
     import sys
@@ -803,4 +803,4 @@ def testSimple():
 if  __name__ == '__main__':
     a = qt.QApplication(sys.argv)
     testPreview()
-    # a.exec()
+    # a.exec_()

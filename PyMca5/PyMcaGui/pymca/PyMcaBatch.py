@@ -987,7 +987,7 @@ class McaBatchGUI(qt.QWidget):
         button.clicked.connect(dialog.accept)
         dialog.mainLayout.addWidget(nexusWidget)
         dialog.mainLayout.addWidget(button)
-        ret = dialog.exec()
+        ret = dialog.exec_()
         cntSelection = nexusWidget.cntTable.getCounterSelection()
         cntlist = cntSelection['cntlist']
         if not len(cntlist):
@@ -1019,7 +1019,7 @@ class McaBatchGUI(qt.QWidget):
         msg.setWindowTitle("PyMcaBatch Message")
         msg.setIcon(qt.QMessageBox.Information)
         msg.setText(text)
-        msg.exec()
+        msg.exec_()
 
     def setConfigFile(self,configfile=None):
         if configfile is None:
@@ -1483,7 +1483,7 @@ class McaBatchGUI(qt.QWidget):
             text = "Your fit has been started as an independent process."
             msg.setText(text)
             # REMARK: needs to be non-blocking for unit testing
-            #msg.exec()
+            #msg.exec_()
             msg.show()
 
     def genListFile(self, listfile, config=None):
@@ -2207,13 +2207,13 @@ def main():
                 msg = qt.QMessageBox()
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("%s" % sys.exc_info()[1])
-                msg.exec()
+                msg.exec_()
                 return
 
         window._rootname = "%s"% thread._rootname
         launchThread(thread, window)
         
-    app.exec()
+    app.exec_()
     app = None
 
 if __name__ == "__main__":

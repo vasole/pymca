@@ -75,7 +75,7 @@ def getPixmap():
             msg = qt.QMessageBox()
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Cannot read file %s as an image" % fname)
-            msg.exec()
+            msg.exec_()
             return None, None
         return os.path.basename(fname), convertQImageToArray(qimage)
     if filterUsed.split()[0] in ["EDF", "ADSC"]:

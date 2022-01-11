@@ -532,7 +532,7 @@ class McaCalWidget(qt.QDialog):
             if QTVERSION < '4.0.0':
                 ret = linewidget.exec_loop()
             else:
-                ret = linewidget.exec()
+                ret = linewidget.exec_()
             if ret == qt.QDialog.Accepted:
                 ddict=linewidget.getDict()
                 _logger.debug("dict got from dialog = %s", ddict)
@@ -658,7 +658,7 @@ class McaCalWidget(qt.QDialog):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Error on estimate: %s" % sys.exc_info()[1])
-            msg.exec()
+            msg.exec_()
             return
         try:
             self.specfit.startfit()
@@ -666,7 +666,7 @@ class McaCalWidget(qt.QDialog):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Error on Fit")
-            msg.exec()
+            msg.exec_()
             return
         npeaks = 0
         delta  = 0.0
@@ -686,13 +686,13 @@ class McaCalWidget(qt.QDialog):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Less than two peaks found")
-            msg.exec()
+            msg.exec_()
             return
 
 
         d = DoubleDialog(self, text='Enter peak separation in time:')
         d.setWindowTitle('Time calibration')
-        ret = d.exec()
+        ret = d.exec_()
         if ret != qt.QDialog.Accepted:
             return
         text = str(d.lineEdit.text())
@@ -704,7 +704,7 @@ class McaCalWidget(qt.QDialog):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid peak separation %g" % deltat)
-            msg.exec()
+            msg.exec_()
             return
 
         return peak0, npeaks, delta, deltat
@@ -782,7 +782,7 @@ class McaCalWidget(qt.QDialog):
                 msg.setWindowTitle(sys.exc_info()[0])
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error on fit:\n%s" % sys.exc_info()[1])
-                msg.exec()
+                msg.exec_()
         return (A, B, Vret)
 
     def functionTOF(self, param, x):
@@ -1171,7 +1171,7 @@ class CalibrationParameters(qt.QWidget):
             if QTVERSION < '4.0.0':
                 msg.exec_loop()
             else:
-                msg.exec()
+                msg.exec_()
             self.AText.setFocus()
 
     def _Bslot(self):
@@ -1184,7 +1184,7 @@ class CalibrationParameters(qt.QWidget):
             msg=qt.QMessageBox(self.BText)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid Float")
-            msg.exec()
+            msg.exec_()
             self.BText.setFocus()
 
     def _Cslot(self):
@@ -1197,7 +1197,7 @@ class CalibrationParameters(qt.QWidget):
             msg=qt.QMessageBox(self.CText)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid Float")
-            msg.exec()
+            msg.exec_()
             self.CText.setFocus()
 
     def myslot(self, *var, **kw):
@@ -1578,7 +1578,7 @@ class McaCalCopy(qt.QDialog):
             msg=qt.QMessageBox(self.AText)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid Float")
-            msg.exec()
+            msg.exec_()
             self.AText.setFocus()
 
     def _Bslot(self):
@@ -1589,7 +1589,7 @@ class McaCalCopy(qt.QDialog):
             msg=qt.QMessageBox(self.BText)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid Float")
-            msg.exec()
+            msg.exec_()
             self.BText.setFocus()
 
     def _Cslot(self):
@@ -1600,7 +1600,7 @@ class McaCalCopy(qt.QDialog):
             msg=qt.QMessageBox(self.CText)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid Float")
-            msg.exec()
+            msg.exec_()
             self.CText.setFocus()
 
     def __copybuttonclicked(self):
@@ -1643,7 +1643,7 @@ class SimpleComboBox(qt.QComboBox):
 def test(x,y,legend):
     app = qt.QApplication(args)
     demo = McaCalWidget(x=x,y=y,modal=1,legend=legend)
-    ret=demo.exec()
+    ret=demo.exec_()
     if ret == qt.QDialog.Accepted:
         ddict=demo.getDict()
     else:

@@ -253,7 +253,7 @@ class FitParamWidget(FitParamForm):
             text = "Error %s" % sys.exc_info()[1]
             msg.setInformativeText(text)
             msg.setDetailedText(traceback.format_exc())
-            msg.exec()
+            msg.exec_()
 
     def computeEfficiency(self):
         pars = self.__getAttPar()
@@ -335,7 +335,7 @@ class FitParamWidget(FitParamForm):
                             xlabel='Energy (keV)',
                             ylabel='Efficiency Term',
                             replace=True)
-        self.graphDialog.exec()
+        self.graphDialog.exec_()
 
     def __contComboActivated(self, idx):
         if idx==4:
@@ -379,7 +379,7 @@ class FitParamWidget(FitParamForm):
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error configuring strategy")
                 msg.setInformativeText("You need to specify incident beam energy")
-                msg.exec()
+                msg.exec_()
         #_logger.debug("TO check for matrix composition")
         #_logger.debug("TO check for peaks")
 
@@ -392,7 +392,7 @@ class FitParamWidget(FitParamForm):
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Error configuring strategy")
             msg.setInformativeText("You need to specify incident beam energy")
-            msg.exec()
+            msg.exec_()
             return
         if self._strategyDialog is None:
             self._strategyDialog = StrategyHandler.StrategyHandlerDialog(self.parent())
@@ -412,10 +412,10 @@ class FitParamWidget(FitParamForm):
             msg.setText("Error configuring strategy")
             msg.setInformativeText(qt.safe_str(sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
-            msg.exec()
+            msg.exec_()
             return
         self._strategyDialog.raise_()
-        ret = self._strategyDialog.exec()
+        ret = self._strategyDialog.exec_()
         if ret != qt.QDialog.Accepted:
             self._strategyDialog.setFitConfiguration(before)
 
@@ -429,7 +429,7 @@ class FitParamWidget(FitParamForm):
             msg.setWindowTitle("No data supplied")
             msg.setIcon(qt.QMessageBox.Information)
             msg.setText("Please enter the values in the fields")
-            msg.exec()
+            msg.exec_()
             return
 
         pars = self.__getFitPar()
@@ -445,7 +445,7 @@ class FitParamWidget(FitParamForm):
 
         self._stripDialog.setParameters(pars)
         self._stripDialog.setData(x, y)
-        ret = self._stripDialog.exec()
+        ret = self._stripDialog.exec_()
         if not ret:
             return
         pars = self._stripDialog.getParameters()
@@ -1223,7 +1223,7 @@ class FitParamDialog(qt.QDialog):
             text = "Error %s" % sys.exc_info()[1]
             msg.setInformativeText(text)
             msg.setDetailedText(traceback.format_exc())
-            msg.exec()
+            msg.exec_()
             return 0
         self.setParameters(copy.deepcopy(cfg))
         return 1
@@ -1382,7 +1382,7 @@ class FitParamDialog(qt.QDialog):
 
 def openDialog():
     wid= FitParamDialog(modal=1)
-    ret = wid.exec()
+    ret = wid.exec_()
     if ret == qt.QDialog.Accepted:
         npar = wid.getParameters()
         print(npar)

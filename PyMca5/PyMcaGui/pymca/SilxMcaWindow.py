@@ -187,7 +187,7 @@ class McaWindow(ScanWindow.ScanWindow):
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Please Select an active curve")
             msg.setWindowTitle('MCA Window Simple Fit')
-            msg.exec()
+            msg.exec_()
             return
         x, y, info = self.getDataAndInfoFromLegend(legend)
         self.advancedfit.hide()
@@ -218,7 +218,7 @@ class McaWindow(ScanWindow.ScanWindow):
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Error. Trying to fit fitted data?")
             msg.setWindowTitle('MCA Window Simple Fit')
-            msg.exec()
+            msg.exec_()
 
     def getActiveCurve(self, just_legend=False):
         _logger.debug("Local MCA window getActiveCurve called!!!!")
@@ -290,7 +290,7 @@ class McaWindow(ScanWindow.ScanWindow):
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Please Select an active curve")
             msg.setWindowTitle('MCA Window')
-            msg.exec()
+            msg.exec_()
             return
 
         x, y, info = self.getDataAndInfoFromLegend(legend)
@@ -331,7 +331,7 @@ class McaWindow(ScanWindow.ScanWindow):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Error. Trying to fit fitted data?")
-            msg.exec()
+            msg.exec_()
         return
 
     def __anasignal(self, ddict):
@@ -346,7 +346,7 @@ class McaWindow(ScanWindow.ScanWindow):
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText("Please Select an active curve")
-                    msg.exec()
+                    msg.exec_()
                     return
                 else:
                     x, y, info = self.getDataAndInfoFromLegend(legend)
@@ -378,7 +378,7 @@ class McaWindow(ScanWindow.ScanWindow):
                                                           y=y,
                                                           modal=1,
                                                           caldict=ndict)
-                    ret = caldialog.exec()
+                    ret = caldialog.exec_()
 
                     if ret == qt.QDialog.Accepted:
                         self.caldict.update(caldialog.getDict())
@@ -402,7 +402,7 @@ class McaWindow(ScanWindow.ScanWindow):
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText("Please Select an active curve")
-                    msg.exec()
+                    msg.exec_()
                     return
                 else:
                     x, y, info = self.getDataAndInfoFromLegend(legend)
@@ -467,7 +467,7 @@ class McaWindow(ScanWindow.ScanWindow):
                                                         fl=0)
                     #info,x,y = self.getinfodatafromlegend(legend)
                     #caldialog.graph.newCurve("fromlegend",x=x,y=y)
-                    ret = caldialog.exec()
+                    ret = caldialog.exec_()
                     if ret == qt.QDialog.Accepted:
                         self.caldict.update(caldialog.getDict())
                         item, text = self.controlWidget.calbox.getCurrent()
@@ -493,7 +493,7 @@ class McaWindow(ScanWindow.ScanWindow):
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText(text)
-                    msg.exec()
+                    msg.exec_()
                     return
                 cald = ConfigDict.ConfigDict()
                 try:
@@ -503,7 +503,7 @@ class McaWindow(ScanWindow.ScanWindow):
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText(text)
-                    msg.exec()
+                    msg.exec_()
                     return
                 self.caldict.update(cald)
                 options = []
@@ -522,7 +522,7 @@ class McaWindow(ScanWindow.ScanWindow):
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText(text)
-                    msg.exec()
+                    msg.exec_()
                     return
             elif ddict['button'] == 'CalibrationSave':
                 filename = ddict['line_edit']
@@ -535,7 +535,7 @@ class McaWindow(ScanWindow.ScanWindow):
                         msg = qt.QMessageBox(self)
                         msg.setIcon(qt.QMessageBox.Critical)
                         msg.setText(text)
-                        msg.exec()
+                        msg.exec_()
                         return
                 cald.update(self.caldict)
                 cald.write(filename)
@@ -1511,7 +1511,7 @@ def test():
     w.resetZoom()
     app.lastWindowClosed.connect(app.quit)
     w.show()
-    app.exec()
+    app.exec_()
 
 
 if __name__ == "__main__":

@@ -282,7 +282,7 @@ class RGBImageCalculator(qt.QWidget):
             msg.setText(text)
             msg.setInformativeText(qt.safe_str(sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
-            msg.exec()
+            msg.exec_()
             return 1
         self.setName("(%s)" % name)
         self.plotImage()
@@ -374,7 +374,7 @@ def test():
     w.imageList = imageList
     w.imageDict = imageDict
     w.show()
-    app.exec()
+    app.exec_()
 
 if __name__ == "__main__":
     test()

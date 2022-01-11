@@ -457,7 +457,7 @@ def main(args):
     demo = PyMcaMdi()
     app.lastWindowClosed.connect(app.quit)
     demo.show()
-    app.exec()
+    app.exec_()
 
 if __name__ == '__main__':
     main(sys.argv)

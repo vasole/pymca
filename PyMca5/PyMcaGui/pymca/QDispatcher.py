@@ -370,7 +370,7 @@ def test():
     w = QDispatcher()
     w.show()
     app.lastWindowClosed.connect(app.quit)
-    app.exec()
+    app.exec_()
 
 if __name__ == "__main__":
     test()

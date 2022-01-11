@@ -379,11 +379,11 @@ def test2():
     dialog = NNMAParametersDialog(regions=True)
     #dialog.setParameters({'options':[1,3,5,7,9],'method':1, 'npc':8,'binning':3})
     dialog.setModal(True)
-    ret = dialog.exec()
+    ret = dialog.exec_()
     if ret:
         dialog.close()
         print(dialog.getParameters())
-    #app.exec()
+    #app.exec_()
 
 def test():
     app = qt.QApplication([])
@@ -399,7 +399,7 @@ def test():
         print(ddict['event'])
 
     container.sigMaskImageWidgetSignal.connect(theSlot)
-    app.exec()
+    app.exec_()
 
 if __name__ == "__main__":
     import numpy

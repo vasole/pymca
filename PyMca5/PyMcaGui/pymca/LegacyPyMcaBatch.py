@@ -476,7 +476,7 @@ class McaBatchGUI(qt.QWidget):
                         button.clicked.connect(dialog.accept)
                         dialog.mainLayout.addWidget(nexusWidget)
                         dialog.mainLayout.addWidget(button)
-                        ret = dialog.exec()
+                        ret = dialog.exec_()
                         cntSelection = nexusWidget.cntTable.getCounterSelection()
                         cntlist = cntSelection['cntlist']
                         if not len(cntlist):
@@ -524,7 +524,7 @@ class McaBatchGUI(qt.QWidget):
         msg.setWindowTitle("PyMcaBatch Message")
         msg.setIcon(qt.QMessageBox.Information)
         msg.setText(text)
-        msg.exec()
+        msg.exec_()
 
     def setConfigFile(self,configfile=None):
         if configfile is None:return
@@ -1112,7 +1112,7 @@ class McaBatchGUI(qt.QWidget):
                 text = "Your batch has been started as an independent process."
                 msg.setText(text)
                 # REMARK: non-blocking for unit testing
-                #msg.exec()
+                #msg.exec_()
                 msg.show()
 
     def genListFile(self, listfile, config=None):
@@ -1787,7 +1787,7 @@ def main():
         w = McaBatchGUI(actions=1)
         w.show()
         w.raise_()
-        app.exec()
+        app.exec_()
     else:
         app.lastWindowClosed.connect(app.quit)
         text = "LegacyBatch from %s to %s" % (os.path.basename(filelist[0]), os.path.basename(filelist[-1]))
@@ -1811,7 +1811,7 @@ def main():
                 msg = qt.QMessageBox()
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("%s" % sys.exc_info()[1])
-                msg.exec()
+                msg.exec_()
                 return
 
 
@@ -1835,7 +1835,7 @@ def main():
         window._rootname = "%s"% b._rootname
         window.show()
         b.start()
-        app.exec()
+        app.exec_()
 
 if __name__ == "__main__":
     main()

@@ -236,4 +236,4 @@ if __name__ == "__main__":
     m.setCurrentArrayIndex(4)
     #m.setArrayData(numpy.ones((100,)))
     w.show()
-    a.exec()
+    a.exec_()

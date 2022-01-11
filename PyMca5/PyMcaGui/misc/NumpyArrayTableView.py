@@ -98,4 +98,4 @@ if __name__ == "__main__":
     w = NumpyArrayTableView()
     w.setArrayData(d)
     w.show()
-    a.exec()
+    a.exec_()

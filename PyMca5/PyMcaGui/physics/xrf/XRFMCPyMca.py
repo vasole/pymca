@@ -181,7 +181,7 @@ class XRFMCProgramFile(GetFileList):
         if sys.platform == 'darwin':
             filedialog.setFileMode(qt.QFileDialog.Directory)
             filedialog.setOption(qt.QFileDialog.ShowDirsOnly)
-            filelist = filedialog.exec()
+            filelist = filedialog.exec_()
             if filelist:
                 filelist = filedialog.selectedFiles()
                 filelist = filelist[0]
@@ -673,7 +673,7 @@ class XRFMCPyMca(qt.QWidget):
             msg.setIcon(qt.QMessageBox.Information)
             msg.setText("Do you want to stop on-going simulation?")
             msg.setStandardButtons(qt.QMessageBox.Yes|qt.QMessageBox.No)
-            answer=msg.exec()
+            answer=msg.exec_()
             if answer == qt.QMessageBox.Yes:
                 self.logWidget.stop()
                 close = True
@@ -741,7 +741,7 @@ class XRFMCPyMca(qt.QWidget):
             msg.setWindowTitle(title)
         msg.setIcon(qt.QMessageBox.Critical)
         msg.setText(text)
-        msg.exec()
+        msg.exec_()
 
     def start(self):
         try:
@@ -753,7 +753,7 @@ class XRFMCPyMca(qt.QWidget):
             msg.setText("An error has occured while executing the plugin:")
             msg.setInformativeText(str(sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
-            msg.exec()
+            msg.exec_()
 
     def _start(self):
         """
@@ -910,7 +910,7 @@ class XRFMCPyMca(qt.QWidget):
                 for line in ddict['message']:
                     text += line
             msg.setText(text)
-            msg.exec()
+            msg.exec_()
         xmsoName = self.__fileNamesDict['xmso']
 
 if __name__ == "__main__":
@@ -918,5 +918,5 @@ if __name__ == "__main__":
     app.lastWindowClosed.connect(app.quit)
     w = XRFMCPyMca()
     w.show()
-    app.exec()
+    app.exec_()
 

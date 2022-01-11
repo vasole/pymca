@@ -987,7 +987,7 @@ def getDatasetValueDialog(filename=None, message=None, parent=None):
     """
     hdf5Dialog = Hdf5SelectionDialog(parent, filename, message,
                                      "dataset")
-    ret = hdf5Dialog.exec()
+    ret = hdf5Dialog.exec_()
     if not ret:
         return None
 
@@ -1002,7 +1002,7 @@ def getDatasetValueDialog(filename=None, message=None, parent=None):
 def getDatasetUri(parent=None, filename=None, message=None):
     # TODO: Accept a filter for type of dataset
     hdf5Dialog = Hdf5SelectionDialog(parent, filename, message, "dataset")
-    ret = hdf5Dialog.exec()
+    ret = hdf5Dialog.exec_()
     if not ret:
         return None
     selectedHdf5Uri = hdf5Dialog.selectedItemUri
@@ -1011,7 +1011,7 @@ def getDatasetUri(parent=None, filename=None, message=None):
 def getGroupUri(parent=None, filename=None, message=None):
     # TODO: Accept a filter for a particular attribute (NXclass)
     hdf5Dialog = Hdf5SelectionDialog(parent, filename, message, "dataset")
-    ret = hdf5Dialog.exec()
+    ret = hdf5Dialog.exec_()
     if not ret:
         return None
     selectedHdf5Uri = hdf5Dialog.selectedItemUri
@@ -1019,7 +1019,7 @@ def getGroupUri(parent=None, filename=None, message=None):
 
 def getUri(parent=None, filename=None, message=None):
     hdf5Dialog = Hdf5SelectionDialog(parent, filename, message, "any")
-    ret = hdf5Dialog.exec()
+    ret = hdf5Dialog.exec_()
     if not ret:
         return None
     selectedHdf5Uri = hdf5Dialog.selectedItemUri
@@ -1033,7 +1033,7 @@ def getDatasetDialog(filename=None, value=False, message=None, parent=None):
                                      parent=parent)
 
     hdf5Dialog = Hdf5SelectionDialog(parent, filename, message, "dataset")
-    ret = hdf5Dialog.exec()
+    ret = hdf5Dialog.exec_()
     if not ret:
         return None
     selectedHdf5Uri = hdf5Dialog.selectedItemUri
@@ -1051,7 +1051,7 @@ def getGroupNameDialog(filename=None, message=None, parent=None):
     :return: HDF5 group name
     """
     hdf5Dialog = Hdf5SelectionDialog(parent, filename, message, "group")
-    ret = hdf5Dialog.exec()
+    ret = hdf5Dialog.exec_()
     if not ret:
         return None
 
@@ -1075,6 +1075,6 @@ if __name__ == "__main__":
             print(phynxFile[ddict['name']].dtype, phynxFile[ddict['name']].shape)
     fileView.sigHDF5WidgetSignal.connect(mySlot)
     fileView.show()
-    ret = app.exec()
+    ret = app.exec_()
     app = None
     sys.exit(ret)

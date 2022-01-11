@@ -1206,7 +1206,7 @@ def test():
     w.eh.register("repSelection", repSelection)
     """
     w.show()
-    a.exec()
+    a.exec_()
 
 if __name__=="__main__":
     test()

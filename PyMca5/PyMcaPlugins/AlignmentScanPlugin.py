@@ -234,4 +234,4 @@ if __name__ == "__main__":
     print("LIMITS = ", plugin.getGraphYLimits())
     if QT:
         plot.show()
-        app.exec()
+        app.exec_()

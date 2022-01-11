@@ -8614,5 +8614,5 @@ if __name__ == '__main__':
     app = qt.QApplication(sys.argv)
     app.lastWindowClosed.connect(app.quit)
     w = showIcons()
-    app.exec()
+    app.exec_()
     app = None

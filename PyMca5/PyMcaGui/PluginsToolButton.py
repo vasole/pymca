@@ -192,7 +192,7 @@ class PluginsToolButton(qt.QToolButton, PluginLoader):
                 msg.setWindowTitle("No plugins")
                 msg.setInformativeText(" Problem loading plugins ")
                 msg.setDetailedText(message)
-                msg.exec()
+                msg.exec_()
             return
         if a.text() == "Set User Plugin Directory":
             dirName = qt.QFileDialog.getExistingDirectory(
@@ -248,7 +248,7 @@ class PluginsToolButton(qt.QToolButton, PluginLoader):
             msg.setText("An error has occured while executing the plugin:")
             msg.setInformativeText(str(sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
-            msg.exec()
+            msg.exec_()
 
     def _actionHovered(self, action):
         # from PyMca5 PlotWindow

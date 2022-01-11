@@ -691,7 +691,7 @@ def main(args):
     else:
         tab = MultilayerTab(None)
     tab.show()
-    app.exec()
+    app.exec_()
 
 
 if __name__=="__main__":

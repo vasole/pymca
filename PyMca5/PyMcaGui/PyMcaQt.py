@@ -138,39 +138,6 @@ elif BINDING == "PySide2":
     pyqtSlot = Slot
 
     # Qt6 compatibility:
-    # with PySide2 `exec` method has a special behavior
-    class _ExecMixIn:
-        """Mix-in class providind `exec` compatibility"""
-        def exec(self, *args, **kwargs):
-            return super().exec_(*args, **kwargs)
-
-    # QtWidgets
-    _QApplication = QApplication
-    class QApplication(_QApplication):
-        def exec(self, *args, **kwargs):
-            if args or kwargs:
-                print(1)
-                return super().exec(*args, **kwargs)
-            else:
-                print(2)
-                return super().exec_()
-
-    class QColorDialog(_ExecMixIn, QColorDialog): pass
-    class QDialog(_ExecMixIn, QDialog): pass
-    class QErrorMessage(_ExecMixIn, QErrorMessage): pass
-    class QFileDialog(_ExecMixIn, QFileDialog): pass
-    class QFontDialog(_ExecMixIn, QFontDialog): pass
-    class QInputDialog(_ExecMixIn, QInputDialog): pass
-    class QMenu(_ExecMixIn, QMenu): pass
-    class QMessageBox(_ExecMixIn, QMessageBox): pass
-    class QProgressDialog(_ExecMixIn, QProgressDialog): pass
-    #QtCore
-    class QCoreApplication(_ExecMixIn, QCoreApplication): pass
-    class QEventLoop(_ExecMixIn, QEventLoop): pass
-    if hasattr(QTextStreamManipulator, "exec_"):
-        # exec_ only wrapped in PySide2 and NOT in PyQt5
-        class QTextStreamManipulator(_ExecMixIn, QTextStreamManipulator): pass
-    class QThread(_ExecMixIn, QThread): pass
 
     # workaround not finding the Qt platform plugin "windows" in "" error
     # when creating a QApplication
@@ -247,7 +214,7 @@ def exceptionHandler(type_, value, trace):
         msg.setDetailedText(("%s " % value) + \
                             ''.join(traceback.format_tb(trace)))
         msg.raise_()
-        msg.exec()
+        msg.exec_()
 
 # Overwrite the QFileDialog to make sure that by default it
 # returns non-native dialogs as it was the traditional behavior of Qt

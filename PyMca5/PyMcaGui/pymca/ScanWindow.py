@@ -766,7 +766,7 @@ class ScanWindow(PlotWindow.PlotWindow):
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setInformativeText(str(sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
-            msg.exec()
+            msg.exec_()
 
     def _saveOperation(self, fileName, fileType, fileFilter):
         filterused = fileFilter
@@ -793,7 +793,7 @@ class ScanWindow(PlotWindow.PlotWindow):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Graphics Saving Error: %s" % (sys.exc_info()[1]))
-            msg.exec()
+            msg.exec_()
             return
         systemline = os.linesep
         os.linesep = '\n'
@@ -806,7 +806,7 @@ class ScanWindow(PlotWindow.PlotWindow):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Input Output Error: %s" % (sys.exc_info()[1]))
-            msg.exec()
+            msg.exec_()
             return
         x, y, legend, info = self.getActiveCurve()
         xlabel = info.get("xlabel", "X")
@@ -1162,7 +1162,7 @@ class ScanWindow(PlotWindow.PlotWindow):
 
         if legends:
             mtplt.plotLegends()
-        ret = self.matplotlibDialog.exec()
+        ret = self.matplotlibDialog.exec_()
         if ret == qt.QDialog.Accepted:
             mtplt.saveFile(filename)
         return
@@ -1612,7 +1612,7 @@ def test():
     w.resetZoom()
     app.lastWindowClosed.connect(app.quit)
     w.show()
-    app.exec()
+    app.exec_()
 
 
 if __name__ == "__main__":

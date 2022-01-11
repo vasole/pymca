@@ -228,4 +228,4 @@ if __name__ == "__main__":
     w.addCurve([1, 2, 3], [4, 5, 6], legend="My Curve")
     w.insertXMarker(1.5, draggable=True)
     w.show()
-    app.exec()
+    app.exec_()

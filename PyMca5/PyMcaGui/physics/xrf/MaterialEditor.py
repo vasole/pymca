@@ -202,13 +202,13 @@ class MaterialEditor(qt.QWidget):
                                 replace=True)
             self.graph.setGraphTitle(ddict['Comment'])
             if self.graphDialog is not None:
-                self.graphDialog.exec()
+                self.graphDialog.exec_()
         except:
             msg=qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setInformativeText(str(sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
-            msg.exec()
+            msg.exec_()
 
     def _massAttenuationSlot(self, ddict):
         try:
@@ -251,13 +251,13 @@ class MaterialEditor(qt.QWidget):
             self.graph.setActiveCurve(legend+' '+'Mass Att. (cm2/g)')
             self.graph.setGraphTitle(ddict['Comment'])
             if self.graphDialog is not None:
-                self.graphDialog.exec()
+                self.graphDialog.exec_()
         except:
             msg=qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setInformativeText(str(sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
-            msg.exec()
+            msg.exec_()
 
     def closeEvent(self, event):
         if self.graph is not None:
@@ -312,14 +312,14 @@ class MaterialComboBox(qt.QComboBox):
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Invalid Material Name '%s'\n" % text + \
                             "It contains a % character.\n")
-                msg.exec()
+                msg.exec_()
                 msg = qt.QMessageBox.No
             elif text.endswith(" ") or text.startswith(" "):
                 msg =  qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Invalid Material Name '%s'\n" % text + \
                             "It starts or ends with a space character.\n")
-                msg.exec()
+                msg.exec_()
                 msg = qt.QMessageBox.No
             else:
                 try:
@@ -330,7 +330,7 @@ class MaterialComboBox(qt.QComboBox):
                     msg.setText("Invalid Material Name %s\n" % text + \
                                 "You cannot use a number as material name.\n" +\
                                 "Hint: You can use _%s_" % text)
-                    msg.exec()
+                    msg.exec_()
                     msg = qt.QMessageBox.No
                 except:
                     msg=qt.QMessageBox.information( self, "Invalid Material %s" % str(qstring),
@@ -356,7 +356,7 @@ class MaterialComboBox(qt.QComboBox):
             msg.setText("Invalid Material Name %s\n" % text + \
                         "The material is a valid Formula.\n " \
                         "There is no need to define it.")
-            msg.exec()
+            msg.exec_()
             self.setCurrentIndex(0)
             for i in range(self.count()):
                 selftext = self.itemText(i)
@@ -794,7 +794,7 @@ class MaterialGUI(qt.QWidget):
             msg=qt.QMessageBox(self.__densityLine)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid Float")
-            msg.exec()
+            msg.exec_()
             self.__densityLine.setFocus()
 
     def __thicknessSlot(self, silent=False):
@@ -810,7 +810,7 @@ class MaterialGUI(qt.QWidget):
             msg=qt.QMessageBox(self.__thicknessLine)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid Float")
-            msg.exec()
+            msg.exec_()
             self.__thicknessLine.setFocus()
 
     def __transmissionSlot(self):
@@ -895,7 +895,7 @@ class MaterialGUI(qt.QWidget):
                     msg=qt.QMessageBox(self.__table)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText("Invalid Formula %s" % compound)
-                    msg.exec()
+                    msg.exec_()
                     self.__table.setCurrentCell(row, col)
                     return
         else:
@@ -905,7 +905,7 @@ class MaterialGUI(qt.QWidget):
                 msg=qt.QMessageBox(self.__table)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Invalid Float")
-                msg.exec()
+                msg.exec_()
                 self.__table.setCurrentCell(row, col)
                 return
         self._updateCurrent()
@@ -948,7 +948,7 @@ class MaterialGUI(qt.QWidget):
                     msg=qt.QMessageBox(self.__table)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText("Invalid Formula %s" % compound)
-                    msg.exec()
+                    msg.exec_()
                     self.__table.setCurrentCell(self.__lastRow, self.__lastColumn)
                     return
         else:
@@ -958,7 +958,7 @@ class MaterialGUI(qt.QWidget):
                 msg=qt.QMessageBox(self.__table)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Invalid Float")
-                msg.exec()
+                msg.exec_()
                 self.__table.setCurrentCell(self.__lastRow, self.__lastColumn)
                 return
         self._updateCurrent()
@@ -971,5 +971,5 @@ if __name__ == "__main__":
     else:
         demo = MaterialEditor(toolmode=False)
     demo.show()
-    ret  = app.exec()
+    ret  = app.exec_()
     app = None

@@ -213,7 +213,7 @@ class StackSelector(object):
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setInformativeText("%s" % sys.exc_info()[1])
                     msg.setDetailedText(traceback.format_exc())
-                    msg.exec()
+                    msg.exec_()
                     if _logger.getEffectiveLevel() == logging.DEBUG:
                         raise
         elif len(filelist):
@@ -224,7 +224,7 @@ class StackSelector(object):
                     msg = qt.QMessageBox()
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText("%s" % sys.exc_info()[1])
-                    msg.exec()
+                    msg.exec_()
                     if _logger.getEffectiveLevel() == logging.DEBUG:
                         raise
         if aifirafile:
@@ -495,4 +495,4 @@ if __name__ == "__main__":
     else:
         widget.setStack(stack)
     widget.show()
-    app.exec()
+    app.exec_()

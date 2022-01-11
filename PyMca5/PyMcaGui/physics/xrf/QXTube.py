@@ -464,5 +464,5 @@ if __name__ == "__main__":
     app = qt.QApplication([])
     w = QXTube()
     w.show()
-    app.exec()
+    app.exec_()
 

@@ -111,7 +111,7 @@ class XASScanNormalizationPlugin(Plugin1DBase.Plugin1DBase):
                 if abs(oldEMax - x.max()) < 1:
                     self.widget.setParameters(oldParameters)
 
-        ret = self.widget.exec()
+        ret = self.widget.exec_()
         if ret:
             self.parameters = self.widget.getParameters()
 

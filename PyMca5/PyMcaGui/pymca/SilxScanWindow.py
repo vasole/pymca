@@ -318,7 +318,7 @@ class BaseScanWindow(PlotWindow):
 
         if legends:
             mtplt.plotLegends()
-        ret = self.matplotlibDialog.exec()
+        ret = self.matplotlibDialog.exec_()
         if ret == qt.QDialog.Accepted:
             mtplt.saveFile(filename)
         return
@@ -332,7 +332,7 @@ class BaseScanWindow(PlotWindow):
     def printHtml(self, text):
         printer = qt.QPrinter()
         printDialog = qt.QPrintDialog(printer, self)
-        if printDialog.exec():
+        if printDialog.exec_():
             document = qt.QTextDocument()
             document.setHtml(text)
             document.print_(printer)
@@ -835,7 +835,7 @@ class ScanWindow(BaseScanWindow):
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Please Select an active curve")
             msg.setWindowTitle('%s window' % self._plotType)
-            msg.exec()
+            msg.exec_()
             return
         output = self._getOutputFileNameAndFilter()
         if output is None:
@@ -850,7 +850,7 @@ class ScanWindow(BaseScanWindow):
             msg.setInformativeText("Saving Error: %s" %
                                    (sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
-            msg.exec()
+            msg.exec_()
 
     def saveOperation(self, outputFile, outputFilter):
         filterused = outputFilter.split()
@@ -885,7 +885,7 @@ class ScanWindow(BaseScanWindow):
                 msg.setInformativeText("Graphics Saving Error: %s" %
                                        (sys.exc_info()[1]))
                 msg.setDetailedText(traceback.format_exc())
-                msg.exec()
+                msg.exec_()
             return
 
         # TEXT based formats
@@ -1052,7 +1052,7 @@ def test():
     w.resetZoom()
     app.lastWindowClosed.connect(app.quit)
     w.show()
-    app.exec()
+    app.exec_()
 
 
 if __name__ == "__main__":

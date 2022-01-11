@@ -99,7 +99,7 @@ def main():
     tab = HDF5Selection()
     tab.setSelection({'x':[1, 2], 'y':[4], 'cntlist':["dummy", "Cnt0", "Cnt1", "Cnt2", "Cnt3"]})
     tab.show()
-    app.exec()
+    app.exec_()
 
 if __name__ == "__main__":
     main()

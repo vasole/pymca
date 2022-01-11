@@ -290,7 +290,7 @@ class PasteCellsAction(qt.QAction):
         if len(selected_idx) != 1:
             msgBox = qt.QMessageBox(parent=self.table)
             msgBox.setText("A single cell must be selected to paste data")
-            msgBox.exec()
+            msgBox.exec_()
             return False
 
         data_model = self.table.model()
@@ -332,7 +332,7 @@ class PasteCellsAction(qt.QAction):
             msg = "Some data could not be inserted, "
             msg += "due to out-of-range or write-protected cells."
             msgBox.setText(msg)
-            msgBox.exec()
+            msgBox.exec_()
             return False
         return True
 
@@ -622,4 +622,4 @@ if __name__ == "__main__":
     tableview.setModel(model)
     tableview.show()
 
-    app.exec()
+    app.exec_()

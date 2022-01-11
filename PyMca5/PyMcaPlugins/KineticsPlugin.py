@@ -197,4 +197,4 @@ if __name__ == "__main__":
     for method in plugin.getMethods():
         print(method, ":", plugin.getMethodToolTip(method))
     #plugin.applyMethod(plugin.getMethods()[1])    
-    app.exec()
+    app.exec_()

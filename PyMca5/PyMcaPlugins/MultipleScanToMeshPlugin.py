@@ -319,7 +319,7 @@ if __name__ == "__main__":
     from PyMca5.PyMcaGraph import Plot
     app = qt.QApplication([])
     #w = ConfigurationWidget()
-    #w.exec()
+    #w.exec_()
     #sys.exit(0)
 
     _logger.setLevel(logging.DEBUG)

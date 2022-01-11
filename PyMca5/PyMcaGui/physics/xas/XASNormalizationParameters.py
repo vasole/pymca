@@ -419,4 +419,4 @@ if __name__ == "__main__":
     mu = data[1, :]
     w.setSpectrum(energy, mu)
     w.setTitleColor("blue")
-    app.exec()
+    app.exec_()

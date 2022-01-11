@@ -215,7 +215,7 @@ class Mca2EdfGUI(qt.QWidget):
                                        "All Files (*)"])
             filedialog.setModal(1)
             filedialog.setFileMode(filedialog.ExistingFiles)
-            ret = filedialog.exec()
+            ret = filedialog.exec_()
             if  ret == qt.QDialog.Accepted:
                 filelist0=filedialog.selectedFiles()
             else:
@@ -266,7 +266,7 @@ class Mca2EdfGUI(qt.QWidget):
             outfile.setModal(1)
             outfile.setDirectory(wdir)
             outfile.setFileMode(outfile.DirectoryOnly)
-            ret = outfile.exec()
+            ret = outfile.exec_()
         if ret:
             if QTVERSION < '4.0.0':
                 outdir = qt.safe_str(outfile.selectedFile())
@@ -573,7 +573,7 @@ def main():
     if len(filelist) == 0:
         w = Mca2EdfGUI(actions=1)
         w.show()
-        sys.exit(app.exec())
+        sys.exit(app.exec_())
     else:
         text = "Batch from %s to %s" % (os.path.basename(filelist[0]), \
                                         os.path.basename(filelist[-1]))
@@ -598,7 +598,7 @@ def main():
         app.aboutToQuit.connect(cleanup)
         window.show()
         b.start()
-        sys.exit(app.exec())
+        sys.exit(app.exec_())
 
 if __name__ == "__main__":
     main()

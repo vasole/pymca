@@ -356,7 +356,7 @@ def test():
         fit.startfit()
         w.fillfromfit(fit.paramlist,current='Fit')
         w.removeview(view='Region 1')
-    a.exec()
+    a.exec_()
 
 if __name__ == "__main__":
     bench=0

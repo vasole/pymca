@@ -389,13 +389,13 @@ if __name__ == "__main__":
     app = qt.QApplication([])
     w = XASSelfattenuationDialog()
     w.setConfiguration({"material":"Goethite"})
-    ret = w.exec()
+    ret = w.exec_()
     if ret:
         cfg = w.getConfiguration()
         print(cfg)
         cfg['material'] = "Fe"
         w.setConfiguration(cfg)
-        ret = w.exec()
+        ret = w.exec_()
         if ret:
             cfg = w.getConfiguration()
             print(cfg)

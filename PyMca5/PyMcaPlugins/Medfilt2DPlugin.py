@@ -208,4 +208,4 @@ if __name__ == "__main__":
                                max_noise=10.)    # %
     master_plot.addImage(myimg)
 
-    app.exec()
+    app.exec_()

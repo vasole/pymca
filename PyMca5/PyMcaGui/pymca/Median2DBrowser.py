@@ -93,7 +93,7 @@ class Median2DBrowser(StackBrowser.StackBrowser):
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setWindowTitle("Median filter error")
             msg.setText("One odd values accepted")
-            msg.exec()
+            msg.exec_()
             return
         if len(kernelSize.shape) == 0:
             kernelSize = [kernelSize.item()] * 2
@@ -166,4 +166,4 @@ if __name__ == "__main__":
     w = Median2DBrowser()
     w.setStackDataObject(stackData, index=0)
     w.show()
-    app.exec()
+    app.exec_()

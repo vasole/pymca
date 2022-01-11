@@ -213,7 +213,7 @@ class SimpleFitConfigurationGui(qt.QDialog):
             y = self.simpleFitInstance._y0[idx] * 1
             self._stripDialog.setParameters(pars)
             self._stripDialog.setData(x, y)
-            ret = self._stripDialog.exec()
+            ret = self._stripDialog.exec_()
             if not ret:
                 return
             pars = self._stripDialog.getParameters()
@@ -499,7 +499,7 @@ class SimpleFitConfigurationGui(qt.QDialog):
             txt = "ERROR while loading parameters from\n%s\n" % filename
             msg.setInformativeText(str(sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
-            msg.exec()
+            msg.exec_()
 
     def _loadIniFromHdf5(self, filename):
         self.__hdf5Dialog = qt.QDialog()
@@ -514,7 +514,7 @@ class SimpleFitConfigurationGui(qt.QDialog):
             fileView.sigHDF5WidgetSignal.connect(self._hdf5WidgetSlot)
             self.__hdf5Dialog.mainLayout.addWidget(fileView)
             self.__hdf5Dialog.resize(400, 200)
-            ret = self.__hdf5Dialog.exec()
+            ret = self.__hdf5Dialog.exec_()
             if ret:
                 initxt = hdfFile[self.__fitConfigDataset][()]
             else:
@@ -550,7 +550,7 @@ def test():
     # ddict['fit']['xmin'] = 1
     # ddict['fit']['xmax'] = 1024
     # wid.setConfiguration(ddict)
-    wid.exec()
+    wid.exec_()
     print(wid.getConfiguration())
     sys.exit()
 

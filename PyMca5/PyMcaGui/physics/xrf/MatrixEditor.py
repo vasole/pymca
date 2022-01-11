@@ -237,7 +237,7 @@ class MatrixEditor(qt.QWidget):
                 msg.exec_loop()
             else:
                 msg.setWindowTitle("Angle Error")
-                msg.exec()
+                msg.exec_()
             self.__angle1Line.setFocus()
             return
 
@@ -269,7 +269,7 @@ class MatrixEditor(qt.QWidget):
                 msg.exec_loop()
             else:
                 msg.setWindowTitle("Angle Error")
-                msg.exec()
+                msg.exec_()
             self.__angle2Line.setFocus()
             return
 
@@ -334,7 +334,7 @@ class MyQLineEdit(qt.QLineEdit):
             msg=qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid Float")
-            msg.exec()
+            msg.exec_()
             self.setFocus()
 
 if __name__ == "__main__":
@@ -343,5 +343,5 @@ if __name__ == "__main__":
     #demo = MatrixEditor(table=False, orientation="horizontal")
     demo = MatrixEditor(table=True, orientation="vertical")
     demo.show()
-    app.exec()
+    app.exec_()
     app = None

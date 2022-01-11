@@ -249,7 +249,7 @@ class SimpleFitGui(qt.QWidget):
             msg.setInformativeText("Function not imported %s" % \
                                            str(sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
-            msg.exec()
+            msg.exec_()
 
         config = self.fitModule.getConfiguration()
         self.topWidget.setFunctions(config['fit']['functions'])
@@ -273,7 +273,7 @@ class SimpleFitGui(qt.QWidget):
             self._configurationDialog =\
                 SimpleFitConfigurationGui.SimpleFitConfigurationGui()
         self._configurationDialog.setSimpleFitInstance(self.fitModule)
-        if not self._configurationDialog.exec():
+        if not self._configurationDialog.exec_():
             _logger.debug("NOT UPDATING CONFIGURATION")
             oldConfig = self.fitModule.getConfiguration()
             self._configurationDialog.setConfiguration(oldConfig)
@@ -347,7 +347,7 @@ class SimpleFitGui(qt.QWidget):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText(text)
-            msg.exec()
+            msg.exec_()
             self.setStatus("Ready (after estimate error)")
 
     def setStatus(self, text=None):
@@ -369,7 +369,7 @@ class SimpleFitGui(qt.QWidget):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText(text)
-            msg.exec()
+            msg.exec_()
             self.setStatus("Ready (after fit error)")
             return
 
@@ -457,4 +457,4 @@ if __name__=="__main__":
     _logger.setLevel(logging.DEBUG)
     app = qt.QApplication([])
     w = test()
-    app.exec()
+    app.exec_()
