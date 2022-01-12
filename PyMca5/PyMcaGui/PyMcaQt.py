@@ -145,7 +145,7 @@ elif BINDING == "PySide2":
             return super().exec_(*args, **kwargs)
 
     # QtWidgets
-    class QApplication(_ExecMixIn, QApplication): pass
+    #class QApplication(_ExecMixIn, QApplication): pass
     class QColorDialog(_ExecMixIn, QColorDialog): pass
     class QDialog(_ExecMixIn, QDialog): pass
     class QErrorMessage(_ExecMixIn, QErrorMessage): pass

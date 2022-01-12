@@ -1787,7 +1787,10 @@ def main():
         w = McaBatchGUI(actions=1)
         w.show()
         w.raise_()
-        app.exec()
+        if hasattr(app, "exec"):
+            app.exec()
+        else:
+            app.exec_()
     else:
         app.lastWindowClosed.connect(app.quit)
         text = "LegacyBatch from %s to %s" % (os.path.basename(filelist[0]), os.path.basename(filelist[-1]))
@@ -1835,7 +1838,11 @@ def main():
         window._rootname = "%s"% b._rootname
         window.show()
         b.start()
-        app.exec()
+        if hasattr(app, "exec"):
+            app.exec()
+        else:
+            app.exec_()
+    app = None
 
 if __name__ == "__main__":
     main()
