@@ -12,8 +12,7 @@ Ready-to-use packages are available for the most common platforms.
 PyMca frozen binaries for MacOS and Windows can be obtained from
 `Sourceforge <https://sourceforge.net/projects/pymca/files/pymca>`_
 
-Unofficial Debian packages are also available, but you should check if
-official pacakges are available for your distribution.
+Official packages are available for common Linux distributions.
 
 Please continue reading if you want to use PyMca with your existing
 Python installation.
