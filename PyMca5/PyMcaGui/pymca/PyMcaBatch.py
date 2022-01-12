@@ -2213,10 +2213,7 @@ def main():
         window._rootname = "%s"% thread._rootname
         launchThread(thread, window)
 
-    if hasattr(app, "exec"):
-        app.exec()
-    else:
-        app.exec_()
+    app.exec()
     app = None
 
 if __name__ == "__main__":
