@@ -145,11 +145,7 @@ elif BINDING == "PySide2":
             return super().exec_(*args, **kwargs)
 
     # QtWidgets
-    from PySide2.QtWidgets import QApplication as _QApplication
-    class QApplication(_QApplication):
-        def exec(self, *args, **kwargs):
-            return _QApplication.exec_()
-
+    QApplication.exec = QApplication.exec_
     class QColorDialog(_ExecMixIn, QColorDialog): pass
     class QDialog(_ExecMixIn, QDialog): pass
     class QErrorMessage(_ExecMixIn, QErrorMessage): pass
