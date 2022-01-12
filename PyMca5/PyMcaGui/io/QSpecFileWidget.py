@@ -597,7 +597,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             msg.setIcon(qt.QMessageBox.Critical)
             text = "Error: %s\n accessing scan information." % (sys.exc_info()[1])
             msg.setText(text)
-            msg.exec_()
+            msg.exec()
             if _logger.getEffectiveLevel() == logging.DEBUG:
                 raise
             return
@@ -837,7 +837,7 @@ def test():
     w.sigReplaceSelection.connect(mySlot)
     a.lastWindowClosed.connect(a.quit)
 
-    a.exec_()
+    a.exec()
 
 
 if __name__=="__main__":

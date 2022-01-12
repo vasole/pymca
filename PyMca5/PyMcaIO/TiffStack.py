@@ -405,7 +405,7 @@ def test():
         print("Setting stack")
         w.setStack(stackData)
         w.show()
-        app.exec_()
+        app.exec()
 
 if __name__ == "__main__":
     test()

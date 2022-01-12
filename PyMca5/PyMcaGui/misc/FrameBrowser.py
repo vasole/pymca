@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -147,7 +147,7 @@ class FrameBrowser(qt.QWidget):
         self.previousButton = qt.QPushButton(self)
         self.previousButton.setIcon(qt.QIcon(qt.QPixmap(icon_previous)))
         self.lineEdit = qt.QLineEdit(self)
-        self.lineEdit.setFixedWidth(self.lineEdit.fontMetrics().width('%05d' % n))
+        self.lineEdit.setFixedWidth(self.lineEdit.fontMetrics().maxWidth()*len('%05d' % n))
         validator = qt.QIntValidator(1, n, self.lineEdit)
         self.lineEdit.setText("1")
         self._oldIndex = 0
@@ -245,6 +245,7 @@ class HorizontalSliderWithBrowser(qt.QAbstractSlider):
         self.mainLayout = qt.QHBoxLayout(self)
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(2)
+        self.headingLabel = None
         self._slider  = qt.QSlider(self)
         self._slider.setOrientation(qt.Qt.Horizontal)
         self._browser = FrameBrowser(self)
@@ -253,6 +254,11 @@ class HorizontalSliderWithBrowser(qt.QAbstractSlider):
         self._slider.valueChanged[int].connect(self._sliderSlot)
         self._browser.sigIndexChanged.connect(self._browserSlot)
 
+    def setHeadingLabelText(self, text):
+        if self.headingLabel is None:
+            self.headingLabel = qt.QLabel(self)
+            self.mainLayout.insertWidget(0, self.headingLabel)
+        self.headingLabel.setText(text)
 
     def setMinimum(self, value):
         self._slider.setMinimum(value)
@@ -296,7 +302,7 @@ def test1(args):
     w.valueChanged[int].connect(slot)
     w.setRange(8, 20)
     w.show()
-    app.exec_()
+    app.exec()
 
 
 def test2(args):
@@ -308,7 +314,7 @@ def test2(args):
     if len(args) > 1:
         w.setLimits(8, 20)
     w.show()
-    app.exec_()
+    app.exec()
 
 
 if __name__=="__main__":

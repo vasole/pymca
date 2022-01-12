@@ -61,6 +61,7 @@ elif 'PyQt5.QtCore' in sys.modules:
 
 elif 'PyQt4.QtCore' in sys.modules:
     BINDING = 'PyQt4'
+    _logger = logging.critical("PyQt4 already imported and not supported")
 
 elif hasattr(sys, 'argv') and ('--binding=PySide2' in sys.argv):
     BINDING = 'PySide2'
@@ -83,89 +84,17 @@ if BINDING is None: # Try the different bindings
             if "PySide2" in sys.modules:
                 del sys.modules["PySide2"]
             try:
-                import sip
-                sip.setapi('QString', 2)
-                sip.setapi('QVariant', 2)
-                sip.setapi('QDate', 2)
-                sip.setapi('QDateTime', 2)
-                sip.setapi('QTextStream', 2)
-                sip.setapi('QTime', 2)
-                sip.setapi('QUrl', 2)
-                import PyQt4.QtCore
-                BINDING = "PyQt4"
+                import PySide6.QtCore
+                BINDING = "PySide6"
             except ImportError:
-                if "PyQt4" in sys.modules:
-                    del sys.modules["sip"]
-                    del sys.modules["PyQt4"]
-                try:
-                    import PySide6.QtCore
-                    BINDING = "PySide6"
-                except ImportError:
-                    if 'PySide6' in sys.modules:
-                        del sys.modules["PySide6"]
-                    raise ImportError(
-                        'No Qt wrapper found. Install PyQt5, PyQt4, PySide2 or PySide6.')
+                if 'PySide6' in sys.modules:
+                    del sys.modules["PySide6"]
+                raise ImportError(
+                    'No Qt wrapper found. Install PyQt5, PySide2 or PySide6.')
 
 _logger.info("BINDING set to %s" % BINDING)
 
-if BINDING == "PySide":
-    from PySide.QtCore import *
-    from PySide.QtGui import *
-    try:
-        from PySide.QtSvg import *
-        HAS_SVG = True
-    except:
-        _logger.info("PySide.QtSVG not available")
-
-    try:
-        from PySide.QtOpenGL import *
-        HAS_OPENGL = True
-    except:
-        _logger.info("PySide.QtOpenGL not available")
-
-    pyqtSignal = Signal
-    pyqtSlot = Slot
-
-    #matplotlib has difficulties to identify PySide
-    try:
-        import matplotlib
-        matplotlib.rcParams['backend.qt4']='PySide'
-    except:
-        pass
-
-elif BINDING == "PyQt4":
-    if sys.version_info < (3,) and ('sip' not in sys.modules):
-        try:
-            import sip
-            sip.setapi('QString', 2)
-            sip.setapi('QVariant', 2)
-            sip.setapi('QDate', 2)
-            sip.setapi('QDateTime', 2)
-            sip.setapi('QTextStream', 2)
-            sip.setapi('QTime', 2)
-            sip.setapi('QUrl', 2)
-        except:
-            _logger.info("Cannot set sip API") # Console widget not available
-
-    from PyQt4.QtCore import *
-    from PyQt4.QtGui import *
-
-    try:
-        from PyQt4.QtOpenGL import *
-        HAS_OPENGL = True
-    except:
-        _logger.info("PyQt4.QtOpenGL not available")
-
-    try:
-        from PyQt4.QtSvg import *
-        HAS_SVG = True
-    except:
-        _logger.info("PyQt4.QtSVG not available")
-
-    Signal = pyqtSignal
-    Slot = pyqtSlot
-
-elif BINDING == "PyQt5":
+if BINDING == "PyQt5":
     from PyQt5.QtCore import *
     from PyQt5.QtGui import *
     from PyQt5.QtWidgets import *
@@ -207,6 +136,32 @@ elif BINDING == "PySide2":
         _logger.info("PySide2.QtSVG not available")
     pyqtSignal = Signal
     pyqtSlot = Slot
+
+    # Qt6 compatibility:
+    # with PySide2 `exec` method has a special behavior
+    class _ExecMixIn:
+        """Mix-in class providind `exec` compatibility"""
+        def exec(self, *args, **kwargs):
+            return super().exec_(*args, **kwargs)
+
+    # QtWidgets
+    QApplication.exec = QApplication.exec_
+    class QColorDialog(_ExecMixIn, QColorDialog): pass
+    class QDialog(_ExecMixIn, QDialog): pass
+    class QErrorMessage(_ExecMixIn, QErrorMessage): pass
+    class QFileDialog(_ExecMixIn, QFileDialog): pass
+    class QFontDialog(_ExecMixIn, QFontDialog): pass
+    class QInputDialog(_ExecMixIn, QInputDialog): pass
+    class QMenu(_ExecMixIn, QMenu): pass
+    class QMessageBox(_ExecMixIn, QMessageBox): pass
+    class QProgressDialog(_ExecMixIn, QProgressDialog): pass
+    #QtCore
+    class QCoreApplication(_ExecMixIn, QCoreApplication): pass
+    class QEventLoop(_ExecMixIn, QEventLoop): pass
+    if hasattr(QTextStreamManipulator, "exec_"):
+        # exec_ only wrapped in PySide2 and NOT in PyQt5
+        class QTextStreamManipulator(_ExecMixIn, QTextStreamManipulator): pass
+    class QThread(_ExecMixIn, QThread): pass
 
     # workaround not finding the Qt platform plugin "windows" in "" error
     # when creating a QApplication
@@ -270,7 +225,7 @@ elif BINDING == 'PySide6':
             return screen.availableGeometry().width()
 
 else:
-    raise ImportError('No Qt wrapper found. Install one of PyQt5, PyQt4, PySide or PySide2 (untested)')
+    raise ImportError('No Qt wrapper found. Install one of PyQt5, PySide2 or PySide6')
 
 # provide a exception handler but not implement it by default
 def exceptionHandler(type_, value, trace):
@@ -283,10 +238,7 @@ def exceptionHandler(type_, value, trace):
         msg.setDetailedText(("%s " % value) + \
                             ''.join(traceback.format_tb(trace)))
         msg.raise_()
-        if hasattr(msg, "exec"):
-            msg.exec()
-        else:
-            msg.exec_()
+        msg.exec()
 
 # Overwrite the QFileDialog to make sure that by default it
 # returns non-native dialogs as it was the traditional behavior of Qt

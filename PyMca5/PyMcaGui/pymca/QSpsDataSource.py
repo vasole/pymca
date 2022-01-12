@@ -140,5 +140,5 @@ if __name__ == "__main__":
     app.mytest = mytest
     data = obj.getDataObject(arrayname,poll=True)
     obj.sigUpdated.connect(mytest)
-    app.exec_()
+    app.exec()
 

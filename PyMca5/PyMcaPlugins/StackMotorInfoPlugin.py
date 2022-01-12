@@ -184,7 +184,7 @@ class StackMotorInfoPlugin(StackPluginBase.StackPluginBase):
             msg.setIcon(qt.QMessageBox.Information)
             msg.setInformativeText("No positioners are set for this stack.")
             msg.raise_()
-            msg.exec_()
+            msg.exec()
             return
         if self.widget is None:
             self.widget = PointInfoWindow(plugin=self)

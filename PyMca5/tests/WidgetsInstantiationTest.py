@@ -64,6 +64,31 @@ class TestRGBCorrelatorGraph(TestCaseQt):
         from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
         PyMcaPrintPreview.resetSingletonPrintPreview()
 
+class TestRGBCorrelatorWidget(TestCaseQt):
+    def setUp(self):
+        super().setUp()
+
+    def testShow(self):
+        from PyMca5.PyMcaGui.pymca import RGBCorrelatorWidget
+        widget = RGBCorrelatorWidget.RGBCorrelatorWidget()
+        widget.show()
+        self.qapp.processEvents()
+        from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
+        PyMcaPrintPreview.resetSingletonPrintPreview()
+
+class TestXASNormalizationWindow(TestCaseQt):
+    def setUp(self):
+        super().setUp()
+
+    def testShow(self):
+        from PyMca5.PyMcaGui.physics.xas import XASNormalizationWindow
+        spectrum = [1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 5, 5, 5, 5, 5,  5]
+        widget = XASNormalizationWindow.XASNormalizationWindow(None, spectrum)
+        widget.show()
+        self.qapp.processEvents()
+        from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
+        PyMcaPrintPreview.resetSingletonPrintPreview()
+
 class TestMaskImageWidget(TestCaseQt):
     def setUp(self):
         super(TestMaskImageWidget, self).setUp()
@@ -202,6 +227,8 @@ def getSuite(auto=True):
                         TestPlotWidget,
                         TestPlotWindow,
                         TestRGBCorrelatorGraph,
+                        TestRGBCorrelatorWidget,
+                        TestXASNormalizationWindow,
                         TestMaskImageWidget,
                         TestScanWindow,
                         TestMcaCalWidget,

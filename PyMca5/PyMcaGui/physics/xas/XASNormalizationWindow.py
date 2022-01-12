@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V. Armando Sole - ESRF Data Analysis"
+__author__ = "V. Armando Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -105,7 +105,11 @@ class XASNormalizationParametersWidget(qt.QWidget):
         self.userEdgeEnergy = userEnergy
 
         # connect the signals
-        buttonGroup.buttonClicked[int].connect(self._buttonClicked)
+        if hasattr(buttonGroup, "idClicked"):
+            buttonGroup.idClicked[int].connect(self._buttonClicked)
+        else:
+            # deprecated
+            buttonGroup.buttonClicked[int].connect(self._buttonClicked)
 
         self.userEdgeEnergy.editingFinished.connect(self._userEdgeEnergyEditingFinished)
 
@@ -273,10 +277,10 @@ class XASNormalizationWindow(qt.QWidget):
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(2)
         if energy is None:
-            self.energy = range(len(spectrum))
+            self.energy = numpy.arange(len(spectrum)).astype(numpy.float64)
         else:
             self.energy = energy
-        self.spectrum = spectrum
+        self.spectrum = numpy.array(spectrum, dtype=numpy.float64, copy=False) 
         self.parametersWidget = XASNormalizationParametersWidget(self)
         self.graph = PlotWindow.PlotWindow(self, backend=backend,
                                            plugins=False, newplot=False)
@@ -303,7 +307,7 @@ class XASNormalizationWindow(qt.QWidget):
     def setData(self, spectrum, energy=None):
         self.spectrum = spectrum
         if energy is None:
-            self.energy = range(len(spectrum))
+            self.energy = numpy.arange(len(spectrum)).astype(numpy.float64)
         else:
             self.energy = energy
         self.graph.clearMarkers()
@@ -367,7 +371,7 @@ class XASNormalizationWindow(qt.QWidget):
             msg.setText("An error has occured while normalizing the data")
             msg.setInformativeText(str(sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
-            msg.exec_()
+            msg.exec()
             return
 
         nEnergy, nSpectrum, usedEdge, jump = normalizationResult[0:4]
@@ -532,11 +536,11 @@ if __name__ == "__main__":
         w = XASNormalizationDialog(None, spectrum, energy=energy)
     else:
         from PyMca5.PyMcaMath.fitting import SpecfitFuns
-        noise = numpy.random.randn(1500.)
-        x = 8000. + numpy.arange(1500.)
+        noise = numpy.random.randn(1500).astype(numpy.float64)
+        x = 8000. + numpy.arange(1500).astype(numpy.float64)
         y = SpecfitFuns.upstep([100, 8500., 50], x)
         w = XASNormalizationDialog(None, y + numpy.sqrt(y)* noise, energy=x)
-    ret=w.exec_()
+    ret=w.exec()
     if ret:
         print(w.getParameters())
 

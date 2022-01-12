@@ -136,4 +136,4 @@ if __name__ == "__main__":
     app = qt.QApplication([])
     w = FitConfigGui()
     w.show()
-    app.exec_()
+    app.exec()

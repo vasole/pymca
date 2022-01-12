@@ -403,6 +403,6 @@ if __name__ == "__main__":
                100 * numpy.exp(-(1./20) * ((x-64)*(x-64) + (y-128)*(y-128)))
         w = SNIPDialog(None, data)
     w.show()
-    ret = w.exec_()
+    ret = w.exec()
     if ret:
         print(w.getParameters())

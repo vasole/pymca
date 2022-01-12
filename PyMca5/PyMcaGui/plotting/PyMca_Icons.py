@@ -3870,5 +3870,5 @@ if __name__ == '__main__':
     logging.basicConfig()
     _logger.setLevel(logging.DEBUG)
     w = showIcons()
-    app.exec_()
+    app.exec()
     app = None

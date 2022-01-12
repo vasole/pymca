@@ -89,7 +89,7 @@ def test():
     w = QSelectorWidget()
     w.show()
     app.lastWindowClosed.connect(app.quit)
-    app.exec_()
+    app.exec()
 
 if __name__ == "__main__":
     test()

@@ -668,7 +668,7 @@ if __name__ == "__main__":
     w0.setXLabel('Channel')
     w0.setYLabel('Counts')
     w.plotLegends()
-    ret = w0.exec_()
+    ret = w0.exec()
     if ret:
         w.saveFile("filename.png")
         print("Plot filename.png saved")
@@ -680,4 +680,4 @@ if __name__ == "__main__":
     w.setXLabel('Channel')
     w.setYLabel('Counts')
     w.plotLegends()
-    ret = w0.exec_()
+    ret = w0.exec()

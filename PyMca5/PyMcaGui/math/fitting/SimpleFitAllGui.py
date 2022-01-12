@@ -182,7 +182,7 @@ class SimpleFitAllGui(SimpleFitGui):
             msg.setIcon(qt.QMessageBox.Information)
             msg.setText("Do you want to delete current output files?")
             msg.setStandardButtons(qt.QMessageBox.Yes | qt.QMessageBox.Cancel)
-            answer = msg.exec_()
+            answer = msg.exec()
             if answer == qt.QMessageBox.Yes:
                 try:
                     if os.path.exists(fileName):
@@ -206,7 +206,7 @@ class SimpleFitAllGui(SimpleFitGui):
             msg.setText("Error has occurred while processing the data")
             msg.setInformativeText(qt.safe_str(sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
-            msg.exec_()
+            msg.exec()
         finally:
             self.progressBar.hide()
             self.setEnabled(True)

@@ -324,7 +324,7 @@ if __name__ == "__main__":
         w.show()
         w.setSpectrum(energy, mu)
         w.update()
-        app.exec_()
+        app.exec()
     else:
         from PyMca5.PyMca import XASClass
         ownAnalyzer = XASClass.XASClass()
@@ -333,7 +333,7 @@ if __name__ == "__main__":
         w.setSpectrum(energy, mu)
         w.setConfiguration(configuration)
         print("SENT CONFIGURATION", configuration["Normalization"])
-        if w.exec_():
+        if w.exec():
             print("PARAMETERS = ", w.getConfiguration())
         else:
             print("PARAMETERS = ", configuration)

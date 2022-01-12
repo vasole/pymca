@@ -119,7 +119,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
         if self.widget is None:
             self.widget = FFTAlignmentWindow.FFTAlignmentDialog()
         self.widget.setStack(stack)
-        ret = self.widget.exec_()
+        ret = self.widget.exec()
         if ret:
             ddict = self.widget.getParameters()
             self.widget.setDummyStack()
@@ -284,7 +284,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
         widget.setStack(stack)
         mask = self.getStackSelectionMask()
         widget.setSelectionMask(mask)
-        ret = widget.exec_()
+        ret = widget.exec()
         if ret:
             ddict = widget.getParameters()
             widget.setDummyStack()
@@ -522,7 +522,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                 fileView.sigHDF5WidgetSignal.connect(self._hdf5WidgetSlot)
                 self.__hdf5Dialog.mainLayout.addWidget(fileView)
                 self.__hdf5Dialog.resize(400, 200)
-                ret = self.__hdf5Dialog.exec_()
+                ret = self.__hdf5Dialog.exec()
                 if not ret:
                     return
                 shifts = hdfFile[self.__shitfsDataset].value

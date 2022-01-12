@@ -899,7 +899,7 @@ def test():
     w =Parameters.Parameters()
     w.fillfromfit(fit.paramlist)
     w.show()
-    a.exec_()
+    a.exec()
 
 if __name__=="__main__":
     _logger.setLevel(logging.DEBUG)

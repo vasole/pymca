@@ -89,8 +89,12 @@ class SpecfitGui(qt.QWidget):
             self.guiconfig.AutoScalingCheckBox.stateChanged[int].connect(self.autoscaleevent)
             self.guiconfig.ConfigureButton.clicked.connect(self.__configureGuiSlot)
             self.guiconfig.PrintPushButton.clicked.connect(self.printps)
+        if hasattr(self.guiconfig.BkgComBox, "textActivated"):
             self.guiconfig.BkgComBox.textActivated[str].connect(self.bkgevent)
             self.guiconfig.FunComBox.textActivated[str].connect(self.funevent)
+        else:
+            self.guiconfig.BkgComBox.activated[str].connect(self.bkgevent)
+            self.guiconfig.FunComBox.activated[str].connect(self.funevent)            
             layout.addWidget(self.guiconfig)
 
         self.guiparameters = MultiParameters.ParametersTab(self)
@@ -240,7 +244,7 @@ class SpecfitGui(qt.QWidget):
                             default=oldconfiguration)
 
             w.show()
-            w.exec_()
+            w.exec()
             if w.result():
                 newconfiguration.update(w.output)
             #we do not need the dialog any longer
@@ -260,7 +264,7 @@ class SpecfitGui(qt.QWidget):
                 msg.setWindowTitle("Error on mcafit")
                 msg.setInformativeText(str(sys.exc_info()[1]))
                 msg.setDetailedText(traceback.format_exc())
-                msg.exec_()
+                msg.exec()
                 ddict={}
                 ddict['event'] = 'FitError'
                 self._emitSignal(ddict)
@@ -285,7 +289,7 @@ class SpecfitGui(qt.QWidget):
                     text += "yourself in the table and press Start Fit\n"
                     msg.setText(text)
                     msg.setWindowTitle('SpecfitGui Message')
-                    msg.exec_()
+                    msg.exec()
                     return
             except:
                 if _logger.getEffectiveLevel() == logging.DEBUG:
@@ -293,7 +297,7 @@ class SpecfitGui(qt.QWidget):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error on estimate: %s" % sys.exc_info()[1])
-                msg.exec_()
+                msg.exec()
                 return
             self.guiparameters.fillfromfit(self.specfit.paramlist,current='Fit')
             self.guiparameters.removeallviews(keep='Fit')
@@ -315,7 +319,7 @@ class SpecfitGui(qt.QWidget):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error on mcafit: %s" % sys.exc_info()[1])
-                msg.exec_()
+                msg.exec()
                 if _logger.getEffectiveLevel() == logging.DEBUG:
                     raise
                 return
@@ -340,7 +344,7 @@ class SpecfitGui(qt.QWidget):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error on Fit")
-                msg.exec_()
+                msg.exec()
                 if _logger.getEffectiveLevel() == logging.DEBUG:
                     raise
                 return
@@ -368,7 +372,7 @@ class SpecfitGui(qt.QWidget):
         msg = qt.QMessageBox(self)
         msg.setIcon(qt.QMessageBox.Critical)
         msg.setText("Sorry, Qt4 printing not implemented yet")
-        msg.exec_()
+        msg.exec()
 
     def mcaevent(self,item):
         if int(item):
@@ -548,4 +552,4 @@ if __name__ == "__main__":
     w = SpecfitGui(config=1, status=1, buttons=1)
     w.setdata(x=x,y=y)
     w.show()
-    a.exec_()
+    a.exec()

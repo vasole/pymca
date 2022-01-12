@@ -364,4 +364,4 @@ if __name__ == "__main__":
     w = XASPostEdgeParameters()
     w.sigPostEdgeParametersSignal.connect(testSlot)
     w.show()
-    app.exec_()
+    app.exec()

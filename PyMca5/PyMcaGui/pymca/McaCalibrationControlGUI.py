@@ -312,4 +312,4 @@ if __name__ == '__main__':
     app = qt.QApplication(sys.argv)
     demo = McaCalibrationControlGUI()
     demo.show()
-    app.exec_()
+    app.exec()

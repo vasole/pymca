@@ -246,4 +246,4 @@ class ExternalImagesStackPluginBase(StackPluginBase.StackPluginBase):
         msg = qt.QMessageBox(self._dialogParent)
         msg.setIcon(qt.QMessageBox.Critical)
         msg.setText(text)
-        msg.exec_()
+        msg.exec()

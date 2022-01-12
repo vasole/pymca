@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Software Group"
+__author__ = "V.A. Sole - ESRF"
 __doc__ = """This set of routines performs normalization of X-ray absorption
 spectra for qualitative/preliminary analysis. For state-of-the-art XAS you
 should take a look at dedicated and well-tested packages like IFEFFIT or
@@ -143,9 +143,8 @@ def estimateXANESEdge(spectrum, energy=None, npoints=5, full=False,
                       sanitize=True):
     if sanitize:
         if energy is None:
-            x = numpy.arange(len(spectrum)).astype(numpy.float64)
-        else:
-            x = numpy.array(energy, dtype=numpy.float64, copy=False)
+            energy = numpy.arange(len(spectrum))
+        x = numpy.array(energy, dtype=numpy.float64, copy=False)
         y = numpy.array(spectrum, dtype=numpy.float64, copy=False)
         # make sure data are sorted
         idx = energy.argsort(kind='mergesort')

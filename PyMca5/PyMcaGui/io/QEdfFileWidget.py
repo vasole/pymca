@@ -521,7 +521,7 @@ class QEdfFileWidget(qt.QWidget):
         outfile.setFileMode(outfile.AnyFile)
         outfile.setAcceptMode(outfile.AcceptSave)
         outfile.setDirectory(self.lastInputDir)
-        ret = outfile.exec_()
+        ret = outfile.exec()
 
         if not ret:
             return
@@ -855,7 +855,7 @@ class QEdfFileWidget(qt.QWidget):
                 strlist.append("All Files *")
                 fdialog.setFilters(strlist)
                 fdialog.setFileMode(fdialog.ExistingFiles)
-                ret = fdialog.exec_()
+                ret = fdialog.exec()
                 if ret == qt.QDialog.Accepted:
                     filelist = fdialog.selectedFiles()
                     fdialog.close()
@@ -1721,7 +1721,7 @@ def test2():
 
     w = EdfFile_StandardArray()
     w.show()
-    a.exec_()
+    a.exec()
 
 def test():
     import sys
@@ -1755,7 +1755,7 @@ def test():
     w.sigReplaceSelection.connect(replaceSelection)
     w.show()
     if a is not None:
-        a.exec_()
+        a.exec()
     else:
         return w
 

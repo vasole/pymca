@@ -176,4 +176,4 @@ def main(argv=None):
 if __name__ == "__main__":
     app = qt.QApplication([])
     w = main()
-    app.exec_()
+    app.exec()

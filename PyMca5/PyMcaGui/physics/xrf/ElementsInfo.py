@@ -211,7 +211,7 @@ class ElementsInfo(qt.QWidget):
                 msg=qt.QMessageBox(self.energy)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Invalid Float")
-                msg.exec_()
+                msg.exec()
                 self.energy.setFocus()
                 return
             if self.energyValue is not None:
@@ -281,7 +281,7 @@ def main():
     app.setPalette(winpalette)
     w= ElementsInfo()
     w.show()
-    app.exec_()
+    app.exec()
 
 if __name__ == "__main__":
     main()

@@ -77,7 +77,7 @@ def _QWarning(msg, parent=None):
     mb = qt.QMessageBox(parent)
     mb.setIcon(qt.QMessageBox.Warning)
     mb.setText(msg)
-    mb.exec_()
+    mb.exec()
 
 #
 # def _isActive(legend, plot):
