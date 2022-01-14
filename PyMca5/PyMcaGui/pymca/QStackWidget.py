@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -68,26 +68,12 @@ if __name__ == "__main__":
             binding = arg.lower()
             if binding == "pyqt5":
                 import PyQt5.QtCore
-            elif binding == "pyqt4":
-                if sys.version_info < (3,):
-                    try:
-                        import sip
-                        sip.setapi('QString', 2)
-                        sip.setapi('QVariant', 2)
-                        sip.setapi('QDate', 2)
-                        sip.setapi('QDateTime', 2)
-                        sip.setapi('QTextStream', 2)
-                        sip.setapi('QTime', 2)
-                        sip.setapi('QUrl', 2)
-                    except:
-                        print("Cannot set sip API")
-                import PyQt4.QtCore
             elif binding == "pyside2":
                 import PySide2.QtCore
-            elif binding == "pyside":
-                import PySide.QtCore
+            elif binding == "pyside6":
+                import PySide6.QtCore
             else:
-                raise ValueError("Unknown Qt binding <%s>" % binding)
+                raise ValueError("Unsupported Qt binding <%s>" % binding)
     from PyMca5.PyMcaCore.LoggingLevel import getLoggingLevel
     logging.basicConfig(level=getLoggingLevel(opts))
 
@@ -97,11 +83,6 @@ if hasattr(qt, "QString"):
 else:
     QString = qt.safe_str
 try:
-    if (sys.version_info < (3,)) and ("PyQt4.QtCore" in sys.modules):
-        # PyQt4 is the most reliable binding at the ESRF for python 2
-        import silx
-        silxLogger = logging.getLogger("silx.DEPRECATION")
-        silxLogger.setLevel(logging.CRITICAL)
     # try to import silx prior to importing matplotlib to prevent
     # unnecessary warning
     import silx.gui.plot

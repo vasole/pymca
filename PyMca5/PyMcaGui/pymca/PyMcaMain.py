@@ -91,24 +91,10 @@ if __name__ == '__main__':
             binding = arg.lower()
             if binding == "pyqt5":
                 import PyQt5.QtCore
-            elif binding == "pyqt4":
-                if sys.version_info < (3,):
-                    try:
-                        import sip
-                        sip.setapi('QString', 2)
-                        sip.setapi('QVariant', 2)
-                        sip.setapi('QDate', 2)
-                        sip.setapi('QDateTime', 2)
-                        sip.setapi('QTextStream', 2)
-                        sip.setapi('QTime', 2)
-                        sip.setapi('QUrl', 2)
-                    except:
-                        print("Cannot set sip API")
-                import PyQt4.QtCore
             elif binding == "pyside2":
                 import PySide2.QtCore
-            elif binding == "pyside":
-                import PySide.QtCore
+            elif binding == "pyside6":
+                import PySide6.QtCore
             else:
                 raise ValueError("Unknown Qt binding <%s>" % binding)
 
@@ -122,22 +108,14 @@ if __name__ == '__main__':
         if qtversion == '3':
             raise NotImplementedError("Qt3 is no longer supported")
         elif qtversion == '4':
-            if sys.version_info < (3,):
-                try:
-                    import sip
-                    sip.setapi('QString', 2)
-                    sip.setapi('QVariant', 2)
-                    sip.setapi('QDate', 2)
-                    sip.setapi('QDateTime', 2)
-                    sip.setapi('QTextStream', 2)
-                    sip.setapi('QTime', 2)
-                    sip.setapi('QUrl', 2)
-                except:
-                    print("Cannot set sip API")
-            import PyQt4.QtCore
+            raise NotImplementedError("Qt4 is no longer supported")
         elif qtversion == '5':
-            import PyQt5.QtCore
-
+            try:
+                import PyQt5.QtCore
+            except ImportError:
+                import PySide2.QtCore
+        elif qtversion == '6':
+            import PySide6.QtCore
     try:
         # make sure hdf5plugins are imported
         import hdf5plugin
@@ -153,10 +131,6 @@ if sys.platform == 'darwin':
                 print("Warning: OpenGL backend not fully supported")
 try:
     import silx
-    if (sys.version_info < (3,)) and ("PyQt4.QtCore" in sys.modules):
-        # PyQt4 is the most reliable binding at the ESRF for python 2
-        silxLogger = logging.getLogger("silx.DEPRECATION")
-        silxLogger.setLevel(logging.CRITICAL)
     # try to import silx prior to importing matplotlib to prevent
     # unnecessary warning
     import silx.gui.plot
