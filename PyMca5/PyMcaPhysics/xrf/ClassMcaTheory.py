@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -2940,7 +2940,7 @@ def test(inputfile=None,scankey=None,pkm=None,
 
     if plotflag:
         from PyMca5.PyMcaGui import PyMcaQt as qt
-        from PyMca5.PyMcaGui import ScanWindow
+        from PyMca5.PyMcaGui.pymca import ScanWindow
         app = qt.QApplication(sys.argv)
         graph = ScanWindow.ScanWindow()
         xw = numpy.ravel(mcafit.xdata)

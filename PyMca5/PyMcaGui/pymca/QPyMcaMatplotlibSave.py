@@ -37,7 +37,7 @@ import logging
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaCore import PyMcaMatplotlibSave
-from PyMca5.PyMcaGui.plotting.PyMca_icons import IconDict
+from PyMca5.PyMcaGui.plotting.PyMca_Icons import IconDict
 from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
 from PyMca5 import PyMcaDirs
 

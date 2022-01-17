@@ -31,8 +31,8 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import logging
-from PyMca5.PyMcaPhysics import Elements
-from PyMca5.PyMcaPhysics import XRayTubeEbel
+from PyMca5.PyMcaPhysics.xrf import Elements
+from PyMca5.PyMcaPhysics.xrf import XRayTubeEbel
 import numpy
 from PyMca5.PyMcaGui.plotting.PlotWindow import PlotWindow
 from PyMca5.PyMcaGui import PyMcaQt as qt

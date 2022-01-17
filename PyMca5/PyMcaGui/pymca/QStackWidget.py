@@ -100,7 +100,7 @@ convertToRowAndColumn = MaskImageWidget.convertToRowAndColumn
 
 from PyMca5.PyMcaGui.pymca import RGBCorrelator
 from PyMca5.PyMcaGui.pymca.RGBCorrelatorWidget import ImageShapeDialog
-from PyMca5.PyMcaGui.plotting.PyMca_icons import IconDict
+from PyMca5.PyMcaGui.plotting.PyMca_Icons import IconDict
 from PyMca5.PyMcaGui.pymca import StackSelector
 from PyMca5 import PyMcaDirs
 from PyMca5.PyMcaIO import ArraySave

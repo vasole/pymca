@@ -62,18 +62,18 @@ from PyMca5.PyMcaPhysics.xrf import ClassMcaTheory
 FISX = ClassMcaTheory.FISX
 if FISX:
     FisxHelper = ClassMcaTheory.FisxHelper
-from . import FitParam
-from . import McaAdvancedTable
-from . import QtMcaAdvancedFitReport
-from . import ConcentrationsWidget
+from PyMca5.PyMcaGui.physics.xrf import FitParam
+from PyMca5.PyMcaGui.physics.xrf import McaAdvancedTable
+from PyMca5.PyMcaGui.physics.xrf import QtMcaAdvancedFitReport
+from PyMca5.PyMcaGui.physics.xrf import ConcentrationsWidget
 from PyMca5.PyMcaPhysics.xrf import ConcentrationsTool
 from PyMca5.PyMcaGui.plotting import PlotWindow
 from PyMca5.PyMcaGui.plotting import PyMca_Icons
 IconDict = PyMca_Icons.IconDict
-from . import McaCalWidget
-from . import PeakIdentifier
+from PyMca5.PyMcaGui.physics.xrf import McaCalWidget
+from PyMca5.PyMcaGui.physics.xrf import PeakIdentifier
 from PyMca5.PyMcaGui.misc import SubprocessLogWidget
-from . import ElementsInfo
+from PyMca5.PyMcaGui.physics.xrf import ElementsInfo
 Elements = ElementsInfo.Elements
 #import McaROIWidget
 from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
