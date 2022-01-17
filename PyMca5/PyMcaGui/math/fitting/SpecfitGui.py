@@ -34,7 +34,7 @@ import logging
 from PyMca5.PyMcaCore import EventHandler
 from PyMca5.PyMcaMath.fitting import Specfit
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.PyMcaGui import PyMcaFileDialogs
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 
 QTVERSION = qt.qVersion()
 from . import FitConfigGui
