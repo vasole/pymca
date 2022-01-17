@@ -36,8 +36,8 @@ import numpy
 import logging
 from . import QXTube
 from PyMca5.PyMcaCore import PyMcaDirs
-from PyMca5.PyMcaGui import PyMca_Icons as Icons
-from PyMca5.PyMcaGui import PyMcaFileDialogs
+from PyMca5.PyMcaGui.plotting import PyMca_Icons as Icons
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 qt = QXTube.qt
 
 QTVERSION = qt.qVersion()

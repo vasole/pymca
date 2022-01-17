@@ -34,9 +34,9 @@ import sys
 import copy
 import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.PyMcaGui import PyMcaFileDialogs
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from PyMca5.PyMcaPhysics import Elements
-from PyMca5.PyMcaGui import PyMca_Icons
+from PyMca5.PyMcaGui.plotting import PyMca_Icons
 from PyMca5.PyMcaIO import ConfigDict
 from .MaterialEditor import MaterialComboBox
 

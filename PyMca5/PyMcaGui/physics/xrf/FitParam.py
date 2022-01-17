@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "E. Papillon & V. Armando Sole - ESRF Software Group"
+__author__ = "E. Papillon & V. Armando Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -37,7 +37,7 @@ from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 
 from PyMca5.PyMcaIO import ConfigDict
-from PyMca5.PyMcaGui import PyMca_Icons as Icons
+from PyMca5.PyMcaGui.plotting import PyMca_Icons as Icons
 import os.path
 import copy
 from PyMca5.PyMcaPhysics import Elements
@@ -59,7 +59,7 @@ except ImportError:
     # no XRFMC support
     pass
 from PyMca5.PyMcaGui.math import StripBackgroundWidget
-from PyMca5.PyMcaGui import PlotWindow
+from PyMca5.PyMcaGui.plotting import PlotWindow
 from PyMca5.PyMcaGui.physics.xrf import StrategyHandler
 import numpy
 

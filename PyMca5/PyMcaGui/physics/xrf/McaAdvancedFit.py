@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V. Armando Sole - ESRF Data Analysis"
+__author__ = "V. Armando Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -48,7 +48,7 @@ else:
 
 QTVERSION = qt.qVersion()
 
-from PyMca5.PyMcaGui import QPyMcaMatplotlibSave1D
+from PyMca5.PyMcaGui.pymca import QPyMcaMatplotlibSave1D
 MATPLOTLIB = True
 #force understanding of utf-8 encoding
 #otherways it cannot generate svg output
@@ -67,19 +67,19 @@ from . import McaAdvancedTable
 from . import QtMcaAdvancedFitReport
 from . import ConcentrationsWidget
 from PyMca5.PyMcaPhysics.xrf import ConcentrationsTool
-from PyMca5.PyMcaGui import PlotWindow
-from PyMca5.PyMcaGui import PyMca_Icons
+from PyMca5.PyMcaGui.plotting import PlotWindow
+from PyMca5.PyMcaGui.plotting import PyMca_Icons
 IconDict = PyMca_Icons.IconDict
 from . import McaCalWidget
 from . import PeakIdentifier
-from PyMca5.PyMcaGui import SubprocessLogWidget
+from PyMca5.PyMcaGui.misc import SubprocessLogWidget
 from . import ElementsInfo
 Elements = ElementsInfo.Elements
 #import McaROIWidget
-from PyMca5.PyMcaGui import PyMcaPrintPreview
+from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
 from PyMca5.PyMcaCore import PyMcaDirs
 from PyMca5.PyMcaIO import ConfigDict
-from PyMca5.PyMcaGui import CalculationThread
+from PyMca5.PyMcaGui.misc import CalculationThread
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 
 _logger = logging.getLogger(__name__)
