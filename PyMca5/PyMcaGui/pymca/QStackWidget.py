@@ -89,18 +89,18 @@ try:
 except:
     pass
 
-from PyMca5.PyMcaGui import PyMcaFileDialogs
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from PyMca5.PyMcaCore import DataObject
 from PyMca5.PyMcaGui.pymca import McaWindow
 from PyMca5.PyMcaCore import StackBase
 from PyMca5.PyMcaCore import McaStackExport
-from PyMca5.PyMcaGui import CloseEventNotifyingWidget
-from PyMca5.PyMcaGui import MaskImageWidget
+from PyMca5.PyMcaGui.misc import CloseEventNotifyingWidget
+from PyMca5.PyMcaGui.plotting import MaskImageWidget
 convertToRowAndColumn = MaskImageWidget.convertToRowAndColumn
 
 from PyMca5.PyMcaGui.pymca import RGBCorrelator
 from PyMca5.PyMcaGui.pymca.RGBCorrelatorWidget import ImageShapeDialog
-from PyMca5.PyMcaGui import IconDict
+from PyMca5.PyMcaGui.plotting.PyMca_icons import IconDict
 from PyMca5.PyMcaGui.pymca import StackSelector
 from PyMca5 import PyMcaDirs
 from PyMca5.PyMcaIO import ArraySave

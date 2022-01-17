@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "Tonn Rueter - ESRF Data Analysis"
+__author__ = "Tonn Rueter - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -31,9 +31,9 @@ import numpy, copy
 import logging
 import sys
 from os.path import splitext, basename, dirname, exists, join as pathjoin
-from PyMca5.PyMcaGui import IconDict
+from PyMca5.PyMcaGui.plotting.PyMca_Icons import IconDict
 from PyMca5 import PyMcaDirs
-from PyMca5.PyMcaGui import PyMcaFileDialogs
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaIO import specfilewrapper as specfile

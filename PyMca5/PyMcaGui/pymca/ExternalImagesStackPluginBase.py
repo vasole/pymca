@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2019 European Synchrotron Radiation Facility
+# Copyright (c) 2019-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -36,14 +36,14 @@ import logging
 from PyMca5 import StackPluginBase
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaIO import EDFStack
-from PyMca5.PyMcaGui import PyMcaFileDialogs
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 try:
     import h5py
 except ImportError:
     HAS_H5PY = False
 else:
     HAS_H5PY = True
-    from PyMca5.PyMca import HDF5Widget
+    from PyMca5.PyMcaGui.io.hdf5 import HDF5Widget
     from PyMca5.PyMcaIO import NexusUtils
 
 _logger = logging.getLogger(__name__)

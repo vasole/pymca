@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,7 @@
 #############################################################################*/
 """This module defines a :class:`ScanWindow` inheriting a 
 :class:`PlotWindow` with additional tools and actions."""
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -49,11 +49,11 @@ from . import ScanFit
 from PyMca5.PyMcaMath import SimpleMath
 from PyMca5.PyMcaCore import DataObject
 import copy
-from PyMca5.PyMcaGui import PyMcaPrintPreview
+from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
 from PyMca5.PyMcaCore import PyMcaDirs
-from . import ScanWindowInfoWidget
+from PyMca5.PyMcaGui.pymca import ScanWindowInfoWidget
 #implement the plugins interface
-from PyMca5.PyMcaGui import QPyMcaMatplotlibSave1D
+from PyMca5.PyMcaGui.pymca import QPyMcaMatplotlibSave1D
 MATPLOTLIB = True
 #force understanding of utf-8 encoding
 #otherways it cannot generate svg output

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 T. Rueter, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "Tonn Rueter - ESRF Data Analysis"
+__author__ = "Tonn Rueter - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -37,15 +37,15 @@ from os.path import join as osPathJoin
 import numpy
 from PyMca5.PyMcaMath.fitting.SpecfitFuns import upstep, downstep
 
-from PyMca5.PyMca import PyMcaQt as qt
-from PyMca5.PyMca import PlotWindow as DataDisplay
-from PyMca5.PyMca import Elements
-from PyMca5.PyMca import ConfigDict
+from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaGui.plotting import PlotWindow as DataDisplay
+from PyMca5.PyMcaPhysics.xrf import Elements
+from PyMca5.PyMcaIO import ConfigDict
 
-from PyMca5.PyMca import PyMcaDataDir, PyMcaDirs
-from PyMca5.PyMca import QSpecFileWidget
-from PyMca5.PyMca import SpecFileDataSource
-from PyMca5.PyMcaGui import IconDict
+from PyMca5 import PyMcaDataDir, PyMcaDirs
+from PyMca5.PyMcaGui.io import QSpecFileWidget
+from PyMca5.PyMcaCore import SpecFileDataSource
+from PyMca5.PyMcaGui.plotting.PyMca_Icons import IconDict
 
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -266,7 +266,10 @@ class LineEditDisplay(qt.QLineEdit):
         self.setMaximumWidth(120)
         self.controller = controller
         if isinstance(self.controller, qt.QComboBox):
-            self.controller.currentIndexChanged['QString'].connect(self.setText)
+            if hasattr(self.controller, "textActivated"):
+                self.controller.textActivated['QString'].connect(self.setText)
+            else:
+                self.controller.currentIndexChanged['QString'].connect(self.setText)
         elif isinstance(self.controller, qt.QDoubleSpinBox):
             # Update must be triggered otherwise
             #self.controller.valueChanged['QString'].connect(self.setText)
@@ -432,7 +435,10 @@ class SumRulesWindow(qt.QMainWindow):
                 self.elementEConfCB = qt.QComboBox()
                 self.elementEConfCB.setMinimumWidth(100)
                 self.elementEConfCB.addItems(['']+self.electronConfs)
-                self.elementEConfCB.currentIndexChanged['QString'].connect(self.setElectronConf)
+                if hasattr(self.elementEConfCB, "textActivated"):
+                    self.elementEConfCB.textActivated['QString'].connect(self.setElectronConf)
+                else:           
+                    self.elementEConfCB.currentIndexChanged['QString'].connect(self.setElectronConf)
                 elementEConfLayout = qt.QHBoxLayout()
                 elementEConfLayout.setContentsMargins(0,0,0,0)
                 elementEConfLayout.addWidget(qt.QLabel('Electron configuration'))
@@ -445,7 +451,10 @@ class SumRulesWindow(qt.QMainWindow):
                 self.elementCB = qt.QComboBox()
                 self.elementCB.setMinimumWidth(100)
                 self.elementCB.addItems([''])
-                self.elementCB.currentIndexChanged['QString'].connect(self.getElementInfo)
+                if hasattr(self.elementCB, "textActivated"):
+                    self.elementCB.textActivated['QString'].connect(self.getElementInfo)
+                else:
+                    self.elementCB.currentIndexChanged['QString'].connect(self.getElementInfo)
                 elementLayout = qt.QHBoxLayout()
                 elementLayout.setContentsMargins(0,0,0,0)
                 elementLayout.addWidget(qt.QLabel('Element'))
