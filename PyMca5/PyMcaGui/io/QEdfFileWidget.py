@@ -33,7 +33,7 @@ import numpy
 import logging
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.PyMcaGui import PlotWidget
+from PyMca5.PyMcaGui.plotting import PlotWidget
 
 
 if not hasattr(qt, 'QString'):
@@ -44,11 +44,11 @@ else:
     QStringList = qt.QStringList
 QTVERSION = qt.qVersion()
 QT4=True
-from PyMca5.PyMcaGui import QPyMcaMatplotlibSave
+from PyMca5.PyMcaGui.pymca import QPyMcaMatplotlibSave
 MATPLOTLIB = True
-from PyMca5.PyMcaGui import IconDict
-from PyMca5.PyMcaGui import ColormapDialog
-from PyMca5.PyMcaGui import PyMcaPrintPreview
+from PyMca5.PyMcaGui.plotting.PyMca_Icons import IconDict
+from PyMca5.PyMcaGui.plotting import ColormapDialog
+from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
 from PyMca5.PyMcaIO import ArraySave
 from PyMca5 import PyMcaDirs
 from . import SpecFileDataInfo
