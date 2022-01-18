@@ -79,8 +79,6 @@ jobs:
           Linux)
             sudo apt-get update -yy
             sudo apt-get install -yy \
-              libgl1-mesa-dev  \
-              libegl1-mesa \
               libxkbcommon-x11-0 \
               libxkbcommon0 \
               libxkbcommon-dev \
@@ -127,6 +125,8 @@ jobs:
         run: |
           pip install --upgrade wheel
           pip install --upgrade numpy
+          # put cython
+          pip install cython
 
       - name: Install runtime dependencies
         run: |
