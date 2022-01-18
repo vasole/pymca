@@ -361,8 +361,8 @@ class EnergyTable(QTable):
         rowoffset = 0
         for idx in range(nrows):
             text = "Energy %3d" % (idx)
-            if idx >= (nrows/self.dataColumns):
-                rowoffset= (-int(idx/self.__rows))*(nrows/self.dataColumns)
+            if idx >= (nrows // self.dataColumns):
+                rowoffset= (-int(idx/self.__rows))*(nrows //self.dataColumns)
                 coloffset=  3*int(idx/self.__rows)
             r = idx + rowoffset
             color = qt.Qt.white
