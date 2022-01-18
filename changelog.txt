@@ -1,3 +1,8 @@
+VERSION 5.7.1
+-------------
+
+- Correct GUI issue with the combination Python 3.10 and PyQt5 
+
 VERSION 5.7.0
 -------------
 
