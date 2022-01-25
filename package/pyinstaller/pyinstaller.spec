@@ -15,6 +15,7 @@ datas.append((os.path.join(PROJECT_PATH, "LICENSE"), "."))
 datas.append((os.path.join(PROJECT_PATH, "copyright"), "."))
 #datas += collect_data_files("silx.resources")
 
+icon = os.path.join(PROJECT_PATH, "icons", "PyMca.ico")
 
 hiddenimports = []
 hiddenimports += collect_submodules('encodings.ascii')
@@ -35,7 +36,6 @@ script_l = [os.path.abspath(PyMcaMain.__file__),
             os.path.abspath(PyMcaBatch.__file__),
             os.path.abspath(PyMcaPostBatch.__file__),
             os.path.abspath(QStackWidget.__file__),
-            os.path.join(SPECPATH, "pymca_launcher.py"),
            ]
 #script_l = [os.path.join(SPECPATH, "mymain.py"),
 #            os.path.join(SPECPATH, "mymain2.py"),
@@ -58,7 +58,6 @@ for script in script_l:
         )
     except:
         pass
-    print("passed")
 
     script_a.append(Analysis(
                             [os.path.basename(script)],
@@ -104,12 +103,6 @@ if 0: # avoid merge
             (script_a[4], script_n[4], os.path.join(script_n[4], script_n[4])),
         )
 
-#MERGE(
-#    (silx_a, 'silx', os.path.join('silx', 'silx')),
-#    (silx_view_a, 'silx-view', os.path.join('silx-view', 'silx-view')),
-#)
-
-
 script_pyz = []
 script_exe = []
 script_col = []
@@ -131,7 +124,7 @@ for i in range(len(script_a)):
             strip=False,
             upx=False,
             console=True,
-            icon='silx.ico')
+            icon=icon)
         )
     script_col.append(
         COLLECT(
