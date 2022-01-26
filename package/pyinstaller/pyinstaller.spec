@@ -21,8 +21,8 @@ hiddenimports = []
 hiddenimports += collect_submodules('encodings.ascii')
 hiddenimports += collect_submodules('encodings.utf_8')
 hiddenimports += collect_submodules('encodings.latin_1')
-hiddenimports += collect_submodules('fabio')
-hiddenimports += collect_submodules('PyQt5.uic')
+#hiddenimports += collect_submodules('fabio')
+#hiddenimports += collect_submodules('PyQt5.uic')
 #hiddenimports += collect_submodules('hdf5plugin')
 #hiddenimports += collect_submodules('fisx')
 #hiddenimports += collect_submodules('PyMca5.PyMcaGui.PyMcaQt')
@@ -30,37 +30,49 @@ hiddenimports += collect_submodules('PyQt5.uic')
 
 excludes = ["fabio", "hdf5plugin", "silx"]
 
-# det the script list
-from PyMca5.PyMcaGui.pymca import PyMcaMain, PyMcaBatch, PyMcaPostBatch, QStackWidget
-script_l = [os.path.abspath(PyMcaMain.__file__),
-            os.path.abspath(PyMcaBatch.__file__),
-            os.path.abspath(PyMcaPostBatch.__file__),
-            os.path.abspath(QStackWidget.__file__),
-           ]
-#script_l = [os.path.join(SPECPATH, "mymain.py"),
-#            os.path.join(SPECPATH, "mymain2.py"),
-#            ]
+
+# get the script list
+import PyMca5
+PyMcaDir = os.path.abspath(os.path.dirname(PyMca5.__file__))
+exec_dict = {"PyMcaMain": os.path.join(PyMcaDir, "PyMcaGui", \
+                                      "pymca", "PyMcaMain.py"),
+             "PyMcaBatch": os.path.join(PyMcaDir, "PyMcaGui", \
+                                       "pymca", "PyMcaBatch.py"),
+             "QStackWidget":os.path.join(PyMcaDir, "PyMcaGui", \
+                                         "pymca", "QStackWidget.py"),
+             "PeakIdentifier":os.path.join(PyMcaDir, "PyMcaGui", \
+                                         "physics", "xrf", "PeakIdentifier.py"),
+             "EdfFileSimpleViewer": os.path.join(PyMcaDir, "PyMcaGui", \
+                                                 "pymca", "EdfFileSimpleViewer.py"),
+             "PyMcaPostBatch": os.path.join(PyMcaDir, "PyMcaGui", \
+                                           "pymca", "PyMcaPostBatch.py"),
+             "Mca2Edf": os.path.join(PyMcaDir, "PyMcaGui", \
+                                    "pymca", "Mca2Edf.py"),
+             "ElementsInfo":os.path.join(PyMcaDir, "PyMcaGui", \
+                                        "physics", "xrf", "ElementsInfo.py"),
+            }
 script_n = []
-for s in script_l:
-    script_n.append(os.path.basename(s).split(".")[0].lower())
+script_l = []
+for key in exec_dict:
+    script_l.append(exec_dict[key])
+    script_n.append(key)
 
 block_cipher = None
 
 script_a = []
 
-for script in script_l:
+for i in range(len(script_l)):
+    script = script_l[i]
     cwd = Path(SPECPATH)
-    try:
-        print("Copying %s to %s" % (script, os.path.basename(script).split(".")[0].lower()))
-        shutil.copy2(
-            src = script,
-            dst = os.path.join(cwd, os.path.basename(script))# .split(".")[0].lower()),
-        )
-    except:
-        pass
-
+    print("Copying %s to %s" % (script, script_n[i]))
+    if os.path.exists(script_n[i]):
+        os.remove(script_n[i])
+    shutil.copy2(
+        src = script,
+        dst = os.path.join(cwd, script_n[i]),
+    )
     script_a.append(Analysis(
-                            [os.path.basename(script)],
+                            [script_n[i]],
                             pathex=[],
                             binaries=[],
                             datas=datas,
