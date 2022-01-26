@@ -343,6 +343,11 @@ if sys.platform.startswith("win") and os.path.exists(nsis):
     print(cmd)
     os.system(cmd)
 
+    # cleanup intermediate files
+    shutil.rmtree(os.path.join(SPECPATH, "build"))
+    shutil.rmtree(os.path.join(SPECPATH, "dist"))
+    shutil.rmtree(os.path.join(SPECPATH, "__pycache__"))
+
 if 0:
     # Run innosetup
     def innosetup():
