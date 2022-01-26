@@ -285,6 +285,64 @@ def replace_module(name):
 for name in special_modules:
     replace_module(name)
 
+
+
+# cleanup copied files
+for fname in script_n:
+    os.remove(fname)
+
+
+# cleanup copied files
+for fname in script_n:
+    if os.path.exists(fname):
+        os.remove(fname)
+
+# move generated directory to top level dist
+program = "PyMca"
+version = PyMca5.version()
+source = os.path.join(SPECPATH, "dist", script_n[0])
+dist = os.path.join(PROJECT_PATH, "dist",)
+if not os.path.exists(dist):
+    os.mkdir(dist)
+target = os.path.join(dist, "%s%s" % (program, version))
+if os.path.exists(target):
+    print("Removing target")
+    shutil.rmtree(target)
+shutil.move(source, target)
+frozenDir = target
+
+#  generation of the NSIS executable
+nsis = os.path.join("\Program Files (x86)", "NSIS", "makensis.exe")
+if sys.platform.startswith("win") and os.path.exists(nsis):
+    # check if we can perform the packaging
+    outFile = os.path.join(PROJECT_PATH, "nsisscript.nsi")
+    f = open(os.path.join(PROJECT_PATH,"nsisscript.nsi.in"), "r")
+    content = f.readlines()
+    f.close()
+    if os.path.exists(outFile):
+        os.remove(outFile)
+    pymcaexe = os.path.join(PROJECT_PATH, "%s%s-win64.exe" % (program.lower(), version))
+    if os.path.exists(pymcaexe):
+        os.remove(pymcaexe)
+    pymcalicense = os.path.join(PROJECT_PATH, "PyMca.txt")
+    f = open(outFile, "w")
+    for line in content:
+        if "__LICENSE_FILE__" in line:
+            line = line.replace("__LICENSE_FILE__", pymcalicense)
+        if "__VERSION__" in line:
+            line = line.replace("__VERSION__", version)
+        if "__PROGRAM__" in line:
+            line = line.replace("__PROGRAM__", program)
+        if "__OUTFILE__" in line:
+            line = line.replace("__OUTFILE__", pymcaexe)
+        if "__SOURCE_DIRECTORY__" in line:
+            line = line.replace("__SOURCE_DIRECTORY__", frozenDir)
+        f.write(line)
+    f.close()
+    cmd = '"%s" %s' % (nsis, outFile)
+    print(cmd)
+    os.system(cmd)
+
 if 0:
     # Run innosetup
     def innosetup():
