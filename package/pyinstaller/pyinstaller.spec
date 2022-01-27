@@ -187,6 +187,49 @@ special_modules = [os.path.dirname(PyMca5.__file__),
                    #os.path.dirname(ctypes.__file__),
                    os.path.dirname(hdf5plugin.__file__),
                    ]
+
+# recent versions of matplotlib need packaging, PIL and pyparsing
+try:
+    import packaging
+    special_modules.append(os.path.dirname(packaging.__file__))
+except:
+    pass
+try:
+    import PIL
+    special_modules.append(os.path.dirname(PIL.__file__))
+except:
+    pass
+try:
+    import pyparsing
+    special_modules.append(os.path.dirname(pyparsing.__file__))
+except:
+    pass
+try:
+    import dateutil
+    special_modules.append(os.path.dirname(dateutil.__file__))
+except:
+    pass
+try:
+    import mpl_toolkits.mplot3d.axes3d as axes3d
+    special_modules.append(os.path.dirname(os.path.dirname(axes3d.__file__)))
+except:
+    pass
+try:
+    import six
+    special_modules.append(six.__file__)
+except:
+    pass
+try:
+    import cycler
+    special_modules.append(cycler.__file__)
+except:
+    pass
+try:
+    import uuid
+    special_modules.append(uuid.__file__)
+except:
+    pass
+
 excludes = []
 
 try:
@@ -279,11 +322,18 @@ time.sleep(2)
 def replace_module(name):
     dest = os.path.join(Path(SPECPATH), 'dist', script_n[0])
     target = os.path.join(dest, os.path.basename(name))
-    if os.path.exists(target):
-        shutil.rmtree(target)
     print("source = ", name)
     print("dest = ", target)
-    shutil.copytree(name, target)
+    if os.path.exists(target):
+        if os.path.isdir(target):
+            shutil.rmtree(target)
+        else:
+            os.remove(target)
+    if os.path.isdir(name):
+        shutil.copytree(name, target)
+    else:
+        shutil.copy2(src=name, dst=target)
+            
 
 for name in special_modules:
     replace_module(name)
