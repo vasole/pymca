@@ -4,6 +4,8 @@ import os.path
 from pathlib import Path
 import shutil
 import subprocess
+import time
+
 
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
@@ -167,7 +169,6 @@ if len(script_a) > 1:
 # Mandatory modules to be integrally included in the frozen version.
 # One can add other modules here if not properly detected
 # (PyQt5 seems to be properly handled, if not, add to special_modules)
-import time
 import PyMca5
 import fisx
 import h5py
@@ -220,8 +221,10 @@ try:
     special_modules += [os.path.dirname(silx.__file__),
                         os.path.dirname(fabio.__file__),
                         os.path.dirname(xml.__file__),]
+    SILX = True
 except ImportError:
     print("silx not available, not added to the frozen executables")
+    SILX = False
 
 try:
     import freeart
@@ -297,6 +300,58 @@ for fname in script_n:
     if os.path.exists(fname):
         os.remove(fname)
 
+# patch silx
+if SILX:
+    fname = os.path.join(SPECPATH, "dist", script_n[0], "silx", "gui","qt","_qt.py")
+    if os.path.exists(fname):
+        print("###################################################################")
+        print("Patching silx")
+        print(fname)
+        print("###################################################################")
+        f = open(fname, "r")
+        content = f.readlines()
+        f.close()
+        f = open(fname, "w")
+        for line in content:
+            f.write(line.replace("from PyQt5.uic import loadUi", "pass"))
+        f.close()
+
+# patch OpenCL
+if OPENCL:
+    # pyopencl __init__.py needs to be patched
+    exe_win_dir = os.path.join(SPECPATH, "dist", script_n[0])
+    initFile = os.path.join(exe_win_dir, "pyopencl", "__init__.py")
+    print("###################################################################")
+    print("Patching pyopencl file")
+    print(initFile)
+    print("###################################################################")
+    f = open(initFile, "r")
+    content = f.readlines()
+    f.close()
+    i = 0
+    i0 = 0
+    for line in content:
+        if "def _find_pyopencl_include_path():" in line:
+            i0 = i - 1
+        elif (i0 != 0) and ("}}}" in line):
+            i1 = i
+            break
+        i += 1
+    f = open(initFile, "w")
+    for i in range(0, i0):
+        f.write(content[i])
+    txt ='\n'
+    txt +='def _find_pyopencl_include_path():\n'
+    txt +='     from os.path import dirname, join, realpath\n'
+    txt +="     return '\"%s\"' % join(realpath(dirname(__file__)), \"cl\")"
+    txt +="\n"
+    txt +="\n"
+    f.write(txt)
+    for line in content[i1:]:
+        f.write(line)
+    f.close()
+time.sleep(2)
+
 # move generated directory to top level dist
 program = "PyMca"
 version = PyMca5.version()
@@ -344,22 +399,8 @@ if sys.platform.startswith("win") and os.path.exists(nsis):
     os.system(cmd)
 
     # cleanup intermediate files
-    shutil.rmtree(os.path.join(SPECPATH, "build"))
-    shutil.rmtree(os.path.join(SPECPATH, "dist"))
-    shutil.rmtree(os.path.join(SPECPATH, "__pycache__"))
+    for dname in ["build", "dist", "__pycache__"]:
+        ddir = os.path.join(SPECPATH, "dname")
+        if os.path.exists(ddir):
+            shutil.rmtree(ddir)
 
-if 0:
-    # Run innosetup
-    def innosetup():
-        from silx import version
-
-        config_name = "create-installer.iss"
-        with open(config_name + '.template') as f:
-            content = f.read().replace("#Version", version)
-        with open(config_name, "w") as f:
-            f.write(content)
-
-        subprocess.call(["iscc", os.path.join(SPECPATH, config_name)])
-        os.remove(config_name)
-
-    innosetup()
