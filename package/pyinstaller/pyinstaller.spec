@@ -183,52 +183,56 @@ special_modules = [os.path.dirname(PyMca5.__file__),
                    os.path.dirname(fisx.__file__),
                    os.path.dirname(h5py.__file__),
                    #os.path.dirname(numpy.__file__),
-                   os.path.dirname(matplotlib.__file__),
                    #os.path.dirname(ctypes.__file__),
                    os.path.dirname(hdf5plugin.__file__),
                    ]
 
-# recent versions of matplotlib need packaging, PIL and pyparsing
-try:
-    import packaging
-    special_modules.append(os.path.dirname(packaging.__file__))
-except:
-    pass
-try:
-    import PIL
-    special_modules.append(os.path.dirname(PIL.__file__))
-except:
-    pass
-try:
-    import pyparsing
-    special_modules.append(os.path.dirname(pyparsing.__file__))
-except:
-    pass
-try:
-    import dateutil
-    special_modules.append(os.path.dirname(dateutil.__file__))
-except:
-    pass
-try:
-    import mpl_toolkits.mplot3d.axes3d as axes3d
-    special_modules.append(os.path.dirname(os.path.dirname(axes3d.__file__)))
-except:
-    pass
-try:
-    import six
-    special_modules.append(six.__file__)
-except:
-    pass
-try:
-    import cycler
-    special_modules.append(cycler.__file__)
-except:
-    pass
-try:
-    import uuid
-    special_modules.append(uuid.__file__)
-except:
-    pass
+# this block  can be needed for matplotlib
+MATPLOTLIB_FROM_PYINSTALLER = True
+if not MATPLOTLIB_FROM_PYINSTALLER:
+    special_modules.append(os.path.dirname(matplotlib.__file__))
+
+    # recent versions of matplotlib need packaging, PIL and pyparsing
+    try:
+        import packaging
+        special_modules.append(os.path.dirname(packaging.__file__))
+    except:
+        pass
+    try:
+        import PIL
+        special_modules.append(os.path.dirname(PIL.__file__))
+    except:
+        pass
+    try:
+        import pyparsing
+        special_modules.append(os.path.dirname(pyparsing.__file__))
+    except:
+        pass
+    try:
+        import dateutil
+        special_modules.append(os.path.dirname(dateutil.__file__))
+    except:
+        pass
+    try:
+        import mpl_toolkits.mplot3d.axes3d as axes3d
+        special_modules.append(os.path.dirname(os.path.dirname(axes3d.__file__)))
+    except:
+        pass
+    try:
+        import six
+        special_modules.append(six.__file__)
+    except:
+        pass
+    try:
+        import cycler
+        special_modules.append(cycler.__file__)
+    except:
+        pass
+    try:
+        import uuid
+        special_modules.append(uuid.__file__)
+    except:
+        pass
 
 excludes = []
 
@@ -450,7 +454,7 @@ if sys.platform.startswith("win") and os.path.exists(nsis):
 
     # cleanup intermediate files
     for dname in ["build", "dist", "__pycache__"]:
-        ddir = os.path.join(SPECPATH, "dname")
+        ddir = os.path.join(SPECPATH, dname)
         if os.path.exists(ddir):
             shutil.rmtree(ddir)
 
