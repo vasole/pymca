@@ -1,8 +1,7 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: PyMca5
 Upstream-Contact: V. Armando Sole <sole@esrf.fr>
-Files-Excluded: PyMca5/PyMcaMath/sift third-party/qhull third-party/fisx
- third-party/khronos_headers
+Files-Excluded: PyMca5/PyMcaMath/sift
 
 Files: *
 Copyright: 2004-2018 European Synchrotron Radiation Facility
@@ -10,31 +9,6 @@ License: Expat
 
 Files: PyMca5/*
 Copyright: 2002, 2004-2018, European Synchrotron Radiation Facility
-License: Expat
-
-Files: PyMca5/Object3D/*
-Copyright: 2004-2018 European Synchrotron Radiation Facility
-License: LGPL-2+
-
-Files: PyMca5/Object3D/Object3DCTools/*
-Copyright: 2004-2015, Cory Bloyd (corysama@yahoo.com)
-License: Expat
-
-Files: PyMca5/Object3D/Object3DCTools/Object3DCTools.c
-  PyMca5/Object3D/Object3DCTools/setup.py
-Copyright: 2004-2015, V.A. Sole, European Synchrotron Radiation Facility
-License: Expat
-
-Files: PyMca5/Object3D/Object3DQhull/*
-Copyright: 2004-2014 European Synchrotron Radiation Facility (ESRF)
-License: Expat
-
-Files: PyMca5/Object3D/Object3DQhull/Object3DQhull.c
-Copyright: 2004-2015, V.A. Sole, European Synchrotron Radiation Facility
-License: LGPL-2+
-
-Files: PyMca5/Object3D/scripts/*
-Copyright: 2002, 2004-2015, European Synchrotron Radiation Facility
 License: Expat
 
 Files: PyMca5/PyMca/*
