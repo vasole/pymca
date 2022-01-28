@@ -35,12 +35,12 @@ import numpy
 import traceback
 import copy
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.PyMcaGui import PyMca_Icons
+from PyMca5.PyMcaGui.plotting import PyMca_Icons
 IconDict = PyMca_Icons.IconDict
 from PyMca5.PyMcaGraph.backends.MatplotlibBackend \
      import MatplotlibBackend as backend
-from PyMca5.PyMcaGui import PlotWindow
-from PyMca5.PyMcaPhysics import XASNormalization
+from PyMca5.PyMcaGui.plotting import PlotWindow
+from PyMca5.PyMcaPhysics.xas import XASNormalization
 
 POLYNOM_OPTIONS = ['Modif. Victoreen',
                    'Victoreen',

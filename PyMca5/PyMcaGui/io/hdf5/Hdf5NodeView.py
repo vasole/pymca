@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +38,7 @@ import os
 
 import PyMca5
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.PyMcaGui import CloseEventNotifyingWidget
+from PyMca5.PyMcaGui.misc import CloseEventNotifyingWidget
 
 from PyMca5.PyMcaGui.PluginsToolButton import PluginsToolButton
 

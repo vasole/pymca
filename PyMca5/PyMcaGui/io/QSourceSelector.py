@@ -34,7 +34,7 @@ _logger = logging.getLogger(__name__)
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
-from PyMca5.PyMcaGui import PyMca_Icons as icons
+from PyMca5.PyMcaGui.plotting import PyMca_Icons as icons
 from PyMca5.PyMcaIO import spswrap as sps
 from PyMca5 import PyMcaDirs
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs

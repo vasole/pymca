@@ -60,7 +60,7 @@ from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from PyMca5.PyMcaGui.io import ConfigurationFileDialogs
 from PyMca5.PyMcaCore import EdfFileLayer
 from PyMca5.PyMcaCore import SpecFileLayer
-from PyMca5.PyMcaGui import IconDict
+from PyMca5.PyMcaGui.plotting.PyMca_Icons import IconDict
 from PyMca5.PyMcaGui.pymca import McaCustomEvent
 from PyMca5.PyMcaGui.pymca import EdfFileSimpleViewer
 from PyMca5.PyMcaCore import HtmlIndex

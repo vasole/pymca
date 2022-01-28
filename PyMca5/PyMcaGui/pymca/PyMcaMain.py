@@ -279,8 +279,8 @@ OBJECT3D = isSilxGLAvailable
 _logger.info("SilxGL availability: %s", isSilxGLAvailable)
 
 from PyMca5.PyMcaGui.pymca import QDispatcher
-from PyMca5.PyMcaGui import ElementsInfo
-from PyMca5.PyMcaGui import PeakIdentifier
+from PyMca5.PyMcaGui.physics.xrf import ElementsInfo
+from PyMca5.PyMcaGui.physics.xrf import PeakIdentifier
 from PyMca5.PyMcaGui.pymca import PyMcaBatch
 ###########import Fit2Spec
 from PyMca5.PyMcaGui.pymca import Mca2Edf
@@ -291,8 +291,8 @@ try:
 except:
     STACK = False
 from PyMca5.PyMcaGui.pymca import PyMcaPostBatch
-from PyMca5.PyMcaGui import RGBCorrelator
-from PyMca5.PyMcaGui import MaterialEditor
+from PyMca5.PyMcaGui.pymca import RGBCorrelator
+from PyMca5.PyMcaGui.physics.xrf import MaterialEditor
 
 from PyMca5.PyMcaIO import ConfigDict
 from PyMca5 import PyMcaDirs

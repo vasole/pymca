@@ -31,9 +31,9 @@ import logging
 from PyMca5.PyMcaIO import spswrap as sps
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui.io import SpecFileCntTable
-from PyMca5.PyMcaGui import MaskImageWidget
+from PyMca5.PyMcaGui.plotting import MaskImageWidget
 QTVERSION = qt.qVersion()
-from PyMca5.PyMcaGui import PyMca_Icons as icons
+from PyMca5.PyMcaGui.plotting import PyMca_Icons as icons
 
 _logger = logging.getLogger(__name__)
 

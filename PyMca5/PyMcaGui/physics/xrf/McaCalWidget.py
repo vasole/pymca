@@ -38,7 +38,7 @@ import copy
 import logging
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.PyMcaGui.PlotWidget import PlotWidget
+from PyMca5.PyMcaGui.plotting.PlotWidget import PlotWidget
 
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -48,7 +48,7 @@ QTVERSION = qt.qVersion()
 from PyMca5.PyMcaMath.fitting import Gefit
 from PyMca5.PyMcaMath.fitting import Specfit
 from PyMca5.PyMcaMath.fitting import SpecfitFuns
-from PyMca5.PyMcaGui import PyMca_Icons
+from PyMca5.PyMcaGui.plotting import PyMca_Icons
 IconDict = PyMca_Icons.IconDict
 from . import PeakTableWidget
 if 0:

@@ -38,14 +38,14 @@ from . import RGBCorrelatorSlider
 from . import RGBCorrelatorTable
 from PyMca5.PyMcaGui.pymca import RGBImageCalculator
 from PyMca5 import spslut
-from PyMca5.PyMcaGui import IconDict
+from PyMca5.PyMcaGui.plotting.PyMca_Icons import IconDict
 from PyMca5.PyMcaIO import ArraySave
 from PyMca5 import PyMcaDirs
 from PyMca5.PyMcaCore import EdfFileDataSource
 from PyMca5.PyMcaGui.pymca import ExternalImagesWindow
 from PyMca5.PyMcaIO import TiffIO
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
-from PyMca5.PyMcaGui import ScatterPlotCorrelatorWidget
+from PyMca5.PyMcaGui.plotting import ScatterPlotCorrelatorWidget
 
 DataReader = EdfFileDataSource.EdfFileDataSource
 USE_STRING = False
@@ -60,9 +60,9 @@ else:
 
 QTVERSION = qt.qVersion()
 try:
-    from PyMca5.PyMcaGui import NNMADialog
+    from PyMca5.PyMcaGui.math import NNMADialog
     NNMA = NNMADialog.NNMA
-    from PyMca5.PyMcaGui import PCADialog
+    from PyMca5.PyMcaGui.math import PCADialog
     PCA = PCADialog.PCA
 except:
     NNMA = False
@@ -94,7 +94,7 @@ except ImportError:
 else:
     def isHdf5(filename):
         return h5py.is_hdf5(filename)
-    from PyMca5.PyMca import HDF5Widget
+    from PyMca5.PyMcaGui.io.hdf5 import HDF5Widget
     from PyMca5.PyMcaIO import NexusUtils
 
 

@@ -29,10 +29,10 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.PyMcaGui import PyMca_Icons
+from PyMca5.PyMcaGui.plotting import PyMca_Icons
 IconDict = PyMca_Icons.IconDict
-from PyMca5.PyMcaGui import MaskImageWidget
-from PyMca5.PyMcaGui import ScanWindow
+from PyMca5.PyMcaGui.plotting import MaskImageWidget
+from PyMca5.PyMcaGui.pymca import ScanWindow
 from PyMca5.PyMcaMath import SNIPModule
 #TODO: Add this functionality using SilxGLWindow
 OBJECT3D = False

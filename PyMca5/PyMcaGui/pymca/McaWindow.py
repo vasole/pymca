@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -46,7 +46,7 @@ if __name__ == "__main__":
 import copy
 
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
-from PyMca5.PyMcaGui import IconDict
+from PyMca5.PyMcaGui.plotting.PyMca_Icons import IconDict
 from .ScanWindow import ScanWindow
 from . import McaCalibrationControlGUI
 from PyMca5.PyMcaIO import ConfigDict
@@ -56,10 +56,10 @@ from PyMca5.PyMcaCore import DataObject
 from . import McaSimpleFit
 from PyMca5.PyMcaMath.fitting import Specfit
 from PyMca5.PyMcaMath.fitting import SpecfitFuns
-from PyMca5.PyMcaGui import PyMcaPrintPreview
+from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
 from PyMca5 import PyMcaDirs
 
-from PyMca5.PyMcaGui import QPyMcaMatplotlibSave1D
+from PyMca5.PyMcaGui.pymca import QPyMcaMatplotlibSave1D
 MATPLOTLIB = True
 
 # force understanding of utf-8 encoding
