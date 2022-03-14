@@ -41,22 +41,25 @@ import PyMca5
 version = PyMca5.version()
 PyMcaDir = os.path.abspath(os.path.dirname(PyMca5.__file__))
 exec_dict = {"PyMcaMain": os.path.join(PyMcaDir, "PyMcaGui", \
-                                      "pymca", "PyMcaMain.py"),
+                                     "pymca", "PyMcaMain.py"),
              "PyMcaBatch": os.path.join(PyMcaDir, "PyMcaGui", \
-                                       "pymca", "PyMcaBatch.py"),
+                                   "pymca", "PyMcaBatch.py"),
              "QStackWidget":os.path.join(PyMcaDir, "PyMcaGui", \
-                                         "pymca", "QStackWidget.py"),
-             #"PeakIdentifier":os.path.join(PyMcaDir, "PyMcaGui", \
-             #                            "physics", "xrf", "PeakIdentifier.py"),
-             #"EdfFileSimpleViewer": os.path.join(PyMcaDir, "PyMcaGui", \
-             #                                    "pymca", "EdfFileSimpleViewer.py"),
+                                    "pymca", "QStackWidget.py"),
              "PyMcaPostBatch": os.path.join(PyMcaDir, "PyMcaGui", \
-                                           "pymca", "PyMcaPostBatch.py"),
-             #"Mca2Edf": os.path.join(PyMcaDir, "PyMcaGui", \
-             #                       "pymca", "Mca2Edf.py"),
-             #"ElementsInfo":os.path.join(PyMcaDir, "PyMcaGui", \
-             #                           "physics", "xrf", "ElementsInfo.py"),
+                                    "pymca", "PyMcaPostBatch.py"),
             }
+
+if not sys.platform.startswith("darwin"):
+    exec_dict["PeakIdentifier"] = os.path.join(PyMcaDir, "PyMcaGui", \
+                                      "physics", "xrf", "PeakIdentifier.py")
+    exec_dict["EdfFileSimpleViewer"] = os.path.join(PyMcaDir, "PyMcaGui", \
+                                      "pymca", "EdfFileSimpleViewer.py")
+    exec_dict["Mca2Edf"] = os.path.join(PyMcaDir, "PyMcaGui", \
+                                      "pymca", "Mca2Edf.py")
+    exec_dict["ElementsInfo"] = os.path.join(PyMcaDir, "PyMcaGui", \
+                                      "physics", "xrf", "ElementsInfo.py")
+
 script_n = []
 script_l = []
 for key in exec_dict:
@@ -157,10 +160,16 @@ for i in range(len(script_a)):
 
 def move_exe(name):
     dist = os.path.join(Path(SPECPATH), 'dist')
-    shutil.copy2(
-        src=os.path.join(dist, name, name),
-        dst=os.path.join(dist, script_n[0])
-    )
+    if sys.platform.startswith("darwin"):
+        shutil.copy2(
+            src=os.path.join(dist, name, name),
+            dst=os.path.join(dist, script_n[0])
+        )
+    else:
+        shutil.copy2(
+            src=os.path.join(dist, name, name + ".exe"),
+            dst=os.path.join(dist, script_n[0])
+        )
     shutil.rmtree(os.path.join(dist, name))
 
 if len(script_a) > 1:
@@ -352,14 +361,8 @@ def replace_module(name):
         shutil.copy2(src=name, dst=target)
     cleanup_cache(target)
 
-
-
-
-
 for name in special_modules:
     replace_module(name)
-
-
 
 # cleanup copied files
 for fname in script_n:
