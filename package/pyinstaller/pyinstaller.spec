@@ -17,7 +17,10 @@ datas.append((os.path.join(PROJECT_PATH, "LICENSE"), "."))
 datas.append((os.path.join(PROJECT_PATH, "copyright"), "."))
 #datas += collect_data_files("silx.resources")
 
-icon = os.path.join(PROJECT_PATH, "icons", "PyMca.ico")
+if sys.platform.startswith('darwin'):
+   icon = os.path.join(PROJECT_PATH, "icons", "PyMca.icns")
+else:
+   icon = os.path.join(PROJECT_PATH, "icons", "PyMca.ico")
 
 hiddenimports = []
 hiddenimports += collect_submodules('encodings.ascii')
@@ -35,6 +38,7 @@ excludes = ["fabio", "hdf5plugin", "silx"]
 
 # get the script list
 import PyMca5
+version = PyMca5.version()
 PyMcaDir = os.path.abspath(os.path.dirname(PyMca5.__file__))
 exec_dict = {"PyMcaMain": os.path.join(PyMcaDir, "PyMcaGui", \
                                       "pymca", "PyMcaMain.py"),
@@ -42,16 +46,16 @@ exec_dict = {"PyMcaMain": os.path.join(PyMcaDir, "PyMcaGui", \
                                        "pymca", "PyMcaBatch.py"),
              "QStackWidget":os.path.join(PyMcaDir, "PyMcaGui", \
                                          "pymca", "QStackWidget.py"),
-             "PeakIdentifier":os.path.join(PyMcaDir, "PyMcaGui", \
-                                         "physics", "xrf", "PeakIdentifier.py"),
-             "EdfFileSimpleViewer": os.path.join(PyMcaDir, "PyMcaGui", \
-                                                 "pymca", "EdfFileSimpleViewer.py"),
+             #"PeakIdentifier":os.path.join(PyMcaDir, "PyMcaGui", \
+             #                            "physics", "xrf", "PeakIdentifier.py"),
+             #"EdfFileSimpleViewer": os.path.join(PyMcaDir, "PyMcaGui", \
+             #                                    "pymca", "EdfFileSimpleViewer.py"),
              "PyMcaPostBatch": os.path.join(PyMcaDir, "PyMcaGui", \
                                            "pymca", "PyMcaPostBatch.py"),
-             "Mca2Edf": os.path.join(PyMcaDir, "PyMcaGui", \
-                                    "pymca", "Mca2Edf.py"),
-             "ElementsInfo":os.path.join(PyMcaDir, "PyMcaGui", \
-                                        "physics", "xrf", "ElementsInfo.py"),
+             #"Mca2Edf": os.path.join(PyMcaDir, "PyMcaGui", \
+             #                       "pymca", "Mca2Edf.py"),
+             #"ElementsInfo":os.path.join(PyMcaDir, "PyMcaGui", \
+             #                           "physics", "xrf", "ElementsInfo.py"),
             }
 script_n = []
 script_l = []
@@ -86,7 +90,7 @@ for i in range(len(script_l)):
                             win_private_assemblies=False,
                             cipher=block_cipher,
                             noarchive=False))
-    script_a[-1].pure = [x for x in script_a[-1].pure if not x[0].startswith("PyMca5.")]
+    #script_a[-1].pure = [x for x in script_a[-1].pure if not x[0].startswith("PyMca5.")]
 
 
 if 0: # avoid merge
@@ -151,12 +155,10 @@ for i in range(len(script_a)):
             name=script_n[i])
         )
 
-
-# Fix MERGE by copying produced exe files to the location of the first one
 def move_exe(name):
     dist = os.path.join(Path(SPECPATH), 'dist')
     shutil.copy2(
-        src=os.path.join(dist, name, name + '.exe'),
+        src=os.path.join(dist, name, name),
         dst=os.path.join(dist, script_n[0])
     )
     shutil.rmtree(os.path.join(dist, name))
@@ -323,6 +325,17 @@ excludes += ["scipy"]
 
 # give some time to read the output
 time.sleep(2)
+
+def cleanup_cache(topdir): 
+    # cleanup __pycache__
+    for root, dirs, files in os.walk(topdir):
+        for dirname in dirs:
+            if dirname == "__pycache__": 
+               print("deleting ",os.path.join(topdir, dirname))
+               shutil.rmtree(os.path.join(topdir, dirname))
+            else:
+               cleanup_cache(os.path.join(topdir, dirname))
+
 def replace_module(name):
     dest = os.path.join(Path(SPECPATH), 'dist', script_n[0])
     target = os.path.join(dest, os.path.basename(name))
@@ -337,7 +350,11 @@ def replace_module(name):
         shutil.copytree(name, target)
     else:
         shutil.copy2(src=name, dst=target)
-            
+    cleanup_cache(target)
+
+
+
+
 
 for name in special_modules:
     replace_module(name)
@@ -406,6 +423,58 @@ if OPENCL:
     f.close()
 time.sleep(2)
 
+for i in range(len(script_col)):
+    app = BUNDLE(
+        script_col[i],
+        name=script_n[i] + ".app",
+        icon=icon,
+        bundle_identifier=None,
+        info_plist={
+            "CFBundleIdentifier": "com.github.vasole.pymca",
+            "CFBundleShortVersionString": version,
+            "CFBundleVersion": "PyMca " + version,
+            "LSTypeIsPackage": True,
+            "LSMinimumSystemVersion": "10.9.0",
+            "NSHumanReadableCopyright": "MIT",
+            "NSHighResolutionCapable": True,
+            "NSPrincipalClass": "NSApplication",
+            "NSAppleScriptEnabled": False,
+       },
+    )
+
+# make all the .app share the same resources
+if sys.platform.startswith("darwin"):
+    source = os.path.join(SPECPATH, "dist", script_n[0],"")
+    destination = os.path.join(SPECPATH, "dist", script_n[0] + ".app", "Contents", "MacOS")
+    cmd = "cp -Rf %s %s" % (source, destination)
+    result = os.system(cmd)
+    if result:
+        raise IOError("Unsuccessful cp")
+    if len(script_n) > 1:
+        cwd = os.getcwd()
+        for script in script_n[1:]:
+            source = os.path.join(SPECPATH, "dist", script + ".app" ,"Contents", "MacOS")
+            os.chdir(os.path.dirname(source))
+            cmd = "rm -Rf MacOS"
+            result = os.system(cmd)
+            if result:
+                os.chdir(cwd)
+                raise IOError("Unsuccessful %s" % cmd)
+            target = os.path.join("..", "..", script_n[0] + ".app", "Contents", "MacOS")
+            cmd = "ln -s %s %s" % (target, "MacOS")
+            result = os.system(cmd)
+            if result:
+                os.chdir(cwd)
+                raise IOError("Unsuccessful %s" % cmd)
+            os.chdir(cwd)
+            subprocess.call(
+                [
+                     "codesign",
+                     "--remove-signature",
+                     os.path.join("dist", script + ".app", "Contents", "MacOS", "Python"),
+                ]
+            )
+
 # move generated directory to top level dist
 program = "PyMca"
 version = PyMca5.version()
@@ -452,9 +521,9 @@ if sys.platform.startswith("win") and os.path.exists(nsis):
     print(cmd)
     os.system(cmd)
 
-    # cleanup intermediate files
-    for dname in ["build", "dist", "__pycache__"]:
-        ddir = os.path.join(SPECPATH, dname)
-        if os.path.exists(ddir):
-            shutil.rmtree(ddir)
+# cleanup intermediate files
+for dname in ["build", "dist", "__pycache__"]:
+    ddir = os.path.join(SPECPATH, dname)
+    if os.path.exists(ddir):
+        shutil.rmtree(ddir)
 
