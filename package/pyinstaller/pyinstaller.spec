@@ -481,7 +481,10 @@ if sys.platform.startswith("darwin"):
 # move generated directory to top level dist
 program = "PyMca"
 version = PyMca5.version()
-source = os.path.join(SPECPATH, "dist", script_n[0])
+if sys.platform.startswith("darwin"):
+    source = os.path.join(SPECPATH, "dist")
+else:
+    source = os.path.join(SPECPATH, "dist", script_n[0])
 dist = os.path.join(PROJECT_PATH, "dist",)
 if not os.path.exists(dist):
     os.mkdir(dist)
