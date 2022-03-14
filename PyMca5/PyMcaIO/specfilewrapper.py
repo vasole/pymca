@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2021 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -354,10 +354,10 @@ class specfilewrapper(object):
                         labels = None
             # check if it is a KETEK AXAS-D file
             ketek_keys = ["File Version = ",
-                          "Livetime = ",
-                          "Realtime = ",
-                          "Input Count Rate = ",
-                          "Output Count Rate = ",
+                          "Livetime = ", "Live Time: = ",
+                          "Realtime = ", "Real Time: = ",
+                          "Input Count Rate = ", "ICR: = ",
+                          "Output Count Rate = ", "OCR: = ",
                           "= KETEK"]
             ketek_counter = 0
             icr = None
@@ -369,27 +369,27 @@ class specfilewrapper(object):
                 for key in ketek_keys:
                     if key in line:
                         keylower = line.lower()
-                        if keylower.startswith("livetime ="):
-                            tokens = line.split()
+                        if keylower.startswith("livetime =") or keylower.startswith("live time: = "):
+                            tokens = line.split(" = ")[-1].split()
                             if tokens[-1] == "s":
-                                if "." in tokens[2]:
-                                    live_time = float(tokens[2])
+                                if "." in tokens[0]:
+                                    live_time = float(tokens[0])
                                 else:
-                                    live_time = float(tokens[2] + "." + tokens[3])
-                        elif keylower.startswith("realtime ="):
-                            tokens = line.split()
+                                    live_time = float(tokens[0] + "." + tokens[1])
+                        elif keylower.startswith("realtime =") or keylower.startswith("real time: = "):
+                            tokens = line.split(" = ")[-1].split()
                             if tokens[-1] == "s":
-                                if "." in tokens[2]:
-                                    real_time = float(tokens[2]) 
+                                if "." in tokens[0]:
+                                    real_time = float(tokens[0]) 
                                 else:
-                                    real_time = float(tokens[2] + "." + tokens[3])
-                        elif keylower.startswith("input count rate = "):
+                                    real_time = float(tokens[0] + "." + tokens[1])
+                        elif keylower.startswith("input count rate = ") or keylower.startswith("icr: = "):
                             tokens = line.split(" = ")[-1].split()
                             if "." in tokens[0]:
                                 icr = float(tokens[0]) 
                             else:
                                 icr = float(tokens[0] + "." + tokens[1])
-                        elif keylower.startswith("output count rate = "):
+                        elif keylower.startswith("output count rate = ") or keylower.startswith("ocr: = "):
                             tokens = line.split(" = ")[-1].split()
                             if "." in tokens[0]:
                                 ocr = float(tokens[0]) 
