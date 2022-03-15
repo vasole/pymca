@@ -503,6 +503,8 @@ if sys.platform.startswith("darwin"):
         f.write(line)
     f.close()
     subprocess.call(["bash", "create-dmg.sh"])
+    if os.path.exists(outFile):
+        os.remove(outFile)
 
     # move the image to the top level dist directory
     dist = os.path.join(PROJECT_PATH, "dist")
