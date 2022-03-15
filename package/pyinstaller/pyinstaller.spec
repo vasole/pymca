@@ -480,7 +480,7 @@ if sys.platform.startswith("darwin"):
 
     # rename the application
     version = PyMca5.version()
-    source = os.path.join(SPECPATH, "dist", script_n[0] + "app")
+    source = os.path.join(SPECPATH, "dist", script_n[0] + ".app")
     dest = os.path.join(SPECPATH, "dist", "PyMca%s.app" % version)
     os.rename(source, dest)
 
