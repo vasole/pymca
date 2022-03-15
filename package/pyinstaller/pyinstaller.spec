@@ -501,7 +501,7 @@ if sys.platform.startswith("darwin"):
 
     # move the image to the top level dist directory
     dist = os.path.join(PROJECT_PATH, "dist")
-    if not os.path.exits(dist):
+    if not os.path.exists(dist):
         os.mkdir(dist)
     source = os.path.join(SPECPATH, "artifacts", "PyMca%s.dmg" % version)
     destination = os.path.join(PROJECT_PATH, "dist", "PyMca%s.dmg" % version)
