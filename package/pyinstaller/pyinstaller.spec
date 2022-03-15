@@ -453,6 +453,13 @@ if sys.platform.startswith("darwin"):
     result = os.system(cmd)
     if result:
         raise IOError("Unsuccessful copy command <%s>" % cmd)
+    subprocess.call(
+        [
+             "codesign",
+             "--remove-signature",
+             os.path.join("dist", script_n[0] + ".app", "Contents", "MacOS", "Python"),
+        ]
+    )
     if len(script_n) > 1:
         cwd = os.getcwd()
         for script in script_n[1:]:
@@ -470,13 +477,28 @@ if sys.platform.startswith("darwin"):
                 os.chdir(cwd)
                 raise IOError("Unsuccessful %s" % cmd)
             os.chdir(cwd)
-            subprocess.call(
-                [
-                     "codesign",
-                     "--remove-signature",
-                     os.path.join("dist", script + ".app", "Contents", "MacOS", "Python"),
-                ]
-            )
+
+    # rename the application
+    version = PyMca5.version()
+    source = os.path.join(SPECPATH, "dist", script_n[0] + "app")
+    dest = os.path.join(SPECPATH, "dist", "PyMca%s.app" % version)
+    os.rename(source, dest)
+
+    # Pack the application
+    outFile = os.path.join(SPECPATH, "create-dmg.sh")
+    f = open(os.path.join(SPECPATH, "create-dmg.sh.in"), "r")
+    content = f.readlines()
+    f.close()
+    if os.path.exists(outFile):
+        os.remove(outFile)
+    f = open(outFile, "w")
+    for line in content:
+        if "__VERSION__" in line:
+            line = line.replace("__VERSION__", version)
+        f.write(line)
+    f.close()
+    subprocess.call(["bash", "create-dmg.sh"])
+    
 
 # move generated directory to top level dist
 program = "PyMca"
