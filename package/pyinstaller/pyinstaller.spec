@@ -487,6 +487,9 @@ if sys.platform.startswith("darwin"):
     os.rename(source, dest)
 
     # Pack the application
+    destination = os.path.join(SPECPATH, "artifacts")
+    if os.path.exists(destination):
+        shutil.rmtree(destination)
     outFile = os.path.join(SPECPATH, "create-dmg.sh")
     f = open(os.path.join(SPECPATH, "create-dmg.sh.in"), "r")
     content = f.readlines()
@@ -510,6 +513,7 @@ if sys.platform.startswith("darwin"):
     if os.path.exists(destination):
         os.remove(destination)
     os.rename(source, destination)
+    # get rid of the artifacts directory
     shutil.rmtree(os.path.dirname(source))
 else:
     # move generated directory to top level dist
