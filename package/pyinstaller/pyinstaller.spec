@@ -482,6 +482,8 @@ if sys.platform.startswith("darwin"):
     version = PyMca5.version()
     source = os.path.join(SPECPATH, "dist", script_n[0] + ".app")
     dest = os.path.join(SPECPATH, "dist", "PyMca%s.app" % version)
+    if os.path.exists(dest):
+        shutil.rmtree(dest)
     os.rename(source, dest)
 
     # Pack the application
@@ -505,8 +507,10 @@ if sys.platform.startswith("darwin"):
         os.mkdir(dist)
     source = os.path.join(SPECPATH, "artifacts", "PyMca%s.dmg" % version)
     destination = os.path.join(PROJECT_PATH, "dist", "PyMca%s.dmg" % version)
+    if os.path.exists(destination):
+        os.remove(destination)
     os.rename(source, destination)
-    shutil.rmtree(os.path.disrname(source))
+    shutil.rmtree(os.path.dirname(source))
 else:
     # move generated directory to top level dist
     program = "PyMca"
