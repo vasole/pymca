@@ -452,7 +452,7 @@ if sys.platform.startswith("darwin"):
     cmd = "cp -Rf %s %s" % (source, destination)
     result = os.system(cmd)
     if result:
-        raise IOError("Unsuccessful cp")
+        raise IOError("Unsuccessful copy command <%s>" % cmd)
     if len(script_n) > 1:
         cwd = os.getcwd()
         for script in script_n[1:]:
@@ -462,7 +462,7 @@ if sys.platform.startswith("darwin"):
             result = os.system(cmd)
             if result:
                 os.chdir(cwd)
-                raise IOError("Unsuccessful %s" % cmd)
+                raise IOError("Unsuccessful command <%s>" % cmd)
             target = os.path.join("..", "..", script_n[0] + ".app", "Contents", "MacOS")
             cmd = "ln -s %s %s" % (target, "MacOS")
             result = os.system(cmd)
@@ -482,13 +482,19 @@ if sys.platform.startswith("darwin"):
 program = "PyMca"
 version = PyMca5.version()
 if sys.platform.startswith("darwin"):
-    source = os.path.join(SPECPATH, "dist")
+    SINGLE_APP = True
+    if SINGLE_APP:
+        source = os.path.join(SPECPATH, "dist", script_n[0] + ".app")
+    else:
+        source = os.path.join(SPECPATH, "dist")
 else:
     source = os.path.join(SPECPATH, "dist", script_n[0])
 dist = os.path.join(PROJECT_PATH, "dist",)
 if not os.path.exists(dist):
     os.mkdir(dist)
 target = os.path.join(dist, "%s%s" % (program, version))
+if sys.platform.startswith("darwin"):
+    target += ".app"
 if os.path.exists(target):
     print("Removing target")
     shutil.rmtree(target)
