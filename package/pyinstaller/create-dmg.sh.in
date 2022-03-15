@@ -46,12 +46,12 @@ mkdir "${TEMPLATE}"/.fseventsd
 touch "${TEMPLATE}"/.fseventsd/no_log
 
 echo "Creating the temporary disk image."
-hdiutil create -format UDRW -volname PyMca -fs HFS+ \
+hdiutil create -format UDRW -volname PyMca__VERSION__ -fs HFS+ \
        -fsargs '-c c=64,a=16,e=16' \
        -srcfolder "${TEMPLATE}" \
        "${TEMPLATE_DMG}"
 
-hdiutil detach /Volumes/PyMca -force || true
+hdiutil detach /Volumes/PyMca__VERSION__ -force || true
 
 echo 'Attaching the temporary disk image in read/write mode.'
 MOUNT_OUTPUT=$(hdiutil attach -readwrite -noverify -noautoopen "${TEMPLATE_DMG}" | grep '^/dev/')
