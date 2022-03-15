@@ -431,11 +431,12 @@ for i in range(len(script_col)):
         script_col[i],
         name=script_n[i] + ".app",
         icon=icon,
-        bundle_identifier=None,
+        bundle_identifier="com.esrf.pymca.mac",
         info_plist={
             "CFBundleIdentifier": "com.github.vasole.pymca",
             "CFBundleShortVersionString": version,
             "CFBundleVersion": "PyMca " + version,
+            "LSBackgroundOnly": False,
             "LSTypeIsPackage": True,
             "LSMinimumSystemVersion": "10.9.0",
             "NSHumanReadableCopyright": "MIT",
