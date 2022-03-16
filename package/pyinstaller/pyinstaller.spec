@@ -60,6 +60,10 @@ if not sys.platform.startswith("darwin"):
     exec_dict["ElementsInfo"] = os.path.join(PyMcaDir, "PyMcaGui", \
                                       "physics", "xrf", "ElementsInfo.py")
 
+# for fast testing uncomment the following two lines
+#exec_dict = {"PyMcaMain": os.path.join(PyMcaDir, "PyMcaGui", \
+#                                     "pymca", "PyMcaMain.py")}
+
 script_n = []
 script_l = []
 for key in exec_dict:
@@ -179,7 +183,7 @@ if len(script_a) > 1:
 
 # Mandatory modules to be integrally included in the frozen version.
 # One can add other modules here if not properly detected
-# (PyQt5 seems to be properly handled, if not, add to special_modules)
+# (PyQt5 and PySide6 seem to be properly handled, if not, add to special_modules)
 import PyMca5
 import fisx
 import h5py
@@ -527,8 +531,6 @@ else:
     if not os.path.exists(dist):
         os.mkdir(dist)
     target = os.path.join(dist, "%s%s" % (program, version))
-    if sys.platform.startswith("darwin"):
-        target += ".app"
     if os.path.exists(target):
         print("Removing target")
         shutil.rmtree(target)
@@ -539,16 +541,16 @@ else:
     nsis = os.path.join("\Program Files (x86)", "NSIS", "makensis.exe")
     if sys.platform.startswith("win") and os.path.exists(nsis):
         # check if we can perform the packaging
-        outFile = os.path.join(PROJECT_PATH, "nsisscript.nsi")
-        f = open(os.path.join(PROJECT_PATH,"nsisscript.nsi.in"), "r")
+        outFile = os.path.join(SPECPATH, "nsisscript.nsi")
+        f = open(os.path.join(SPECPATH,"nsisscript.nsi.in"), "r")
         content = f.readlines()
         f.close()
         if os.path.exists(outFile):
             os.remove(outFile)
-        pymcaexe = os.path.join(PROJECT_PATH, "%s%s-win64.exe" % (program.lower(), version))
+        pymcaexe = os.path.join(PROJECT_PATH, "dist", "%s%s-win64.exe" % (program.lower(), version))
         if os.path.exists(pymcaexe):
             os.remove(pymcaexe)
-        pymcalicense = os.path.join(PROJECT_PATH, "PyMca.txt")
+        pymcalicense = os.path.join(SPECPATH, "PyMca.txt")
         f = open(outFile, "w")
         for line in content:
             if "__LICENSE_FILE__" in line:
@@ -561,6 +563,8 @@ else:
                 line = line.replace("__OUTFILE__", pymcaexe)
             if "__SOURCE_DIRECTORY__" in line:
                 line = line.replace("__SOURCE_DIRECTORY__", frozenDir)
+            if "__ICON_PATH__" in line:
+                line = line.replace("__ICON_PATH__", icon)
             f.write(line)
         f.close()
         cmd = '"%s" %s' % (nsis, outFile)
