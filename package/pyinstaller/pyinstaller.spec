@@ -12,6 +12,11 @@ from PyInstaller.config import CONF
 DISTDIR = os.path.abspath(CONF["distpath"])
 BUILDDIR = os.path.abspath(CONF["workpath"])
 
+# make sure to start with a clean environment
+for target in [DISTDIR, BUILDDIR]:
+    if os.path.exists(target):
+        shutil.rmtree(target)
+
 datas = []
 
 PROJECT_PATH = os.path.abspath(os.path.join(SPECPATH, "..", ".."))
