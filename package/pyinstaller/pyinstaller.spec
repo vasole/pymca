@@ -522,6 +522,15 @@ if sys.platform.startswith("darwin"):
     os.rename(source, destination)
     # get rid of the artifacts directory
     shutil.rmtree(os.path.dirname(source))
+
+    # move the generated .app to top level dist for debugging purposes
+    program = "PyMca"
+    version = PyMca5.version()
+    source = os.path.join(SPECPATH, "dist", "PyMca%s.app" % version))
+    target = os.path.join(PROJECT_PATH, "dist", "%s%s.app" % (program, version))
+    if os.path.exists(target):
+        shutil.rmtree(target)
+    shutil.move(source, target)
 else:
     # move generated directory to top level dist
     program = "PyMca"
