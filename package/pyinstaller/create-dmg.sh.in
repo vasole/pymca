@@ -6,7 +6,7 @@ set -e
 ROOT="${PWD}"
 
 # Path to the built application.
-APP1="${ROOT}"/dist/PyMca__VERSION__.app
+APP1="${ROOT}"/__DISTDIR__/PyMca__VERSION__.app
 #APP2="${ROOT}"/dist/PyMcaBatch.app
 #APP3="${ROOT}"/dist/PyMcaPostBatch.app
 #APP4="${ROOT}"/dist/QStackWidget.app

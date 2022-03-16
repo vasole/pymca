@@ -465,7 +465,7 @@ if sys.platform.startswith("darwin"):
         [
              "codesign",
              "--remove-signature",
-             os.path.join("dist", script_n[0] + ".app", "Contents", "MacOS", "Python"),
+             os.path.join(DISTDIR, script_n[0] + ".app", "Contents", "MacOS", "Python"),
         ]
     )
     if len(script_n) > 1:
@@ -508,6 +508,8 @@ if sys.platform.startswith("darwin"):
     for line in content:
         if "__VERSION__" in line:
             line = line.replace("__VERSION__", version)
+        if "__DISTDIR__" in line:
+            line = line.replace("__DISTDIR__", DISTDIR)
         f.write(line)
     f.close()
     subprocess.call(["bash", "create-dmg.sh"])
