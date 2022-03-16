@@ -589,7 +589,7 @@ for dname in ["build", "dist", "__pycache__"]:
     if os.path.exists(ddir):
         shutil.rmtree(ddir)
 
-for ddir in [DISTDIR, WORKDIR]:
+for ddir in [DISTDIR, BUILDDIR]:
     if os.path.exists(ddir):
         shutil.rmtree(ddir)
 
