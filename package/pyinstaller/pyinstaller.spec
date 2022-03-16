@@ -16,7 +16,7 @@ DISTDIR = os.path.abspath(CONF["distpath"])
 BUILDDIR = os.path.abspath(CONF["workpath"])
 
 logger.info("Using temporary build dir <%s>" % BUILDDIR)
-logger.info("Using temporary dist dir <%s>" % BUILDDIR)
+logger.info("Using temporary dist dir <%s>" % DISTDIR)
 
 datas = []
 
@@ -601,6 +601,8 @@ for dname in ["build", "dist", "__pycache__"]:
 for ddir in [DISTDIR, BUILDDIR]:
     if os.path.exists(ddir):
         shutil.rmtree(ddir)
-
-        
+        if os.path.basename(ddir) == "pyinstaller":
+            if os.path.basename(os.path.dirname(ddir)).startswith("build"):
+                if os.path.isdir(os.path.dirname(ddir)):
+                    shutil.rmtree(os.path.dirname(ddir))
 
