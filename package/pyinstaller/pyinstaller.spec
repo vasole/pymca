@@ -5,12 +5,18 @@ from pathlib import Path
 import shutil
 import subprocess
 import time
+import logging
 
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 from PyInstaller.config import CONF
 
+logger = logging.getLogger("pyinstaller")
+
 DISTDIR = os.path.abspath(CONF["distpath"])
 BUILDDIR = os.path.abspath(CONF["workpath"])
+
+logger.info("Using temporary build dir <%s>" % BUILDDIR)
+logger.info("Using temporary dist dir <%s>" % BUILDDIR)
 
 datas = []
 
@@ -24,6 +30,8 @@ if sys.platform.startswith('darwin'):
    icon = os.path.join(PROJECT_PATH, "icons", "PyMca.icns")
 else:
    icon = os.path.join(PROJECT_PATH, "icons", "PyMca.ico")
+
+logger.info("Using icon <%s>" % icon)
 
 hiddenimports = []
 hiddenimports += collect_submodules('encodings.ascii')
@@ -258,7 +266,7 @@ try:
     import OpenGL
     special_modules += [os.path.dirname(OpenGL.__file__)]
 except ImportError:
-    print("OpenGL not available, not added to the frozen executables")
+    logger.info("OpenGL not available, not added to the frozen executables")
 
 # This adds the interactive console but probably I should aim at an older
 # version to reduce binary size. Tested with IPython 7.4.0
@@ -277,7 +285,7 @@ try:
     special_modules += [os.path.dirname(ipykernel.__file__)]
     special_modules += [os.path.dirname(zmq.__file__)]
 except ImportError:
-    print("qtconsole not available, not added to the frozen executables")
+    logger.info("qtconsole not available, not added to the frozen executables")
 
 try:
     import silx
@@ -288,7 +296,7 @@ try:
                         os.path.dirname(xml.__file__),]
     SILX = True
 except ImportError:
-    print("silx not available, not added to the frozen executables")
+    logger.info("silx not available, not added to the frozen executables")
     SILX = False
 
 try:
@@ -297,7 +305,7 @@ try:
     special_modules += [os.path.dirname(freeart.__file__),
                         os.path.dirname(tomogui.__file__)]
 except ImportError:
-    print("tomogui not available, not added to the frozen executables")
+    logger.info("tomogui not available, not added to the frozen executables")
 
 # package used by silx and probably others that is not always added properly
 # always add it because it is small
@@ -306,7 +314,7 @@ try:
     special_modules += [os.path.dirname(pkg_resources.__file__)]
     excludes += ["pkg_resources"]
 except ImportError:
-    print("pkg_resources could not be imported")
+    logger.info("pkg_resources could not be imported")
 
 # pyopencl needs special treatment
 try:
@@ -375,7 +383,6 @@ for name in special_modules:
 for fname in script_n:
     os.remove(fname)
 
-
 # cleanup copied files
 for fname in script_n:
     if os.path.exists(fname):
@@ -385,10 +392,10 @@ for fname in script_n:
 if SILX:
     fname = os.path.join(DISTDIR, script_n[0], "silx", "gui","qt","_qt.py")
     if os.path.exists(fname):
-        print("###################################################################")
-        print("Patching silx")
-        print(fname)
-        print("###################################################################")
+        logger.info("###################################################################")
+        logger.info("Patching silx")
+        logger.info(fname)
+        logger.info("###################################################################")
         f = open(fname, "r")
         content = f.readlines()
         f.close()
@@ -402,10 +409,10 @@ if OPENCL:
     # pyopencl __init__.py needs to be patched
     exe_win_dir = os.path.join(DISTDIR, script_n[0])
     initFile = os.path.join(exe_win_dir, "pyopencl", "__init__.py")
-    print("###################################################################")
-    print("Patching pyopencl file")
-    print(initFile)
-    print("###################################################################")
+    logger.info("###################################################################")
+    logger.info("Patching pyopencl file")
+    logger.info(initFile)
+    logger.info("###################################################################")
     f = open(initFile, "r")
     content = f.readlines()
     f.close()
@@ -582,7 +589,7 @@ else:
             f.write(line)
         f.close()
         cmd = '"%s" %s' % (nsis, outFile)
-        print(cmd)
+        logger.info("Issuing NSIS command <%s>" % cmd)
         os.system(cmd)
 
 # cleanup intermediate files
