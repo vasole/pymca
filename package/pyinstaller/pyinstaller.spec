@@ -6,8 +6,11 @@ import shutil
 import subprocess
 import time
 
-
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
+from PyInstaller.config import CONF
+
+DISTDIR = os.path.abspath(CONF["distpath"])
+BUILDDIR = os.path.abspath(CONF["workpath"])
 
 datas = []
 
@@ -163,7 +166,7 @@ for i in range(len(script_a)):
         )
 
 def move_exe(name):
-    dist = os.path.join(Path(SPECPATH), 'dist')
+    dist = DISTDIR
     if sys.platform.startswith("darwin"):
         shutil.copy2(
             src=os.path.join(dist, name, name),
@@ -350,7 +353,7 @@ def cleanup_cache(topdir):
                cleanup_cache(os.path.join(topdir, dirname))
 
 def replace_module(name):
-    dest = os.path.join(Path(SPECPATH), 'dist', script_n[0])
+    dest = os.path.join(DISTDIR, script_n[0])
     target = os.path.join(dest, os.path.basename(name))
     print("source = ", name)
     print("dest = ", target)
@@ -380,7 +383,7 @@ for fname in script_n:
 
 # patch silx
 if SILX:
-    fname = os.path.join(SPECPATH, "dist", script_n[0], "silx", "gui","qt","_qt.py")
+    fname = os.path.join(DISTDIR, script_n[0], "silx", "gui","qt","_qt.py")
     if os.path.exists(fname):
         print("###################################################################")
         print("Patching silx")
@@ -397,7 +400,7 @@ if SILX:
 # patch OpenCL
 if OPENCL:
     # pyopencl __init__.py needs to be patched
-    exe_win_dir = os.path.join(SPECPATH, "dist", script_n[0])
+    exe_win_dir = os.path.join(DISTDIR, script_n[0])
     initFile = os.path.join(exe_win_dir, "pyopencl", "__init__.py")
     print("###################################################################")
     print("Patching pyopencl file")
@@ -452,8 +455,8 @@ for i in range(len(script_col)):
 
 # make all the .app share the same resources
 if sys.platform.startswith("darwin"):
-    source = os.path.join(SPECPATH, "dist", script_n[0],"")
-    destination = os.path.join(SPECPATH, "dist", script_n[0] + ".app", "Contents", "MacOS")
+    source = os.path.join(DISTDIR, script_n[0],"")
+    destination = os.path.join(DISTDIR, script_n[0] + ".app", "Contents", "MacOS")
     cmd = "cp -Rf %s %s" % (source, destination)
     result = os.system(cmd)
     if result:
@@ -468,7 +471,7 @@ if sys.platform.startswith("darwin"):
     if len(script_n) > 1:
         cwd = os.getcwd()
         for script in script_n[1:]:
-            source = os.path.join(SPECPATH, "dist", script + ".app" ,"Contents", "MacOS")
+            source = os.path.join(DISTDIR, script + ".app" ,"Contents", "MacOS")
             os.chdir(os.path.dirname(source))
             cmd = "rm -Rf MacOS"
             result = os.system(cmd)
@@ -485,8 +488,8 @@ if sys.platform.startswith("darwin"):
 
     # rename the application
     version = PyMca5.version()
-    source = os.path.join(SPECPATH, "dist", script_n[0] + ".app")
-    dest = os.path.join(SPECPATH, "dist", "PyMca%s.app" % version)
+    source = os.path.join(DISTDIR, script_n[0] + ".app")
+    dest = os.path.join(DISTDIR, "PyMca%s.app" % version)
     if os.path.exists(dest):
         shutil.rmtree(dest)
     os.rename(source, dest)
@@ -526,7 +529,7 @@ if sys.platform.startswith("darwin"):
     # move the generated .app to top level dist for debugging purposes
     program = "PyMca"
     version = PyMca5.version()
-    source = os.path.join(SPECPATH, "dist", "PyMca%s.app" % version)
+    source = os.path.join(DISTDIR, "PyMca%s.app" % version)
     target = os.path.join(PROJECT_PATH, "dist", "%s%s.app" % (program, version))
     if os.path.exists(target):
         shutil.rmtree(target)
@@ -535,7 +538,7 @@ else:
     # move generated directory to top level dist
     program = "PyMca"
     version = PyMca5.version()
-    source = os.path.join(SPECPATH, "dist", script_n[0])
+    source = os.path.join(DISTDIR, script_n[0])
     dist = os.path.join(PROJECT_PATH, "dist",)
     if not os.path.exists(dist):
         os.mkdir(dist)
@@ -585,4 +588,10 @@ for dname in ["build", "dist", "__pycache__"]:
     ddir = os.path.join(SPECPATH, dname)
     if os.path.exists(ddir):
         shutil.rmtree(ddir)
+
+for ddir in [DISTDIR, WORKDIR]:
+    if os.path.exists(ddir):
+        shutil.rmtree(ddir)
+
+        
 
