@@ -2,8 +2,9 @@ import os
 import sys
 
 cwd = os.path.abspath(os.getcwd())
-cmd = r"cd %s; pyinstaller pyinstaller.spec --noconfirm" % \
-              os.path.join(".", "package", "pyinstaller")
+cmd = r"cd %s; pyinstaller pyinstaller.spec --noconfirm --workpath %s" % \
+              (os.path.join(".", "package", "pyinstaller"),
+               os.path.join(".", "build-" + sys.platform))
 
 if sys.platform.startswith("win"):
     cmd = cmd.replace(";", "&")    
