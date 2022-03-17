@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -526,14 +526,18 @@ class StackBase(object):
     def getStackOriginalImage(self):
         return self._stackImageData
 
-    def calculateMcaDataObject(self, normalize=False):
+    def calculateMcaDataObject(self, normalize=False, mask=None):
         #original ICR mca
         if self._stackImageData is None:
             return
+        if mask is None:
+            selectionMask = self._selectionMask
+        else:
+            selectionMask = mask
         mcaData = None
         goodData = numpy.isfinite(self._mcaData0.y[0].sum())
         logger.debug("Stack data is not finite")
-        if (self._selectionMask is None) and goodData:
+        if (selectionMask is None) and goodData:
             if normalize:
                 logger.debug("Case 1")
                 npixels = self._stackImageData.shape[0] *\
@@ -550,7 +554,7 @@ class StackBase(object):
             return dataObject
 
         #deal with NaN and inf values
-        if self._selectionMask is None:
+        if selectionMask is None:
             if (self._ROIImageDict["ROI"] is not None) and\
                (self.mcaIndex != 0):
                 actualSelectionMask = numpy.isfinite(self._ROIImageDict["ROI"])
@@ -559,9 +563,9 @@ class StackBase(object):
         else:
             if (self._ROIImageDict["ROI"] is not None) and\
                (self.mcaIndex != 0):
-                actualSelectionMask = self._selectionMask * numpy.isfinite(self._ROIImageDict["ROI"])
+                actualSelectionMask = selectionMask * numpy.isfinite(self._ROIImageDict["ROI"])
             else:
-                actualSelectionMask = self._selectionMask * numpy.isfinite(self._stackImageData)
+                actualSelectionMask = selectionMask * numpy.isfinite(self._stackImageData)
 
         npixels = actualSelectionMask.sum()
         if (npixels == 0) and goodData:
