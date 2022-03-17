@@ -1267,6 +1267,35 @@ class QStackWidget(StackBase.StackBase,
             self.stackGraphWidget.setInfoText( \
                     "    X = %d Y = %d Z = %.4g" % (y, x, z))
 
+        if ddict['event'] in ["mouseDoubleClicked"]:
+            if ddict['button'] == "left":
+                if self._stackImageData is None:
+                    return
+                # x and y arrive in scaled coordinates
+                # we need to convert them to row and column
+            if None in [ddict['x'], ddict['y']]:
+                _logger.debug("Signal from outside region %s", ddict)
+                return
+            xScale = self._stack.info.get("xScale", None)
+            yScale = self._stack.info.get("yScale", None)
+            row, column = MaskImageWidget.convertToRowAndColumn(ddict['x'],
+                                      ddict['y'],
+                                      self._stackImageData.shape,
+                                      xScale=xScale,
+                                      yScale=yScale,
+                                      safe=True)
+            ddict['row'] = row
+            ddict['col'] = column
+            selectionMask = numpy.zeros(self._stackImageData.shape,
+                                     numpy.uint8)
+            selectionMask[row, column] = 1
+            dataObject = self.calculateMcaDataObject(normalize=True,
+                                                     mask=selectionMask)
+            self.sendMcaSelection(dataObject,
+                                     key="Selection",
+                                     legend="MCA[%d,%d]" % (row, column),
+                                     action="ADD")
+
     def _mcaWidgetSignal(self, ddict):
         if not self.__ROIConnected:
             return
