@@ -94,8 +94,8 @@ class SpecfitGui(qt.QWidget):
             self.guiconfig.FunComBox.textActivated[str].connect(self.funevent)
         else:
             self.guiconfig.BkgComBox.activated[str].connect(self.bkgevent)
-            self.guiconfig.FunComBox.activated[str].connect(self.funevent)            
-            layout.addWidget(self.guiconfig)
+            self.guiconfig.FunComBox.activated[str].connect(self.funevent)
+        layout.addWidget(self.guiconfig)
 
         self.guiparameters = MultiParameters.ParametersTab(self)
         layout.addWidget(self.guiparameters)
