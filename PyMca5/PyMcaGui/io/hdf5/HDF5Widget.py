@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2021 V.A. Sole, ESRF - D. Dale CHESS
+# Copyright (C) 2004-2022 V.A. Sole, ESRF - D. Dale CHESS
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -246,12 +246,16 @@ class H5NodeProxy(object):
             # obtaining the lock here is necessary, otherwise application can
             # freeze if navigating tree while data is processing
             if 1: #with self.file.plock:
-                items = list(self.getNode(self.name).items())
-                if posixpath.dirname(self.name) == "/":
-                    # top level item
-                    doit = True
-                else:
-                    doit = False
+                try:
+                    items = list(self.getNode(self.name).items())
+                    if posixpath.dirname(self.name) == "/":
+                        # top level item
+                        doit = True
+                    else:
+                        doit = False
+                except:
+                    items = []
+                    _logger.warning("Cannot obtain items list. Ignoring")
                 try:
                     # better handling of external links
                     finalList = h5py_sorting(items, sorting_list=self.__sorting_list)
@@ -949,11 +953,14 @@ class Hdf5SelectionDialog(qt.QDialog):
         self.selectedItemUri = self._lastEvent['file'] + "::" + self._lastEvent['name']
         self.accept()
 
-    def exec_(self):
+    def exec(self):
         with h5open(self.filename) as hdf5File:
             self.fileModel.appendPhynxFile(hdf5File, weakreference=True)
-            ret = qt.QDialog.exec_(self)
+            ret = qt.QDialog.exec(self)
         return ret
+
+    def exec_(self):
+        return self.exec()
 
 
 def _getFilenameDialog(parent=None):
