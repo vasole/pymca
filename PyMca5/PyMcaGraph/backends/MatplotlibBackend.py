@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2021 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -46,6 +46,7 @@ from numpy import vstack as numpyvstack
 # Problem on debian6 numpy version 1.4.1 unsigned longs give infinity
 #from numpy import nanmax, nanmin
 def nanmax(x):
+    x = numpy.array(x, copy=False)
     x = x[numpy.isfinite(x)]
     if len(x):
         return x.max()
@@ -53,6 +54,7 @@ def nanmax(x):
         return 0
 
 def nanmin(x):
+    x = numpy.array(x, copy=False)
     x = x[numpy.isfinite(x)]
     if len(x):
         return x.min()
