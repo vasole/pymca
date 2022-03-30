@@ -223,7 +223,7 @@ class QNexusWidget(qt.QWidget):
 
     def _counterTableCustomMenuSlot(self, qpoint):
         self.getWidgetConfiguration()
-        self._cntTableMenu.exec_(qt.QCursor.pos())
+        self._cntTableMenu.exec(qt.QCursor.pos())
 
     def _getConfigurationFromFile(self, fname):
         ddict = ConfigDict.ConfigDict()
@@ -528,7 +528,7 @@ class QNexusWidget(qt.QWidget):
                                              self._showInfoWidgetSlot)
             _hdf5WidgetDatasetMenu.addAction(QString("Copy Path to Clipboard"),
                                              self._copyPathSlot)
-            _hdf5WidgetDatasetMenu.exec_(qt.QCursor.pos())
+            _hdf5WidgetDatasetMenu.exec(qt.QCursor.pos())
         else:
             #handle a right click on a numeric dataset
             _hdf5WidgetDatasetMenu.addAction(QString("Add to selection table"),
@@ -545,7 +545,7 @@ class QNexusWidget(qt.QWidget):
                                                  self._showInfoWidgetSlot)
                 _hdf5WidgetDatasetMenu.addAction(QString("Copy Path to Clipboard"),
                                              self._copyPathSlot)
-                _hdf5WidgetDatasetMenu.exec_(qt.QCursor.pos())
+                _hdf5WidgetDatasetMenu.exec(qt.QCursor.pos())
         self._lastItemDict = None
         return
 
