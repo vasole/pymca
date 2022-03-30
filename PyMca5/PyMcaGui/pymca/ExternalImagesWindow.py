@@ -177,7 +177,7 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
             return
         if self.imageNames is None:
             return
-        self._flipMenu.exec_(self.cursor().pos())
+        self._flipMenu.exec(self.cursor().pos())
 
     def _hFlipIconSignal(self):
         if self.getQImage() is None:
@@ -191,7 +191,7 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
             return
         if self._imageDict is None:
             return
-        self._flipMenu.exec_(self.cursor().pos())
+        self._flipMenu.exec(self.cursor().pos())
 
     def __hFlipIconSignal(self):
         MaskImageWidget.MaskImageWidget._hFlipIconSignal(self)

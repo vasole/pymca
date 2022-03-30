@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -256,7 +256,7 @@ class MaskToolBar(qt.QToolBar):
                                       self._setBrush5)
             self._brushMenu.addAction(QString("20 Image Pixel Width"),
                                       self._setBrush6)
-        self._brushMenu.exec_(self.cursor().pos())
+        self._brushMenu.exec(self.cursor().pos())
 
     def _setBrush1(self):
         self.plot._brushWidth = 1
@@ -310,9 +310,9 @@ class MaskToolBar(qt.QToolBar):
 
     def _additionalIconSignal(self, checked=False):
         if self.plot._plotViewMode == "density":   # and imageData is not none ...
-            self._additionalSelectionMenu["density"].exec_(self.cursor().pos())
+            self._additionalSelectionMenu["density"].exec(self.cursor().pos())
         else:
-            self._additionalSelectionMenu["scatter"].exec_(self.cursor().pos())
+            self._additionalSelectionMenu["scatter"].exec(self.cursor().pos())
 
     def _uncheckAllSelectionButtons(self):
         self.brushSelectionToolButton.setChecked(False)

@@ -333,7 +333,7 @@ class QStackWidget(StackBase.StackBase,
                                         yScale=yScale)
 
     def _stackSaveToolButtonSignal(self):
-        self._stackSaveMenu.exec_(self.cursor().pos())
+        self._stackSaveMenu.exec(self.cursor().pos())
 
     def _getOutputHDF5Filename(self, nexus=False):
         fileTypes = "HDF5 Files (*.h5)\nHDF5 Files (*.hdf)"
@@ -620,7 +620,7 @@ class QStackWidget(StackBase.StackBase,
             for action in actionList:
                 text = QString(action)
                 menu.addAction(text)
-            a = menu.exec_(qt.QCursor.pos())
+            a = menu.exec(qt.QCursor.pos())
             if a is None:
                 return None
             if qt.safe_str(a.text()).startswith("Replace"):
@@ -812,7 +812,7 @@ class QStackWidget(StackBase.StackBase,
             menu.addAction(text)
             actionList.append(text)
             callableKeys.append(m)
-        a = menu.exec_(qt.QCursor.pos())
+        a = menu.exec(qt.QCursor.pos())
         if a is None:
             return None
         idx = actionList.index(a.text())
@@ -865,7 +865,7 @@ class QStackWidget(StackBase.StackBase,
                 menu.addAction(action)
                 actionList.append((text, pixmap, tip, action))
             menu.hovered.connect(self._actionHovered)
-            a = menu.exec_(qt.QCursor.pos())
+            a = menu.exec(qt.QCursor.pos())
             if a is None:
                 return None
             idx = -1

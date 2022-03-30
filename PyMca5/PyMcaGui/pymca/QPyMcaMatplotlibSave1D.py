@@ -322,13 +322,16 @@ class QPyMcaMatplotlibSaveDialog(qt.QDialog):
         self.dismissButton.clicked.connect(self.reject)
 
     def exec_(self):
+        return self.exec()
+
+    def exec(self):
         self.plot.draw()
         if self.doNotShowAgain.isChecked():
             return qt.QDialog.Accepted
         else:
             if self._lastGoodSize is not None:
                 self.resize(self._lastGoodSize)
-            return qt.QDialog.exec_(self)
+            return qt.QDialog.exec(self)
 
     def accept(self):
         self._lastGoodSize = self.size()

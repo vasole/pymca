@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "E. Papillon, V.A. Sole - ESRF Software Group"
+__author__ = "E. Papillon, V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -75,7 +75,7 @@ class SpecFileMcaTable(qt.QWidget):
         text = str(item.text())
         if text.startswith("No MCA for"):
             return
-        action = self.table._hHeader.menu.exec_(self.cursor().pos())
+        action = self.table._hHeader.menu.exec(self.cursor().pos())
         if action is None:
             return
         txt = str(action.text())

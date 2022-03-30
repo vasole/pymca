@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -89,7 +89,7 @@ class ScanFitToolButton(qt.QToolButton):
         Selecting simple fit calls :meth:`_scanFitSignal`.
         Selecting customized fit calls :meth:`_customFitSignal`.
         """
-        self.fitButtonMenu.exec_(self.plot.cursor().pos())
+        self.fitButtonMenu.exec(self.plot.cursor().pos())
 
     def _getOneCurve(self):
         """Return active curve if any. Else return first curve, if any.

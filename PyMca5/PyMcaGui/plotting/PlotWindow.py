@@ -190,9 +190,9 @@ class PlotWindow(PlotWidget.PlotWidget):
                                        self.toggleCrosshairCursor)
             controlMenu.addAction(QString("Toggle Arrow Keys Panning"),
                                        self.toggleArrowKeysPanning)
-            controlMenu.exec_(self.cursor().pos())
+            controlMenu.exec(self.cursor().pos())
         else:
-            self._controlMenu.exec_(self.cursor().pos())
+            self._controlMenu.exec(self.cursor().pos())
 
     def setControlMenu(self, menu=None):
         self._controlMenu = menu
@@ -483,9 +483,9 @@ class PlotWindow(PlotWidget.PlotWidget):
                             self._getPrintConfigurationFromDialog)
             printMenu.addAction(QString("Print"),
                                        self.printGraph)
-            printMenu.exec_(self.cursor().pos())
+            printMenu.exec(self.cursor().pos())
         else:
-            self._printMenu.exec_(self.cursor().pos())
+            self._printMenu.exec(self.cursor().pos())
 
     def printGraph(self, *var, **kw):
         config = self.getPrintConfiguration()
@@ -954,7 +954,7 @@ class PlotWindow(PlotWidget.PlotWidget):
             actionList.append(text)
             callableKeys.append(m)
         menu.hovered.connect(self._actionHovered)
-        a = menu.exec_(qt.QCursor.pos())
+        a = menu.exec(qt.QCursor.pos())
         if a is None:
             return None
         idx = actionList.index(a.text())
@@ -1006,7 +1006,7 @@ class PlotWindow(PlotWidget.PlotWidget):
                 actionList.append((text, pixmap, tip, action))
             #qt.QObject.connect(menu, qt.SIGNAL("hovered(QAction *)"), self._actionHovered)
             menu.hovered.connect(self._actionHovered)
-            a = menu.exec_(qt.QCursor.pos())
+            a = menu.exec(qt.QCursor.pos())
             if a is None:
                 return None
             idx = -1

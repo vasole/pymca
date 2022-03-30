@@ -102,7 +102,7 @@ class PyMcaNexusWidget(QNexusWidget.QNexusWidget):
                                                  self._loadStack2DSignal)
 
         self._lastItemDict = ddict
-        _hdf5WidgetDatasetMenu.exec_(qt.QCursor.pos())
+        _hdf5WidgetDatasetMenu.exec(qt.QCursor.pos())
         self._lastItemDict= None
         return
 

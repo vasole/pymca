@@ -138,7 +138,7 @@ class RGBCorrelator(qt.QWidget):
             self.graph.replot()
 
     def _saveToolButtonSignal(self):
-        self._saveMenu.exec_(self.cursor().pos())
+        self._saveMenu.exec(self.cursor().pos())
 
     def _saveMatplotlibImage(self):
         if self._matplotlibSaveImage is None:

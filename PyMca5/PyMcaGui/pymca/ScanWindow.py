@@ -678,7 +678,7 @@ class ScanWindow(PlotWindow.PlotWindow):
 
     def _fitIconSignal(self):
         _logger.debug("_fitIconSignal")
-        self.fitButtonMenu.exec_(self.cursor().pos())
+        self.fitButtonMenu.exec(self.cursor().pos())
 
     def _simpleFitSignal(self):
         _logger.debug("_simpleFitSignal")
