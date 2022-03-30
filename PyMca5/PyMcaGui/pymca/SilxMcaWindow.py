@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -165,7 +165,7 @@ class McaWindow(ScanWindow.ScanWindow):
         return self._curvesROIDockWidget
 
     def _fitButtonClicked(self):
-        self.fitButtonMenu.exec_(self.cursor().pos())
+        self.fitButtonMenu.exec(self.cursor().pos())
 
     def _buildCalibrationControlWidget(self):
         widget = self.centralWidget()

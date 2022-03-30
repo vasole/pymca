@@ -1510,7 +1510,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         self._sumRulesTool.raise_()
 
     def onOpen(self):
-        self.openMenu.exec_(self.cursor().pos())
+        self.openMenu.exec(self.cursor().pos())
 
     def onSave(self):
         self._saveAs()
@@ -1529,7 +1529,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         elif text in self.imageWindowDict.keys():
             self.saveMenu.addAction("Active Image",
                   self.imageWindowDict[text].graphWidget._saveIconSignal)
-        self.saveMenu.exec_(self.cursor().pos())
+        self.saveMenu.exec(self.cursor().pos())
 
     def _onSaveAs(self):
         cwd = os.getcwd()
@@ -1610,7 +1610,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 self.trainingDataMenu.addAction(action)
         try:
             source = None
-            selectedAction = self.trainingDataMenu.exec_(qt.QCursor.pos())
+            selectedAction = self.trainingDataMenu.exec(qt.QCursor.pos())
             if selectedAction is not None:
                 key = qt.safe_str(selectedAction.text())
                 source = self.trainingSources[key]

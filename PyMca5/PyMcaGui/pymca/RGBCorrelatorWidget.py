@@ -364,7 +364,7 @@ class RGBCorrelatorWidget(qt.QWidget):
             if KMEANS:
                 self._calculationMenu.addAction(QString("K-Means Clustering"),
                                             self.showKMeansDialog)
-        self._calculationMenu.exec_(self.cursor().pos())
+        self._calculationMenu.exec(self.cursor().pos())
 
     def _showTomoReconsDialog(self):
         def getSinograms(ids):
@@ -1151,7 +1151,7 @@ class RGBCorrelatorWidget(qt.QWidget):
             self.addImage(numpy.resize(singleArray, (nrows, ncols)), labels[i])
 
     def saveButtonClicked(self):
-        self._saveButtonMenu.exec_(self.cursor().pos())
+        self._saveButtonMenu.exec(self.cursor().pos())
 
     def saveSelectedImages(self):
         itemList = self.tableWidget.selectedItems()

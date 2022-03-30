@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2018-2019 European Synchrotron Radiation Facility
+# Copyright (C) 2018-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -243,7 +243,7 @@ class OpenAction(qt.QAction):
         loadChimeraAction.triggered[bool].connect(self._onLoadChimeraStack)
         menu.addAction(loadChimeraAction)
 
-        a = menu.exec_(qt.QCursor.pos())
+        a = menu.exec(qt.QCursor.pos())
 
     def _onLoadPixmap(self, checked):
         legend, data = getPixmap()
