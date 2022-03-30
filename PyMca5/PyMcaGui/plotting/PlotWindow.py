@@ -483,7 +483,7 @@ class PlotWindow(PlotWidget.PlotWidget):
                             self._getPrintConfigurationFromDialog)
             printMenu.addAction(QString("Print"),
                                        self.printGraph)
-            printMenu.exe(self.cursor().pos())
+            printMenu.exec(self.cursor().pos())
         else:
             self._printMenu.exe(self.cursor().pos())
 
