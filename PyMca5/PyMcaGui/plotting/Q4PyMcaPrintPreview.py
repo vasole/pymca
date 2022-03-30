@@ -108,9 +108,9 @@ class PyMcaPrintPreview(qt.QDialog):
         self.badNews = None
 
     def exec_(self):
-        return self.exe()
+        return self.exec()
 
-    def exe(self):
+    def exec(self):
         if self._toBeCleared:
             self.__clearAll()
         return qt.QDialog.exec(self)

@@ -788,9 +788,9 @@ class LegendListContextMenu(qt.QMenu):
             self.addAction(name, action)
 
     def exec_(self, pos, idx):
-        return self.exe(pos, idx)
+        return self.exec(pos, idx)
 
-    def exe(self, pos, idx):
+    def exec(self, pos, idx):
         self.__currentIdx = idx
         super(LegendListContextMenu, self).popup(pos)
 

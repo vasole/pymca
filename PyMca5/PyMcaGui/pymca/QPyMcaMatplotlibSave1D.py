@@ -322,9 +322,9 @@ class QPyMcaMatplotlibSaveDialog(qt.QDialog):
         self.dismissButton.clicked.connect(self.reject)
 
     def exec_(self):
-        return self.exe()
+        return self.exec()
 
-    def exe(self):
+    def exec(self):
         self.plot.draw()
         if self.doNotShowAgain.isChecked():
             return qt.QDialog.Accepted

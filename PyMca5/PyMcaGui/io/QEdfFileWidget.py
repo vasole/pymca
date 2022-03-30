@@ -494,7 +494,7 @@ class QEdfFileWidget(qt.QWidget):
         self.graph.copyToClipboard()
 
     def __saveIconSignal(self):
-        self._saveMenu.exe(self.cursor().pos())
+        self._saveMenu.exec(self.cursor().pos())
 
     def _saveIconSignal(self):
         self.lastInputDir = PyMcaDirs.outputDir
