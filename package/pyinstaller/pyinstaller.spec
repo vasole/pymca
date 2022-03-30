@@ -59,13 +59,13 @@ exec_dict = {"PyMcaMain": os.path.join(PyMcaDir, "PyMcaGui", \
                                     "pymca", "QStackWidget.py"),
              "PyMcaPostBatch": os.path.join(PyMcaDir, "PyMcaGui", \
                                     "pymca", "PyMcaPostBatch.py"),
+             "EdfFileSimpleViewer": os.path.join(PyMcaDir, "PyMcaGui", \
+                                      "pymca", "EdfFileSimpleViewer.py"),
             }
 
 if not sys.platform.startswith("darwin"):
     exec_dict["PeakIdentifier"] = os.path.join(PyMcaDir, "PyMcaGui", \
                                       "physics", "xrf", "PeakIdentifier.py")
-    exec_dict["EdfFileSimpleViewer"] = os.path.join(PyMcaDir, "PyMcaGui", \
-                                      "pymca", "EdfFileSimpleViewer.py")
     exec_dict["Mca2Edf"] = os.path.join(PyMcaDir, "PyMcaGui", \
                                       "pymca", "Mca2Edf.py")
     exec_dict["ElementsInfo"] = os.path.join(PyMcaDir, "PyMcaGui", \
