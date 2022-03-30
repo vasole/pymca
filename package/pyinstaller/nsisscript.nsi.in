@@ -61,7 +61,7 @@ InstallDirRegKey HKCU "Software\${PRODUCT} ${VERSION}" ""
   !insertmacro MUI_LANGUAGE "English"
 ;--------------------------------
 ;Icon "${NSISDIR}\Contrib\Graphics\Icons\win-install.ico"
-Icon ".\icons\PyMca.ico"
+Icon "__ICON_PATH__"
 UninstallIcon "${NSISDIR}\Contrib\Graphics\Icons\win-uninstall.ico"
 
 ;Installer Sections

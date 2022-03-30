@@ -266,7 +266,7 @@ def toolPath(toolname):
 
 def noProcesses():
     _, forzen = toolInfo()
-    forzenDarwin = sys.platform == 'darwin' and forzen
+    forzenDarwin = sys.platform == 'not_any_longer_needed_with_py_installer_on_darwin' and forzen
     return forzenDarwin
 
 
@@ -500,7 +500,7 @@ class McaBatchGUI(qt.QWidget):
 
     def __build(self, actions, roifit=0, roiwidth=ROIWIDTH, overwrite=1,
                 concentrations=0, fitfiles=0, diagnostics=0, multipage=0,
-                tif=0, edf=1, csv=0, h5=1, dat=0, nproc=1,
+                tif=0, edf=1, csv=0, h5=1, dat=1, nproc=1,
                 table=2, html=0):
         self.__grid= qt.QWidget(self)
         self._layout.addWidget(self.__grid)

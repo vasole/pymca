@@ -5,9 +5,18 @@ from pathlib import Path
 import shutil
 import subprocess
 import time
-
+import logging
 
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
+from PyInstaller.config import CONF
+
+logger = logging.getLogger("pyinstaller")
+
+DISTDIR = os.path.abspath(CONF["distpath"])
+BUILDDIR = os.path.abspath(CONF["workpath"])
+
+logger.info("Using temporary build dir <%s>" % BUILDDIR)
+logger.info("Using temporary dist dir <%s>" % DISTDIR)
 
 datas = []
 
@@ -17,7 +26,12 @@ datas.append((os.path.join(PROJECT_PATH, "LICENSE"), "."))
 datas.append((os.path.join(PROJECT_PATH, "copyright"), "."))
 #datas += collect_data_files("silx.resources")
 
-icon = os.path.join(PROJECT_PATH, "icons", "PyMca.ico")
+if sys.platform.startswith('darwin'):
+   icon = os.path.join(PROJECT_PATH, "icons", "PyMca.icns")
+else:
+   icon = os.path.join(PROJECT_PATH, "icons", "PyMca.ico")
+
+logger.info("Using icon <%s>" % icon)
 
 hiddenimports = []
 hiddenimports += collect_submodules('encodings.ascii')
@@ -35,24 +49,32 @@ excludes = ["fabio", "hdf5plugin", "silx"]
 
 # get the script list
 import PyMca5
+version = PyMca5.version()
 PyMcaDir = os.path.abspath(os.path.dirname(PyMca5.__file__))
 exec_dict = {"PyMcaMain": os.path.join(PyMcaDir, "PyMcaGui", \
-                                      "pymca", "PyMcaMain.py"),
+                                     "pymca", "PyMcaMain.py"),
              "PyMcaBatch": os.path.join(PyMcaDir, "PyMcaGui", \
-                                       "pymca", "PyMcaBatch.py"),
+                                   "pymca", "PyMcaBatch.py"),
              "QStackWidget":os.path.join(PyMcaDir, "PyMcaGui", \
-                                         "pymca", "QStackWidget.py"),
-             "PeakIdentifier":os.path.join(PyMcaDir, "PyMcaGui", \
-                                         "physics", "xrf", "PeakIdentifier.py"),
-             "EdfFileSimpleViewer": os.path.join(PyMcaDir, "PyMcaGui", \
-                                                 "pymca", "EdfFileSimpleViewer.py"),
+                                    "pymca", "QStackWidget.py"),
              "PyMcaPostBatch": os.path.join(PyMcaDir, "PyMcaGui", \
-                                           "pymca", "PyMcaPostBatch.py"),
-             "Mca2Edf": os.path.join(PyMcaDir, "PyMcaGui", \
-                                    "pymca", "Mca2Edf.py"),
-             "ElementsInfo":os.path.join(PyMcaDir, "PyMcaGui", \
-                                        "physics", "xrf", "ElementsInfo.py"),
+                                    "pymca", "PyMcaPostBatch.py"),
+             "EdfFileSimpleViewer": os.path.join(PyMcaDir, "PyMcaGui", \
+                                      "pymca", "EdfFileSimpleViewer.py"),
             }
+
+if not sys.platform.startswith("darwin"):
+    exec_dict["PeakIdentifier"] = os.path.join(PyMcaDir, "PyMcaGui", \
+                                      "physics", "xrf", "PeakIdentifier.py")
+    exec_dict["Mca2Edf"] = os.path.join(PyMcaDir, "PyMcaGui", \
+                                      "pymca", "Mca2Edf.py")
+    exec_dict["ElementsInfo"] = os.path.join(PyMcaDir, "PyMcaGui", \
+                                      "physics", "xrf", "ElementsInfo.py")
+
+# for fast testing uncomment the following two lines
+#exec_dict = {"PyMcaMain": os.path.join(PyMcaDir, "PyMcaGui", \
+#                                     "pymca", "PyMcaMain.py")}
+
 script_n = []
 script_l = []
 for key in exec_dict:
@@ -86,7 +108,7 @@ for i in range(len(script_l)):
                             win_private_assemblies=False,
                             cipher=block_cipher,
                             noarchive=False))
-    script_a[-1].pure = [x for x in script_a[-1].pure if not x[0].startswith("PyMca5.")]
+    #script_a[-1].pure = [x for x in script_a[-1].pure if not x[0].startswith("PyMca5.")]
 
 
 if 0: # avoid merge
@@ -151,14 +173,18 @@ for i in range(len(script_a)):
             name=script_n[i])
         )
 
-
-# Fix MERGE by copying produced exe files to the location of the first one
 def move_exe(name):
-    dist = os.path.join(Path(SPECPATH), 'dist')
-    shutil.copy2(
-        src=os.path.join(dist, name, name + '.exe'),
-        dst=os.path.join(dist, script_n[0])
-    )
+    dist = DISTDIR
+    if sys.platform.startswith("darwin"):
+        shutil.copy2(
+            src=os.path.join(dist, name, name),
+            dst=os.path.join(dist, script_n[0])
+        )
+    else:
+        shutil.copy2(
+            src=os.path.join(dist, name, name + ".exe"),
+            dst=os.path.join(dist, script_n[0])
+        )
     shutil.rmtree(os.path.join(dist, name))
 
 if len(script_a) > 1:
@@ -168,7 +194,7 @@ if len(script_a) > 1:
 
 # Mandatory modules to be integrally included in the frozen version.
 # One can add other modules here if not properly detected
-# (PyQt5 seems to be properly handled, if not, add to special_modules)
+# (PyQt5 and PySide6 seem to be properly handled, if not, add to special_modules)
 import PyMca5
 import fisx
 import h5py
@@ -240,7 +266,7 @@ try:
     import OpenGL
     special_modules += [os.path.dirname(OpenGL.__file__)]
 except ImportError:
-    print("OpenGL not available, not added to the frozen executables")
+    logger.info("OpenGL not available, not added to the frozen executables")
 
 # This adds the interactive console but probably I should aim at an older
 # version to reduce binary size. Tested with IPython 7.4.0
@@ -259,7 +285,7 @@ try:
     special_modules += [os.path.dirname(ipykernel.__file__)]
     special_modules += [os.path.dirname(zmq.__file__)]
 except ImportError:
-    print("qtconsole not available, not added to the frozen executables")
+    logger.info("qtconsole not available, not added to the frozen executables")
 
 try:
     import silx
@@ -270,7 +296,7 @@ try:
                         os.path.dirname(xml.__file__),]
     SILX = True
 except ImportError:
-    print("silx not available, not added to the frozen executables")
+    logger.info("silx not available, not added to the frozen executables")
     SILX = False
 
 try:
@@ -279,7 +305,7 @@ try:
     special_modules += [os.path.dirname(freeart.__file__),
                         os.path.dirname(tomogui.__file__)]
 except ImportError:
-    print("tomogui not available, not added to the frozen executables")
+    logger.info("tomogui not available, not added to the frozen executables")
 
 # package used by silx and probably others that is not always added properly
 # always add it because it is small
@@ -288,7 +314,7 @@ try:
     special_modules += [os.path.dirname(pkg_resources.__file__)]
     excludes += ["pkg_resources"]
 except ImportError:
-    print("pkg_resources could not be imported")
+    logger.info("pkg_resources could not be imported")
 
 # pyopencl needs special treatment
 try:
@@ -323,8 +349,19 @@ excludes += ["scipy"]
 
 # give some time to read the output
 time.sleep(2)
+
+def cleanup_cache(topdir): 
+    # cleanup __pycache__
+    for root, dirs, files in os.walk(topdir):
+        for dirname in dirs:
+            if dirname == "__pycache__": 
+               print("deleting ",os.path.join(topdir, dirname))
+               shutil.rmtree(os.path.join(topdir, dirname))
+            else:
+               cleanup_cache(os.path.join(topdir, dirname))
+
 def replace_module(name):
-    dest = os.path.join(Path(SPECPATH), 'dist', script_n[0])
+    dest = os.path.join(DISTDIR, script_n[0])
     target = os.path.join(dest, os.path.basename(name))
     print("source = ", name)
     print("dest = ", target)
@@ -337,17 +374,14 @@ def replace_module(name):
         shutil.copytree(name, target)
     else:
         shutil.copy2(src=name, dst=target)
-            
+    cleanup_cache(target)
 
 for name in special_modules:
     replace_module(name)
 
-
-
 # cleanup copied files
 for fname in script_n:
     os.remove(fname)
-
 
 # cleanup copied files
 for fname in script_n:
@@ -356,12 +390,12 @@ for fname in script_n:
 
 # patch silx
 if SILX:
-    fname = os.path.join(SPECPATH, "dist", script_n[0], "silx", "gui","qt","_qt.py")
+    fname = os.path.join(DISTDIR, script_n[0], "silx", "gui","qt","_qt.py")
     if os.path.exists(fname):
-        print("###################################################################")
-        print("Patching silx")
-        print(fname)
-        print("###################################################################")
+        logger.info("###################################################################")
+        logger.info("Patching silx")
+        logger.info(fname)
+        logger.info("###################################################################")
         f = open(fname, "r")
         content = f.readlines()
         f.close()
@@ -373,12 +407,12 @@ if SILX:
 # patch OpenCL
 if OPENCL:
     # pyopencl __init__.py needs to be patched
-    exe_win_dir = os.path.join(SPECPATH, "dist", script_n[0])
+    exe_win_dir = os.path.join(DISTDIR, script_n[0])
     initFile = os.path.join(exe_win_dir, "pyopencl", "__init__.py")
-    print("###################################################################")
-    print("Patching pyopencl file")
-    print(initFile)
-    print("###################################################################")
+    logger.info("###################################################################")
+    logger.info("Patching pyopencl file")
+    logger.info(initFile)
+    logger.info("###################################################################")
     f = open(initFile, "r")
     content = f.readlines()
     f.close()
@@ -406,55 +440,169 @@ if OPENCL:
     f.close()
 time.sleep(2)
 
-# move generated directory to top level dist
-program = "PyMca"
-version = PyMca5.version()
-source = os.path.join(SPECPATH, "dist", script_n[0])
-dist = os.path.join(PROJECT_PATH, "dist",)
-if not os.path.exists(dist):
-    os.mkdir(dist)
-target = os.path.join(dist, "%s%s" % (program, version))
-if os.path.exists(target):
-    print("Removing target")
-    shutil.rmtree(target)
-shutil.move(source, target)
-frozenDir = target
+for i in range(len(script_col)):
+    app = BUNDLE(
+        script_col[i],
+        name=script_n[i] + ".app",
+        icon=icon,
+        bundle_identifier="com.esrf.pymca.mac",
+        info_plist={
+            "CFBundleIdentifier": "com.github.vasole.pymca",
+            "CFBundleShortVersionString": version,
+            "CFBundleVersion": "PyMca " + version,
+            "LSBackgroundOnly": False,
+            "LSTypeIsPackage": True,
+            "LSMinimumSystemVersion": "10.9.0",
+            "NSHumanReadableCopyright": "MIT",
+            "NSHighResolutionCapable": True,
+            "NSPrincipalClass": "NSApplication",
+            "NSAppleScriptEnabled": False,
+       },
+    )
 
-#  generation of the NSIS executable
-nsis = os.path.join("\Program Files (x86)", "NSIS", "makensis.exe")
-if sys.platform.startswith("win") and os.path.exists(nsis):
-    # check if we can perform the packaging
-    outFile = os.path.join(PROJECT_PATH, "nsisscript.nsi")
-    f = open(os.path.join(PROJECT_PATH,"nsisscript.nsi.in"), "r")
+# make all the .app share the same resources
+if sys.platform.startswith("darwin"):
+    source = os.path.join(DISTDIR, script_n[0],"")
+    destination = os.path.join(DISTDIR, script_n[0] + ".app", "Contents", "MacOS")
+    cmd = "cp -Rf %s %s" % (source, destination)
+    result = os.system(cmd)
+    if result:
+        raise IOError("Unsuccessful copy command <%s>" % cmd)
+    subprocess.call(
+        [
+             "codesign",
+             "--remove-signature",
+             os.path.join(DISTDIR, script_n[0] + ".app", "Contents", "MacOS", "Python"),
+        ]
+    )
+    if len(script_n) > 1:
+        cwd = os.getcwd()
+        for script in script_n[1:]:
+            source = os.path.join(DISTDIR, script + ".app" ,"Contents", "MacOS")
+            os.chdir(os.path.dirname(source))
+            cmd = "rm -Rf MacOS"
+            result = os.system(cmd)
+            if result:
+                os.chdir(cwd)
+                raise IOError("Unsuccessful command <%s>" % cmd)
+            target = os.path.join("..", "..", script_n[0] + ".app", "Contents", "MacOS")
+            cmd = "ln -s %s %s" % (target, "MacOS")
+            result = os.system(cmd)
+            if result:
+                os.chdir(cwd)
+                raise IOError("Unsuccessful %s" % cmd)
+            os.chdir(cwd)
+
+    # rename the application
+    version = PyMca5.version()
+    source = os.path.join(DISTDIR, script_n[0] + ".app")
+    dest = os.path.join(DISTDIR, "PyMca%s.app" % version)
+    if os.path.exists(dest):
+        shutil.rmtree(dest)
+    os.rename(source, dest)
+
+    # Pack the application
+    destination = os.path.join(SPECPATH, "artifacts")
+    if os.path.exists(destination):
+        shutil.rmtree(destination)
+    outFile = os.path.join(SPECPATH, "create-dmg.sh")
+    f = open(os.path.join(SPECPATH, "create-dmg.sh.in"), "r")
     content = f.readlines()
     f.close()
     if os.path.exists(outFile):
         os.remove(outFile)
-    pymcaexe = os.path.join(PROJECT_PATH, "%s%s-win64.exe" % (program.lower(), version))
-    if os.path.exists(pymcaexe):
-        os.remove(pymcaexe)
-    pymcalicense = os.path.join(PROJECT_PATH, "PyMca.txt")
     f = open(outFile, "w")
     for line in content:
-        if "__LICENSE_FILE__" in line:
-            line = line.replace("__LICENSE_FILE__", pymcalicense)
         if "__VERSION__" in line:
             line = line.replace("__VERSION__", version)
-        if "__PROGRAM__" in line:
-            line = line.replace("__PROGRAM__", program)
-        if "__OUTFILE__" in line:
-            line = line.replace("__OUTFILE__", pymcaexe)
-        if "__SOURCE_DIRECTORY__" in line:
-            line = line.replace("__SOURCE_DIRECTORY__", frozenDir)
+        if "__DISTDIR__" in line:
+            line = line.replace("__DISTDIR__", DISTDIR)
         f.write(line)
     f.close()
-    cmd = '"%s" %s' % (nsis, outFile)
-    print(cmd)
-    os.system(cmd)
+    subprocess.call(["bash", "create-dmg.sh"])
+    if os.path.exists(outFile):
+        os.remove(outFile)
 
-    # cleanup intermediate files
-    for dname in ["build", "dist", "__pycache__"]:
-        ddir = os.path.join(SPECPATH, dname)
-        if os.path.exists(ddir):
-            shutil.rmtree(ddir)
+    # move the image to the top level dist directory
+    dist = os.path.join(PROJECT_PATH, "dist")
+    if not os.path.exists(dist):
+        os.mkdir(dist)
+    source = os.path.join(SPECPATH, "artifacts", "PyMca%s.dmg" % version)
+    destination = os.path.join(PROJECT_PATH, "dist", "PyMca%s.dmg" % version)
+    if os.path.exists(destination):
+        os.remove(destination)
+    os.rename(source, destination)
+    # get rid of the artifacts directory
+    shutil.rmtree(os.path.dirname(source))
+
+    # move the generated .app to top level dist for debugging purposes
+    program = "PyMca"
+    version = PyMca5.version()
+    source = os.path.join(DISTDIR, "PyMca%s.app" % version)
+    target = os.path.join(PROJECT_PATH, "dist", "%s%s.app" % (program, version))
+    if os.path.exists(target):
+        shutil.rmtree(target)
+    shutil.move(source, target)
+else:
+    # move generated directory to top level dist
+    program = "PyMca"
+    version = PyMca5.version()
+    source = os.path.join(DISTDIR, script_n[0])
+    dist = os.path.join(PROJECT_PATH, "dist",)
+    if not os.path.exists(dist):
+        os.mkdir(dist)
+    target = os.path.join(dist, "%s%s" % (program, version))
+    if os.path.exists(target):
+        print("Removing target")
+        shutil.rmtree(target)
+    shutil.move(source, target)
+    frozenDir = target
+
+    #  generation of the NSIS executable
+    nsis = os.path.join("\Program Files (x86)", "NSIS", "makensis.exe")
+    if sys.platform.startswith("win") and os.path.exists(nsis):
+        # check if we can perform the packaging
+        outFile = os.path.join(SPECPATH, "nsisscript.nsi")
+        f = open(os.path.join(SPECPATH,"nsisscript.nsi.in"), "r")
+        content = f.readlines()
+        f.close()
+        if os.path.exists(outFile):
+            os.remove(outFile)
+        pymcaexe = os.path.join(PROJECT_PATH, "dist", "%s%s-win64.exe" % (program.lower(), version))
+        if os.path.exists(pymcaexe):
+            os.remove(pymcaexe)
+        pymcalicense = os.path.join(SPECPATH, "PyMca.txt")
+        f = open(outFile, "w")
+        for line in content:
+            if "__LICENSE_FILE__" in line:
+                line = line.replace("__LICENSE_FILE__", pymcalicense)
+            if "__VERSION__" in line:
+                line = line.replace("__VERSION__", version)
+            if "__PROGRAM__" in line:
+                line = line.replace("__PROGRAM__", program)
+            if "__OUTFILE__" in line:
+                line = line.replace("__OUTFILE__", pymcaexe)
+            if "__SOURCE_DIRECTORY__" in line:
+                line = line.replace("__SOURCE_DIRECTORY__", frozenDir)
+            if "__ICON_PATH__" in line:
+                line = line.replace("__ICON_PATH__", icon)
+            f.write(line)
+        f.close()
+        cmd = '"%s" %s' % (nsis, outFile)
+        logger.info("Issuing NSIS command <%s>" % cmd)
+        os.system(cmd)
+
+# cleanup intermediate files
+for dname in ["build", "dist", "__pycache__"]:
+    ddir = os.path.join(SPECPATH, dname)
+    if os.path.exists(ddir):
+        shutil.rmtree(ddir)
+
+for ddir in [DISTDIR, BUILDDIR]:
+    if os.path.exists(ddir):
+        shutil.rmtree(ddir)
+        if os.path.basename(ddir) == "pyinstaller":
+            if os.path.basename(os.path.dirname(ddir)).startswith("build"):
+                if os.path.isdir(os.path.dirname(ddir)):
+                    shutil.rmtree(os.path.dirname(ddir))
 
