@@ -1,8 +1,8 @@
 # /*#########################################################################
-# Copyright (C) 2004-2018 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -404,7 +404,7 @@ class SaveToolButton(qt.QToolButton):
                                                     self.maskImageWidget))
 
     def _saveToolButtonSignal(self):
-        self._saveMenu.exec_(self.parent().cursor().pos())
+        self._saveMenu.exec(self.parent().cursor().pos())
 
 
 class MedianParameters(qt.QWidget):

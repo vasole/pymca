@@ -310,7 +310,7 @@ class QSourceSelector(qt.QWidget):
             else:
                 menu.addAction(session,
                         lambda i=session:self.openFile(i, specsession="bliss"))
-        menu.exec_(self.cursor().pos())
+        menu.exe(self.cursor().pos())
         
 
     def openSpec(self):
@@ -329,7 +329,7 @@ class QSourceSelector(qt.QWidget):
             else:
                 menu.addAction(spec,
                         lambda i=spec:self.openFile(i, specsession=True))
-        menu.exec_(self.cursor().pos())
+        menu.exe(self.cursor().pos())
 
 
     def _fileSelection(self, qstring):
