@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2015-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2015-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -561,7 +561,7 @@ class LegendListItemWidget(qt.QItemDelegate):
         # Mouse events are sent to editorEvent()
         # even if they don't start editing of the item.
         if event.button() == qt.Qt.RightButton and self.contextMenu:
-            self.contextMenu.exec_(event.globalPos(), modelIndex)
+            self.contextMenu.exec(event.globalPos(), modelIndex)
             return True
         elif event.button() == qt.Qt.LeftButton:
             # Check if checkbox was clicked
@@ -788,6 +788,9 @@ class LegendListContextMenu(qt.QMenu):
             self.addAction(name, action)
 
     def exec_(self, pos, idx):
+        return self.exe(pos, idx)
+
+    def exe(self, pos, idx):
         self.__currentIdx = idx
         super(LegendListContextMenu, self).popup(pos)
 
