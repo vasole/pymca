@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -179,7 +179,7 @@ class PluginsToolButton(qt.QToolButton, PluginLoader):
             actionNames.append(text)
             callableKeys.append(pluginName)
         menu.hovered.connect(self._actionHovered)
-        a = menu.exec_(qt.QCursor.pos())
+        a = menu.exec(qt.QCursor.pos())
         if a is None:
             return None
 
@@ -232,7 +232,7 @@ class PluginsToolButton(qt.QToolButton, PluginLoader):
                 actionNames.append((text, pixmap, tip, action))
             #qt.QObject.connect(menu, qt.SIGNAL("hovered(QAction *)"), self._actionHovered)
             menu.hovered.connect(self._actionHovered)
-            a = menu.exec_(qt.QCursor.pos())
+            a = menu.exec(qt.QCursor.pos())
             if a is None:
                 return None
             idx = -1
