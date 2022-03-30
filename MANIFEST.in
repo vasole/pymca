@@ -8,6 +8,7 @@ include qtconffile
 include cx_setup.py
 include README
 include build-deb.sh
+include build-pyinstaller.py
 include version.py
 include copyright
 include requirements.txt
