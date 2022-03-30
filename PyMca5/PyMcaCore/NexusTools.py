@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2018-2020 European Synchrotron Radiation Facility
+# Copyright (c) 2018-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -541,14 +541,14 @@ def getScannedPositioners(h5file, path):
                 scanned = [item.name for key, item in positioners.items() if \
                                             isDataset(item) and \
                                             (hasattr(item, "size") and (item.size > 1))]
-        if not len(scanned):
-            entry = h5file[entry_name]
-            if len(title) and hasattr(title, "split"):
+
+        if len(title) and hasattr(title, "split"):
+            if not len(scanned) or "fscan " in title:
                 tokens = title.split()
-                scanned = [item.name for key, item in measurement.items() if \
-                                            isDataset(item) and \
-                                            (key in tokens)]
-        
+                scanned = scanned + [item.name for key, item in measurement.items() if \
+                                                isDataset(item) and \
+                                                (key in tokens)]
+
         # provide proper sorting
         if len(scanned) > 1 and sys.version_info > (3, 3):
             # sort irrespective of capital or lower case
