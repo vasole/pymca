@@ -63,16 +63,17 @@ class QNexusWidgetActions(qt.QWidget):
         self.autoReplaceBox.setText("Auto REPLACE")
 
         row = 0
+
         autoBoxLayout.addWidget(self.autoOffBox, row, 0)
         autoBoxLayout.addWidget(self.autoAddBox, row, 1)
         autoBoxLayout.addWidget(self.autoReplaceBox, row, 2)
-
         if self.autoReplace:
             self.autoAddBox.setChecked(False)
             self.autoReplaceBox.setChecked(True)
         else:
             self.autoAddBox.setChecked(True)
             self.autoReplaceBox.setChecked(False)
+
         row += 1
 
         self.object3DBox = qt.QCheckBox(autoBox)
@@ -85,11 +86,16 @@ class QNexusWidgetActions(qt.QWidget):
         self.meshBox.setToolTip("Enable 2-Axes selections (mesh and scatter)")
         autoBoxLayout.addWidget(self.meshBox, row, 1)
 
-
         self.forceMcaBox = qt.QCheckBox(autoBox)
         self.forceMcaBox.setText("Force MCA")
         self.forceMcaBox.setToolTip("Interpret selections as MCA")
         autoBoxLayout.addWidget(self.forceMcaBox, row, 2)
+
+        row += 1
+
+        self.lastScanBox = qt.QCheckBox(autoBox)
+        self.lastScanBox.setText("Exclude Last Scan")
+        autoBoxLayout.addWidget(self.lastScanBox, row, 0, 1, 2)
 
         self.mainLayout.addWidget(autoBox)
 
@@ -120,6 +126,7 @@ class QNexusWidgetActions(qt.QWidget):
         self.addButton.clicked.connect(self._addClickedSlot)
         self.removeButton.clicked.connect(self._removeClicked)
         self.replaceButton.clicked.connect(self._replaceClicked)
+        self.lastScanBox.clicked.connect(self._lastScanSlot)
 
     def _setObject3DBox(self):
         if self.object3DBox.isChecked():
@@ -172,6 +179,9 @@ class QNexusWidgetActions(qt.QWidget):
             self.meshBox.setEnabled(True)
         self.configurationChanged()
 
+    def _lastScanSlot(self):
+        self.configurationChanged()
+
     def _addClickedSlot(self):
         self._addClicked()
 
@@ -214,7 +224,20 @@ class QNexusWidgetActions(qt.QWidget):
         ddict["2d"]= self.meshBox.isChecked()
         ddict["3d"]= self.object3DBox.isChecked()
         ddict["mca"]= self.forceMcaBox.isChecked()
+        ddict["exclude_last_scan"]= self.lastScanBox.isChecked()
         return ddict
+
+    def setConfiguration(self, ddict):
+        ddict = {**self.getConfiguration(), **ddict}
+        self.forceMcaBox.setChecked(ddict["mca"])
+        self.autoReplaceBox.setChecked(ddict["auto"] == "REPLACE")
+        self.autoAddBox.setChecked(ddict["auto"] == "ADD")
+        self.autoOffBox.setChecked(ddict["auto"] == "OFF")
+        self.meshBox.setChecked(ddict["2d"])
+        self.object3DBox.setChecked(ddict["3d"])
+        self.lastScanBox.setChecked(ddict["exclude_last_scan"])
+        self.configurationChanged()
+
 
 if __name__ == "__main__":
     app = qt.QApplication([])

@@ -426,22 +426,24 @@ class QNexusWidget(qt.QWidget):
         self.cntTable.build(self._cntList, self._aliasList)
         _logger.debug("TODO - Add selection options")
 
-    def setDataSource(self, dataSource):
+    def setDataSource(self, dataSource, refresh=False):
         self.data = dataSource
         if self.data is None:
             self.hdf5Widget.collapseAll()
             self.hdf5Widget.setModel(self._defaultModel)
             return
-        def dataSourceDestroyed(weakrefReference):
-            idx = self._dataSourceList.index(weakrefReference)
-            del self._dataSourceList[idx]
-            del self._modelDict[weakrefReference]
-            return
-        ref = weakref.ref(dataSource, dataSourceDestroyed)
+
+        ref = weakref.ref(dataSource, self._dataSourceDestroyed)
         if ref not in self._dataSourceList:
             self._dataSourceList.append(ref)
-            self._modelDict[ref] = HDF5Widget.FileModel()
-        model = self._modelDict[ref]
+            exclude_last_scan = self.actions.getConfiguration().get("exclude_last_scan", False)
+            model = HDF5Widget.FileModel(exclude_last_entry=exclude_last_scan)
+            self._modelDict[ref] = model
+        else:
+            model = self._modelDict[ref]
+            if not refresh and hasattr(self.actions, "setConfiguration"):
+                exclude_last_entry = self.hdf5Widget.model().exclude_last_entry
+                self.actions.setConfiguration({"exclude_last_scan":exclude_last_entry})
         self.hdf5Widget.setModel(model)
         for source in self.data._sourceObjectList:
             self.hdf5Widget.model().appendPhynxFile(source, weakreference=True)
@@ -449,6 +451,17 @@ class QNexusWidget(qt.QWidget):
             # only one file, expand by default
             if hasattr(self.hdf5Widget, "expandToDepth"):
                 self.hdf5Widget.expandToDepth(0)
+
+    def _dataSourceDestroyed(self, weakrefReference):
+        idx = self._dataSourceList.index(weakrefReference)
+        del self._dataSourceList[idx]
+        del self._modelDict[weakrefReference]
+
+    def refreshDataSource(self):
+        if self.data is None:
+            return
+        self.data.refresh()
+        self.setDataSource(self.data, refresh=True)
 
     def setFile(self, filename):
         self._data = self.hdf5Widget.model().openFile(filename, weakreference=True)
@@ -871,6 +884,8 @@ class QNexusWidget(qt.QWidget):
         else:
             self.autoTable.set2DEnabled(False, emit=False)
             self.cntTable.set2DEnabled(False, emit=False)
+        self.hdf5Widget.model().exclude_last_entry = ddict.get("exclude_last_scan", False)
+        self.refreshDataSource()
 
     def _autoTableUpdated(self, ddict):
         _logger.debug("_autoTableUpdated(self, ddict) %s", ddict)

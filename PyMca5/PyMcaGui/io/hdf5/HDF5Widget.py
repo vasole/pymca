@@ -218,14 +218,16 @@ class RootItem(object):
     def __len__(self):
         return len(self.children)
 
-    def appendChild(self, item):
-        self.children.append(H5FileProxy(item, self))
+    def appendChild(self, item, exclude_last_entry=False):
+        child = H5FileProxy(item, self, exclude_last_entry=exclude_last_entry)
+        self.children.append(child)
         self._identifiers.append(id(item))
 
     def deleteChild(self, child):
         idx = self._children.index(child)
         del self._children[idx]
         del self._identifiers[idx]
+
 
 class H5NodeProxy(object):
     def sortChildren(self, column, order):
@@ -259,6 +261,8 @@ class H5NodeProxy(object):
                 try:
                     # better handling of external links
                     finalList = h5py_sorting(items, sorting_list=self.__sorting_list)
+                    if self.__exclude_last_child:
+                        finalList = finalList[:-1]
                     for i in range(len(finalList)):
                         if finalList[i][1] is not None:
                             finalList[i][1]._posixPath = posixpath.join(self.name,
@@ -344,10 +348,11 @@ class H5NodeProxy(object):
     def color(self):
         return self._color
 
-    def __init__(self, ffile, node, parent=None, path=None):
+    def __init__(self, ffile, node, parent=None, path=None, exclude_last_child=None):
         self.__sorting = False
         self.__sorting_list = None
         self.__sorting_order = qt.Qt.AscendingOrder
+        self.__exclude_last_child = exclude_last_child
         if 1:#with ffile.plock:
             self._file = ffile
             self._parent = parent
@@ -414,6 +419,15 @@ class H5NodeProxy(object):
     def __len__(self):
         return len(self.children)
 
+    @property
+    def exclude_last_child(self):
+        return self.__exclude_last_child
+
+    @exclude_last_child.setter
+    def exclude_last_child(self, value):
+        self.__exclude_last_child = value
+        self.clearChildren()
+
 
 class H5FileProxy(H5NodeProxy):
 
@@ -425,8 +439,8 @@ class H5FileProxy(H5NodeProxy):
     def filename(self):
         return self._filename
 
-    def __init__(self, ffile, parent=None):
-        super(H5FileProxy, self).__init__(ffile, ffile, parent)
+    def __init__(self, ffile, parent=None, exclude_last_entry=False):
+        super(H5FileProxy, self).__init__(ffile, ffile, parent, exclude_last_child=exclude_last_entry)
         self._name = ffile.name
         self._filename = self.file.name
 
@@ -440,6 +454,14 @@ class H5FileProxy(H5NodeProxy):
         else:
             return H5NodeProxy(self.file, self.file[path], self)
 
+    @property
+    def exclude_last_entry(self):
+        return self.exclude_last_child
+
+    @exclude_last_entry.setter
+    def exclude_last_entry(self, value):
+        self.exclude_last_child = value
+
 
 class FileModel(qt.QAbstractItemModel):
     """
@@ -447,7 +469,8 @@ class FileModel(qt.QAbstractItemModel):
     sigFileUpdated = qt.pyqtSignal(object)
     sigFileAppended = qt.pyqtSignal(object)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, exclude_last_entry=False):
+        self.__exclude_last_entry = exclude_last_entry
         qt.QAbstractItemModel.__init__(self, parent)
         self.rootItem = RootItem(['File/Group/Dataset', 'Description', 'Shape', 'DType'])
         self._idMap = {qt.QModelIndex().internalId(): self.rootItem}
@@ -608,9 +631,9 @@ class FileModel(qt.QAbstractItemModel):
                     self.clear()
                 return
             refProxy = weakref.proxy(phynxFile, phynxFileInstanceDistroyed)
-            self.rootItem.appendChild(refProxy)
+            self._appendChild(refProxy)
         else:
-            self.rootItem.appendChild(phynxFile)
+            self._appendChild(phynxFile)
         ddict = {}
         ddict['event'] = "fileAppended"
         ddict['filename'] = filename
@@ -652,13 +675,26 @@ class FileModel(qt.QAbstractItemModel):
                     self.clear()
                 return
             phynxFileProxy = weakref.proxy(phynxFile, phynxFileInstanceDistroyed)
-            self.rootItem.appendChild(phynxFileProxy)
+            self._appendChild(phynxFileProxy)
         else:
-            self.rootItem.appendChild(phynxFile)
+            self._appendChild(phynxFile)
         ddict = {}
         ddict['event'] = "fileAppended"
         ddict['filename'] = name
         self.sigFileAppended.emit(ddict)
+
+    def _appendChild(self, item):
+        self.rootItem.appendChild(item, exclude_last_entry=self.exclude_last_entry)
+
+    @property
+    def exclude_last_entry(self):
+        return self.__exclude_last_entry
+
+    @exclude_last_entry.setter
+    def exclude_last_entry(self, value):
+        self.__exclude_last_entry = value
+        for fileItem in self.rootItem:
+            fileItem.exclude_last_entry = value
 
     def clear(self):
         _logger.debug("Clear called")
