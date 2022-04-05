@@ -31,6 +31,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
 import posixpath
+import time
 import gc
 import re
 from operator import itemgetter
@@ -64,6 +65,7 @@ except ImportError:
                 raise
             _logger.info("Cannot open %s. Trying in SWMR mode" % filename)
             return h5py.File(filename, "r", libver='latest', swmr=True)
+from PyMca5.PyMcaIO import HDF5Utils
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 safe_str = qt.safe_str
@@ -159,19 +161,18 @@ def h5py_sorting(object_list, sorting_list=None):
         _logger.warning("Probably all entries do not have the key %s" % sorting_key)
         return object_list
 
+
 def _get_number_list(txt):
     rexpr = '[/a-zA-Z:_-]'
     nbs= [float(w) for w in re.split(rexpr, txt) if w not in ['',' ']]
     return nbs
 
+
 class BrokenLink(object):
     pass
 
+
 class QRLock(qt.QMutex):
-
-    """
-    """
-
     def __init__(self):
         qt.QMutex.__init__(self, qt.QMutex.Recursive)
 
@@ -227,6 +228,7 @@ class RootItem(object):
         del self._children[idx]
         del self._identifiers[idx]
 
+
 class H5NodeProxy(object):
     def sortChildren(self, column, order):
         #print("sort children called with ", column, order)
@@ -236,6 +238,22 @@ class H5NodeProxy(object):
         else:
             self.__sorting_list = None
         self.__sorting_order = order
+
+    def raw_keys(self):
+        for node in self.children:
+            yield node.name
+
+    def raw_values(self):
+        node = self.getNode(self.name)
+        if hasattr(node, "values"):
+            return node.values()
+        else:
+            # spech5 does not implement values() prior to silx 0.6.0
+            for _, value in self.raw_items():
+                yield value
+
+    def raw_items(self):
+        return self.getNode(self.name).items()
 
     @property
     def children(self):
@@ -247,13 +265,8 @@ class H5NodeProxy(object):
             # freeze if navigating tree while data is processing
             if 1: #with self.file.plock:
                 try:
-                    items = list(self.getNode(self.name).items())
-                    if posixpath.dirname(self.name) == "/":
-                        # top level item
-                        doit = True
-                    else:
-                        doit = False
-                except:
+                    items = list(self.raw_items())
+                except Exception:
                     items = []
                     _logger.warning("Cannot obtain items list. Ignoring")
                 try:
@@ -270,17 +283,13 @@ class H5NodeProxy(object):
                                                                finalList[i][0])
                     self._children = [H5NodeProxy(self.file, i[1], self)
                                       for i in finalList]
-                except:
-                    #one cannot afford any error, so I revert to the old
+                except Exception:
+                    # one cannot afford any error, so I revert to the old
                     # method where values where used instead of items
                     if 1 or _logger.getEffectiveLevel() == logging.DEBUG:
                         raise
-                    else:
-                        # tmpList = list(self.getNode(self.name).values())
-                        # spech5 does not implement values() prior to silx 0.6.0
-                        tmpList = list(map(self.getNode(self.name).__getitem__,
-                                           self.getNode(self.name).keys()))
-                        finalList = tmpList
+                    tmpList = list(self.raw_values())
+                    finalList = tmpList
                     for i in range(len(finalList)):
                         finalList[i]._posixPath = posixpath.join(self.name,
                                                                items[i][0])
@@ -439,6 +448,22 @@ class H5FileProxy(H5NodeProxy):
             return self
         else:
             return H5NodeProxy(self.file, self.file[path], self)
+
+    def raw_keys(self):
+        if isinstance(self.file, h5py.File) and ((time.time() - os.stat(self.file.filename).st_mtime) > 3600):
+            file_path = self.file.filename
+            data_path = self.name
+            return HDF5Utils.safe_hdf5_group_keys(file_path, data_path=data_path)
+        else:
+            return super().raw_keys()
+
+    def raw_values(self):
+        for _, value in self.raw_items():
+            yield value
+
+    def raw_items(self):
+        for data_path in self.raw_keys():
+            yield data_path, self.getNode(data_path)
 
 
 class FileModel(qt.QAbstractItemModel):
