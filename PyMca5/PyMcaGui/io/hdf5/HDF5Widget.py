@@ -31,6 +31,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
 import posixpath
+import time
 import gc
 import re
 from operator import itemgetter
@@ -449,7 +450,7 @@ class H5FileProxy(H5NodeProxy):
             return H5NodeProxy(self.file, self.file[path], self)
 
     def raw_keys(self):
-        if isinstance(self.file, h5py.File):
+        if isinstance(self.file, h5py.File) and ((time.time() - os.stat(self.file.filename).st_mtime) > 3600):
             file_path = self.file.filename
             data_path = self.name
             return HDF5Utils.safe_hdf5_group_keys(file_path, data_path=data_path)
