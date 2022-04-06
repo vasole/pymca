@@ -450,12 +450,12 @@ class H5FileProxy(H5NodeProxy):
             return H5NodeProxy(self.file, self.file[path], self)
 
     def raw_keys(self):
-        if isinstance(self.file, h5py.File) and ((time.time() - os.stat(self.file.filename).st_mtime) > 3600):
+        if isinstance(self.file, h5py.File):
             file_path = self.file.filename
             data_path = self.name
-            return HDF5Utils.safe_hdf5_group_keys(file_path, data_path=data_path)
-        else:
-            return super().raw_keys()
+            if (time.time() - os.stat(self.file.filename).st_mtime) < 3600:
+                return HDF5Utils.safe_hdf5_group_keys(file_path, data_path=data_path)
+        return super().raw_keys()
 
     def raw_values(self):
         for _, value in self.raw_items():
@@ -499,7 +499,11 @@ class FileModel(qt.QAbstractItemModel):
             column = index.column()
             if column == 0:
                 if isinstance(item, H5FileProxy):
-                    return MyQVariant(os.path.basename(item.file.filename))
+                    try:
+                        return MyQVariant(os.path.basename(item.file.filename))
+                    except:
+                        _logger.critical("Cannot retrieve file name")
+                        return MyQVariant("Unknown file. Please refresh")
                 else:
                     if hasattr(item, "name"):
                         return MyQVariant(posixpath.basename(item.name))
