@@ -454,6 +454,7 @@ class H5FileProxy(H5NodeProxy):
             file_path = self.file.filename
             data_path = self.name
             if (time.time() - os.stat(self.file.filename).st_mtime) < 3600:
+                _logger.info("File too young. Using multiprocess approach")
                 return HDF5Utils.safe_hdf5_group_keys(file_path, data_path=data_path)
         return super().raw_keys()
 
