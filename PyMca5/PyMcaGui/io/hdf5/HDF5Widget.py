@@ -65,7 +65,6 @@ except ImportError:
                 raise
             _logger.info("Cannot open %s. Trying in SWMR mode" % filename)
             return h5py.File(filename, "r", libver='latest', swmr=True)
-from PyMca5.PyMcaIO import HDF5Utils
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 safe_str = qt.safe_str
@@ -453,9 +452,11 @@ class H5FileProxy(H5NodeProxy):
         if isinstance(self.file, h5py.File):
             file_path = self.file.filename
             data_path = self.name
-            if (time.time() - os.stat(self.file.filename).st_mtime) < 3600:
-                _logger.info("File too young. Using multiprocess approach")
+            try:
+                from PyMca5.PyMcaIO import HDF5Utils
                 return HDF5Utils.safe_hdf5_group_keys(file_path, data_path=data_path)
+            except:
+                _logger.info("Cannot use multiprocess approach")
         return super().raw_keys()
 
     def raw_values(self):
@@ -495,70 +496,74 @@ class FileModel(qt.QAbstractItemModel):
         return 4
 
     def data(self, index, role):
-        if role == qt.Qt.DisplayRole:
-            item = self.getProxyFromIndex(index)
-            column = index.column()
-            if column == 0:
-                if isinstance(item, H5FileProxy):
-                    try:
-                        return MyQVariant(os.path.basename(item.file.filename))
-                    except:
-                        _logger.critical("Cannot retrieve file name")
-                        return MyQVariant("Unknown file. Please refresh")
-                else:
-                    if hasattr(item, "name"):
-                        return MyQVariant(posixpath.basename(item.name))
+        try:
+            if role == qt.Qt.DisplayRole:
+                item = self.getProxyFromIndex(index)
+                column = index.column()
+                if column == 0:
+                    if isinstance(item, H5FileProxy):
+                        try:
+                            return MyQVariant(os.path.basename(item.file.filename))
+                        except:
+                            _logger.critical("Cannot retrieve file name")
+                            return MyQVariant("Unknown file. Please refresh")
                     else:
-                        # this can only happen with the root
-                        return MyQVariant("/")
-            if column == 1:
-                showtitle = True
-                if showtitle:
-                    if hasattr(item, 'type'):
-                        if item.type in ["Entry", "NXentry"]:
-                            if hasattr(item, "children"):
-                                children = item.children
-                                names = [posixpath.basename(o.name) for o in children]
-                                if "title" in names:
-                                    idx = names.index("title")
-                                    node = children[idx].getNode()
-                                    if hasattr(node, "shape") and len(node.shape):
-                                        #stored as an array of strings???
-                                        #return just the first item
-                                        if hasattr(node, "asstr"):
+                        if hasattr(item, "name"):
+                            return MyQVariant(posixpath.basename(item.name))
+                        else:
+                            # this can only happen with the root
+                            return MyQVariant("/")
+                if column == 1:
+                    showtitle = True
+                    if showtitle:
+                        if hasattr(item, 'type'):
+                            if item.type in ["Entry", "NXentry"]:
+                                if hasattr(item, "children"):
+                                    children = item.children
+                                    names = [posixpath.basename(o.name) for o in children]
+                                    if "title" in names:
+                                        idx = names.index("title")
+                                        node = children[idx].getNode()
+                                        if hasattr(node, "shape") and len(node.shape):
+                                            #stored as an array of strings???
+                                            #return just the first item
+                                            if hasattr(node, "asstr"):
+                                                try:
+                                                    return MyQVariant("%s" % node.asstr()[()][0])
+                                                except:
+                                                    return MyQVariant("%s" % node[()][0])
+                                        else:
+                                            #stored as a string
                                             try:
-                                                return MyQVariant("%s" % node.asstr()[()][0])
+                                                try:
+                                                    return MyQVariant("%s" % node.asstr()[()])
+                                                except:
+                                                    return MyQVariant("%s" % node[()])
                                             except:
-                                                return MyQVariant("%s" % node[()][0])
-                                    else:
-                                        #stored as a string
-                                        try:
-                                            try:
-                                                return MyQVariant("%s" % node.asstr()[()])
-                                            except:
-                                                return MyQVariant("%s" % node[()])
-                                        except:
-                                            # issue #745
-                                            return MyQVariant("Unknown %s" % node)
-                            else:
-                                _logger.critical("Entry %s has no children" % item.name)
-                return MyQVariant(item.type)
-            if column == 2:
-                return MyQVariant(item.shape)
-            if column == 3:
-                return MyQVariant(item.dtype)
-        elif role == qt.Qt.ForegroundRole:
-            item = self.getProxyFromIndex(index)
-            column = index.column()
-            if column == 0:
+                                                # issue #745
+                                                return MyQVariant("Unknown %s" % node)
+                                else:
+                                    _logger.critical("Entry %s has no children" % item.name)
+                    return MyQVariant(item.type)
+                if column == 2:
+                    return MyQVariant(item.shape)
+                if column == 3:
+                    return MyQVariant(item.dtype)
+            elif role == qt.Qt.ForegroundRole:
+                item = self.getProxyFromIndex(index)
+                column = index.column()
+                if column == 0:
+                    if hasattr(item, "color"):
+                        return MyQVariant(qt.QColor(item.color))
+            elif role == qt.Qt.ToolTipRole:
+                item = self.getProxyFromIndex(index)
                 if hasattr(item, "color"):
-                    return MyQVariant(qt.QColor(item.color))
-        elif role == qt.Qt.ToolTipRole:
-            item = self.getProxyFromIndex(index)
-            if hasattr(item, "color"):
-                if item.color == qt.Qt.blue:
-                    return MyQVariant("Item has a double click NXdata associated action")
-        return MyQVariant()
+                    if item.color == qt.Qt.blue:
+                        return MyQVariant("Item has a double click NXdata associated action")
+            return MyQVariant()
+        except:
+            _logger.critical("Unhandled exception filling tree")
+            return MyQVariant("Unhandled exception filling tree.")
 
     def getNodeFromIndex(self, index):
         try:
