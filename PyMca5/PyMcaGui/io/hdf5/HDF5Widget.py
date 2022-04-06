@@ -65,6 +65,7 @@ except ImportError:
                 raise
             _logger.info("Cannot open %s. Trying in SWMR mode" % filename)
             return h5py.File(filename, "r", libver='latest', swmr=True)
+from PyMca5.PyMcaIO import HDF5Utils
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 safe_str = qt.safe_str
@@ -452,11 +453,7 @@ class H5FileProxy(H5NodeProxy):
         if isinstance(self.file, h5py.File):
             file_path = self.file.filename
             data_path = self.name
-            try:
-                from PyMca5.PyMcaIO import HDF5Utils
-                return HDF5Utils.safe_hdf5_group_keys(file_path, data_path=data_path)
-            except:
-                _logger.info("Cannot use multiprocess approach")
+            return HDF5Utils.safe_hdf5_group_keys(file_path, data_path=data_path)
         return super().raw_keys()
 
     def raw_values(self):
@@ -506,7 +503,7 @@ class FileModel(qt.QAbstractItemModel):
                             return MyQVariant(os.path.basename(item.file.filename))
                         except:
                             _logger.critical("Cannot retrieve file name")
-                            return MyQVariant("Unknown file. Please refresh")
+                            return MyQVariant("Unknown file. Please refresh/reload file")
                     else:
                         if hasattr(item, "name"):
                             return MyQVariant(posixpath.basename(item.name))
@@ -563,7 +560,7 @@ class FileModel(qt.QAbstractItemModel):
             return MyQVariant()
         except:
             _logger.critical("Unhandled exception filling tree")
-            return MyQVariant("Unhandled exception filling tree.")
+            return MyQVariant("Unhandled exception filling tree. Reload?")
 
     def getNodeFromIndex(self, index):
         try:
