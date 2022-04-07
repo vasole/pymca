@@ -277,7 +277,7 @@ try:
     import asyncio
     import ipykernel
     import zmq
-    includes.append("colorsys")
+    #includes.append("colorsys")
     special_modules += [os.path.dirname(IPython.__file__)]
     special_modules += [os.path.dirname(pygments.__file__)]
     special_modules += [os.path.dirname(qtconsole.__file__)]
@@ -335,7 +335,7 @@ if OPENCL:
     special_modules.append(os.path.dirname(mako.__file__))
     special_modules.append(os.path.dirname(cffi.__file__))
     special_modules.append(os.path.dirname(pytools.__file__))
-    includes.append("decorator")
+    #includes.append("decorator")
 else:
     excludes.append("pyopencl")
 
