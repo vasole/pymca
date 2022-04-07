@@ -535,10 +535,28 @@ if sys.platform.startswith("darwin"):
     # get rid of the artifacts directory
     shutil.rmtree(os.path.dirname(source))
 
-    # move the generated .app to top level dist for debugging purposes
     program = "PyMca"
     version = PyMca5.version()
     source = os.path.join(DISTDIR, "PyMca%s.app" % version)
+    # create intermediate directory for packaging
+    tmpdir = os.path.join(os.path.dirname(source), "tmpdir")
+    if os.path.exists(tmpdir):
+        shutil.rmtree(tmpdir)
+    os.mkdir(tmpdir)
+    tmpsource = os.path.join(tmpdir, os.path.basename(source))
+    shutil.move(source, tmpsource)
+    cmd = "pkgbuild --root %s --install-location /Applications %s"  % \
+                                     (tmpdir,
+                                      os.path.join(PROJECT_PATH,
+                                                  "dist",
+                                                  "PyMca%s.pkg" % version)
+                                     )
+    os.system(cmd)
+    shutil.move(tmpsource, source)
+    shutil.rmtree(tmpdir)
+    # end of generation of .pkg
+
+    # move the generated .app to top level dist for debugging purposes
     target = os.path.join(PROJECT_PATH, "dist", "%s%s.app" % (program, version))
     if os.path.exists(target):
         shutil.rmtree(target)
