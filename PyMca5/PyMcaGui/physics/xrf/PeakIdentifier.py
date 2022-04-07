@@ -110,11 +110,11 @@ class PeakIdentifier(qt.QWidget):
         self.m.setText('M')
         self.m.setChecked(1)
         self.threshold.valueChanged[int].connect(self._thresholdSlot)
-        self.k.clicked.connect(self.mySlot)
-        self.l1.clicked.connect(self.mySlot)
-        self.l2.clicked.connect(self.mySlot)
-        self.l3.clicked.connect(self.mySlot)
-        self.m.clicked.connect(self.mySlot)
+        self.k.clicked.connect(self._mySlot)
+        self.l1.clicked.connect(self._mySlot)
+        self.l2.clicked.connect(self._mySlot)
+        self.l3.clicked.connect(self._mySlot)
+        self.m.clicked.connect(self._mySlot)
 
         hbox2.layout.addWidget(l2)
         hbox2.layout.addWidget(self.threshold)
@@ -165,6 +165,11 @@ class PeakIdentifier(qt.QWidget):
 
     def _thresholdSlot(self, value):
         self.mySlot()
+
+    def _mySlot(self):
+        # this intermediate is needed to prevent passing a boolean to
+        # mySlot when receiving the signal from the checkboxes.
+        return self.mySlot()
 
     def mySlot(self, energy=None):
         if energy is None:
