@@ -7,7 +7,7 @@
 --only-binary numpy,h5py,PyQt5,PySide2
 
 numpy >= 1.8
-fisx >= 1.1.5
+fisx >= 1.1.6
 PyOpenGL                  # For PyMca5.Object3D module 
 h5py                      # For HDF5 file format support
 matplotlib > 1.0          # For visualization

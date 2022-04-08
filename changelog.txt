@@ -1,3 +1,14 @@
+VERSION 5.7.2
+-------------
+
+- IO. Robust access to HDF5 files while being written.
+
+- IO. Support ProSpect v1.1.36 
+
+- ROI Imaging. Double click on Stack Window adds spectrum to MCA  window. 
+
+- Support building of frozen binaries with PyInstaller
+
 VERSION 5.7.1
 -------------
 
