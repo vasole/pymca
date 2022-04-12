@@ -539,21 +539,37 @@ if sys.platform.startswith("darwin"):
     version = PyMca5.version()
     source = os.path.join(DISTDIR, "PyMca%s.app" % version)
     # create intermediate directory for packaging
-    tmpdir = os.path.join(os.path.dirname(source), "tmpdir")
+    tmpdir = os.path.join(os.path.dirname(source), "ROOT")
     if os.path.exists(tmpdir):
         shutil.rmtree(tmpdir)
+    scriptsdir = os.path.join(os.path.dirname(source), "scripts")
+    if os.path.exists(scriptsdir):
+        shutil.rmtree(scriptsdir)
+    os.mkdir(tmpdir)
+    os.mkdir(scriptsdir)
+    postinstall = os.path.join(scriptsdir, "postinstall") 
+    with open(postinstall, "w") as f:
+        f.write("#!/bin/sh\n")
+        f.write("\n")
+        #f.write('echo $0 "$1" "$2" "$3" > /Users/sole/called.txt\n')
+        f.write('/usr/bin/xattr -cr "$2"/Applications/PyMca%s.app\n' % version)
+    os.system("chmod +x %s" % postinstall)
+    os.system("cat %s"  % postinstall)
+    tmpdir = os.path.join(tmpdir, "Applications")
     os.mkdir(tmpdir)
     tmpsource = os.path.join(tmpdir, os.path.basename(source))
     shutil.move(source, tmpsource)
-    cmd = "pkgbuild --root %s --install-location /Applications %s"  % \
-                                     (tmpdir,
+    cmd = "pkgbuild --root %s --scripts %s %s"  % \
+                                     (os.path.dirname(tmpdir),
+                                      scriptsdir,
                                       os.path.join(PROJECT_PATH,
                                                   "dist",
                                                   "PyMca%s.pkg" % version)
                                      )
     os.system(cmd)
     shutil.move(tmpsource, source)
-    shutil.rmtree(tmpdir)
+    shutil.rmtree(os.path.dirname(tmpdir))
+    shutil.rmtree(scriptsdir)
     # end of generation of .pkg
 
     # move the generated .app to top level dist for debugging purposes
