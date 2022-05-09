@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2019 European Synchrotron Radiation Facility
+# Copyright (c) 2019-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -34,6 +34,7 @@ import unittest
 import tempfile
 import shutil
 import os
+import sys
 import numpy
 import itertools
 from contextlib import contextmanager
@@ -124,6 +125,14 @@ class testMcaStackView(unittest.TestCase):
                     nChunksTot = 1
                 for axesOrder in itertools.permutations(other, nOther):
                     yield chunkAxes, axesOrder, nChunksTot
+
+    def assert_array_equal(self, *var):
+        if sys.maxsize > 2**32:
+            # 64-bit interpreter
+            return numpy.testing.assert_array_equal(*var)
+        else:
+            # 32-bit interpreter
+            return numpy.testing.assert_allclose(*var)
 
     @unittest.skipIf(McaStackView is None,
                      'PyMca5.PyMcaCore.McaStackView cannot be imported')
@@ -265,13 +274,13 @@ class testMcaStackView(unittest.TestCase):
                     for (key, chunk), (addKey, add) in chunks:
                         chunk += add
                     for idxFullComplement in dataView.idxFullComplement:
-                        numpy.testing.assert_array_equal(data[idxFullComplement],
+                        self.assert_array_equal(data[idxFullComplement],
                                                          dataOrg[idxFullComplement])
                     if readonly:
-                        numpy.testing.assert_array_equal(data[idxFull],
+                        self.assert_array_equal(data[idxFull],
                                                          dataOrg[idxFull])
                     else:
-                        numpy.testing.assert_array_equal(data[idxFull],
+                        self.assert_array_equal(data[idxFull],
                                                          dataOrg[idxFull]+npAdd[idxFull])
 
     def _assertMaskedView(self, data):
@@ -307,13 +316,13 @@ class testMcaStackView(unittest.TestCase):
                     else:
                         _data = data
                     for idxFullComplement in dataView.idxFullComplement:
-                        numpy.testing.assert_array_equal(_data[idxFullComplement],
+                        self.assert_array_equal(_data[idxFullComplement],
                                                          dataOrg[idxFullComplement])
                     if readonly:
-                        numpy.testing.assert_array_equal(_data[idxFull],
+                        self.assert_array_equal(_data[idxFull],
                                                          dataOrg[idxFull])
                     else:
-                        numpy.testing.assert_array_equal(_data[idxFull],
+                        self.assert_array_equal(_data[idxFull],
                                                          dataOrg[idxFull]+npAdd[idxFull])
 
     @contextmanager
