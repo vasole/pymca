@@ -34,6 +34,7 @@ import weakref
 import gc
 import h5py
 import logging
+_logger = logging.getLogger(__name__)
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
@@ -52,14 +53,13 @@ from . import HDF5McaTable
 from . import QNexusWidgetActions
 try:
     from . import Hdf5NodeView
-except ImportError:
+except:
+    # prevent crushing due to other silx-related errors
+    _logger.info("Cannot use silx Hdf5NodeView")
     from . import HDF5DatasetTable
     Hdf5NodeView = None
 from PyMca5.PyMcaIO import ConfigDict
 from PyMca5 import PyMcaDirs
-
-_logger = logging.getLogger(__name__)
-
 
 class Buttons(qt.QWidget):
 
