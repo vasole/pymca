@@ -34,6 +34,7 @@ import weakref
 import gc
 import h5py
 import logging
+_logger = logging.getLogger(__name__)
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
@@ -59,9 +60,6 @@ except:
     Hdf5NodeView = None
 from PyMca5.PyMcaIO import ConfigDict
 from PyMca5 import PyMcaDirs
-
-_logger = logging.getLogger(__name__)
-
 
 class Buttons(qt.QWidget):
 
