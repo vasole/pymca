@@ -52,7 +52,9 @@ from . import HDF5McaTable
 from . import QNexusWidgetActions
 try:
     from . import Hdf5NodeView
-except ImportError:
+except:
+    # prevent crushing due to other silx-related errors
+    _logger.info("Cannot use silx Hdf5NodeView")
     from . import HDF5DatasetTable
     Hdf5NodeView = None
 from PyMca5.PyMcaIO import ConfigDict
