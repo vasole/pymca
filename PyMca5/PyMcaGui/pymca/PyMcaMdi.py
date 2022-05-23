@@ -221,10 +221,7 @@ class PyMcaMdi(qt.QMainWindow):
                 window.parentWidget().showNormal()
                 window.parentWidget().setGeometry(0, int(windowheight*i),
                                         self.mdi.width(),int(windowheight))
-                if QTVERSION < '4.0.0':
-                    window.parentWidget().raiseW()
-                else:
-                    window.parentWidget().raise_()
+                window.parentWidget().raise_()
                 i+=1
         self.mdi.update()
         self.update()
