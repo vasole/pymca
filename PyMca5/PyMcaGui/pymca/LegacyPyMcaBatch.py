@@ -557,10 +557,7 @@ class McaBatchGUI(qt.QWidget):
             if not os.path.exists(ffile):
                 qt.QMessageBox.critical(self, "ERROR",
                                     'File %s\ndoes not exist' % ffile)
-                if QTVERSION < '4.0.0':
-                    self.raiseW()
-                else:
-                    self.raise_()
+                self.raise_()
                 return False
         return True
 
@@ -573,19 +570,13 @@ class McaBatchGUI(qt.QWidget):
             if not os.path.exists(configfile):
                 qt.QMessageBox.critical(self,
                              "ERROR",'File %s\ndoes not exist' % configfile)
-                if QTVERSION < '4.0.0':
-                    self.raiseW()
-                else:
-                    self.raise_()
+                self.raise_()
                 return False
             elif len(configfile.split()) > 1:
                 if sys.platform != 'win32':
                     qt.QMessageBox.critical(self,
                                  "ERROR",'Configuration File:\n %s\ncontains spaces in the path' % configfile)
-                    if QTVERSION < '4.0.0':
-                        self.raiseW()
-                    else:
-                        self.raise_()
+                    self.raise_()
                     return False
         return True
 
@@ -597,10 +588,7 @@ class McaBatchGUI(qt.QWidget):
                 qt.QMessageBox.critical(self,
                     "ERROR",
                     'Output Directory:\n %s\ncontains spaces in the path' % outputdir)
-                if QTVERSION < '4.0.0':
-                    self.raiseW()
-                else:
-                    self.raise_()
+                self.raise_()
                 return False
         return True
 
@@ -624,10 +612,7 @@ class McaBatchGUI(qt.QWidget):
             qt.QMessageBox.critical(self,
                                     sys.exc_info()[0],
                                     'I do not know what to do with file\n %s' % ffile)
-            if QTVERSION < '4.0.0':
-                self.raiseW()
-            else:
-                self.raise_()
+            self.raise_()
             return None
 
     def browseList(self):
@@ -674,10 +659,7 @@ class McaBatchGUI(qt.QWidget):
             self.setConfigFile(fileList[0])
         elif len(fileList):
             self.setConfigFile(fileList)
-        if QTVERSION < '4.0.0':
-            self.raiseW()
-        else:
-            self.raise_()
+        self.raise_()
 
     def browseOutputDir(self):
         self.outputDir = PyMcaDirs.outputDir
@@ -690,10 +672,7 @@ class McaBatchGUI(qt.QWidget):
                                     currentdir=wdir)
         if len(outdir):
             self.setOutputDir(outdir)
-        if QTVERSION < '4.0.0':
-            self.raiseW()
-        else:
-            self.raise_()
+        self.raise_()
 
     def start(self):
         if not len(self.fileList):
@@ -1154,10 +1133,7 @@ class McaBatchGUI(qt.QWidget):
         if n > 0: return
         self._timer.stop()
         self.show()
-        if QTVERSION < '4.0.0':
-            self.raiseW()
-        else:
-            self.raise_()
+        self.raise_()
 
         work = PyMcaBatchBuildOutput.PyMcaBatchBuildOutput(os.path.join(self.outputDir, "IMAGES"))
         if _logger.getEffectiveLevel() == logging.DEBUG:
@@ -1345,10 +1321,7 @@ class McaBatchWindow(qt.QWidget):
 
         if actions: self.addButtons()
         self.show()
-        if QTVERSION < '4.0.0':
-            self.raiseW()
-        else:
-            self.raise_()
+        self.raise_()
 
 
     def addButtons(self):

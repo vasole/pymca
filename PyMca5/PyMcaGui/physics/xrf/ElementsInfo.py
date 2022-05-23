@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V. Armando Sole - ESRF Data Analysis"
+__author__ = "V. Armando Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -35,8 +35,6 @@ from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaPhysics.xrf import ElementHtml
 from PyMca5.PyMcaPhysics.xrf import Elements
 from PyMca5.PyMcaGui.physics.xrf.QPeriodicTable import QPeriodicTable
-
-__revision__ = "$Revision: 1.15 $"
 
 _logger = logging.getLogger(__name__)
 
@@ -198,7 +196,7 @@ class ElementsInfo(qt.QWidget):
         _logger.debug("toggleSource called")
         if self.infoWidget.isHidden():
             self.infoWidget.show()
-            self.infoWidget.raiseW()
+            self.infoWidget.raise_()
         else:
             self.infoWidget.hide()
 

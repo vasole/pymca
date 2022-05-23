@@ -1006,7 +1006,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                                               **d['Information'])
                 if d['LastFit']['hidden'] == 'False':
                     self.mcaWindow.advancedfit.show()
-                    self.mcaWindow.advancedfit.raiseW()
+                    self.mcaWindow.advancedfit.raise_()
                     if d['LastFit']['fitdone']:
                         try:
                             self.mcaWindow.advancedfit.fit()
@@ -1031,7 +1031,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                                               **d['Information'])
                 if d['LastFit']['hidden'] == 'False':
                     self.mcaWindow.advancedfit.show()
-                    self.mcaWindow.advancedfit.raiseW()
+                    self.mcaWindow.advancedfit.raise_()
                     if d['LastFit']['fitdone']:
                         try:
                             self.mcaWindow.advancedfit.fit()
@@ -1854,8 +1854,9 @@ class MyQTextBrowser(qt.QTextBrowser):
                 self.report.mimeSourceFactory().addFilePath(QString(ddir+"/HTML"))
                 self.report.mimeSourceFactory().addFilePath(QString(ddir+"/HTML/PyMCA_files"))
                 self.report.setSource(name)
-            if self.report.isHidden():self.report.show()
-            self.report.raiseW()
+            if self.report.isHidden():
+                self.report.show()
+            self.report.raise_()
         else:
             qt.QTextBrowser.setSource(self, name)
 
