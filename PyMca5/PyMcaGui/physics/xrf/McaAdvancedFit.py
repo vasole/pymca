@@ -1572,10 +1572,7 @@ class McaAdvancedFit(qt.QWidget):
     def showLastReport(self):
         if self.browser is not None:
             self.browser.show()
-            if QTVERSION < '4.0.0':
-                self.browser.raiseW()
-            else:
-                self.browser.raise_()
+            self.browser.raise_()
 
     def printConcentrations(self, doit=0):
         text = "<CENTER>"+self.concentrationsWidget.concentrationsTable.getHtmlText()+"</CENTER>"
