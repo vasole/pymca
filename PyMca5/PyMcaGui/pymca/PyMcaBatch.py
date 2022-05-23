@@ -1053,10 +1053,7 @@ class McaBatchGUI(qt.QWidget):
             if not os.path.exists(ffile):
                 qt.QMessageBox.critical(self, "ERROR",
                                     'File %s\ndoes not exist' % ffile)
-                if QTVERSION < '4.0.0':
-                    self.raiseW()
-                else:
-                    self.raise_()
+                self.raise_()
                 return False
         return True
 
@@ -1069,19 +1066,13 @@ class McaBatchGUI(qt.QWidget):
             if not os.path.exists(configfile.split('::')[0]):
                 qt.QMessageBox.critical(self,
                              "ERROR",'File %s\ndoes not exist' % configfile)
-                if QTVERSION < '4.0.0':
-                    self.raiseW()
-                else:
-                    self.raise_()
+                self.raise_()
                 return False
             elif len(configfile.split()) > 1:
                 if sys.platform != 'win32':
                     qt.QMessageBox.critical(self,
                                  "ERROR",'Configuration File:\n %s\ncontains spaces in the path' % configfile)
-                    if QTVERSION < '4.0.0':
-                        self.raiseW()
-                    else:
-                        self.raise_()
+                    self.raise_()
                     return False
         return True
 
@@ -1093,10 +1084,7 @@ class McaBatchGUI(qt.QWidget):
                 qt.QMessageBox.critical(self,
                     "ERROR",
                     'Output Directory:\n %s\ncontains spaces in the path' % outputdir)
-                if QTVERSION < '4.0.0':
-                    self.raiseW()
-                else:
-                    self.raise_()
+                self.raise_()
                 return False
         if len(self.fileList) == 1:
             if HDF5SUPPORT:
@@ -1107,10 +1095,7 @@ class McaBatchGUI(qt.QWidget):
                             msg = "Please specify a different output directory.\n"
                             msg += "Risk of overwritting input file."
                             qt.QMessageBox.critical(self,"ERROR", msg)
-                            if QTVERSION < '4.0.0':
-                                self.raiseW()
-                            else:
-                                self.raise_()
+                            self.raise_()
                             return False
                 except:
                     _logger.warning("Cannot verify suitability of output directory")
@@ -1136,10 +1121,7 @@ class McaBatchGUI(qt.QWidget):
             qt.QMessageBox.critical(self,
                                     sys.exc_info()[0],
                                     'I do not know what to do with file\n %s' % ffile)
-            if QTVERSION < '4.0.0':
-                self.raiseW()
-            else:
-                self.raise_()
+            self.raise_()
             return None
 
     def browseList(self):
@@ -1179,10 +1161,7 @@ class McaBatchGUI(qt.QWidget):
 
         if fileList:
             self.setConfigFile(fileList[0])
-        if QTVERSION < '4.0.0':
-            self.raiseW()
-        else:
-            self.raise_()
+        self.raise_()
 
     def browseOutputDir(self):
         self.outputDir = PyMcaDirs.outputDir
@@ -1195,10 +1174,7 @@ class McaBatchGUI(qt.QWidget):
                                     currentdir=wdir)
         if outdir:
             self.setOutputDir(outdir)
-        if QTVERSION < '4.0.0':
-            self.raiseW()
-        else:
-            self.raise_()
+        self.raise_()
 
     @property
     def _runAsMultiProcess(self):
@@ -1523,10 +1499,7 @@ class McaBatchGUI(qt.QWidget):
             return
         self._timer.stop()
         self.show()
-        if QTVERSION < '4.0.0':
-            self.raiseW()
-        else:
-            self.raise_()
+        self.raise_()
         edfoutlist, datoutlist = self._mergeProcessResults()
         if not edfoutlist and not datoutlist:
             edfoutlist, datoutlist = self._fetchProcessResults()
@@ -1723,10 +1696,7 @@ class McaBatchWindow(qt.QWidget):
 
         if actions: self.addButtons()
         self.show()
-        if QTVERSION < '4.0.0':
-            self.raiseW()
-        else:
-            self.raise_()
+        self.raise_()
 
     def addButtons(self):
         self.actions = 1
