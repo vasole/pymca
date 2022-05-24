@@ -257,7 +257,7 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
                           replace=False)
 
     def minusLogDivideByActiveCurve(self):
-        return divideByActiveCurve(minusLog=True)
+        return self.divideByActiveCurve(minusLog=True)
 
     def divideByActiveCurve(self, minusLog=False):
         #all curves
