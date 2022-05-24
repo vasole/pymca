@@ -315,6 +315,9 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
             y = yw / yi
             if minusLog:
                 y = -numpy.log(y)
+                legend = "-log(%s/%s)" % (legend, legend0)
+            else:
+                legend = "%s/%s" % (legend, legend0)
             if i == 0:
                 replace = (self._plotType != "MCA")
                 replot = True
