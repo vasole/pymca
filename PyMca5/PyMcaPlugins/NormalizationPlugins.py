@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -32,6 +32,7 @@ Following normalization methods are available:
  - Subtract offset and normalize to integrated area (y-min(y))/trapz(max(y)-min(y),x)
  - Subtract offset and normalize to counts (y-min(y))/sum(max(y)-min(y))
  - Divide all curves by active curve
+ - Take the negative of the log of the previous division
 """
 
 __author__ = "V.A. Sole - ESRF Data Analysis"
@@ -71,6 +72,9 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
         if HAS_SPECFIT:
             self.methodDict['y/yactive'] = [self.divideByActiveCurve,
                        "Divide all curves by active curve",
+                                       None]
+            self.methodDict['-log(y/yactive)'] = [self.minusLogDivideByActiveCurve,
+               "Take the negative log of the division of each curve by active curve",
                                        None]
 
     #Methods to be implemented by the plugin
@@ -252,7 +256,10 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
                           replot=True,
                           replace=False)
 
-    def divideByActiveCurve(self):
+    def minusLogDivideByActiveCurve(self):
+        return divideByActiveCurve(minusLog=True)
+
+    def divideByActiveCurve(self, minusLog=False):
         #all curves
         curves = self.getAllCurves()
         nCurves = len(curves)
@@ -306,6 +313,8 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
             xi.shape = -1, 1
             yw = SpecfitFuns.interpol([x], y, xi, yi.min())
             y = yw / yi
+            if minusLog:
+                y = -numpy.log(y)
             if i == 0:
                 replace = (self._plotType != "MCA")
                 replot = True
