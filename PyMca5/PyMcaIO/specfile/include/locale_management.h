@@ -24,22 +24,24 @@
 #define PyMca_LOCALE_MANAGEMENT_H
 
 #include <locale.h>
-#ifdef _GNU_SOURCE
-#  ifdef __GLIBC__
-#    include <features.h>
-#    if !((__GLIBC__ > 2) || ((__GLIBC__ == 2) && (__GLIBC_MINOR__ > 25)))
-#      /* strtod_l has been moved to stdlib.h since glibc 2.26 */
-#      include <xlocale.h>
-#    endif
-#  else
-#    include <xlocale.h>
-#  endif
-#else
+
+#ifndef SPECFILE_USE_GNU_SOURCE
 #  ifdef SPECFILE_POSIX
 #    ifndef LOCALE_NAME_MAX_LENGTH
 #           define LOCALE_NAME_MAX_LENGTH 85
 #    endif
 #  endif
+#else
+#  ifdef  _GNU_SOURCE
+#    ifdef __GLIBC__
+#       include <features.h>
+#       if !((__GLIBC__ > 2) || ((__GLIBC__ == 2) && (__GLIBC_MINOR__ > 25)))
+#          /* strtod_l has been moved to stdlib.h since glibc 2.26 */
+#         include <xlocale.h>
+#       endif
+#    else
+#       include <xlocale.h>
+#     endif
 #endif
 
 double PyMcaAtof(const char*);

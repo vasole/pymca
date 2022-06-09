@@ -259,11 +259,12 @@ def build_specfile(ext_modules):
         specfile_define_macros = [('WIN32', None),
                                   ('SPECFILE_POSIX', None)]
     elif os.name.lower().startswith('posix'):
-        specfile_define_macros = [('SPECFILE_POSIX', 1)]
+        specfile_define_macros = [('SPECFILE_POSIX', None)]
         # the best choice is to use _GNU_SOURCE if possible
         # because that enables the use of strtod_l
         if SPECFILE_USE_GNU_SOURCE:
-            specfile_define_macros = [('_GNU_SOURCE', 1)]
+            specfile_define_macros = [('SPECFILE_USE_GNU_SOURCE', 1),
+                                      ('_GNU_SOURCE', 1)]
     else:
         specfile_define_macros = define_macros
 
