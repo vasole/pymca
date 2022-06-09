@@ -26,13 +26,16 @@
 
 double PyMcaAtof(const char * inputString)
 {
-#ifdef _GNU_SOURCE
-	double result;
-	locale_t newLocale;
-	newLocale = newlocale(LC_NUMERIC_MASK, "C", NULL);
-	result = strtod_l(inputString, NULL, newLocale);
-	freelocale(newLocale);
-	return result;
+
+#ifdef SPECFILE_USE_GNU_SOURCE
+#	ifdef _GNU_SOURCE
+		double result;
+		locale_t newLocale;
+		newLocale = newlocale(LC_NUMERIC_MASK, "C", NULL);
+		result = strtod_l(inputString, NULL, newLocale);
+		freelocale(newLocale);
+		return result;
+#	endif
 #endif
 #if defined(_MSC_VER) && defined(_MSC_FULL_VER)
 	_locale_t c_locale = _create_locale(LC_NUMERIC, "C");
