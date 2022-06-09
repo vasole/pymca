@@ -29,7 +29,7 @@ double PyMcaAtof(const char * inputString)
     double result;
 	_locale_t newLocale = _create_locale(LC_NUMERIC, "C");
 	result = _atof_l(inputString, newLocale);
-	_freelocale(newLocale);
+	_free_locale(newLocale);
 	return result;
 #else
 	double result;
