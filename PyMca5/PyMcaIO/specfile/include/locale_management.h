@@ -41,7 +41,8 @@
 #       endif
 #    else
 #       include <xlocale.h>
-#     endif
+#    endif
+#  endif
 #endif
 
 double PyMcaAtof(const char*);
