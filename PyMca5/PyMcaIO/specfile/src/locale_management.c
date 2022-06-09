@@ -22,34 +22,22 @@
 # ############################################################################*/
 #include <stdlib.h>
 #include <locale_management.h>
-#include <string.h>
 
 double PyMcaAtof(const char * inputString)
 {
-#ifdef _GNU_SOURCE
+#if defined(_MSC_VER) && defined(_MSC_FULL_VER)
+    double result;
+	_locale_t newLocale = _create_locale(LC_NUMERIC, "C");
+	result = _atof_l(inputString, newLocale);
+	_freelocale(newLocale);
+	return result;
+#else
 	double result;
-	locale_t newLocale;
-	newLocale = newlocale(LC_NUMERIC_MASK, "C", NULL);
+	locale_t newLocale = newlocale(LC_NUMERIC_MASK, "C", NULL);
 	result = strtod_l(inputString, NULL, newLocale);
 	freelocale(newLocale);
 	return result;
-#endif
-#if defined(_MSC_VER) && defined(_MSC_FULL_VER)
-	_locale_t c_locale = _create_locale(LC_NUMERIC, "C");
-	return _atof_l(inputString, c_locale);
-#endif
-#ifdef SPECFILE_POSIX
-	char *currentLocaleBuffer;
-	char *restoredLocaleBuffer;
-	char localeBuffer[LOCALE_NAME_MAX_LENGTH + 1] = {'\0'};
-	double result;
-	currentLocaleBuffer = setlocale(LC_NUMERIC, NULL);
-	strcpy(localeBuffer, currentLocaleBuffer);
-	setlocale(LC_NUMERIC, "C\0");
-	result = atof(inputString);
-	restoredLocaleBuffer = setlocale(LC_NUMERIC, localeBuffer);
-	return(result);
-#else
-	return atof(inputString);
+//#else
+//	return atof(inputString);
 #endif
 }

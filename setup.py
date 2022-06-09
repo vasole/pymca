@@ -92,18 +92,6 @@ if PYMCA_DATA_DIR is None and PYMCA_DOC_DIR is None:
 
 USE_SMART_INSTALL_SCRIPTS = "--install-scripts" in sys.argv
 
-SPECFILE_USE_GNU_SOURCE = os.getenv("SPECFILE_USE_GNU_SOURCE")
-if SPECFILE_USE_GNU_SOURCE is None:
-    SPECFILE_USE_GNU_SOURCE = 0
-    if sys.platform.lower().startswith("linux"):
-        print("WARNING:")
-        print("A cleaner locale independent implementation")
-        print("may be achieved setting SPECFILE_USE_GNU_SOURCE to 1")
-        print("For instance running this script as:")
-        print("SPECFILE_USE_GNU_SOURCE=1 python setup.py build")
-else:
-    SPECFILE_USE_GNU_SOURCE = int(SPECFILE_USE_GNU_SOURCE)
-
 
 # check if cython is not to be used despite being present
 def use_cython():
@@ -256,14 +244,7 @@ def build_FastEdf(ext_modules):
 
 def build_specfile(ext_modules):
     if sys.platform == "win32":
-        specfile_define_macros = [('WIN32', None),
-                                  ('SPECFILE_POSIX', None)]
-    elif os.name.lower().startswith('posix'):
-        specfile_define_macros = [('SPECFILE_POSIX', None)]
-        # the best choice is to use _GNU_SOURCE if possible
-        # because that enables the use of strtod_l
-        if SPECFILE_USE_GNU_SOURCE:
-            specfile_define_macros = [('_GNU_SOURCE', 1)]
+        specfile_define_macros = [('WIN32', None),]
     else:
         specfile_define_macros = define_macros
 
