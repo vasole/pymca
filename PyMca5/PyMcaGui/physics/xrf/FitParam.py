@@ -119,6 +119,8 @@ class FitParamWidget(FitParamForm):
         if maxheight < 801:
             self.setMaximumHeight(int(0.8*maxheight))
             self.setMinimumHeight(int(0.8*maxheight))
+        maxWidth = int(min(900, 0.8*qt.QDesktopWidget().width()))
+        self.tabAttenuators.setMaximumWidth(maxWidth)
 
         #This was previously into FitParamForm.py: END
         self.tabMul = qt.QWidget()
