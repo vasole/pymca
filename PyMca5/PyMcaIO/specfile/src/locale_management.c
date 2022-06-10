@@ -20,6 +20,9 @@
 # THE SOFTWARE.
 #
 # ############################################################################*/
+
+#define _GNU_SOURCE
+
 #include <stdlib.h>
 #include <locale_management.h>
 
@@ -31,13 +34,11 @@ double PyMcaAtof(const char * inputString)
 	result = _atof_l(inputString, newLocale);
 	_free_locale(newLocale);
 	return result;
-#elif defined(__USE_GNU)
+#else
 	double result;
 	locale_t newLocale = newlocale(LC_NUMERIC_MASK, "C", NULL);
 	result = strtod_l(inputString, NULL, newLocale);
 	freelocale(newLocale);
 	return result;
-#else
-	return atof(inputString);
 #endif
 }
