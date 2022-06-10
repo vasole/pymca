@@ -31,7 +31,7 @@ double PyMcaAtof(const char * inputString)
 	result = _atof_l(inputString, newLocale);
 	_free_locale(newLocale);
 	return result;
-#elseif defined(__USE_GNU)
+#elif defined(__USE_GNU)
 	double result;
 	locale_t newLocale = newlocale(LC_NUMERIC_MASK, "C", NULL);
 	result = strtod_l(inputString, NULL, newLocale);
