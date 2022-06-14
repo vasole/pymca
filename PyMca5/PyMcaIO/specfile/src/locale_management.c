@@ -23,6 +23,7 @@
 
 #include <stdlib.h>
 #include <locale_management.h>
+#include <string.h>
 
 double PyMcaAtof(const char * inputString)
 {
