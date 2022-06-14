@@ -32,13 +32,13 @@ double PyMcaAtof(const char * inputString)
 	result = _atof_l(inputString, newLocale);
 	_free_locale(newLocale);
 	return result;
-#elifdef __GLIBC__ || __GLIBCXX__
+#elif defined __GLIBC__ || defined__GLIBCXX__
 	double result;
 	locale_t newLocale = newlocale(LC_NUMERIC_MASK, "C", NULL);
 	result = strtod_l(inputString, NULL, newLocale);
 	freelocale(newLocale);
 	return result;
-#elifdef SPECFILE_POSIX
+#elif defined SPECFILE_POSIX
 #   ifndef LOCALE_NAME_MAX_LENGTH
 #           define LOCALE_NAME_MAX_LENGTH 85
 #   endif
