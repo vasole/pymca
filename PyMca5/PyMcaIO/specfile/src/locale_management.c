@@ -1,5 +1,5 @@
 # /*##########################################################################
-# Copyright (C) 2012-2020 European Synchrotron Radiation Facility
+# Copyright (C) 2012-2022 European Synchrotron Radiation Facility
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,25 +20,28 @@
 # THE SOFTWARE.
 #
 # ############################################################################*/
+
 #include <stdlib.h>
 #include <locale_management.h>
-#include <string.h>
 
 double PyMcaAtof(const char * inputString)
 {
-#ifdef _GNU_SOURCE
+#if defined(_MSC_VER) && defined(_MSC_FULL_VER)
 	double result;
-	locale_t newLocale;
-	newLocale = newlocale(LC_NUMERIC_MASK, "C", NULL);
+	_locale_t newLocale = _create_locale(LC_NUMERIC, "C");
+	result = _atof_l(inputString, newLocale);
+	_free_locale(newLocale);
+	return result;
+#elifdef __GLIBC__ || __GLIBCXX__
+	double result;
+	locale_t newLocale = newlocale(LC_NUMERIC_MASK, "C", NULL);
 	result = strtod_l(inputString, NULL, newLocale);
 	freelocale(newLocale);
 	return result;
-#endif
-#if defined(_MSC_VER) && defined(_MSC_FULL_VER)
-	_locale_t c_locale = _create_locale(LC_NUMERIC, "C");
-	return _atof_l(inputString, c_locale);
-#endif
-#ifdef SPECFILE_POSIX
+#elifdef SPECFILE_POSIX
+#   ifndef LOCALE_NAME_MAX_LENGTH
+#           define LOCALE_NAME_MAX_LENGTH 85
+#   endif
 	char *currentLocaleBuffer;
 	char *restoredLocaleBuffer;
 	char localeBuffer[LOCALE_NAME_MAX_LENGTH + 1] = {'\0'};
