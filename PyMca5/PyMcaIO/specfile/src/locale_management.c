@@ -21,6 +21,7 @@
 #
 # ############################################################################*/
 
+#define _GNU_SOURCE
 #include <stdlib.h>
 #include <locale_management.h>
 #include <string.h>
