@@ -1,5 +1,5 @@
 # /*##########################################################################
-# Copyright (C) 2000-2020 European Synchrotron Radiation Facility
+# Copyright (C) 2000-2022 European Synchrotron Radiation Facility
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -289,6 +289,11 @@ SfGetMca( SpecFile *sf, long index, long number, double **retdata, int *error )
        val = my_atof(strval);
        data[vals] = val;
        vals++;
+     } else if (i>0) {
+         strval[i] = '\0';
+         val = PyMcaAtof(strval);
+         data[vals] = val;
+         vals++;
      }
 
     *retdata = data;
