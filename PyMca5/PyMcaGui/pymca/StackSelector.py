@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -51,6 +51,7 @@ from PyMca5.PyMcaIO import RenishawMap
 from PyMca5.PyMcaIO import OmdaqLmf
 from PyMca5.PyMcaIO import JcampOpusStack
 from PyMca5.PyMcaIO import FsmMap
+from PyMca5.PyMcaIO import LabSpec6TxtMap
 from .QStack import QStack, QSpecFileStack
 try:
     from PyMca5.PyMcaGui.pymca import QHDF5Stack1D
@@ -119,6 +120,18 @@ class StackSelector(object):
                 imagestack = True
                 fileindex = 0
                 stack = TextImageStack.TextImageStack(imagestack=True)
+            elif filefilter.upper().startswith("LABSPEC6") and\
+                 (filelist[0].upper().endswith("TIF") or\
+                  filelist[0].upper().endswith("TIFF")):
+                stack = TiffStack.TiffStack(imagestack=True)
+                stack.loadFileList(filelist[0])
+                stack.info["FileIndex"] = 0
+                stack.info["McaIndex"] = 2
+                omnicfile = True
+            elif filefilter.upper().startswith("LABSPEC6") and\
+                 filelist[0].upper().endswith("TXT"):
+                stack = LabSpec6TxtMap.LabSpec6TxtMap(filelist[0])
+                omnicfile = True
             elif filefilter.upper().startswith("IMAGE") and\
                  (filelist[0].upper().endswith("TIF") or\
                   filelist[0].upper().endswith("TIFF")):
@@ -372,6 +385,7 @@ class StackSelector(object):
                         "OMNIC Files (*map)",
                         "OPUS-DPT Files (*.DPT *.dpt)",
                         "JCAMP-DX Files (*.JDX *.jdx *.DX *.dx)",
+                        "LabSpec6 Files (*.tif *.TIF *.TIFF *.TIFF *.txt *.TXT)",
                         "RTX Files (*.rtx *.RTX)",
                         "Lispix-RPL Files (*.rpl)",
                         "Renishaw-ASCII Files (*.txt *.TXT)",
