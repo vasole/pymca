@@ -284,6 +284,16 @@ try:
     special_modules += [os.path.dirname(asyncio.__file__)]
     special_modules += [os.path.dirname(ipykernel.__file__)]
     special_modules += [os.path.dirname(zmq.__file__)]
+    try:
+        import ipython_genutils
+        special_modules += [os.path.dirname(ipython_genutils.__file__)]
+    except:
+        pass
+    try:
+        import qtpy
+        special_modules += [os.path.dirname(qtpy.__file__)]
+    except:
+        pass
 except ImportError:
     logger.info("qtconsole not available, not added to the frozen executables")
 
