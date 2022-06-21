@@ -33,7 +33,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import numpy
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.PyMcaGui.plotting.PyMca_Icons import PyMca_Icons
+from PyMca5.PyMcaGui.plotting import PyMca_Icons
 IconDict = PyMca_Icons.IconDict
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 
