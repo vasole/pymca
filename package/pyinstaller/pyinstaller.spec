@@ -44,7 +44,11 @@ hiddenimports += collect_submodules('encodings.latin_1')
 #hiddenimports += collect_submodules('PyMca5.PyMcaGui.PyMcaQt')
 #hiddenimports += collect_submodules('PyMca5.PyMcaGui.pymca')
 
+# they will be added in full
 excludes = ["fabio", "hdf5plugin", "silx"]
+
+# if this module is included, the interactive console does not work
+excludes.append("debugpy")
 
 
 # get the script list
