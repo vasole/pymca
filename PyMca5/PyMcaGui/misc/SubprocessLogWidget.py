@@ -59,6 +59,10 @@ class SubprocessLogWidget(qt.QWidget):
                 self._args = args
         else:
             self._args = args
+        if timing < 1:
+            timing = int(timing * 1000) # it should be in milliseconds
+        else:
+            timing = int(timing)
         self._startTimer(timing=timing)
 
     def stop(self):
@@ -75,6 +79,10 @@ class SubprocessLogWidget(qt.QWidget):
         return running
 
     def _startTimer(self, timing=0.1):
+        if timing < 1:
+            timing = int(timing * 1000) # it should be in milliseconds
+        else:
+            timing = int(timing)
         if self._args is None:
             raise ValueError("Subprocess command not defined")
         self._p = subprocess.Popen(self._args,
@@ -86,7 +94,8 @@ class SubprocessLogWidget(qt.QWidget):
         ddict["subprocess"] = self._p
         ddict["event"] = "ProcessStarted"
         self.sigSubprocessLogWidgetSignal.emit(ddict)
-        self.__timer.start(timing)
+        self.__timer.setInterval(timing)
+        self.__timer.start()
 
     def _timerSlot(self):
         ddict = {}
@@ -133,3 +142,36 @@ class SubprocessLogWidget(qt.QWidget):
                 # this may happen if the process finished in the mean time
                 pass
         qt.QWidget.closeEvent(self, event)
+
+
+if __name__ == "__main__":
+    def slot(ddict):
+        print(ddict)
+    # show the command on the log widget
+    if len(sys.argv) == 1 and sys.platform.startswith("win"):
+        scriptFile = r"C:\Windows\System32\whoami.exe"
+        args = [r"C:\Windows\System32\whoami.exe"]
+    elif len(sys.argv) > 1:
+        args = sys.argv[1:]
+    else:
+        print("Usage:")
+        print("%s SubprocessLogWidget.py executable_path [arguments]" % (sys.executable,))
+        print("")
+        print("Example:")
+        print("")
+        print("%s -m PyMca5.PyMca.SubprocessLogWidget %s -m PyMca5.PyMca.SubprocessLogWidget" % (sys.executable, sys.executable))
+        sys.exit(0)
+    text = "%s" % args[0]
+    if len(args) > 1:
+        for arg in args[1:]:
+            text += " %s" % arg
+    app = qt.QApplication([])
+    logWidget = SubprocessLogWidget()
+    logWidget.setMinimumWidth(400)
+    logWidget.sigSubprocessLogWidgetSignal.connect(slot)
+    logWidget.clear()
+    logWidget.show()
+    logWidget.raise_()
+    logWidget.append(text)
+    logWidget.start(args=args)
+    app.exec_()
