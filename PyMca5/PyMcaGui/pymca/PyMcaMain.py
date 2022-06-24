@@ -40,6 +40,13 @@ nativeFileDialogs = None
 _logger = logging.getLogger(__name__)
 backend=None
 if __name__ == '__main__':
+    if sys.platform == 'win32':
+        try:
+            # https://github.com/vasole/pymca/issues/879
+            from multiprocessing import freeze_support
+            freeze_support()
+        except:
+            print("Error providing frozen multiprocessing support")
     options     = '-f'
     longoptions = ['spec=',
                    'shm=',
