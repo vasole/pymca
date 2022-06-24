@@ -65,7 +65,6 @@ except ImportError:
                 raise
             _logger.info("Cannot open %s. Trying in SWMR mode" % filename)
             return h5py.File(filename, "r", libver='latest', swmr=True)
-from PyMca5.PyMcaIO import HDF5Utils
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 safe_str = qt.safe_str
@@ -453,7 +452,13 @@ class H5FileProxy(H5NodeProxy):
         if isinstance(self.file, h5py.File):
             file_path = self.file.filename
             data_path = self.name
-            return HDF5Utils.safe_hdf5_group_keys(file_path, data_path=data_path)
+            try:
+                from PyMca5.PyMcaIO import HDF5Utils
+                return HDF5Utils.safe_hdf5_group_keys(file_path,
+                                                      data_path=data_path)
+            except:
+                _logger.debug("Using standard approach")
+                return self.file[data_path].keys()
         else:
             return super().raw_keys()
 

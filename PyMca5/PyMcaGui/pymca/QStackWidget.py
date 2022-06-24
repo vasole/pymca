@@ -37,6 +37,13 @@ import logging
 _logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
+    if sys.platform == 'win32':
+        try:
+            # https://github.com/vasole/pymca/issues/879
+            from multiprocessing import freeze_support
+            freeze_support()
+        except:
+            print("Error providing frozen multiprocessing support")
     # We are going to read. Disable file locking.
     os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
     _logger.info("%s set to %s" % ("HDF5_USE_FILE_LOCKING",
