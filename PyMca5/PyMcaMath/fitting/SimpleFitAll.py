@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2017-2020 European Synchrotron Radiation Facility
+# Copyright (c) 2017-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -62,6 +62,11 @@ def to_h5py_utf8(str_list):
     """
     return numpy.array(str_list, dtype=text_dtype)
 
+def to_utf8(x):
+    if hasattr(x, 'decode'):
+        return x.decode('utf-8')
+    else:
+        return x
 
 class SimpleFitAll(object):
     """Fit module designed to fit a number of curves, and save its
@@ -408,7 +413,8 @@ class SimpleFitAll(object):
                     result.create_dataset("chisq",
                                           shape=(self._nSpectra,),
                                           dtype=numpy.float32)
-                    for parameter in parameterNames:
+                    for parameter0 in parameterNames:
+                        parameter = to_utf8(parameter0)
                         result.create_dataset(parameter,
                                               shape=(self._nSpectra,),
                                               dtype=numpy.float32)
@@ -420,7 +426,7 @@ class SimpleFitAll(object):
                                               dtype=numpy.float32)
                 result["chisq"][idx] = chisq
                 for par in range(len(parameterNames)):
-                    parameter = parameterNames[par]
+                    parameter = to_utf8(parameterNames[par])
                     estimationName = "fit_process/results/estimation/%s/estimation" % \
                                      parameter
                     estimation = inputEntry[estimationName]
