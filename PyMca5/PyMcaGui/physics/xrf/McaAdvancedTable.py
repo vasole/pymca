@@ -39,7 +39,12 @@ else:
 QTVERSION = qt.qVersion()
 _logger = logging.getLogger(__name__)
 
-QTable = qt.QTableWidget
+try:
+    from PyMca5.PyMcaGui.misc.TableWidget import TableWidget
+    QTable = TableWidget
+except:
+    _logger.warning("Cannot import clipboard enabled table")
+    QTable = qt.QTableWidget
 
 class McaTable(QTable):
     sigMcaTableSignal = qt.pyqtSignal(object)
