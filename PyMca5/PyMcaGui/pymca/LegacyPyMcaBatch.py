@@ -1812,13 +1812,6 @@ def main():
     app = None
 
 if __name__ == "__main__":
-    if sys.platform == 'win32':
-        try:
-            # https://github.com/vasole/pymca/issues/879
-            from multiprocessing import freeze_support
-            freeze_support()
-        except:
-            print("Error providing frozen multiprocessing support")
     main()
 
 
