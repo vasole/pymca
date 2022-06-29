@@ -32,6 +32,9 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import logging
+_logger = logging.getLogger(__name__)
+_logger.debug("ConcentrationsWidget is in debug mode")
+
 from PyMca5.PyMcaGui import PyMcaQt as qt
 
 if hasattr(qt, 'QString'):
@@ -45,16 +48,18 @@ XRFMC_FLAG = False
 if QTVERSION > '4.0.0':
     XRFMC_FLAG = True
 
-QTable = qt.QTableWidget
+try:
+    from PyMca5.PyMcaGui.misc.TableWidget import TableWidget
+    QTable = TableWidget
+    USE_QTABLE_WIDGET = False
+except:
+    _logger.warning("Cannot import clipboard enabled table")
+    QTable = qt.QTableWidget
+    USE_QTABLE_WIDGET = True
 
 from PyMca5.PyMcaPhysics.xrf import ConcentrationsTool
 from PyMca5.PyMcaPhysics.xrf import Elements
 import time
-
-_logger = logging.getLogger(__name__)
-
-_logger.debug("ConcentrationsWidget is in debug mode")
-
 
 class Concentrations(qt.QWidget):
     sigConcentrationsSignal = qt.pyqtSignal(object)
@@ -862,10 +867,11 @@ class ConcentrationsTable(QTable):
         qapp = qt.QApplication.instance()
         qapp.clipboard().setText(copied_text)
 
-    def keyPressEvent(self, keyEvent):
-        #if there is a control-C event copy data to the clipboard
-        if (keyEvent.key() == qt.Qt.Key_C) and \
-           (keyEvent.modifiers() & qt.Qt.ControlModifier):
+    if USE_QTABLE_WIDGET:
+        def keyPressEvent(self, keyEvent):
+            #if there is a control-C event copy data to the clipboard
+            if (keyEvent.key() == qt.Qt.Key_C) and \
+               (keyEvent.modifiers() & qt.Qt.ControlModifier):
                self._copySelection()
 
 class MyQLineEdit(qt.QLineEdit):
