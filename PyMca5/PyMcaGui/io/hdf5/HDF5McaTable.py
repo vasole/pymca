@@ -30,6 +30,13 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import posixpath
 import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
+try:
+    from . import DataViewerSelector
+    SINGLE_ENABLED = True
+except:
+    _logger.debug("Cannot import DataViewerSelector")
+    SINGLE_ENABLED = False
+
 safe_str = qt.safe_str
 
 _logger = logging.getLogger(__name__)
@@ -48,6 +55,8 @@ class McaSelectionType(qt.QWidget):
         self._selection = qt.QCheckBox(self)
         self._selectionType = qt.QComboBox(self)
         self._optionsList = ["sum", "avg"]
+        if SINGLE_ENABLED:
+            self._optionsList += ["single"]
         for option in self._optionsList:
             self._selectionType.addItem(option[0].upper() + option[1:])
         self._selectionType.setCurrentIndex(self._optionsList.index("avg"))
