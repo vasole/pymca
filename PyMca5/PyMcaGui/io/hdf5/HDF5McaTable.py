@@ -33,12 +33,6 @@ import re
 from PyMca5.PyMcaGui import PyMcaQt as qt
 _logger = logging.getLogger(__name__)
 
-try:
-    from . import DataViewerSelector
-    SINGLE_ENABLED = True
-except:
-    _logger.debug("Cannot import DataViewerSelector")
-    SINGLE_ENABLED = False
 
 SINGLE_ENABLED = True
 
@@ -220,7 +214,6 @@ class HDF5McaTable(qt.QTableWidget):
         self.mcaList = []
         self.mcaSelection = []
         self.mcaSelectionType = []
-        self.mcaSelectionMcaIndex = []
         labels = ['Dataset', 'Selection', 'Alias']
         self._aliasColumn = labels.index('Alias')
         self.setColumnCount(len(labels))
@@ -340,7 +333,6 @@ class HDF5McaTable(qt.QTableWidget):
                     idx = self.mcaSelection.index(row)
                     del self.mcaSelection[idx]
                     del self.mcaSelectionType[idx]
-                    del self.mcaSelectionMcaIndex[idx]
 
         self._update(row, col)
         self.resizeColumnToContents(1)
