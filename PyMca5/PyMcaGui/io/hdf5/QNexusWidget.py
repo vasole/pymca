@@ -964,6 +964,8 @@ class QNexusWidget(qt.QWidget):
                 sel['selection']['key'] = "%d.%d" % (fileIndex+1, entryIndex+1)
                 sel['selection']['mca'] = [yMca]
                 sel['selection']['mcaselectiontype'] = mcaSelection['selectiontype'][mcaIdx]
+                sel['legend'] += " " + mcaSelection['aliaslist'][yMca] + \
+                                 " " + sel['selection']['mcaselectiontype']
                 mcaIdx += 1
                 sel['selection']['mcalist'] = mcaSelection['mcalist']
                 sel['selection']['LabelNames'] = mcaSelection['aliaslist']
