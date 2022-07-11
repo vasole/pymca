@@ -45,7 +45,7 @@ safe_str = qt.safe_str
 
 class McaSelectionType(qt.QWidget):
     sigMcaSelectionTypeSignal = qt.pyqtSignal(object)
-    
+
     def __init__(self, parent=None,row=0, column=0):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QHBoxLayout(self)
@@ -90,18 +90,13 @@ class McaSelectionType(qt.QWidget):
             raise ValueError("Received option %s not among supported options")
 
     def _preSignal(self, value):
-        if self.isChecked():
-            # no need to emit anything because it was not selected
-            self._mySignal(value)
+        self._mySignal()
 
     def _mySignal(self, value=None):
         ddict = {}
         ddict["event"] = "clicked"
         ddict["state"] = self._selection.isChecked()
-        if value is None:
-            idx = self._selectionType.currentIndex()
-        else:
-            idx = value
+        idx = self._selectionType.currentIndex()
         ddict["type"] = self._optionsList[idx]
         ddict["row"] = self._row * 1
         ddict["column"] = self._column * 1
@@ -245,11 +240,14 @@ class HDF5McaTable(qt.QTableWidget):
                     widget.setCurrentText(self.mcaSelectionType[i])
             else:
                 if widget.isChecked():
-                    widget.setChecked(False)            
+                    widget.setChecked(False)
         ddict = {}
         ddict["event"] = "updated"
         ddict["row"] = row
         ddict["column"] = column
+        if row:
+            ddict["type"] = self.cellWidget(row, 1).currentText().lower()
+
         if row is not None and column is not None:
             self.sigHDF5McaTableSignal.emit(ddict)
 
@@ -301,7 +299,7 @@ class HDF5McaTable(qt.QTableWidget):
 def main():
     app = qt.QApplication([])
     tab = HDF5McaTable()
-    tab.build(["Cnt1", "Cnt2", "Cnt3"])    
+    tab.build(["Cnt1", "Cnt2", "Cnt3"])
     #tab.setCounterSelection({'x':[1, 2], 'y':[4],
     #                    'cntlist':["dummy", "Cnt0", "Cnt1", "Cnt2", "Cnt3"]})
     tab.show()
@@ -312,4 +310,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
