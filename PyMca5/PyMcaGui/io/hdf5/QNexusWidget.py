@@ -58,6 +58,12 @@ except:
     _logger.info("Cannot use silx Hdf5NodeView")
     from . import HDF5DatasetTable
     Hdf5NodeView = None
+try:
+    from . import DataViewerSelector
+    SINGLE_ENABLED = True
+except:
+    _logger.debug("Cannot import DataViewerSelector")
+    SINGLE_ENABLED = False
 from PyMca5.PyMcaIO import ConfigDict
 from PyMca5 import PyMcaDirs
 
@@ -669,16 +675,13 @@ class QNexusWidget(qt.QWidget):
                             _logger.error("Cannot apply sorting %s" % sys.exc_info()[1])
                     if self._mca:
                         mcaList = NexusTools.getMcaList(h5file, entryName)
-                        if 1: #SINGLE_ENABLED:
-                            mcaShapeList = []
-                            for mca in mcaList:
-                                dataset = h5file[mca]
-                                if hasattr(dataset, "shape"):
-                                    mcaShapeList.append(h5file[mca].shape)
-                                else:
-                                    mcaShapeList.append((0,))                                    
-                        print(mcaList)
-                        print(mcaShapeList)
+                        mcaShapeList = []
+                        for mca in mcaList:
+                            dataset = h5file[mca]
+                            if hasattr(dataset, "shape"):
+                                mcaShapeList.append(h5file[mca].shape)
+                            else:
+                                mcaShapeList.append((0,))
                 finally:
                     h5file.close()
                     h5file = None

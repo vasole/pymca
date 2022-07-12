@@ -33,9 +33,6 @@ import re
 from PyMca5.PyMcaGui import PyMcaQt as qt
 _logger = logging.getLogger(__name__)
 
-
-SINGLE_ENABLED = True
-
 safe_str = qt.safe_str
 
 
@@ -52,12 +49,10 @@ class McaSelectionType(qt.QWidget):
         self._selector = False
         self._selection = qt.QCheckBox(self)
         self._selectionType = qt.QComboBox(self)
-        self._optionsList = ["sum", "average"]
-        print("RECEIVED SHAPE = ", shape)
-        if SINGLE_ENABLED:
-            self._optionsList += ["single"]
-        if len(shape) > 2:
-            self._optionsList += ["slice"]
+        self._optionsList = ["sum", "average", "index"]
+        if shape:
+            if len(shape) > 2:
+                self._optionsList += ["slice"]
         for option in self._optionsList:
             self._selectionType.addItem(option[0].upper() + option[1:])
         self._selectionType.setCurrentIndex(self._optionsList.index("average"))
@@ -66,42 +61,42 @@ class McaSelectionType(qt.QWidget):
         self._selection.clicked.connect(self._mySignal)
         self._selectionType.activated[int].connect(self._preSignal)
         self._sliceList = []
-        if SINGLE_ENABLED:
-            self._mcaIndex = qt.QSpinBox(self)
-            if shape is None:
-                maximum = 0
-            elif len(shape) in [0, 1]:
-                maximum = 0
-            else:
-                maximum = 1
-                for dim in shape[:-1]:
-                    maximum *= dim
-            self._mcaIndex.setMinimum(0)
-            self._mcaIndex.setMaximum(maximum)
-            self._mcaIndex.setValue(0)
-            self.mainLayout.addWidget(self._mcaIndex)
-            if self._selector:
-                self._selectorButton = qt.QPushButton(self)
-                self._selectorButton.setText("Browser")
-                self.mainLayout.addWidget(self._selectorButton)
-            self._mcaIndex.hide()
-            # textChanged or editingFinished ?
-            #self._mcaIndex.editingFinished[str].connect(self._mcaIndexTextChangedSlot)
-            self._mcaIndex.valueChanged[int].connect(self._mcaIndexValueChangedSlot)
-            if self._selector:
-                self._selectorButton.hide()
-                self._selectorButton.clicked.connect(self._selectorButtonClickedSlot)
-            if len(shape) > 2:
-                self._sliceList = []
-                for i in range(len(shape) - 1):
-                    spinbox = qt.QSpinBox(self)
-                    spinbox.setMinimum(0)
-                    spinbox.setMaximum(shape[i])
-                    spinbox.setValue(0)
-                    self.mainLayout.addWidget(spinbox)
-                    spinbox.hide()
-                    spinbox.valueChanged[int].connect(self._sliceChangedSlot)
-                    self._sliceList.append(spinbox)
+
+        self._mcaIndex = qt.QSpinBox(self)
+        if shape is None:
+            maximum = 0
+        elif len(shape) in [0, 1]:
+            maximum = 0
+        else:
+            maximum = 1
+            for dim in shape[:-1]:
+                maximum *= dim
+        self._mcaIndex.setMinimum(0)
+        self._mcaIndex.setMaximum(maximum)
+        self._mcaIndex.setValue(0)
+        self.mainLayout.addWidget(self._mcaIndex)
+        if self._selector:
+            self._selectorButton = qt.QPushButton(self)
+            self._selectorButton.setText("Browser")
+            self.mainLayout.addWidget(self._selectorButton)
+        self._mcaIndex.hide()
+        # textChanged or editingFinished ?
+        #self._mcaIndex.editingFinished[str].connect(self._mcaIndexTextChangedSlot)
+        self._mcaIndex.valueChanged[int].connect(self._mcaIndexValueChangedSlot)
+        if self._selector:
+            self._selectorButton.hide()
+            self._selectorButton.clicked.connect(self._selectorButtonClickedSlot)
+        if len(shape) > 2:
+            self._sliceList = []
+            for i in range(len(shape) - 1):
+                spinbox = qt.QSpinBox(self)
+                spinbox.setMinimum(0)
+                spinbox.setMaximum(shape[i])
+                spinbox.setValue(0)
+                self.mainLayout.addWidget(spinbox)
+                spinbox.hide()
+                spinbox.valueChanged[int].connect(self._sliceChangedSlot)
+                self._sliceList.append(spinbox)
                     
     def setChecked(self, value):
         if value:
@@ -115,7 +110,7 @@ class McaSelectionType(qt.QWidget):
     def currentText(self):
         idx = self._selectionType.currentIndex()
         text = self._optionsList[idx]
-        if text == "single":
+        if text == "index":
             text += " %d" % self._mcaIndex.value()
         if text == "slice":
             for i in range(len(self._sliceList)):
@@ -136,7 +131,7 @@ class McaSelectionType(qt.QWidget):
         text = text.lower()
         if text in ["average", "avg"]:
             text = "average"
-        elif text.startswith("single"):
+        elif text.startswith("index"):
             exp = re.compile(r'(-?[0-9]+\.?[0-9]*)')
             items = exp.findall(text)
             if len(items) not in [0, 1]:
@@ -173,7 +168,7 @@ class McaSelectionType(qt.QWidget):
         self._mySignal(event="selector")
 
     def _preSignal(self, value):
-        if self._optionsList[value] == "single":
+        if self._optionsList[value] == "index":
             self._mcaIndex.show()
             if self._selector:
                 self._selectorButton.show()
