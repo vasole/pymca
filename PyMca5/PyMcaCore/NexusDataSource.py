@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -178,6 +178,35 @@ def get_family_pattern(filelist):
     else:
         rootname = name1[0:]
     return rootname
+
+
+def _to_slice_mode(single_idx, shape):
+    assert len(shape) > 1
+    if len(shape) == 2:
+        return single_idx
+    reference = single_idx
+    slice_index = [None] * (len(shape) - 1)
+    for i in range(len(shape)-1):
+        v = 1
+        for j in range(i+1, len(shape)-1):
+            v *= shape[j]
+        slice_index[i] = reference // v
+        reference = reference % v
+    return slice_index
+
+
+def _to_index_mode(slice_idx, shape):
+    assert len(shape) > 1
+    assert len(slice_idx) == (len(shape) - 1)
+    if len(shape) == 2:
+        return slice_idx[0]
+    single_index = 0
+    for i in range(len(slice_idx)):
+        v = 1
+        for j in range(i+1, len(shape) - 1): 
+            v *= shape[j]
+        single_index += v * slice_idx[i]
+    return single_index
 
 class NexusDataSource(object):
     def __init__(self,nameInput):
@@ -421,6 +450,40 @@ class NexusDataSource(object):
                                     output.info["McaLiveTime"].sum()
                         if selection['mcaselectiontype'].lower() != "sum":
                             output.info["McaLiveTime"] /= divider
+                elif selection['mcaselectiontype'].lower().startswith("index") or \
+                     selection['mcaselectiontype'].lower().startswith("slice"):
+                    exp = re.compile(r'(-?[0-9]+\.?[0-9]*)')
+                    re_items = exp.findall(selection['mcaselectiontype'].lower())
+                    if selection['mcaselectiontype'].lower().startswith("index"):
+                        assert(len(re_items) == 1)
+                        single_idx = int(re_items[0])
+                        slice_idx = _to_slice_mode(single_idx, mcaData.shape)
+                    else:
+                        assert(len(re_items) == len(mcaData.shape) - 1)
+                        slice_idx = [int(re_item) for re_item in re_items]
+                        single_idx = _to_index_mode(slice_idx, mcaData.shape)
+                    # care for self consistency
+                    assert(_to_index_mode(slice_idx, mcaData.shape) == single_idx)
+
+                    if len(mcaData.shape) > 1:
+                        for idx in slice_idx:
+                            mcaData = mcaData[idx]
+                        mcaData = numpy.array(mcaData, dtype=numpy.float32)
+                    else:
+                        mcaData = mcaData[()]
+                    if "McaLiveTime" in output.info:
+                        if numpy.isscalar(output.info["McaLiveTime"]):
+                            # it is already a single number
+                            pass
+                        elif output.info["McaLiveTime"].shape == 1:
+                            if output.info["McaLiveTime"].shape[0] == 1:
+                                output.info["McaLiveTime"] = output.info["McaLiveTime"][0]
+                            else:
+                                output.info["McaLiveTime"] = output.info["McaLiveTime"][single_idx]
+                        else:
+                            # convert the single index to slice
+                            output.info["McaLiveTime"] = \
+                                    output.info["McaLiveTime"].flatten()[single_idx]
             except:
                 # import traceback
                 _logger.error("%s", sys.exc_info())

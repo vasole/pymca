@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2018 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2020-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,39 +23,81 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import posixpath
 import logging
+import re
 from PyMca5.PyMcaGui import PyMcaQt as qt
-safe_str = qt.safe_str
-
 _logger = logging.getLogger(__name__)
+
+safe_str = qt.safe_str
 
 
 class McaSelectionType(qt.QWidget):
     sigMcaSelectionTypeSignal = qt.pyqtSignal(object)
-    
-    def __init__(self, parent=None,row=0, column=0):
+
+    def __init__(self, parent=None, row=0, column=0, shape=None):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QHBoxLayout(self)
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(2)
         self._row = row
         self._column = column
+        self._selector = False
         self._selection = qt.QCheckBox(self)
         self._selectionType = qt.QComboBox(self)
-        self._optionsList = ["sum", "avg"]
+        self._optionsList = ["sum", "average", "index"]
+        if shape:
+            if len(shape) > 2:
+                self._optionsList += ["slice"]
         for option in self._optionsList:
             self._selectionType.addItem(option[0].upper() + option[1:])
-        self._selectionType.setCurrentIndex(self._optionsList.index("avg"))
+        self._selectionType.setCurrentIndex(self._optionsList.index("average"))
         self.mainLayout.addWidget(self._selection)
         self.mainLayout.addWidget(self._selectionType)
         self._selection.clicked.connect(self._mySignal)
         self._selectionType.activated[int].connect(self._preSignal)
+        self._sliceList = []
 
+        self._mcaIndex = qt.QSpinBox(self)
+        if shape is None:
+            maximum = 0
+        elif len(shape) in [0, 1]:
+            maximum = 0
+        else:
+            maximum = 1
+            for dim in shape[:-1]:
+                maximum *= dim
+        self._mcaIndex.setMinimum(0)
+        self._mcaIndex.setMaximum(maximum)
+        self._mcaIndex.setValue(0)
+        self.mainLayout.addWidget(self._mcaIndex)
+        if self._selector:
+            self._selectorButton = qt.QPushButton(self)
+            self._selectorButton.setText("Browser")
+            self.mainLayout.addWidget(self._selectorButton)
+        self._mcaIndex.hide()
+        # textChanged or editingFinished ?
+        #self._mcaIndex.editingFinished[str].connect(self._mcaIndexTextChangedSlot)
+        self._mcaIndex.valueChanged[int].connect(self._mcaIndexValueChangedSlot)
+        if self._selector:
+            self._selectorButton.hide()
+            self._selectorButton.clicked.connect(self._selectorButtonClickedSlot)
+        if len(shape) > 2:
+            self._sliceList = []
+            for i in range(len(shape) - 1):
+                spinbox = qt.QSpinBox(self)
+                spinbox.setMinimum(0)
+                spinbox.setMaximum(shape[i])
+                spinbox.setValue(0)
+                self.mainLayout.addWidget(spinbox)
+                spinbox.hide()
+                spinbox.valueChanged[int].connect(self._sliceChangedSlot)
+                self._sliceList.append(spinbox)
+                    
     def setChecked(self, value):
         if value:
             self._selection.setChecked(True)
@@ -66,33 +108,93 @@ class McaSelectionType(qt.QWidget):
         return self._selection.isChecked()
 
     def currentText(self):
-        return self._selectionType.currentText()
+        idx = self._selectionType.currentIndex()
+        text = self._optionsList[idx]
+        if text == "index":
+            text += " %d" % self._mcaIndex.value()
+        if text == "slice":
+            for i in range(len(self._sliceList)):
+                if i == 0:
+                    text += " [%d" % self._sliceList[0].value()
+                else:
+                    text += ", %d" % self._sliceList[1].value()
+            text += ", :]"
+        return text
+
+    def currentMcaIndex(self):
+        if hasattr(self, "_mcaIndex"):
+            return self._mcaIndex.value()
+        else:
+            return 0
 
     def setCurrentText(self, text):
         text = text.lower()
         if text in ["average", "avg"]:
-            text = "avg"
-        if text in self._optionsList:
-            idx = self._optionsList.index(text)
-            if self._selectionType.currentIndex() != idx:
-                self._selectionType.setCurrentIndex(idx)
+            text = "average"
+        elif text.startswith("index"):
+            exp = re.compile(r'(-?[0-9]+\.?[0-9]*)')
+            items = exp.findall(text)
+            if len(items) not in [0, 1]:
+                raise ValueError("Cannot retieve index from %s" % text)
+            elif len(items) == 0:
+                value = 0
+            else:
+                value = 1
+            self._mcaIndex.setValue(value)
+        elif text.startswith("slice"):
+            exp = re.compile(r'(-?[0-9]+\.?[0-9]*)')
+            items = exp.findall(text)
+            if len(items) != len(self._sliceList):
+                raise IndexError("Received slice %s does not match length of %" % (text, len(self._sliceList)))
+            for w in self._sliceList:
+                w.setValue(int(items[0]))
         else:
-            raise ValueError("Received option %s not among supported options")
+            raise ValueError("Received option %s not among supported options" % text)
+
+    def _mcaIndexTextChangedSlot(self, text):
+        _logger.debug("Text changed %s" % text)
+        self._mySignal()
+
+    def _mcaIndexValueChangedSlot(self, value):
+        _logger.debug("Value changed %s" % value)
+        self._mySignal()
+
+    def _sliceChangedSlot(self, value):
+        _logger.debug("Value changed %s" % value)
+        self._mySignal()
+
+    def _selectorButtonClickedSlot(self):
+        _logger.debug("selectorButtonClicked")
+        self._mySignal(event="selector")
 
     def _preSignal(self, value):
-        if self.isChecked():
-            # no need to emit anything because it was not selected
-            self._mySignal(value)
-
-    def _mySignal(self, value=None):
-        ddict = {}
-        ddict["event"] = "clicked"
-        ddict["state"] = self._selection.isChecked()
-        if value is None:
-            idx = self._selectionType.currentIndex()
+        if self._optionsList[value] == "index":
+            self._mcaIndex.show()
+            if self._selector:
+                self._selectorButton.show()
         else:
-            idx = value
-        ddict["type"] = self._optionsList[idx]
+            self._mcaIndex.hide()
+            if self._selector:
+                self._selectorButton.hide()
+        if self._optionsList[value] == "slice":
+            for w in self._sliceList:
+                w.show()
+            if self._selector:
+                self._selectorButton.show()
+        else:
+            for w in self._sliceList:
+                w.hide()
+            if self._selector:
+                self._selectorButton.hide()
+        self._mySignal()
+
+    def _mySignal(self, value=None, event=None):
+        if event is None:
+            event = "clicked"
+        ddict = {}
+        ddict["event"] = event
+        ddict["state"] = self._selection.isChecked()
+        ddict["type"] = self.currentText()
         ddict["row"] = self._row * 1
         ddict["column"] = self._column * 1
         self.sigMcaSelectionTypeSignal.emit(ddict)
@@ -118,7 +220,7 @@ class HDF5McaTable(qt.QTableWidget):
             self.setHorizontalHeaderItem(i,item)
         self.cellChanged[int, int].connect(self._aliasSlot)
 
-    def build(self, cntlist, aliaslist=None):
+    def build(self, cntlist, aliaslist=None, shapelist=None):
         self.__building = True
         if aliaslist is None:
             aliaslist = []
@@ -128,7 +230,10 @@ class HDF5McaTable(qt.QTableWidget):
             raise ValueError("Alias list and counter list must have same length")
         self.mcaList = cntlist
         self.aliasList = aliaslist
+        self.shapeList = shapelist
         n = len(cntlist)
+        if self.shapeList is None:
+            self.shapeList = (None,) * n
         self.setRowCount(n)
         if n > 0:
             self.setRowCount(n)
@@ -146,9 +251,9 @@ class HDF5McaTable(qt.QTableWidget):
             for i in range(n):
                 self.setRowHeight(i, rheight)
                 if i in useFullPath:
-                    self.__addLine(i, cntlist[i])
+                    self.__addLine(i, cntlist[i], self.shapeList[i])
                 else:
-                    self.__addLine(i, posixpath.basename(cntlist[i]))
+                    self.__addLine(i, posixpath.basename(cntlist[i]), self.shapeList[i])
                 for j in range(1, 2):
                     widget = self.cellWidget(i, j)
                     widget.setEnabled(True)
@@ -159,7 +264,7 @@ class HDF5McaTable(qt.QTableWidget):
         #self.resizeColumnToContents(2)
         self.__building = False
 
-    def __addLine(self, i, cntlabel):
+    def __addLine(self, i, cntlabel, shape=None):
         #the counter name
         j = 0
         item = self.item(i, 0)
@@ -178,7 +283,7 @@ class HDF5McaTable(qt.QTableWidget):
         j += 1
         widget = self.cellWidget(i, j)
         if widget is None:
-            widget = McaSelectionType(self, i, j)
+            widget = McaSelectionType(self, i, j, shape=shape)
             self.setCellWidget(i, j, widget)
             widget.sigMcaSelectionTypeSignal.connect(self._mySlot)
         else:
@@ -222,7 +327,9 @@ class HDF5McaTable(qt.QTableWidget):
                     idx = self.mcaSelection.index(row)
                     del self.mcaSelection[idx]
                     del self.mcaSelectionType[idx]
+
         self._update(row, col)
+        self.resizeColumnToContents(1)
 
     def _update(self, row=None, column=None):
         for i in range(self.rowCount()):
@@ -235,11 +342,14 @@ class HDF5McaTable(qt.QTableWidget):
                     widget.setCurrentText(self.mcaSelectionType[i])
             else:
                 if widget.isChecked():
-                    widget.setChecked(False)            
+                    widget.setChecked(False)
         ddict = {}
         ddict["event"] = "updated"
         ddict["row"] = row
         ddict["column"] = column
+        if row:
+            ddict["type"] = self.cellWidget(row, 1).currentText().lower()
+
         if row is not None and column is not None:
             self.sigHDF5McaTableSignal.emit(ddict)
 
@@ -273,7 +383,7 @@ class HDF5McaTable(qt.QTableWidget):
             selection = []
 
         if 'selectiontype' in keys:
-            selectionType = ddict['selectiontye']
+            selectionType = ddict['selectiontype']
         else:
             selectionType = []
 
@@ -291,7 +401,7 @@ class HDF5McaTable(qt.QTableWidget):
 def main():
     app = qt.QApplication([])
     tab = HDF5McaTable()
-    tab.build(["Cnt1", "Cnt2", "Cnt3"])    
+    tab.build(["Cnt1", "Cnt2", "Cnt3"])
     #tab.setCounterSelection({'x':[1, 2], 'y':[4],
     #                    'cntlist':["dummy", "Cnt0", "Cnt1", "Cnt2", "Cnt3"]})
     tab.show()
@@ -302,4 +412,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

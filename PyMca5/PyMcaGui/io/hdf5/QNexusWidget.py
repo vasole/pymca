@@ -58,6 +58,12 @@ except:
     _logger.info("Cannot use silx Hdf5NodeView")
     from . import HDF5DatasetTable
     Hdf5NodeView = None
+try:
+    from . import DataViewerSelector
+    SINGLE_ENABLED = True
+except:
+    _logger.debug("Cannot import DataViewerSelector")
+    SINGLE_ENABLED = False
 from PyMca5.PyMcaIO import ConfigDict
 from PyMca5 import PyMcaDirs
 
@@ -650,6 +656,7 @@ class QNexusWidget(qt.QWidget):
             measurement = None
             scanned = []
             mcaList = []
+            mcaShapeList = []
             if posixpath.dirname(entryName) != entryName:
                 h5file = HDF5Widget.h5open(ddict['file'])
                 try:
@@ -668,6 +675,13 @@ class QNexusWidget(qt.QWidget):
                             _logger.error("Cannot apply sorting %s" % sys.exc_info()[1])
                     if self._mca:
                         mcaList = NexusTools.getMcaList(h5file, entryName)
+                        mcaShapeList = []
+                        for mca in mcaList:
+                            dataset = h5file[mca]
+                            if hasattr(dataset, "shape"):
+                                mcaShapeList.append(h5file[mca].shape)
+                            else:
+                                mcaShapeList.append((0,))
                 finally:
                     h5file.close()
                     h5file = None
@@ -708,7 +722,7 @@ class QNexusWidget(qt.QWidget):
                     else:
                         cleanedMcaList.append(key[len(root):])
                     mcaAliasList.append(posixpath.basename(key))
-                self.mcaTable.build(cleanedMcaList, mcaAliasList)
+                self.mcaTable.build(cleanedMcaList, mcaAliasList, mcaShapeList)
                 nTabs = self.tableTab.count()
                 if (len(mcaList) > 0) and (nTabs < 3):
                     self.tableTab.insertTab(2, self.mcaTable, "MCA")
@@ -953,6 +967,8 @@ class QNexusWidget(qt.QWidget):
                 sel['selection']['key'] = "%d.%d" % (fileIndex+1, entryIndex+1)
                 sel['selection']['mca'] = [yMca]
                 sel['selection']['mcaselectiontype'] = mcaSelection['selectiontype'][mcaIdx]
+                sel['legend'] += " " + mcaSelection['aliaslist'][yMca] + \
+                                 " " + sel['selection']['mcaselectiontype']
                 mcaIdx += 1
                 sel['selection']['mcalist'] = mcaSelection['mcalist']
                 sel['selection']['LabelNames'] = mcaSelection['aliaslist']
