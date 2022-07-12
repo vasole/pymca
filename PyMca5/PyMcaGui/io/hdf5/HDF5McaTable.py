@@ -152,19 +152,19 @@ class McaSelectionType(qt.QWidget):
             raise ValueError("Received option %s not among supported options" % text)
 
     def _mcaIndexTextChangedSlot(self, text):
-        _logger.warning("Text changed %s" % text)
+        _logger.debug("Text changed %s" % text)
         self._mySignal()
 
     def _mcaIndexValueChangedSlot(self, value):
-        _logger.warning("Value changed %s" % value)
+        _logger.debug("Value changed %s" % value)
         self._mySignal()
 
     def _sliceChangedSlot(self, value):
-        _logger.warning("Value changed %s" % value)
+        _logger.debug("Value changed %s" % value)
         self._mySignal()
 
     def _selectorButtonClickedSlot(self):
-        _logger.warning("selectorButtonClicked")
+        _logger.debug("selectorButtonClicked")
         self._mySignal(event="selector")
 
     def _preSignal(self, value):
@@ -197,7 +197,6 @@ class McaSelectionType(qt.QWidget):
         ddict["type"] = self.currentText()
         ddict["row"] = self._row * 1
         ddict["column"] = self._column * 1
-        print(ddict)
         self.sigMcaSelectionTypeSignal.emit(ddict)
 
 class HDF5McaTable(qt.QTableWidget):
