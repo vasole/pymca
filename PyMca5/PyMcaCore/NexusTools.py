@@ -42,6 +42,7 @@ try:
 except:
     # but do not crash just because of it
     pass
+import h5py
 from h5py import File, Dataset, Group
 try:
     from silx.io import is_dataset, is_group
@@ -135,24 +136,38 @@ def _get_number_list(txt):
     nbs= [float(w) for w in re.split(rexpr, txt) if w not in ['',' ']]
     return nbs
 
-def getEntryName(path):
+def getEntryName(path, h5file=None):
     """
     Retrieve the top level name (not h5py object) associated to a given path
     despite being or not an NXentry group.
     """
-    entry = path
-    candidate = posixpath.dirname(entry)
+    entry_name = path
+    candidate = posixpath.dirname(entry_name)
     while len(candidate) > 1:
-        entry = candidate
-        candidate = posixpath.dirname(entry)
-    return entry
+        entry_name = candidate
+        candidate = posixpath.dirname(entry_name)
+    if h5file is not None:
+        if entry_name not in h5file["/"]:
+            # dealing with a external link?
+            items_list = list(h5file["/"].items())
+            for key, group in items_list:
+                if not isGroup(group):
+                    continue
+                if group.name == entry_name:
+                    link = h5file.get(key, getlink=True)
+                    if isinstance(link, h5py.ExternalLink):
+                        print("filename = %s" % link.filename)
+                        print("path = %s" % link.path)
+                        entry_name = "/" + key
+                        break
+    return entry_name
 
 def getTitle(h5file, path):
     """
     Retrieve the title associated to the entry asoociated to the provided path
     It returns an emptry string of not title is found
     """
-    entry = h5file[getEntryName(path)]
+    entry = h5file[getEntryName(path, h5file=h5file)]
     title = ''
     if isGroup(entry) and "title" in entry:
         title = entry["title"][()]
@@ -205,6 +220,13 @@ def getNXClassList(h5file, path, classes, objects=False):
         h5file[path].visititems(visit_function)
     return pathList
 
+def _correct_entry_path(path, entry_in, entry_out):
+    if entry_in in path:
+        if path.index(entry_in) == 0:
+            return entry_out + path[len(entry_in):]
+    return path
+
+
 def getMcaList(h5file, path, dataset=False, ignore=None):
     """
     Retrieve the hdf5 dataset names down a given path where the interpretation attribute
@@ -222,6 +244,18 @@ def getMcaList(h5file, path, dataset=False, ignore=None):
     and link to it named /entry/measurement/mca
 
     """
+    # deal with ESRF external links with different names from the targets
+    correct_entry_path = False
+    entry_path = getEntryName(path)
+    entry_file = getEntryName(path, h5file=h5file)
+    if entry_path:
+        if entry_path != entry_file:
+            print("entry_path = ", entry_path)
+            print("entry_file = ", entry_file)
+            print("RECEIVED = ", path)
+            path = _correct_entry_path(path, entry_path, entry_file)
+            correct_entry_path = False
+            print("USED = ", path)
     if ignore is None:
         ignore = ["channels",
                   "calibration",
@@ -279,7 +313,10 @@ def getMcaList(h5file, path, dataset=False, ignore=None):
                         if dataset:
                             datasetList.append(obj)
                         else:
-                            datasetList.append(obj.name)
+                            name = obj.name
+                            if correct_entry_path:
+                                _correct_entry_path(name, entry_path, entry_file)                        
+                            datasetList.append(name)
     if hasattr(h5file[path], "visititems"):
         # prevent errors dealing with toplevel datasets
         h5file[path].visititems(visit_function)
@@ -338,6 +375,16 @@ def getMcaObjectPaths(h5file, mcaPath):
     #mca["i0_to_flux_factor"] = 1.0
     #mca["it_to_flux_factor"] = 1.0
 
+    _logger.info("Input path <%s>" % (mcaPath,))
+
+    # check entry
+    entry_item = getEntryName(mcaPath)
+    entry_file = getEntryName(mcaPath, h5file=h5file)
+    if entry_item != entry_file:
+        mcaPath = _correct_entry_path(mcaPath, entry_item, entry_file)
+
+    _logger.info("Used path <%s>" % (mcaPath,))
+    
     # look at the same level as the dataset
     parentPath = posixpath.dirname(mcaPath)
     searchPaths =[parentPath]
@@ -393,10 +440,21 @@ def getNXClassGroups(h5file, path, classes, single=False):
     Retrieve the hdf5 groups inside a given path where the NX_class attribute
     matches one of the items in the classes list.
     """
+
+
+    print("path = ", path)
+    if path in ["", "/"]:
+        print(list(h5file["/"].keys()))
+        print(list(h5file["/"].items()))
+    #isExternalLink = isinstance(h5file.get(path, getlink=True), h5py.ExternalLink)
+    #print("isExternalLink = ", isExternalLink)
+
+
     groups = []
     items_list = list(h5file[path].items())
     if ("NXentry" in classes) or (b"NXentry" in classes):
         items_list = h5py_sorting(items_list)
+    print(items_list[0])
     for key, group in items_list:
         if not isGroup(group):
             continue
@@ -406,6 +464,10 @@ def getNXClassGroups(h5file, path, classes, single=False):
                     groups.append(group)
                     if single:
                         break
+        link = h5file.get(key, getlink=True)
+        if isinstance(link, h5py.ExternalLink):
+            print("filename = %s" % link.filename)
+            print("path = %s" % link.path)
     return groups
 
 def getPositionersGroup(h5file, path):
@@ -419,7 +481,7 @@ def getPositionersGroup(h5file, path):
     - NXentry/measurement/pre_scan_snapshot
 
     """
-    entry_path = getEntryName(path)
+    entry_path = getEntryName(path, h5file=h5file)
     instrument = getNXClassGroups(h5file, entry_path, ["NXinstrument", b"NXinstrument"], single=True)
     positioners = None
     if len(instrument):
@@ -452,8 +514,37 @@ def getMeasurementGroup(h5file, path):
     """
     if path in ["/", b"/", "", b""]:
         raise ValueError("path cannot be the toplevel root")
-    entry_path = getEntryName(path)
-    entry = h5file[entry_path]
+    entry_path = getEntryName(path, h5file=h5file)
+    if 0 and entry_path not in h5file:
+        # dealing with a external link?
+        result = None
+        items_list = list(h5file["/"].items())
+        for key, group in items_list:
+            if not isGroup(group):
+                continue
+            print(entry_path, group.name)
+            if group.name == entry_path:
+                link = h5file.get(key, getlink=True)
+                if isinstance(link, h5py.ExternalLink):
+                    print("filename = %s" % link.filename)
+                    print("path = %s" % link.path)
+                    entry = h5file[key]
+                """
+                    print("filename = %s" % link.filename)
+                    print("path = %s" % link.path)
+                    print(h5file.filename)
+                    newFile = os.path.join(os.path.dirname(os.path.abspath(h5file.filename)), link.filename)
+                    print("newFile= ", newFile)
+                    newPath = link.path
+                    with h5py.File(newFile, "r") as f:
+                        result = getMeasurementGroup(f, entry_path)
+                        result = newFile + "::" + result.name
+                        print("result = ", result)
+                    break
+        return result
+                """
+    else:
+        entry = h5file[entry_path]
     if hasattr(entry, "items"):
         items_list = entry.items()
     else:
@@ -493,7 +584,7 @@ def getMeasurementGroup(h5file, path):
     return measurement
 
 def getInstrumentGroup(h5file, path):
-    entry_name = getEntryName(path)
+    entry_name = getEntryName(path, h5file=h5file)
     groups = getNXClassGroups(h5file, entry_name, ["NXinstrument", b"NXinstrument"] , single=False)
     n = len(groups)
     if n == 0:
@@ -513,7 +604,7 @@ def getScannedPositioners(h5file, path):
         - Look for positioners with more than one single value
         - Look for datasets present at measurement and title
     """
-    entry_name = getEntryName(path)
+    entry_name = getEntryName(path, h5file=h5file)
     try:
         title = getTitle(h5file, path)
     except:
@@ -580,10 +671,10 @@ if __name__ == "__main__":
     except:
         h5 = h5py.File(sourcename, 'r')
     entries = getNXClassGroups(h5, "/", ["NXentry", b"NXentry"], single=False)
+    print("entries = ", entries)
     if not len(entries):
         entries = [item for name, item in h5["/"].items() if isGroup(item)]
     for entry in entries:
-        print("Entry name = %s" % entry.name)
         if "title" in entry:
             print("Entry title = %s" % entry["title"][()])
         measurement = getMeasurementGroup(h5, entry.name)
