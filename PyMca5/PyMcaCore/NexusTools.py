@@ -156,8 +156,9 @@ def getEntryName(path, h5file=None):
                 if group.name == entry_name:
                     link = h5file.get(key, getlink=True)
                     if isinstance(link, h5py.ExternalLink):
-                        print("filename = %s" % link.filename)
-                        print("path = %s" % link.path)
+                        _logger.info("Dealing with external link")
+                        _logger.info("External filename = <%s>" % link.filename)
+                        _logger.info("External path = <%s>" % link.path)
                         entry_name = "/" + key
                         break
     return entry_name
@@ -254,18 +255,20 @@ def getMcaList(h5file, path, dataset=False, ignore=None):
     and link to it named /entry/measurement/mca
 
     """
+    _logger.debug("Received path %s" % path)
     # deal with ESRF external links with different names from the targets
     correct_entry_path = False
     entry_path = getEntryName(path)
     entry_file = getEntryName(path, h5file=h5file)
+    _logger.debug("Associated entry name from path %s" % entry_path)
+    _logger.debug("Associated entry name from file %s" % entry_file)
+
     if entry_path:
         if entry_path != entry_file:
-            print("entry_path = ", entry_path)
-            print("entry_file = ", entry_file)
-            print("RECEIVED = ", path)
             path = _correct_entry_path(path, entry_path, entry_file)
             correct_entry_path = True
-            print("USED = ", path)
+    _logger.debug("Finally used path %s" % path)
+
     if ignore is None:
         ignore = ["channels",
                   "calibration",
@@ -420,9 +423,7 @@ def getMcaObjectPaths(h5file, mcaPath):
             baseKey = posixpath.basename(key)
             if (baseKey in mcaKeys) and (key != mcaPath):
                 if baseKey not in mca:
-                    name = item.name
-                    name = sanitizeFilePath(h5file, name)
-                    mca[baseKey] = name
+                    mca[baseKey] = sanitizeFilePath(h5file, item.name)
 
     if len(mca) == 2:
         # we found nothing
@@ -452,20 +453,11 @@ def getNXClassGroups(h5file, path, classes, single=False):
     matches one of the items in the classes list.
     """
 
-
-    print("path = ", path)
-    if path in ["", "/"]:
-        print(list(h5file["/"].keys()))
-        print(list(h5file["/"].items()))
-    #isExternalLink = isinstance(h5file.get(path, getlink=True), h5py.ExternalLink)
-    #print("isExternalLink = ", isExternalLink)
-
-
     groups = []
     items_list = list(h5file[path].items())
     if ("NXentry" in classes) or (b"NXentry" in classes):
         items_list = h5py_sorting(items_list)
-    print(items_list[0])
+
     for key, group in items_list:
         if not isGroup(group):
             continue
@@ -477,8 +469,8 @@ def getNXClassGroups(h5file, path, classes, single=False):
                         break
         link = h5file.get(key, getlink=True)
         if isinstance(link, h5py.ExternalLink):
-            print("filename = %s" % link.filename)
-            print("path = %s" % link.path)
+            _logger.info("External filename = <%s>" % link.filename)
+            _logger.info("External file path = <%s>" % link.path)
     return groups
 
 def getPositionersGroup(h5file, path):
@@ -526,36 +518,8 @@ def getMeasurementGroup(h5file, path):
     if path in ["/", b"/", "", b""]:
         raise ValueError("path cannot be the toplevel root")
     entry_path = getEntryName(path, h5file=h5file)
-    if 0 and entry_path not in h5file:
-        # dealing with a external link?
-        result = None
-        items_list = list(h5file["/"].items())
-        for key, group in items_list:
-            if not isGroup(group):
-                continue
-            print(entry_path, group.name)
-            if group.name == entry_path:
-                link = h5file.get(key, getlink=True)
-                if isinstance(link, h5py.ExternalLink):
-                    print("filename = %s" % link.filename)
-                    print("path = %s" % link.path)
-                    entry = h5file[key]
-                """
-                    print("filename = %s" % link.filename)
-                    print("path = %s" % link.path)
-                    print(h5file.filename)
-                    newFile = os.path.join(os.path.dirname(os.path.abspath(h5file.filename)), link.filename)
-                    print("newFile= ", newFile)
-                    newPath = link.path
-                    with h5py.File(newFile, "r") as f:
-                        result = getMeasurementGroup(f, entry_path)
-                        result = newFile + "::" + result.name
-                        print("result = ", result)
-                    break
-        return result
-                """
-    else:
-        entry = h5file[entry_path]
+    entry = h5file[entry_path]
+
     if hasattr(entry, "items"):
         items_list = entry.items()
     else:
