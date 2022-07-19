@@ -226,6 +226,16 @@ def _correct_entry_path(path, entry_in, entry_out):
             return entry_out + path[len(entry_in):]
     return path
 
+def sanitizeFilePath(h5file, path):
+    """
+    This deals with the ESRF case of having a top-level entry being an external link
+    to another top-level entry but with different name
+    """
+    try:
+        h5file[path]
+    except KeyError:
+        path = _correct_entry_path(path, getEntryName(path), getEntryName(path, h5file))
+    return path
 
 def getMcaList(h5file, path, dataset=False, ignore=None):
     """
@@ -314,12 +324,7 @@ def getMcaList(h5file, path, dataset=False, ignore=None):
                             datasetList.append(obj)
                         else:
                             name = obj.name
-                            try:
-                                h5file[name]
-                            except KeyError:
-                                name = _correct_entry_path(name,
-                                                           getEntryName(name),
-                                                           getEntryName(name, h5file))
+                            name = sanitizeFilePath(h5file, name)
                             datasetList.append(name)
     if hasattr(h5file[path], "visititems"):
         # prevent errors dealing with toplevel datasets
@@ -415,7 +420,9 @@ def getMcaObjectPaths(h5file, mcaPath):
             baseKey = posixpath.basename(key)
             if (baseKey in mcaKeys) and (key != mcaPath):
                 if baseKey not in mca:
-                    mca[baseKey] = item.name
+                    name = item.name
+                    name = sanitizeFilePath(h5file, name)
+                    mca[baseKey] = name
 
     if len(mca) == 2:
         # we found nothing
