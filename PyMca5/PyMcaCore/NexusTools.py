@@ -254,7 +254,7 @@ def getMcaList(h5file, path, dataset=False, ignore=None):
             print("entry_file = ", entry_file)
             print("RECEIVED = ", path)
             path = _correct_entry_path(path, entry_path, entry_file)
-            correct_entry_path = False
+            correct_entry_path = True
             print("USED = ", path)
     if ignore is None:
         ignore = ["channels",
@@ -314,8 +314,12 @@ def getMcaList(h5file, path, dataset=False, ignore=None):
                             datasetList.append(obj)
                         else:
                             name = obj.name
-                            if correct_entry_path:
-                                _correct_entry_path(name, entry_path, entry_file)                        
+                            try:
+                                h5file[name]
+                            except KeyError:
+                                name = _correct_entry_path(name,
+                                                           getEntryName(name),
+                                                           getEntryName(name, h5file))
                             datasetList.append(name)
     if hasattr(h5file[path], "visititems"):
         # prevent errors dealing with toplevel datasets
