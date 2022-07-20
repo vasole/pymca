@@ -86,7 +86,7 @@ class McaSelectionType(qt.QWidget):
         if self._selector:
             self._selectorButton.hide()
             self._selectorButton.clicked.connect(self._selectorButtonClickedSlot)
-        if len(shape) > 2:
+        if shape and len(shape) > 2:
             self._sliceList = []
             for i in range(len(shape) - 1):
                 spinbox = qt.QSpinBox(self)
