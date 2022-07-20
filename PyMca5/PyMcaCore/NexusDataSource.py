@@ -183,7 +183,7 @@ def get_family_pattern(filelist):
 def _to_slice_mode(single_idx, shape):
     assert len(shape) > 1
     if len(shape) == 2:
-        return single_idx
+        return [single_idx]
     reference = single_idx
     slice_index = [None] * (len(shape) - 1)
     for i in range(len(shape)-1):
@@ -535,6 +535,8 @@ class NexusDataSource(object):
             if not len(selection[cnt]):
                 continue
             path =  entry + selection['cntlist'][selection[cnt][0]]
+
+            # get the data
             data = phynxFile[path]
             totalElements = 1
             for dim in data.shape:
@@ -545,6 +547,32 @@ class NexusDataSource(object):
                 except MemoryError:
                     data = phynxFile[path]
                     pass
+
+            # get the selection if any
+            selectionTypeKey = cnt + "selectiontype"
+            if cnt in ["y", "m"]:
+                if selection[selectionTypeKey][0].startswith("index") or \
+                   selection[selectionTypeKey][0].startswith("slice"):
+                    exp = re.compile(r'(-?[0-9]+\.?[0-9]*)')
+                    re_items = exp.findall(selection[selectionTypeKey][0].lower())
+                    if selection[selectionTypeKey][0].lower().startswith("index"):
+                        assert(len(re_items) == 1)
+                        single_idx = int(re_items[0])
+                        slice_idx = _to_slice_mode(single_idx, data.shape)
+                    else:
+                        assert(len(re_items) == len(mcaData.shape) - 1)
+                        slice_idx = [int(re_item) for re_item in re_items]
+                        single_idx = _to_index_mode(slice_idx, data.shape)
+                    # care for self consistency
+                    assert(_to_index_mode(slice_idx, data.shape) == single_idx)
+
+                    if len(data.shape) > 1:
+                        for idx in slice_idx:
+                            data = data[idx]
+                        data = numpy.array(data, dtype=numpy.float32)
+                    else:
+                        data = data[()]
+
             if output.info['selectiontype'] in ["1D", "MCA"]:
                 if (len(data.shape) > 1) and ('mcaselectiontype' in selection):
                     mcaselectiontype = selection['mcaselectiontype'].lower()
@@ -559,6 +587,26 @@ class NexusDataSource(object):
                         # calculate the average
                         _logger.debug("AVERAGE")
                         data /= nSpectra
+                    elif selection['mcaselectiontype'].lower().startswith("index") or \
+                         selection['mcaselectiontype'].lower().startswith("slice"):
+                        exp = re.compile(r'(-?[0-9]+\.?[0-9]*)')
+                        re_items = exp.findall(selection['mcaselectiontype'].lower())
+                        if selection['mcaselectiontype'].lower().startswith("index"):
+                            assert(len(re_items) == 1)
+                            single_idx = int(re_items[0])
+                            slice_idx = _to_slice_mode(single_idx, data.shape)
+                        else:
+                            assert(len(re_items) == len(data.shape) - 1)
+                            slice_idx = [int(re_item) for re_item in re_items]
+                            single_idx = _to_index_mode(slice_idx, data.shape)
+                        # care for self consistency
+                        assert(_to_index_mode(slice_idx, data.shape) == single_idx)
+                        if len(data.shape) > 1:
+                            for idx in slice_idx:
+                                data = data[idx]
+                            data = numpy.array(mcaData, dtype=numpy.float32)
+                        else:
+                            data = mcaData[()]
                     else:
                         _logger.warning("Unsupported selection type %s",
                                         mcaselectiontype)
