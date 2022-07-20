@@ -72,7 +72,10 @@ class McaSelectionType(qt.QWidget):
             for dim in shape[:-1]:
                 maximum *= dim
         self._mcaIndex.setMinimum(0)
-        self._mcaIndex.setMaximum(maximum - 1)
+        if maximum:
+            self._mcaIndex.setMaximum(maximum - 1)
+        else:
+            self._mcaIndex.setMaximum(0)
         self._mcaIndex.setValue(0)
         self.mainLayout.addWidget(self._mcaIndex)
         if self._selector:
@@ -91,7 +94,10 @@ class McaSelectionType(qt.QWidget):
             for i in range(len(shape) - 1):
                 spinbox = qt.QSpinBox(self)
                 spinbox.setMinimum(0)
-                spinbox.setMaximum(shape[i] - 1)
+                if shape[i] > 0:
+                    spinbox.setMaximum(shape[i] - 1)
+                else:
+                    spinbox.setMaximum(0)
                 spinbox.setValue(0)
                 self.mainLayout.addWidget(spinbox)
                 spinbox.hide()
