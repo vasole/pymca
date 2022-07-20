@@ -71,7 +71,7 @@ class CntSelectionType(qt.QWidget):
             for dim in shape[:-1]:
                 maximum *= dim
         self._index.setMinimum(0)
-        self._index.setMaximum(maximum)
+        self._index.setMaximum(maximum - 1)
         self._index.setValue(0)
         self.mainLayout.addWidget(self._index)
         if self._selector:
@@ -89,7 +89,7 @@ class CntSelectionType(qt.QWidget):
             for i in range(len(shape) - 1):
                 spinbox = qt.QSpinBox(self)
                 spinbox.setMinimum(0)
-                spinbox.setMaximum(shape[i])
+                spinbox.setMaximum(shape[i] - 1)
                 spinbox.setValue(0)
                 self.mainLayout.addWidget(spinbox)
                 spinbox.hide()
