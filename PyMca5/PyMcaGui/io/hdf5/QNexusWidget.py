@@ -651,10 +651,11 @@ class QNexusWidget(qt.QWidget):
         if (currentEntry != self._lastEntry) and not self._BUTTONS:
             self._lastEntry = None
             cntList = []
-            mcaList = []
+            cntShapeList = []
             aliasList = []
             measurement = None
             scanned = []
+            scannedShapeList = []
             mcaList = []
             mcaShapeList = []
             if posixpath.dirname(entryName) != entryName:
@@ -665,6 +666,8 @@ class QNexusWidget(qt.QWidget):
                     scanned = NexusTools.getScannedPositioners(h5file,
                                                                ddict['name'])
                     if measurement is not None:
+                        measurementDatasets = [item for key,item in measurement.items() \
+                                       if self._isNumeric(item)]
                         measurement = [item.name for key,item in measurement.items() \
                                        if self._isNumeric(item)]
                         try:
@@ -673,42 +676,75 @@ class QNexusWidget(qt.QWidget):
                                 measurement.sort(key=str.casefold)
                         except:
                             _logger.error("Cannot apply sorting %s" % sys.exc_info()[1])
+                        nmeasurement = len(measurement)
+                        cntShapeList = [None] * nmeasurement
+                        for item in measurementDatasets:
+                            if item.name in measurement:
+                                idx = measurement.index(item.name)
+                                if hasattr(item, "shape"):
+                                    shape = item.shape
+                                else:
+                                    shape = (0,)
+                                cntShapeList[idx] = shape
                     if self._mca:
                         mcaList = NexusTools.getMcaList(h5file, entryName)
                         mcaShapeList = []
                         for mca in mcaList:
                             dataset = h5file[mca]
                             if hasattr(dataset, "shape"):
-                                mcaShapeList.append(h5file[mca].shape)
+                                mcaShapeList.append(dataset.shape)
                             else:
                                 mcaShapeList.append((0,))
+                    if scanned:
+                        scannedShapeList = []
+                        for itemName in scanned:
+                            try:
+                                dataset = h5file[itemName]
+                            except KeyError:
+                                dataset = h5file[NexusTools.sanitizeFilePath(h5file, itemName)]
+                            if hasattr(dataset, "shape"):
+                                scannedShapeList.append(dataset.shape)
+                            else:
+                                scannedShapeList.append((0,))
                 finally:
                     h5file.close()
                     h5file = None
                     del h5file
+            self._autoCntList = []
+            self._autoCntShapeList = []
             for i in range(len(scanned)):
                 key = scanned[i]
-                cntList.append(key)
+                self._autoCntList.append(key)
+                self._autoCntShapeList.append(scannedShapeList[i])
                 aliasList.append(posixpath.basename(key))
+
             if measurement is not None:
-                for key in measurement:
-                    if key not in cntList:
-                        cntList.append(key)
+                for i in range(len(measurement)):
+                    key = measurement[i]
+                    if key not in self._autoCntList:
+                        self._autoCntList.append(key)
+                        self._autoCntShapeList.append(cntShapeList[i])
                         aliasList.append(posixpath.basename(key))
+
             cleanedCntList = []
-            for key in cntList:
+            for key in self._autoCntList:
                 root = key.split('/')
                 root = "/" + root[1]
                 if len(key) == len(root):
                     cleanedCntList.append(key)
                 else:
                     cleanedCntList.append(key[len(root):])
+
             self._autoAliasList = aliasList
+
             self._autoCntList = cleanedCntList
+
             _logger.info("building autoTable")
+
             self.autoTable.build(self._autoCntList,
                                  self._autoAliasList,
-                                 selection=self._lastCntSelection)
+                                 selection=self._lastCntSelection,
+                                 shapelist=self._autoCntShapeList)
             currentTab = qt.safe_str(self.tableTab.tabText( \
                                     self.tableTab.currentIndex()))
             if self._mca:
@@ -999,8 +1035,11 @@ class QNexusWidget(qt.QWidget):
                 sel['selection']['entry'] = entry
                 sel['selection']['key'] = "%d.%d" % (fileIndex+1, entryIndex+1)
                 sel['selection']['x'] = cntSelection['x']
+                sel['selection']['xselectiontype'] = cntSelection['xselectiontype']
                 sel['selection']['y'] = [yCnt]
+                sel['selection']['yselectiontype'] = [cntSelection['yselectiontype'][cntSelection['y'].index(yCnt)]]
                 sel['selection']['m'] = cntSelection['m']
+                sel['selection']['mselectiontype'] = cntSelection['monselectiontype']
                 sel['selection']['cntlist'] = cntSelection['cntlist']
                 sel['selection']['LabelNames'] = cntSelection['aliaslist']
                 #sel['selection']['aliaslist'] = cntSelection['aliaslist']
@@ -1024,7 +1063,7 @@ class QNexusWidget(qt.QWidget):
                             raise
                     sel['scanselection'] = True
                     if hasattr(actualDataset, "shape"):
-                        if len(actualDataset.shape) > 1:
+                        if len(actualDataset.shape) > 1 and sel['selection']['yselectiontype'][0] in ["full", ""]:
                             if 1 in actualDataset.shape[-2:]:
                                 #shape (1, n) or (n, 1)
                                 pass
@@ -1032,6 +1071,17 @@ class QNexusWidget(qt.QWidget):
                                 # at least twoD dataset
                                 selectionType= "2D"
                                 sel['scanselection'] = False
+                        elif len(actualDataset.shape) > 1 and sel['selection']['yselectiontype'][0].startswith("index"):
+                            if len(actualDataset.shape) <= 2:
+                                # 1D selection
+                                pass
+                            else:
+                                # at least twoD dataset
+                                selectionType= "2D"
+                                sel['scanselection'] = False
+                        elif len(actualDataset.shape) > 1 and sel['selection']['yselectiontype'][0].startswith("slice"):
+                            # 1D selection
+                            pass
                     n_axes = len(sel['selection']['x'])
                     if n_axes > 1:
                         selectionType = "%dD" % len(sel['selection']['x'])
