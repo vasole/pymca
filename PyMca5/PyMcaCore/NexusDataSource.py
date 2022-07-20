@@ -550,28 +550,27 @@ class NexusDataSource(object):
 
             # get the selection if any
             selectionTypeKey = cnt + "selectiontype"
-            if cnt in ["y", "m"]:
-                if selection[selectionTypeKey][0].startswith("index") or \
-                   selection[selectionTypeKey][0].startswith("slice"):
-                    exp = re.compile(r'(-?[0-9]+\.?[0-9]*)')
-                    re_items = exp.findall(selection[selectionTypeKey][0].lower())
-                    if selection[selectionTypeKey][0].lower().startswith("index"):
-                        assert(len(re_items) == 1)
-                        single_idx = int(re_items[0])
-                        slice_idx = _to_slice_mode(single_idx, data.shape)
-                    else:
-                        assert(len(re_items) == len(mcaData.shape) - 1)
-                        slice_idx = [int(re_item) for re_item in re_items]
-                        single_idx = _to_index_mode(slice_idx, data.shape)
-                    # care for self consistency
-                    assert(_to_index_mode(slice_idx, data.shape) == single_idx)
+            if selection[selectionTypeKey][0].startswith("index") or \
+               selection[selectionTypeKey][0].startswith("slice"):
+                exp = re.compile(r'(-?[0-9]+\.?[0-9]*)')
+                re_items = exp.findall(selection[selectionTypeKey][0].lower())
+                if selection[selectionTypeKey][0].lower().startswith("index"):
+                    assert(len(re_items) == 1)
+                    single_idx = int(re_items[0])
+                    slice_idx = _to_slice_mode(single_idx, data.shape)
+                else:
+                    assert(len(re_items) == len(mcaData.shape) - 1)
+                    slice_idx = [int(re_item) for re_item in re_items]
+                    single_idx = _to_index_mode(slice_idx, data.shape)
+                # care for self consistency
+                assert(_to_index_mode(slice_idx, data.shape) == single_idx)
 
-                    if len(data.shape) > 1:
-                        for idx in slice_idx:
-                            data = data[idx]
-                        data = numpy.array(data, dtype=numpy.float32)
-                    else:
-                        data = data[()]
+                if len(data.shape) > 1:
+                    for idx in slice_idx:
+                        data = data[idx]
+                    data = numpy.array(data, dtype=numpy.float32)
+                else:
+                    data = data[()]
 
             if output.info['selectiontype'] in ["1D", "MCA"]:
                 if (len(data.shape) > 1) and ('mcaselectiontype' in selection):
@@ -632,6 +631,8 @@ class NexusDataSource(object):
                 if output.x is None:
                     output.x = [data]
                 if len(selection[cnt]) > 1:
+                    # TODO: if the selection for the additional axes is not complete
+                    # this will not work.
                     for xidx in range(1, len(selection[cnt])):
                         path =  entry + selection['cntlist'][selection[cnt][xidx]]
                         data = phynxFile[path][()]
