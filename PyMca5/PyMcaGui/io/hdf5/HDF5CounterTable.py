@@ -267,6 +267,7 @@ class HDF5CounterTable(qt.QTableWidget):
         self.cntList = cntlist
         self.aliasList = aliaslist
         self.shapeList = shapelist
+        self.setRowCount(0)
         n = len(cntlist)
         if self.shapeList is None:
             self.shapeList = (None,) * n
@@ -289,7 +290,7 @@ class HDF5CounterTable(qt.QTableWidget):
                 if i in useFullPath:
                     self.__addLine(i, cntlist[i], shape=self.shapeList[i])
                 else:
-                    self.__addLine(i, posixpath.basename(cntlist[i]), self.shapeList[i])
+                    self.__addLine(i, posixpath.basename(cntlist[i]), shape=self.shapeList[i])
                 for j in range(1, 4, 1):
                     widget = self.cellWidget(i, j)
                     widget.setEnabled(True)
