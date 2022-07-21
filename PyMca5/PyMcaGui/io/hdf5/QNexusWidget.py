@@ -1176,6 +1176,17 @@ class QNexusWidget(qt.QWidget):
                     sel['mcaselection']  = False
                 sel['selection']['selectiontype'] = selectionType
                 aliases = cntSelection['aliaslist']
+                if sel['selection']['yselectiontype'][0] not in ["", "full", None]:
+                     aliases[yCnt] += " " + sel['selection']['yselectiontype'][0]
+
+                if len(cntSelection['m']):
+                     if sel['selection']['mselectiontype'][0] not in ["", "full", None]:
+                         aliases[cntSelection['m'][0]] += " " + sel['selection']['mselectiontype'][0]
+
+                if len(cntSelection['x']):
+                     if sel['selection']['xselectiontype'][0] not in ["", "full", None]:
+                         aliases[cntSelection['x'][0]] += " " + sel['selection']['xselectiontype'][0]
+
                 if len(cntSelection['x']) and len(cntSelection['m']):
                     addLegend = " (%s/%s) vs %s" % (aliases[yCnt],
                                                    aliases[cntSelection['m'][0]],
