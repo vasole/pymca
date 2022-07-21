@@ -282,6 +282,8 @@ class QNexusWidget(qt.QWidget):
 
         ddict = self._getConfigurationFromFile(fname)
         if ddict is not None:
+            if "shapes" not in ddict:
+                ddict["shapes"] = [None,] * len(ddict["counters"])
             self.setWidgetConfiguration(ddict)
 
     def _mergeCounterTableConfiguration(self):
@@ -296,11 +298,13 @@ class QNexusWidget(qt.QWidget):
         current = self.getWidgetConfiguration()
         cntList = ddict['counters']
         aliasList = ddict['aliases']
+        shapeList = ddict['shapes']
         for i in range(len(cntList)):
             cnt = cntList[i]
             if cnt not in current['counters']:
                 current['counters'].append(cnt)
                 current['aliases'].append(aliasList[i])
+                current['shapes'].append(shapeList[i])
 
         self.setWidgetConfiguration(current)
 
@@ -332,6 +336,7 @@ class QNexusWidget(qt.QWidget):
 
     def _deleteSelectedCountersFromTable(self):
         itemList = self.cntTable.selectedItems()
+        _logger.debug("Selected items = %s" % itemList)
         rowList = []
         for item in itemList:
             row = item.row()
@@ -341,6 +346,7 @@ class QNexusWidget(qt.QWidget):
         rowList.sort()
         rowList.reverse()
         current = self.cntTable.getCounterSelection()
+        _logger.debug("current = %s" % current)
         for row in rowList:
             for key in ['x', 'y', 'm']:
                 if row in current[key]:
@@ -350,12 +356,19 @@ class QNexusWidget(qt.QWidget):
         ddict = {}
         ddict['counters'] = []
         ddict['aliases'] = []
+        ddict['shapes'] = []
         for i in range(self.cntTable.rowCount()):
             if i not in rowList:
-                name = safe_str(self.cntTable.item(i, 0).text())
-                alias = safe_str(self.cntTable.item(i, 4).text())
-                ddict['counters'].append(name)
-                ddict['aliases'].append(alias)
+                #name = safe_str(self.cntTable.item(i, 0).text())
+                #alias = safe_str(self.cntTable.item(i, 4).text())
+                ddict['counters'].append(current["cntlist"][i])
+                ddict['aliases'].append(current["aliaslist"][i])
+                ddict['shapes'].append(current["shapelist"][i])
+
+        for i in rowList:
+            del current['cntlist'][i]
+            del current['aliaslist'][i]
+            del current['shapelist'][i]
 
         self.setWidgetConfiguration(ddict)
         self.cntTable.setCounterSelection(current)
@@ -416,7 +429,7 @@ class QNexusWidget(qt.QWidget):
         ddict = {}
         ddict['counters'] = cntSelection['cntlist']
         ddict['aliases'] = cntSelection['aliaslist']
-        ddict['shapelist'] = cntSelection['shapelist']
+        ddict['shapes'] = cntSelection['shapelist']
         return ddict
 
     def setWidgetConfiguration(self, ddict=None):
@@ -428,7 +441,7 @@ class QNexusWidget(qt.QWidget):
         else:
             self._cntList = ddict['counters']
             self._aliasList = ddict['aliases']
-            self._shapeList = ddict['shapelist']
+            self._shapeList = ddict['shapes']
             if type(self._cntList) == type(""):
                 self._cntList = [ddict['counters']]
             if type(self._aliasList) == type(""):
