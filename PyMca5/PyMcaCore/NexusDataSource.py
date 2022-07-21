@@ -559,7 +559,7 @@ class NexusDataSource(object):
                     single_idx = int(re_items[0])
                     slice_idx = _to_slice_mode(single_idx, data.shape)
                 else:
-                    assert(len(re_items) == len(mcaData.shape) - 1)
+                    assert(len(re_items) == len(data.shape) - 1)
                     slice_idx = [int(re_item) for re_item in re_items]
                     single_idx = _to_index_mode(slice_idx, data.shape)
                 # care for self consistency
