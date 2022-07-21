@@ -103,6 +103,11 @@ class McaSelectionType(qt.QWidget):
                 spinbox.hide()
                 spinbox.valueChanged[int].connect(self._sliceChangedSlot)
                 self._sliceList.append(spinbox)
+        if shape is None or len(shape) < 2:
+            self._selectionType.hide()
+        elif len(shape) == 2:
+            if shape[0] == 1:
+                self._selectionType.hide()
                     
     def setChecked(self, value):
         if value:
