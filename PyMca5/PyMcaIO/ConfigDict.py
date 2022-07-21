@@ -244,6 +244,8 @@ class ConfigDict(dict):
         for key in ddict.keys():
             if isinstance(ddict[key], list):
                 listkey.append(key)
+            elif isinstance(ddict[key], tuple):
+                listkey.append(key)
             elif hasattr(ddict[key], 'keys'):
                 dictkey.append(key)
             else:

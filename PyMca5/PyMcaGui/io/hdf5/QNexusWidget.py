@@ -284,6 +284,11 @@ class QNexusWidget(qt.QWidget):
         if ddict is not None:
             if "shapes" not in ddict:
                 ddict["shapes"] = [None,] * len(ddict["counters"])
+            elif not hasattr(ddict["shapes"], "__len__"):
+                ddict["shapes"] = [ddict["shapes"]]
+            elif len(ddict["shapes"]) != len(ddict["counters"]):
+                ddict["shapes"] = [ddict["shapes"]]
+            assert len(ddict["shapes"]) == len(ddict["counters"])
             self.setWidgetConfiguration(ddict)
 
     def _mergeCounterTableConfiguration(self):
