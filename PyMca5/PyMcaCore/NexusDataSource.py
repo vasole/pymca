@@ -565,12 +565,15 @@ class NexusDataSource(object):
                 # care for self consistency
                 assert(_to_index_mode(slice_idx, data.shape) == single_idx)
 
-                if len(data.shape) > 1:
-                    for idx in slice_idx:
-                        data = data[idx]
-                    data = numpy.array(data, dtype=numpy.float32)
+                if output.info['selectiontype'] in ["1D", "MCA"]:
+                    if len(data.shape) > 1:
+                        for idx in slice_idx:
+                            data = data[idx]
+                        data = numpy.array(data, dtype=numpy.float32)
+                    else:
+                        data = data[()]
                 else:
-                    data = data[()]
+                    data = data[single_idx]
 
             if output.info['selectiontype'] in ["1D", "MCA"]:
                 if (len(data.shape) > 1) and ('mcaselectiontype' in selection):
