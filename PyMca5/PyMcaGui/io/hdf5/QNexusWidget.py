@@ -443,7 +443,7 @@ class QNexusWidget(qt.QWidget):
             self._cntList = []
             self._aliasList = []
             self._shapeList = []
-        else:
+        elif "counters" in ddict and len(ddict["counters"]):
             self._cntList = ddict['counters']
             self._aliasList = ddict['aliases']
             if type(self._cntList) == type(""):
@@ -1163,17 +1163,20 @@ class QNexusWidget(qt.QWidget):
                     actualDataset = phynxFile[actualDatasetPath]
                     if hasattr(actualDataset, "shape"):
                         actualDatasetLen = len(actualDataset.shape)
-                        if (actualDatasetLen == 2) and (1 in actualDataset.shape):
-                            # still can be used
-                            pass
-                        elif (actualDatasetLen > 1) and (not hasattr(self, "_messageShown")):
-                            # at least twoD dataset
-                            msg = qt.QMessageBox(self)
-                            msg.setIcon(qt.QMessageBox.Information)
-                            msg.setText("Multidimensional data set as MCA. Using Average. You should use ROI Imaging")
-                            msg.exec()
-                            self._messageShown = True
-                        sel['selection']['mcaselectiontype'] = "avg"
+                        if sel['selection']['yselectiontype'][0] not in ["", "full", None]:
+                            sel['selection']['mcaselectiontype'] = sel['selection']['yselectiontype'][0]
+                        else:
+                            if (actualDatasetLen == 2) and (1 in actualDataset.shape):
+                                # still can be used
+                                pass
+                            elif (actualDatasetLen > 1) and (not hasattr(self, "_messageShown")):
+                                # at least twoD dataset
+                                msg = qt.QMessageBox(self)
+                                msg.setIcon(qt.QMessageBox.Information)
+                                msg.setText("Multidimensional data set as MCA. Using Average.\n Consider slicing or use ROI Imaging tool")
+                                msg.exec()
+                                self._messageShown = True
+                            sel['selection']['mcaselectiontype'] = "avg"
                 else:
                     sel['scanselection'] = False
                     sel['mcaselection']  = False
