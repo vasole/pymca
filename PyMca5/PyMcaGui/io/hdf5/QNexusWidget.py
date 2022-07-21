@@ -446,11 +446,14 @@ class QNexusWidget(qt.QWidget):
         else:
             self._cntList = ddict['counters']
             self._aliasList = ddict['aliases']
-            self._shapeList = ddict['shapes']
             if type(self._cntList) == type(""):
                 self._cntList = [ddict['counters']]
             if type(self._aliasList) == type(""):
                 self._aliasList = [ddict['aliases']]
+            if 'shapes' in ddict:
+                self._shapeList = ddict['shapes']
+            else:
+                self._shapeList = [None,] * len(self._cntList)
         self.cntTable.build(self._cntList, self._aliasList, shapelist=self._shapeList)
         _logger.debug("TODO - Add selection options")
 
@@ -969,7 +972,7 @@ class QNexusWidget(qt.QWidget):
         text = qt.safe_str(self.tableTab.tabText(self.tableTab.currentIndex()))
         if text.upper() == "USER":
             actions = self.actions.getConfiguration()
-            if len(self.autoTable.getCounterSelection()['y']):
+            if len(self.cntTable.getCounterSelection()['y']):
                 if actions["auto"] == "ADD":
                     self._addAction()
                 elif actions["auto"] == "REPLACE":
@@ -980,7 +983,7 @@ class QNexusWidget(qt.QWidget):
         text = qt.safe_str(self.tableTab.tabText(self.tableTab.currentIndex()))
         if text.upper() == "MCA":
             actions = self.actions.getConfiguration()
-            if len(self.autoTable.getCounterSelection()['y']):
+            if len(self.mcaTable.getMcaSelection()['selectionindex']):
                 if actions["auto"] == "ADD":
                     self._addAction()
                 elif actions["auto"] == "REPLACE":
