@@ -119,6 +119,7 @@ class QNexusWidget(qt.QWidget):
         self._oldCntSelection = None
         self._cntList = []
         self._aliasList = []
+        self._shapeList = []
         self._autoCntList = []
         self._autoAliasList = []
         self._defaultModel = HDF5Widget.FileModel()
@@ -415,6 +416,7 @@ class QNexusWidget(qt.QWidget):
         ddict = {}
         ddict['counters'] = cntSelection['cntlist']
         ddict['aliases'] = cntSelection['aliaslist']
+        ddict['shapelist'] = cntSelection['shapelist']
         return ddict
 
     def setWidgetConfiguration(self, ddict=None):
@@ -422,14 +424,16 @@ class QNexusWidget(qt.QWidget):
         if ddict is None:
             self._cntList = []
             self._aliasList = []
+            self._shapeList = []
         else:
             self._cntList = ddict['counters']
             self._aliasList = ddict['aliases']
+            self._shapeList = ddict['shapelist']
             if type(self._cntList) == type(""):
                 self._cntList = [ddict['counters']]
             if type(self._aliasList) == type(""):
                 self._aliasList = [ddict['aliases']]
-        self.cntTable.build(self._cntList, self._aliasList)
+        self.cntTable.build(self._cntList, self._aliasList, shapelist=self._shapeList)
         _logger.debug("TODO - Add selection options")
 
     def setDataSource(self, dataSource):
@@ -812,7 +816,12 @@ class QNexusWidget(qt.QWidget):
                             self._aliasList.append(basename)
                         else:
                             self._aliasList.append(cnt)
-                        self.cntTable.build(self._cntList, self._aliasList)
+                        if 'shape' in ddict and 'x' in ddict['shape']:
+                            shape = [int(item) for item in ddict['shape'].split('x')]
+                        else:
+                            shape = None
+                        self._shapeList.append(shape)
+                        self.cntTable.build(self._cntList, self._aliasList, shapelist=self._shapeList)
             elif (ddict['color'] == qt.Qt.blue) and ("silx" in sys.modules):
                 # there is an action to be applied
                 self.showInfoWidget(ddict["file"], ddict["name"], dset=False)
@@ -843,7 +852,11 @@ class QNexusWidget(qt.QWidget):
                                 self._aliasList.append(basename)
                             else:
                                 self._aliasList.append(cnt)
-                            self.cntTable.build(self._cntList, self._aliasList)
+                            try:
+                                self._shapeList.append(dataset.shape)
+                            except:
+                                self._shapeList.append(None)
+                            self.cntTable.build(self._cntList, self._aliasList, shapelist=self._shapeList)
                         return
                 _logger.debug("Unhandled item type: %s", ddict['dtype'])
 
