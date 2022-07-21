@@ -577,7 +577,15 @@ class NexusDataSource(object):
                     mcaselectiontype = selection['mcaselectiontype'].lower()
                     nSpectra = 1.0
                     for iDummy in data.shape[:-1]:
-                        data = data.sum(axis=0, dtype=numpy.float64)
+                        # we might be working with an HDF5 dataset here
+                        if hasattr(data, "sum"):
+                            data = data.sum(axis=0, dtype=numpy.float64)
+                        else:
+                            tmpSum = numpy.zeros(data.shape[1:], dtype=numpy.float64)
+                            for i in range(iDummy):
+                                tmpSum += data[i]
+                            data = tmpSum
+                            tmpSum = None
                         nSpectra *= iDummy
                     if mcaselectiontype == "sum":
                         # sum already calculated
