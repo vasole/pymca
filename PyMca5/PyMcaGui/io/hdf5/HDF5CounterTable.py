@@ -221,6 +221,7 @@ class HDF5CounterTable(qt.QTableWidget):
         qt.QTableWidget.__init__(self, parent)
         self.cntList      = []
         self.aliasList    = []
+        self.shapeList    = []
         self.mcaList      = []
         self.xSelection   = []
         self.ySelection   = []
@@ -248,7 +249,7 @@ class HDF5CounterTable(qt.QTableWidget):
         self.cellChanged[int, int].connect(self._aliasSlot)
 
     def build(self, cntlist, aliaslist=None, selection=None, shapelist=None):
-        _logger.debug("build cntlist = %s aliaslist = %s" % (cntlist, aliaslist))
+        _logger.debug("build cntlist = %s aliaslist = %s shapelist = %s" % (cntlist, aliaslist, shapelist))
         self.__building = True
         if selection is None:
             if len(cntlist):
@@ -471,6 +472,7 @@ class HDF5CounterTable(qt.QTableWidget):
         ddict = {}
         ddict['cntlist'] = self.cntList * 1
         ddict['aliaslist'] = self.aliasList * 1
+        ddict['shapelist'] = self.shapeList * 1
         ddict['x'] = self.xSelection * 1
         ddict['y'] = self.ySelection * 1
         ddict['m'] = self.monSelection * 1
