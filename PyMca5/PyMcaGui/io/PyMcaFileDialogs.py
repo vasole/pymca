@@ -85,10 +85,6 @@ def getFileList(parent=None, filetypelist=None, message=None, currentdir=None,
         fileTypeList = ['All Files (*)']
     else:
         fileTypeList = filetypelist
-    if currentfilter not in filetypelist:
-        currentfilter = None
-    if currentfilter is None:
-        currentfilter = filetypelist[0]
     if message is None:
         if single:
             message = "Please select one file"
@@ -105,6 +101,15 @@ def getFileList(parent=None, filetypelist=None, message=None, currentdir=None,
             wdir = PyMcaDirs.outputDir
     else:
         wdir = currentdir
+    if currentfilter is None:
+        if mode == "OPEN":
+            currentfilter = PyMcaDirs.openFilter
+        else:
+            currentfilter = PyMcaDirs.saveFilter
+    if currentfilter not in filetypelist:
+        currentfilter = None
+    if currentfilter is None:
+        currentfilter = filetypelist[0]
     if native is None:
         nativeFileDialogs = PyMcaDirs.nativeFileDialogs
     else:
@@ -174,7 +179,7 @@ def getFileList(parent=None, filetypelist=None, message=None, currentdir=None,
         else:
             if mode == "OPEN":
                 if single:
-                    if QTVERSION < '5.0.0': 
+                    if QTVERSION < '5.0.0':
                         filelist = [qt.QFileDialog.getOpenFileName(parent,
                                 message,
                                 wdir,
@@ -296,6 +301,14 @@ def getFileList(parent=None, filetypelist=None, message=None, currentdir=None,
     #do not sort file list in order to allow the user other choices
     #filelist.sort()
     if getfilter:
+        if mode == "OPEN":
+            PyMcaDirs.openFilter = filterused
+            if PyMcaDirs.saveFilter is None:
+                PyMcaDirs.saveFilter = filterused
+        else:
+            PyMcaDirs.saveFilter = filterused
+            if PyMcaDirs.openFilter is None:
+                PyMcaDirs.openFilter = filterused
         return filelist, filterused
     else:
         return filelist
@@ -321,4 +334,8 @@ if __name__ == "__main__":
                       getfilter=True,
                       currentfilter='TIFF Files (*.tif *.tiff)',
                       single=False))
+    print("Last INPUT directory <%s>" % PyMcaDirs.inputDir)
+    print("Last OPEN filter <%s>" % PyMcaDirs.openFilter)
+    print("Last OUTPUT directory <%s>" % PyMcaDirs.outputDir)
+    print("Last SAVE filter <%s>" % PyMcaDirs.saveFilter)
     #app.exec()
