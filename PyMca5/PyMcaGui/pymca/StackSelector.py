@@ -374,12 +374,12 @@ class StackSelector(object):
     def _getStackOfFiles(self, getfilter=None):
         if getfilter is None:
             getfilter = False
-        fileTypeList = ["EDF Files (*edf *edf.gz)",
+        fileTypeList = ["HDF5 Files (*.nxs *.hdf *.hdf5 *.h5)",
+                        "EDF Files (*edf *edf.gz)",
+                        "EDF Files (*ccd)",
                         "Image Files (*edf *ccd *raw *edf.gz *ccd.gz *raw.gz *cbf)",
                         "Image Files (*tif *tiff *TIF *TIFF)",
                         "TextImage Files (*txt)",
-                        "HDF5 Files (*.nxs *.hdf *.hdf5 *.h5)",
-                        "EDF Files (*ccd)",
                         "Specfile Files (*mca)",
                         "Specfile Files (*dat)",
                         "OMNIC Files (*map)",
