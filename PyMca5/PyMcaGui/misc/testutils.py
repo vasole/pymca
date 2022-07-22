@@ -26,7 +26,7 @@
 
 __authors__ = ["T. Vincent"]
 __license__ = "MIT"
-__date__ = "05/10/2018"
+__date__ = "22/07/2022"
 
 
 import gc
@@ -202,9 +202,13 @@ class TestCaseQt(unittest.TestCase):
 
     def _currentTestSucceeded(self):
         if hasattr(self, '_outcome'):
-            # For Python >= 3.4
-            result = self.defaultTestResult()  # these 2 methods have no side effects
-            self._feedErrorsToResult(result, self._outcome.errors)
+            if hasattr(self, '_feedErrorsToResult'):
+                # For Python 3.4 -3.10
+                result = self.defaultTestResult()  # these 2 methods have no side effects
+                self._feedErrorsToResult(result, self._outcome.errors)
+            else:
+                # Python 3.11+
+                result = self._outcome.result
         else:
             # For Python < 3.4
             result = getattr(self, '_outcomeForDoCleanups', self._resultForDoCleanups)
