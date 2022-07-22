@@ -1,6 +1,8 @@
 VERSION 5.7.3
 -------------
 
+- Allow project build and test under Python 3.11
+
 - HDF5. Improved support of external links.
 
 - HDF5. Simplify single MCA selection in multidimensional datasets.
