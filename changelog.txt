@@ -1,7 +1,15 @@
 VERSION 5.7.3
 -------------
 
-- Simplify single MCA selection in multidimensional datasets.
+- HDF5. Improved support of external links.
+
+- HDF5. Simplify single MCA selection in multidimensional datasets.
+
+- XRF. Enable copy to clipboard from the tables.
+
+- GUI. Add -log(y/yactive) to the list of normalization options.
+
+- IO. Support LabSpec6 exported maps.
 
 VERSION 5.7.2
 -------------
