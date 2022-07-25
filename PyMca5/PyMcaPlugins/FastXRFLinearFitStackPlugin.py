@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,39 +23,16 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-"""
+__doc__ = """
+Fast XRF Linear fit of data stack by:
 
-A Stack plugin is a module that will be automatically added to the PyMca stack windows
-in order to perform user defined operations on the data stack.
+- fixing non-linear parameters to its starting values
+- processing the data in chunks instead of point by point
 
-These plugins will be compatible with any stack window that provides the functions:
-    #data related
-    getStackDataObject
-    getStackData
-    getStackInfo
-    setStack
-
-    #images related
-    addImage
-    removeImage
-    replaceImage
-
-    #mask related
-    setSelectionMask
-    getSelectionMask
-
-    #displayed curves
-    getActiveCurve
-    getGraphXLimits
-    getGraphYLimits
-
-    #information method
-    stackUpdated
-    selectionMaskUpdated
 """
 import sys
 import os
@@ -75,13 +52,14 @@ _logger = logging.getLogger(__name__)
 
 
 class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
+    '''Performs a speedy linear fit''' 
     def __init__(self, stackWindow, **kw):
         if _logger.getEffectiveLevel() == logging.DEBUG:
             StackPluginBase.pluginBaseLogger.setLevel(logging.DEBUG)
         StackPluginBase.StackPluginBase.__init__(self, stackWindow, **kw)
         self.methodDict = {}
         function = self.calculate
-        info = "Fit stack with a fit configuration"
+        info = "Fast XRF Linear fit of data stack"
         icon = PyMca_Icons.fit
         self.methodDict["Fit Stack"] =[function,
                                        info,
@@ -268,7 +246,7 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
         #update
         self.selectionMaskUpdated()
 
-MENU_TEXT = "Fast XRF Stack Fitting"
+MENU_TEXT = "Fast XRF Linear Fit"
 def getStackPluginInstance(stackWindow, **kw):
     ob = FastXRFLinearFitStackPlugin(stackWindow)
     return ob
