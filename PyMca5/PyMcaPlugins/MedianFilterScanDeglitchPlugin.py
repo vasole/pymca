@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2020 T.Rueter, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,7 @@ threshold), and the user can choose to apply it on the active curve or on all
 curves.
 
 """
-__author__ = "T. Rueter - ESRF Data Analysis"
+__author__ = "T. Rueter - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -43,6 +43,7 @@ _logger = logging.getLogger(__name__)
 
 
 class MedianFilterScanDeglitchPlugin(Plugin1DBase.Plugin1DBase):
+    '''Median-filter-based deglitching'
     def __init__(self,  plotWindow,  **kw):
         Plugin1DBase.Plugin1DBase.__init__(self,  plotWindow,  **kw)
         self.methodDict = {

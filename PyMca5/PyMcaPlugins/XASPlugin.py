@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -39,6 +39,7 @@ except ImportError:
     print("XASPlugin problem")
 
 class XASPlugin(Plugin1DBase.Plugin1DBase):
+    '''Normalization, EXAFS signal extraction and FT of XAS data''' 
     def __init__(self, plotWindow, **kw):
         Plugin1DBase.Plugin1DBase.__init__(self, plotWindow, **kw)
         self.methodDict = {}
