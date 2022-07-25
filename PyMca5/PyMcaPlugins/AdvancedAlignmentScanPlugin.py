@@ -457,6 +457,7 @@ class AlignmentWidget(qt.QDialog):
                 item.setText(str(floatValue))
 
 class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
+    '''It calculates and corrects shifts using a variety of different methods.'''
     def __init__(self, plotWindow, **kw):
         Plugin1DBase.Plugin1DBase.__init__(self, plotWindow, **kw)
         self.__randomization = True
