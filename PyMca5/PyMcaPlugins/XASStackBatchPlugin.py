@@ -27,36 +27,20 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-"""
+__doc__=     """
+    This plugin perform XAS data reduction in the complete stack, using
+    a previously generated configuration file (XAS plugin in plot window).
 
-A Stack plugin is a module that will be automatically added to the PyMca stack windows
-in order to perform user defined operations on the data stack.
+    It generates secondary stacks corresponding to
 
-These plugins will be compatible with any stack window that provides the functions:
-    #data related
-    getStackDataObject
-    getStackData
-    getStackInfo
-    setStack
+    - The normalized spectra
+    - The EXAFS signal
+    - The Fourier transform of the signal
 
-    #images related
-    addImage
-    removeImage
-    replaceImage
+    The user can then perform selections based on those features and
+    not just on the raw data.
+    """
 
-    #mask related
-    setSelectionMask
-    getSelectionMask
-
-    #displayed curves
-    getActiveCurve
-    getGraphXLimits
-    getGraphYLimits
-
-    #information method
-    stackUpdated
-    selectionMaskUpdated
-"""
 import sys
 import os
 import logging
@@ -74,6 +58,19 @@ _logger = logging.getLogger(__name__)
 
 
 class XASStackBatchPlugin(StackPluginBase.StackPluginBase):
+    """
+    This plugin perform XAS data reduction of the complete stack, using
+    a previously generated configuration file (XAS plugin in plot window).
+
+    It generates secondary stacks corresponding to
+
+    - The normalized spectra
+    - The EXAFS signal
+    - The Fourier transform of the signal
+
+    The user can then perform selections based on those features and
+    not just on the raw data.
+    """
     def __init__(self, stackWindow, **kw):
         if _logger.getEffectiveLevel() == logging.DEBUG:
             StackPluginBase.pluginBaseLogger.setLevel(logging.DEBUG)
@@ -113,7 +110,7 @@ class XASStackBatchPlugin(StackPluginBase.StackPluginBase):
             self.addImage(ddict['image'], ddict['title'])
         elif ddict['event'] == "addAllClicked":
             for i in range(len(ddict["images"])):
-                self.addImage(ddict['images'][i], ddict['titles'][i])            
+                self.addImage(ddict['images'][i], ddict['titles'][i])
         elif ddict['event'] == "removeImageClicked":
             self.removeImage(ddict['title'])
         elif ddict['event'] == "replaceImageClicked":
@@ -244,4 +241,3 @@ MENU_TEXT = "XAS Batch"
 def getStackPluginInstance(stackWindow, **kw):
     ob = XASStackBatchPlugin(stackWindow)
     return ob
-    
