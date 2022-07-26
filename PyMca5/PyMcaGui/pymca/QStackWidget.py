@@ -809,9 +809,16 @@ class QStackWidget(StackBase.StackBase,
                 callableKeys.append(m)
         additionalItems.sort()
         for text, m in additionalItems:
-            menu.addAction(text)
+            if self.pluginInstanceDict[m].__doc__:
+                tip = self.pluginInstanceDict[m].__doc__
+                action = qt.QAction(text, self)
+                action.setToolTip(tip)
+                menu.addAction(action)
+            else:
+                menu.addAction(text)
             actionList.append(text)
             callableKeys.append(m)
+        menu.hovered.connect(self._actionHovered)
         a = menu.exec(qt.QCursor.pos())
         if a is None:
             return None
@@ -887,9 +894,14 @@ class QStackWidget(StackBase.StackBase,
 
     def _actionHovered(self, action):
         tip = action.toolTip()
-        if qt.safe_str(tip) != qt.safe_str(action.text()):
+        if str(tip) != str(action.text()):
             qt.QToolTip.showText(qt.QCursor.pos(), tip)
-
+        else:
+            # hideText was introduced in Qt 4.2
+            if hasattr(qt.QToolTip, "hideText"):
+                qt.QToolTip.hideText()
+            else:
+                qt.QToolTip.showText(qt.QCursor.pos(), "")
 
     def _buildBottom(self):
         n = 0

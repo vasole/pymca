@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -30,7 +30,7 @@ data in its original order, or in a randomized order.
 
 """
 
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -41,6 +41,7 @@ from PyMca5.PyMcaMath.fitting import SpecfitFuns
 from PyMca5.PyMcaMath.PyMcaSciPy.signal.median import medfilt1d
 
 class MedianFilterScanPlugin(Plugin1DBase.Plugin1DBase):
+    '''Methods to replace curves by their median filter average.'''
     def __init__(self, plotWindow, **kw):
         Plugin1DBase.Plugin1DBase.__init__(self, plotWindow, **kw)
         self.__randomization = True

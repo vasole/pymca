@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 T. Rueter, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -52,6 +52,10 @@ _logger = logging.getLogger(__name__)
 
 
 class MotorInfo(Plugin1DBase.Plugin1DBase):
+    """This plugin opens a widget displaying values of various motors associated
+    with each spectrum, if the curve originates from a file whose format provides
+    this information.
+    """
     def __init__(self,  plotWindow,  **kw):
         Plugin1DBase.Plugin1DBase.__init__(self,  plotWindow,  **kw)
         self.methodDict = {}

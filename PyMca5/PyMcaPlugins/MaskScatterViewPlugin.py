@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,7 @@ This plugin opens a widget to view a stack as a scatter plot, by using
 positioner data as X and Y coordinates.
 
 """
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -253,6 +253,13 @@ class MaskScatterViewWidget(qt.QMainWindow):
 
 
 class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
+    """
+    Widget to handle a stack as a scatter plot, by using
+    positioner data as X and Y coordinates.
+
+    The position data can be loaded via the load positioners plugin
+    if not detected automatically.
+    """
     def __init__(self, stackWindow, **kw):
         StackPluginBase.StackPluginBase.__init__(self, stackWindow, **kw)
         tooltip = "Stack as a scatter plot, using positioners as axes"

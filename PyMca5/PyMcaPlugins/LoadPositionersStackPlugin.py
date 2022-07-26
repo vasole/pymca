@@ -1,5 +1,5 @@
 # /*#########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -83,6 +83,22 @@ _logger = logging.getLogger(__name__)
 
 
 class LoadPositionersStackPlugin(StackPluginBase.StackPluginBase):
+    """
+    This plugin is used to load motor positions from a CSV or HDF5 file.
+
+    The number of values associated with a given positioner should be equal
+    to the number of pixels in the stack image. A single scalar value can also be
+    provided for a motor, if it didn't move during the experiment.
+
+    A CSV file should have unique motor names in the header line, and can have
+    an arbitrary number of motors/columns.
+
+    Motor positions in a HDF5 files are 1-dimensional datasets whose names are
+    the motor names. The user is allowed to select the HDF5 group containing all
+    motor datasets. Only compatible motors will be loaded.
+
+    Data loaded with this plugin can then be used by other plugins.
+    """
     def __init__(self, stackWindow):
         if _logger.getEffectiveLevel() == logging.DEBUG:
             StackPluginBase.pluginBaseLogger.setLevel(logging.DEBUG)

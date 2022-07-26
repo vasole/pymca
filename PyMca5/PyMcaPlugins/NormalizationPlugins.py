@@ -53,6 +53,7 @@ except ImportError:
     HAS_SPECFIT = False
 
 class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
+    '''Normalization methods to simplify curve comparison'''
     def __init__(self, plotWindow, **kw):
         Plugin1DBase.Plugin1DBase.__init__(self, plotWindow, **kw)
         self.methodDict = {'y/max(y)':[self.toMaximum,

@@ -49,6 +49,15 @@ from PyMca5.PyMcaGui import MaskImageWidget
 from PyMca5.PyMcaGui import PyMcaQt as qt
 
 class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
+    """
+    This plugin attempts to create an image from multiple scans.
+
+    It is aimed at dealing with:
+
+    - ID26 RIXS Data
+    - Meshes generated line by line.
+
+    """
     def __init__(self, plotWindow, **kw):
         Plugin1DBase.Plugin1DBase.__init__(self, plotWindow, **kw)
         self.methodDict = {}

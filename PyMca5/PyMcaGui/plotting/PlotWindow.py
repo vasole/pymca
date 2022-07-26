@@ -949,6 +949,10 @@ class PlotWindow(PlotWidget.PlotWidget):
                 if tip is not None:
                     action.setToolTip(tip)
                 menu.addAction(action)
+            elif self.pluginInstanceDict[m].__doc__:
+                action = qt.QAction(text, self)
+                action.setToolTip(self.pluginInstanceDict[m].__doc__)
+                menu.addAction(action)
             else:
                 menu.addAction(text)
             actionList.append(text)
