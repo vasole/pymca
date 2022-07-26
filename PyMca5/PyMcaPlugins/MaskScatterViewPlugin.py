@@ -254,7 +254,7 @@ class MaskScatterViewWidget(qt.QMainWindow):
 
 class MaskScatterViewPlugin(StackPluginBase.StackPluginBase):
     """
-    Generic widget to handle a stack as a scatter plot, by using
+    Widget to handle a stack as a scatter plot, by using
     positioner data as X and Y coordinates.
 
     The position data can be loaded via the load positioners plugin
