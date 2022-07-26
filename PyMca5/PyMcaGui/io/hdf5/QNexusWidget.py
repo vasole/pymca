@@ -718,7 +718,9 @@ class QNexusWidget(qt.QWidget):
                             try:
                                 dataset = h5file[mca]
                             except KeyError:
-                                dataset = h5file[NexusTools.sanitizeFilePath(h5file, mca)]
+                                dataset = h5file[NexusTools.sanitizeFilePath(h5file, 
+                                                                             mca,
+                                                                             entry=entryName)]
                             if hasattr(dataset, "shape"):
                                 mcaShapeList.append(dataset.shape)
                             else:
@@ -729,7 +731,10 @@ class QNexusWidget(qt.QWidget):
                             try:
                                 dataset = h5file[itemName]
                             except KeyError:
-                                dataset = h5file[NexusTools.sanitizeFilePath(h5file, itemName)]
+                                newItemName = NexusTools.sanitizeFilePath(h5file,
+                                                                         itemName,
+                                                                         entry=entryName)
+                                dataset = h5file[newItemName]
                             if hasattr(dataset, "shape"):
                                 scannedShapeList.append(dataset.shape)
                             else:
