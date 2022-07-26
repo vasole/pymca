@@ -715,7 +715,10 @@ class QNexusWidget(qt.QWidget):
                         mcaList = NexusTools.getMcaList(h5file, entryName)
                         mcaShapeList = []
                         for mca in mcaList:
-                            dataset = h5file[mca]
+                            try:
+                                dataset = h5file[mca]
+                            except KeyError:
+                                dataset = h5file[NexusTools.sanitizeFilePath(h5file, mca)]
                             if hasattr(dataset, "shape"):
                                 mcaShapeList.append(dataset.shape)
                             else:
