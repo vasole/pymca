@@ -52,7 +52,13 @@ _logger = logging.getLogger(__name__)
 
 
 class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
-    '''Performs a speedy linear fit''' 
+    """
+    Fast XRF Linear fit of data stack by:
+
+    - fixing non-linear parameters to its starting values
+    - processing the data in chunks instead of point by point
+
+    """
     def __init__(self, stackWindow, **kw):
         if _logger.getEffectiveLevel() == logging.DEBUG:
             StackPluginBase.pluginBaseLogger.setLevel(logging.DEBUG)
