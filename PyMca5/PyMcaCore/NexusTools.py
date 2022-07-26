@@ -227,7 +227,7 @@ def _correct_entry_path(path, entry_in, entry_out):
             return entry_out + path[len(entry_in):]
     return path
 
-def sanitizeFilePath(h5file, path):
+def sanitizeFilePath(h5file, path, entry=None):
     """
     This deals with the ESRF case of having a top-level entry being an external link
     to another top-level entry but with different name
@@ -235,7 +235,13 @@ def sanitizeFilePath(h5file, path):
     try:
         h5file[path]
     except KeyError:
-        path = _correct_entry_path(path, getEntryName(path), getEntryName(path, h5file))
+        if entry is None:
+            # this can still fail 
+            # the case where it fails is when two external links point to two different
+            # files with the same entry name. Easily found at ESRF with top level master
+            path = _correct_entry_path(path, getEntryName(path), getEntryName(path, h5file))
+        else:
+            path = _correct_entry_path(path, getEntryName(path), entry)
     return path
 
 def getMcaList(h5file, path, dataset=False, ignore=None):
