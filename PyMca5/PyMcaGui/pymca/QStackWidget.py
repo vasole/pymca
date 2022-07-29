@@ -1301,8 +1301,38 @@ class QStackWidget(StackBase.StackBase,
             selectionMask = numpy.zeros(self._stackImageData.shape,
                                      numpy.uint8)
             selectionMask[row, column] = 1
-            dataObject = self.calculateMcaDataObject(normalize=True,
+            dataObject = self.calculateMcaDataObject(normalize=False,
                                                      mask=selectionMask)
+            mcaIndex = self._stack.info.get('McaIndex', -1)
+            if mcaIndex in [-1, len(self._stack.data.shape) - 1]:
+                try:
+                    positioners = self._stack.info.get("positioners", None)
+                    if positioners:
+                        def _to_index_mode(slice_idx, shape):
+                            if len(shape) == 2:
+                                return slice_idx[0]
+                            single_index = 0
+                            for i in range(len(slice_idx)):
+                                v = 1
+                                for j in range(i+1, len(shape) - 1): 
+                                    v *= shape[j]
+                                single_index += v * slice_idx[i]
+                            return single_index
+                        idx = _to_index_mode((row, column),
+                                             self._stack.data.shape)
+                        motorNames = []
+                        motorValues = []
+                        for key, value in positioners.items():
+                            motorNames.append(key)
+                            if hasattr(value, "__len__"):
+                                motorValues.append(value[idx])
+                            else:
+                                motorValues.append(value)
+                        dataObject.info["MotorNames"] = motorNames
+                        dataObject.info["MotorValues"] = motorValues
+                except:
+                    _logger.warning("Error obtaining positioners")
+
             self.sendMcaSelection(dataObject,
                                      key="Selection",
                                      legend="MCA[%d,%d]" % (row, column),
