@@ -380,6 +380,27 @@ class NexusDataSource(object):
             _logger.warning(txt)
             output.info["title"] = ""
         output.info['selection'] = selection
+        if entry != "/":
+            try:
+                positioners = NexusTools.getPositionersGroup(phynxFile, entry)
+                if positioners is not None:
+                    output.info['MotorNames'] = []
+                    output.info['MotorValues'] = []
+                    for key in positioners.keys():
+                        if positioners[key].dtype in [object, numpy.object_]:
+                            # not a standard value
+                            _logger.info("Skipping object key %s" % key)
+                            continue
+                        output.info['MotorNames'].append(key)
+                        value = positioners[key][()]
+                        if hasattr(value, "size"):
+                            if value.size > 1:
+                                if hasattr(value, "flat"):
+                                    value = value.flat[0]
+                        output.info['MotorValues'].append(value)
+            except:
+                # I cannot affort to fail here for something probably not used
+                _logger.debug("Error reading positioners\n%s", sys.exc_info())
         if "mca" in selection:
             # this should go somewhere else
             h5File = phynxFile
@@ -484,6 +505,10 @@ class NexusDataSource(object):
                             # convert the single index to slice
                             output.info["McaLiveTime"] = \
                                     output.info["McaLiveTime"].flatten()[single_idx]
+                    if "MotorNames" in output.info:
+                       for idx in range(len(output.info["MotorNames"])):
+                           value = output.info["MotorValues"][idx]
+                           output.info['MotorValues'][idx] = value[single_idx]
             except:
                 # import traceback
                 _logger.error("%s", sys.exc_info())
@@ -508,27 +533,6 @@ class NexusDataSource(object):
             output.info['LabelNames'] = selection['aliaslist']
         else:
             output.info['LabelNames'] = selection['cntlist']
-        if entry != "/":
-            try:
-                positioners = NexusTools.getPositionersGroup(phynxFile, entry)
-                if positioners is not None:
-                    output.info['MotorNames'] = []
-                    output.info['MotorValues'] = []
-                    for key in positioners.keys():
-                        if positioners[key].dtype in [object, numpy.object_]:
-                            # not a standard value
-                            _logger.info("Skipping object key %s" % key)
-                            continue
-                        output.info['MotorNames'].append(key)
-                        value = positioners[key][()]
-                        if hasattr(value, "size"):
-                            if value.size > 1:
-                                if hasattr(value, "flat"):
-                                    value = value.flat[0]
-                        output.info['MotorValues'].append(value)
-            except:
-                # I cannot affort to fail here for something probably not used
-                _logger.debug("Error reading positioners\n%s", sys.exc_info())
         for cnt in ['y', 'x', 'm']:
             if not cnt in selection:
                 continue
