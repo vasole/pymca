@@ -79,6 +79,8 @@ def _exportStackList(stackList, h5, path=None, channels=None, calibration=None):
         entryName = path
     if entryName not in h5 and HAS_NEXUS_UTILS:
         NexusUtils.nxEntryInit(h5, entryName)
+    if calibration is None:
+        calibration = None * len(stackList)
     entry = h5.require_group(entryName)
     att = "NX_class"
     if att not in entry.attrs:
@@ -104,7 +106,7 @@ def _exportStackList(stackList, h5, path=None, channels=None, calibration=None):
                     h5,
                     detectorPath,
                     channels=channels,
-                    calibration=calibration)
+                    calibration=calibration[i])
         dataPath = posixpath.join(detectorPath, "data")
         dataTargets.append(dataPath)
         i += 1
