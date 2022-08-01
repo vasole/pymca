@@ -495,7 +495,7 @@ class QStackWidget(StackBase.StackBase,
                 os.remove(filename)
 
         # try to get the current calibration, not the one loaded
-       calibration = self.getActiveCurveCalibration()
+        calibration = self.getActiveCurveCalibration()
 
         # save the stack
         McaStackExport.exportStackList([self.getStackDataObject()],
