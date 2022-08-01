@@ -111,13 +111,15 @@ class ArtaxFileParser(object):
                         "YLast",
                         "ZLast",
                         "MeasNo", # number of spectra
-                        "Mapping"]
+                        "Mapping",
+                        "Picture", # number of pictures
+                        "Single"]
         scanInfo = {}
         if node:
             for child in node:
                 if child.tag in scanInfoKeys:
                     key = child.tag
-                    if key == "Mapping":
+                    if key in ["Mapping", "Single"]:
                         if child.text.upper() == "TRUE":
                             scanInfo[key] = True
                         else:
@@ -128,13 +130,75 @@ class ArtaxFileParser(object):
         for key in scanInfoKeys:
             if key in scanInfo:
                 continue
-            if key == "Mapping":
+            if key in ["Mapping", "Single"]:
                 scanInfo[key] = False
+            elif key in ["Picture"]:
+                scanInfo[key] = 0
             else:
                 scanInfo[key] = numpy.nan
+        # images
+        # TODO: See to what these pictures correspond
+        LOAD_PICTURES = False
+        nPictures = scanInfo.get("Picture", 0)
+        if LOAD_PICTURES and nPictures:
+            import base64
+            import struct
+            from PyMca5.PyMcaIO import TiffIO
+            nodes = root.findall(".//ClassInstance[@Type='TRTImageData']")
+            pictures = {}
+            pictureList = []
+            for node in nodes:
+                name = node.attrib["Name"]
+                #print("name = ", name)
+                pictureList.append(name)
+                pictures[name] = {}
+                for child in node:
+                    #print(child.tag)
+                    tag = child.tag
+                    try:
+                        if tag in ["PlaneCount", "ItemSize", "Width", "Height"]:
+                            pictures[name][tag] = int(child.text)
+                        else:
+                            pictures[name][tag] = myFloat(child.text)
+                    except:
+                        pictures[name][tag] = child.text
+                    if tag.startswith("Plane") and tag not in ["PlaneCount"]:
+                        plane = node.find(".//" + tag)
+                        #print("plane = ", plane)
+                        pictures[name][tag] = {}
+                        for item in plane:
+                            pictures[name][tag][item.tag] = item.text
+                        #print(pictures[name][tag].keys())
+                #print(pictures[name].keys())
+            for name in pictures:
+                picture = pictures[name]
+                #print(picture["ItemSize"])
+                #print(picture["Width"])
+                #print(picture["Height"])
+                #print(picture.keys())
+                tiff = None
+                for plane in range(picture["PlaneCount"]):
+                    key = "Plane%d" % plane
+                    #print(len(picture[key]["Data"]))
+                    #print(picture[key]["Size"])
+                    data = numpy.zeros((picture["Height"] * picture["Width"]),
+                                       dtype=numpy.uint8)
+                    decoded = base64.b64decode(picture[key]["Data"])
+                    data[:] = struct.unpack("%dB" % int(picture[key]["Size"]), decoded)
+                    if tiff is None:
+                        tiff =TiffIO.TiffIO(name + ".tiff", "wb")
+                    else:
+                        tiff =TiffIO.TiffIO(name + ".tiff", "rb+")
+                    tiff.writeImage(data, info={"Title": key})
+                    data.shape = picture["Height"], picture["Width"]
+                    picture[key]["Data"] = data
+                tiff = None
+            #print("pictures = ", pictures.keys())
+            #print("PictureList = ", pictureList)
+            scanInfo["pictures"] = pictures
         # done with the Artax map specific information
         return scanInfo
-        
+
     def scanno(self):
         return len(self._classDict["TRTSpectrum"])
 
