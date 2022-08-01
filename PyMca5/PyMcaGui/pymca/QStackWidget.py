@@ -461,6 +461,9 @@ class QStackWidget(StackBase.StackBase,
         return view
 
     def exportStackList(self, filename=None):
+        if not self.master:
+            raise IOError("Only primary stacks can export all stacks")
+
         if filename is None:
             filename = self._getOutputHDF5Filename()
             if not len(filename):
@@ -469,7 +472,17 @@ class QStackWidget(StackBase.StackBase,
             # delete an existing file
             if os.path.exists(filename):
                 os.remove(filename)
-        McaStackExport.exportStackList(self.getStackDataObjectList(), filename)
+
+        calibrationList = []
+        # master, join all slaves
+        calibrationList.append(self.getActiveCurveCalibration())
+        if self._slaveList is not None:
+            for slave in self._slaveList:
+                calibrationList.append(slave.getActiveCurveCalibration())
+                
+        McaStackExport.exportStackList(self.getStackDataObjectList(),
+                                       filename,
+                                       calibration=calibrationList)
 
     def exportStack(self, filename=None):
         if filename is None:
@@ -480,21 +493,25 @@ class QStackWidget(StackBase.StackBase,
             # delete an existing file
             if os.path.exists(filename):
                 os.remove(filename)
+
         # try to get the current calibration, not the one loaded
-        calibration = None
-        
-        try:
-            xLabel = qt.safe_str(self.mcaWidget.getGraphXLabel())
-            xData, y, legend, info = self.mcaWidget.getActiveCurve()[:4]
-            if xLabel not in [None, 'Channels']:
-                calibration = info.get("McaCalib", None)
-        except:
-            _logger.info("Cannot obtain current calibration")
+       calibration = self.getActiveCurveCalibration()
 
         # save the stack
         McaStackExport.exportStackList([self.getStackDataObject()],
                                        filename,
                                        calibration=[calibration])
+
+    def getActiveCurveCalibration(self):
+        calibration = None
+        try:
+            xLabel = qt.safe_str(self.getGraphXLabel())
+            xData, y, legend, info = self.mcaWidget.getActiveCurve()[:4]
+            if xLabel not in [None, 'Channels']:
+                calibration = info.get("McaCalib", None)
+        except:
+            _logger.info("Cannot obtain current calibration")
+        return calibration
 
     def saveStackAsNeXus(self, dtype=None, interpretation=None, compression=False):
         mcaIndex = self._stack.info.get('McaIndex', -1)
@@ -516,7 +533,7 @@ class QStackWidget(StackBase.StackBase,
         axes = [None] * len(self._stack.data.shape)
         labels = [None] * len(self._stack.data.shape)
         try:
-            xLabel = qt.safe_str(self.mcaWidget.graph.getGraphXLabel())
+            xLabel = qt.safe_str(self.mcaWidget.getGraphXLabel())
         except:
             xLabel = None
         try:
