@@ -3,10 +3,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -120,66 +120,110 @@ class RTXMap(DataObject.DataObject):
 
         # we are supposed to have a regular map
         # let's figure out the shape?
-        if tScanInfo["XFirst"] == tScanInfo["XLast"] and \
-           tScanInfo["YFirst"] != tScanInfo["YLast"] and \
-           tScanInfo["ZFirst"] != tScanInfo["ZLast"]:
-            _logger.info("YZ scan if Y and Z are finite")
-            meshType = "YZ"
-        elif tScanInfo["XFirst"] != tScanInfo["XLast"] and \
-             tScanInfo["YFirst"] != tScanInfo["YLast"] and \
-             tScanInfo["ZFirst"] == tScanInfo["ZLast"]:
-            _logger.info("XY scan if X and Y are finite")
-            meshType = "XY"            
-        elif tScanInfo["XFirst"] != tScanInfo["XLast"] and \
-             tScanInfo["YFirst"] == tScanInfo["YLast"] and \
-             tScanInfo["ZFirst"] != tScanInfo["ZLast"]:
-            _logger.info("XZ scan if X and Z are finite")
-            meshType = "XZ"
-        elif tScanInfo["XFirst"] != tScanInfo["XLast"] and \
-             tScanInfo["YFirst"] != tScanInfo["YLast"] and \
-             numpy.isnan(tScanInfo["ZFirst"]) and \
-             numpy.isnan(tScanInfo["ZLast"]):
-            _logger.info("XY scan if X and Y are finite")
-            meshType = "XY"
+        # It seems the {AxisName}First and {AxisName}Last information is
+        # not reliable to decide the scanned motors.
+        axes = []
+        if positioners:
+            for axis in positioners:
+                # Axis0, Axis1, Axis2 typically named x, y, z
+                if numpy.alltrue(numpy.isfinite(positioners[axis])):
+                    axes.append(axis)
+            
+        if len(axes) in [0, 1]:
+            # we do not need to figure out any regular shape
+            return
+        elif len(axes) == 2:
+            # potentially variating X, Y and Z
+            x = positioners[axes[0]]
+            y = positioners[axes[1]]
+            deltaX = x[-1] - x[0]
+            deltaY = y[-1] - y[0]
+            deltaZ = 0.0
+        elif len(axes) == 3:
+            # potentially variating X, Y and Z
+            x = positioners[axes[0]]
+            y = positioners[axes[1]]
+            z = positioners[axes[2]]
+            deltaX = x[-1] - x[0]
+            deltaY = y[-1] - y[0]
+            deltaZ = z[-1] - z[0]
         else:
-            meshType = None
+            # wait for the case to appear
+            return
 
-        if meshType:
-            for axis in meshType:
-                key=axis+"First"
-                if not numpy.isfinite(tScanInfo[key]):
-                    meshType = None
-                    break
+        epsilon = 1.0e-8
+        meshType = None
+        if abs(deltaX) > epsilon and \
+           abs(deltaY) > epsilon and \
+           abs(deltaZ) > epsilon:
+            # XYZ scan
+            # do not try to figure out any shape
+            _logger.info("XYZ scan")
+            meshType = "XYZ"
+        elif abs(deltaX) < epsilon:
+            # Y and Z variating
+            if abs(y[1] - y[0]) < epsilon:
+                meshType = "ZY"
+            else:
+                meshType = "YZ"
+        elif abs(deltaY) < epsilon:
+            # X and Z variating
+            if abs(x[1] - x[0]) < epsilon:
+                meshType = "ZX"
+            else:
+                meshType = "XZ"
+        elif abs(deltaZ) < epsilon:
+            # X and Y variating
+            if abs(x[1] - x[0]) < epsilon:
+                meshType = "YX"
+            else:
+                meshType = "XY"
+        else:
+            _logger.info("Unknown scan type")
+
+        if meshType in [None, "XYZ"]:
+            # the only safe solution is a scatter plot
+            return
+
+        _logger.info("%s scan" % meshType)
+
+
+        # the only safe solution is a scatter plot but attempt to
+        # interpret as a regular map
+        for axis in meshType:
+            key=axis+"First"
+            if not numpy.isfinite(tScanInfo[key]):
+                meshType = None
+                break
 
         if meshType == "XY":
-            _logger.info("XY scan")
-            x = positioners["x"]
-            y = positioners["y"]
-            xFirst = tScanInfo["XFirst"]
-            xLast = tScanInfo["XLast"]
-            yFirst = tScanInfo["YFirst"]
-            yLast = tScanInfo["YLast"]
+            x = positioners[axes[0]]
+            y = positioners[axes[1]]
+        elif meshType == "YX":
+            x = positioners[axes[1]]
+            y = positioners[axes[0]]
         elif meshType == "XZ":
-            _logger.info("XZ scan")
-            x = positioners["x"]
-            y = positioners["z"]
-            xFirst = tScanInfo["XFirst"]
-            xLast = tScanInfo["XLast"]
-            yFirst = tScanInfo["ZFirst"]
-            yLast = tScanInfo["ZLast"]
+            x = positioners[axes[0]]
+            y = positioners[axes[2]]
+        elif meshType == "ZX":
+            x = positioners[axes[2]]
+            y = positioners[axes[0]]
         elif meshType == "YZ":
-            _logger.info("YZ scan")
-            x = positioners["y"]
-            y = positioners["z"]
-            xFirst = tScanInfo["YFirst"]
-            xLast = tScanInfo["YLast"]
-            yFirst = tScanInfo["ZFirst"]
-            yLast = tScanInfo["ZLast"]
+            x = positioners[axes[1]]
+            y = positioners[axes[2]]
+        elif meshType == "ZY":
+            x = positioners[axes[2]]
+            y = positioners[axes[1]]
         else:
             return
 
         if len(x) == 1 or len(y) == 1:
             return
+
+        xFirst = x[0]
+        xLast = x[-1]
+        yFirst = y[0]
+        yLast = y[-1]
 
         reasonableDeltaX = numpy.abs(x.max() - x.min()) / (1.0 + len(x))
         reasonableDeltaY = numpy.abs(y.max() - y.min()) / (1.0 + len(y))
