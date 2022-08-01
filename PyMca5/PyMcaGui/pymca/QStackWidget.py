@@ -480,7 +480,21 @@ class QStackWidget(StackBase.StackBase,
             # delete an existing file
             if os.path.exists(filename):
                 os.remove(filename)
-        McaStackExport.exportStackList([self.getStackDataObject()], filename)
+        # try to get the current calibration, not the one loaded
+        calibration = None
+        
+        try:
+            xLabel = qt.safe_str(self.mcaWidget.getGraphXLabel())
+            xData, y, legend, info = self.mcaWidget.getActiveCurve()[:4]
+            if xLabel not in [None, 'Channels']:
+                calibration = info.get("McaCalib", None)
+        except:
+            _logger.info("Cannot obtain current calibration")
+
+        # save the stack
+        McaStackExport.exportStackList([self.getStackDataObject()],
+                                       filename,
+                                       calibration=[calibration])
 
     def saveStackAsNeXus(self, dtype=None, interpretation=None, compression=False):
         mcaIndex = self._stack.info.get('McaIndex', -1)
