@@ -27,7 +27,7 @@ __author__ = "V.A. Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-__version__ = "5.7.3"
+__version__ = "5.7.4"
 
 import os
 import sys
@@ -48,7 +48,7 @@ if sys.platform.startswith("win"):
     from ctypes.wintypes import MAX_PATH
 
 if os.path.exists(os.path.join(\
-    os.path.dirname(os.path.dirname(__file__)), 'py2app_setup.py')):
+    os.path.dirname(os.path.dirname(__file__)), 'bootstrap.py')):
     raise ImportError('PyMca cannot be imported from source directory')
 
 def version():
