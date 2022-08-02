@@ -1,3 +1,14 @@
+VERSION 5.7.4
+-------------
+
+- HDF5. Improved support of external links PR #891.
+
+- HDF5. Single MCA selections accompanied by associated motor positions (if any).
+
+- XRF. Make more explicit the Fast XRF fit is a linear fit.
+
+- ROI Imaging. Clearer tool tips.
+
 VERSION 5.7.3
 -------------
 
