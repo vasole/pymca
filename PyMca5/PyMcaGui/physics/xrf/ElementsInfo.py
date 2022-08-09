@@ -98,7 +98,7 @@ class ElementsInfo(qt.QWidget):
         self.table.sigElementClicked.connect(self.elementClicked)
 
         self.lastElement = None
-        Elements.registerUpdate(self._updateCallback)
+        #Elements.registerUpdate(self._updateCallback)
 
     def elementClicked(self, symbol):
         if self.infoWidget is None:
@@ -219,6 +219,7 @@ class ElementsInfo(qt.QWidget):
             else:
                 self.energyValue = value
                 Elements.updateDict(energy=value)
+            self._updateCallback()
             self.energy.setPaletteBackgroundColor(qt.QColor('white'))
             self.infoWidget.setFocus()
         else:
@@ -227,6 +228,7 @@ class ElementsInfo(qt.QWidget):
 
 
     def _updateCallback(self):
+        _logger.debug("_updateCallback called")
         if self.lastElement is not None:
             self.elementClicked(self.lastElement)
             if Elements.Element[self.lastElement]['buildparameters']['energy'] is not None:
