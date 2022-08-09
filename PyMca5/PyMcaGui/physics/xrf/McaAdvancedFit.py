@@ -788,7 +788,8 @@ class McaAdvancedFit(qt.QWidget):
         self.elementsInfo.raise_()
 
     def __peakIdentifier(self, energy = None):
-        if energy is None:energy = 5.9
+        if energy is None:
+            energy = 5.9
         if self.identifier is None:
             self.identifier=PeakIdentifier.PeakIdentifier(energy=energy,
                                                           threshold=0.040,
@@ -802,7 +803,7 @@ class McaAdvancedFit(qt.QWidget):
     def printActiveTab(self):
         txt = str(self.mainTab.tabText(self.mainTab.currentIndex())).upper()
         if txt == "GRAPH":
-            self.graph.printps()
+            self.graphWindow.printGraph()
         elif txt == "TABLE":
             self.printps(True)
         elif txt == "CONCENTRATIONS":
@@ -2497,7 +2498,7 @@ class McaAdvancedFit(qt.QWidget):
                         file.write("  %.7g" % fitresult['result']['ymatrix'][i])
                     if MCLabels is not None:
                         for nInteractions in range(2, len(MCLabels)):
-                            file.write("  %.7g" %  MCSpectra[nInteractions][i])        
+                            file.write("  %.7g" %  MCSpectra[nInteractions][i])
                     for group in fitresult['result']['groups']:
                         label = 'y'+group
                         if label in keys:
@@ -2555,7 +2556,7 @@ class McaAdvancedFit(qt.QWidget):
                     data = data[idx]
                 spectra.append(data)
                 for i in range(2, len(self._xrfmcMatrixSpectra)):
-                    labels.append("MC Matrix %d" % (i - 1))                        
+                    labels.append("MC Matrix %d" % (i - 1))
                     data = self._xrfmcMatrixSpectra[i]
                     if limits:
                         data = data[idx]
@@ -2873,7 +2874,11 @@ class McaGraphWindow(PlotWindow.PlotWindow):
             self.setGraphXLabel("Channel")
 
     def printGraph(self):
-        pixmap = qt.QPixmap.grabWidget(self.getWidgetHandle())
+        widget = self.getWidgetHandle()
+        if hasattr(qt.QPixmap, "grabWidget"):
+            pixmap = qt.QPixmap.grabWidget(widget)
+        else:
+            pixmap = widget.grab()
         self.printPreview.addPixmap(pixmap)
         if self.printPreview.isHidden():
             self.printPreview.show()

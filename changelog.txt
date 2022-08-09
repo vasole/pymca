@@ -44,7 +44,9 @@ VERSION 5.7.0
 -------------
 
 - Support PySide2 and PySide6.
+
 - Drop Qt4 support (PyQt4 and PySide)
+
 - Drop Object3D module.
 
 VERSION 5.6.7
