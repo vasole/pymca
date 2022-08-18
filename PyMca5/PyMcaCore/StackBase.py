@@ -263,6 +263,7 @@ class StackBase(object):
         if self._stackImageData is not None:
             previousStackImageSize = self._stackImageData.size
 
+        mcaMax = None
         if self._tryNumpy and isinstance(self._stack.data, numpy.ndarray):
             self._stackImageData = numpy.sum(self._stack.data,
                                              axis=self.mcaIndex,
@@ -275,6 +276,14 @@ class StackBase(object):
             mcaData0 = numpy.sum(numpy.sum(self._stack.data,
                                            axis=i,
                                            dtype=numpy.float64), j)
+
+            # max MCA
+            if self.mcaIndex == -1 or (self.mcaIndex == (len(self._stack.data.shape) - 1)):
+                mcaMax = numpy.nanmax(numpy.nanmax(self._stack.data, axis=-1), axis=-1)
+            elif self.mcaIndex == 0:
+                mcaMax = numpy.nanmax(numpy.nanmax(self._stack.data, axis=-0), axis=0)
+            else:
+                _logger.info("Unsupported index for max spectrum calculation")
         else:
             t0 = time.time()
             shape = self._stack.data.shape
@@ -282,24 +291,22 @@ class StackBase(object):
                 self._stackImageData = numpy.zeros((shape[0], shape[1]),
                                                 dtype=numpy.float64)
                 mcaData0 = numpy.zeros((shape[2],), numpy.float64)
+                mcaMax = mcaData0 + numpy.NINF
                 step = 1
-                # this is not the meaning of monitor
-                #if hasattr(self._stack, "monitor"):
-                #    monitor = self._stack.monitor[:]
-                #    monitor.shape = shape[2]
-                #else:
-                #    monitor = numpy.ones((shape[2],), numpy.float64)
                 for i in range(shape[0]):
                     tmpData = self._stack.data[i:i+step,:,:]
                     numpy.add(self._stackImageData[i:i+step,:],
                               numpy.sum(tmpData, 2),
                               self._stackImageData[i:i+step,:])
                     tmpData.shape = step*shape[1], shape[2]
+                    tmpMax = numpy.nanmax(tmpData, axis=0)
                     numpy.add(mcaData0, numpy.sum(tmpData, 0), mcaData0)
+                    mcaMax =numpy.max([mcaMax, tmpMax], axis=0)
             elif self.mcaIndex == 0:
                 self._stackImageData = numpy.zeros((shape[1], shape[2]),
                                                 dtype=numpy.float64)
                 mcaData0 = numpy.zeros((shape[0],), numpy.float64)
+                mcaMax = mcaData0 + numpy.NINF
                 step = 1
                 for i in range(shape[0]):
                     tmpData = self._stack.data[i:i+step,:,:]
@@ -308,6 +315,7 @@ class StackBase(object):
                               tmpData,
                               self._stackImageData)
                     mcaData0[i] = tmpData.sum()
+                    mcaMax[i] = numpy.nanmax(tmpData)
             else:
                 raise ValueError("Unhandled case 1D index = %d" % self.mcaIndex)
             logger.debug("Print dynamic loading elapsed = %f", time.time() - t0)
@@ -343,6 +351,9 @@ class StackBase(object):
 
         #store the original spectrum
         self._mcaData0 = dataObject
+
+        #store the original max spectrum
+        self._mcaMax = mcaMax
 
         #add the original image
         self.showOriginalImage()
