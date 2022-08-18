@@ -30,6 +30,7 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
+import copy
 import traceback
 import numpy
 import weakref
@@ -289,6 +290,11 @@ class QStackWidget(StackBase.StackBase,
                 self.stackWidget.setImageData(None)
                 self.roiWidget.setImageData(None)
                 StackBase.StackBase.setStack(self, self._stack, **kw)
+        if self._mcaMax is not None:
+            self.addMcaMaxButton.show()
+        else:
+            self.addMcaMaxButton.hide()
+
         try:
             if 'SourceName' in self._stack.info:
                 if type(self._stack.info['SourceName']) == type([]):
@@ -971,17 +977,23 @@ class QStackWidget(StackBase.StackBase,
         self.mcaButtonBoxLayout.setSpacing(0)
         self.addMcaButton = qt.QPushButton(self.mcaButtonBox)
         self.addMcaButton.setText("ADD MCA")
+        self.addMcaMaxButton = qt.QPushButton(self.mcaButtonBox)
+        self.addMcaMaxButton.setText("ADD MCA MAX")
+        self.addMcaMaxButton.setToolTip('Add spectrum of the maximum at each channel.')
         self.removeMcaButton = qt.QPushButton(self.mcaButtonBox)
         self.removeMcaButton.setText("REMOVE MCA")
         self.replaceMcaButton = qt.QPushButton(self.mcaButtonBox)
         self.replaceMcaButton.setText("REPLACE MCA")
         self.mcaButtonBoxLayout.addWidget(self.addMcaButton)
+        self.mcaButtonBoxLayout.addWidget(self.addMcaMaxButton)
         self.mcaButtonBoxLayout.addWidget(self.removeMcaButton)
         self.mcaButtonBoxLayout.addWidget(self.replaceMcaButton)
+        self.addMcaMaxButton.hide()
 
         self.stackWindow.mainLayout.addWidget(self.mcaButtonBox)
 
         self.addMcaButton.clicked.connect(self.__addMcaClicked)
+        self.addMcaMaxButton.clicked.connect(self._addMcaMaxClicked)
         self.removeMcaButton.clicked.connect(self._removeMcaClicked)
         self.replaceMcaButton.clicked.connect(self._replaceMcaClicked)
 
@@ -1121,6 +1133,17 @@ class QStackWidget(StackBase.StackBase,
 
     def __addMcaClicked(self):
         self._addMcaClicked("ADD")
+
+    def _addMcaMaxClicked(self):
+        if self._mcaMax is not None:
+            dataObject = copy.deepcopy(self._mcaData0)
+            dataObject.y = [self._mcaMax]
+            self.sendMcaSelection(dataObject,
+                                  key="Maximum",
+                                  legend= "Max Spectrum",
+                                  action="ADD")
+        else:
+            self.addMcaMaxButton.hide()
 
     def _addMcaClicked(self, action=None):
         if action in [None, False]:
