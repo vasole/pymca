@@ -1,3 +1,12 @@
+VERSION 5.7.5
+-------------
+
+- Packaging. Correct PyInstaller packaging.
+
+- HDF5. Correct Show Info not working with PySide 6.
+
+- GUI. Elements Info update line emission ratios when changing energy without need to ckick on the periodic table.
+
 VERSION 5.7.4
 -------------
 
