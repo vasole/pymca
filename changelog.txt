@@ -5,6 +5,8 @@ VERSION 5.7.5
 
 - HDF5. Correct Show Info not working with PySide 6.
 
+- ROI Imaging. Add spectrum of the maximum at each channel.
+
 - GUI. Elements Info update line emission ratios when changing energy without need to ckick on the periodic table.
 
 VERSION 5.7.4
