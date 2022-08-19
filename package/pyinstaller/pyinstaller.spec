@@ -33,7 +33,7 @@ else:
 
 logger.info("Using icon <%s>" % icon)
 
-hiddenimports = []
+hiddenimports = ["secrets"] # needed by numpy 1.23.2
 hiddenimports += collect_submodules('encodings.ascii')
 hiddenimports += collect_submodules('encodings.utf_8')
 hiddenimports += collect_submodules('encodings.latin_1')
