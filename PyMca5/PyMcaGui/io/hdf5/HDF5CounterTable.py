@@ -47,6 +47,7 @@ class CntSelectionType(qt.QWidget):
         self._column = column
         self._selector = False
         self._selection = qt.QCheckBox(self)
+        self._selection.setText(" ")
         self._selectionType = qt.QComboBox(self)
         self._optionsList = ["full", "index"]
         if shape:
