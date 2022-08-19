@@ -43,7 +43,9 @@ _logger = logging.getLogger(__name__)
 
 
 class MedianFilterScanDeglitchPlugin(Plugin1DBase.Plugin1DBase):
-    '''Median-filter-based deglitching'
+    """
+    Median-filter-based deglitching
+    """
     def __init__(self,  plotWindow,  **kw):
         Plugin1DBase.Plugin1DBase.__init__(self,  plotWindow,  **kw)
         self.methodDict = {
