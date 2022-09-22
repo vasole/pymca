@@ -309,7 +309,7 @@ class OmnicMap(DataObject.DataObject):
         x1, y1 = ddict['Last map location']
         deltaX = ddict['Mapping stage X step size']
         deltaY = ddict['Mapping stage Y step size']
-        nX = int(1 + ((x1 - x0) / deltaX))
+        nX = int(round(1 + ((x1 - x0) / deltaX)))
         x = x0 + (index % nX) * deltaX
         y = y0 + int(index / nX) * deltaY
         return x, y
