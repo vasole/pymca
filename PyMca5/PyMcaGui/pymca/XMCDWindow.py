@@ -454,7 +454,7 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
             height = .5 * self.parent().height()
         else:
             height = self.height()
-        return qt.QSize(self.width(), height)
+        return qt.QSize(self.width(), int(height))
 
     def processOptions(self, options):
         tmp = { 'equidistant': False,
@@ -1199,7 +1199,7 @@ class XMCDTreeWidget(qt.QTreeWidget):
         width = vscrollbar.width()
         for i in range(self.columnCount()):
             width += (2 + self.columnWidth(i))
-        return qt.QSize( width, 20*22)
+        return qt.QSize( int(width), 20*22)
 
     def setContextMenu(self, menu):
         self.contextMenu = menu
