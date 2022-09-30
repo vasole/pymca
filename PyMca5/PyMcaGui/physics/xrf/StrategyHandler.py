@@ -185,7 +185,7 @@ class SingleLayerStrategyWidget(qt.QWidget):
         label = qt.QLabel("Number of matrix iterations to perfom:")
         self._nIterations = qt.QSpinBox(self)
         self._nIterations.setMinimum(1)
-        self._nIterations.setMaximum(5)
+        self._nIterations.setMaximum(100)
         self._nIterations.setValue(3)
         self.mainLayout.addWidget(label, 0, 0)
         self.mainLayout.addWidget(qt.HorizontalSpacer(self), 1, 0)
