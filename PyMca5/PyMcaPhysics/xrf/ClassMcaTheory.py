@@ -440,7 +440,7 @@ class McaTheory(object):
             div.sort()
             #print "before = ",len(newpeaksnames)
             div = Elements._filterPeaks(div, ethreshold = deltaonepeak,
-                                            ithreshold = 0.0005,
+                                            ithreshold = 0.00005,
                                             #ithreshold = ithreshold,
                                             nthreshold = None,
                                             keeptotalrate=True)
