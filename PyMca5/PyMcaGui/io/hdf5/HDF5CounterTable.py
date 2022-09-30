@@ -558,14 +558,14 @@ class HDF5CounterTable(qt.QTableWidget):
                     self.ySelectionType.append(ySelectionType[i])
 
         self.monSelection = []
-        self.monSelectionType = []        
+        self.monSelectionType = []
         for i in range(len(monitor)):
             item = monitor[i]
             if item < len(cntlist):
                 counter = cntlist[item]
                 if counter in self.cntList:
                     self.monSelection.append(self.cntList.index(counter))
-                    self.monSelectionType[i]
+                    self.monSelectionType.append(monSelectionType[i])
         self._update()
 
 class CheckBoxItem(qt.QCheckBox):

@@ -2,7 +2,7 @@
 # Copyright (C) 2004-2022 V.A. Sole, ESRF - D. Dale CHESS
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -263,16 +263,21 @@ class H5NodeProxy(object):
             # obtaining the lock here is necessary, otherwise application can
             # freeze if navigating tree while data is processing
             if 1: #with self.file.plock:
-                try:
-                    items = list(self.raw_items())
-                except Exception:
-                    items = []
-                    _logger.warning("Cannot obtain items list. Ignoring")
+                if 1:
+                    try:
+                        # this returns (str, str) in case of dealing with a broken link
+                        items = list(self.raw_items())
+                    except Exception:
+                       items = []
+                       _logger.warning("Cannot obtain items list. Ignoring")
+                else:
+                    # this returns (str, None) in case of dealing with a broken link
+                    items = list(self.getNode(self.name).items())
                 try:
                     # better handling of external links
                     finalList = h5py_sorting(items, sorting_list=self.__sorting_list)
                     for i in range(len(finalList)):
-                        if finalList[i][1] is not None:
+                        if finalList[i][1] and not isinstance(finalList[i][1], str):
                             finalList[i][1]._posixPath = posixpath.join(self.name,
                                                                finalList[i][0])
                         else:
@@ -282,7 +287,7 @@ class H5NodeProxy(object):
                                                                finalList[i][0])
                     self._children = [H5NodeProxy(self.file, i[1], self)
                                       for i in finalList]
-                except Exception:
+                except:
                     # one cannot afford any error, so I revert to the old
                     # method where values where used instead of items
                     if 1 or _logger.getEffectiveLevel() == logging.DEBUG:
