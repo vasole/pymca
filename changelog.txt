@@ -1,3 +1,18 @@
+VERSION 5.7.6
+-------------
+
+- HDF5. Correct error when selecting a monitor.
+
+- HDF5. Correct handling of broken links.
+
+- XRF. Raise the maximum number of matrix iterations.
+
+- ROI Imaging. Correct calculation of spectrum of the maximum at each channel.
+
+- GUI. Make sure QSize uses integers and not floats.
+
+- IO. Correct shape calculation of Omnic maps.
+
 VERSION 5.7.5
 -------------
 
