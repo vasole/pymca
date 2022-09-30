@@ -279,9 +279,9 @@ class StackBase(object):
 
             # max MCA
             if self.mcaIndex == -1 or (self.mcaIndex == (len(self._stack.data.shape) - 1)):
-                mcaMax = numpy.nanmax(numpy.nanmax(self._stack.data, axis=-1), axis=-1)
+                mcaMax = numpy.nanmax(numpy.nanmax(self._stack.data, axis=0), axis=0)
             elif self.mcaIndex == 0:
-                mcaMax = numpy.nanmax(numpy.nanmax(self._stack.data, axis=-0), axis=0)
+                mcaMax = numpy.nanmax(numpy.nanmax(self._stack.data, axis=-1), axis=-1)
             else:
                 _logger.info("Unsupported index for max spectrum calculation")
         else:
