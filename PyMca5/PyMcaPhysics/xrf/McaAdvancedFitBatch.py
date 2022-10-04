@@ -956,8 +956,8 @@ class McaAdvancedFitBatch(object):
             xdata = self.mcafit.xdata.flatten().astype(numpy.float32)   # x (after fit limits)
             stackShape = self.__nrows, self.__ncols, len(xdata0)
             mcaIndex = 2
-            iXMin, iXMax = int(max(numpy.where(xdata0 <= xdata[0]))),
-                           int(min(numpy.where(xdata0 >= xdata[-1]))) + 1
+            iXMin, iXMax = int(max(numpy.where(xdata0 <= xdata[0])[0])),
+                           int(min(numpy.where(xdata0 >= xdata[-1])[0])) + 1
             self._mcaIdx = slice(iXMin, iXMax)
             nObs = iXMax-iXMin
             if outbuffer.saveFOM:
