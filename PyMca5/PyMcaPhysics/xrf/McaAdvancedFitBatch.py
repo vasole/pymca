@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2021 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -952,11 +952,12 @@ class McaAdvancedFitBatch(object):
 
         # Model ,residuals, chisq ,...
         if outbuffer.diagnostics:
-            xdata0 = self.mcafit.xdata0.flatten().astype(numpy.int32)  # channels
-            xdata = self.mcafit.xdata.flatten().astype(numpy.int32)  # channels after limits
+            xdata0 = self.mcafit.xdata0.flatten().astype(numpy.float32) # x (channels or energy)
+            xdata = self.mcafit.xdata.flatten().astype(numpy.float32)   # x (after fit limits)
             stackShape = self.__nrows, self.__ncols, len(xdata0)
             mcaIndex = 2
-            iXMin, iXMax = xdata[0], xdata[-1]+1
+            iXMin, iXMax = int(max(numpy.where(xdata0 <= xdata[0])[0])), \
+                           int(min(numpy.where(xdata0 >= xdata[-1])[0])) + 1
             self._mcaIdx = slice(iXMin, iXMax)
             nObs = iXMax-iXMin
             if outbuffer.saveFOM:
@@ -1002,10 +1003,10 @@ class McaAdvancedFitBatch(object):
                     #gain = result['fittedpar'][result['parameters'].index('Gain')]
                     zero = mcacfg['zero']
                     gain = mcacfg['gain']
-                    xenergy = zero + gain*xdata0
+                    xenergy = zero + gain * xdata0
                     dataAxesNames[mcaIndex] = 'energy'
                     dataAxes[mcaIndex] = 'energy', xenergy.astype(dtypeResult), {'units': 'keV'}
-                    dataAxes.append(('channels', xdata0.astype(numpy.int32), {}))
+                    dataAxes.append(('channels', xdata0.astype(numpy.float32), {}))
                 fitAttrs['axes'] = dataAxes
                 fitAttrs['axesused'] = dataAxesNames
             if outbuffer.saveFit:

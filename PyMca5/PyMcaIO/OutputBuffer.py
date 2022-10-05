@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2019 European Synchrotron Radiation Facility
+# Copyright (c) 2019-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -793,7 +793,7 @@ class OutputBuffer(MutableMapping):
             return [self.filename(ext, suffix="_" + label) for label in labels]
 
     def _saveImages(self):
-        from PyMca5.PyMca import ArraySave
+        from PyMca5.PyMcaIO import ArraySave
 
         # List of images in deterministic order
         imageFileLabels, imageTitleLabels, imageList = self._imageList()
