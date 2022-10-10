@@ -428,7 +428,6 @@ class EDFStack(DataObject.DataObject):
                     filelist = filelist[::fileSampling]
                     self.sourceName = self.sourceName[::fileSampling]
                     self.nbFiles = len(filelist)
-                    print(self.nbFiles)
                     self.incrProgressBar=0
                     if fileindex == 1:
                         for tempEdfFileName in filelist:
@@ -520,7 +519,6 @@ class EDFStack(DataObject.DataObject):
             self.info["NumberOfFiles"] = self.__nFiles * 1
             self.info["Size"] = self.__nFiles * self.__nImagesPerFile
 
-        print(self.data.shape)
         # try to use positioners to compute the scales (ID24 specific)
         xPositionerName = None
         yPositionerName = None
