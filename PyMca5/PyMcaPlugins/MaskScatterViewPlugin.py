@@ -121,6 +121,8 @@ class AxesPositionersSelector(qt.QWidget):
         :param dict positioners: Dictionary of positioners
             The key is the motor name, the value are the motor's position data
         """
+        currentX, currentY = self.getSelectedPositioners()
+        
         self._initComboBoxes()
         i = 0
         for motorName, motorValues in positioners.items():
@@ -131,6 +133,11 @@ class AxesPositionersSelector(qt.QWidget):
                 i += 1
                 self.xPositioner.insertItem(i, motorName)
                 self.yPositioner.insertItem(i, motorName)
+
+        if currentX in positioners and currentY in positioners:
+            self.xPositioner.setCurrentIndex(self.xPositioner.findText(currentX))
+            self.yPositioner.setCurrentIndex(self.yPositioner.findText(currentY))
+        
 
     def getSelectedPositioners(self):
         """
@@ -223,6 +230,7 @@ class MaskScatterViewWidget(qt.QMainWindow):
         stackValues = stackImage.reshape((-1,))
 
         # get regular grid coordinates as a 1D array
+        print(self._xdata, self._ydata)
         if self._xdata is None or self._ydata is None:
             defaultX, defaultY = numpy.meshgrid(numpy.arange(ncols),
                                                 numpy.arange(nrows))
@@ -246,6 +254,7 @@ class MaskScatterViewWidget(qt.QMainWindow):
             _logger.debug("flattening %s array", str(ydata.shape))
             ydata = ydata.reshape((-1,))
 
+        print(xdata.shape, ydata.shape)
         self._scatterView.setData(xdata, ydata, stackValues,
                                   copy=False)
         if first_time:
