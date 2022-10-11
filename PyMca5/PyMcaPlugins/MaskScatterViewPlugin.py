@@ -80,7 +80,7 @@ class AxesPositionersSelector(qt.QWidget):
         qt.QWidget.__init__(self, parent)
         hlayout = qt.QHBoxLayout()
         self.setLayout(hlayout)
-
+        self._initializing = True
         xlabel = qt.QLabel("X:", parent=parent)
         self.xPositioner = qt.QComboBox(parent)
         self.xPositioner.currentIndexChanged.connect(self._emitSelectionChanged)
@@ -88,6 +88,7 @@ class AxesPositionersSelector(qt.QWidget):
         ylabel = qt.QLabel("Y:", parent=parent)
         self.yPositioner = qt.QComboBox(parent)
         self.yPositioner.currentIndexChanged.connect(self._emitSelectionChanged)
+        self._initializing = False
 
         hlayout.addWidget(xlabel)
         hlayout.addWidget(self.xPositioner)
@@ -107,7 +108,8 @@ class AxesPositionersSelector(qt.QWidget):
         self.yPositioner.insertItem(0, "None")
 
     def _emitSelectionChanged(self, idx):
-        self.sigSelectionChanged.emit(*self.getSelectedPositioners())
+        if not self._initializing:
+            self.sigSelectionChanged.emit(*self.getSelectedPositioners())
 
     def setNumPoints(self, n):
         self._nPoints = n
@@ -122,7 +124,8 @@ class AxesPositionersSelector(qt.QWidget):
             The key is the motor name, the value are the motor's position data
         """
         currentX, currentY = self.getSelectedPositioners()
-        
+
+        self._initializing = True
         self._initComboBoxes()
         i = 0
         for motorName, motorValues in positioners.items():
@@ -137,8 +140,7 @@ class AxesPositionersSelector(qt.QWidget):
         if currentX in positioners and currentY in positioners:
             self.xPositioner.setCurrentIndex(self.xPositioner.findText(currentX))
             self.yPositioner.setCurrentIndex(self.yPositioner.findText(currentY))
-        
-
+        self._initializing = False
     def getSelectedPositioners(self):
         """
 
@@ -230,7 +232,6 @@ class MaskScatterViewWidget(qt.QMainWindow):
         stackValues = stackImage.reshape((-1,))
 
         # get regular grid coordinates as a 1D array
-        print(self._xdata, self._ydata)
         if self._xdata is None or self._ydata is None:
             defaultX, defaultY = numpy.meshgrid(numpy.arange(ncols),
                                                 numpy.arange(nrows))
@@ -254,7 +255,6 @@ class MaskScatterViewWidget(qt.QMainWindow):
             _logger.debug("flattening %s array", str(ydata.shape))
             ydata = ydata.reshape((-1,))
 
-        print(xdata.shape, ydata.shape)
         self._scatterView.setData(xdata, ydata, stackValues,
                                   copy=False)
         if first_time:
