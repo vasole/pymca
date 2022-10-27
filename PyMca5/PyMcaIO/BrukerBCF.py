@@ -65,9 +65,19 @@ class BrukerBCF(DataObject):
             raise IOError("Filename %s does not seem to be a Bruker bcf file")
         DataObject.__init__(self)
         reader = bruker.BCF_reader(filename)
-        # TODO: I should allow downsampling here
-        self.data = reader.parse_hypermap(downsample=1, lazy=False)
-        print(type(self.data))
+        self.data = None
+        self._sampling = 1
+        try:
+            self.data = reader.parse_hypermap(downsample=self._sampling,
+                                              lazy=False)
+        except:
+            if "MemoryError" in "%s" % (sys.exc_info()[0],):
+                self._sampling += 1
+                self.data = reader.parse_hypermap(downsample=self._sampling,
+                                                  lazy=False)
+                _logger.warning("Data downsampled to fit into memory")
+            else:
+                raise
         self.sourceName = filename
         self.info = {}
         self.info["SourceType"] = SOURCE_TYPE
@@ -131,5 +141,10 @@ if __name__ == "__main__":
         print("Usage: ")
         print("python BrukerBCF.py filename")
         sys.exit(0)
-    print("is Bruker BCF File?", isBrukerBCF(filename))
+    print("is Bruker BCF File?", isBrukerBCFFile(filename))
+    stack = BrukerBCF(filename)
+    print(stack.data)
+    print(stack.info)
+    
+    
 
