@@ -34,7 +34,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 Base class to handle stacks.
 
 """
-from . import DataObject
+from PyMca5.PyMcaCore import DataObject
 import numpy
 import time
 import os
@@ -208,7 +208,8 @@ class StackBase(object):
            ("DataObject.DataObject" in ("%s" % type(stack))) or\
            ("QStack" in ("%s" % type(stack))) or\
            ("Map" in ("%s" % type(stack)))or\
-           ("Stack" in ("%s" % type(stack))):
+           ("Stack" in ("%s" % type(stack))) or\
+           (hasattr(stack, "data") and hasattr(stack, "info")):
             self._stack = stack
             self._stack.info['SourceName'] = stack.info.get('SourceName',
                                                             "Data of unknown origin")
