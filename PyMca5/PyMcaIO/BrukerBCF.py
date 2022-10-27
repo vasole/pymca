@@ -101,9 +101,11 @@ class BrukerBCF(DataObject):
         root = root.find("./ClassInstance[@Type='TRTSpectrumDatabase']")
         xScale, yScale = get_scales(root)
         self.info["xScale"] = xScale
-        self.info["xScale"][1] = xScale[1] * self._sampling
+        if xScale:
+            self.info["xScale"][1] = xScale[1] * self._sampling
         self.info["yScale"] = yScale
-        self.info["yScale"][1] = yScale[1] * self._sampling
+        if yScale:
+            self.info["yScale"][1] = yScale[1] * self._sampling
         self.info["McaCalib"] = get_calibration(root)
 
 def get_scales(root):
