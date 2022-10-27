@@ -145,6 +145,4 @@ if __name__ == "__main__":
     stack = BrukerBCF(filename)
     print(stack.data)
     print(stack.info)
-    
-    
 
