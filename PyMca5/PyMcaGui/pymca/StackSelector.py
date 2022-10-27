@@ -52,6 +52,7 @@ from PyMca5.PyMcaIO import OmdaqLmf
 from PyMca5.PyMcaIO import JcampOpusStack
 from PyMca5.PyMcaIO import FsmMap
 from PyMca5.PyMcaIO import LabSpec6TxtMap
+from PyMca5.PyMcaIO import BrukerBCF
 from .QStack import QStack, QSpecFileStack
 try:
     from PyMca5.PyMcaGui.pymca import QHDF5Stack1D
@@ -202,16 +203,24 @@ class StackSelector(object):
                 # columns would be accepted as a Renishaw Map
                 # by other hand, I do not know how to handle
                 # that case as a stack.
+                _logger.info("RenishawMap")
                 stack = RenishawMap.RenishawMap(filelist[0])
                 omnicfile = True
             elif OmdaqLmf.isOmdaqLmf(filelist[0]):
+                _logger.info("OmdaqLmf")
                 stack = OmdaqLmf.OmdaqLmf(filelist[0])
                 omnicfile = True
             elif FsmMap.isFsmFile(filelist[0]):
+                _logger.info("FsmMap")
                 stack = FsmMap.FsmMap(filelist[0])
                 omnicfile = True
             elif JcampOpusStack.isJcampOpusStackFile(filelist[0]):
+                _logger.info("JcampOpusStack")
                 stack = JcampOpusStack.JcampOpusStack(filelist[0])
+                omnicfile = True
+            elif BrukerBCF.isBrukerBCFFile(filelist[0]):
+                _logger.info("Bruker bcf")
+                stack = BrukerBCF.BrukerBCF(filelist[0])
                 omnicfile = True
             else:
                 stack = QSpecFileStack()
@@ -397,6 +406,9 @@ class StackSelector(object):
         if not HDF5:
             idx = fileTypeList.index("HDF5 Files (*.nxs *.hdf *.hdf5 *.h5)")
             del fileTypeList[idx]
+        if BrukerBCF.HAS_BCF_SUPPORT:
+            idx = fileTypeList.index("RTX Files (*.rtx *.RTX)")
+            fileTypeList.insert(idx+1, "BCF Files (*.bcf *.BCF)")
         message = "Open ONE indexed stack or SEVERAL files"
         return self._getFileList(fileTypeList, message=message,
                                  getfilter=getfilter)
