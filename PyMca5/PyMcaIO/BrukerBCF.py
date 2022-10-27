@@ -90,16 +90,47 @@ class BrukerBCF(DataObject):
         self.info["McaIndex"] = -1
         self.info["McaCalib"] = [0.0, 1.0, 0.0]
         self.info["Channel0"] = 0.0
-        return
 
         # header information
         header_file = reader.get_file('EDSDatabase/HeaderData')
         header_byte_str = header_file.get_as_BytesIO_string().getvalue()
         hd_bt_str = bruker.fix_dec_patterns.sub(b'\\1.\\2', header_byte_str)
         xml_str = hd_bt_str
-        root = ET.fromstring(xml_str)
-        root = root.find("./ClassInstance[@Type='TRTSpectrumDatabase']")
 
+        root = bruker.ET.fromstring(xml_str)
+        root = root.find("./ClassInstance[@Type='TRTSpectrumDatabase']")
+        xScale, yScale = get_scales(root)
+        self.info["xScale"] = xScale
+        self.info["xScale"][1] = xScale[1] * self._sampling
+        self.info["yScale"] = yScale
+        self.info["yScale"][1] = yScale[1] * self._sampling
+        self.info["McaCalib"] = get_calibration(root)
+
+def get_scales(root):
+    semData = root.find("./ClassInstance[@Type='TRTSEMData']")
+    semData_dict = bruker.dictionarize(semData)
+    if "DX" in semData_dict and "DY" in semData_dict:
+        xScale = [0.0, semData_dict["DX"]]
+        yScale = [0.0, semData_dict["DY"]]
+    else:
+        xScale = None
+        yScale = None
+    return xScale, yScale
+
+def get_calibration(root):
+    spectrum_header = root.find(".//ClassInstance[@Type='TRTSpectrumHeader']")
+    if spectrum_header:
+        spectrum_header_data = bruker.dictionarize(spectrum_header)
+        calculate = True
+        for key in ["ChannelCount", "CalibAbs", "CalibLin"]:
+            if key not in spectrum_header_data:
+                calculate = False
+                break
+        if calculate:
+            return [spectrum_header_data["CalibAbs"],
+                    spectrum_header_data["CalibLin"],
+                    0.0]
+    return [0.0, 1.0, 0.0]
 
 def isBrukerBCFFile(filename):
     _logger.info("BrukerBCF.isBrukerBCFFile called %s" % filename)
