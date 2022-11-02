@@ -36,6 +36,7 @@ import sys
 import os
 import struct
 import numpy
+import base64
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -66,14 +67,15 @@ class BrukerBCF(DataObject):
         DataObject.__init__(self)
         reader = bruker.BCF_reader(filename)
         self.data = None
-        self._sampling = 1
+        # it seems the library performs a binning when downsampling.
+        self._binning = 1
         try:
-            self.data = reader.parse_hypermap(downsample=self._sampling,
+            self.data = reader.parse_hypermap(downsample=self._binning,
                                               lazy=False)
         except:
             if "MemoryError" in "%s" % (sys.exc_info()[0],):
-                self._sampling += 1
-                self.data = reader.parse_hypermap(downsample=self._sampling,
+                self._binning += 1
+                self.data = reader.parse_hypermap(downsample=self._binning,
                                                   lazy=False)
                 _logger.warning("Data downsampled to fit into memory")
             else:
@@ -102,11 +104,18 @@ class BrukerBCF(DataObject):
         xScale, yScale = get_scales(root)
         self.info["xScale"] = xScale
         if xScale:
-            self.info["xScale"][1] = xScale[1] * self._sampling
+            self.info["xScale"][1] = xScale[1] * self._binning
         self.info["yScale"] = yScale
         if yScale:
-            self.info["yScale"][1] = yScale[1] * self._sampling
+            self.info["yScale"][1] = yScale[1] * self._binning
         self.info["McaCalib"] = get_calibration(root)
+        if self._binning == 1:
+            try:
+                live_times = get_live_times(root)
+            except:
+                _logger.warning("Error retrieving spectra live time")
+                live_times = None
+            self.info["live_time"] = live_times
 
 def get_scales(root):
     semData = root.find("./ClassInstance[@Type='TRTSEMData']")
@@ -121,18 +130,43 @@ def get_scales(root):
 
 def get_calibration(root):
     spectrum_header = root.find(".//ClassInstance[@Type='TRTSpectrumHeader']")
+    calibration = [0.0, 1.0, 0.0]
     if spectrum_header:
         spectrum_header_data = bruker.dictionarize(spectrum_header)
-        calculate = True
+        calibrated = True
         for key in ["ChannelCount", "CalibAbs", "CalibLin"]:
             if key not in spectrum_header_data:
-                calculate = False
+                calibrated = False
                 break
-        if calculate:
-            return [spectrum_header_data["CalibAbs"],
-                    spectrum_header_data["CalibLin"],
-                    0.0]
-    return [0.0, 1.0, 0.0]
+        if calibrated:
+            calibration = [spectrum_header_data["CalibAbs"],
+                            spectrum_header_data["CalibLin"],
+                            0.0]
+    return calibration
+
+def get_live_times(root):
+    result = None
+    image_nodes = root.findall("./ClassInstance[@Type='TRTImageData']")
+    # for the time being we retrieve only one live_time image
+    for node in image_nodes:
+        if not node.get('Name'):
+            continue
+        name = node.get('Name')
+        if name == "PixelTimes":
+            width = int(node.find('./Width').text)
+            height = int(node.find('./Height').text)
+            dtype = 'u' + node.find('./ItemSize').text
+            plane_count = int(node.find('./PlaneCount').text)
+            if plane_count == 1:
+                # can it be different for PixelTimes?
+                image_data_node = node.find("./Plane0")
+                decoded = base64.b64decode(image_data_node.find('./Data').text)
+                result = numpy.frombuffer(decoded, dtype=dtype)
+                result.shape = height, width
+                # express in seconds
+                result = (result * 1.0e-6).astype(numpy.float32)
+                break
+    return result
 
 def isBrukerBCFFile(filename):
     _logger.info("BrukerBCF.isBrukerBCFFile called %s" % filename)
@@ -150,13 +184,11 @@ def isBrukerBCFFile(filename):
             if eight_chars == b"AAMVHFSS":
                 if owner:
                     fid.close()
-                _logger.info("It is a Bruker bcf file")
                 result = True
         else:
             if eight_chars == "AAMVHFSS":
                 if owner:
                     fid.close()
-                _logger.info("It is a Bruker bcf file")
                 result = True
     except:
         if owner:
@@ -177,5 +209,6 @@ if __name__ == "__main__":
     print("is Bruker BCF File?", isBrukerBCFFile(filename))
     stack = BrukerBCF(filename)
     print(stack.data)
+    print("total counts = ", stack.data.sum())
     print(stack.info)
 
