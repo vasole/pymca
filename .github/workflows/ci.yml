@@ -147,8 +147,11 @@ jobs:
           ls dist
 
       - name: Install from source package
-        run:
-          pip install --pre --find-links dist/ --no-cache-dir --no-index PyMca5
+        run: |
+          for filename in dist/PyMca5*.*; do
+            echo "\nInstall $filename"
+            pip install --pre $filename
+          done
 
       - name: Run the tests
         run: |
