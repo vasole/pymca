@@ -22,7 +22,6 @@ import os
 import glob
 import platform
 import numpy
-import time
 
 USING_SETUPTOOLS = True
 if '--distutils' in sys.argv:
