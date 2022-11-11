@@ -61,13 +61,11 @@ test_script:
     - "%VENV_TEST_DIR%\\Scripts\\activate.bat"
 
     # Install the generated wheel package to test it
-    - "pip install numpy"
-    - "pip install fisx"
-    - "pip install matplotlib"
     - "pip install silx"
-    - "pip install h5py"
     - "pip install PyQt5"
-    - "pip install --pre --no-index --no-cache-dir --find-links dist/ PyMca5"
+    - "FOR %%F IN (dist\\PyMca5*.*) DO (
+        pip install --pre %%F
+      )"
 
     # Print Python info
     - "python ci\\info_platform.py"

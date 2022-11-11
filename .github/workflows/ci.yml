@@ -130,9 +130,6 @@ jobs:
 
       - name: Install runtime dependencies
         run: |
-          pip install matplotlib
-          pip install fisx
-          pip install h5py
           # pip install silx --pre --find-links https://silx.gitlab-pages.esrf.fr/bob/silx/
           pip install ${{ matrix.QT_BINDING }}
           
