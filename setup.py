@@ -22,7 +22,6 @@ import os
 import glob
 import platform
 import numpy
-import time
 
 USING_SETUPTOOLS = True
 if '--distutils' in sys.argv:
@@ -362,7 +361,7 @@ def build_plotting_ctools(ext_modules):
         for fname in glob.glob(os.path.join(cython_dir, '*.c')):
             try:
                 os.remove(fname)
-            except:
+            except Exception:
                 print("Cannot delete previously generated code <%s>" % fname)
                 raise
         src = [os.path.join(basedir, 'cython', '_ctools.pyx')]
@@ -413,7 +412,7 @@ def build_xas_xas(ext_modules):
         for fname in glob.glob(os.path.join(cython_dir, '*.c')):
             try:
                 os.remove(fname)
-            except:
+            except Exception:
                 print("Cannot delete previously generated code <%s>" % fname)
                 raise
         src = [os.path.join(basedir, 'cython', '_xas.pyx')]
@@ -701,7 +700,7 @@ class install(dftinstall):
             if not os.path.exists(self.install_man):
                 try:
                     os.makedirs(self.install_man)
-                except:
+                except Exception:
                     # we'll get the error in the next check
                     pass
             # check if we can write
@@ -811,7 +810,7 @@ try:
     import sphinx.util.console
     sphinx.util.console.color_terminal = lambda: False
     from sphinx.setup_command import BuildDoc
-except:
+except ImportError:
     sphinx = None
 
 if sphinx:
@@ -893,9 +892,6 @@ try:
     print("PyMca is installed in %s " % PYMCA_INSTALL_DIR)
     print("PyMca data files are installed in %s " % PYMCA_DATA_DIR)
     print("HTML help files are installed in %s " % PYMCA_DOC_DIR)
-except:
+except BaseException:
     #I really do not see how this may happen but ...
     pass
-
-
-
