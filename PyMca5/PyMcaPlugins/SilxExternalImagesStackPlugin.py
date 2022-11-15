@@ -1,8 +1,8 @@
 # /*#########################################################################
-# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,7 @@
 # ###########################################################################*/
 """This plugin open a file selection dialog to open an image in a
 new window. Usual image data formats are supported, as well as standard
-image formats (JPG, PNG).
+image formats (JPG, PNG, TIFF).
 
 The tool is meant to view an alternative view of the data, such as a
 photograph of the sample or a different type of scientific measurement
@@ -49,10 +49,10 @@ __license__ = "MIT"
 import os
 import numpy
 
-from PyMca5.PyMcaGui import ExternalImagesStackPluginBase
-from PyMca5.PyMcaGui import SilxExternalImagesWindow
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import PyMca_Icons as PyMca_Icons
+from PyMca5.PyMcaGui.pymca import ExternalImagesStackPluginBase
+from PyMca5.PyMcaGui.pymca import SilxExternalImagesWindow
 
 # temporarily disable logging when importing silx and fabio
 import logging
