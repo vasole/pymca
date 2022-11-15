@@ -696,7 +696,15 @@ class SilxMaskImageWidget(qt.QMainWindow):
             # self._maskToolsDockWidget.setFloating(True)
             self._maskToolsDockWidget.sigMaskChanged.connect(
                     self._emitMaskImageWidgetSignal)
+            # At the very least silx 1.1.0 was not restoring the plot mode prior
+            # to activate the mask. Force zoom state when closing the mask dock widget
+            self._maskToolsDockWidget.visibilityChanged[bool].connect(
+                    self._maskToolsDockWidgetVisibilityChanged)
         return self._maskToolsDockWidget
+
+    def _maskToolsDockWidgetVisibilityChanged(self, visibility):
+        if not visibility:
+            self.plot.setInteractiveMode("zoom")
 
     def _setMedianKernelWidth(self, value):
         kernelSize = numpy.asarray(value)
