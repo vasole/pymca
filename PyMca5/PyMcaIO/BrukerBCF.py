@@ -101,6 +101,7 @@ class BrukerBCF(DataObject):
 
         root = bruker.ET.fromstring(xml_str)
         root = root.find("./ClassInstance[@Type='TRTSpectrumDatabase']")
+        # root.atrib["Name"] contains information
         xScale, yScale = get_scales(root)
         self.info["xScale"] = xScale
         if xScale:
@@ -117,12 +118,46 @@ class BrukerBCF(DataObject):
                 live_times = None
             self.info["live_time"] = live_times
 
+        if __name__ == "__main__":
+            # images
+            images = get_overview_images(root, name="Default")
+            if not len(images):
+                images = None
+            else:
+                im = images[0]
+                # I should recover images, image names, scales, ...
+                print("MAP START = (%f, %f) END = (%f, %f)"  % (self.info["xScale"][0],
+                                                                self.info["yScale"][0],
+                                                                self.info["xScale"][1] * shape[1],
+                                                                self.info["yScale"][1] * shape[1]))
+
+                print("IMAGE START = (%f, %f) END = (%f, %f)"  % (im["xScale"][0],
+                                                                  im["yScale"][0],
+                                                                  im["xScale"][1] * im["image"].shape[1],
+                                                                  im["yScale"][1] * im["image"].shape[1]))
+
+
+def dump_dict(root, offset=0):
+    class_instances = root.findall("./ClassInstance")
+    for class_instance in class_instances:
+        print(offset * " " + class_instance.attrib["Type"] + " " +class_instance.attrib.get("Name", "-") )
+        for child in class_instance:
+            if child.tag == "ChildClassInstances":
+                dump_dict(child, offset=offset + 5)
+        dump_dict(class_instance, offset=offset+10)
+
 def get_scales(root):
     semData = root.find("./ClassInstance[@Type='TRTSEMData']")
     semData_dict = bruker.dictionarize(semData)
+    semStageData = root.find("./ClassInstance[@Type='TRTSEMStageData']")
+    semStageData_dict = bruker.dictionarize(semStageData)
     if "DX" in semData_dict and "DY" in semData_dict:
-        xScale = [0.0, semData_dict["DX"]]
-        yScale = [0.0, semData_dict["DY"]]
+        if "X" in semStageData_dict and "Y" in semStageData_dict:
+            xScale = [semStageData_dict["X"], semData_dict["DX"]]
+            yScale = [semStageData_dict["Y"], semData_dict["DY"]]
+        else:
+            xScale = [0.0, semData_dict["DX"]]
+            yScale = [0.0, semData_dict["DY"]]
     else:
         xScale = None
         yScale = None
@@ -167,6 +202,77 @@ def get_live_times(root):
                 result = (result * 1.0e-6).astype(numpy.float32)
                 break
     return result
+
+def get_overview_images(root, name=None):
+    result = None
+    container = root.find("./ClassInstance[@Type='TRTContainerClass']")
+    images = []
+    image_nodes = []
+    for item in container:
+        if item.tag == "ChildClassInstances":
+            for child in item:
+                child_name = child.get("Name")
+                if not child_name:
+                    continue
+                if child_name == "OverviewImages":
+                    for element in child:
+                        image_nodes = element.findall("./ClassInstance[@Type='TRTImageData']")
+                    break
+
+    for node in image_nodes:
+        node_name = node.get('Name')
+        if name:
+            if not node_name:
+                # it cannot be equal to requested name
+                continue
+            elif name != node_name:
+                continue
+        width = int(node.find('./Width').text)
+        height = int(node.find('./Height').text)
+        dtype = 'u' + node.find('./ItemSize').text
+        plane_count = int(node.find('./PlaneCount').text)
+        x_calibration = float(node.find('./XCalibration').text)
+        y_calibration = float(node.find('./YCalibration').text)
+        plane_count = int(node.find('./PlaneCount').text)
+        if plane_count == 1:
+            # monochrome or data image
+            image_data_node = node.find("./Plane0")
+            decoded = base64.b64decode(image_data_node.find('./Data').text)
+            result = numpy.frombuffer(decoded, dtype=dtype)
+            result.shape = height, width
+            images.append(result)
+        elif plane_count == 3:
+            if __name__ == "__main__":
+                from PyMca5.PyMcaIO import TiffIO
+                tiff = None
+            # color picture
+            result = numpy.zeros((height * width, 3), dtype=dtype)
+            planes = [] * plane_count
+            for plane_index in range(plane_count):
+                image_data_node = node.find("./Plane%d" % plane_index)
+                decoded = base64.b64decode(image_data_node.find('./Data').text)
+                tmp_result = numpy.frombuffer(decoded, dtype=dtype)
+                result[:, plane_index]  = tmp_result
+                if __name__ == "__main__":
+                    if tiff is None:
+                        tiff = TiffIO.TiffIO(node_name + ".tif", "wb")
+                    else:
+                        tiff = TiffIO.TiffIO(node_name + ".tif", "rb+")
+                tmp_result.shape = height, width
+                tiff.writeImage(tmp_result, info={"Title":"Plane%d" % plane_index})
+            tiff = None
+            result.shape = height, width, 3
+            if __name__ == "__main__":
+                if name:
+                    tiff = TiffIO.TiffIO(name + ".tif", "wb")
+                    tiff.writeImage(result, info={"Title":container.attrib.get("Name", name)})
+                    tiff = None
+            # express in seconds
+            images.append({"image":result,
+                           "image_name":name,
+                           "xScale": [0.0, x_calibration],
+                           "yScale": [0.0, y_calibration]})
+    return images
 
 def isBrukerBCFFile(filename):
     _logger.info("BrukerBCF.isBrukerBCFFile called %s" % filename)
