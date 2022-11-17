@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -99,45 +99,32 @@ def getSourceType(sourceName0):
                 pass
     if os.path.exists(sourceName):
         f = open(sourceName, 'rb')
-        if sys.version < '3.0':
+        tiff = False
+        twoChars = f.read(2)
+        if twoChars in [b'II', b'MM']:
+            # tiff file
+            f.close()
+            return EdfFileDataSource.SOURCE_TYPE
+        f.seek(0)
+        line = f.readline()
+        if not len(line.replace(b"\n",b"")):
             line = f.readline()
-            if not len(line.replace("\n","")):
-                line = f.readline()
-        else:
-            tiff = False
-            try:
-                twoChars = f.read(2)
-                if twoChars in [eval("b'II'"), eval("b'MM'")]:
-                    f.close()
-                    return EdfFileDataSource.SOURCE_TYPE
-            except:
-                pass
-            f.seek(0)
-            try:
-                line = str(f.readline().decode())
-                if not len(line.replace("\n","")):
-                    line = str(f.readline().decode())
-            except UnicodeDecodeError:
-                line = str(f.readline().decode("latin-1"))
-                if not len(line.replace("\n","")):
-                    line = str(f.readline().decode("latin-1"))
-
         f.close()
         if sourceName.lower().endswith('.cbf'):
             #pilatus CBF
             mccd = True
         elif len(line) < 2:
             mccd = False
-        elif line[0:2] in ["II","MM"]:
+        elif line[0:2] in [b"II",b"MM"]:
             #this also accounts for TIFF
             mccd = True
         elif sourceName.lower().endswith('.spe') and\
-             (line[0:1] not in ['$', '#']):
+             (line[0:1] not in [b'$', b'#']):
             #Roper images
             mccd = True
         else:
             mccd = False
-        if (line.startswith("{")) or mccd:
+        if line.startswith(b"{") or mccd:
             return EdfFileDataSource.SOURCE_TYPE
         elif sourceName.lower().endswith('edf.gz') or\
              sourceName.lower().endswith('ccd.gz') or\
