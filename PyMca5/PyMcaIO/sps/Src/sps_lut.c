@@ -1069,8 +1069,8 @@ void FillSegment(int pcbyteorder, XServer_Info Xservinfo,
 unsigned int *CalcPalette (XServer_Info Xservinfo, int palette_type)
 {
   static unsigned int *full_palette = NULL;
-  static old_type = -1;
-  static old_mapbytes = -1;
+  static int old_type = -1;
+  static int old_mapbytes = -1;
   unsigned int col;
   int rbit, gbit, bbit, rshift, gshift, bshift, pcbyteorder;
   swaptype val;
@@ -1190,6 +1190,7 @@ unsigned int *CalcPalette (XServer_Info Xservinfo, int palette_type)
   return full_palette;
 }
 
+void
 FillPalette (XServer_Info Xservinfo,
              void *palette, int fmin, int fmax,
 	     int palette_type, int meth, double gamma)
