@@ -1478,39 +1478,27 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
 
     def _onSaveAs(self):
         cwd = os.getcwd()
-        outfile = qt.QFileDialog(self)
-        if hasattr(outfile, "setFilters"):
-            outfile.setFilters(['PyMca  *.ini'])
-        else:
-            outfile.setNameFilters(['PyMca  *.ini'])
-        outfile.setFileMode(outfile.AnyFile)
-        outfile.setAcceptMode(qt.QFileDialog.AcceptSave)
-
         if os.path.exists(self.configDir):
-            cwd =self.configDir
-        outfile.setDirectory(cwd)
-        ret = outfile.exec()
-        if ret:
-            if hasattr(outfile, "selectedFilter"):
-                filterused = qt.safe_str(outfile.selectedFilter()).split()
-            else:
-                filterused = qt.safe_str(outfile.selectedNameFilter()).split()
-            extension = ".ini"
-            outdir=qt.safe_str(outfile.selectedFiles()[0])
-            try:
-                outputDir  = os.path.dirname(outdir)
-            except:
-                outputDir  = "."
-            try:
-                outputFile = os.path.basename(outdir)
-            except:
-                outputFile  = "PyMca.ini"
-            outfile.close()
-            del outfile
-        else:
-            outfile.close()
-            del outfile
+            cwd = self.configDir
+
+        outputFile = PyMcaFileDialogs.getFileList(self, filetypelist=['PyMca  *.ini'],
+                                                message="Provide output file",
+                                                currentdir=cwd, mode="SAVE",
+                                                getfilter=False, single=False,
+                                                currentfilter=None, native=None)
+        if not len(outputFile):
             return
+        extension = ".ini"
+        outputFile = outputFile[0]
+        try:
+            outputDir  = os.path.dirname(outputFile)
+        except:
+            outputDir  = "."
+        try:
+            outputFile = os.path.basename(outputFile)
+        except:
+            outputFile  = "PyMca.ini"
+
         #always overwrite for the time being
         if len(outputFile) < len(extension[:]):
             outputFile += extension[:]
