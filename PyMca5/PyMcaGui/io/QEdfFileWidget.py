@@ -33,6 +33,7 @@ import numpy
 import logging
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from PyMca5.PyMcaGui.plotting import PlotWidget
 
 
@@ -508,37 +509,21 @@ class QEdfFileWidget(qt.QWidget):
                         "Widget *.png",
                         "Widget *.jpg"]
 
-        outfile = qt.QFileDialog(self)
-        outfile.setModal(1)
-        outfile.setWindowTitle("Output File Selection")
-        strlist = QStringList()
-        for f in fileTypeList:
-            strlist.append(f)
-        if hasattr(outfile, "setFilters"):
-            outfile.setFilters(strlist)
-        else:
-            outfile.setNameFilters(strlist)
-        outfile.setFileMode(outfile.AnyFile)
-        outfile.setAcceptMode(outfile.AcceptSave)
-        outfile.setDirectory(self.lastInputDir)
-        ret = outfile.exec()
-
-        if not ret:
+        outfile, filterused = PyMcaFileDialogs.getFileList(parent=self,
+                    filetypelist=fileTypeList, message="Output File Selection",
+                    currentdir=self.lastInputDir, mode="SAVE",
+                    getfilter=None,
+                    single=False,
+                    currentfilter=None,
+                    native=None)
+        if not len(outfile):
             return
-        if hasattr(outfile, "selectedFilter"):
-            filterused = qt.safe_str(outfile.selectedFilter()).split()
-        else:
-            filterused = qt.safe_str(outfile.selectedNameFilter()).split()
+        filterused = filterused.split()
         filetype = filterused[0]
         extension = filterused[1]
-        outstr = qt.safe_str(outfile.selectedFiles()[0])
-        try:
-            outputFile = os.path.basename(outstr)
-        except:
-            outputFile  = outstr
-        outputDir  = os.path.dirname(outstr)
+        outputFile  = outfile[0]
+        outputDir  = os.path.dirname(outputFile)
         self.lastInputDir = outputDir
-        PyMcaDirs.outputDir = outputDir
 
         #always overwrite for the time being
         if len(outputFile) < len(extension[1:]):
@@ -552,7 +537,6 @@ class QEdfFileWidget(qt.QWidget):
             except:
                 qt.QMessageBox.critical(self, "Save Error", "Cannot overwrite existing file")
                 return
-
 
         tiff = False
         if filetype.upper() == "IMAGEDATA":
@@ -845,47 +829,24 @@ class QEdfFileWidget(qt.QWidget):
         if justloaded is None:justloaded = 0
         if filename is None:
             self.lastInputDir = PyMcaDirs.inputDir
-            if QT4:
-                fdialog = qt.QFileDialog(self)
-                fdialog.setModal(True)
-                fdialog.setWindowTitle("Open a new EdfFile")
-                strlist = QStringList()
-                strlist.append("EDF Files *edf")
-                strlist.append("EDF Files *ccd")
-                strlist.append("All Files *")
-                fdialog.setFilters(strlist)
-                fdialog.setFileMode(fdialog.ExistingFiles)
-                ret = fdialog.exec()
-                if ret == qt.QDialog.Accepted:
-                    filelist = fdialog.selectedFiles()
-                    fdialog.close()
-                    del fdialog
-                else:
-                    fdialog.close()
-                    del fdialog
-                    return
-            elif sys.platform == 'win32':
-                wdir = self.lastInputDir
-                if wdir is None:wdir = ""
-                filelist = qt.QFileDialog.getOpenFileNames("EdfFiles (*.edf)\nEdfFiles (*mca)\nEdfFiles (*ccd)\nAll files (*)",
-                            wdir,
-                            self,"openFile", "Open a new EdfFile")
-            else:
-                filedialog = qt.QFileDialog(self,"Open new EdfFile(s)",1)
-                if self.lastInputDir is not None:
-                    filedialog.setDir(self.lastInputDir)
-                filedialog.setMode(filedialog.ExistingFiles)
-                filedialog.setFilters("EdfFiles (*.edf)\nEdfFiles (*.mca)\nEdfFiles (*ccd)\nAll files (*)")
-                if filedialog.exec_loop() == qt.QDialog.Accepted:
-                    filelist= filedialog.selectedFiles()
-                else:
-                    return
+            wdir = self.lastInputDir
+            filetypelist = ["EdfFiles (*.edf)",
+                            "EdfFiles (*mca)",
+                            "EdfFiles (*ccd)",
+                            "All files (*)"]
+            message = "Open new EdfFile(s)"
+            filelist = PyMcaFileDialogs.getFileList(parent=None, filetypelist=None, message=None,
+                                                    currentdir=wdir, mode="OPEN", getfilter=False,
+                                                    single=False, currentfilter=None, native=None)
+            if not len(filelist):
+                return
             #respect selection choice
             #filelist.sort()
             filename=[]
             for f in filelist:
                 filename.append(qt.safe_str(f))
-            if not len(filename):    return
+            if not len(filename):
+                return
             if len(filename):
                 self.lastInputDir  = os.path.dirname(filename[0])
                 PyMcaDirs.inputDir = os.path.dirname(filename[0])
@@ -914,12 +875,8 @@ class QEdfFileWidget(qt.QWidget):
                     combokey = os.path.basename(filename[0])
                 if combokey not in self.mapComboName.keys():
                     self.mapComboName[combokey]= filename[0]
-                    if QT4:
-                        self.fileCombo.addItem(combokey)
-                    else:
-                        self.fileCombo.insertItem(combokey)
+                    self.fileCombo.insertItem(combokey)
                 self.selectFile(combokey,justloaded=justloaded)
-
 
     def selectFile(self, filename=None, justloaded=None):
         if justloaded is None:justloaded=0
