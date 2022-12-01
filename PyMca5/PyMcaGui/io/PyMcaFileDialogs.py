@@ -108,10 +108,10 @@ def getFileList(parent=None, filetypelist=None, message=None, currentdir=None,
             currentfilter = PyMcaDirs.openFilter
         else:
             currentfilter = PyMcaDirs.saveFilter
-    if currentfilter not in filetypelist:
+    elif currentfilter not in fileTypeList:
         currentfilter = None
     if currentfilter is None:
-        currentfilter = filetypelist[0]
+        currentfilter = fileTypeList[0]
     if native is None:
         nativeFileDialogs = PyMcaDirs.nativeFileDialogs
     else:

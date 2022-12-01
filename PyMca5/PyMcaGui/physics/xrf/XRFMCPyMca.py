@@ -37,6 +37,7 @@ import traceback
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5 import PyMcaDirs as xrfmc_dirs
 from PyMca5.PyMcaIO import ConfigDict
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from PyMca5.PyMcaGui.misc import SubprocessLogWidget
 from PyMca5.PyMcaPhysics.xrf.XRFMC import XRFMCHelper
 
@@ -79,46 +80,32 @@ class GetFileList(qt.QGroupBox):
         self.__listView.setMaximumHeight(n*self.__listButton.sizeHint().height())
         self.__listButton.clicked.connect(self.__browseList)
         grid = self.mainLayout
-        grid.addWidget(self._label,             0, 0, qt.Qt.AlignTop|qt.Qt.AlignLeft)
-        grid.addWidget(self.__listView,   0, 1)
+        grid.addWidget(self._label, 0, 0, qt.Qt.AlignTop|qt.Qt.AlignLeft)
+        grid.addWidget(self.__listView, 0, 1)
         grid.addWidget(self.__listButton, 0, 2, qt.Qt.AlignTop|qt.Qt.AlignRight)
 
     def __browseList(self, dummy=True):
         return self._browseList()
 
-    def _browseList(self, filetypes="All Files (*)"):
+    def _browseList(self, filetypes=["All Files (*)"]):
         self.inputDir = xrfmc_dirs.inputDir
         if not os.path.exists(self.inputDir):
             self.inputDir =  os.getcwd()
         wdir = self.inputDir
-
-        filedialog = qt.QFileDialog(self)
-        filedialog.setWindowTitle("Open a set of files")
-        filedialog.setDirectory(wdir)
-        filedialog.setModal(1)
-        filedialog.setFileMode(filedialog.ExistingFiles)
-
+        filelist = PyMcaFileDialogs.getFileList(parent=self,
+                                                filetypelist=filetypes,
+                                                message="Open a set of files",
+                                                currentdir=wdir,
+                                                mode="OPEN",
+                                                getfilter=False,
+                                                single=False,
+                                                currentfilter=None,
+                                                native=False)
+        if not len(filelist):
+            return
         if self.__maxNFiles == 1:
-            filelist = qt.QFileDialog.getOpenFileName(self,
-                        "Open a file",
-                        wdir,
-                        filetypes)
-            if QTVERSION > "5.0.0":
-                # in PyQt5 the call corresponds to getOpenFileNameAndFilter
-                filelist = filelist[0]
-            if len(filelist):
-                filelist = [filelist]
-        else:
-            filelist = qt.QFileDialog.getOpenFileNames(self,
-                        "Open a set of files",
-                        wdir,
-                        filetypes)
-            if QTVERSION > "5.0.0":
-                # in PyQt5 the call corresponds to getOpenFileNameAndFilter
-                filelist = filelist[0]
-        if len(filelist):
-            filelist = [str(x) for x in filelist]
-            self.setFileList(filelist)
+            filelist = [filelist[0]]
+        self.setFileList(filelist)
 
     def setFileList(self,filelist=None):
         if filelist is None:
@@ -151,11 +138,10 @@ class GetFileList(qt.QGroupBox):
 
 class PyMcaFitFileList(GetFileList):
     def __init__(self, parent=None):
-        GetFileList.__init__(self, parent, title='PyMca Configuruation or Fit Result File')
+        GetFileList.__init__(self, parent, title='PyMca Configuration or Fit Result File')
         self.build("")
 
-    def _browseList(self, filetypes=\
-                    "PyMca .cfg Files (*.cfg)\nPyMca .fit Files (*.fit)"):
+    def _browseList(self, filetypes=["PyMca .cfg Files (*.cfg)", "PyMca .fit Files (*.fit)"]):
         GetFileList._browseList(self, filetypes)
 
 class XRFMCProgramFile(GetFileList):
@@ -165,42 +151,31 @@ class XRFMCProgramFile(GetFileList):
         if XRFMCHelper.XMIMSIM_PYMCA is not None:
             self.setFileList([XRFMCHelper.XMIMSIM_PYMCA])
 
-    def _browseList(self, filetypes="All Files (*)"):
+    def _browseList(self, filetypes=["All Files (*)"]):
         self.inputDir = xrfmc_dirs.inputDir
         if not os.path.exists(self.inputDir):
             self.inputDir =  os.getcwd()
         wdir = self.inputDir
-
-        filedialog = qt.QFileDialog(self)
         if sys.platform == "darwin":
-            filedialog.setWindowTitle("Select XMI-MSIM application bundle")
-        else:
-            filedialog.setWindowTitle("Select xmimsim-pymca executable")
-        filedialog.setDirectory(wdir)
-        filedialog.setModal(1)
-        if sys.platform == 'darwin':
-            filedialog.setFileMode(qt.QFileDialog.Directory)
-            filedialog.setOption(qt.QFileDialog.ShowDirsOnly)
-            filelist = filedialog.exec()
-            if filelist:
-                filelist = filedialog.selectedFiles()
-                filelist = filelist[0]
-                xmimsim = os.path.join(qt.safe_str(filelist),
+            message = "Select XMI-MSIM application bundle"
+            filelist = PyMcaFileDialogs.getExistingDirectory(parent=self,
+                                                             message=message,
+                                                             mode="OPEN",
+                                                             currentdir=wdir)
+            if len(filelist):
+                xmimsim = os.path.join(filelist,
                                        "Contents",
                                        "Resources",
                                        "xmimsim-pymca")
                 filelist = [xmimsim]
+            print(" FILELIST = ", filelist)
         else:
-            filedialog.setFileMode(qt.QFileDialog.ExistingFiles)
-            filelist = qt.QFileDialog.getOpenFileName(self,
-                        "Selec xmimsim-pymca executable",
-                        wdir,
-                        filetypes)
-            if QTVERSION > "5.0.0":
-                # in PyQt5 the call corresponds to getOpenFileNameAndFilter
-                filelist = filelist[0]
-            if len(filelist):
-                filelist = [filelist]
+            message = "Select xmimsim-pymca executable"
+            filelist = PyMcaFileDialogs.getFileList(parent=self,
+                                                filetypelist=filetypes,
+                                                message=message,
+                                                mode="OPEN",
+                                                currentdir=wdir)
         if len(filelist):
             self.setFileList(filelist)
 
@@ -229,21 +204,16 @@ class XRFMCOutputDir(GetFileList):
         GetFileList.__init__(self, parent, title='XMIMSIM-PyMca Output Directory')
         self.build("")
 
-    def _browseList(self, filetypes="All Files (*)"):
+    def _browseList(self, filetypes=["All Files (*)"]):
         self.outputDir = xrfmc_dirs.outputDir
         if not os.path.exists(self.outputDir):
             self.outputDir =  os.getcwd()
         wdir = self.outputDir
-
-        filedialog = qt.QFileDialog(self)
-        filedialog.setWindowTitle("Open a set of files")
-        filedialog.setDirectory(wdir)
-        filedialog.setModal(1)
-        filedialog.setFileMode(filedialog.DirectoryOnly)
-
-        filelist = qt.QFileDialog.getExistingDirectory(self,
-                    "Please select the output directory",
-                    wdir)
+        message = "Please select the output directory"
+        filelist = PyMcaFileDialogs.getExistingDirectory(parent=self,
+                                                         message=message,
+                                                         mode="SAVE",
+                                                         currentdir=wdir)
         if len(filelist):
             filelist = [str(filelist)]
             self.setFileList(filelist)
