@@ -123,6 +123,7 @@ if __name__ == '__main__':
         _logger.info("Failed to import hdf5plugin")
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 QTVERSION = qt.qVersion()
 if sys.platform == 'darwin':
     if backend is not None:
@@ -1360,69 +1361,13 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         wdir = PyMcaDirs.inputDir
         fileTypeList = typelist
         filterused = None
-        if False and PyMcaDirs.nativeFileDialogs:
-            #windows cannot handle thousands of files in a file dialog
-            filetypes = ""
-            for filetype in fileTypeList:
-                filetypes += filetype+"\n"
-            filelist = qt.QFileDialog.getOpenFileNames(self,
-                        message,
-                        wdir,
-                        filetypes)
-            if not len(filelist):
-                if getfilter:
-                    return [], filterused
-                else:
-                    return []
-            else:
-                sample  = qt.safe_str(filelist[0])
-                for filetype in fileTypeList:
-                    ftype = filetype.replace("(", "").replace(")","")
-                    extensions = ftype.split()[2:]
-                    for extension in extensions:
-                        if sample.endswith(extension[-3:]):
-                            filterused = filetype
-                            break
-        else:
-            fdialog = qt.QFileDialog(self)
-            fdialog.setModal(True)
-            fdialog.setWindowTitle(message)
-            if hasattr(qt, "QStringList"):
-                strlist = qt.QStringList()
-            else:
-                strlist = []
-            for filetype in fileTypeList:
-                strlist.append(filetype.replace("(","").replace(")",""))
-            if hasattr(fdialog, "setFilters"):
-                fdialog.setFilters(strlist)
-            else:
-                fdialog.setNameFilters(strlist)
-            fdialog.setFileMode(fdialog.ExistingFiles)
-            fdialog.setDirectory(wdir)
-            if QTVERSION > '4.3.0':
-                history = fdialog.history()
-                if len(history) > 6:
-                    fdialog.setHistory(history[-6:])
-            ret = fdialog.exec()
-            if ret == qt.QDialog.Accepted:
-                filelist = fdialog.selectedFiles()
-                if getfilter:
-                    filterused = qt.safe_str(fdialog.selectedFilter())
-                fdialog.close()
-                del fdialog
-            else:
-                fdialog.close()
-                del fdialog
-                if getfilter:
-                    return [], filterused
-                else:
-                    return []
-        filelist = [qt.safe_str(x) for x in filelist]
+        #windows cannot handle thousands of files in a file dialog force Qt dialogs
+        output = PyMcaFileDialogs.getFileList(self, filetypelist=typelist, message=message, currentdir=wdir,
+                                        mode="OPEN", getfilter=getfilter, single=False, currentfilter=None, native=False)
         if getfilter:
-            return filelist, filterused
+            return output[0], output[1]
         else:
-            return filelist
-
+            return output
 
     def __roiImaging(self):
         if self.__imagingTool is None:
@@ -1637,24 +1582,22 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
     def openSource(self,index=0):
         _logger.debug("index = %d ", index)
         if index <= 0:
-            outfile = qt.QFileDialog(self)
-            outfile.setWindowTitle("Select PyMca Configuration File")
             if os.path.exists(self.configDir):
-                outfile.setDirectory(self.configDir)
-            if hasattr(outfile, "setFilters"):
-                outfile.setFilters(['PyMca  *.ini'])
+                currentdir = self.configDir
             else:
-                outfile.setNameFilters(['PyMca  *.ini'])
-            outfile.setFileMode(outfile.ExistingFile)
-            ret = outfile.exec()
-            if ret:
-                filename = qt.safe_str(outfile.selectedFiles()[0])
-                outfile.close()
-                del outfile
-            else:
-                outfile.close()
-                del outfile
+                currentdir = None
+            filename = PyMcaFileDialogs.getFileList(parent=self,
+                                                   filetypelist=['PyMca  *.ini'],
+                                                   message="Select PyMca Configuration File",
+                                                   currentdir=currentdir,
+                                                   mode="OPEN",
+                                                   getfilter=False,
+                                                   single=False,
+                                                   currentfilter=None,
+                                                   native=None)
+            if not len(filename):
                 return
+            filename = filename[0]
             currentConfigDict = ConfigDict.ConfigDict()
             self.configDir  = os.path.dirname(filename)
             currentConfigDict.read(filename)

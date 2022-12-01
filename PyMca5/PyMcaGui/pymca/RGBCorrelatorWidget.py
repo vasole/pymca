@@ -889,8 +889,8 @@ class RGBCorrelatorWidget(qt.QWidget):
     def getInputFileName(self, getfilter=False):
         initdir = PyMcaDirs.inputDir
         filedialog = qt.QFileDialog(self)
-        filedialog.setFileMode(filedialog.ExistingFiles)
-        filedialog.setAcceptMode(qt.QFileDialog.AcceptOpen)
+        filedialog.setFileMode(qt.QFileDialog.FileMode.ExistingFiles)
+        filedialog.setAcceptMode(qt.QFileDialog.AcceptMode.AcceptOpen)
         filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict["gioconda16"])))
         formatlist = ["ASCII Files *dat",
                       "EDF Files *edf",
