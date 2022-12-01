@@ -56,6 +56,7 @@ except:
 
 from .PyMca_Icons import IconDict
 from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 
 if hasattr(qt, 'QString'):
     QString = qt.QString
@@ -1610,9 +1611,6 @@ class PlotWindow(PlotWidget.PlotWidget):
             msg.exec()
 
     def _getOutputFileName(self):
-        outfile = qt.QFileDialog(self)
-        outfile.setWindowTitle("Output File Selection")
-        outfile.setModal(1)
         filterlist = ['Specfile MultiScan *.dat',
                       'Specfile Scan *.dat',
                       'Specfile MCA  *.mca',
@@ -1623,25 +1621,20 @@ class PlotWindow(PlotWidget.PlotWidget):
                       'OMNIC CSV *.csv',
                       'Widget PNG *.png',
                       'Widget JPG *.jpg']
-        if hasattr(outfile, "setFilters"):
-            outfile.setFilters(filterlist)
-        else:
-            outfile.setNameFilters(filterlist)
-        outfile.setFileMode(outfile.AnyFile)
-        outfile.setAcceptMode(outfile.AcceptSave)
-        ret = outfile.exec()
-        if not ret:
+        outputFile, outputFilter = PyMcaFileDialogs.getFileList(self,
+                    filetypelist=filterlist,
+                    message="Output File Selection",
+                    currentdir=None,
+                    mode="SAVE",
+                    getfilter=True,
+                    single=False,
+                    currentfilter=None, native=None)
+        if not len(outputFile):
             return None
-        if hasattr(outfile, "selectedFilter"):
-            outputFilter = qt.safe_str(outfile.selectedFilter())
-        else:
-            outputFilter = qt.safe_str(outfile.selectedNameFilter())
         filterused = outputFilter.split()
         filetype  = filterused[1]
         extension = filterused[2]
-        outputFile = qt.safe_str(outfile.selectedFiles()[0])
-        outfile.close()
-        del outfile
+        outputFile = outputFile[0]
         if len(outputFile) < 5:
             outputFile = outputFile + extension[-4:]
         elif outputFile[-4:] != extension[-4:]:
