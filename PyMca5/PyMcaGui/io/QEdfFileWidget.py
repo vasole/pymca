@@ -591,8 +591,8 @@ class QEdfFileWidget(qt.QWidget):
             xmin, xmax = self.graph.getGraphXLimits()
             ymin, ymax = self.graph.getGraphYLimits()
             # save zoomed image, for that we have to get the limits
-            r0, c0 = convertToRowAndColumn(xmin, ymin, shape, xScale=xScale, yScale=yScale, safe=True)
-            r1, c1 = convertToRowAndColumn(xmax, ymax, shape, xScale=xScale, yScale=yScale, safe=True)
+            r0, c0 = convertToRowAndColumn(xmin, ymin, shape, xScale=None, yScale=None, safe=True)
+            r1, c1 = convertToRowAndColumn(xmax, ymax, shape, xScale=None, yScale=None, safe=True)
             row0 = int(min(r0, r1))
             row1 = int(max(r0, r1))
             col0 = int(min(c0, c1))

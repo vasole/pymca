@@ -837,10 +837,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         if self.outputDir is not None:
             if os.path.exists(self.outputDir):
                 initdir = self.outputDir
-        filedialog = qt.QFileDialog(self)
-        filedialog.setFileMode(filedialog.AnyFile)
-        filedialog.setAcceptMode(qt.QFileDialog.AcceptSave)
-        filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict["gioconda16"])))
+
         formatlist = ["ASCII Files *.dat",
                       "EDF Files *.edf",
                       "EDF(Float32) Files *.edf",
@@ -850,29 +847,25 @@ class RGBCorrelatorWidget(qt.QWidget):
                       'CSV(, separated) Files *.csv',
                       'CSV(; separated) Files *.csv',
                       'CSV(tab separated) Files *.csv']
-        strlist = QStringList()
-        for f in formatlist:
-                strlist.append(f)
-        if self._saveFilter is None:
+        if self._saveFilter in [None, ""]:
             self._saveFilter =formatlist[0]
-        if hasattr(filedialog, "setFilters"):
-            filedialog.setFilters(strlist)
-            filedialog.selectFilter(self._saveFilter)
-        else:
-            filedialog.setNameFilters(strlist)
-            filedialog.selectNameFilter(self._saveFilter)
-        filedialog.setDirectory(initdir)
-        ret = filedialog.exec()
-        if not ret: return ""
-        filename = filedialog.selectedFiles()[0]
+
+        filename, self._saveFilter = PyMcaFileDialogs.getFileList(self,
+                                                filetypelist=formatlist,
+                                                message="Provide output file",
+                                                currentdir=initdir,
+                                                mode="SAVE",
+                                                getfilter=True,
+                                                single=False,
+                                                currentfilter=self._saveFilter,
+                                                native=None)
+        if not len(filename):
+            return ""
+
+        filename = filename[0]
         if len(filename):
-            filename = "%s" % filename
             self.outputDir = os.path.dirname(filename)
-            if hasattr(filedialog, "selectedFilter"):
-                self._saveFilter = "%s" % filedialog.selectedFilter()
-            else:
-                self._saveFilter = "%s" % filedialog.selectedNameFilter()
-            filterused = "."+self._saveFilter[-3:]
+            filterused = "." + self._saveFilter[-3:]
             PyMcaDirs.outputDir = os.path.dirname(filename)
             if len(filename) < 4:
                 filename = filename+ filterused
@@ -882,8 +875,6 @@ class RGBCorrelatorWidget(qt.QWidget):
                     pass
                 else:
                     filename = filename+ filterused
-        else:
-            filename = ""
         return filename
 
     def getInputFileName(self, getfilter=False):
