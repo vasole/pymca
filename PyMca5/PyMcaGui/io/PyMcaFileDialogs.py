@@ -59,8 +59,10 @@ def getExistingDirectory(parent=None, message=None, mode=None, currentdir=None):
             outfile.setFileMode(outfile.Directory)
             if hasattr(outfile, "ShowDirsOnly"):
                 outfile.setOption(outfile.ShowDirsOnly)
-        else:
+        elif hasattr(outfile, "DirectoryOnly"):
             outfile.setFileMode(outfile.DirectoryOnly)
+        else:
+            outfile.setFileMode(qt.QFileDialog.FileMode.Directory)
         ret = outfile.exec()
         if ret:
             outdir = qt.safe_str(outfile.selectedFiles()[0])
