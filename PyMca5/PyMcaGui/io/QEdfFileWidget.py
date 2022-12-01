@@ -512,7 +512,7 @@ class QEdfFileWidget(qt.QWidget):
         outfile, filterused = PyMcaFileDialogs.getFileList(parent=self,
                     filetypelist=fileTypeList, message="Output File Selection",
                     currentdir=self.lastInputDir, mode="SAVE",
-                    getfilter=None,
+                    getfilter=True,
                     single=False,
                     currentfilter=None,
                     native=None)
