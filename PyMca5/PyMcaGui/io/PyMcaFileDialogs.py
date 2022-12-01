@@ -244,10 +244,10 @@ def getFileList(parent=None, filetypelist=None, message=None, currentdir=None,
             fdialog.setNameFilters(strlist)
 
         if mode == "OPEN":
-            fdialog.setFileMode(fdialog.ExistingFiles)
+            fdialog.setFileMode(qt.QFileDialog.FileMode.ExistingFiles)
         else:
-            fdialog.setAcceptMode(fdialog.AcceptSave)
-            fdialog.setFileMode(fdialog.AnyFile)
+            fdialog.setAcceptMode(qt.QFileDialog.AcceptMode.AcceptSave)
+            fdialog.setFileMode(qt.QFileDialog.FileMode.AnyFile)
 
         fdialog.setDirectory(wdir)
         if QTVERSION > '4.3.0':
