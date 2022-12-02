@@ -1654,8 +1654,13 @@ class XMCDWidget(qt.QWidget):
         self.saveShortcut.activated.connect(self.analysisWindow._saveIconSignal)
 
         # Connects
-        self.expCBox.currentIndexChanged['QString'].connect(self.updateTree)
-        self.expCBox.currentIndexChanged['QString'].connect(self.selectExperiment)
+        self.expCBox.currentIndexChanged[int].connect(self.updateTree)
+        if hasattr(self.expCBox, "textActivated"):
+            self.expCBox.textActivated[str].connect(\
+                                    self.selectExperiment)
+        else:
+            self.expCBox.currentIndexChanged['QString'].connect(\
+                                    self.selectExperiment)
         self.list.selectionModifiedSignal.connect(self.updateSelectionDict)
         self.setSelectionSignal.connect(self.analysisWindow.processSelection)
         self.analysisWindow.saveOptionsSignal.connect(self.optsWindow.saveOptions)
