@@ -57,7 +57,7 @@ Examples of source installation
 
 You will need the following dependencies installed:
 
--  `python <https://www.python.org/>`_ (3.6 or higher
+-  `python <https://www.python.org/>`_ (3.7 or higher
    recommended)
 -  `numpy <https://www.numpy.org/>`_
 -  `fisx <https://github.com/vasole/fisx>`_
