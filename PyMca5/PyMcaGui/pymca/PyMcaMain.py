@@ -1481,7 +1481,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         if os.path.exists(self.configDir):
             cwd = self.configDir
 
-        outputFile = PyMcaFileDialogs.getFileList(self, filetypelist=['PyMca  *.ini'],
+        outputFile = PyMcaFileDialogs.getFileList(self, filetypelist=['PyMca (*.ini)'],
                                                 message="Provide output file",
                                                 currentdir=cwd, mode="SAVE",
                                                 getfilter=False, single=False,
@@ -1575,7 +1575,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             else:
                 currentdir = None
             filename = PyMcaFileDialogs.getFileList(parent=self,
-                                                   filetypelist=['PyMca  *.ini'],
+                                                   filetypelist=['PyMca (*.ini)'],
                                                    message="Select PyMca Configuration File",
                                                    currentdir=currentdir,
                                                    mode="OPEN",
