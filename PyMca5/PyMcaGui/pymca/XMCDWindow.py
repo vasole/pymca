@@ -64,15 +64,17 @@ class TreeWidgetItem(qt.QTreeWidgetItem):
         col = self.treeWidget().sortColumn()
         val      = self.text(col)
         valOther = other.text(col)
-        if val == '---':
-                ret = True
+        if val == valOther:
+            ret = False
+        elif val in ['---']:
+            ret = True
         elif col > self.__legendColumn:
             try:
                 ret  = (float(val) < float(valOther))
             except ValueError:
-                ret  = qt.QTreeWidgetItem.__lt__(self, other)
+                ret  = val < valOther
         else:
-            ret  = qt.QTreeWidgetItem.__lt__(self, other)
+            ret  = val < valOther
         return ret
 
 class XMCDOptions(qt.QDialog):
@@ -1654,8 +1656,13 @@ class XMCDWidget(qt.QWidget):
         self.saveShortcut.activated.connect(self.analysisWindow._saveIconSignal)
 
         # Connects
-        self.expCBox.currentIndexChanged['QString'].connect(self.updateTree)
-        self.expCBox.currentIndexChanged['QString'].connect(self.selectExperiment)
+        self.expCBox.currentIndexChanged[int].connect(self.updateTree)
+        if hasattr(self.expCBox, "textActivated"):
+            self.expCBox.textActivated[str].connect(\
+                                    self.selectExperiment)
+        else:
+            self.expCBox.currentIndexChanged['QString'].connect(\
+                                    self.selectExperiment)
         self.list.selectionModifiedSignal.connect(self.updateSelectionDict)
         self.setSelectionSignal.connect(self.analysisWindow.processSelection)
         self.analysisWindow.saveOptionsSignal.connect(self.optsWindow.saveOptions)
@@ -2067,8 +2074,6 @@ def getSaveFileName(parent, caption, directory, filter):
     return (files, append, comment)
 
 def main():
-    app = qt.QApplication([])
-
     # Create dummy ScanWindow
     swin = ScanWindow.ScanWindow()
     info0 = {'xlabel': 'foo',
@@ -2095,6 +2100,7 @@ def main():
 
     w = XMCDWidget(None, swin, 'ID08', nSelectors = 5)
     w.show()
+    return w
 
 #    helpFileBrowser = qt.QTextBrowser()
 #    helpFileBrowser.setLineWrapMode(qt.QTextEdit.FixedPixelWidth)
@@ -2106,7 +2112,8 @@ def main():
 #    helpFileBrowser.setHtml(helpFileHTML)
 #    helpFileBrowser.show()
 
-    app.exec()
 
 if __name__ == '__main__':
-    main()
+    app = qt.QApplication([])
+    w = main()
+    app.exec()
