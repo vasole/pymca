@@ -64,8 +64,10 @@ class TreeWidgetItem(qt.QTreeWidgetItem):
         col = self.treeWidget().sortColumn()
         val      = self.text(col)
         valOther = other.text(col)
-        if val == '---':
-                ret = True
+        if val == valOther:
+            ret = False
+        elif val in ['---']:
+            ret = True
         elif col > self.__legendColumn:
             try:
                 ret  = (float(val) < float(valOther))
