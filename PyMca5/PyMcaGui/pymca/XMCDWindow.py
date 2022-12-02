@@ -2067,8 +2067,6 @@ def getSaveFileName(parent, caption, directory, filter):
     return (files, append, comment)
 
 def main():
-    app = qt.QApplication([])
-
     # Create dummy ScanWindow
     swin = ScanWindow.ScanWindow()
     info0 = {'xlabel': 'foo',
@@ -2095,6 +2093,7 @@ def main():
 
     w = XMCDWidget(None, swin, 'ID08', nSelectors = 5)
     w.show()
+    return w
 
 #    helpFileBrowser = qt.QTextBrowser()
 #    helpFileBrowser.setLineWrapMode(qt.QTextEdit.FixedPixelWidth)
@@ -2106,7 +2105,8 @@ def main():
 #    helpFileBrowser.setHtml(helpFileHTML)
 #    helpFileBrowser.show()
 
-    app.exec()
 
 if __name__ == '__main__':
-    main()
+    app = qt.QApplication([])
+    w = main()
+    app.exec()

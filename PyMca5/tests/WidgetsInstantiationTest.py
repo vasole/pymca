@@ -189,6 +189,17 @@ class TestMcaAdvancedFit(TestCaseQt):
         from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
         PyMcaPrintPreview.resetSingletonPrintPreview()
 
+class TestXMCDWindow(TestCaseQt):
+    def setUp(self):
+        super(TestXMCDWindow, self).setUp()
+
+    def testShow(self):
+        from PyMca5.PyMcaGui.pymca import XMCDWindow
+        widget = XMCDWindow.main()
+        self.qapp.processEvents()
+        from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
+        PyMcaPrintPreview.resetSingletonPrintPreview()
+
 class TestPyMcaMain(TestCaseQt):
     def setUp(self):
         super(TestPyMcaMain, self).setUp()
@@ -237,6 +248,7 @@ def getSuite(auto=True):
                         TestFitParam,
                         TestPeakIdentifier,
                         TestMcaAdvancedFit,
+                        TestXMCDWindow,
                         TestPyMcaMain,
                         ):
         test_suite.addTest(
