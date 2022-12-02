@@ -72,9 +72,9 @@ class TreeWidgetItem(qt.QTreeWidgetItem):
             try:
                 ret  = (float(val) < float(valOther))
             except ValueError:
-                ret  = qt.QTreeWidgetItem.__lt__(self, other)
+                ret  = val < valOther
         else:
-            ret  = qt.QTreeWidgetItem.__lt__(self, other)
+            ret  = val < valOther
         return ret
 
 class XMCDOptions(qt.QDialog):
