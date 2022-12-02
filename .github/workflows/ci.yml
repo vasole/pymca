@@ -26,7 +26,7 @@ jobs:
         include:
           - name-suffix: "(Minimum Versions)"
             os: ubuntu-latest
-            python-version: 3.6
+            python-version: 3.7
             BUILD_COMMAND: sdist
             QT_BINDING: PyQt5
             XVFB_RUN: xvfb-run -a
@@ -47,14 +47,14 @@ jobs:
 
           - name-suffix: "PySide6 bdist_wheel"
             os: ubuntu-latest
-            python-version: 3.10.2
+            python-version: "3.10"
             BUILD_COMMAND: bdist_wheel
             QT_BINDING: PySide6
             XVFB_RUN: xvfb-run -a
 
           - name-suffix: "PyQt5 bdist_wheel"
             os: ubuntu-latest
-            python-version: 3.10.2
+            python-version: "3.10"
             BUILD_COMMAND: bdist_wheel
             QT_BINDING: PyQt5
             XVFB_RUN: xvfb-run -a
