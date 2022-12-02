@@ -319,6 +319,8 @@ if sys.version_info < (3,):
 else:
     safe_str = str
 
+if BINDING=="PySide2":
+    _logger = logging.warning("PyMca PySide2 support deprecated and not reliable")
 
 class CLocaleQDoubleValidator(QDoubleValidator):
     """
