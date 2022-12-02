@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -32,6 +32,7 @@ import os
 import numpy
 import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from . import PlotWidget
 from . import PyMcaPrintPreview
 from .PyMca_Icons import IconDict
@@ -575,40 +576,23 @@ class RGBCorrelatorGraph(qt.QWidget):
                         "Widget *.png",
                         "Widget *.jpg"]
 
-        outfile = qt.QFileDialog(self)
-        outfile.setModal(1)
-        outfile.setWindowTitle("Output File Selection")
-        if hasattr(qt, "QStringList"):
-            strlist = qt.QStringList()
-        else:
-            strlist = []
-        for f in fileTypeList:
-            strlist.append(f)
-        if hasattr(outfile, "setFilters"):
-            outfile.setFilters(strlist)
-        else:
-            outfile.setNameFilters(strlist)
-        outfile.setFileMode(outfile.AnyFile)
-        outfile.setAcceptMode(qt.QFileDialog.AcceptSave)
-        outfile.setDirectory(self.saveDirectory)
-        ret = outfile.exec()
-
-        if not ret:
+        filelist, filterused = PyMcaFileDialogs.getFileList(self,
+                                     filetypelist=fileTypeList,
+                                     message="Output File Selection",
+                                     currentdir=self.saveDirectory,
+                                     mode="SAVE",
+                                     getfilter=True,
+                                     single=False,
+                                     currentfilter=None,
+                                     native=None)
+        if not len(filelist):
             return
-        if hasattr(outfile, "selectedFilter"):
-            filterused = qt.safe_str(outfile.selectedFilter()).split()
-        else:
-            filterused = qt.safe_str(outfile.selectedNameFilter()).split()
+
+        filterused = filterused.split()
         filetype = filterused[0]
         extension = filterused[1]
-
-        outstr = qt.safe_str(outfile.selectedFiles()[0])
-
-        try:
-            outputFile = os.path.basename(outstr)
-        except:
-            outputFile = outstr
-        outputDir  = os.path.dirname(outstr)
+        outputFile = filelist[0]
+        outputDir  = os.path.dirname(outputFile)
         self.saveDirectory = outputDir
         PyMcaDirs.outputDir = outputDir
 

@@ -59,8 +59,10 @@ def getExistingDirectory(parent=None, message=None, mode=None, currentdir=None):
             outfile.setFileMode(outfile.Directory)
             if hasattr(outfile, "ShowDirsOnly"):
                 outfile.setOption(outfile.ShowDirsOnly)
-        else:
+        elif hasattr(outfile, "DirectoryOnly"):
             outfile.setFileMode(outfile.DirectoryOnly)
+        else:
+            outfile.setFileMode(qt.QFileDialog.FileMode.Directory)
         ret = outfile.exec()
         if ret:
             outdir = qt.safe_str(outfile.selectedFiles()[0])
@@ -106,10 +108,11 @@ def getFileList(parent=None, filetypelist=None, message=None, currentdir=None,
             currentfilter = PyMcaDirs.openFilter
         else:
             currentfilter = PyMcaDirs.saveFilter
-    if currentfilter not in filetypelist:
-        currentfilter = None
-    if currentfilter is None:
-        currentfilter = filetypelist[0]
+        # it can still be None
+        if currentfilter is None:
+            currentfilter = fileTypeList[0]
+    if currentfilter not in fileTypeList:
+        currentfilter = fileTypeList[0]
     if native is None:
         nativeFileDialogs = PyMcaDirs.nativeFileDialogs
     else:
@@ -244,10 +247,10 @@ def getFileList(parent=None, filetypelist=None, message=None, currentdir=None,
             fdialog.setNameFilters(strlist)
 
         if mode == "OPEN":
-            fdialog.setFileMode(fdialog.ExistingFiles)
+            fdialog.setFileMode(qt.QFileDialog.FileMode.ExistingFiles)
         else:
-            fdialog.setAcceptMode(fdialog.AcceptSave)
-            fdialog.setFileMode(fdialog.AnyFile)
+            fdialog.setAcceptMode(qt.QFileDialog.AcceptMode.AcceptSave)
+            fdialog.setFileMode(qt.QFileDialog.FileMode.AnyFile)
 
         fdialog.setDirectory(wdir)
         if QTVERSION > '4.3.0':

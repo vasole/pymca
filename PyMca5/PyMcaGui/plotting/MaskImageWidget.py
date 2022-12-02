@@ -32,6 +32,7 @@ import os
 import numpy
 import logging
 from PyMca5.PyMcaGraph.ctools import pnpoly
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from . import RGBCorrelatorGraph
 from . import ColormapDialog
 qt = RGBCorrelatorGraph.qt
@@ -1999,50 +2000,31 @@ class MaskImageWidget(qt.QWidget):
         if self.outputDir is not None:
             if os.path.exists(self.outputDir):
                 initdir = self.outputDir
-        filedialog = qt.QFileDialog(self)
-        filedialog.setFileMode(filedialog.AnyFile)
-        filedialog.setAcceptMode(qt.QFileDialog.AcceptSave)
-        filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict["gioconda16"])))
         formatlist = ["TIFF Files *.tif",
                       "ASCII Files *.dat",
                       "EDF Files *.edf",
                       'CSV(, separated) Files *.csv',
                       'CSV(; separated) Files *.csv',
                       'CSV(tab separated) Files *.csv']
-        if hasattr(qt, "QStringList"):
-            strlist = qt.QStringList()
-        else:
-            strlist = []
-        for f in formatlist:
-                strlist.append(f)
-        if self._saveFilter is None:
+        if self._saveFilter in [None, ""]:
             self._saveFilter = formatlist[0]
-        if hasattr(filedialog, "setFilters"):
-            filedialog.setFilters(strlist)
-            filedialog.selectFilter(self._saveFilter)
-        else:
-            filedialog.setNameFilters(strlist)
-            filedialog.selectNameFilter(self._saveFilter)
-        filedialog.setDirectory(initdir)
-        ret = filedialog.exec()
-        if not ret:
+        filelist, self._saveFilter = PyMcaFileDialogs.getFileList(parent=self,
+                        filetypelist=formatlist,
+                        message="Provide output file name", currentdir=initdir,
+                        mode="SAVE",
+                        getfilter=True,
+                        single=False, currentfilter=None, native=None)
+        if not len(filelist):
             return ""
-        filename = filedialog.selectedFiles()[0]
+        filename = filelist[0]
         if len(filename):
-            filename = qt.safe_str(filename)
             self.outputDir = os.path.dirname(filename)
-            if hasattr(filedialog, "selectedFilter"):
-                self._saveFilter = qt.safe_str(filedialog.selectedFilter())
-            else:
-                self._saveFilter = qt.safe_str(filedialog.selectedNameFilter())
             filterused = "." + self._saveFilter[-3:]
             PyMcaDirs.outputDir = os.path.dirname(filename)
             if len(filename) < 4:
                 filename = filename + filterused
             elif filename[-4:] != filterused :
                 filename = filename + filterused
-        else:
-            filename = ""
         return filename
 
     def saveImageList(self, filename=None, imagelist=None, labels=None):

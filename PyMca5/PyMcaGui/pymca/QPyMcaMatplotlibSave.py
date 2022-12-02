@@ -36,6 +36,7 @@ from io import StringIO
 import logging
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from PyMca5.PyMcaCore import PyMcaMatplotlibSave
 from PyMca5.PyMcaGui.plotting.PyMca_Icons import IconDict
 from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
@@ -196,62 +197,38 @@ class SaveImageSetup(qt.QWidget):
 
 
     def saveClicked(self):
-        outfile = qt.QFileDialog(self)
-        outfile.setModal(1)
         if self.lastOutputDir is None:
             self.lastOutputDir = PyMcaDirs.outputDir
 
-        outfile.setWindowTitle("Output File Selection")
-        if hasattr(qt, "QStringList"):
-            strlist = qt.QStringList()
-        else:
-            strlist = []
         format_list = []
         format_list.append('Graphics PNG *.png')
         format_list.append('Graphics EPS *.eps')
         format_list.append('Graphics SVG *.svg')
-        for f in format_list:
-            strlist.append(f)
-        if hasattr(outfile, "setFilters"):
-            outfile.setFilters(strlist)
-        else:
-            outfile.setNameFilters(strlist)
-        outfile.setFileMode(outfile.AnyFile)
-        outfile.setAcceptMode(qt.QFileDialog.AcceptSave)
-        outfile.setDirectory(self.lastOutputDir)
-        ret = outfile.exec()
-        if ret:
-            if hasattr(outfile, "selectedFilter"):
-                filterused = qt.safe_str(outfile.selectedFilter()).split()
-            else:
-                filterused = qt.safe_str(outfile.selectedNameFilter()).split()
-            filedescription = filterused[0]
-            filetype  = filterused[1]
-            extension = filterused[2]
-            try:
-                outstr = qt.safe_str(outfile.selectedFiles()[0])
-            except:
-                msg = qt.QMessageBox(self)
-                msg.setIcon(qt.QMessageBox.Critical)
-                msg.setText("Error saving image: %s" % sys.exc_info()[1])
-                msg.setWindowTitle('Matplotlib Save Image')
-                msg.exec()
-            try:
-                outputDir  = os.path.dirname(outstr)
-                self.lastOutputDir = outputDir
-                PyMcaDirs.outputDir = outputDir
-            except:
-                outputDir  = "."
-            try:
-                outputFile = os.path.basename(outstr)
-            except:
-                outputFile  = outstr
-            outfile.close()
-            del outfile
-        else:
-            outfile.close()
-            del outfile
+        outputFile, filterused = PyMcaFileDialogs.getFileList(self, filetypelist=format_list,
+                                                              message="Output File Selection",
+                                                              currentdir=self.lastOutputDir,
+                                                              mode="SAVE", getfilter=True,
+                                                              single=False, currentfilter=None, native=None)
+        if not len(outputFile):
             return
+
+        filterused = filterused.split()
+        filedescription = filterused[0]
+        filetype  = filterused[1]
+        extension = filterused[2]
+
+        outputFile = outputFile[0]
+        try:
+            outputDir  = os.path.dirname(outputFile)
+            self.lastOutputDir = outputDir
+            PyMcaDirs.outputDir = outputDir
+        except:
+            outputDir  = "."
+        try:
+            outputFile = os.path.basename(outputFile)
+        except:
+            outputFile  = outputFile
+
         #always overwrite for the time being
         if len(outputFile) < len(extension[1:]):
             outputFile += extension[1:]

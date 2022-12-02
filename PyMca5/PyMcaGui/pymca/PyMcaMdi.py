@@ -126,34 +126,34 @@ class PyMcaMdi(qt.QMainWindow):
         self.actionOpen = qt.QAction(self)
         self.actionOpen.setText(QString("&Open"))
         self.actionOpen.setIcon(self.Icons["fileopen"])
-        self.actionOpen.setShortcut(qt.QKeySequence(qt.Qt.CTRL+qt.Qt.Key_O))
+        self.actionOpen.setShortcut(qt.QKeySequence(qt.Qt.CTRL|qt.Qt.Key_O))
         self.actionOpen.triggered[bool].connect(self.onOpen)
         #filesaveas
         self.actionSaveAs = qt.QAction(self)
         self.actionSaveAs.setText(QString("&Save"))
         self.actionSaveAs.setIcon(self.Icons["filesave"])
-        self.actionSaveAs.setShortcut(qt.QKeySequence(qt.Qt.CTRL+qt.Qt.Key_S))
+        self.actionSaveAs.setShortcut(qt.QKeySequence(qt.Qt.CTRL|qt.Qt.Key_S))
         self.actionSaveAs.triggered[bool].connect(self.onSaveAs)
 
         #filesave
         self.actionSave = qt.QAction(self)
         self.actionSave.setText(QString("Save &Defaults"))
         #self.actionSave.setIcon(self.Icons["filesave"])
-        #self.actionSave.setShortcut(qt.Qt.CTRL+qt.Qt.Key_S)
+        #self.actionSave.setShortcut(qt.Qt.CTRL|qt.Qt.Key_S)
         self.actionSave.triggered[bool].connect(self.onSave)
 
         #fileprint
         self.actionPrint = qt.QAction(self)
         self.actionPrint.setText(QString("&Print"))
         self.actionPrint.setIcon(self.Icons["fileprint"])
-        self.actionPrint.setShortcut(qt.QKeySequence(qt.Qt.CTRL+qt.Qt.Key_P))
+        self.actionPrint.setShortcut(qt.QKeySequence(qt.Qt.CTRL|qt.Qt.Key_P))
         self.actionPrint.triggered[bool].connect(self.onPrint)
 
         #filequit
         self.actionQuit = qt.QAction(self)
         self.actionQuit.setText(QString("&Quit"))
         #self.actionQuit.setIcon(self.Icons["fileprint"])
-        self.actionQuit.setShortcut(qt.QKeySequence(qt.Qt.CTRL+qt.Qt.Key_Q))
+        self.actionQuit.setShortcut(qt.QKeySequence(qt.Qt.CTRL|qt.Qt.Key_Q))
         qApp = qt.QApplication.instance()
         self.actionQuit.triggered[bool].connect(qApp.closeAllWindows)
 

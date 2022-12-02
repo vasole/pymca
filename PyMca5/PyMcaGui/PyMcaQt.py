@@ -214,13 +214,13 @@ elif BINDING == 'PySide6':
     # use a (bad) replacement for QDesktopWidget
     class QDesktopWidget:
         def height(self):
-            _logger.info("Using obsolete classes")
+            _logger.info("Using obsolete QDesktopWidget class")
             screen = QApplication.instance().primaryScreen() 
             return screen.availableGeometry().height()
 
 
         def width(self):
-            _logger.info("Using obsolete classes")
+            _logger.info("Using obsolete QDesktopWidget class")
             screen = QApplication.instance().primaryScreen() 
             return screen.availableGeometry().width()
 
@@ -319,6 +319,8 @@ if sys.version_info < (3,):
 else:
     safe_str = str
 
+if BINDING=="PySide2":
+    _logger = logging.warning("PyMca PySide2 support deprecated and not reliable")
 
 class CLocaleQDoubleValidator(QDoubleValidator):
     """

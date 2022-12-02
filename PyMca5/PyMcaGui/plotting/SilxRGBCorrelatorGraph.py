@@ -32,6 +32,7 @@ import os
 import numpy
 import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from silx.gui.plot import PlotWidget
 from silx.gui.plot.PrintPreviewToolButton import SingletonPrintPreviewToolButton
 from .PyMca_Icons import IconDict
@@ -583,40 +584,22 @@ class RGBCorrelatorGraph(qt.QWidget):
                         "Widget *.png",
                         "Widget *.jpg"]
 
-        outfile = qt.QFileDialog(self)
-        outfile.setModal(1)
-        outfile.setWindowTitle("Output File Selection")
-        if hasattr(qt, "QStringList"):
-            strlist = qt.QStringList()
-        else:
-            strlist = []
-        for f in fileTypeList:
-            strlist.append(f)
-        if hasattr(outfile, "setFilters"):
-            outfile.setFilters(strlist)
-        else:
-            outfile.setNameFilters(strlist)
-        outfile.setFileMode(outfile.AnyFile)
-        outfile.setAcceptMode(qt.QFileDialog.AcceptSave)
-        outfile.setDirectory(self.saveDirectory)
-        ret = outfile.exec()
-
-        if not ret:
+        outputFile, filterused = PyMcaFileDialogs.getFileList(self,
+                                                              filetypelist=fileTypeList,
+                                                              message="Output File Selection",
+                                                              currentdir=self.saveDirectory,
+                                                              mode="SAVE", getfilter=True,
+                                                              single=False, currentfilter=None, native=None)
+        if not len(outputFile):
             return
-        if hasattr(outfile, "selectedFilter"):
-            filterused = qt.safe_str(outfile.selectedFilter()).split()
-        else:
-            filterused = qt.safe_str(outfile.selectedNameFilter()).split()
+        
+        outputFile = outputFile[0]
+
+        filterused = filterused.split()
         filetype = filterused[0]
         extension = filterused[1]
 
-        outstr = qt.safe_str(outfile.selectedFiles()[0])
-
-        try:
-            outputFile = os.path.basename(outstr)
-        except:
-            outputFile = outstr
-        outputDir  = os.path.dirname(outstr)
+        outputDir  = os.path.dirname(outputFile)
         self.saveDirectory = outputDir
         PyMcaDirs.outputDir = outputDir
 
