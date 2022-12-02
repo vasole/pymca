@@ -392,7 +392,12 @@ class MaterialComboBox(qt.QComboBox):
 class MaterialValidator(qt.QValidator):
     def __init__(self, *var):
         qt.QValidator.__init__(self, *var)
-        self.Valid = self.Acceptable
+        if hasattr(self, "Acceptable"):
+            self.Valid = self.Acceptable
+        else:
+            self.Valid = qt.QValidator.State.Acceptable
+        if not hasattr(self, "Invalid"):
+            self.Invalid = qt.QValidator.State.Invalid
 
     def fixup(self, qstring):
         if qstring is None:
