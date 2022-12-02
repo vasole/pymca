@@ -96,8 +96,7 @@ class BrukerBCF(DataObject):
         # header information
         header_file = reader.get_file('EDSDatabase/HeaderData')
         header_byte_str = header_file.get_as_BytesIO_string().getvalue()
-        hd_bt_str = bruker.fix_dec_patterns.sub(b'\\1.\\2', header_byte_str)
-        xml_str = hd_bt_str
+        xml_str = bruker.fix_dec_patterns.sub(b'\\1.\\2', header_byte_str)
 
         root = bruker.ET.fromstring(xml_str)
         root = root.find("./ClassInstance[@Type='TRTSpectrumDatabase']")
@@ -111,11 +110,11 @@ class BrukerBCF(DataObject):
             self.info["yScale"][1] = yScale[1] * self._binning
         self.info["McaCalib"] = get_calibration(root)
         if self._binning == 1:
-            try:
+            if 1:#try:
                 live_times = get_live_times(root)
-            except:
-                _logger.warning("Error retrieving spectra live time")
-                live_times = None
+            #except:
+            #    _logger.warning("Error retrieving spectra live time")
+            #    live_times = None
             self.info["live_time"] = live_times
 
         if __name__ == "__main__":
@@ -125,6 +124,10 @@ class BrukerBCF(DataObject):
                 images = None
             else:
                 im = images[0]
+                print(self.info["xScale"])
+                print(self.info["yScale"])
+                print(im["xScale"])
+                print(im["yScale"])
                 # I should recover images, image names, scales, ...
                 print("MAP START = (%f, %f) END = (%f, %f)"  % (self.info["xScale"][0],
                                                                 self.info["yScale"][0],
@@ -135,6 +138,39 @@ class BrukerBCF(DataObject):
                                                                   im["yScale"][0],
                                                                   im["xScale"][1] * im["image"].shape[1],
                                                                   im["yScale"][1] * im["image"].shape[1]))
+                # coordinates of rectangle in image pixels
+                def convertToRowAndColumn(x, y, shape, xScale=None, yScale=None, safe=True):
+                    if xScale is None:
+                        c = x
+                    else:
+                        c = (x - xScale[0]) / xScale[1]
+                    if yScale is None:
+                        r = y
+                    else:
+                        r = ( y - yScale[0]) / yScale[1]
+
+                    if safe:
+                        c = min(int(c), shape[1] - 1)
+                        c = max(c, 0)
+                        r = min(int(r), shape[0] - 1)
+                        r = max(r, 0)
+                    else:
+                        c = int(c)
+                        r = int(r)
+                    return r, c
+
+                r0, c0 = convertToRowAndColumn(self.info["xScale"][0],
+                                               self.info["yScale"][0],
+                                               im["image"].shape,
+                                               xScale=im["xScale"],
+                                               yScale=im["yScale"],
+                                               safe=True)
+                r1, c1 = convertToRowAndColumn(self.info["xScale"][0],
+                                               self.info["yScale"][0],
+                                               im["image"].shape,
+                                               xScale=im["xScale"],
+                                               yScale=im["yScale"],
+                                               safe=True)
 
 
 def dump_dict(root, offset=0):
@@ -168,6 +204,7 @@ def get_calibration(root):
     calibration = [0.0, 1.0, 0.0]
     if spectrum_header:
         spectrum_header_data = bruker.dictionarize(spectrum_header)
+        print(spectrum_header_data.keys())
         calibrated = True
         for key in ["ChannelCount", "CalibAbs", "CalibLin"]:
             if key not in spectrum_header_data:
@@ -184,9 +221,29 @@ def get_live_times(root):
     image_nodes = root.findall("./ClassInstance[@Type='TRTImageData']")
     # for the time being we retrieve only one live_time image
     for node in image_nodes:
-        if not node.get('Name'):
-            continue
         name = node.get('Name')
+        print("name = ", name)
+        if not node.get('Name'):
+            width = int(node.find('./Width').text)
+            height = int(node.find('./Height').text)
+            dtype = 'u' + node.find('./ItemSize').text
+            plane_count = int(node.find('./PlaneCount').text)
+            if plane_count == 1:
+                image_data_node = node.find("./Plane0")
+                description = image_data_node.find("./Description")
+                if hasattr(description, "text"):
+                    if description.text.lower() == "video":
+                        # can it be different?
+                        image_data_node = node.find("./Plane0")
+                        decoded = base64.b64decode(image_data_node.find('./Data').text)
+                        image_data = numpy.frombuffer(decoded, dtype=dtype)
+                        image_data.shape = height, width
+                        if __name__ == "__main__":
+                            from PyMca5.PyMcaIO import TiffIO
+                            tiff = TiffIO.TiffIO(description.text + ".tif", "wb")
+                            tiff.writeImage(image_data,
+                                            info={"Title":description.text})
+                            tiff = None
         if name == "PixelTimes":
             width = int(node.find('./Width').text)
             height = int(node.find('./Height').text)
