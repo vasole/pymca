@@ -979,7 +979,8 @@ class QStackWidget(StackBase.StackBase,
         self.addMcaButton.setText("ADD MCA")
         self.addMcaMaxButton = qt.QPushButton(self.mcaButtonBox)
         self.addMcaMaxButton.setText("ADD MCA MAX")
-        self.addMcaMaxButton.setToolTip('Add spectrum of the maximum at each channel.')
+        txt = 'Add spectrum of the maximum at each channel for the selected region.'
+        self.addMcaMaxButton.setToolTip(txt)
         self.removeMcaButton = qt.QPushButton(self.mcaButtonBox)
         self.removeMcaButton.setText("REMOVE MCA")
         self.replaceMcaButton = qt.QPushButton(self.mcaButtonBox)
