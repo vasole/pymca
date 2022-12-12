@@ -538,7 +538,7 @@ class StackBase(object):
     def getStackOriginalImage(self):
         return self._stackImageData
 
-    def calculateMcaDataObject(self, normalize=False, mask=None):
+    def calculateMcaDataObject(self, normalize=False, mask=None, mcamax=False):
         #original ICR mca
         if self._stackImageData is None:
             return
@@ -547,10 +547,16 @@ class StackBase(object):
         else:
             selectionMask = mask
         mcaData = None
+        mcaMax = None
         goodData = numpy.isfinite(self._mcaData0.y[0].sum())
         logger.debug("Stack data is not finite")
         if (selectionMask is None) and goodData:
-            if normalize:
+            if mcamax:
+                # return the default maximum MCA spectrum
+                dataObject = copy.deepcopy(self._mcaData0)
+                dataObject.y = [self._mcaMax]
+                return DataObject
+            elif normalize:
                 logger.debug("Case 1")
                 npixels = self._stackImageData.shape[0] *\
                           self._stackImageData.shape[1] * 1.0
@@ -581,7 +587,12 @@ class StackBase(object):
 
         npixels = actualSelectionMask.sum()
         if (npixels == 0) and goodData:
-            if normalize:
+            if mcamax:
+                # return the default maximum MCA spectrum
+                dataObject = copy.deepcopy(self._mcaData0)
+                dataObject.y = [self._mcaMax]
+                return DataObject
+            elif normalize:
                 logger.debug("Case 3")
                 npixels = self._stackImageData.shape[0] * self._stackImageData.shape[1] * 1.0
                 dataObject = DataObject.DataObject()
@@ -595,20 +606,25 @@ class StackBase(object):
                 dataObject = self._mcaData0
             return dataObject
 
-        mcaData = numpy.zeros(self._mcaData0.y[0].shape, numpy.float64)
+        mcaData = numpy.zeros(self._mcaData0.y[0].shape, dtype=numpy.float64)
 
         n_nonselected = self._stackImageData.shape[0] *\
                         self._stackImageData.shape[1] - npixels
-        if goodData:
+
+        if mcamax:
+            # we cannot calculate the maximum without using the actually selected pixels
+            arrayMask = (actualSelectionMask > 0)
+        elif goodData:
             if n_nonselected < npixels:
                 arrayMask = (actualSelectionMask == 0)
             else:
                 arrayMask = (actualSelectionMask > 0)
         else:
-                arrayMask = (actualSelectionMask > 0)
+            arrayMask = (actualSelectionMask > 0)
 
         logger.debug("Reached MCA calculation")
         cleanMask = numpy.nonzero(arrayMask)
+
         logger.debug("self.fileIndex, self.mcaIndex = %d , %d",
                      self.fileIndex, self.mcaIndex)
         t0 = time.time()
@@ -620,7 +636,13 @@ class StackBase(object):
                     if isinstance(self._stack.data, numpy.ndarray):
                         logger.debug("In memory case 0")
                         for r, c in cleanMask:
-                            mcaData += self._stack.data[:, r, c]
+                            tmpData = self._stack.data[:, r, c]
+                            mcaData += tmpData
+                            if mcamax:
+                                if mcaMax is None:
+                                    mcaMax = tmpData
+                                else:
+                                    mcaMax = numpy.max([mcaMax, tmpData], axis=0)
                     else:
                         logger.debug("Dynamic loading case 0")
                         #no other choice than to read all images
@@ -633,14 +655,23 @@ class StackBase(object):
                         #rMax, cMax = cleanMask.max(axis=0)
                         tmpMask = arrayMask[rMin:(rMax+1),cMin:(cMax+1)]
                         tmpData = numpy.zeros((1, rMax-rMin+1,cMax-cMin+1))
+                        mcaMax = numpy.zeros((self._stack.data.shape[0],), dtype=numpy.float64)
                         for i in range(self._stack.data.shape[0]):
                             tmpData[0:1,:,:] = self._stack.data[i:i+1,rMin:(rMax+1),cMin:(cMax+1)]
                             #multiplication is faster than selection
                             mcaData[i] = (tmpData[0]*tmpMask).sum(dtype=numpy.float64)
+                            if mcamax:
+                                mcaMax[i] = numpy.max(tmpData[0][tmpMask])
                 elif self.mcaIndex == 1:
                     if isinstance(self._stack.data, numpy.ndarray):
                         for r, c in cleanMask:
-                            mcaData += self._stack.data[r,:,c]
+                            tmpData = self._stack.data[r,:,c]
+                            mcaData += tmpData
+                            if mcamax:
+                                if mcaMax is None:
+                                    mcaMax = tmpData
+                                else:
+                                    mcaMax = numpy.max([mcaMax, tmpData], axis=0)
                     else:
                         raise IndexError("Dynamic loading case 1")
                 else:
@@ -650,7 +681,13 @@ class StackBase(object):
                     if isinstance(self._stack.data, numpy.ndarray):
                         logger.debug("In memory case 2")
                         for r, c in cleanMask:
-                            mcaData += self._stack.data[:, r, c]
+                            tmpData = self._stack.data[:, r, c]
+                            mcaData += tmpData
+                            if mcamax:
+                                if mcaMax is None:
+                                    mcaMax = tmpData
+                                else:
+                                    mcaMax = numpy.max([mcaMax, tmpData], axis=0)
                     else:
                         logger.debug("Dynamic loading case 2")
                         #no other choice than to read all images
@@ -664,10 +701,15 @@ class StackBase(object):
                             #rMax, cMax = cleanMask.max(axis=0)
                             tmpMask = arrayMask[rMin:(rMax + 1), cMin:(cMax + 1)]
                             tmpData = numpy.zeros((1, rMax - rMin + 1, cMax - cMin + 1))
+                            mcaMax = numpy.zeros((self._stack.data.shape[0],), dtype=numpy.float64)
                             for i in range(self._stack.data.shape[0]):
                                 tmpData[0:1, :, :] = self._stack.data[i:i + 1, rMin:(rMax + 1), cMin:(cMax + 1)]
-                                #multiplication is faster than selection
+                                # multiplication is faster than selection
                                 mcaData[i] = (tmpData[0] * tmpMask).sum(dtype=numpy.float64)
+                                # Multiplication does not work with negative data
+                                # because zero it's already a maximum
+                                if mcamax:
+                                    mcaMax[i] = numpy.max(tmpData[0][tmpMask])
                         if 0:
                             tmpData = numpy.zeros((1, self._stack.data.shape[1], self._stack.data.shape[2]))
                             for i in range(self._stack.data.shape[0]):
@@ -679,13 +721,21 @@ class StackBase(object):
                     if isinstance(self._stack.data, numpy.ndarray):
                         logger.debug("In memory case 3")
                         for r, c in cleanMask:
-                            mcaData += self._stack.data[r, c, :]
+                            tmpData = self._stack.data[r, c, :]
+                            mcaData += tmpData
+                            if mcamax:
+                                if mcaMax is None:
+                                    mcaMax = tmpData
+                                else:
+                                    mcaMax = numpy.max([mcaMax, tmpData], axis=0) 
                     else:
                         logger.debug("Dynamic loading case 3")
                         #try to minimize access to the file
                         row_list = []
                         row_dict = {}
                         for r, c in cleanMask:
+                            if mcaMax is None:
+                                self._stack.data[r, c, :]
                             if r not in row_list:
                                 row_list.append(r)
                                 row_dict[r] = []
@@ -694,6 +744,8 @@ class StackBase(object):
                             tmpMcaData = self._stack.data[r:r + 1, row_dict[r], :]
                             tmpMcaData.shape = -1, mcaData.shape[0]
                             mcaData += numpy.sum(tmpMcaData, axis=0, dtype=numpy.float64)
+                            if mcamax:
+                                mcaMax = numpy.max([mcaMax, numpy.max(tmpMcaData, axis=0)], axis=0)
                 else:
                     raise IndexError("Wrong combination of indices. Case 1")
             elif self.fileIndex == 0:
@@ -701,20 +753,34 @@ class StackBase(object):
                     if isinstance(self._stack.data, numpy.ndarray):
                         logger.debug("In memory case 4")
                         for r, c in cleanMask:
-                            mcaData += self._stack.data[r, :, c]
+                            tmpData = self._stack.data[r, :, c]
+                            mcaData += tmpData
+                            if mcamax:
+                                if mcaMax is None:
+                                    mcaMax = tmpData
+                                else:
+                                    mcaMax = numpy.max([mcaMax, tmpData], axis=0)
                     else:
                         raise IndexError("Dynamic loading case 4")
                 elif self.mcaIndex in [2, -1]:
                     if isinstance(self._stack.data, numpy.ndarray):
                         logger.debug("In memory case 5")
                         for r, c in cleanMask:
-                            mcaData += self._stack.data[r, c, :]
+                            tmpData = self._stack.data[r, c, :]
+                            mcaData += tmpData
+                            if mcamax:
+                                if mcaMax is None:
+                                    mcaMax = tmpData
+                                else:
+                                    mcaMax = numpy.max([mcaMax, tmpData], axis=0) 
                     else:
                         logger.debug("Dynamic loading case 5")
                         #try to minimize access to the file
                         row_list = []
                         row_dict = {}
                         for r, c in cleanMask:
+                            if mcaMax is None:
+                                mcaMax = self._stack.data[r, c, :]
                             if r not in row_list:
                                 row_list.append(r)
                                 row_dict[r] = []
@@ -723,12 +789,25 @@ class StackBase(object):
                             tmpMcaData = self._stack.data[r:r + 1, row_dict[r], :]
                             tmpMcaData.shape = -1, mcaData.shape[0]
                             mcaData += tmpMcaData.sum(axis=0, dtype=numpy.float64)
+                            if mcamax:
+                                mcaMax = numpy.max([mcaMax, numpy.max(tmpMcaData, axis=0)], axis=0)
                 else:
                     raise IndexError("Wrong combination of indices. Case 2")
             else:
                 raise IndexError("File index undefined")
         else:
             logger.debug("NOT USING MASK !")
+
+        if mcamax:
+            calib = self._stack.info['McaCalib']
+            dataObject = DataObject.DataObject()
+            dataObject.info = {"McaCalib": calib,
+                               "selectiontype": "1D",
+                               "SourceName": "Stack",
+                               "Key": "Selection"}
+            dataObject.x = [self._mcaData0.x[0]]
+            dataObject.y = [mcaMax]
+            return dataObject
 
         logger.debug("Mca sum elapsed = %f", time.time() - t0)
         if goodData:
