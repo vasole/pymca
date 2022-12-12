@@ -1136,11 +1136,20 @@ class QStackWidget(StackBase.StackBase,
 
     def _addMcaMaxClicked(self):
         if self._mcaMax is not None:
-            dataObject = copy.deepcopy(self._mcaData0)
-            dataObject.y = [self._mcaMax]
+            mask = self.getSelectionMask()
+            if mask is not None:
+                dataObject = self.calculateMcaDataObject(normalize=False,
+                                                           mask=mask,
+                                                           mcamax=True)
+                legend = self.roiWidget.graphWidget.graph.getGraphTitle() + \
+                         " Max Spectrum"
+            else:
+                dataObject = copy.deepcopy(self._mcaData0)
+                dataObject.y = [self._mcaMax]
+                legend = "Max Spectrum"
             self.sendMcaSelection(dataObject,
                                   key="Maximum",
-                                  legend= "Max Spectrum",
+                                  legend= legend,
                                   action="ADD")
         else:
             self.addMcaMaxButton.hide()
