@@ -370,7 +370,9 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
 
     def showStatsWidget(self):
         if self.statsWidget is None:
-            self.statsWidget = ImageListStatsWidget.ImageListStatsWidget()
+            self.statsWidget = ImageListStatsWidget.ImageListStatsWidget(self)
+            self.layout().addWidget(self.statsWidget)
+
         self.statsWidget.setSelectionMask(self.getSelectionMask())
         self.statsWidget.setImageList(self.imageList, image_names=self.imageNames)
         self.statsWidget.show()
