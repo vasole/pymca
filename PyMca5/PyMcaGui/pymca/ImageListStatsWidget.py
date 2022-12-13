@@ -54,6 +54,11 @@ class ImageListStatsWidget(TableWidget.TableWidget):
         self.setMinimumHeight(5*rheight)
 
     def setImageList(self, images, image_names=None):
+        if images is None:
+            self.imageList = None
+            self.imageMask = None
+            self.updateStats()
+            return
         if type(images) == type([]):
             self.imageList = images
             if image_names is None:
@@ -98,7 +103,7 @@ class ImageListStatsWidget(TableWidget.TableWidget):
 
     def updateStats(self):
         if self.imageList in [None, []]:
-            # clear table
+            # TODO: clear table
             return
         statsList = []
         mask = self.imageMask

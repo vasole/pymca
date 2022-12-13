@@ -42,6 +42,7 @@ from PyMca5.PyMcaGui.plotting.PyMca_Icons import IconDict
 from PyMca5.PyMcaIO import ArraySave
 from PyMca5 import PyMcaDirs
 from PyMca5.PyMcaCore import EdfFileDataSource
+from PyMca5.PyMcaGui.pymca import StackPluginResultsWindow
 from PyMca5.PyMcaGui.pymca import ExternalImagesWindow
 from PyMca5.PyMcaIO import TiffIO
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
@@ -195,6 +196,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         self._slidersOnIcon = qt.QIcon(qt.QPixmap(IconDict["sliderson"]))
         self.toggleSlidersButton.setIcon(self._slidersOffIcon)
         self.toggleSlidersButton.setToolTip("Toggle sliders show On/Off")
+        self.statisticsDialog = None
         self.calculationDialog = None
         self.calculationButton = qt.QToolButton(hbox)
         self.calculationButton.setIcon(qt.QIcon(qt.QPixmap(IconDict["sigma"])))
@@ -347,6 +349,8 @@ class RGBCorrelatorWidget(qt.QWidget):
             return self.showCalculationDialog()
         if self._calculationMenu is None:
             self._calculationMenu = qt.QMenu()
+            self._calculationMenu.addAction(QString("Image Statistics"),
+                                            self.showStatisticsDialog)
             self._calculationMenu.addAction(QString("Image Calculator"),
                                             self.showCalculationDialog)
             self._calculationMenu.addAction(QString("Scatter Plot"),
@@ -1233,6 +1237,22 @@ class RGBCorrelatorWidget(qt.QWidget):
             ArraySave.save2DArrayListAsASCII(datalist, filename, labels,
                                              csv=False)
 
+    def showStatisticsDialog(self):
+        if self.statisticsDialog is None:
+            self.statisticsDialog = StackPluginResultsWindow.StackPluginResultsWindow(usetab=False)
+            self.statisticsDialog.sigMaskImageWidgetSignal.connect( \
+                                self.maskImageSlot)
+            self.statisticsDialog.showStatsWidget()
+
+        images = [self._imageDict[x]["image"] for x in self._imageList]
+        self.statisticsDialog.setStackPluginResults(images,
+                                                    image_names=self._imageList)
+        self.statisticsDialog.setSelectionMask(self.getSelectionMask())
+        self.statisticsDialog.showStatsWidget()
+        if self.statisticsDialog.isHidden():
+            self.statisticsDialog.show()
+        self.statisticsDialog.raise_()
+
     def showCalculationDialog(self):
         if self.calculationDialog is None:
             selection = True
@@ -1402,6 +1422,8 @@ class RGBCorrelatorWidget(qt.QWidget):
     def setSelectionMask(self, mask, instance_id=None):
         self._lastMask = mask
         widgetList = []
+        if self.statisticsDialog:
+            widgetList.append(self.statisticsDialog)
         if self.calculationDialog:
             widgetList.append(self.calculationDialog.graphWidget)
         if self.kMeansDialog:

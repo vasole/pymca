@@ -73,6 +73,7 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
         self.slider.valueChanged[int].connect(self._showImage)
 
         self.imageList = None
+        self.imageNames = None
         self.spectrumList = None
         self.spectrumNames = None
         self.spectrumGraphTitles = None
@@ -224,6 +225,11 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
         # scatter plot related
         self.__scatterPlotWidgetDataToUpdate = True
         self._updateScatterPlotWidget()
+
+        # stats widget
+        if self.statsWidget is not None:
+            self.statsWidget.setSelectionMask(self.getSelectionMask())
+            self.statsWidget.setImageList(self.imageList, image_names=self.imageNames)
 
     def _updateScatterPlotWidget(self):
         w = self.scatterPlotWidget
