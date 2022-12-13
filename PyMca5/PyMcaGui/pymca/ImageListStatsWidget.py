@@ -30,8 +30,10 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 import numpy
 
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui.misc import TableWidget
+logger = logging.getLogger(__name__)
 
 class ImageListStatsWidget(TableWidget.TableWidget):
     def __init__(self, parent=None, cut=False, paste=False):
@@ -97,7 +99,7 @@ class ImageListStatsWidget(TableWidget.TableWidget):
     def updateStats(self):
         if self.imageList in [None, []]:
             # clear table
-            pass
+            return
         statsList = []
         mask = self.imageMask
         if mask is None:
