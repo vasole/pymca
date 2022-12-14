@@ -119,11 +119,14 @@ class QStackWidget(StackBase.StackBase,
                  mcawidget=None,
                  rgbwidget=None,
                  vertical=False,
-                 master=True):
+                 primary=True,
+                 **kw):
         StackBase.StackBase.__init__(self)
         CloseEventNotifyingWidget.CloseEventNotifyingWidget.__init__(self,
                                                                      parent)
-
+        # keep backwards compatibility 
+        if "master" in kw:
+            primary = kw["master"]
         self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
         self.setWindowTitle("PyMCA - ROI Imaging Tool")
         screenHeight = qt.QDesktopWidget().height()
@@ -141,9 +144,9 @@ class QStackWidget(StackBase.StackBase,
         self.mainLayout.setSpacing(2)
         self.mcaWidget = mcawidget
         self.rgbWidget = rgbwidget
-        self.master = master
-        self._slaveList = None
-        self._masterStack = None
+        self.primary = primary
+        self._secondaryList = None
+        self._primaryStack = None
         self.stackSelector = None
         self._build(vertical=vertical)
         self._buildBottom()
@@ -171,7 +174,7 @@ class QStackWidget(StackBase.StackBase,
                                                     aspect=True)
         self._stackSaveMenu = qt.QMenu()
         if HDF5:
-            if self.master:
+            if self.primary:
                 self._stackSaveMenu.addAction(QString("Export All Stacks Workspace"),
                                                          self.exportStackList)
             self._stackSaveMenu.addAction(QString("Export Stack Workspace"),
@@ -254,11 +257,11 @@ class QStackWidget(StackBase.StackBase,
                                         position=6)
         offset += 1
 
-        if self.master:
+        if self.primary:
             self.loadIcon = qt.QIcon(qt.QPixmap(IconDict["fileopen"]))
             self.loadStackButton = self.stackGraphWidget._addToolButton( \
                                         self.loadIcon,
-                                        self.loadSlaveStack,
+                                        self.loadSecondaryStack,
                                         'Load another stack of same shape',
                                         position=offset)
             offset += 1
@@ -467,7 +470,7 @@ class QStackWidget(StackBase.StackBase,
         return view
 
     def exportStackList(self, filename=None):
-        if not self.master:
+        if not self.primary:
             raise IOError("Only primary stacks can export all stacks")
 
         if filename is None:
@@ -480,11 +483,11 @@ class QStackWidget(StackBase.StackBase,
                 os.remove(filename)
 
         calibrationList = []
-        # master, join all slaves
+        # primary, join all secondary stacks
         calibrationList.append(self.getActiveCurveCalibration())
-        if self._slaveList is not None:
-            for slave in self._slaveList:
-                calibrationList.append(slave.getActiveCurveCalibration())
+        if self._secondaryList is not None:
+            for secondary in self._secondaryList:
+                calibrationList.append(secondary.getActiveCurveCalibration())
                 
         McaStackExport.exportStackList(self.getStackDataObjectList(),
                                        filename,
@@ -631,28 +634,28 @@ class QStackWidget(StackBase.StackBase,
         if (type(stack) == type([])) or isinstance(stack, list):
             #aifira like, two stacks
             self.setStack(stack[0])
-            self._slaveList = None
+            self._secondaryList = None
             if len(stack) > 1:
                 for i in range(1, len(stack)):
                     if stack[i] is not None:
-                        slave = QStackWidget(master=False,
+                        secondary = QStackWidget(primary=False,
                                              rgbwidget=self.rgbWidget)
-                        slave.setStack(stack[i])
-                        if slave is not None:
+                        secondary.setStack(stack[i])
+                        if secondary is not None:
                             if i == 1:
-                                self.setSlave(slave)
+                                self.setSecondary(secondary)
                             else:
-                                self.addSlave(slave)
+                                self.addSecondary(secondary)
         else:
             self.setStack(stack)
 
-    def loadSlaveStack(self):
-        if self._slaveList is not None:
-            actionList = ['Replace Slaves',
-                          'Load Slaves',
-                          'Show Slaves',
-                          'Merge Slaves',
-                          'Delete Slaves']
+    def loadSecondaryStack(self):
+        if self._secondaryList is not None:
+            actionList = ['Replace Secondary Stacks',
+                          'Load Secondary Stacks',
+                          'Show Secondary Stacks',
+                          'Merge Secondary Stacks',
+                          'Delete Secondary Stacks']
             menu = qt.QMenu(self)
             for action in actionList:
                 text = QString(action)
@@ -661,44 +664,44 @@ class QStackWidget(StackBase.StackBase,
             if a is None:
                 return None
             if qt.safe_str(a.text()).startswith("Replace"):
-                _logger.info("Replacing slave stacks")
-                self._closeSlave()
+                _logger.info("Replacing secondary stacks")
+                self._closeSecondary()
             elif qt.safe_str(a.text()).startswith("Load"):
-                _logger.info("Loading an additional slave stack")
-                #self._closeSlave()
+                _logger.info("Loading an additional secondary stack")
+                #self._closeSecondary()
             elif qt.safe_str(a.text()).startswith("Show"):
-                _logger.info("Showing all the slaves")
-                for slave in self._slaveList:
-                    slave.show()
-                    slave.raise_()
+                _logger.info("Showing all the secondary stacks")
+                for secondary in self._secondaryList:
+                    secondary.show()
+                    secondary.raise_()
                 return
             elif qt.safe_str(a.text()).startswith("Merge"):
-                masterStackDataObject = self.getStackDataObject()
+                primaryStackDataObject = self.getStackDataObject()
                 try:
                     # Use views to ensure no casting is done in case of
                     # different dtype to save memory.
                     # This is risky when the original stack is integers
                     # due to the possibility to overflow.
-                    for slave in self._slaveList:
-                        masterStackDataObject.data[:] = \
-                                            masterStackDataObject.data[:] + \
-                                            slave.getStackData()
+                    for secondary in self._secondaryList:
+                        primaryStackDataObject.data[:] = \
+                                            primaryStackDataObject.data[:] + \
+                                            secondary.getStackData()
                 except:
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setWindowTitle("Stack Summing Error")
-                    msg.setText("An error has occurred while summing the master and slave stacks")
+                    msg.setText("An error has occurred while summing the primary and secondary stacks")
                     msg.setInformativeText(qt.safe_str(sys.exc_info()[1]))
                     msg.setDetailedText(traceback.format_exc())
                     msg.exec()
-                if "McaLiveTime" in masterStackDataObject.info:
+                if "McaLiveTime" in primaryStackDataObject.info:
                     try:
-                        for slave in self._slaveList:
-                            info = slave.getStackInfo()
+                        for secondary in self._secondaryList:
+                            info = secondary.getStackInfo()
                             if "McaLiveTime" in info:
                                 info["McaLiveTime"].shape = \
-                                   masterStackDataObject.info["McaLiveTime"].shape
-                                masterStackDataObject.info["McaLiveTime"] += \
+                                   primaryStackDataObject.info["McaLiveTime"].shape
+                                primaryStackDataObject.info["McaLiveTime"] += \
                                         info["McaLiveTime"]
                             else:
                                 raise ValueError("No compatible time information")
@@ -706,19 +709,19 @@ class QStackWidget(StackBase.StackBase,
                         msg = qt.QMessageBox(self)
                         msg.setIcon(qt.QMessageBox.Critical)
                         msg.setWindowTitle("Stack Time Summing Error")
-                        txt = "An error has occurred cumulating the master and slave times\n"
+                        txt = "An error has occurred cumulating the primary and secondary stack times\n"
                         txt += "Time information is lost"
-                        del masterStackDataObject.info["McaLiveTime"]
+                        del primaryStackDataObject.info["McaLiveTime"]
                         msg.setText(txt)
                         msg.setInformativeText(qt.safe_str(sys.exc_info()[1]))
                         msg.setDetailedText(traceback.format_exc())
                         msg.exec()
-                self._closeSlave()
-                self.setStack(masterStackDataObject)
+                self._closeSecondary()
+                self.setStack(primaryStackDataObject)
                 return
             else:
-                _logger.info("Deleting all the slaves")
-                self._closeSlave()
+                _logger.info("Deleting all the secondary stacks")
+                self._closeSecondary()
                 return
         if self.stackSelector is None:
             self.stackSelector = StackSelector.StackSelector(self)
@@ -730,7 +733,7 @@ class QStackWidget(StackBase.StackBase,
             if txt.startswith("Incomplete selection"):
                 return
             msg = qt.QMessageBox(self)
-            msg.setWindowTitle("Error loading slave stack")
+            msg.setWindowTitle("Error loading secondary stack")
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("%s: %s" % (sys.exc_info()[0], sys.exc_info()[1]))
             msg.exec()
@@ -738,67 +741,67 @@ class QStackWidget(StackBase.StackBase,
         if stack is None:
             return
         if (type(stack) == type([])) or (isinstance(stack, list)):
-            #self._closeSlave()
+            #self._closeSecondary()
             for i in range(len(stack)):
                 if stack[i] is not None:
-                    slave = QStackWidget(master=False,
+                    secondary = QStackWidget(primary=False,
                                          rgbwidget=widget.rgbWidget)
-                    slave.setStack(stack[i])
-                    widget.addSlave(slave)
+                    secondary.setStack(stack[i])
+                    widget.addSecondary(secondary)
                     stack[i] = None
         else:
-            slave = QStackWidget(rgbwidget=self.rgbWidget,
-                                 master=False)
-            slave.setStack(stack)
-            self.addSlave(slave)
+            secondary = QStackWidget(rgbwidget=self.rgbWidget,
+                                 primary=False)
+            secondary.setStack(stack)
+            self.addSecondary(secondary)
 
-    def _closeSlave(self):
-        if self._slaveList is None:
+    def _closeSecondary(self):
+        if self._secondaryList is None:
             return
-        for slave in self._slaveList:
-            slave.close()
-        slave = None
-        self._slaveList = None
+        for secondary in self._secondaryList:
+            secondary.close()
+        secondary = None
+        self._secondaryList = None
         # make sure memory is released
         import gc
         gc.collect()
 
-    def setSlave(self, slave):
-        if self._slaveList is None:
-            self._slaveList = []
-        for slave in self._slaveList:
-            slave.close()
-        self._slaveList = None
-        self.addSlave(slave)
+    def setSecondary(self, secondary):
+        if self._secondaryList is None:
+            self._secondaryList = []
+        for secondary in self._secondaryList:
+            secondary.close()
+        self._secondaryList = None
+        self.addSecondary(secondary)
 
-    def addSlave(self, slave):
-        _logger.info("Adding slave with id %d" % id(slave))
-        if self._slaveList is None:
-            self._slaveList = []
-        slave.setSelectionMask(self.getSelectionMask())
-        slave.show()
-        slave._setMaster(self)
-        self._slaveList.append(slave)
+    def addSecondary(self, secondary):
+        _logger.info("Adding secondary with id %d" % id(secondary))
+        if self._secondaryList is None:
+            self._secondaryList = []
+        secondary.setSelectionMask(self.getSelectionMask())
+        secondary.show()
+        secondary._setPrimary(self)
+        self._secondaryList.append(secondary)
 
-    def _setMaster(self, master=None):
-        if self.master:
-            self._masterStack = None
+    def _setPrimary(self, primary=None):
+        if self.primary:
+            self._primaryStack = None
             return
-        if master is None:
-            master = self
-        self._masterStack = weakref.proxy(master)
+        if primary is None:
+            primary = self
+        self._primaryStack = weakref.proxy(primary)
 
     def getStackDataObjectList(self):
         stackList = []
-        if self.master:
-            # master, join all slaves
+        if self.primary:
+            # primary, join all secondary stacks
             stackList.append(self.getStackDataObject())
-            if self._slaveList is not None:
-                for slave in self._slaveList:
-                    stackList.append(slave.getStackDataObject())
+            if self._secondaryList is not None:
+                for secondary in self._secondaryList:
+                    stackList.append(secondary.getStackDataObject())
         else:
-            # slave, join master
-            stackList.append(self._masterStack.getStackDataObject())
+            # secondary, join primary
+            stackList.append(self._primaryStack.getStackDataObject())
             stackList.append(self.getStackDataObject())
         return stackList
 
@@ -1094,7 +1097,7 @@ class QStackWidget(StackBase.StackBase,
     def addImage(self, image, name, info=None, replace=False, replot=True):
         self.rgbWidget.addImage(image, name)
         if self.tab is None:
-            if self.master:
+            if self.primary:
                 self.rgbWidget.show()
         else:
             self.tab.setCurrentWidget(self.rgbWidget)
@@ -1243,10 +1246,10 @@ class QStackWidget(StackBase.StackBase,
         if instance_id == id(self):
             return
 
-        if self._slaveList is not None:
-            _logger.debug("MASTER  setSelectionMask CALLED")
-        elif self._masterStack is not None:
-            _logger.debug("SLAVE setSelectionMask CALLED")
+        if self._secondaryList is not None:
+            _logger.debug("PRIMARY stack  setSelectionMask CALLED")
+        elif self._primaryStack is not None:
+            _logger.debug("SECONDARY stack setSelectionMask CALLED")
 
         #inform built in widgets
         widgetList = [self.stackWidget, self.roiWidget]
@@ -1264,38 +1267,38 @@ class QStackWidget(StackBase.StackBase,
             if hasattr(self.rgbWidget, "setSelectionMask"):
                 self.rgbWidget.setSelectionMask(mask, instance_id=instance_id)
 
-        #inform slave
-        if self._slaveList is not None:
-            #This is a master instance
-            for slave in self._slaveList:
-                instanceList = [id(slave),
-                                id(slave.stackWidget),
-                                id(slave.roiWidget)]
-                for key in slave.pluginInstanceDict.keys():
-                    instanceList.append(id(slave.pluginInstanceDict[key]))
+        #inform secondary
+        if self._secondaryList is not None:
+            # This is a primary stack instance
+            for secondary in self._secondaryList:
+                instanceList = [id(secondary),
+                                id(secondary.stackWidget),
+                                id(secondary.roiWidget)]
+                for key in secondary.pluginInstanceDict.keys():
+                    instanceList.append(id(secondary.pluginInstanceDict[key]))
                 if instance_id not in instanceList:
-                    #Originated by the master
-                    _logger.warning("INFORMING SLAVE")
-                    slave.setSelectionMask(mask, instance_id=id(self))
+                    # Originated by the primary stack
+                    _logger.warning("INFORMING SECONDARY STACK")
+                    secondary.setSelectionMask(mask, instance_id=id(self))
 
-        if self._masterStack is not None:
-            #This is a slave instance
+        if self._primaryStack is not None:
+            # This is a secondary instance
             instanceList = [id(self.stackWidget),
                             id(self.roiWidget)]
             for key in self.pluginInstanceDict.keys():
                 instanceList.append(id(self.pluginInstanceDict[key]))
             if instance_id in instanceList:
-                #Originated by the slave
-                _logger.debug("INFORMING MASTER")
-                self._masterStack.setSelectionMask(mask, instance_id=id(self))
+                # Originated by the secondary
+                _logger.debug("INFORMING PRIMARY STACK")
+                self._primaryStack.setSelectionMask(mask, instance_id=id(self))
 
         #Inform plugins
         for key in self.pluginInstanceDict.keys():
             if key == "PyMcaPlugins.StackPluginBase":
                 continue
-            #I remove this optimization for the case the plugin
-            #does not update itself the mask
-            #if id(self.pluginInstanceDict[key]) != instance_id:
+            # I remove this optimization for the case the plugin
+            # does not update itself the mask
+            # if id(self.pluginInstanceDict[key]) != instance_id:
             self.pluginInstanceDict[key].selectionMaskUpdated()
 
     def getSelectionMask(self):
@@ -1432,13 +1435,13 @@ class QStackWidget(StackBase.StackBase,
         return self.mcaWidget.getGraphYLabel()
 
     def closeEvent(self, event):
-        if self._slaveList is not None:
-            self._closeSlave()
+        if self._secondaryList is not None:
+            self._closeSecondary()
         # Inform plugins
         for key in self.pluginInstanceDict.keys():
             self.pluginInstanceDict[key].stackClosed()
         CloseEventNotifyingWidget.CloseEventNotifyingWidget.closeEvent(self, event)
-        if (self._masterStack is None) and __name__ == "__main__":
+        if (self._primaryStack is None) and __name__ == "__main__":
             app = qt.QApplication.instance()
             allWidgets = app.allWidgets()
             for widget in allWidgets:
@@ -1549,10 +1552,10 @@ if __name__ == "__main__":
         if len(stack) > 1:
             for i in range(1, len(stack)):
                 if stack[i] is not None:
-                    slave = QStackWidget(master=False,
+                    secondary = QStackWidget(primary=False,
                                          rgbwidget=widget.rgbWidget)
-                    slave.setStack(stack[i])
-                    widget.addSlave(slave)
+                    secondary.setStack(stack[i])
+                    widget.addSecondary(secondary)
         stack = None
     else:
         widget.setStack(stack)

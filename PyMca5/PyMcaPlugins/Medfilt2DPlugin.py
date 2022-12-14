@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -186,17 +186,17 @@ if __name__ == "__main__":
 
     # build a plot widget with a plugin toolbar button
     app = qt.QApplication([])
-    master_plot = PlotWidget()
-    toolb = qt.QToolBar(master_plot)
-    plugins_tb_2d = PluginsToolButton(plot=master_plot,
+    main_plot = PlotWidget()
+    toolb = qt.QToolBar(main_plot)
+    plugins_tb_2d = PluginsToolButton(plot=main_plot,
                                       parent=toolb,
                                       method="getPlugin2DInstance")
     plugins_tb_2d.getPlugins(
                     method="getPlugin2DInstance",
                     directoryList=[os.path.dirname(PyMcaPlugins.__file__)])
     toolb.addWidget(plugins_tb_2d)
-    master_plot.addToolBar(toolb)
-    master_plot.show()
+    main_plot.addToolBar(toolb)
+    main_plot.show()
 
     # add a noisy image
     a, b = numpy.meshgrid(numpy.linspace(-10, 10, 500),
@@ -206,6 +206,6 @@ if __name__ == "__main__":
                           dtype='float32')
     myimg = add_relative_noise(myimg,
                                max_noise=10.)    # %
-    master_plot.addImage(myimg)
+    main_plot.addImage(myimg)
 
     app.exec()

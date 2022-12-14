@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -37,10 +37,10 @@ This plugin opens a stack ROI window providing alternative views:
 This window also provides a median filter tool, with a configurable filter
 width, to get rid of outlier pixel.
 
-The mask of this plot widget is synchronized with the master stack widget.
+The mask of this plot widget is synchronized with the primary stack widget.
 
 """
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"

@@ -250,16 +250,16 @@ class StackSelector(object):
                     if _logger.getEffectiveLevel() == logging.DEBUG:
                         raise
         if aifirafile:
-            masterStack = DataObject.DataObject()
-            masterStack.info = copy.deepcopy(stack.info)
-            masterStack.data = stack.data[:, :, 0:1024]
-            masterStack.info['Dim_2'] = int(masterStack.info['Dim_2'] / 2)
+            primaryStack = DataObject.DataObject()
+            primaryStack.info = copy.deepcopy(stack.info)
+            primaryStack.data = stack.data[:, :, 0:1024]
+            primaryStack.info['Dim_2'] = int(primaryStack.info['Dim_2'] / 2)
 
-            slaveStack = DataObject.DataObject()
-            slaveStack.info = copy.deepcopy(stack.info)
-            slaveStack.data = stack.data[:, :, 1024:]
-            slaveStack.info['Dim_2'] = int(slaveStack.info['Dim_2'] / 2)
-            return [masterStack, slaveStack]
+            secondaryStack = DataObject.DataObject()
+            secondaryStack.info = copy.deepcopy(stack.info)
+            secondaryStack.data = stack.data[:, :, 1024:]
+            secondaryStack.info['Dim_2'] = int(secondaryStack.info['Dim_2'] / 2)
+            return [primaryStack, secondaryStack]
         else:
             return stack
 
@@ -513,10 +513,10 @@ if __name__ == "__main__":
     if type(stack) == type([]):
         #aifira like, two stacks
         widget.setStack(stack[0])
-        slave = QStackWidget.QStackWidget(master=False,
+        secondary = QStackWidget.QStackWidget(primary=False,
                                           rgbwidget=widget.rgbWidget)
-        slave.setStack(stack[1])
-        widget.setSlave(slave)
+        secondary.setStack(stack[1])
+        widget.setSecondary(secondary)
         stack = None
     else:
         widget.setStack(stack)
