@@ -1,8 +1,8 @@
 # /*#########################################################################
-# Copyright (C) 2004-2018 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -48,7 +48,7 @@ image to view this background image.
 This window also provides a median filter tool, with a configurable filter
 width, to smooth the stack image.
 
-The mask of the plot widget is synchronized with the master stack widget.
+The mask of the plot widget is synchronized with the primary stack widget.
 """
 
 __authors__ = ["V.A. Sole", "P. Knobel"]
