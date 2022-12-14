@@ -780,10 +780,10 @@ class QStackWidget(StackBase.StackBase,
             self._secondaryList = []
         secondary.setSelectionMask(self.getSelectionMask())
         secondary.show()
-        secondary._setMaster(self)
+        secondary._setPrimary(self)
         self._secondaryList.append(secondary)
 
-    def _setMaster(self, primary=None):
+    def _setPrimary(self, primary=None):
         if self.primary:
             self._primaryStack = None
             return
@@ -1282,23 +1282,23 @@ class QStackWidget(StackBase.StackBase,
                     secondary.setSelectionMask(mask, instance_id=id(self))
 
         if self._primaryStack is not None:
-            #This is a secondary instance
+            # This is a secondary instance
             instanceList = [id(self.stackWidget),
                             id(self.roiWidget)]
             for key in self.pluginInstanceDict.keys():
                 instanceList.append(id(self.pluginInstanceDict[key]))
             if instance_id in instanceList:
-                #Originated by the secondary
-                _logger.debug("INFORMING MASTER")
+                # Originated by the secondary
+                _logger.debug("INFORMING PRIMARY STACK")
                 self._primaryStack.setSelectionMask(mask, instance_id=id(self))
 
         #Inform plugins
         for key in self.pluginInstanceDict.keys():
             if key == "PyMcaPlugins.StackPluginBase":
                 continue
-            #I remove this optimization for the case the plugin
-            #does not update itself the mask
-            #if id(self.pluginInstanceDict[key]) != instance_id:
+            # I remove this optimization for the case the plugin
+            # does not update itself the mask
+            # if id(self.pluginInstanceDict[key]) != instance_id:
             self.pluginInstanceDict[key].selectionMaskUpdated()
 
     def getSelectionMask(self):
