@@ -1415,7 +1415,8 @@ class RGBCorrelatorWidget(qt.QWidget):
         if ddict['event'] in ["selectionMaskChanged",
                               "resetSelection",
                               "invertSelection"]:
-            self.setSelectionMask(None, instance_id=ddict['id'])
+            mask = ddict.get("current", None)
+            self.setSelectionMask(mask, instance_id=ddict['id'])
             self.sigMaskImageWidgetSignal.emit(ddict)
             return
 
