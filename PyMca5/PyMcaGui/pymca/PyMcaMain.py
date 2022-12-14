@@ -1375,7 +1375,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             try:
                 widget = QStackWidget.QStackWidget(mcawidget=self.mcaWindow,
                                                    rgbwidget=rgbWidget,
-                                                   master=True)
+                                                   primary=True)
                 widget.notifyCloseEventToWidget(self)
                 self.__imagingTool = id(widget)
                 self._widgetDict[self.__imagingTool] = widget
