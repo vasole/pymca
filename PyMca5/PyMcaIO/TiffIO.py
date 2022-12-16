@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,11 +26,11 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-__date__ = "08/10/2020"
+__date__ = "16/12/2022"
 
 import sys
 import os
@@ -38,7 +38,7 @@ import struct
 import numpy
 import logging
 
-_logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 ALLOW_MULTIPLE_STRIPS = False
 
@@ -160,7 +160,7 @@ class TiffIO(object):
             if fortyTwo != 42:
                 raise IOError("Invalid TIFF version %d" % fortyTwo)
             else:
-                _logger.debug("VALID TIFF VERSION")
+                logger.debug("VALID TIFF VERSION")
             if sys.byteorder != fileOrder:
                 swap = True
             else:
@@ -182,7 +182,7 @@ class TiffIO(object):
     def __makeSureFileIsOpen(self):
         if not self.fd.closed:
             return
-        _logger.debug("Reopening closed file")
+        logger.debug("Reopening closed file")
         fileName = self.fd.name
         if self._access is None:
             # we do not own the file
@@ -195,7 +195,7 @@ class TiffIO(object):
     def __makeSureFileIsClosed(self):
         if self._access is None:
             # we do not own the file
-            _logger.debug("Not closing not owned file")
+            logger.debug("Not closing not owned file")
             return
 
         if not self.fd.closed:
@@ -229,21 +229,21 @@ class TiffIO(object):
             offsetToIFD = 0
         else:
             offsetToIFD = struct.unpack(fmt, inStr)[0]
-        _logger.debug("Offset to first IFD = %d", offsetToIFD)
+        logger.debug("Offset to first IFD = %d", offsetToIFD)
         while offsetToIFD != 0:
             self._IFD.append(offsetToIFD)
             nImages += 1
             fd.seek(offsetToIFD)
             fmt = st + 'H'
-            numberOfDirectoryEntries = struct.unpack(fmt,fd.read(struct.calcsize(fmt)))[0]
-            _logger.debug("Number of directory entries = %d", numberOfDirectoryEntries)
+            numberOfDirectoryEntries = struct.unpack(fmt, fd.read(struct.calcsize(fmt)))[0]
+            logger.debug("Number of directory entries = %d", numberOfDirectoryEntries)
 
             fmt = st + 'I'
             fd.seek(offsetToIFD + 2 + 12 * numberOfDirectoryEntries)
-            offsetToIFD = struct.unpack(fmt,fd.read(struct.calcsize(fmt)))[0]
-            _logger.debug("Next Offset to IFD = %d", offsetToIFD)
+            offsetToIFD = struct.unpack(fmt, fd.read(struct.calcsize(fmt)))[0]
+            logger.debug("Next Offset to IFD = %d", offsetToIFD)
             # offsetToIFD = 0
-        _logger.debug("Number of images found = %d", nImages)
+        logger.debug("Number of images found = %d", nImages)
         return nImages
 
     def _parseImageFileDirectory(self, nImage):
@@ -252,8 +252,8 @@ class TiffIO(object):
         fd = self.fd
         fd.seek(offsetToIFD)
         fmt = st + 'H'
-        numberOfDirectoryEntries = struct.unpack(fmt,fd.read(struct.calcsize(fmt)))[0]
-        _logger.debug("Number of directory entries = %d", numberOfDirectoryEntries)
+        numberOfDirectoryEntries = struct.unpack(fmt, fd.read(struct.calcsize(fmt)))[0]
+        logger.debug("Number of directory entries = %d", numberOfDirectoryEntries)
 
         fmt = st + 'HHI4s'
         tagIDList = []
@@ -273,7 +273,7 @@ class TiffIO(object):
                     if struct.calcsize(vfmt) > len(data):
                         # I do not see how I can enter here
                         # Add a 0 padding to have the expected size
-                        print("WARNING: Data at tag id '%s' is smaller than expected", tagID)
+                        logger.warning("Data at tag id '%s' is smaller than expected", tagID)
                         data = data + b"\x00" * (struct.calcsize(vfmt) - len(data))
                     actualValue = struct.unpack(vfmt, data)[0]
                     valueOffsetList.append(actualValue)
@@ -286,15 +286,15 @@ class TiffIO(object):
                 valueOffsetList.append(actualValue)
             else:
                 valueOffsetList.append(valueOffset)
-
-            if tagID in TAG_ID:
-                _logger.debug("tagID = %s", TAG_ID[tagID])
-            else:
-                _logger.debug("tagID        = %d", tagID)
-            _logger.debug("fieldType    = %s", FIELD_TYPE[fieldType][0])
-            _logger.debug("nValues      = %d", nValues)
-            # if nValues == 1:
-            #    print("valueOffset =  %s" % valueOffset)
+            if logger.getEffectiveLevel() == logging.DEBUG:
+                if tagID in TAG_ID:
+                    logger.debug("tagID = %s", TAG_ID[tagID])
+                else:
+                    logger.debug("tagID        = %d", tagID)
+                logger.debug("fieldType    = %s", FIELD_TYPE[fieldType][0])
+                logger.debug("nValues      = %d", nValues)
+                # if nValues == 1:
+                #    logger.debug("valueOffset =  %s" % valueOffset)
         return tagIDList, fieldTypeList, nValuesList, valueOffsetList
 
     def _readIFDEntry(self, tag, tagIDList, fieldTypeList, nValuesList, valueOffsetList):
@@ -326,7 +326,7 @@ class TiffIO(object):
                 try:
                     text = raw.decode("utf-8")
                 except UnicodeDecodeError:
-                    _logger.debug("TIFF file tag %d contains non ASCII/UTF-8 characters. ", tag)
+                    logger.warning("TIFF file tag %d contains non ASCII/UTF-8 characters. ", tag)
                     text = raw.decode("utf-8", errors='replace')
                     # Use a valid ASCII character to limit ferther encoding error
                     text = text.replace(u"\ufffd", "?")
@@ -356,7 +356,7 @@ class TiffIO(object):
 
     def _readInfo(self, nImage, close=True):
         if nImage in self._imageInfoCacheIndex:
-            _logger.debug("Reading info from cache")
+            logger.debug("Reading info from cache")
             return self._imageInfoCache[self._imageInfoCacheIndex.index(nImage)]
 
         # read the header
@@ -365,7 +365,7 @@ class TiffIO(object):
 
         # rows and columns
         nColumns = valueOffsetList[tagIDList.index(TAG_NUMBER_OF_COLUMNS)]
-        nRows    = valueOffsetList[tagIDList.index(TAG_NUMBER_OF_ROWS)]
+        nRows = valueOffsetList[tagIDList.index(TAG_NUMBER_OF_ROWS)]
 
         # bits per sample
         idx = tagIDList.index(TAG_BITS_PER_SAMPLE)
@@ -375,7 +375,6 @@ class TiffIO(object):
             nBits = self._readIFDEntry(TAG_BITS_PER_SAMPLE,
                                        tagIDList, fieldTypeList, nValuesList,
                                        valueOffsetList)
-
 
         if TAG_COLORMAP in tagIDList:
             idx = tagIDList.index(TAG_COLORMAP)
@@ -416,7 +415,7 @@ class TiffIO(object):
         if TAG_PHOTOMETRIC_INTERPRETATION in tagIDList:
             interpretation = valueOffsetList[tagIDList.index(TAG_PHOTOMETRIC_INTERPRETATION)]
         else:
-            _logger.warning("WARNING: Non standard TIFF. Photometric interpretation TAG missing")
+            logger.info("WARNING: Non standard TIFF. Photometric interpretation TAG missing")
 
         helpString = ""
 
@@ -438,8 +437,11 @@ class TiffIO(object):
 
         if TAG_SOFTWARE in tagIDList:
             software = self._readIFDEntry(TAG_SOFTWARE,
-                    tagIDList, fieldTypeList, nValuesList, valueOffsetList)
-            if type(software) in [type([1]), type((1,))]:
+                                          tagIDList,
+                                          fieldTypeList,
+                                          nValuesList,
+                                          valueOffsetList)
+            if isinstance(software, (tuple, list)):
                 software =helpString.join(software)
         else:
             software = defaultSoftware
@@ -459,7 +461,10 @@ class TiffIO(object):
 
         if TAG_DATE in tagIDList:
             date = self._readIFDEntry(TAG_DATE,
-                    tagIDList, fieldTypeList, nValuesList, valueOffsetList)
+                                      tagIDList,
+                                      fieldTypeList,
+                                      nValuesList,
+                                      valueOffsetList)
             if type(date) in [type([1]), type((1,))]:
                 date = helpString.join(date)
         else:
@@ -475,13 +480,13 @@ class TiffIO(object):
                         tagIDList, fieldTypeList, nValuesList, valueOffsetList)[0]
         else:
             rowsPerStrip = nRows
-            _logger.warning("WARNING: Non standard TIFF. Rows per strip TAG missing")
+            logger.warning("Non standard TIFF. Rows per strip TAG missing")
 
         if TAG_STRIP_BYTE_COUNTS in tagIDList:
             stripByteCounts = self._readIFDEntry(TAG_STRIP_BYTE_COUNTS,
                         tagIDList, fieldTypeList, nValuesList, valueOffsetList)
         else:
-            _logger.warning("WARNING: Non standard TIFF. Strip byte counts TAG missing")
+            logger.warning("Non standard TIFF. Strip byte counts TAG missing")
             if hasattr(nBits, 'index'):
                 expectedSum = 0
                 for n in nBits:
@@ -501,7 +506,7 @@ class TiffIO(object):
             interpretation = 1
             # we cannot rely on any cache in this case
             useInfoCache = False
-            _logger.debug("FORCED MONO")
+            logger.debug("FORCED MONO")
         else:
             useInfoCache = True
 
@@ -522,6 +527,7 @@ class TiffIO(object):
         info["photometricInterpretation"] = interpretation
         if model is not None:
             info["model"] = model
+
         infoDict = {}
         testString = 'PyMca'
 
@@ -551,7 +557,7 @@ class TiffIO(object):
         return info
 
     def _readImage(self, nImage, **kw):
-        _logger.debug("Reading image %d", nImage)
+        logger.debug("Reading image %d", nImage)
         if 'close' in kw:
             close = kw['close']
         else:
@@ -559,7 +565,7 @@ class TiffIO(object):
         rowMin = kw.get('rowMin', None)
         rowMax = kw.get('rowMax', None)
         if nImage in self._imageDataCacheIndex:
-            _logger.debug("Reading image data from cache")
+            logger.debug("Reading image data from cache")
             return self._imageDataCache[self._imageDataCacheIndex.index(nImage)]
 
         self.__makeSureFileIsOpen()
@@ -572,6 +578,7 @@ class TiffIO(object):
             info = self._readInfo(nImage, close=False)
             self._forceMonoOutput = oldMono
         except:
+            logger.debug("Backtrace", exc_info=True)
             self._forceMonoOutput = oldMono
             raise
         compression = info['compression']
@@ -581,7 +588,7 @@ class TiffIO(object):
                 raise IOError("Compressed TIFF images not supported except packbits")
             else:
                 # PackBits compression
-                _logger.debug("Using PackBits compression")
+                logger.debug("Using PackBits compression")
 
         interpretation = info["photometricInterpretation"]
         if interpretation == 2:
@@ -594,11 +601,11 @@ class TiffIO(object):
             # raise IOError("Palette-color Image. Only grayscale images supported")
         elif interpretation > 2:
             # Palette Color Image
-            raise IOError("Only grayscale images supported")
+            logger.warning("Only grayscale and RGB images supported")
 
-        nRows    = info["nRows"]
+        nRows = info["nRows"]
         nColumns = info["nColumns"]
-        nBits    = info["nBits"]
+        nBits = info["nBits"]
         colormap = info["colormap"]
         sampleFormat = info["sampleFormat"]
 
@@ -616,7 +623,7 @@ class TiffIO(object):
 
         if rowMax < rowMin:
             txt = "Max Row smaller than Min Row. Reverse selection not supported"
-            raise NotImplemented(txt)
+            raise NotImplementedError(txt)
 
         if rowMin >= nRows:
             raise IndexError("Image only has %d rows" % nRows)
@@ -676,9 +683,9 @@ class TiffIO(object):
             if nRows == rowsPerStrip:
                 actualBytesPerRow = int(image.nbytes / nRows)
                 if actualBytesPerRow != bytesPerRow:
-                    _logger.warning("Warning: Bogus StripByteCounts information")
+                    logger.warning("Bogus StripByteCounts information")
                     bytesPerRow = actualBytesPerRow 
-                    nBytes = (rowMax-rowMin+1) * bytesPerRow
+                    nBytes = (rowMax - rowMin + 1) * bytesPerRow
             fd.seek(stripOffsets[0] + rowMin * bytesPerRow)
             if self._swap:
                 readout = numpy.array(numpy.frombuffer(fd.read(nBytes), dtype)).byteswap()
@@ -691,7 +698,7 @@ class TiffIO(object):
                 readout.shape = -1, nColumns, 3
             else:
                 readout.shape = -1, nColumns
-            image[rowMin:rowMax+1, :] = readout
+            image[rowMin:rowMax + 1, :] = readout
         else:
             for i in range(len(stripOffsets)):
                 # the amount of rows
@@ -843,7 +850,7 @@ class TiffIO(object):
 
         # get the image file directories
         nImages = self.getImageFileDirectories()
-        _logger.debug("File contains %d images", nImages)
+        logger.debug("File contains %d images", nImages)
         if nImages == 0:
             fd.seek(4)
             fmt = st + 'I'
@@ -1019,12 +1026,12 @@ class TiffIO(object):
         self.fd.seek(0, os.SEEK_END)
         endOfFile = self.fd.tell()
         if endOfFile == 0:
-            #empty file
+            # empty file
             endOfFile = 8
 
         # rows per strip
         if ALLOW_MULTIPLE_STRIPS:
-            #try to segment the image in several pieces
+            # try to segment the image in several pieces
             if not (nRows % 4):
                 rowsPerStrip = int(nRows / 4)
             elif not (nRows % 10):
@@ -1080,7 +1087,7 @@ class TiffIO(object):
                     stripOffsetsString += struct.pack(fmt, value)
                     stripByteCountsString += struct.pack(fmt, stripByteCounts)
 
-        _logger.debug("IMAGE WILL START AT %d", stripOffsets[0])
+        logger.debug("IMAGE WILL START AT %d", stripOffsets[0])
 
         # sample format
         if dtype in [numpy.float32, numpy.float64] or\
