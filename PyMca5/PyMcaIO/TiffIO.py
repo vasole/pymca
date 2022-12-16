@@ -594,7 +594,7 @@ class TiffIO(object):
             # raise IOError("Palette-color Image. Only grayscale images supported")
         elif interpretation > 2:
             # Palette Color Image
-            raise IOError("Only grayscale images supported")
+            logger.warning("Only grayscale and RGB images supported")
 
         nRows    = info["nRows"]
         nColumns = info["nColumns"]
