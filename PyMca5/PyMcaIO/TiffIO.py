@@ -273,7 +273,7 @@ class TiffIO(object):
                     if struct.calcsize(vfmt) > len(data):
                         # I do not see how I can enter here
                         # Add a 0 padding to have the expected size
-                        print("WARNING: Data at tag id '%s' is smaller than expected", tagID)
+                        logger.warning("Data at tag id '%s' is smaller than expected", tagID)
                         data = data + b"\x00" * (struct.calcsize(vfmt) - len(data))
                     actualValue = struct.unpack(vfmt, data)[0]
                     valueOffsetList.append(actualValue)
