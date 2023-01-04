@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2022 European Synchrotron Radiation Facility
+# Copyright (C) 2022-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -40,7 +40,7 @@ class ImageListStatsWidget(TableWidget.TableWidget):
         super(ImageListStatsWidget, self).__init__(parent=parent, cut=cut, paste=paste)
         self.imageList = None
         self.imageMask = None
-        labels = ["Name", "Maximum", "Minimum", "Mean", "std"]
+        labels = ["Name", "Maximum", "Minimum", "N", "Mean", "std"]
         self._stats = [x.lower() for x in labels]
         self.setColumnCount(len(self._stats))
         for i in range(len(labels)):
@@ -103,30 +103,31 @@ class ImageListStatsWidget(TableWidget.TableWidget):
 
     def updateStats(self):
         if self.imageList in [None, []]:
-            # TODO: clear table
+            self.setRowCount(0)
             return
         statsList = []
         mask = self.imageMask
         if mask is None:
-            mask = numpy.zeros(self.imageList[0].shape, dtype=numpy.int32)
+            mask = numpy.zeros(self.imageList[0].shape, dtype=numpy.uint8)
+        mask = mask.flatten()
         results = []
         for idx, imageName in enumerate(self.imageNames):
             result = {}
-            if mask is None:
-                image = self.imageList[idx]
-            elif mask.min() == mask.max():
+            image = self.imageList[idx].flatten()
+            if mask.min() == mask.max():
                 if mask.min() == 0:
                     # whole image
-                    image = self.imageList[idx]
+                    pass
                 else:
-                    # only maked image
-                    image = self.imageList[idx][mask]
+                    # only masked image
+                    image = image[mask > 0]
             else:
-                image = self.imageList[idx][mask]
-            image = image[numpy.isfinite(image)]
+                image = image[mask > 0]
+            image = numpy.array(image[numpy.isfinite(image)], dtype=numpy.float64)
             result['name'] = imageName
             result['maximum'] = image.max()
             result['minimum'] = image.min()
+            result['n'] = image.size
             result['mean'] = image.mean()
             result['std'] = image.std()
             results.append(result)
