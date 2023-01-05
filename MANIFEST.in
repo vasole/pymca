@@ -6,7 +6,7 @@ include LICENSE.LGPL
 include changelog.txt
 include qtconffile
 include cx_setup.py
-include README
+include README.rst
 include build-deb.sh
 include build-pyinstaller.py
 include version.py
