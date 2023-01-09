@@ -1767,7 +1767,7 @@ if 0:
             return "Graph %d"%(idx)
 
 class MyQTextBrowser(qt.QTextBrowser):
-    def setSource(self, name):
+    def myWrappedSource(self, name, ignored=None):
         if name == QString("./PyMCA.html") or ("PyMCA.html" in ("%s" % name)):
             if sys.platform == 'win32':
                 ddir=PyMcaDataDir.PYMCA_DOC_DIR
@@ -1789,7 +1789,17 @@ class MyQTextBrowser(qt.QTextBrowser):
                 self.report.show()
             self.report.raise_()
         else:
-            qt.QTextBrowser.setSource(self, name)
+            if QTVERSION.startswith('6'):
+                qt.QTextBrowser.doSetSource(self, name)
+            else:
+                qt.QTextBrowser.setSource(self, name)
+
+    if QTVERSION.startswith('6'):
+        def doSetSource(self, name, ignored=None):
+            return self.myWrappedSource(name, ignored)
+    else:
+        def setSource(self, name):
+            return self.myWrappedSource(name)
 
 class Line(qt.QFrame):
     sigLineDoubleClickEvent = qt.pyqtSignal(object)
