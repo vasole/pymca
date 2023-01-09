@@ -24,36 +24,14 @@ import platform
 import numpy
 
 USING_SETUPTOOLS = True
-if '--distutils' in sys.argv:
-    assert 'bdist_wheel' not in sys.argv,\
-        "Incompatible arguments bdist_wheel and --distutils"
-    sys.argv.remove("--distutils")
-    from distutils.core import setup
-    from distutils.command.install import install as dftinstall
-    from distutils.core import Command
-    from distutils.core import Extension
-    from distutils.command.build_py import build_py
-    from distutils.command.install_data import install_data
-    from distutils.command.install_scripts import install_scripts
-    from distutils.command.sdist import sdist
-    USING_SETUPTOOLS = False
-else:
-    # wheels require setuptools
-    from setuptools import setup
-    from setuptools.command.install import install as dftinstall
-    from setuptools import Command
-    from setuptools.extension import Extension
-    from setuptools.command.build_py import build_py
-    from distutils.command.install_data import install_data
-    from setuptools.command.install_scripts import install_scripts
-    from setuptools.command.sdist import sdist
-
-# more command line verification related to --distutils (frozen binaries)
-if ("--install-scripts" in sys.argv or "--install-lib" in sys.argv or
-        "--install-data" in sys.argv) and USING_SETUPTOOLS:
-    print("error: --install-scripts, --install-lib and --install-data options "
-          "require to specify --distutils.")
-    sys.exit(1)
+# wheels require setuptools
+from setuptools import setup
+from setuptools.command.install import install as dftinstall
+from setuptools import Command
+from setuptools.extension import Extension
+from setuptools.command.build_py import build_py
+from setuptools.command.install_scripts import install_scripts
+from setuptools.command.sdist import sdist
 
 try:
     from Cython.Distutils import build_ext
@@ -87,10 +65,14 @@ assert (PYMCA_DATA_DIR is None) == (PYMCA_DOC_DIR is None), \
 defaultDataPath = os.path.join('PyMca5', 'PyMcaData')
 if PYMCA_DATA_DIR is None and PYMCA_DOC_DIR is None:
     PYMCA_DATA_DIR = PYMCA_DOC_DIR = defaultDataPath
-
+    DISTUTILS = False
+else:
+    # debian likes to put data files somewhere else than into the package
+    # but that needs install_data
+    from distutils.command.install_data import install_data
+    DISTUTILS = True
 
 USE_SMART_INSTALL_SCRIPTS = "--install-scripts" in sys.argv
-
 
 # check if cython is not to be used despite being present
 def use_cython():
@@ -180,22 +162,20 @@ packages = ['PyMca5', 'PyMca5.PyMcaPlugins', 'PyMca5.tests',
 # more packages are appended later, when building extensions
 
 
-if USING_SETUPTOOLS and PYMCA_DATA_DIR == defaultDataPath \
-        and PYMCA_DOC_DIR == defaultDataPath:
+if PYMCA_DATA_DIR == defaultDataPath and PYMCA_DOC_DIR == defaultDataPath:
     # general case: pip install or "setup.py install" without parameters
     use_smart_install_data_class = True
 else:
     # used by debian packaging (PYMCA_DATA_DIR & PYMCA_DOC_DIR set by the packager)
-    # or used by cx_freeze or py2app to generate frozen binaries.
     use_smart_install_data_class = False
 package_data = {}
 data_files = [(PYMCA_DATA_DIR, ['LICENSE',
                                 'LICENSE.GPL',
                                 'LICENSE.LGPL',
                                 'LICENSE.MIT',
-                                'PyMca5/PyMcaData/Scofield1973.dict',
                                 'changelog.txt',
                                 'copyright',
+                                'PyMca5/PyMcaData/Scofield1973.dict',
                                 'PyMca5/PyMcaData/McaTheory.cfg',
                                 'PyMca5/PyMcaData/PyMcaSplashImage.png',
                                 'PyMca5/PyMcaData/KShellRatesScofieldHS.dat',
@@ -213,6 +193,26 @@ data_files = [(PYMCA_DATA_DIR, ['LICENSE',
               (PYMCA_DATA_DIR + '/EPDL97', glob.glob('PyMca5/EPDL97/*.DAT')),
               (PYMCA_DATA_DIR + '/EPDL97', ['PyMca5/EPDL97/LICENSE'])]
 
+if not DISTUTILS:
+    package_data["PyMca5"] = ['PyMcaData/Scofield1973.dict',
+                              'PyMcaData/McaTheory.cfg',
+                              'PyMcaData/PyMcaSplashImage.png',
+                              'PyMcaData/KShellRatesScofieldHS.dat',
+                              'PyMcaData/LShellRatesCampbell.dat',
+                              'PyMcaData/LShellRatesScofieldHS.dat',
+                              'PyMcaData/EXAFS_Cu.dat',
+                              'PyMcaData/EXAFS_Ge.dat',
+                              'PyMcaData/Steel.cfg',
+                              'PyMcaData/Steel.spe',
+                              'PyMcaData/XRFSpectrum.mca',
+                              'PyMcaData/attdata/*',
+                              'PyMcaData/HTML/*.*',
+                              'PyMcaData/HTML/IMAGES/*',
+                              'HTML/PyMca_files/*',
+                              'EPDL97/*.DAT',
+                              'EPDL97/LICENSE'
+                              ]
+    data_files = None
 
 SIFT_OPENCL_FILES = []
 if os.path.exists(os.path.join("PyMca5", "PyMcaMath", "sift")):
@@ -221,7 +221,6 @@ if os.path.exists(os.path.join("PyMca5", "PyMcaMath", "sift")):
         package_data['PyMca5'].append('PyMcaMath/sift/*.cl')
     else:
         package_data['PyMca5'] = ['PyMcaMath/sift/*.cl']
-
 sources = glob.glob('*.c')
 if sys.platform == "win32":
     define_macros = [('WIN32', None)]
@@ -770,20 +769,23 @@ class sdist_debian(sdist):
         self.archive_files = [debian_arch]
         print("Building debian .orig.tar.gz in %s" % self.archive_files[0])
 
-class smart_install_data(install_data):
-    def run(self):
-        global INSTALL_DIR
-        #need to change self.install_dir to the library dir
-        install_cmd = self.get_finalized_command('install')
-        self.install_dir = getattr(install_cmd, 'install_lib')
-        INSTALL_DIR = self.install_dir
-        return install_data.run(self)
+if DISTUTILS:
+    class smart_install_data(install_data):
+        def run(self):
+            global INSTALL_DIR
+            # need to change self.install_dir to the library dir
+            install_cmd = self.get_finalized_command('install')
+            self.install_dir = getattr(install_cmd, 'install_lib')
+            INSTALL_DIR = self.install_dir
+            return install_data.run(self)
 
 # end of man pages handling
-cmdclass = {'install_data': install_data,
-            'build_py': smart_build_py}
-if use_smart_install_data_class:
-    cmdclass['install_data'] = smart_install_data
+cmdclass = {'build_py': smart_build_py}
+if DISTUTILS:
+    if use_smart_install_data_class:
+        cmdclass['install_data'] = smart_install_data
+    else:
+        cmdclass['install_data'] = install_data
 if build_ext is not None:
     cmdclass['build_ext'] = build_ext
 
@@ -835,7 +837,6 @@ if sphinx:
     cmdclass['build_doc'] = build_doc
 
 classifiers = ["Development Status :: 5 - Production/Stable",
-               "Programming Language :: Python :: 2",
                "Programming Language :: Python :: 3",
                "Intended Audience :: Developers",
                "Intended Audience :: End Users/Desktop",
@@ -862,7 +863,7 @@ if use_gui():
     # and additonal optional dependencies.
     install_requires += ["PyOpenGL",
                          "qtconsole",
-                         "PyQt5",   # either PyQt4 or PySide supported too
+                         "PyQt5",   # either PySide6 or PySide2 supported too
                         ]
 
 setup_requires = ["numpy"]
