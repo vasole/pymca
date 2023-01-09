@@ -189,7 +189,7 @@ data_files = [(PYMCA_DATA_DIR, ['LICENSE',
               (PYMCA_DATA_DIR + '/attdata', glob.glob('PyMca5/PyMcaData/attdata/*')),
               (PYMCA_DOC_DIR + '/HTML', glob.glob('PyMca5/PyMcaData/HTML/*.*')),
               (PYMCA_DOC_DIR + '/HTML/IMAGES', glob.glob('PyMca5/PyMcaData/HTML/IMAGES/*')),
-              (PYMCA_DOC_DIR + '/HTML/PyMCA_files', glob.glob('PyMca5/HTML/PyMCA_files/*')),
+              (PYMCA_DOC_DIR + '/HTML/PyMCA_files', glob.glob('PyMca5/PyMcaData/HTML/PyMCA_files/*')),
               (PYMCA_DATA_DIR + '/EPDL97', glob.glob('PyMca5/EPDL97/*.DAT')),
               (PYMCA_DATA_DIR + '/EPDL97', ['PyMca5/EPDL97/LICENSE'])]
 
@@ -208,7 +208,7 @@ if not DISTUTILS:
                               'PyMcaData/attdata/*',
                               'PyMcaData/HTML/*.*',
                               'PyMcaData/HTML/IMAGES/*',
-                              'HTML/PyMca_files/*',
+                              'PyMcaData/HTML/PyMca_files/*',
                               'EPDL97/*.DAT',
                               'EPDL97/LICENSE'
                               ]
