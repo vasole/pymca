@@ -511,6 +511,30 @@ class smart_build_py(build_py):
                 lineToBeWritten = line.replace(txt, PYMCA_DOC_DIR)
             fid.write(lineToBeWritten)
         fid.close()
+
+        if not DISTUTILS:
+            # package_data cannot deal with data files outside the package
+            target = os.path.join(self.build_lib, "PyMca5", "PyMcaData")
+            dirname = os.path.dirname(os.path.relpath(__file__))
+            if not len(dirname):
+                dirname = "."
+            for fname in ["LICENSE", "LICENSE.GPL", "LICENSE.LGPL", "LICENSE.MIT",
+                          "copyright", "changelog.txt"]:
+                src = os.path.join(dirname, fname)
+                dest = os.path.join(target, fname)
+                print("copying %s to %s" % (src, dest))
+                self.copy_file(src, dest)
+
+            target = os.path.join(self.build_lib, "PyMca5", "PyMcaData", "EPDL97")
+            if not os.path.exists(target):
+                os.mkdir(target)
+
+            for fname in ["EADL.DAT", "EPDL97.DAT", "LICENSE"]:
+                src = os.path.join(dirname, "PyMca5", "EPDL97", fname)
+                dest = os.path.join(target, fname)
+                print("copying %s to %s" % (src, dest))
+                self.copy_file(src, dest)
+
         return toReturn
 
 
