@@ -484,14 +484,6 @@ class smart_build_py(build_py):
             global INSTALL_DIR
             INSTALL_DIR = getattr(install_cmd, 'install_lib')
 
-        # frozen binary: use --install-data directory (absolute path)
-        if PYMCA_DATA_DIR == defaultDataPath and "--install-data" in sys.argv:
-            PYMCA_DATA_DIR = getattr(install_cmd, 'install_data')
-            if not PYMCA_DATA_DIR.endswith(defaultDataPath):
-                # append PyMca5/PyMcaData to build/
-                PYMCA_DATA_DIR = os.path.join(PYMCA_DATA_DIR,
-                                              defaultDataPath)
-
         # pip install or generic build/install: prepend lib path
         elif PYMCA_DATA_DIR == defaultDataPath or PYMCA_DOC_DIR == defaultDataPath:
 
