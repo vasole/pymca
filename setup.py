@@ -209,9 +209,8 @@ if not DISTUTILS:
                               'PyMcaData/HTML/*.*',
                               'PyMcaData/HTML/IMAGES/*',
                               'PyMcaData/HTML/PyMca_files/*',
-                              'EPDL97/*.DAT',
-                              'EPDL97/LICENSE'
                               ]
+    # missing files added derived class
     data_files = None
 
 SIFT_OPENCL_FILES = []
@@ -493,6 +492,7 @@ class smart_build_py(build_py):
             if PYMCA_DOC_DIR == defaultDataPath:
                 PYMCA_DOC_DIR = os.path.join(PYMCA_INSTALL_DIR,
                                              PYMCA_DOC_DIR)
+
         # packager should have provided the complete path as an environment
         # variable in other cases.
 
