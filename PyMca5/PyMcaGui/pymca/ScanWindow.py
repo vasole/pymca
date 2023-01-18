@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -162,6 +162,9 @@ class ScanWindow(PlotWindow.PlotWindow):
                 self.derivateMenu.addAction(item)
 
             self.derivateToolButton.setMenu(self.derivateMenu)
+            tip = "Take Derivative of active curve"
+            tip += ".\nLong press to configure"
+            self.derivateToolButton.setToolTip(tip)
             self.derivateToolButton.triggered.connect(self._derivateTriggered)
 
         # this one was made in the base class
@@ -182,6 +185,7 @@ class ScanWindow(PlotWindow.PlotWindow):
     def _derivateTriggered(self, action):
         text = action.text()
         tip = "Take %s derivative of active curve" % text
+        tip += ".\nLong press to configure"
         self.derivateToolButton.setToolTip(tip)
         self.derivateOptionSelected = text
         self._deriveIconSignal()
