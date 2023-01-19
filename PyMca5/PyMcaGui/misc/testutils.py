@@ -79,6 +79,24 @@ elif qt.BINDING == 'PyQt5':
         """
         return not _isdeleted(obj)
 
+elif qt.BINDING == 'PyQt6':
+    from PyQt6.QtTest import QTest
+    try:
+        from PyQt6.sip import isdeleted as _isdeleted  # noqa
+        from PyQt6.sip import ispycreated as createdByPython  # noqa
+        from PyQt6.sip import ispyowned as ownedByPython  # noqa
+    except ImportError:
+        from sip import isdeleted as _isdeleted  # noqa
+        from sip import ispycreated as createdByPython  # noqa
+        from sip import ispyowned as ownedByPython  # noqa
+    def isValid(obj):
+        """Returns True if underlying C++ object is valid.
+
+        :param QObject obj:
+        :rtype: bool
+        """
+        return not _isdeleted(obj)
+
 elif qt.BINDING == 'PyQt4':
     from PyQt4.QtTest import QTest
     from sip import isdeleted as _isdeleted  # noqa
@@ -228,8 +246,9 @@ class TestCaseQt(unittest.TestCase):
                        createdByPython(widget))]
         del self.__previousWidgets
 
-        if qt.BINDING in ('PySide', 'PySide2', 'PySide6', 'PyQt5', 'PyQt4'):
+        if qt.BINDING in ('PySide', 'PySide2', 'PySide6', 'PyQt5', 'PyQt6', 'PyQt4'):
             # TODO: many leaks with PyQt5 as well...
+            # With PyQt6 only the thread case with the fit
             return  # Do not test for leaking widgets
 
         allowedLeakingWidgets = self.allowedLeakingWidgets
