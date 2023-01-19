@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -40,7 +40,7 @@ This module simplifies writing code that has to deal with with PySideX and PyQtX
 _logger = logging.getLogger(__name__)
 
 BINDING = None
-"""The name of the Qt binding in use: PyQt5, PyQt4, PySide2, PySide6"""
+"""The name of the Qt binding in use: PyQt5, PySide6, PySide2, PyQt6"""
 
 HAS_SVG = False
 """True if Qt provides support for Scalable Vector Graphics (QtSVG)."""
@@ -58,6 +58,9 @@ elif 'PySide6.QtCore' in sys.modules:
 
 elif 'PyQt5.QtCore' in sys.modules:
     BINDING = 'PyQt5'
+
+elif 'PyQt6.QtCore' in sys.modules:
+    BINDING = 'PyQt6'
 
 elif 'PyQt4.QtCore' in sys.modules:
     BINDING = 'PyQt4'
@@ -78,19 +81,25 @@ if BINDING is None: # Try the different bindings
         if "PyQt5" in sys.modules:
             del sys.modules["PyQt5"]
         try:
-            import PySide2.QtCore
-            BINDING = "PySide2"
+            import PySide6.QtCore
+            BINDING = "PySide6"
         except ImportError:
-            if "PySide2" in sys.modules:
-                del sys.modules["PySide2"]
+            if "PySide6" in sys.modules:
+                del sys.modules["PySide6"]
             try:
-                import PySide6.QtCore
-                BINDING = "PySide6"
+                import PySide2.QtCore
+                BINDING = "PySide2"
             except ImportError:
-                if 'PySide6' in sys.modules:
-                    del sys.modules["PySide6"]
-                raise ImportError(
-                    'No Qt wrapper found. Install PyQt5, PySide2 or PySide6.')
+                if 'PySide2' in sys.modules:
+                    del sys.modules["PySide2"]
+                try:
+                    import PyQt6.QtCore  # noqa
+                    BINDING = "PyQt6"
+                except ImportError:
+                    if 'PyQt6' in sys.modules:
+                        del sys.modules["PyQt6"]
+                    raise ImportError(
+                    'No Qt wrapper found. Install PyQt5, PySide2, PySide6 or PyQt6.')
 
 _logger.info("BINDING set to %s" % BINDING)
 
@@ -224,8 +233,99 @@ elif BINDING == 'PySide6':
             screen = QApplication.instance().primaryScreen() 
             return screen.availableGeometry().width()
 
+elif BINDING == 'PyQt6':
+    _logger.debug('Using PyQt6 bindings')
+    import enum
+    from PyQt6 import QtCore
+    if QtCore.PYQT_VERSION < int("0x60300", 16):
+        raise RuntimeError(
+            "PyQt6 v%s is not supported, please upgrade it." % QtCore.PYQT_VERSION_STR
+        )
+
+    # Monkey-patch module to expose enum values for compatibility
+    # All Qt modules loaded here should be patched.
+    import PyQt6.sip
+    def patch_enums(*modules):
+        """Patch PyQt6 modules to provide backward compatibility of enum values
+
+        :param modules: Modules to patch (e.g., PyQt6.QtCore).
+        """
+        for module in modules:
+            for clsName in dir(module):
+                cls = getattr(module, clsName, None)
+                if isinstance(cls, PyQt6.sip.wrappertype) and clsName.startswith('Q'):
+                    for qenumName in dir(cls):
+                        if qenumName[0].isupper():
+                            qenum = getattr(cls, qenumName, None)
+                            if isinstance(qenum, enum.EnumMeta):
+                                if qenum is getattr(cls.__mro__[1], qenumName, None):
+                                    continue  # Only handle it once
+                                for item in qenum:
+                                    # Special cases to avoid overrides and mimic PySide6
+                                    if clsName == 'QColorSpace' and qenumName in (
+                                            'Primaries', 'TransferFunction'):
+                                        break
+                                    if qenumName in ('DeviceType', 'PointerType'):
+                                        break
+
+                                    setattr(cls, item.name, item)
+
+    from PyQt6 import QtGui, QtWidgets, QtPrintSupport, QtOpenGL, QtSvg
+    from PyQt6 import QtTest as _QtTest
+
+    patch_enums(
+        QtCore, QtGui, QtWidgets, QtPrintSupport, QtOpenGL, QtSvg, _QtTest)
+
+    import PyQt6 as QtBinding  # noqa
+
+    from PyQt6.QtCore import *  # noqa
+    from PyQt6.QtGui import *  # noqa
+    from PyQt6.QtWidgets import *  # noqa
+    from PyQt6.QtPrintSupport import *  # noqa
+
+    try:
+        from PyQt6.QtOpenGL import *  # noqa
+        from PyQt6.QtOpenGLWidgets import QOpenGLWidget  # noqa
+    except ImportError:
+        _logger.info("PyQt6's QtOpenGL or QtOpenGLWidgets not available")
+        HAS_OPENGL = False
+    else:
+        HAS_OPENGL = True
+
+    try:
+        from PyQt6.QtSvg import *  # noqa
+    except ImportError:
+        _logger.info("PyQt6.QtSvg not available")
+        HAS_SVG = False
+    else:
+        HAS_SVG = True
+    
+    Signal = pyqtSignal
+
+    Property = pyqtProperty
+
+    Slot = pyqtSlot
+
+    # use a (bad) replacement for QDesktopWidget
+    class QDesktopWidget:
+        def height(self):
+            _logger.info("Using obsolete QDesktopWidget class")
+            screen = QApplication.instance().primaryScreen() 
+            return screen.availableGeometry().height()
+
+
+        def width(self):
+            _logger.info("Using obsolete QDesktopWidget class")
+            screen = QApplication.instance().primaryScreen() 
+            return screen.availableGeometry().width()
+
+    # Disable PyQt6 cooperative multi-inheritance since other bindings do not provide it.
+    # See https://www.riverbankcomputing.com/static/Docs/PyQt6/multiinheritance.html?highlight=inheritance
+    class _Foo(object): pass
+    class QObject(QObject, _Foo): pass
+
 else:
-    raise ImportError('No Qt wrapper found. Install one of PyQt5, PySide2 or PySide6')
+    raise ImportError('No Qt wrapper found. Install one of PyQt5, PySide2, PySide6, PyQt6')
 
 # provide a exception handler but not implement it by default
 def exceptionHandler(type_, value, trace):
