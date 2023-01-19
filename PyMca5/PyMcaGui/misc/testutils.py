@@ -1,7 +1,7 @@
 # coding: utf-8
 # /*##########################################################################
 #
-# Copyright (c) 2016-2022 European Synchrotron Radiation Facility
+# Copyright (c) 2016-2023 European Synchrotron Radiation Facility
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@
 
 __authors__ = ["T. Vincent"]
 __license__ = "MIT"
-__date__ = "22/07/2022"
+__date__ = "19/01/2023"
 
 
 import gc
@@ -344,7 +344,7 @@ class TestCaseQt(unittest.TestCase):
         See QTest.mouseClick for details.
         """
         if modifier is None:
-            modifier = qt.Qt.KeyboardModifiers()
+            modifier = self.qapp.keyboardModifiers()
         pos = qt.QPoint(pos[0], pos[1]) if pos is not None else qt.QPoint()
         QTest.mouseClick(widget, button, modifier, pos, delay)
         self.qWait(20)
@@ -355,7 +355,7 @@ class TestCaseQt(unittest.TestCase):
         See QTest.mouseDClick for details.
         """
         if modifier is None:
-            modifier = qt.Qt.KeyboardModifiers()
+            modifier = self.qapp.keyboardModifiers()
         pos = qt.QPoint(pos[0], pos[1]) if pos is not None else qt.QPoint()
         QTest.mouseDClick(widget, button, modifier, pos, delay)
         self.qWait(20)
@@ -375,7 +375,7 @@ class TestCaseQt(unittest.TestCase):
         See QTest.mousePress for details.
         """
         if modifier is None:
-            modifier = qt.Qt.KeyboardModifiers()
+            modifier = self.qapp.keyboardModifiers()
         pos = qt.QPoint(pos[0], pos[1]) if pos is not None else qt.QPoint()
         QTest.mousePress(widget, button, modifier, pos, delay)
         self.qWait(20)
