@@ -1125,6 +1125,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             self.menuHelp.addAction("MCA &HOWTOs",self.onMcaHowto)
             self.menuHelp.addSeparator()
             self.menuHelp.addAction("&About", self.onAbout)
+            self.menuHelp.addAction("Documentation", self.onDocumentation)
             self.menuHelp.addAction("Changes", self.onChanges)
             self.menuHelp.addAction("About &Qt",self.onAboutQt)
             self.menuBar().addSeparator()
@@ -1655,6 +1656,11 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         qt.QMessageBox.about(self, "PyMca",
                 "PyMca Application\nVersion: "+__version__)
         #self.onDebug()
+
+    def onDocumentation(self):
+        import webbrowser
+        url = "http://www.silx.org/doc/PyMca/dev/"
+        webbrowser.open(url)
 
     def onChanges(self):
         if self.changeLog is None:
