@@ -1,7 +1,7 @@
 # coding: utf-8
 # /*##########################################################################
 #
-# Copyright (c) 2016-2022 European Synchrotron Radiation Facility
+# Copyright (c) 2016-2023 European Synchrotron Radiation Facility
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@
 
 __authors__ = ["T. Vincent"]
 __license__ = "MIT"
-__date__ = "22/07/2022"
+__date__ = "19/01/2023"
 
 
 import gc
@@ -67,6 +67,24 @@ elif qt.BINDING == 'PyQt5':
         from PyQt5.sip import isdeleted as _isdeleted  # noqa
         from PyQt5.sip import ispycreated as createdByPython  # noqa
         from PyQt5.sip import ispyowned as ownedByPython  # noqa
+    except ImportError:
+        from sip import isdeleted as _isdeleted  # noqa
+        from sip import ispycreated as createdByPython  # noqa
+        from sip import ispyowned as ownedByPython  # noqa
+    def isValid(obj):
+        """Returns True if underlying C++ object is valid.
+
+        :param QObject obj:
+        :rtype: bool
+        """
+        return not _isdeleted(obj)
+
+elif qt.BINDING == 'PyQt6':
+    from PyQt6.QtTest import QTest
+    try:
+        from PyQt6.sip import isdeleted as _isdeleted  # noqa
+        from PyQt6.sip import ispycreated as createdByPython  # noqa
+        from PyQt6.sip import ispyowned as ownedByPython  # noqa
     except ImportError:
         from sip import isdeleted as _isdeleted  # noqa
         from sip import ispycreated as createdByPython  # noqa
@@ -228,8 +246,9 @@ class TestCaseQt(unittest.TestCase):
                        createdByPython(widget))]
         del self.__previousWidgets
 
-        if qt.BINDING in ('PySide', 'PySide2', 'PySide6', 'PyQt5', 'PyQt4'):
+        if qt.BINDING in ('PySide', 'PySide2', 'PySide6', 'PyQt5', 'PyQt6', 'PyQt4'):
             # TODO: many leaks with PyQt5 as well...
+            # With PyQt6 only the thread case with the fit
             return  # Do not test for leaking widgets
 
         allowedLeakingWidgets = self.allowedLeakingWidgets
@@ -325,7 +344,7 @@ class TestCaseQt(unittest.TestCase):
         See QTest.mouseClick for details.
         """
         if modifier is None:
-            modifier = qt.Qt.KeyboardModifiers()
+            modifier = self.qapp.keyboardModifiers()
         pos = qt.QPoint(pos[0], pos[1]) if pos is not None else qt.QPoint()
         QTest.mouseClick(widget, button, modifier, pos, delay)
         self.qWait(20)
@@ -336,7 +355,7 @@ class TestCaseQt(unittest.TestCase):
         See QTest.mouseDClick for details.
         """
         if modifier is None:
-            modifier = qt.Qt.KeyboardModifiers()
+            modifier = self.qapp.keyboardModifiers()
         pos = qt.QPoint(pos[0], pos[1]) if pos is not None else qt.QPoint()
         QTest.mouseDClick(widget, button, modifier, pos, delay)
         self.qWait(20)
@@ -356,7 +375,7 @@ class TestCaseQt(unittest.TestCase):
         See QTest.mousePress for details.
         """
         if modifier is None:
-            modifier = qt.Qt.KeyboardModifiers()
+            modifier = self.qapp.keyboardModifiers()
         pos = qt.QPoint(pos[0], pos[1]) if pos is not None else qt.QPoint()
         QTest.mousePress(widget, button, modifier, pos, delay)
         self.qWait(20)

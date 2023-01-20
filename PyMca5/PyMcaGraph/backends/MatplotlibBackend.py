@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -92,6 +92,10 @@ elif 'PyQt5.QtCore' in sys.modules:
 elif 'PySide6.QtCore' in sys.modules:
     matplotlib.rcParams['backend'] = 'Qt5Agg'
     from PySide6 import QtCore, QtGui, QtWidgets
+    QtGui.QApplication = QtWidgets.QApplication
+elif 'PyQt6.QtCore' in sys.modules:
+    matplotlib.rcParams['backend'] = 'Qt5Agg'
+    from PyQt6 import QtCore, QtGui, QtWidgets
     QtGui.QApplication = QtWidgets.QApplication
 else:
     try:

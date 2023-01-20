@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -73,6 +73,8 @@ if __name__ == "__main__":
                 import PySide2.QtCore
             elif binding == "pyside6":
                 import PySide6.QtCore
+            elif binding == "pyqt6":
+                import PyQt6.QtCore
             else:
                 raise ValueError("Unsupported Qt binding <%s>" % binding)
     from PyMca5.PyMcaCore.LoggingLevel import getLoggingLevel
