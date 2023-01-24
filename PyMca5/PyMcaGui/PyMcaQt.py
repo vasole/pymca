@@ -193,8 +193,7 @@ elif BINDING == "PySide2":
                              _platform_plugin_path)
 elif BINDING == 'PySide6':
     _logger.debug('Using PySide6 bindings')
-
-    import PySide6 as QtBinding  # noqa
+    import PySide6
 
     from PySide6.QtCore import *  # noqa
     from PySide6.QtGui import *  # noqa
@@ -275,8 +274,6 @@ elif BINDING == 'PyQt6':
 
     patch_enums(
         QtCore, QtGui, QtWidgets, QtPrintSupport, QtOpenGL, QtSvg, _QtTest)
-
-    import PyQt6 as QtBinding  # noqa
 
     from PyQt6.QtCore import *  # noqa
     from PyQt6.QtGui import *  # noqa
