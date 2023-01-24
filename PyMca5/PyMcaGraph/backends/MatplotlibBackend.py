@@ -250,7 +250,7 @@ class MatplotlibGraph(FigureCanvas):
             FigureCanvas.setSizePolicy(self,
                                    QtWidgets.QSizePolicy.Expanding,
                                    QtWidgets.QSizePolicy.Expanding)
-            FigureCanvasQTAgg.updateGeometry(self)
+            FigureCanvas.updateGeometry(self)
         self.__lastMouseClick = ["middle", time.time()]
         self._zoomEnabled = False
         self._zoomColor = "black"
