@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V. Armando Sole - ESRF Data Analysis"
+__author__ = "V. Armando Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -284,10 +284,19 @@ class FastXRFLinearFitWindow(qt.QWidget):
         fit['refit'] = self._fitAgainBox.isChecked()
         output = {}
         ddict['output'] = output
-        output['outputDir'] = qt.safe_str(self._outdirLine.text()).replace(" ", "")
-        output['outputRoot'] = qt.safe_str(self._outrootLine.text()).replace(" ", "")
+        output['outputDir'] = qt.safe_str(self._outdirLine.text())
+        output['outputRoot'] = qt.safe_str(self._outrootLine.text())
+
+        # do not allow spaces in HDF5 
         output['fileEntry'] = qt.safe_str(self._outentryLine.text()).replace(" ", "")
         output['fileProcess'] = qt.safe_str(self._outnameLine.text()).replace(" ", "")
+
+        # make sure the GUI reflects its output
+        if output['fileEntry'] != qt.safe_str(self._outentryLine.text()):
+            self._outentryLine.setText(output['fileEntry'])
+        if output['fileProcess'] != qt.safe_str(self._outnameLine.text()):
+            self._outnameLine.setText(output['fileProcess'])
+
         output['tif'] = int(self._tiffBox.isChecked())
         output['csv'] = int(self._csvBox.isChecked())
         output['dat'] = int(self._datBox.isChecked())
