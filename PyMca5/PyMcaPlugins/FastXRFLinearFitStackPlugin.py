@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -40,13 +40,13 @@ import numpy
 import logging
 import traceback
 from PyMca5 import StackPluginBase
-from PyMca5.PyMcaPhysics import FastXRFLinearFit
-from PyMca5.PyMcaPhysics import XRFBatchFitOutput
-from PyMca5.PyMcaGui import FastXRFLinearFitWindow
-from PyMca5.PyMcaGui import CalculationThread
-from PyMca5.PyMcaGui import StackPluginResultsWindow
-from PyMca5.PyMcaGui import PyMca_Icons as PyMca_Icons
+from PyMca5.PyMcaPhysics.xrf import FastXRFLinearFit
+from PyMca5.PyMcaPhysics.xrf import XRFBatchFitOutput
 from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaGui.physics.xrf import FastXRFLinearFitWindow
+from PyMca5.PyMcaGui.misc import CalculationThread
+from PyMca5.PyMcaGui.pymca import StackPluginResultsWindow
+from PyMca5.PyMcaGui.plotting import PyMca_Icons as PyMca_Icons
 
 _logger = logging.getLogger(__name__)
 
