@@ -1,3 +1,22 @@
+VERSION 5.8.1
+-------------
+
+- GUI. Add PyQt6 support.
+
+- GUI. Adapt to PySide 6.4.x
+
+- GUI. Add link to documentation pages under the Help menu.
+
+- RGB Correlator. Add mask statistics calculator.
+
+- ROI Imaging. Calculate maximum spectrum of masked region.
+
+- ROI Imaging. Do not remove spaces from user specified output path in Fast XRF linear fit plugin.
+
+- ScanWindow. Calculate derivative when dealing with strictly decreasing and full-negative X axis values.
+
+- Python. Remove dependency on deprecated distutils module.
+
 VERSION 5.8.0
 -------------
 
