@@ -123,8 +123,7 @@ VERSION 5.6.5
 - PyMcaBatch. Prevent the use of the input directory as output directory when
 the input file list is a single HDF5 file.
 
-- PyMcaBatch. Allow XRF batch fitting of a single entry in an HDF5 file containing
-multiple maps.
+- PyMcaBatch. Allow XRF batch fitting of a single entry in an HDF5 file containing multiple maps.
 
 - PCA. Deal with NaNs in stacks of spectra.
 
@@ -256,8 +255,7 @@ VERSION 5.5.0
 
 - ROI Imaging: Support PerkinElmer FSM file format
 
-- ROI Imaging: Correct reading OMNIC files under Python 3 in non-windows
-platforms.
+- ROI Imaging: Correct reading OMNIC files under Python 3 in non-windows platforms.
 
 - Support PySide2
 
@@ -298,8 +296,7 @@ VERSION 5.4.1
 
 - Fix mask visibility on monocrome colormaps.
 
-- Prevent problems accessing NeXus files when title is incorrectly written as an
-array instead of being a string.
+- Prevent problems accessing NeXus files when title is incorrectly written as an array instead of being a string.
 
 - Enable multiple processes batch fitting a single HDF5 file.
 
