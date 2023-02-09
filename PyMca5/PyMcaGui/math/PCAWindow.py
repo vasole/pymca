@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -95,7 +95,13 @@ class PCAParametersDialog(qt.QDialog):
             self.buttonGroup.addButton(rButton)
             self.buttonGroup.setId(rButton, i)
             i += 1
-        self.buttonGroup.buttonPressed[int].connect(self._slot)
+
+        if hasattr(self.buttonGroup, "idClicked"):
+            self.buttonGroup.idClicked[int].connect(self._slot)
+        else:
+            # deprecated
+            _logger.debug("Using deprecated signal")
+            self.buttonGroup.buttonClicked[int].connect(self._slot)
 
         self.mainLayout.addWidget(self.methodOptions)
 
