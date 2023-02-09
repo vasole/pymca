@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -200,6 +200,18 @@ class TestXMCDWindow(TestCaseQt):
         from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
         PyMcaPrintPreview.resetSingletonPrintPreview()
 
+class TestPCAParametersDialog(TestCaseQt):
+    def setUp(self):
+        super(TestPCAParametersDialog, self).setUp()
+
+    def testShow(self):
+        from PyMca5.PyMcaGui.math import PCAWindow
+        widget = PCAWindow.PCAParametersDialog()
+        widget.show()
+        self.qapp.processEvents()
+        from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
+        PyMcaPrintPreview.resetSingletonPrintPreview()
+
 class TestPyMcaMain(TestCaseQt):
     def setUp(self):
         super(TestPyMcaMain, self).setUp()
@@ -249,6 +261,7 @@ def getSuite(auto=True):
                         TestPeakIdentifier,
                         TestMcaAdvancedFit,
                         TestXMCDWindow,
+                        TestPCAParametersDialog,
                         TestPyMcaMain,
                         ):
         test_suite.addTest(
