@@ -120,8 +120,7 @@ VERSION 5.6.6
 VERSION 5.6.5
 -------------
 
-- PyMcaBatch. Prevent the use of the input directory as output directory when
-the input file list is a single HDF5 file.
+- PyMcaBatch. Prevent the use of the input directory as output directory when the input file list is a single HDF5 file.
 
 - PyMcaBatch. Allow XRF batch fitting of a single entry in an HDF5 file containing multiple maps.
 
