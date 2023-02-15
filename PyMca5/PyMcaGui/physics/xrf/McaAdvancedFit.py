@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -2853,7 +2853,8 @@ class SimpleThread(qt.QThread):
 
 class McaGraphWindow(PlotWindow.PlotWindow):
     def __init__(self, parent=None, backend=None, plugins=False,
-                 newplot=False, position=True, control=True, **kw):
+                 newplot=False, position=True, control=True, plot1d=True,
+                 **kw):
         super(McaGraphWindow, self).__init__(parent, backend=backend,
                                        plugins=plugins,
                                        newplot=newplot,
@@ -2863,6 +2864,7 @@ class McaGraphWindow(PlotWindow.PlotWindow):
                                        fit=True,
                                        position=position,
                                        control=control,
+                                       plot1d=plot1d,
                                        **kw)
         self.setDataMargins(0, 0, 0.025, 0.025)
         self.setPanWithArrowKeys(True)
