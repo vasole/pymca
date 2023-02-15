@@ -2,11 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
-#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
@@ -64,7 +63,6 @@ class MaterialEditor(qt.QWidget):
             else:
                 self.graphDialog = None
                 self.graph = graph
-
         self.__toolMode = toolmode
         self.build(comments, height)
 
@@ -114,6 +112,7 @@ class MaterialEditor(qt.QWidget):
                                         position=True)
                 self.graph._togglePointsSignal()
                 self.graph.enableOwnSave(True)
+                self.graph.setDataMargins(0, 0, 0.025, 0.025)
             layout.addWidget(self.materialGUI)
             layout.addWidget(self.graph)
         else:
@@ -263,6 +262,12 @@ class MaterialEditor(qt.QWidget):
         if self.graph is not None:
             self.graph.close()
         qt.QWidget.closeEvent(self, event)
+
+    def show(self):
+        if self.graph is not None:
+            if self.graph.isHidden():
+                self.graph.show()
+        qt.QWidget.show(self)
 
 class MaterialComboBox(qt.QComboBox):
     sigMaterialComboBoxSignal = qt.pyqtSignal(object)
