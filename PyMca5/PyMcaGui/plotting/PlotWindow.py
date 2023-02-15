@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -38,6 +38,7 @@ import sys
 import os
 import time
 import traceback
+import logging
 import numpy
 from numpy import argsort, nonzero, take
 
@@ -66,6 +67,7 @@ else:
 QTVERSION = qt.qVersion()
 
 DEBUG = 0
+_logger = logging.getLogger(__name__)
 
 class PlotWindow(PlotWidget.PlotWidget):
     sigROISignal = qt.pyqtSignal(object)
@@ -75,10 +77,12 @@ class PlotWindow(PlotWidget.PlotWidget):
     DEFAULT_COLORMAP_LOG_FLAG = MaskImageTools.DEFAULT_COLORMAP_LOG_FLAG
 
     def __init__(self, parent=None, backend=None, plugins=True, newplot=False,
-                 control=False, position=False, **kw):
+                 control=False, position=False, plot1d=None, **kw):
         super(PlotWindow, self).__init__(parent=parent, backend=backend)
         self.pluginsIconFlag = plugins
         self.newplotIconsFlag = newplot
+        # assume only curves (no images) will be displayed if True
+        self._plot1d = plot1d
         self.setWindowType(None)      # None, "SCAN", "MCA"
         self._initIcons()
         self._buildToolBar(kw)
@@ -178,8 +182,12 @@ class PlotWindow(PlotWidget.PlotWidget):
 
     def setWindowType(self, wtype=None):
         if wtype not in [None, "SCAN", "MCA"]:
-            print("Unsupported window type. Default to None")
+            _logger.warning("Unsupported window type. Default to None")
         self._plotType = wtype
+        # give a proper default if not set
+        if wtype in ["SCAN", "MCA"] and self._plot1d is None:
+            _logger.info("Assuming 1D Plot based on window type")
+            self._plot1d = True
 
     def _graphControlClicked(self):
         if self._controlMenu is None:
@@ -575,6 +583,51 @@ class PlotWindow(PlotWidget.PlotWidget):
         if DEBUG:
             print("_zoomReset")
         self.resetZoom()
+
+    def resetZoom(self, **kw):
+        if self._plot1d:
+            if self.isYAxisAutoScale() and self.isXAxisAutoScale():
+                default = True
+            else:
+                default = False
+        else:
+            default = True
+        super(PlotWindow, self).resetZoom(**kw)
+        if default:
+            return
+        elif self.isYAxisAutoScale():
+            # autoscale data in the seen region based on the active curve
+            xmin, xmax = self.getGraphXLimits()
+            active = self.getActiveCurve()
+            if active not in [[], None]:
+                x, y, legend, info = active[:4] 
+            else:
+                return
+            idx = numpy.nonzero((x >= xmin) & (x <= xmax))[0]
+            y = numpy.take(y, idx)
+            if y.size:
+                ymin = numpy.nanmin(y)
+                ymax = numpy.nanmax(y)
+                if ymin == ymax:
+                    ymax = ymin + 1
+                self.setGraphYLimits(ymin, ymax)
+        elif self.isXAxisAutoScale():
+            # autoscale data in the seen region based on the active curve
+            ymin, ymax = self.getGraphYLimits()
+            active = self.getActiveCurve()
+            if active not in [[], None]:
+                x, y, legend, info = active[:4] 
+            else:
+                return
+            idx = numpy.nonzero((y >= ymin) & (y <= ymax))[0]
+            x = numpy.take(x, idx)
+            if x.size:
+                xmin = numpy.nanmin(x)
+                xmax = numpy.nanmax(x)
+                if xmin == xmax:
+                    xmax = xmin + 1
+                self.setGraphXLimits(xmin, xmax)
+        self.replot()
 
     def _yAutoScaleToggle(self):
         if DEBUG:

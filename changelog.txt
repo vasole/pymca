@@ -1,6 +1,11 @@
 VERSION 5.8.1
 -------------
 
+- 1d-Plots. When one plot axis is frozen, reset zoom based on displayed portion of the active curve.
+
+VERSION 5.8.1
+-------------
+
 - GUI. Add PyQt6 support.
 
 - GUI. Adapt to PySide 6.4.x
