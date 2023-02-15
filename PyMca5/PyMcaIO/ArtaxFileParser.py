@@ -3,10 +3,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2020 European Synchrotron Radiation Facility
+# Copyright (c) 2020-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -380,12 +380,17 @@ class ArtaxScan(object):
 
 def isArtaxFile(filename):
     try:
-        if filename[-3:].lower() not in ["rtx", "spx"]:
+        if filename[-3:].lower() not in ["rtx", "spx", "xml"]:
             return False
         with open(filename, 'rb') as f:
             # expected to read an xml file
-            someChar = f.read(20).decode()
-        if "xml version" in someChar:
+            someChar = f.read(100)
+        if b"xml version" in someChar:
+            if filename[-3:].lower() == "xml":
+                if b"TRTSpectrum" in someChar:
+                    return True
+                else:
+                    return False
             return True
     except:
         pass
