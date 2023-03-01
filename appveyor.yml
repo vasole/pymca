@@ -16,7 +16,7 @@ environment:
 
     matrix:
         # Python 3.8
-        - PYTHON_DIR: "C:\\Python38-x64"
+        - PYTHON_DIR: "C:\\Python311-x64"
 
 branches:
     only:
