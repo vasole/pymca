@@ -241,7 +241,7 @@ def nxClassNeedsInit(parent, name, nxclass):
         _nxclass = nxClass(parent[name])
         if _nxclass != nxclass:
             raise RuntimeError('{} is an instance of {} instead of {}'
-                               .format(parent[name].name, nxclass, _nxclass))
+                               .format(parent[name].name, _nxclass, nxclass))
         return False
     else:
         parent.create_group(name)
