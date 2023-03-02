@@ -3,7 +3,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -84,6 +84,11 @@ class RTXMap(DataObject.DataObject):
         motorNames = sf.allmotors()
         # assuming dictionaries are ordered
         if len(motorNames):
+            # test if last scan also contains motors
+            # processed files contain an additional sum spectrum
+            if len(sf[-1].allmotorpos()) == 0:
+                _logger.info("Last scan does not contain motors. Ignoring it")
+            nScans -= 1
             positioners = {}
             for mne in motorNames:
                 positioners[mne] = numpy.zeros((nScans,),
