@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -1219,6 +1219,10 @@ class MaskImageWidget(qt.QWidget):
                 view = self.__selectionMask[:]
                 view.shape = self.__imageData.shape
                 self.__selectionMask = view
+            else:
+                # reset selection mask
+                self.__selectionMask = None
+                _logger.info("Resetting incompatible mask")
         if self.colormapDialog is not None:
             goodData = self.__imageData[numpy.isfinite(self.__imageData)]
             minData = goodData.min()
