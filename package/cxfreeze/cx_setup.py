@@ -52,17 +52,11 @@ SPECPATH = os.path.abspath(__file__)
 PROJECT_PATH = SPECPATH
 while not os.path.exists(os.path.join(PROJECT_PATH, "icons")):
     PROJECT_PATH = os.path.dirname(PROJECT_PATH)
-#datas.append((os.path.join(PROJECT_PATH, "README.rst"), "."))
-#datas.append((os.path.join(PROJECT_PATH, "LICENSE"), "."))
-#datas.append((os.path.join(PROJECT_PATH, "copyright"), "."))
-#datas += collect_data_files("silx.resources")
 
 if sys.platform.startswith('darwin'):
    exe_icon = os.path.join(PROJECT_PATH, "icons", "PyMca.icns")
 else:
    exe_icon = os.path.join(PROJECT_PATH, "icons", "PyMca.ico")
-
-
 
 # special modules are included completely, with their data files by scripts
 # run after the actual cx_Freeze operation. You may try to add them as packages
@@ -225,10 +219,6 @@ exec_dict = {"PyMcaMain": os.path.join(PyMcaDir, "PyMcaGui", \
             "ElementsInfo":os.path.join(PyMcaDir, "PyMcaGui", \
                                         "physics", "xrf", "ElementsInfo.py"),
             }
-
-exec_dict = {"PyMcaMain": os.path.join(PyMcaDir, "PyMcaGui", \
-                                      "pymca", "PyMcaMain.py")}
-
 
 include_files = []
 for f in special_modules:
