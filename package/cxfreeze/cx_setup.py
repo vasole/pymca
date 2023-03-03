@@ -274,7 +274,6 @@ for key in exec_dict:
     if sys.platform.startswith('win'):
         if key in ["PyMcaMain", "QStackWidget"]:
             icon = exe_icon
-    print("icon = ", icon)
     executables.append(Executable(exec_dict[key],
                                   base="Console" if sys.platform == 'win32' else None,
                                   icon=icon))
