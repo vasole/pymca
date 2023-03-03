@@ -15,7 +15,7 @@ environment:
         VENV_TEST_DIR: "venv_test"
 
     matrix:
-        # Python 3.8
+        # Python 3.11
         - PYTHON_DIR: "C:\\Python311-x64"
 
 branches:
@@ -42,6 +42,7 @@ build_script:
     # Install build dependencies
     - "pip install wheel"
     - "pip install numpy"
+    - "pip install cython"
 
     # Print Python info
     - "python ci\\info_platform.py"
