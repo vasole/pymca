@@ -354,33 +354,6 @@ if REMOVE_DUPLICATED_MODULES:
         shutil.move(os.path.join(exe_win_dir, os.path.basename(dirname)),
                         destination)
 
-    COPY_QT_DLL = False
-    if COPY_QT_DLL:
-        # copy all the dlls in PyQt5/Qt/bin to the PyQt5 directory
-        source = os.path.join(destinationDir, "PyQt5", "Qt", "bin")
-        destination = os.path.join(destinationDir, "PyQt5")
-        if sys.platform.startswith("win"):
-            copy_command = "copy"
-        else:
-            copy_command = "cp"
-
-        for item in glob.glob(os.path.join(source, "*")):
-            target = os.path.join(destination, os.path.basename(item))
-            if os.path.exists(target):
-                continue
-            print("%s %s %s" % (copy_command, item, target))
-            os.system("%s %s %s" % (copy_command, item, target))
-    # remove Qt binary files (qml and translation might be needed)
-    for item in ["bin", "qml", "translations"]:
-        destination = os.path.join(destinationDir,
-                               "PyQt5","Qt",item)
-        if os.path.exists(destination):
-            print("Deleting %s" % destination)
-            shutil.rmtree(destination)
-            print("Deleted")
-        else:
-            print("NOT DELETING ", destination)
-
 if REMOVE_REPEATED_DLL:
     work0 = []
     work1 = []
