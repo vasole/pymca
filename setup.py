@@ -456,10 +456,8 @@ build_specfit(ext_modules)
 build_sps(ext_modules)
 build_PyMcaIOHelper(ext_modules)
 
-if sys.version_info < (3, 11):
-    build__cython_kmeans(ext_modules)
-else:
-    print("Internal K-means not yet supported for this version of python")
+# for python 3.11 kmeans needs a recent version of cython
+build__cython_kmeans(ext_modules)
 
 build_PyMcaSciPy(ext_modules)
 build_plotting_ctools(ext_modules)
