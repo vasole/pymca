@@ -150,6 +150,12 @@ try:
 except ImportError:
     print("silx not available, not added to the frozen executables")
 
+try:
+    import bcflight
+    special_modules += [os.path.dirname(bcflight.__file__)]
+except ImportError:
+    print("bcflight not available, not added to the frozen executables")
+
 # package used by silx and probably others that is not always added properly
 # always add it because it is small
 try:
