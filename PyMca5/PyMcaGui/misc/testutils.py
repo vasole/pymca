@@ -297,44 +297,54 @@ class TestCaseQt(unittest.TestCase):
     QTest = property(lambda self: QTest,
                      doc="""The Qt QTest class from the used Qt binding.""")
 
-    def keyClick(self, widget, key, modifier=qt.Qt.NoModifier, delay=-1):
+    def keyClick(self, widget, key, modifier=None, delay=-1):
         """Simulate clicking a key.
 
         See QTest.keyClick for details.
         """
+        if modifier is None:
+            modifier = self.qapp.keyboardModifiers()
         QTest.keyClick(widget, key, modifier, delay)
         self.qWait(20)
 
-    def keyClicks(self, widget, sequence, modifier=qt.Qt.NoModifier, delay=-1):
+    def keyClicks(self, widget, sequence, modifier=None, delay=-1):
         """Simulate clicking a sequence of keys.
 
         See QTest.keyClick for details.
         """
+        if modifier is None:
+            modifier = self.qapp.keyboardModifiers()
         QTest.keyClicks(widget, sequence, modifier, delay)
         self.qWait(20)
 
     def keyEvent(self, action, widget, key,
-                 modifier=qt.Qt.NoModifier, delay=-1):
+                 modifier=None, delay=-1):
         """Sends a Qt key event.
 
         See QTest.keyEvent for details.
         """
+        if modifier is None:
+            modifier = self.qapp.keyboardModifiers()
         QTest.keyEvent(action, widget, key, modifier, delay)
         self.qWait(20)
 
-    def keyPress(self, widget, key, modifier=qt.Qt.NoModifier, delay=-1):
+    def keyPress(self, widget, key, modifier=None, delay=-1):
         """Sends a Qt key press event.
 
         See QTest.keyPress for details.
         """
+        if modifier is None:
+            modifier = self.qapp.keyboardModifiers()
         QTest.keyPress(widget, key, modifier, delay)
         self.qWait(20)
 
-    def keyRelease(self, widget, key, modifier=qt.Qt.NoModifier, delay=-1):
+    def keyRelease(self, widget, key, modifier=None, delay=-1):
         """Sends a Qt key release event.
 
         See QTest.keyRelease for details.
         """
+        if modifier is None:
+            modifier = self.qapp.keyboardModifiers()
         QTest.keyRelease(widget, key, modifier, delay)
         self.qWait(20)
 
