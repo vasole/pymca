@@ -303,6 +303,54 @@ elif BINDING == 'PyQt6':
 
     Slot = pyqtSlot
 
+    if not hasattr(Qt, "AlignCenter"):
+        Qt.AlignLeft = Qt.AlignmentFlag.AlignLeft
+        Qt.AlignRight = Qt.AlignmentFlag.AlignRight
+        Qt.AlignHCenter = Qt.AlignmentFlag.AlignHCenter
+        Qt.AlignJustify = Qt.AlignmentFlag.AlignJustify
+        Qt.AlignTop = Qt.AlignmentFlag.AlignTop
+        Qt.AlignBottom = Qt.AlignmentFlag.AlignBottom
+        Qt.AlignVCenter = Qt.AlignmentFlag.AlignVCenter
+        Qt.AlignBaseline = Qt.AlignmentFlag.AlignBaseline
+        Qt.AlignCenter = Qt.AlignmentFlag.AlignCenter
+        Qt.AlignAbsolute = Qt.AlignmentFlag.AlignAbsolute
+
+    if not hasattr(Qt, "NoDockWidgetArea"):
+        Qt.LeftDockWidgetArea = Qt.DockWidgetArea.LeftDockWidgetArea
+        Qt.RightDockWidgetArea = Qt.DockWidgetArea.RightDockWidgetArea
+        Qt.TopDockWidgetArea = Qt.DockWidgetArea.TopDockWidgetArea
+        Qt.BottomDockWidgetArea = Qt.DockWidgetArea.BottomDockWidgetArea
+        Qt.AllDockWidgetAreas = Qt.DockWidgetArea.AllDockWidgetAreas
+        Qt.NoDockWidgetArea = Qt.DockWidgetArea.NoDockWidgetArea
+
+    if not hasattr(Qt, "Widget"):
+        Qt.Widget = Qt.WindowType.Widget
+        Qt.Window = Qt.WindowType.Window
+        Qt.Dialog = Qt.WindowType.Dialog
+        Qt.Drawer = Qt.WindowType.Drawer
+        Qt.Popup = Qt.WindowType.Popup
+        Qt.Tool = Qt.WindowType.Tool
+        Qt.ToolTip = Qt.WindowType.ToolTip
+        Qt.SplashScreen = Qt.WindowType.SplashScreen
+        Qt.Subwindow = Qt.WindowType.SubWindow
+        Qt.ForeignWindow = Qt.WindowType.ForeignWindow
+        Qt.CoverWindow = Qt.WindowType.CoverWindow
+
+    if not hasattr(Qt, "StrongFocus"):
+        Qt.TabFocus = Qt.FocusPolicy.TabFocus
+        Qt.ClickFocus = Qt.FocusPolicy.ClickFocus
+        Qt.StrongFocus = Qt.FocusPolicy.StrongFocus
+        Qt.WheelFocus = Qt.FocusPolicy.WheelFocus
+        Qt.NoFocus = Qt.FocusPolicy.NoFocus
+
+    if not hasattr(QAbstractItemView, "NoEditTriggers"):
+        QAbstractItemView.NoEditTriggers = QAbstractItemView.EditTrigger.NoEditTriggers
+        QAbstractItemView.CurrentChanged = QAbstractItemView.EditTrigger.CurrentChanged
+        QAbstractItemView.DoubleClicked = QAbstractItemView.EditTrigger.DoubleClicked
+        QAbstractItemView.SelectedClicked = QAbstractItemView.EditTrigger.SelectedClicked
+        QAbstractItemView.AnyKeyPressed = QAbstractItemView.EditTrigger.AnyKeyPressed
+        QAbstractItemView.AllEditTriggers = QAbstractItemView.EditTrigger.AllEditTriggers
+
     # use a (bad) replacement for QDesktopWidget
     class QDesktopWidget:
         def height(self):
