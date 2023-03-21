@@ -45,7 +45,7 @@ InstallDirRegKey HKCU "Software\${PRODUCT} ${VERSION}" ""
 
 ;--------------------------------
 ;Pages
-!insertmacro MUI_PAGE_LICENSE ".\PyMca.txt"
+!insertmacro MUI_PAGE_LICENSE "..\pyinstaller\PyMca.txt"
   !insertmacro MUI_PAGE_DIRECTORY
   !insertmacro MUI_PAGE_INSTFILES
   !insertmacro MUI_PAGE_FINISH
@@ -97,7 +97,7 @@ CreateShortCut "$SMPROGRAMS\${PRODUCT} ${VERSION}\Uninstall.lnk" "$INSTDIR\unins
 WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT} ${VERSION}" "DisplayName" "${PRODUCT} ${VERSION}"
 WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT} ${VERSION}" "DisplayVersion" "${VERSION}"
 WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT} ${VERSION}" "URLInfoAbout" "http://pymca.sourceforge.net"
-WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT} ${VERSION}" "Publisher" "V.A. Solé - ESRF Software Group"
+WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT} ${VERSION}" "Publisher" "V.A. Solé - ESRF"
 WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT} ${VERSION}" "UninstallString" "$INSTDIR\Uninst.exe"
 WriteRegStr HKCU "Software\${PRODUCT} ${VERSION}" "" $INSTDIR
 WriteUninstaller "$INSTDIR\Uninst.exe"
