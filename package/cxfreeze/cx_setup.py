@@ -38,7 +38,7 @@ if not sys.platform.startswith("win") and\
    not sys.platform.startswith("linux"):
     raise RuntimeError("Only windows and manylinux supported!")
 
-tested_versions = ["6.14.3",]
+tested_versions = ["6.14.3", "6.14.4"]
 if ("%s" % cxVersion) not in tested_versions:
     print("Warning: cx_Freeze version %s not tested" % cxVersion)
 
@@ -46,6 +46,34 @@ if "build_exe" not in sys.argv:
     print("Usage:")
     print("python setup_cx.py build_exe")
     sys.exit()
+
+# patch cx_Freeze.finder.ModuleFinder
+# https://github.com/marcelotduarte/cx_Freeze/issues/1846
+from cx_Freeze.finder import ModuleFinder
+class MyModuleFinder(ModuleFinder):
+    def _add_base_modules(self) -> None:
+        """
+        Add the base modules to the finder. These are the modules that
+        Python imports itself during initialization and, if not found,
+        can result in behavior that differs from running from source;
+        also include modules used within the bootstrap code.
+
+        When cx_Freeze is built, these modules (and modules they load) are
+        included in the startup zip file.
+        """
+        self.include_module("traceback")
+        self.include_module("warnings")
+        self.include_module("unicodedata")
+        self.include_package("encodings")
+        self.include_module("io")
+        self.include_module("os")
+        self.include_module("sys")
+        self.include_module("zlib")
+        self.include_module("collections.abc")
+        #self.include_module("importlib.abc")
+
+import cx_Freeze.freezer
+cx_Freeze.freezer.ModuleFinder = MyModuleFinder
 
 #
 SPECPATH = os.path.abspath(__file__)
