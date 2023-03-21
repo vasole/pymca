@@ -1482,7 +1482,7 @@ class McaAdvancedFit(qt.QWidget):
             _logger.warning("zz      shape = %s" % self.mcafit.zz.shape)
 
     def __printps(self):
-        self.__printmenu.exec_(self.cursor().pos())
+        self.__printmenu.exec(self.cursor().pos())
 
     def htmlReport(self,index=None):
         if not self.__fitdone:
