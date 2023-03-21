@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -436,7 +436,7 @@ class McaWindow(ScanWindow):
                         if 'McaCalibSource' in curveinfo:
                             key = "%s (Source)" % curve
                             if key not in ndict:
-                                if not numpy.alltrue(curveinfo['McaCalibSource'] == [0.0,1.0,0.0]):
+                                if not numpy.all(curveinfo['McaCalibSource'] == [0.0,1.0,0.0]):
                                     ndict[key] = {'A':curveinfo['McaCalibSource'][0],
                                                   'B':curveinfo['McaCalibSource'][1],
                                                   'C':curveinfo['McaCalibSource'][2]}
@@ -445,8 +445,8 @@ class McaWindow(ScanWindow):
                                     else:
                                         ndict[key]['order'] = 1
                             if curve not in self.caldict.keys():
-                                if not numpy.alltrue(curveinfo['McaCalib'] == [0.0,1.0,0.0]):
-                                    if not numpy.alltrue(curveinfo['McaCalib'] == curveinfo['McaCalibSource']):
+                                if not numpy.all(curveinfo['McaCalib'] == [0.0,1.0,0.0]):
+                                    if not numpy.all(curveinfo['McaCalib'] == curveinfo['McaCalibSource']):
                                         key = "%s (PyMca)" % curve
                                         ndict[key] = {'A':curveinfo['McaCalib'][0],
                                                       'B':curveinfo['McaCalib'][1],
@@ -457,7 +457,7 @@ class McaWindow(ScanWindow):
                                             ndict[key]['order'] = 1
                         else:
                             if curve not in self.caldict.keys():
-                                if not numpy.alltrue(curveinfo['McaCalib'] == [0.0,1.0,0.0]):
+                                if not numpy.all(curveinfo['McaCalib'] == [0.0,1.0,0.0]):
                                         key = "%s (PyMca)" % curve
                                         ndict[key] = {'A':curveinfo['McaCalib'][0],
                                                       'B':curveinfo['McaCalib'][1],
