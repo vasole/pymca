@@ -131,7 +131,7 @@ class RTXMap(DataObject.DataObject):
         if positioners:
             for axis in positioners:
                 # Axis0, Axis1, Axis2 typically named x, y, z
-                if numpy.alltrue(numpy.isfinite(positioners[axis])):
+                if numpy.all(numpy.isfinite(positioners[axis])):
                     axes.append(axis)
             
         if len(axes) in [0, 1]:

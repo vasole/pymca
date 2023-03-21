@@ -1,7 +1,7 @@
 #/*##########################################################################
 #
 #
-# Copyright (c) 2002-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2002-2023 European Synchrotron Radiation Facility
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "A. Mirone - ESRF SciSoft Group"
+__author__ = "A. Mirone - ESRF"
 __license__ = "MIT"
 import math
 sparsamodulo=0
@@ -529,7 +529,7 @@ class Lanczos:
 
             nc = self.converged(m)
 
-            if k and not numpy.sometrue(abs(self.beta[:k])>self.tol) :
+            if k and not numpy.any(abs(self.beta[:k])>self.tol) :
                 break
 
             if (nc+2*nd) >= m:

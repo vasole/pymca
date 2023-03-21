@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2020-2021 European Synchrotron Radiation Facility
+# Copyright (c) 2020-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF"
+__author__ = "V.A. Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -96,7 +96,7 @@ def kmeans(x, k, method=None, normalize=True):
     # collapse the information to deal with inf and NaNs
     raws = x.sum(axis=1, dtype=numpy.float64)
     good = numpy.isfinite(raws)
-    finiteData = numpy.alltrue(good)
+    finiteData = numpy.all(good)
     data = numpy.ascontiguousarray(x[good])
     if normalize:
         datamin = data.min(axis=0)
