@@ -209,6 +209,10 @@ def toolInfo():
     :returns 2-tuple: rootdir(str): directory of executables or GUI launch scripts
                         frozen(bool): run as frozen executable
     """
+    if getattr(sys, "frozen", False):
+        # frozen
+        rootdir = os.path.dirname(sys.executable)
+        return rootdir, frozen
     try:
         rootdir = os.path.dirname(__file__)
         if sys.platform == 'darwin':
@@ -238,10 +242,8 @@ def toolInfo():
         # level PyMca5
         rootdir = os.path.dirname(rootdir)
         # rootdir is the directory level with executables
-        # cx_Freeze has an additional lib level
-        if getattr(sys, "frozen", False):
-            # frozen with cx_Freeze
-            rootdir = os.path.dirname(sys.executable)
+        # the above is not true with cx_Freeze because there is an additional
+        # /lib directory
     return rootdir, frozen
 
 
@@ -251,6 +253,7 @@ def toolPath(toolname):
     :returns str: e.g. /users/denolf/.local/bin/pymca
     """
     rootdir, frozen = toolInfo()
+    print("ROOT DIR = ", rootdir, "frozen = ", frozen)
     if frozen:
         if sys.platform == 'win32':
             toolname += '.exe'

@@ -38,7 +38,7 @@ if not sys.platform.startswith("win") and\
    not sys.platform.startswith("linux"):
     raise RuntimeError("Only windows and manylinux supported!")
 
-tested_versions = ["6.14.3", "6.14.4"]
+tested_versions = ["6.14.3", "6.14.4", "6.14.7"]
 if ("%s" % cxVersion) not in tested_versions:
     print("Warning: cx_Freeze version %s not tested" % cxVersion)
 
