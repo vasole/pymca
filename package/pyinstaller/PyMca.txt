@@ -5,7 +5,8 @@
 
  The PyMca X-ray Fluorescence Toolkit is developed at the ESRF by the Software group.
 
- PyMca follows the very permissive MIT license. However, this frozen binary uses a non-commercial version of PyQt and therefore this binary follows the GPL license that follows.
+ PyMca follows the very permissive MIT license. However, this frozen binary
+uses GPL-licensed code and therefore this binary follows the GPL license that follows.
 
  PyMca is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

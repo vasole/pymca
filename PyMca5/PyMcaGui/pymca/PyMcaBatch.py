@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -209,6 +209,10 @@ def toolInfo():
     :returns 2-tuple: rootdir(str): directory of executables or GUI launch scripts
                         frozen(bool): run as frozen executable
     """
+    if getattr(sys, "frozen", False):
+        # frozen
+        rootdir = os.path.dirname(sys.executable)
+        return rootdir, True
     try:
         rootdir = os.path.dirname(__file__)
         if sys.platform == 'darwin':
@@ -237,7 +241,9 @@ def toolInfo():
         rootdir = os.path.dirname(rootdir)
         # level PyMca5
         rootdir = os.path.dirname(rootdir)
-        # directory level with executables
+        # rootdir is the directory level with executables
+        # the above is not true with cx_Freeze because there is an additional
+        # /lib directory
     return rootdir, frozen
 
 
