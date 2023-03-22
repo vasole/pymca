@@ -253,7 +253,6 @@ def toolPath(toolname):
     :returns str: e.g. /users/denolf/.local/bin/pymca
     """
     rootdir, frozen = toolInfo()
-    print("ROOT DIR = ", rootdir, "frozen = ", frozen)
     if frozen:
         if sys.platform == 'win32':
             toolname += '.exe'
