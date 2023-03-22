@@ -212,7 +212,7 @@ def toolInfo():
     if getattr(sys, "frozen", False):
         # frozen
         rootdir = os.path.dirname(sys.executable)
-        return rootdir, frozen
+        return rootdir, True
     try:
         rootdir = os.path.dirname(__file__)
         if sys.platform == 'darwin':
