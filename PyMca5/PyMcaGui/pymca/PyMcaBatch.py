@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -237,7 +237,11 @@ def toolInfo():
         rootdir = os.path.dirname(rootdir)
         # level PyMca5
         rootdir = os.path.dirname(rootdir)
-        # directory level with executables
+        # rootdir is the directory level with executables
+        # cx_Freeze has an additional lib level
+        if getattr(sys, "frozen", False):
+            # frozen with cx_Freeze
+            rootdir = os.path.dirname(sys.executable)
     return rootdir, frozen
 
 
