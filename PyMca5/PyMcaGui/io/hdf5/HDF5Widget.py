@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 V.A. Sole, ESRF - D. Dale CHESS
+# Copyright (C) 2004-2023 V.A. Sole, ESRF - D. Dale CHESS
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -444,8 +444,7 @@ class H5FileProxy(H5NodeProxy):
         self._filename = self.file.name
 
     def close(self):
-        if 1: # with self.file.plock:
-            return self.file.close()
+        return self.file.close()
 
     def __getitem__(self, path):
         if path == '/':
@@ -458,8 +457,13 @@ class H5FileProxy(H5NodeProxy):
             file_path = self.file.filename
             data_path = self.name
             try:
-                from PyMca5.PyMcaIO import HDF5Utils
-                return HDF5Utils.safe_hdf5_group_keys(file_path,
+                if sys.platform.startswith("win") and \
+                   getattr(sys, 'frozen', False):
+                    _logger.debug("Frozen executable. Using standard approach")
+                    return self.file[data_path].keys()
+                else:
+                    from PyMca5.PyMcaIO import HDF5Utils
+                    return HDF5Utils.safe_hdf5_group_keys(file_path,
                                                       data_path=data_path)
             except:
                 _logger.debug("Using standard approach")
