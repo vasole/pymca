@@ -5,8 +5,8 @@ include LICENSE.GPL
 include LICENSE.LGPL
 include changelog.txt
 include qtconffile
-include cx_setup.py
 include README.rst
+include build-cxfreeze.py
 include build-deb.sh
 include build-pyinstaller.py
 include version.py
