@@ -47,34 +47,6 @@ if "build_exe" not in sys.argv:
     print("python setup_cx.py build_exe")
     sys.exit()
 
-# patch cx_Freeze.finder.ModuleFinder
-# https://github.com/marcelotduarte/cx_Freeze/issues/1846
-from cx_Freeze.finder import ModuleFinder
-class MyModuleFinder(ModuleFinder):
-    def _add_base_modules(self) -> None:
-        """
-        Add the base modules to the finder. These are the modules that
-        Python imports itself during initialization and, if not found,
-        can result in behavior that differs from running from source;
-        also include modules used within the bootstrap code.
-
-        When cx_Freeze is built, these modules (and modules they load) are
-        included in the startup zip file.
-        """
-        self.include_module("traceback")
-        self.include_module("warnings")
-        self.include_module("unicodedata")
-        self.include_package("encodings")
-        self.include_module("io")
-        self.include_module("os")
-        self.include_module("sys")
-        self.include_module("zlib")
-        self.include_module("collections.abc")
-        #self.include_module("importlib.abc")
-
-import cx_Freeze.freezer
-cx_Freeze.freezer.ModuleFinder = MyModuleFinder
-
 #
 SPECPATH = os.path.abspath(__file__)
 PROJECT_PATH = SPECPATH
@@ -86,7 +58,7 @@ if sys.platform.startswith('darwin'):
 else:
    exe_icon = os.path.join(PROJECT_PATH, "icons", "PyMca.ico")
 
-# special modules are included completely, with their data files by scripts
+# special modules are included completely, with their data files, by scripts
 # run after the actual cx_Freeze operation. You may try to add them as packages
 # adding the module name as string in packages. If you add a module as special
 # module, you should consider to add that module to the excludes list
@@ -94,11 +66,12 @@ packages = []
 special_modules = []
 excludes = []
 
-#some standard encodings
 includes = []
-includes.append('encodings.ascii')
-includes.append('encodings.utf_8')
-includes.append('encodings.latin_1')
+
+#some standard encodings
+#includes.append('encodings.ascii')
+#includes.append('encodings.utf_8')
+#includes.append('encodings.latin_1')
 
 # exec_dict is a dictionnary whose keys are the name of the .exe files to be
 # generated and the values are the paths to the scripts to be frozen.
@@ -120,6 +93,7 @@ if USE_QT:
     hooks.load_tkinter = dummy_hook
     excludes.append("tcl")
     excludes.append("tk")
+    excludes.append("tkinter")
 
 # Mandatory modules to be integrally included in the frozen version.
 # One can add other modules here if not properly detected by cx_Freeze
@@ -196,7 +170,6 @@ except ImportError:
 try:
     import importlib
     special_modules += [os.path.dirname(importlib.__file__)]
-    excludes += ["importlib"]
 except ImportError:
     print("importlib could not be imported")
 
