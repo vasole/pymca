@@ -34,11 +34,10 @@ except ImportError:
     import cx_Freeze
     cxVersion = cx_Freeze.__version__
 
-if not sys.platform.startswith("win") and\
-   not sys.platform.startswith("linux"):
-    raise RuntimeError("Only windows and manylinux supported!")
+if not sys.platform.startswith("win"):
+    print("Warning: Only windows usage tested!")
 
-tested_versions = ["6.14.3", "6.14.4", "6.14.7"]
+tested_versions = ["6.11.1", "6.14.3", "6.14.4", "6.14.7"]
 if ("%s" % cxVersion) not in tested_versions:
     print("Warning: cx_Freeze version %s not tested" % cxVersion)
 
@@ -316,8 +315,14 @@ else:
                            (sys.platform,
                             sys.version_info[0], sys.version_info[1]))
 
-    REPLACE_BIG_FILES = False
-    REMOVE_DUPLICATED_MODULES = False
+    if not os.path.exists(exe_win_dir) and sys.platform.startswith("darwin"):
+        exe_win_dir = os.path.join("build",
+                           "exe.%s-%d.%d" %
+                           ("macosx-10.9-universal2", #TODO how to get this information?
+                            sys.version_info[0], sys.version_info[1]))
+
+    REPLACE_BIG_FILES = True
+    REMOVE_DUPLICATED_MODULES = True
     REMOVE_REPEATED_DLL = False
     RENAME_EXECUTABLES = True
     QTDIR = os.getenv("QTDIR")
