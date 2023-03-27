@@ -239,6 +239,13 @@ build_options = {
     "excludes": excludes, }
     #"compressed": True, }
 
+if sys.platform.startswith("darwin") and cxVersion not in ["6.11.1"]:
+    # something got wrong starting with cx_Freeze 6.12.0
+    # see https://github.com/marcelotduarte/cx_Freeze/issues/1671
+    build_options["bin_excludes"] = ["libiodbc",
+                                     "libiodbc.2.dylib",
+                                     "libpq.5.dylib"]
+
 install_options = {}
 
 # attempt to cleanup build directory
