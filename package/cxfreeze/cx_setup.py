@@ -34,11 +34,10 @@ except ImportError:
     import cx_Freeze
     cxVersion = cx_Freeze.__version__
 
-if not sys.platform.startswith("win") and\
-   not sys.platform.startswith("linux"):
-    raise RuntimeError("Only windows and manylinux supported!")
+if not sys.platform.startswith("win"):
+    print("Warning: Only windows usage tested!")
 
-tested_versions = ["6.14.3", "6.14.4", "6.14.7"]
+tested_versions = ["6.11.1", "6.14.3", "6.14.4", "6.14.7"]
 if ("%s" % cxVersion) not in tested_versions:
     print("Warning: cx_Freeze version %s not tested" % cxVersion)
 
@@ -65,8 +64,10 @@ else:
 packages = []
 special_modules = []
 excludes = []
-
 includes = []
+
+# This module basically does not work with frozen versions
+excludes.append("multiprocessing")
 
 #some standard encodings
 #includes.append('encodings.ascii')
@@ -238,6 +239,13 @@ build_options = {
     "excludes": excludes, }
     #"compressed": True, }
 
+if sys.platform.startswith("darwin") and cxVersion not in ["6.11.1"]:
+    # something got wrong starting with cx_Freeze 6.12.0
+    # see https://github.com/marcelotduarte/cx_Freeze/issues/1671
+    build_options["bin_excludes"] = ["libiodbc",
+                                     "libiodbc.2.dylib",
+                                     "libpq.5.dylib"]
+
 install_options = {}
 
 # attempt to cleanup build directory
@@ -316,8 +324,14 @@ else:
                            (sys.platform,
                             sys.version_info[0], sys.version_info[1]))
 
-    REPLACE_BIG_FILES = False
-    REMOVE_DUPLICATED_MODULES = False
+    if not os.path.exists(exe_win_dir) and sys.platform.startswith("darwin"):
+        exe_win_dir = os.path.join("build",
+                           "exe.%s-%d.%d" %
+                           ("macosx-10.9-universal2", #TODO how to get this information?
+                            sys.version_info[0], sys.version_info[1]))
+
+    REPLACE_BIG_FILES = True
+    REMOVE_DUPLICATED_MODULES = True
     REMOVE_REPEATED_DLL = False
     RENAME_EXECUTABLES = True
     QTDIR = os.getenv("QTDIR")
@@ -484,7 +498,13 @@ if not sys.platform.startswith("win"):
     txt = "PyMca%s" % PyMca5.__version__
     os.system("mv %s %s" % (exe_win_dir, os.path.join("build", txt)))
     os.chdir("build")
-    os.system("tar -cvzf pymca%s-linux.tgz ./%s" % (PyMca5.__version__, txt))
+    if sys.platform.startswith("darwin"):
+        platform = "macosx"
+    elif sys.platform.startswith("linux"):
+        platform = "linux"
+    else:
+        platform = sys.platform
+    os.system("tar -cvzf pymca%s-%s.tgz ./%s" % (PyMca5.__version__, platform, txt))
     os.system("mv *.tgz ../")
     os.chdir("../")
 
