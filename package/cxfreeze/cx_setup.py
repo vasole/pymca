@@ -498,7 +498,13 @@ if not sys.platform.startswith("win"):
     txt = "PyMca%s" % PyMca5.__version__
     os.system("mv %s %s" % (exe_win_dir, os.path.join("build", txt)))
     os.chdir("build")
-    os.system("tar -cvzf pymca%s-linux.tgz ./%s" % (PyMca5.__version__, txt))
+    if sys.platform.startswith("darwin"):
+        platform = "macosx"
+    elif sys.platform.startswith("linux"):
+        platform = "linux"
+    else:
+        platform = sys.platform
+    os.system("tar -cvzf pymca%s-%s.tgz ./%s" % (PyMca5.__version__, platform, txt))
     os.system("mv *.tgz ../")
     os.chdir("../")
 
