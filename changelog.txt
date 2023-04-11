@@ -1,7 +1,12 @@
-VERSION 5.8.1
+VERSION 5.8.2
 -------------
 
+- GUI. Compatibility with PyQt6 shipped with Qt 6.4.3
+
 - 1d-Plots. When one plot axis is frozen, reset zoom based on displayed portion of the active curve.
+
+- Packaging. Add cx_Freeze support.
+
 
 VERSION 5.8.1
 -------------
