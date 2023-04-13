@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2021 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -214,8 +214,14 @@ class HDF5Stack1D(DataObject.DataObject):
                     scanlist.append("")
         else:
             try:
-                number, order = [int(x) for x in scanlist[0].split(".")]
-                JUST_KEYS = True
+                # the ESRF uses "1.1" notation for the scans so this is ambiguous because
+                # one does not know if the selection is based on scan name or scan order
+                if scanlist[0] in entryNames:
+                    # assumed the selection is based on scan name
+                    JUST_KEYS = False
+                else:
+                    number, order = [int(x) for x in scanlist[0].split(".")]
+                    JUST_KEYS = True
             except:
                 JUST_KEYS = False
             if not JUST_KEYS:
