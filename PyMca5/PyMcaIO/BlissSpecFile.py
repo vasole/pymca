@@ -3,7 +3,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2020-2021 European Synchrotron Radiation Facility
+# Copyright (c) 2020-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -44,11 +44,11 @@ _logger = logging.getLogger(__name__)
 try:
     import RedisTools as redis
     HAS_REDIS = True
-except:
+except Exception:
     try:
         import PyMca5.PyMcaCore.RedisTools as redis
         HAS_REDIS = True
-    except:
+    except Exception:
         _logger.info("Cannot import PyMca5.PyMcaCore.RedisTools")
         HAS_REDIS = False
 
@@ -181,7 +181,7 @@ class BlissSpecScan(object):
             _counters = redis.get_scan_data(self._node)
             try:
                 _counters = self._sort_counters(_counters)
-            except:
+            except Exception:
                 _logger.error("Error sorting counters %s" % sys.exc_info()[1])
             self._counters = _counters
 
@@ -376,7 +376,7 @@ def isBlissSpecFile(filename):
     try:
         if filename in redis.get_sessions_list():
             return True
-    except:
+    except Exception:
         pass
     return False
 

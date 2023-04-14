@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -351,7 +351,7 @@ def getHDF5FileInstanceAndBuffer(filename, shape,
     if os.path.exists(filename):
         try:
             os.remove(filename)
-        except:
+        except Exception:
             raise IOError("Cannot overwrite existing file!")
     hdf = openHDF5File(filename, 'a')
     entryName = "data"
@@ -498,7 +498,7 @@ def save3DArrayAsHDF5(data, filename, axes=None, labels=None, dtype=None, mode='
         if os.path.exists(filename):
             try:
                 os.remove(filename)
-            except:
+            except Exception:
                 raise IOError("Cannot overwrite existing file!")
         hdf = openHDF5File(filename, 'a')
         entryName = "data"
@@ -652,7 +652,7 @@ def save3DArrayAsHDF5(data, filename, axes=None, labels=None, dtype=None, mode='
                         dimlabel = 'dim_%d' % i
                     else:
                         dimlabel = "%s" % labels[i]
-                except:
+                except Exception:
                     dimlabel = 'dim_%d' % i
             else:
                 dim = numpy.arange(shape[i]).astype(numpy.float32)
@@ -680,7 +680,7 @@ def save3DArrayAsHDF5(data, filename, axes=None, labels=None, dtype=None, mode='
         if os.path.exists(filename):
             try:
                 os.remove(filename)
-            except:
+            except Exception:
                 raise IOError("Cannot overwrite existing file!")
         hdf = h5py.File(filename, 'a')
         if compression:
@@ -700,7 +700,7 @@ def save3DArrayAsHDF5(data, filename, axes=None, labels=None, dtype=None, mode='
         if os.path.exists(filename):
             try:
                 os.remove(filename)
-            except:
+            except Exception:
                 raise IOError("Cannot overwrite existing file!")
         shape = data.shape
         dtype = data.dtype

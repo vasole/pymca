@@ -50,12 +50,12 @@ def myFloat(x):
         if ',' in x:
             try:
                 return float(x.replace(',','.'))
-            except:
+            except Exception:
                 return float(x)
         elif '.' in x:
             try:
                 return float(x.replace('.',','))
-            except:
+            except Exception:
                 return float(x)
         else:
             raise
@@ -160,7 +160,7 @@ class ArtaxFileParser(object):
                             pictures[name][tag] = int(child.text)
                         else:
                             pictures[name][tag] = myFloat(child.text)
-                    except:
+                    except Exception:
                         pictures[name][tag] = child.text
                     if tag.startswith("Plane") and tag not in ["PlaneCount"]:
                         plane = node.find(".//" + tag)
@@ -267,7 +267,7 @@ class ArtaxScan(object):
                     self._motorNames = ["x", "y"]
                     self._motorValues = [myFloat(X.split(" ")[-1]),
                                          myFloat(Y.split(" ")[-1])]
-            except:
+            except Exception:
                 _logger.warning("Could not extract positions from %s" % command)
 
         # get the additional information
@@ -392,7 +392,7 @@ def isArtaxFile(filename):
                 else:
                     return False
             return True
-    except:
+    except Exception:
         pass
     return False
 

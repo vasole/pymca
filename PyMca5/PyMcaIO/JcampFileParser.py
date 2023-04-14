@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -137,7 +137,7 @@ class JcampFileParser(SpecFileAbstractClass.SpecFileAbstractClass):
         yLabel = jcampDict.get('YUNITS', 'counts')
         try:
             fileheader = instance._header
-        except:
+        except Exception:
             _logger.warning("JCampFileParser cannot access '_header' attribute")
             fileheader=None
         data = numpy.zeros((x.size, 2), numpy.float32)

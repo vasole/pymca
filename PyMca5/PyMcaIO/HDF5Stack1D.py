@@ -168,7 +168,7 @@ class HDF5Stack1D(DataObject.DataObject):
                         file_entry = tmpHdf[dirname]
                         if base in file_entry.keys():
                             scanlist.append(entry)
-                    except:
+                    except Exception:
                         pass
             else:
                 JUST_KEYS = True
@@ -206,7 +206,7 @@ class HDF5Stack1D(DataObject.DataObject):
                             elif base in file_entry.keys():
                                 JUST_KEYS = False
                                 scanlist.append("")
-                        except:
+                        except Exception:
                             #it will crash later on
                             pass
                 else:
@@ -222,7 +222,7 @@ class HDF5Stack1D(DataObject.DataObject):
                 else:
                     number, order = [int(x) for x in scanlist[0].split(".")]
                     JUST_KEYS = True
-            except:
+            except Exception:
                 JUST_KEYS = False
             if not JUST_KEYS:
                 for scan in scanlist:
@@ -378,7 +378,7 @@ class HDF5Stack1D(DataObject.DataObject):
             positionersGroup = NexusTools.getPositionersGroup(tmpHdf, path)
             for motorName, motorValues in positionersGroup.items():
                 positioners[motorName] = motorValues[()]
-        except:
+        except Exception:
             positionersGroup = None
             positioners = {}
 

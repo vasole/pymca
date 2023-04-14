@@ -261,7 +261,7 @@ def isRTXMap(filename):
             someChar = f.read(20).decode()
         if "<" in someChar and "xml version" in someChar:
             return True
-    except:
+    except Exception:
         pass
     return False
 

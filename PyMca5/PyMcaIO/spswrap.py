@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -56,7 +56,7 @@ try:
     error=sps.error
     updatecounter=sps.updatecounter
     TAG_FRAMES=sps.TAG_FRAMES
-except:
+except Exception:
     #make sure older versions of sps do not give troubles
     TAG_FRAMES=0x0100
     #windows does not use it
@@ -93,7 +93,7 @@ def getarrayinfo(spec,shm):
     spslock.acquire()
     try:
        result = sps.getarrayinfo (spec,shm)
-    except:
+    except Exception:
        pass
     spslock.release()
     return result
@@ -105,7 +105,7 @@ def getarraylist( spec ):
         try:
            result = sps.getarraylist( spec )
            spsdefaultarraylist[spec]=result
-        except:
+        except Exception:
            print("Error reading memory", sys.exc_info())
            pass
         spslock.release()
@@ -125,7 +125,7 @@ def isupdated(spec, shmenv):
 
     try:
         result = sps.isupdated( spec, shmenv  )
-    except:
+    except Exception:
         pass
 
     spslock.release()
@@ -139,7 +139,7 @@ def putenv(spec,shmenv,cmd,outp):
 
     try:
        result = sps.putenv(spec,shmenv,cmd,outp)
-    except:
+    except Exception:
        pass
 
     spslock.release()
@@ -170,7 +170,7 @@ def updatedone(spec,shmenv):
 
     try:
        result = sps.updatedone(spec,shmenv)
-    except:
+    except Exception:
        pass
 
     spslock.release()
@@ -183,7 +183,7 @@ def getdata(spec,shm):
     spslock.acquire()
     try:
         result = sps.getdata(spec,shm)
-    except:
+    except Exception:
         pass
     spslock.release()
     return result
@@ -195,7 +195,7 @@ def getdatacol(spec,shm,idx):
     spslock.acquire()
     try:
        result = sps.getdatacol(spec,shm,idx)
-    except:
+    except Exception:
        pass
     spslock.release()
     return result
@@ -206,7 +206,7 @@ def getdatarow(spec,shm,idx):
     spslock.acquire()
     try:
        result = sps.getdatarow(spec,shm,idx)
-    except:
+    except Exception:
        pass
     spslock.release()
     return result
@@ -226,7 +226,7 @@ def getspeclist():
            result = sps.getspeclist()
            i = i + 1
        if len(result):result.sort()
-    except:
+    except Exception:
        pass
     spslock.release()
     return result
@@ -239,7 +239,7 @@ def getkeylist(spec,shmenv):
 
     try:
         result = sps.getkeylist(spec,shmenv)
-    except:
+    except Exception:
         pass
 
     spslock.release()
@@ -257,7 +257,7 @@ def getmetadata(spec, shm):
     if hasattr(sps, "getmetadata"):
         try:        
             metadata = sps.getmetadata(spec, shm)
-        except:
+        except Exception:
             # this error arrives when accessing old SPEC versions
             # with new versions of the library
             return None
@@ -271,7 +271,7 @@ def getmetadata(spec, shm):
                 if ("os." not in medatadata) and ("sys." not in metadata):
                     try:
                         uncoded_data = eval(metadata)
-                    except:
+                    except Exception:
                         print("Error accessing SCAN_D information without json")
                         return None
                 else:
@@ -298,6 +298,6 @@ def getmetadata(spec, shm):
 def getinfo(spec, shm):
     try:
         return eval(sps.getinfo(spec, shm))
-    except:
+    except Exception:
         return []
 
