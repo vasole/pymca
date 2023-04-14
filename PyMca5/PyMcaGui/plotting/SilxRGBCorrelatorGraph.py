@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -368,7 +368,7 @@ class RGBCorrelatorGraph(qt.QWidget):
                                      text, self, qt.QRect())
             else:
                 qt.QToolTip.hideText()
-        except:
+        except Exception:
             _logger.warning("Error trying to show mouse text <%s>" % text)
 
     def focusOutEvent(self, ev):
@@ -612,7 +612,7 @@ class RGBCorrelatorGraph(qt.QWidget):
         if os.path.exists(outputFile):
             try:
                 os.remove(outputFile)
-            except:
+            except Exception:
                 qt.QMessageBox.critical(self, "Save Error",
                                         "Cannot overwrite existing file")
                 return

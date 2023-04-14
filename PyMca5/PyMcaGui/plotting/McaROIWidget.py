@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -532,7 +532,7 @@ class McaROITable(qt.QTableWidget):
         text = str(item.text())
         try:
             value = float(text)
-        except:
+        except Exception:
             # recover old value
             oldItem = self.item(row, 0)
             if oldItem is None:
@@ -654,7 +654,7 @@ class MyQTableWidgetItem(qt.QTableWidgetItem):
     def __lt__(self, other):
         try:
             return float(self.text()) < float(other.text())
-        except:
+        except Exception:
             return self.text() < other.text()
 
 if __name__ == '__main__':
