@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -460,7 +460,7 @@ def getDataLineIndex(lines, z, Yi, C, S, X1, Yo, I):
             continue
         try:
             ddict = parseHeader(lines[i], lines[i+1])
-        except:
+        except Exception:
             _logger.error("Error with lines")
             _logger.error("line index = %d", i)
             _logger.error(lines[i])
