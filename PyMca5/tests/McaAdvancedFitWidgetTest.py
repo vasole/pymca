@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2019-2022 European Synchrotron Radiation Facility
+# Copyright (c) 2019-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -45,7 +45,7 @@ else:
     try:
         import OpenGL
         OPENGL = True
-    except:
+    except Exception:
         OPENGL = False
 
 # Debian packaging for armhf does not support OpenGL extensions in the

@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V. Armando Sole - ESRF Data Analysis"
+__author__ = "V. Armando Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -61,12 +61,12 @@ class testData(unittest.TestCase):
             from PyMca5 import PyMcaDataDir
             self._importSuccess = True
             self.dataDir = PyMcaDataDir.PYMCA_DATA_DIR
-        except:
+        except Exception:
             self.dataDir = None
 
         try:
             self.docDir = PyMcaDataDir.PYMCA_DOC_DIR
-        except:
+        except Exception:
             self.docDir = None
 
     def testDataDirectoryPresence(self):
@@ -84,7 +84,7 @@ class testData(unittest.TestCase):
         try:
             from fisx import DataDir
             dataDir = DataDir.FISX_DATA_DIR
-        except:
+        except Exception:
             dataDir = None
         self.assertTrue(dataDir is not None,
                         'fisx module not properly installed')
