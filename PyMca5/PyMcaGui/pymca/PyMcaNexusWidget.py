@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -173,7 +173,7 @@ class PyMcaNexusWidget(QNexusWidget.QNexusWidget):
                 if sys.version > '2.9':
                     try:
                         axes = axes.decode('utf-8')
-                    except:
+                    except Exception:
                         _logger.warning("Cannot decode axes")
                 axes = axes.split(":")
                 for axis in axes:
@@ -181,7 +181,7 @@ class PyMcaNexusWidget(QNexusWidget.QNexusWidget):
                         axesList.append(posixpath.join(groupName, axis))
                 if len(axesList):
                     xData = phynxFile[axesList[index]][()]
-        except:
+        except Exception:
             # I cannot afford this Nexus specific things
             # to break the generic HDF5 functionality
             if _logger.getEffectiveLevel() == logging.DEBUG:

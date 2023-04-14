@@ -44,7 +44,7 @@ class testSpecfilewrapper(unittest.TestCase):
         try:
             from PyMca5.PyMcaIO import specfilewrapper as specfile
             self.specfileClass = specfile
-        except:
+        except Exception:
             self.specfileClass = None
         if self.specfileClass is not None:
             text = "1.3  1  1\n"

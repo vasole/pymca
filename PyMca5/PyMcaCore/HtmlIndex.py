@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -83,7 +83,7 @@ class HtmlIndex(object):
                 import qt
                 pixmap = qt.QPixmap(PyMcaLogo.PyMcaLogo)
                 pixmap.save(logofile,"PNG")
-            except:
+            except Exception:
                 pass
         text+= "        <img SRC=%s ALT=""ESRF home"" WIDTH=55 HEIGHT=68 BORDER=0></a>" % "PyMcaLogo.png"
         text+= "    </td>"
@@ -126,13 +126,13 @@ class HtmlIndex(object):
             try:
                 user = os.environ['USERNAME']
                 text+= "        <A STYLE=""color: #0000cc"">%s</A></FONT></TD>" % user
-            except:
+            except Exception:
                 text +="</FONT></TD>"
         else:
             try:
                 user = os.getlogin()
                 text+= "        <A STYLE=""color: #0000cc"">%s</A></FONT></TD>" % user
-            except:
+            except Exception:
                 text +="</FONT></TD>"
         text+= "    </TR>"
         text+= "</TABLE>"
@@ -157,7 +157,7 @@ class HtmlIndex(object):
             if os.path.exists(index):
                 try:
                     os.remove(index)
-                except:
+                except Exception:
                     _logger.error("getBody cannot delete file %s", index)
                     continue
 
@@ -174,7 +174,7 @@ class HtmlIndex(object):
         if os.path.exists(index):
             try:
                 os.remove(index)
-            except:
+            except Exception:
                 _logger.error("buildindex cannot delete file %s", index)
                 return
         filelist = self._getHtmlFileList(directory)
@@ -198,7 +198,7 @@ class HtmlIndex(object):
         if os.path.exists(index):
             try:
                 os.remove(index)
-            except:
+            except Exception:
                 _logger.error("cannot delete file %s", index)
                 return
         directorylist = self._getHtmlDirList(directory)

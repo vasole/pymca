@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2021 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -63,7 +63,7 @@ def checkEdfForRead(filename):
         try:
             if os.path.getsize(filename)==0:
                 raise XiaEdfError("File <%s> has a null size "%filename)
-        except:
+        except Exception:
             raise XiaEdfError("Cannot open file <%s>"%filename)
 
 def openEdf(filename, read=0, write=0, force=0):
@@ -74,7 +74,7 @@ def openEdf(filename, read=0, write=0, force=0):
 
     try:
         edf= EdfFile.EdfFile(filename)
-    except:
+    except Exception:
         raise XiaEdfError("Cannot open EDF file <%s>"%filename)
     return edf
 
@@ -106,7 +106,7 @@ class XiaEdfCountFile:
         self.header= None
         try:
             self.__readStat()
-        except:
+        except Exception:
             raise XiaEdfError("Cannot parse header in <%s>"%filename)
 
     def __readStat(self):
@@ -144,7 +144,7 @@ class XiaEdfCountFile:
         if self.data is None:
             try:
                 self.data= self.edf.GetData(0)
-            except:
+            except Exception:
                 raise XiaEdfError("Cannot read data in <%s>"%self.filename)
 
     def getDetList(self):
@@ -203,7 +203,7 @@ class XiaEdfCountFile:
                 try:
                     rate[idx]= float(self.statArray[idx*XiaStatNb + XiaStatIndex["icr"]]) / \
                             float(self.statArray[idx*XiaStatNb + XiaStatIndex["ocr"]])
-                except:
+                except Exception:
                     rate[idx]= 1.
                     derr.append("#%02d"%idx)
             if len(derr):
@@ -255,7 +255,7 @@ class XiaEdfCountFile:
                 try:
                     det= int(key[-2:])
                     del self.header[key]
-                except:
+                except Exception:
                     pass
 
         dataflag= int(self.header.get("xdata", 0))
@@ -284,7 +284,7 @@ class XiaEdfScanFile:
 
         try:
             self.__readStat()
-        except:
+        except Exception:
             raise XiaEdfError("Cannot parse header in <%s>"%self.statfile)
 
     def __readStat(self):
@@ -338,7 +338,7 @@ class XiaEdfScanFile:
                                 self.header= header
                                 self.detector= xdet
                                 break
-            else: #except:
+            else: #except Exception:
                 raise XiaEdfError("Cannot read data on det #%02d in <%s>"%(detector, file))
 
             if self.data is None:
@@ -622,7 +622,7 @@ class XiaFilename:
             self.prefix= "_".join(filelist[0:xiaidx])
             try:
                 self.index= list(map(int, filelist[xiaidx+1:]))
-            except:
+            except Exception:
                 self.suffix= "_".join(filelist[xiaidx+1:])
 
             type= filelist[xiaidx][3:]
@@ -635,13 +635,13 @@ class XiaFilename:
                 else:
                     try:
                         self.det= int(type[1])
-                    except:
+                    except Exception:
                         self.type= None
             else:
                 try:
                     self.type= "det"
                     self.det= int(type)
-                except:
+                except Exception:
                     self.type= None
 
     def __createFilename(self):

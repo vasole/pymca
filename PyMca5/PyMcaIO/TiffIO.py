@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -456,7 +456,7 @@ class TiffIO(object):
                     if tmpString.upper().startswith("IMAGEJ"):
                         software = bytes(tmpString.split("=")[0],
                                          encoding='utf-8')
-            except:
+            except Exception:
                 pass
 
         if TAG_DATE in tagIDList:
@@ -577,7 +577,7 @@ class TiffIO(object):
             self._forceMonoOutput = False
             info = self._readInfo(nImage, close=False)
             self._forceMonoOutput = oldMono
-        except:
+        except Exception:
             logger.debug("Backtrace", exc_info=True)
             self._forceMonoOutput = oldMono
             raise
@@ -716,7 +716,7 @@ class TiffIO(object):
                 if compression_type == 32773:
                     try:
                         bufferBytes = bytes()
-                    except:
+                    except Exception:
                         # python 2.5 ...
                         bufferBytes = ""
                     # packBits

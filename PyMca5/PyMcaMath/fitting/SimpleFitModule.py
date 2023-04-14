@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -223,7 +223,7 @@ class SimpleFit(object):
                 # SimpleFitUserEstimatedFunctions as module
                 f=os.path.basename(os.path.splitext(modname)[0])
                 newfun=__import__(f)
-            except:
+            except Exception:
                 raise ValueError("Cannot interprete/find %s" % modname)
 
         if isinstance(newfun.THEORY, dict):
@@ -236,19 +236,19 @@ class SimpleFit(object):
         parameters = newfun.PARAMETERS
         try:
             estimate=newfun.ESTIMATE
-        except:
+        except Exception:
             estimate=None
         try:
             derivative=newfun.DERIVATIVE
-        except:
+        except Exception:
             derivative=None
         try:
             configure=newfun.CONFIGURE
-        except:
+        except Exception:
             configure=None
         try:
             widget=newfun.WIDGET
-        except:
+        except Exception:
             widget=None
 
         for i in range(len(theory)):
@@ -349,7 +349,7 @@ class SimpleFit(object):
         for fname in filteredFileList:
             try:
                 self.importFunctions(fname)
-            except:
+            except Exception:
                 _logger.error("Could not import user fit functions %s",
                               fname)
 
@@ -491,7 +491,7 @@ class SimpleFit(object):
             else:
                 result=SpecfitFuns.SavitskyGolay(numpy.array(y).astype(numpy.float64),
                                     self._fitConfiguration['fit']['stripfilterwidth'])
-        except:
+        except Exception:
             err = sys.exc_info()[1]
             raise ValueError("Unsuccessful Savitsky-Golay smoothing: %s" % err)
             result=numpy.array(y).astype(numpy.float64)
@@ -730,7 +730,7 @@ class SimpleFit(object):
                     weightflag=weightflag,
                     model_deriv=model_deriv,
                     fulloutput=True)
-        except:
+        except Exception:
             if _logger.getEffectiveLevel() == logging.DEBUG:
                 raise
             text = sys.exc_info()[1]
@@ -820,7 +820,7 @@ class SimpleFit(object):
             #If the x is not self._x, how to add the strip?
             try:
                 y += self._z
-            except:
+            except Exception:
                 _logger.warning("Cannot add strip background")
         return y
 

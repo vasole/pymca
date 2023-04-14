@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -62,7 +62,7 @@ MATPLOTLIB = True
 # otherwise it cannot generate svg output
 try:
     import encodings.utf_8
-except:
+except Exception:
     # not a big problem
     pass
 
@@ -391,7 +391,7 @@ class McaWindow(ScanWindow.ScanWindow):
                                 options.append(key)
                         try:
                             self.controlWidget.calbox.setOptions(options)
-                        except:
+                        except Exception:
                             pass
                         self.controlWidget.calbox.setCurrentIndex(item)
                         self.refresh()
@@ -479,7 +479,7 @@ class McaWindow(ScanWindow.ScanWindow):
                                 options.append(key)
                         try:
                             self.controlWidget.calbox.setOptions(options)
-                        except:
+                        except Exception:
                             pass
                         self.controlWidget.calbox.setCurrentIndex(item)
                         self.refresh()
@@ -498,7 +498,7 @@ class McaWindow(ScanWindow.ScanWindow):
                 cald = ConfigDict.ConfigDict()
                 try:
                     cald.read(filename)
-                except:
+                except Exception:
                     text = "Error. Cannot read calibration file %s" % filename
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
@@ -517,7 +517,7 @@ class McaWindow(ScanWindow.ScanWindow):
                     self.controlWidget.calbox.setCurrentIndex(options.index(itemtext))
                     self.calibration = itemtext * 1
                     self.controlWidget._calboxactivated(itemtext)
-                except:
+                except Exception:
                     text = "Error. Problem updating combobox"
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
@@ -530,7 +530,7 @@ class McaWindow(ScanWindow.ScanWindow):
                 if os.path.exists(filename):
                     try:
                         os.remove(filename)
-                    except:
+                    except Exception:
                         text = "Error. Problem deleting existing file %s" % filename
                         msg = qt.QMessageBox(self)
                         msg.setIcon(qt.QMessageBox.Critical)
@@ -679,7 +679,7 @@ class McaWindow(ScanWindow.ScanWindow):
                         self.setGraphXLimits(emin, emax)
                     else:
                         self.setGraphXLimits(emax, emin)
-            except:
+            except Exception:
                 _logger.debug("Refreshing due to exception %s", sys.exc_info()[1])
                 self.refresh()
 
@@ -813,7 +813,7 @@ class McaWindow(ScanWindow.ScanWindow):
             if legend in self.dataObjectsDict:
                 try:
                     A = self.dataObjectsDict[legend].x[0][0]
-                except:
+                except Exception:
                     _logger.debug("X axis offset not found")
             B = 1.0
             C = 0.0
@@ -1336,7 +1336,7 @@ class McaWindow(ScanWindow.ScanWindow):
                 options.append(key)
         try:
             self.controlWidget.calbox.setOptions(options)
-        except:
+        except Exception:
             pass
         self.controlWidget.calbox.setCurrentIndex(item)
         self.refresh()

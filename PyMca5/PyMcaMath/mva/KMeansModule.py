@@ -39,7 +39,7 @@ _logger = logging.getLogger(__name__)
 try:
     from PyMca5.PyMcaMath.mva import _cython_kmeans as _kmeans
     KMEANS = "_kmeans"
-except:
+except Exception:
     if _logger.getEffectiveLevel() == logging.DEBUG:
         raise
     else:
@@ -50,7 +50,7 @@ except:
 try:
     from sklearn.cluster import KMeans
     KMEANS = "sklearn"
-except:
+except Exception:
     pass
 
 if KMEANS:

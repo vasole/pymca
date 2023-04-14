@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -179,7 +179,7 @@ class SpecfitGui(qt.QWidget):
                 i=1+self.specfit.theorylist.index(self.specfit.fitconfig['fittheory'])
                 self.guiconfig.FunComBox.setCurrentIndex(i)
                 self.funevent(self.specfit.fitconfig['fittheory'])
-            except:
+            except Exception:
                 _logger.warning("Function not in list %s",
                                 self.specfit.fitconfig['fittheory'])
                 self.funevent(self.specfit.theorylist[0])
@@ -188,7 +188,7 @@ class SpecfitGui(qt.QWidget):
                 #the list conversion is needed in python 3.
                 i=1+list(self.specfit.bkgdict.keys()).index(self.specfit.fitconfig['fitbkg'])
                 self.guiconfig.BkgComBox.setCurrentIndex(i)
-            except:
+            except Exception:
                 _logger.warning("Background not in list %s",
                                 self.specfit.fitconfig['fitbkg'])
                 self.bkgevent(list(self.specfit.bkgdict.keys())[0])
@@ -258,7 +258,7 @@ class SpecfitGui(qt.QWidget):
         if self.specfit.fitconfig['McaMode']:
             try:
                 mcaresult=self.specfit.mcafit()
-            except:
+            except Exception:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setWindowTitle("Error on mcafit")
@@ -291,7 +291,7 @@ class SpecfitGui(qt.QWidget):
                     msg.setWindowTitle('SpecfitGui Message')
                     msg.exec()
                     return
-            except:
+            except Exception:
                 if _logger.getEffectiveLevel() == logging.DEBUG:
                     raise
                 msg = qt.QMessageBox(self)
@@ -315,7 +315,7 @@ class SpecfitGui(qt.QWidget):
         if self.specfit.fitconfig['McaMode']:
             try:
                 mcaresult=self.specfit.mcafit()
-            except:
+            except Exception:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error on mcafit: %s" % sys.exc_info()[1])
@@ -340,7 +340,7 @@ class SpecfitGui(qt.QWidget):
                 _logger.debug("TESTING")
             try:
                 self.specfit.startfit()
-            except:
+            except Exception:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error on Fit")
@@ -455,7 +455,7 @@ class SpecfitGui(qt.QWidget):
                                 self.guiconfig.FunComBox.insertItem(str(key))
                             else:
                                 self.guiconfig.FunComBox.addItem(str(key))
-                except:
+                except Exception:
                     qt.QMessageBox.critical(self, "ERROR",
                                             "Function not imported")
             i=1+self.specfit.theorylist.index(self.specfit.fitconfig['fittheory'])

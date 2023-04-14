@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2019-2021 European Synchrotron Radiation Facility
+# Copyright (C) 2019-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -157,7 +157,7 @@ def get_session_filename(session):
     """
     try:
         info = get_session_last_scan(session).info.get_all()
-    except:
+    except Exception:
         _logger.warning("Error reading info from last scan")
         _logger.warning("attempting slower method")
         info = {}
@@ -166,7 +166,7 @@ def get_session_filename(session):
         for scan in scan_list:
             try:
                 info = scan.info.get_all()
-            except:
+            except Exception:
                 info = {}
             if "filename" in info:
                 break   
@@ -272,7 +272,7 @@ def get_scan_data(scan_node, unique=False, top_master=False):
                 _logger.info("Taking only scalar data from top master")
                 data_channels = [x for x in data_channels \
                                      if x.name in channels["scalars"]]
-        except:
+        except Exception:
             _logger.warning("Cannot perform top_master filtering")
     names = shortnamemap(x.name for x in data_channels)
     result = {}

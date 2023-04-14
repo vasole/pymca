@@ -54,7 +54,7 @@ MATPLOTLIB = True
 #otherways it cannot generate svg output
 try:
     import encodings.utf_8
-except:
+except Exception:
     #not a big problem
     pass
 
@@ -329,7 +329,7 @@ class McaAdvancedFit(qt.QWidget):
         sthread._kw       = parameters
         #try:
         sthread.start()
-        #except:
+        #except Exception:
         #    raise "ThreadError",sys.exc_info()
         msg = qt.QDialog(self, qt.Qt.FramelessWindowHint)
         msg.setModal(0)
@@ -439,7 +439,7 @@ class McaAdvancedFit(qt.QWidget):
             try:
                 #this may crash in qt 2.3.0
                 npar = dialog.getParameters()
-            except:
+            except Exception:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error occured getting parameters:")
@@ -502,7 +502,7 @@ class McaAdvancedFit(qt.QWidget):
                     if len(threadResult):
                         if threadResult[0] == "Exception":
                             raise Exception(threadResult[1], threadResult[2])
-            except:
+            except Exception:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setWindowTitle("Configuration error")
@@ -519,7 +519,7 @@ class McaAdvancedFit(qt.QWidget):
                     if len(threadResult):
                         if threadResult[0] == "Exception":
                             raise Exception(threadResult[1], threadResult[2])
-            except:
+            except Exception:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setWindowTitle("Configuration error")
@@ -548,7 +548,7 @@ class McaAdvancedFit(qt.QWidget):
                 app = qt.QApplication.instance()
                 app.processEvents()
                 self.concentrationsWidget.setParameters(config['concentrations'], signal=False)
-            except:
+            except Exception:
                 if str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == "CONCENTRATIONS":
                     self.mainTab.setCurrentIndex(0)
 
@@ -665,7 +665,7 @@ class McaAdvancedFit(qt.QWidget):
                     if len(threadResult):
                         if threadResult[0] == "Exception":
                             raise Exception(threadResult[1], threadResult[2])
-            except:
+            except Exception:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setWindowTitle("Configuration error")
@@ -682,7 +682,7 @@ class McaAdvancedFit(qt.QWidget):
                     if len(threadResult):
                         if threadResult[0] == "Exception":
                             raise Exception(threadResult[1], threadResult[2])
-            except:
+            except Exception:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error: %s" % (sys.exc_info()[1]))
@@ -704,7 +704,7 @@ class McaAdvancedFit(qt.QWidget):
             try:
                 self.concentrations()
                 self.printButton.setEnabled(True)
-            except:
+            except Exception:
                 if _logger.getEffectiveLevel() == logging.DEBUG:
                     raise
                 #print "try to set"
@@ -996,7 +996,7 @@ class McaAdvancedFit(qt.QWidget):
                                                 elementsfrommatrix=False,
                                                 fluorates=self.mcafit._fluoRates,
                                                 addinfo=True)
-        except:
+        except Exception:
             if _logger.getEffectiveLevel() == logging.DEBUG:
                 raise
             msg = qt.QMessageBox(self)
@@ -1086,7 +1086,7 @@ class McaAdvancedFit(qt.QWidget):
                         if threadResult[0] == "Exception":
                             raise Exception(threadResult[1], threadResult[2])
                 ddict, info = threadResult
-            except:
+            except Exception:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error: %s" % (sys.exc_info()[1]))
@@ -1105,7 +1105,7 @@ class McaAdvancedFit(qt.QWidget):
                         if threadResult[0] == "Exception":
                             raise Exception(threadResult[1], threadResult[2])
                 ddict, info = threadResult
-            except:
+            except Exception:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error: %s" % (sys.exc_info()[1]))
@@ -1181,7 +1181,7 @@ class McaAdvancedFit(qt.QWidget):
         """
         try:
             self.__anasignal(ddict)
-        except:
+        except Exception:
             _logger.warning("Error generating matrix output. ")
             _logger.warning("Try to perform your fit again.  ")
             _logger.warning("%s" % sys.exc_info())
@@ -1428,7 +1428,7 @@ class McaAdvancedFit(qt.QWidget):
                 # this for later
                 try:
                     self.__anasignal(ddict)
-                except:
+                except Exception:
                     _logger.warning("Error generating Monte Carlo matrix output. ")
                     _logger.warning(sys.exc_info())
 
@@ -1471,7 +1471,7 @@ class McaAdvancedFit(qt.QWidget):
                 self.dict['result'][label]= ddict['result'][label] * 1.0
         try:
             self.__anasignal(ddict)
-        except:
+        except Exception:
             _logger.warning("Error generating peaks output. ")
             _logger.warning("Try to perform your fit again.  ")
             _logger.warning("%s" % sys.exc_info())
@@ -1900,7 +1900,7 @@ class McaAdvancedFit(qt.QWidget):
                             raise Exception(threadResult[1], threadResult[2])
                 fitresult = threadResult[0]
                 result    = threadResult[1]
-            except:
+            except Exception:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setWindowTitle("Fit error")
@@ -1912,7 +1912,7 @@ class McaAdvancedFit(qt.QWidget):
             try:
                 #self.mcatable.fillfrommca(self.mcafit.result)
                 self.mcatable.fillfrommca(result)
-            except:
+            except Exception:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error filling Table: %s" % (sys.exc_info()[1]))
@@ -1931,7 +1931,7 @@ class McaAdvancedFit(qt.QWidget):
                             raise Exception(threadResult[1], threadResult[2])
                 fitresult = threadResult[0]
                 result    = threadResult[1]
-            except:
+            except Exception:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setWindowTitle("Fit error")
@@ -1943,7 +1943,7 @@ class McaAdvancedFit(qt.QWidget):
             try:
                 #self.mcatable.fillfrommca(self.mcafit.result)
                 self.mcatable.fillfrommca(result)
-            except:
+            except Exception:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error filling Table: %s" % (sys.exc_info()[1]))
@@ -1983,7 +1983,7 @@ class McaAdvancedFit(qt.QWidget):
                 if not self.concentrationsWidget.isHidden():
                     try:
                         self.concentrations()
-                    except:
+                    except Exception:
                         if _logger.getEffectiveLevel() == logging.DEBUG:
                             raise
                         msg = qt.QMessageBox(self)
@@ -1994,7 +1994,7 @@ class McaAdvancedFit(qt.QWidget):
         if str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == 'DIAGNOSTICS':
             try:
                 self.diagnostics()
-            except:
+            except Exception:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Diagnostics Error: %s" % (sys.exc_info()[1]))
@@ -2230,7 +2230,7 @@ class McaAdvancedFit(qt.QWidget):
                 outputDir  = os.path.dirname(outputFile)
                 self.lastInputDir   = outputDir
                 PyMcaDirs.outputDir = outputDir
-            except:
+            except Exception:
                 outputDir  = "."
             #self.outdir = outputDir
         else:
@@ -2244,7 +2244,7 @@ class McaAdvancedFit(qt.QWidget):
         specFile = os.path.join(outputDir, outputFile)
         try:
             os.remove(specFile)
-        except:
+        except Exception:
             pass
         systemline = os.linesep
         os.linesep = '\n'
@@ -2357,7 +2357,7 @@ class McaAdvancedFit(qt.QWidget):
                 else:
                     mtplt.saveFile(specFile)
                 return
-        except:
+        except Exception:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setInformativeText("Matplotlib or Input Output Error: %s" \
@@ -2531,7 +2531,7 @@ class McaAdvancedFit(qt.QWidget):
                         file.write(self.array2SpecMca(fitresult['result'][label]))
             file.write("\n")
             file.close()
-        except:
+        except Exception:
             os.linesep = systemline
             raise
         return
@@ -2848,7 +2848,7 @@ class SimpleThread(qt.QThread):
                 self._result = self._function(**self._kw)
             else:
                 self._result = self._function(self._kw)
-        except:
+        except Exception:
             self._result = ("Exception",) + sys.exc_info()
 
 class McaGraphWindow(PlotWindow.PlotWindow):

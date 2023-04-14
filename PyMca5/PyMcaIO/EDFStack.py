@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -45,7 +45,7 @@ HDF5 = False
 try:
     import h5py
     HDF5 = True
-except:
+except Exception:
     pass
 
 
@@ -245,7 +245,7 @@ class EDFStack(DataObject.DataObject):
                                                          self.nbFiles),
                                                          self.__dtype)
                                     samplingStep = i
-                                except:
+                                except Exception:
                                     i += 1
                             self.incrProgressBar=0
                             for tempEdfFileName in filelist:
@@ -335,13 +335,13 @@ class EDFStack(DataObject.DataObject):
                                                     self.nbFiles,
                                                    arrRet.shape[1]),
                                                    self.__dtype)
-                        except:
+                        except Exception:
                             try:
                                 self.data = numpy.zeros((arrRet.shape[0],
                                                     self.nbFiles,
                                                    arrRet.shape[1]),
                                                    numpy.float32)
-                            except:
+                            except Exception:
                                 self.data = numpy.zeros((arrRet.shape[0],
                                                     self.nbFiles,
                                                    arrRet.shape[1]),
@@ -365,7 +365,7 @@ class EDFStack(DataObject.DataObject):
                                                    arrRet.shape[0],
                                                    arrRet.shape[1]),
                                                    self.__dtype)
-                        except:
+                        except Exception:
                             text = "Memory Error: Attempt subsampling or convert to HDF5"
                             if 1:
                                 if 'PyMca5.PyMcaGui.PyMcaQt' in sys.modules:
@@ -389,7 +389,7 @@ class EDFStack(DataObject.DataObject):
                                         _logger.warning("Data shape %d x %d x %d " % (self.data.shape[0],
                                                                                       self.data.shape[1],
                                                                                       self.data.shape[2]))
-                                    except:
+                                    except Exception:
                                         if 10 * fileSampling < self.nbFiles:
                                             fileSampling += 1
                                         if 10 * mcaSampling < arrRet.shape[0]:
@@ -474,7 +474,7 @@ class EDFStack(DataObject.DataObject):
                                 pieceOfStack=tempEdf.GetData(0)
                             try:
                                 self.data[self.incrProgressBar, :,:] = pieceOfStack[::mcaSampling,:]
-                            except:
+                            except Exception:
                                 if pieceOfStack.shape[1] != arrRet.shape[1]:
                                     _logger.warning(" ERROR on file %s", tempEdfFileName)
                                     _logger.warning(" DIM 1 error Assuming missing data were at the end!!!")

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -548,7 +548,7 @@ class ColormapDialog(qt.QDialog):
         try:
             cmap = self.getColormap()
             self.sigColormapChanged.emit(cmap)
-        except:
+        except Exception:
             sys.excepthook(sys.exc_info()[0],
                            sys.exc_info()[1],
                            sys.exc_info()[2])

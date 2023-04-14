@@ -66,7 +66,7 @@ MATPLOTLIB = True
 # otherwise it cannot generate svg output
 try:
     import encodings.utf_8
-except:
+except Exception:
     # not a big problem
     pass
 
@@ -405,7 +405,7 @@ class McaWindow(ScanWindow):
                                 options.append(key)
                         try:
                             self.controlWidget.calbox.setOptions(options)
-                        except:
+                        except Exception:
                             pass
                         self.controlWidget.calbox.setCurrentIndex(item)
                         self.refresh()
@@ -494,7 +494,7 @@ class McaWindow(ScanWindow):
                                 options.append(key)
                         try:
                             self.controlWidget.calbox.setOptions(options)
-                        except:
+                        except Exception:
                             pass
                         self.controlWidget.calbox.setCurrentIndex(item)
                         self.refresh()
@@ -513,7 +513,7 @@ class McaWindow(ScanWindow):
                 cald = ConfigDict.ConfigDict()
                 try:
                     cald.read(filename)
-                except:
+                except Exception:
                     text = "Error. Cannot read calibration file %s" % filename
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
@@ -532,7 +532,7 @@ class McaWindow(ScanWindow):
                     self.controlWidget.calbox.setCurrentIndex(options.index(itemtext))
                     self.calibration = itemtext * 1
                     self.controlWidget._calboxactivated(itemtext)
-                except:
+                except Exception:
                     text = "Error. Problem updating combobox"
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
@@ -545,7 +545,7 @@ class McaWindow(ScanWindow):
                 if os.path.exists(filename):
                     try:
                         os.remove(filename)
-                    except:
+                    except Exception:
                         text = "Error. Problem deleting existing file %s" % filename
                         msg = qt.QMessageBox(self)
                         msg.setIcon(qt.QMessageBox.Critical)
@@ -694,7 +694,7 @@ class McaWindow(ScanWindow):
                         self.setGraphXLimits(emin, emax, replot=True)
                     else:
                         self.setGraphXLimits(emax, emin, replot=True)
-            except:
+            except Exception:
                 _logger.debug("Refreshing due to exception", sys.exc_info()[1])
                 self.refresh()
                 #self.graph.replot()
@@ -835,7 +835,7 @@ class McaWindow(ScanWindow):
                 legend = self.getActiveCurve(just_legend=True)
                 if legend in self.dataObjectsDict.keys():
                     A = self.dataObjectsDict[legend].x[0][0]
-            except:
+            except Exception:
                 _logger.debug("X axis offset not found")
             B = 1.0
             C = 0.0
@@ -1094,7 +1094,7 @@ class McaWindow(ScanWindow):
                                           info=curveinfo,
                                           own=True)
                         self.setGraphXLabel('Channel')
-                except:
+                except Exception:
                     del self.dataObjectsDict[legend]
                     raise
         if replot:
@@ -1341,11 +1341,11 @@ class McaWindow(ScanWindow):
         try:
             self.outputDir  = os.path.dirname(outdir)
             PyMcaDirs.outputDir = os.path.dirname(outdir)
-        except:
+        except Exception:
             self.outputDir  = "."
         try:
             outputFile = os.path.basename(outdir)
-        except:
+        except Exception:
             outputFile  = outdir
 
         #get active curve
@@ -1412,7 +1412,7 @@ class McaWindow(ScanWindow):
         try:
             if os.path.exists(specFile):
                 os.remove(specFile)
-        except:
+        except Exception:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Input Output Error: %s" % (sys.exc_info()[1]))
@@ -1437,7 +1437,7 @@ class McaWindow(ScanWindow):
                 if specFile[-3:].upper() in ['EPS', 'PNG', 'SVG']:
                     self.graphicsSave(specFile)
                     return
-            except:
+            except Exception:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setWindowTitle("Save error")
@@ -1537,7 +1537,7 @@ class McaWindow(ScanWindow):
                 options.append(key)
         try:
             self.controlWidget.calbox.setOptions(options)
-        except:
+        except Exception:
             pass
         self.controlWidget.calbox.setCurrentIndex(item)
         self.refresh()

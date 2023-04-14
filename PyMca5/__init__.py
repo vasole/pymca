@@ -72,7 +72,7 @@ def getDefaultSettingsDirectory():
             home = os.getenv('USERPROFILE')
             try:
                 directory = os.path.join(home, "My Documents")
-            except:
+            except Exception:
                 home = '\\'
                 directory = '\\'
         if os.path.isdir('%s' % directory):
@@ -119,7 +119,7 @@ def getDefaultUserPluginsDirectory():
             return userPluginDir
         else:
             return None
-    except:
+    except Exception:
         _logger.info("WARNING: Cannot initialize plugins directory")
         return None
 
@@ -138,7 +138,7 @@ def getDefaultUserFitFunctionsDirectory():
             return fitFunctionsDir
         else:
             return None
-    except:
+    except Exception:
         print("WARNING: Cannot initialize fit functions directory")
         return None
 
@@ -153,7 +153,7 @@ def getUserDataFile(fileName, directory=""):
             userDataDir = os.path.join(settingsDir, "data")
             if not os.path.exists(userDataDir):
                 os.mkdir(userDataDir)
-    except:
+    except Exception:
         _logger.info("WARNING: cannot initialize user data directory")
         
     if userDataDir is None:
@@ -231,7 +231,7 @@ if sys.platform.startswith("win"):
         #try to avoid matplotlib config dir problem under windows
         if os.getenv("MPLCONFIGDIR") is None:
             os.environ['MPLCONFIGDIR'] = getDefaultSettingsDirectory()
-    except:
+    except Exception:
         _logger.info("WARNING: Could not set MPLCONFIGDIR. %s", sys.exc_info()[1])
 
 # mandatory modules for backwards compatibility

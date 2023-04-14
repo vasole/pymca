@@ -193,7 +193,7 @@ try:
         MDP = True
     else:
         MDP = False
-except:
+except Exception:
     MDP = False
 
 from . import py_nnma

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -53,7 +53,7 @@ from . import HDF5McaTable
 from . import QNexusWidgetActions
 try:
     from . import Hdf5NodeView
-except:
+except Exception:
     # prevent crushing due to other silx-related errors
     _logger.info("Cannot use silx Hdf5NodeView")
     from . import HDF5DatasetTable
@@ -61,7 +61,7 @@ except:
 try:
     from . import DataViewerSelector
     SINGLE_ENABLED = True
-except:
+except Exception:
     _logger.debug("Cannot import DataViewerSelector")
     SINGLE_ENABLED = False
 from PyMca5.PyMcaIO import ConfigDict
@@ -514,7 +514,7 @@ class QNexusWidget(qt.QWidget):
                 width = self._widgetDict[self._lastWidgetId].width()
                 height = self._widgetDict[self._lastWidgetId].height()
                 widget.resize(max(150, width), max(150, height))
-            except:
+            except Exception:
                 pass
         self._lastWidgetId = wid
         self._widgetDict[wid] = widget
@@ -536,7 +536,7 @@ class QNexusWidget(qt.QWidget):
                     widget.w = HDF5DatasetTable.HDF5DatasetTable(widget)
                     try:
                         widget.w.setDataset(dataset)
-                    except:
+                    except Exception:
                         _logger.error("Error filling table")
                     widget.addTab(widget.w, 'DataView')
                     widget.setCurrentWidget(widget.w)
@@ -604,7 +604,7 @@ class QNexusWidget(qt.QWidget):
         try:
             clipboard = qt.QApplication.clipboard()
             clipboard.setText(ddict["name"])
-        except:
+        except Exception:
             _logger.warning("Unsuccessful copy to clipboard")
 
     def _openDataset(self, ddict=None):
@@ -633,14 +633,14 @@ class QNexusWidget(qt.QWidget):
                         width = self._widgetDict[self._lastWidgetId].width()
                         height = self._widgetDict[self._lastWidgetId].height()
                         widget.resize(max(150, width), max(300, height))
-                    except:
+                    except Exception:
                         pass
                 else:
                     try:
                         width = self._widgetDict[ids[-1]].width()
                         height = self._widgetDict[ids[-1]].height()
                         widget.resize(max(150, width), max(300, height))
-                    except:
+                    except Exception:
                         pass
         widget.notifyCloseEventToWidget(self)
         wid = id(widget)
@@ -699,7 +699,7 @@ class QNexusWidget(qt.QWidget):
                             # case insensitive sorting of measurement
                             if sys.version_info > (3, 3):
                                 measurement.sort(key=str.casefold)
-                        except:
+                        except Exception:
                             _logger.error("Cannot apply sorting %s" % sys.exc_info()[1])
                         nmeasurement = len(measurement)
                         cntShapeList = [None] * nmeasurement
@@ -883,7 +883,7 @@ class QNexusWidget(qt.QWidget):
                                 self._aliasList.append(cnt)
                             try:
                                 self._shapeList.append(dataset.shape)
-                            except:
+                            except Exception:
                                 self._shapeList.append(None)
                             self.cntTable.build(self._cntList, self._aliasList, shapelist=self._shapeList)
                         return
@@ -1268,7 +1268,7 @@ class QNexusWidget(qt.QWidget):
                             try:
                                 widget = self._widgetDict[ddict['id']]
                                 _logger.debug("DELETING %s", widget.windowTitle())
-                            except:
+                            except Exception:
                                 pass
                         del self._widgetDict[ddict['id']]
 
@@ -1279,7 +1279,7 @@ if __name__ == "__main__":
     try:
         #this is to add the 3D buttons ...
         from PyMca5.PyMcaGui.pymca import SilxGLWindow
-    except:
+    except Exception:
         pass
     w = QNexusWidget()
     if 0:

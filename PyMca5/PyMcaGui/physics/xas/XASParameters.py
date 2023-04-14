@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -213,7 +213,7 @@ class XASParameters(qt.QWidget):
             self.normalizationWidget.setTitleColor(color)
             self.postEdgeWidget.setTitleColor(color)
             self.fourierTransformWidget.setTitleColor(color)
-        except:
+        except Exception:
             _logger.error("Error setting title color: %s" % sys.exc_info())
 
 if __name__ == "__main__":
@@ -236,6 +236,6 @@ if __name__ == "__main__":
         energy = data[0, :]
         mu = data[1, :]
         w.setSpectrum(energy, mu)
-    except:
+    except Exception:
         print("ERROR: ", sys.exc_info())
     app.exec()

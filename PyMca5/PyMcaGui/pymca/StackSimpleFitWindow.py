@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -189,7 +189,7 @@ class StackSimpleFitWindow(qt.QWidget):
                     fileName = fileNames[key]
                     if os.path.exists(fileName):
                         os.remove(fileName)
-            except:
+            except Exception:
                 qt.QMessageBox.critical(self, "Delete Error",
                     "ERROR while deleting file:\n%s"% fileName,
                     qt.QMessageBox.Ok,
@@ -198,7 +198,7 @@ class StackSimpleFitWindow(qt.QWidget):
                 return
         try:
             self._startWork()
-        except:
+        except Exception:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setWindowTitle("Stack Fitting Error")

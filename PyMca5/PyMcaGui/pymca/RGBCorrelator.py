@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -193,7 +193,7 @@ def test():
         try:
             import DataSource
             DataReader = DataSource.DataSource
-        except:
+        except Exception:
             import EdfFileDataSource
             DataReader = EdfFileDataSource.EdfFileDataSource
         for fname in filelist:

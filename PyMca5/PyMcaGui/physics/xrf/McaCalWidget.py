@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -654,7 +654,7 @@ class McaCalWidget(qt.QDialog):
         self.specfit.configure(**fitconfig)
         try:
             self.specfit.estimate()
-        except:
+        except Exception:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Error on estimate: %s" % sys.exc_info()[1])
@@ -662,7 +662,7 @@ class McaCalWidget(qt.QDialog):
             return
         try:
             self.specfit.startfit()
-        except:
+        except Exception:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Error on Fit")
@@ -777,7 +777,7 @@ class McaCalWidget(qt.QDialog):
                     A= fittedpar[0]
                     B= fittedpar[1]
                     Vret= fittedpar[2]
-            except:
+            except Exception:
                 msg=qt.QMessageBox(self.AText)
                 msg.setWindowTitle(sys.exc_info()[0])
                 msg.setIcon(qt.QMessageBox.Critical)
@@ -1164,7 +1164,7 @@ class CalibrationParameters(qt.QWidget):
             value = float(str(qstring))
             self.caldict[self.currentcal]['A'] = value
             self.myslot(event='coeff')
-        except:
+        except Exception:
             msg=qt.QMessageBox(self.AText)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid Float")
@@ -1180,7 +1180,7 @@ class CalibrationParameters(qt.QWidget):
             value = float(str(qstring))
             self.caldict[self.currentcal]['B'] = value
             self.myslot(event='coeff')
-        except:
+        except Exception:
             msg=qt.QMessageBox(self.BText)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid Float")
@@ -1193,7 +1193,7 @@ class CalibrationParameters(qt.QWidget):
             value = float(str(qstring))
             self.caldict[self.currentcal]['C'] = value
             self.myslot(event='coeff')
-        except:
+        except Exception:
             msg=qt.QMessageBox(self.CText)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid Float")
@@ -1574,7 +1574,7 @@ class McaCalCopy(qt.QDialog):
         qstring = self.AText.text()
         try:
             float(str(qstring))
-        except:
+        except Exception:
             msg=qt.QMessageBox(self.AText)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid Float")
@@ -1585,7 +1585,7 @@ class McaCalCopy(qt.QDialog):
         qstring = self.BText.text()
         try:
             float(str(qstring))
-        except:
+        except Exception:
             msg=qt.QMessageBox(self.BText)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid Float")
@@ -1596,7 +1596,7 @@ class McaCalCopy(qt.QDialog):
         qstring = self.CText.text()
         try:
             float(str(qstring))
-        except:
+        except Exception:
             msg=qt.QMessageBox(self.CText)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid Float")

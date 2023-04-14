@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -50,7 +50,7 @@ _logger = logging.getLogger(__name__)
 try:
     from PyMca5.PyMcaIO import ArtaxFileParser
     SPX = True
-except:
+except Exception:
     _logger.info("specfilewrapper cannot import ArtaxFileParser")
     SPX = False
 
@@ -62,10 +62,10 @@ if sys.version >= '2.6':
         except UnicodeDecodeError:
             try:
                 return str(bytesObject, 'latin-1')
-            except:
+            except Exception:
                 try:
                     return str(bytesObject, 'utf-16')
-                except:
+                except Exception:
                     return str(bytesObject)
 else:
     def safe_str(*var, **kw):
@@ -97,7 +97,7 @@ def Specfile(filename):
                     f.close()
                     output = specfilewrapper(filename, dta=True)
                     return output
-                except:
+                except Exception:
                     #try to read in other way
                     pass
 
@@ -117,7 +117,7 @@ def Specfile(filename):
                 break
         try:
             line = f.readline()
-        except:
+        except Exception:
             line = ""
             break
     f.close()
@@ -257,7 +257,7 @@ class specfilewrapper(object):
                            coefficients.append(0.0)
                        self._qxasHeader['@CALIB']=  ['#@CALIB %f  %f  %f' %\
                                             (coefficients[0], coefficients[1], coefficients[2])]
-                    except:
+                    except Exception:
                         pass
                 if line.startswith('$DATA:'):
                     line = f.readline().replace("\n","")
@@ -304,7 +304,7 @@ class specfilewrapper(object):
                         if ncols == ncol0:
                             outdata.append(reals)
                             nlines += 1
-                    except:
+                    except Exception:
                         if len(line) > 1:
                             if sys.version < '3.0':
                                 self.header.append(line.replace("\n",""))
@@ -609,7 +609,7 @@ class myscandata(object):
                         zero = (Sxx * Sy - Sx * Sxy)/d
                         gain = (n * Sxy - Sx * Sy)/d
                     output = ['#@CALIB  %g  %g  0' % (zero, gain)]
-                except:
+                except Exception:
                     pass
             return output
         elif key == "" or key == " ":

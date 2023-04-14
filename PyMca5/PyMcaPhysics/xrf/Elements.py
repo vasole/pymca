@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -2084,7 +2084,7 @@ def isValidFormula(compound):
     try:
         elts= [ w for w in re.split('[0-9]', compound) if w != '' ]
         nbs= [ int(w) for w in re.split('[a-zA-Z]', compound) if w != '' ]
-    except:
+    except Exception:
         return False
     if len(elts)==1 and len(nbs)==0:
         if type(elts) == type([]):
@@ -2386,7 +2386,7 @@ def getMaterialMassAttenuationCoefficients(compoundList0, fractionList0, energy0
             elts= [ w for w in re.split('[0-9]', compound) if w != '' ]
             try:
                 nbs= [ int(w) for w in re.split('[a-zA-Z]', compound) if w != '' ]
-            except:
+            except Exception:
                 raise ValueError("Compound '%s' not understood" % compound)
             if len(elts)==1 and len(nbs)==0:
                 elts=[compound]
@@ -2538,7 +2538,7 @@ def getElementFormFactor(ele, theta, energy):
             z = int(ele)
             ele = getsymbol(z)
             return CoherentScattering.getElementFormFactor(ele, theta, energy)
-        except:
+        except Exception:
             raise ValueError("Unknown element %s" % ele)
 
 
@@ -2553,7 +2553,7 @@ def getElementCoherentDifferentialCrossSection(ele, theta, energy, p1=None):
           ele = getsymbol(z)
           value=CoherentScattering.\
             getElementCoherentDifferentialCrossSection(ele, theta, energy, p1)
-        except:
+        except Exception:
           raise ValueError("Unknown element %s" % ele)
     #convert from cm2/atom to cm2/g
     return (value * AVOGADRO_NUMBER)/ Element[ele]['mass']
@@ -2569,7 +2569,7 @@ def getElementIncoherentScatteringFunction(ele, theta, energy):
           ele = getsymbol(z)
           value = IncoherentScattering.\
                 getElementIncoherentScatteringFunction(ele, theta, energy)
-        except:
+        except Exception:
           raise ValueError("Unknown element %s" % ele)
     return value
 
@@ -2583,7 +2583,7 @@ def getElementComptonDifferentialCrossSection(ele, theta, energy, p1=None):
           ele = getsymbol(z)
           value = IncoherentScattering.\
             getElementComptonDifferentialCrossSection(ele, theta, energy, p1)
-        except:
+        except Exception:
           raise ValueError("Unknown element %s" % ele)
     return (value * 6.022142E23)/ Element[ele]['mass']
 
@@ -2693,7 +2693,7 @@ def getelementmassattcoef(ele,energy=None):
             Element[ele]['xcom']['coherentlog10']=numpy.log10(Element[ele]['xcom']['coherent'])
             Element[ele]['xcom']['comptonlog10']=numpy.log10(Element[ele]['xcom']['compton'])
             Element[ele]['xcom']['photolog10']=numpy.log10(Element[ele]['xcom']['photo'])
-        except:
+        except Exception:
             raise ValueError("Problem calculating logaritm of %s.mat file data" % ele)
         for i in range(0,len(Element[ele]['xcom']['energy'])):
             Element[ele]['xcom']['total'].append(Element[ele]['xcom']['coherent'][i]+\
@@ -3015,7 +3015,7 @@ def registerUpdate(callback):
         try:
             i = _registeredCallbacks.index(ref)
             del _registeredCallbacks[i]
-        except:
+        except Exception:
             pass
 
     if hasattr(callback, 'im_self') and callback.im_self is not None:

@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -400,7 +400,7 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
                 beta = numpy.dot(A.T, tmpData)
                 try:
                     _covariance = numpy.linalg.inv(alpha)
-                except:
+                except Exception:
                     print("Exception")
                     print("Exception", sys.exc_info()[1])
                     continue
@@ -425,7 +425,7 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
                 beta = bufferProduct[:,n]
                 try:
                     _covariance = numpy.linalg.inv(alpha)
-                except:
+                except Exception:
                     print("Exception")
                     print("Exception", sys.exc_inf())
                     continue
@@ -501,7 +501,7 @@ def test2():
         GEFIT = True
         def f(p, x):
             return p[1] * x + p[0]
-    except:
+    except Exception:
         GEFIT = False
     data = "0 0.8214 0.1 1 2.8471 0.3 2 4.852 0.5 3 7.5347 0.7 4 10.2464 0.9 5 10.2707 1.1 6 12.8011 1.3 7 13.7108 1.5 8 17.8501 1.7 9 15.3667 1.9 10 19.3933 2.1"
     data = numpy.array([float(x) for x in data.split()])

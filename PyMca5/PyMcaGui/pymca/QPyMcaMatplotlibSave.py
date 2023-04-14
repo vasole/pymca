@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -172,7 +172,7 @@ class SaveImageSetup(qt.QWidget):
         try:
             ddict = self.getParameters()
             self.imageWidget.setParameters(ddict)
-        except:
+        except Exception:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Error updating image:")
@@ -188,7 +188,7 @@ class SaveImageSetup(qt.QWidget):
             if self.printPreview.isHidden():
                 self.printPreview.show()
             self.printPreview.raise_()
-        except:
+        except Exception:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Error printing image: %s" % sys.exc_info()[1])
@@ -222,11 +222,11 @@ class SaveImageSetup(qt.QWidget):
             outputDir  = os.path.dirname(outputFile)
             self.lastOutputDir = outputDir
             PyMcaDirs.outputDir = outputDir
-        except:
+        except Exception:
             outputDir  = "."
         try:
             outputFile = os.path.basename(outputFile)
-        except:
+        except Exception:
             outputFile  = outputFile
 
         #always overwrite for the time being
@@ -239,7 +239,7 @@ class SaveImageSetup(qt.QWidget):
         if os.path.exists(finalFile):
             try:
                 os.remove(finalFile)
-            except:
+            except Exception:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Cannot overwrite file: %s" % sys.exc_info()[1])
@@ -252,7 +252,7 @@ class SaveImageSetup(qt.QWidget):
                                           facecolor='w',
                                           format=finalFile[-3:],
                                           dpi=self.imageWidget.config['outputdpi'])
-        except:
+        except Exception:
             _logger.warning("trying to save using obsolete method")
             config = self.imageWidget.getParameters()
             try:
@@ -261,7 +261,7 @@ class SaveImageSetup(qt.QWidget):
                     s.setPixmapImage(self.imageWidget.pixmapImage)
                 s.setParameters(config)
                 s.saveImage(finalFile)
-            except:
+            except Exception:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error saving file: %s" % sys.exc_info()[1])
@@ -477,7 +477,7 @@ class RightWidget(qt.QWidget):
                         try:
                             txt = ddict[label][0].upper() +\
                                   ddict[label][1:].lower()
-                        except:
+                        except Exception:
                             pass
                     self.comboBoxList[i].setCurrentText(txt)
         return
@@ -779,7 +779,7 @@ class QPyMcaMatplotlibImage(FigureCanvas):
                         tick_locator = MaxNLocator(nTicks)
                         self._colorbar.locator = tick_locator
                         self._colorbar.update_ticks()
-                    except:
+                    except Exception:
                         _logger.warning("Colorbar error %s", sys.exc_info())
                         pass
             else:

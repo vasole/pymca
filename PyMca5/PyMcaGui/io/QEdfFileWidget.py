@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -346,7 +346,7 @@ class QEdfFileWidget(qt.QWidget):
         try:
             self.infoIcon	= qt.QApplication.style().\
                               standardIcon(qt.QStyle.SP_MessageBoxInformation)
-        except:
+        except Exception:
             self.infoIcon = None
 
         self.toolBar = qt.QWidget(self)
@@ -534,7 +534,7 @@ class QEdfFileWidget(qt.QWidget):
         if os.path.exists(outputFile):
             try:
                 os.remove(outputFile)
-            except:
+            except Exception:
                 qt.QMessageBox.critical(self, "Save Error", "Cannot overwrite existing file")
                 return
 
@@ -566,7 +566,7 @@ class QEdfFileWidget(qt.QWidget):
                     ArraySave.save2DArrayListAsASCII([self.lastData],
                                                      outputFile,
                                                      labels = [label])
-            except:
+            except Exception:
                 qt.QMessageBox.critical(self, "Save Error", "%s" % \
                                         sys.exc_info()[1])
                 return
@@ -1044,7 +1044,7 @@ class QEdfFileWidget(qt.QWidget):
                 if ans==qt.QMessageBox.No: return
                 try:
                     self.sigDelSelection.emit((self.data.SourceName, mcakeys))
-                except:
+                except Exception:
                     _logger.debug("sigDelSelection is to be implemented")
 
         for idx in range(self.fileCombo.count()):

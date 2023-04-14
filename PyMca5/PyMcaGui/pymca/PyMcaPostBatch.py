@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -40,7 +40,7 @@ if __name__ == "__main__":
     try:
         # make sure hdf5plugins are imported
         import hdf5plugin
-    except:
+    except Exception:
         _logger.info("Failed to import hdf5plugin")
 
 from PyMca5 import PyMcaDirs

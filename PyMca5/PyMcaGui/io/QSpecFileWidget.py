@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -318,12 +318,12 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         if self.data is None: return
         try:
             if self.data.sourceName is None: return
-        except:
+        except Exception:
             if self.data.SourceName is None: return
         try:
             #new
             info= self.data.getSourceInfo()
-        except:
+        except Exception:
             #old
             if not hasattr(self.data, "GetSourceInfo"):
                 raise
@@ -464,7 +464,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                             source = self.data.sourceName[0]
                         try:
                             updated = self.data.isUpdated(self.data.sourceName, scan)
-                        except:
+                        except Exception:
                             _logger.warning("Error trying to verify if source was updated")
                             updated = False
                         if updated:
@@ -592,7 +592,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
 
         try:
             info = self.data.getDataObject(self.scans[idx]).info
-        except:
+        except Exception:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             text = "Error: %s\n accessing scan information." % (sys.exc_info()[1])
@@ -829,7 +829,7 @@ def test():
         try:
             # this is only for "addSelection"
             print(d.getDataObject(selection[0]['Key'], selection[0]['selection']))
-        except:
+        except Exception:
             pass
         return
     w.sigAddSelection.connect(mySlot)

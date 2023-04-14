@@ -143,7 +143,7 @@ class MaterialEditor(qt.QWidget):
                 Elements.getMaterialMassAttenuationCoefficients(compoundList,
                                                                 compoundFraction,
                                                                 energy = 10.0)
-            except:
+            except Exception:
                 #no message?
                 error = 1
                 del Elements.Material[material]
@@ -202,7 +202,7 @@ class MaterialEditor(qt.QWidget):
             self.graph.setGraphTitle(ddict['Comment'])
             if self.graphDialog is not None:
                 self.graphDialog.exec()
-        except:
+        except Exception:
             msg=qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setInformativeText(str(sys.exc_info()[1]))
@@ -251,7 +251,7 @@ class MaterialEditor(qt.QWidget):
             self.graph.setGraphTitle(ddict['Comment'])
             if self.graphDialog is not None:
                 self.graphDialog.exec()
-        except:
+        except Exception:
             msg=qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setInformativeText(str(sys.exc_info()[1]))
@@ -337,7 +337,7 @@ class MaterialComboBox(qt.QComboBox):
                                 "Hint: You can use _%s_" % text)
                     msg.exec()
                     msg = qt.QMessageBox.No
-                except:
+                except Exception:
                     msg=qt.QMessageBox.information( self, "Invalid Material %s" % str(qstring),
                                           "The material %s is not a valid Formula " \
                                           "nor a valid Material.\n" \
@@ -424,7 +424,7 @@ class MaterialValidator(qt.QValidator):
             # this test is needed even if pyflakes complains!
             float(text)
             return (self.Invalid, pos)
-        except:
+        except Exception:
             pass
         if text.endswith(' '):
             return (self.Invalid, pos)
@@ -736,12 +736,12 @@ class MaterialGUI(qt.QWidget):
             self.__nameLine.setText("%s" % self._current['Comment'])
             try:
                 self.__densityLine.setText("%.5g" % self._current['Density'])
-            except:
+            except Exception:
                 self.__densityLine.setText("")
             if 'Thickness' in self._current.keys():
                 try:
                     self.__thicknessLine.setText("%.5g" % self._current['Thickness'])
-                except:
+                except Exception:
                     self.__thicknessLine.setText("")
         if type(self._current['CompoundList']) != type([]):
             self._current['CompoundList'] = [self._current['CompoundList']]
@@ -798,7 +798,7 @@ class MaterialGUI(qt.QWidget):
             if len(text):
                 value = float(str(qstring))
                 self._current['Density'] = value
-        except:
+        except Exception:
             if silent:
                 return
             msg=qt.QMessageBox(self.__densityLine)
@@ -814,7 +814,7 @@ class MaterialGUI(qt.QWidget):
             if len(text):
                 value = float(text)
                 self._current['Thickness'] = value
-        except:
+        except Exception:
             if silent:
                 return
             msg=qt.QMessageBox(self.__thicknessLine)
@@ -911,7 +911,7 @@ class MaterialGUI(qt.QWidget):
         else:
             try:
                 float(str(qstring))
-            except:
+            except Exception:
                 msg=qt.QMessageBox(self.__table)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Invalid Float")
@@ -964,7 +964,7 @@ class MaterialGUI(qt.QWidget):
         else:
             try:
                 float(str(qstring))
-            except:
+            except Exception:
                 msg=qt.QMessageBox(self.__table)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Invalid Float")

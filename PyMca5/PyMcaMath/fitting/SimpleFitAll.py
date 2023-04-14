@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2017-2022 European Synchrotron Radiation Facility
+# Copyright (c) 2017-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -181,7 +181,7 @@ class SimpleFitAll(object):
             self._progress = (i * 100.) / self._nSpectra
             try:
                 self.processSpectrum(i)
-            except:
+            except Exception:
                 _logger.error(
                         "Error %s processing index = %d", sys.exc_info()[1], i)
                 if _logger.getEffectiveLevel() == logging.DEBUG:

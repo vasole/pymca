@@ -45,7 +45,7 @@ if __name__ == "__main__":
     try:
         # make sure hdf5plugins are imported
         import hdf5plugin
-    except:
+    except Exception:
         _logger.info("Failed to import hdf5plugin")
     # we have to get the Qt binding prior to import PyMcaQt
     import getopt
@@ -89,7 +89,7 @@ try:
     # try to import silx prior to importing matplotlib to prevent
     # unnecessary warning
     import silx.gui.plot
-except:
+except Exception:
     pass
 
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
@@ -311,13 +311,13 @@ class QStackWidget(StackBase.StackBase,
                         try:
                             f0 = os.path.basename(f0)
                             f1 = os.path.basename(f1)
-                        except:
+                        except Exception:
                             pass
                         title = "Stack from %s to %s"  % (f0, f1)
                 else:
                     title = qt.safe_str(self._stack.info['SourceName'])
                 self.setWindowTitle(title)
-        except:
+        except Exception:
             # TODO: give a reasonable title
             pass
 
@@ -520,7 +520,7 @@ class QStackWidget(StackBase.StackBase,
             xData, y, legend, info = self.mcaWidget.getActiveCurve()[:4]
             if xLabel not in [None, 'Channels']:
                 calibration = info.get("McaCalib", None)
-        except:
+        except Exception:
             _logger.info("Cannot obtain current calibration")
         return calibration
 
@@ -545,11 +545,11 @@ class QStackWidget(StackBase.StackBase,
         labels = [None] * len(self._stack.data.shape)
         try:
             xLabel = qt.safe_str(self.mcaWidget.getGraphXLabel())
-        except:
+        except Exception:
             xLabel = None
         try:
             xData, y, legend, info = self.mcaWidget.getActiveCurve()[:4]
-        except:
+        except Exception:
             xData = self._mcaData0.x[0]
             xLabel = 'Channels'
         if interpretation == 'image':
@@ -568,7 +568,7 @@ class QStackWidget(StackBase.StackBase,
                                     mcaindex=mcaIndex,
                                     interpretation=interpretation,
                                     compression=compression)
-        except:
+        except Exception:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setWindowTitle("Save error")
@@ -688,7 +688,7 @@ class QStackWidget(StackBase.StackBase,
                         primaryStackDataObject.data[:] = \
                                             primaryStackDataObject.data[:] + \
                                             secondary.getStackData()
-                except:
+                except Exception:
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setWindowTitle("Stack Summing Error")
@@ -707,7 +707,7 @@ class QStackWidget(StackBase.StackBase,
                                         info["McaLiveTime"]
                             else:
                                 raise ValueError("No compatible time information")
-                    except:
+                    except Exception:
                         msg = qt.QMessageBox(self)
                         msg.setIcon(qt.QMessageBox.Critical)
                         msg.setWindowTitle("Stack Time Summing Error")
@@ -730,7 +730,7 @@ class QStackWidget(StackBase.StackBase,
 
         try:
             stack = self.stackSelector.getStack()
-        except:
+        except Exception:
             txt = "%s" % sys.exc_info()[1]
             if txt.startswith("Incomplete selection"):
                 return
@@ -923,7 +923,7 @@ class QStackWidget(StackBase.StackBase,
                     idx = actionList.index(action)
         try:
             self.pluginInstanceDict[key].applyMethod(methods[idx])
-        except:
+        except Exception:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setWindowTitle("Plugin error")
@@ -1399,7 +1399,7 @@ class QStackWidget(StackBase.StackBase,
                                 motorValues.append(value)
                         dataObject.info["MotorNames"] = motorNames
                         dataObject.info["MotorValues"] = motorValues
-                except:
+                except Exception:
                     _logger.warning("Error obtaining positioners")
 
             self.sendMcaSelection(dataObject,
@@ -1452,7 +1452,7 @@ class QStackWidget(StackBase.StackBase,
                     if id(widget) != id(self):
                         if widget.parent() is None:
                             widget.close()
-                except:
+                except Exception:
                     _logger.debug("Error closing widget")
             from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
             PyMcaPrintPreview.resetSingletonPrintPreview()
@@ -1481,7 +1481,7 @@ if __name__ == "__main__":
                      sys.argv[1:],
                      options,
                      longoptions)
-    except:
+    except Exception:
         print("%s" % sys.exc_info()[1])
         sys.exit(1)
     fileindex = 0
@@ -1538,7 +1538,7 @@ if __name__ == "__main__":
         try:
             from PyMca5.PyMcaGraph.Plot import Plot
             Plot.defaultBackend = backend
-        except:
+        except Exception:
             _logger.warning("WARNING: Cannot set backend to %s", backend)
     widget = QStackWidget()
     w = StackSelector.StackSelector(widget)

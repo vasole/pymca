@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -141,7 +141,7 @@ class PluginLoader(object):
                         theCall = getattr(sys.modules[plugin], targetMethod)
                         self.pluginInstanceDict[plugin] = theCall(self)
                         self.pluginList.append(plugin)
-                except:
+                except Exception:
                     exceptionMessage += \
                         "Problem importing module %s\n" % plugin
                     exceptionMessage += "%s\n" % sys.exc_info()[0]

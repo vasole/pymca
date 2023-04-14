@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -150,7 +150,7 @@ class PeakIdentifier(qt.QWidget):
             cursor.movePosition(qt.QTextCursor.Start)
             self.__browsertext.setTextCursor(cursor)
             self.threshold.setFocus()
-        except:
+        except Exception:
             msg=qt.QMessageBox(self.energy)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid Float")

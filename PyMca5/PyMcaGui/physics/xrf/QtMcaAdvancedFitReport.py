@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V. Armando Sole - ESRF Data Analysis"
+__author__ = "V. Armando Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -108,12 +108,12 @@ class QtMcaAdvancedFitReport:
             outfile = os.path.join(self.outdir, self.outfile+".html")
         try:
             os.remove(outfile)
-        except:
+        except Exception:
             pass
         concentrationsfile = outfile[:-5]+"_concentrations.txt"
         try:
             os.remove(concentrationsfile)
-        except:
+        except Exception:
             pass
         if text is None:
             text = self.getText()
@@ -248,7 +248,7 @@ class QtMcaAdvancedFitReport:
             d=ConfigDict.ConfigDict(self.fitresult)
             try:
                 os.remove(self.outdir+"/"+self.outfile+".fit")
-            except:
+            except Exception:
                 pass
             if self.concentrations is not None:
                 d['concentrations'] = self.concentrations
@@ -266,7 +266,7 @@ class QtMcaAdvancedFitReport:
         d=ConfigDict.ConfigDict(self.fitresult['result']['config'])
         try:
             os.remove(self.outdir+"/"+self.outfile+".txt")
-        except:
+        except Exception:
             pass
         d.write(self.outdir+"/"+self.outfile+".txt")
         text+= "<a HREF=""%s"">%s</a>"% (self.outfile+".txt",self.outfile+".txt")
@@ -554,13 +554,13 @@ class QtMcaAdvancedFitReport:
             try:
                 user = os.getenv('USERNAME')
                 text+= "        <A STYLE=""color: #0000cc"">%s</A></FONT></TD>" % user
-            except:
+            except Exception:
                 text +="</FONT></TD>"
         else:
             try:
                 user = os.getenv("USER")
                 text+= "        <A STYLE=""color: #0000cc"">%s</A></FONT></TD>" % user
-            except:
+            except Exception:
                 text +="</FONT></TD>"
         text+= "    </TR>"
         text+= "</TABLE>"
@@ -651,7 +651,7 @@ class QtMcaAdvancedFitReport:
         outfile = self.outdir+"/"+self.outfile+".png"
         try:
             os.remove(outfile)
-        except:
+        except Exception:
             pass
 
         canvas.print_figure(outfile)

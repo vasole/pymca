@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -42,7 +42,7 @@ _logger = logging.getLogger(__name__)
 
 try:
     HOME=os.getenv('HOME')
-except:
+except Exception:
     HOME=None
 if HOME is not None:
     os.environ['HOME'] = HOME
@@ -410,7 +410,7 @@ class SpecfitFunctions(object):
        if yscaling == None:
             try:
                 yscaling=self.config['Yscaling']
-            except:
+            except KeyError:
                 yscaling=1.0
        if yscaling == 0:
             yscaling=1.0
@@ -762,7 +762,7 @@ class SpecfitFunctions(object):
        if yscaling == None:
             try:
                 yscaling=self.config['Yscaling']
-            except:
+            except Exception:
                 yscaling=1.0
        if yscaling == 0:
             yscaling=1.0
@@ -1073,7 +1073,7 @@ class SpecfitFunctions(object):
         if yscaling == None:
             try:
                 yscaling=self.config['Yscaling']
-            except:
+            except Exception:
                 yscaling=1.0
         if yscaling == 0:
             yscaling=1.0

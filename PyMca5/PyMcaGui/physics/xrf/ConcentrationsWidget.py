@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -52,7 +52,7 @@ try:
     from PyMca5.PyMcaGui.misc.TableWidget import TableWidget
     QTable = TableWidget
     USE_QTABLE_WIDGET = False
-except:
+except Exception:
     _logger.warning("Cannot import clipboard enabled table")
     QTable = qt.QTableWidget
     USE_QTABLE_WIDGET = True
@@ -117,7 +117,7 @@ class Concentrations(qt.QWidget):
                     else:
                         concentrations = self.processFitResult(*self.__lastVar, **self.__lastKw)
                     ddict['concentrations'] = concentrations
-                except:
+                except Exception:
                     self.__lastKw = None
                     raise
             self.mySignal(ddict)
@@ -157,7 +157,7 @@ class Concentrations(qt.QWidget):
                 ddict = threadResult
                 self.concentrationsTable.fillFromResult(ddict)
                 return ddict
-        except:
+        except Exception:
             self.__lastKw = None
             self.concentrationsTable.setRowCount(0)
             msg = qt.QMessageBox(self)
@@ -229,7 +229,7 @@ class SimpleThread(qt.QThread):
         else:
             try:
                 self._result = self._function(*self._var, **self._kw)
-            except:
+            except Exception:
                 self._result = ("Exception",) + sys.exc_info()
 
 

@@ -183,7 +183,7 @@ class Lanczos:
         self.class4sparse = sparse.__class__
         try:
             self.class4vect   = self.class4sparse.getClass4Vect()
-        except:
+        except Exception:
             self.class4vect   = sparse.getClass4Vect()
 
 

@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -124,7 +124,7 @@ class EnergyTab(qt.QWidget):
                     self.loadEnergyTableParameters(filename)
                     self.inputDir = os.path.dirname(filename)
                     PyMcaDirs.inputDir = self.inputDir
-                except:
+                except Exception:
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText("Error loading energy table: %s" % (sys.exc_info()[1]))
@@ -222,7 +222,7 @@ class EnergyTab(qt.QWidget):
         try:
             self.outputDir  = os.path.dirname(outputFile)
             PyMcaDirs.outputDir = os.path.dirname(outputFile)
-        except:
+        except Exception:
             self.outputDir  = "."
         if not outputFile.endswith('.csv'):
             outputFile += '.csv'
@@ -476,7 +476,7 @@ class EnergyTable(QTable):
             if len(text):
                 try:
                     energy = float(text)
-                except:
+                except Exception:
                     energyflag = 0
                     energy = None
             else:
@@ -487,7 +487,7 @@ class EnergyTable(QTable):
             if len(text):
                 try:
                     energyweight = float(text)
-                except:
+                except Exception:
                     energyflag  = 0
                     energyweight= 0.0
             else:
@@ -508,7 +508,7 @@ class EnergyTable(QTable):
                     self.adjustColumn(0 + 3*i)
                 else:
                     _logger.debug("column adjustment missing")
-        except:
+        except Exception:
             self.__disconnected = False
             raise
         self.__disconnected = False
@@ -529,7 +529,7 @@ class EnergyTable(QTable):
                 s=s.replace(" ","")
                 if len(s):
                     float(s)
-            except:
+            except Exception:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Invalid Float")
@@ -601,7 +601,7 @@ class EnergyTable(QTable):
                             ddict['energy'].append(ene)
                             ddict['rate'].append(rate)
                             ddict['scatterflag'].append(scatterflag)
-                except:
+                except Exception:
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText("EnergyTable: Error on energy %d" % i)

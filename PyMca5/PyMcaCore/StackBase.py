@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -67,7 +67,7 @@ try:
             PLUGINS_DIR = userPluginsDirectory
         else:
             PLUGINS_DIR = [PLUGINS_DIR, userPluginsDirectory]
-except:
+except Exception:
     PYMCA_PLUGINS_DIR = None
     pass
 
@@ -175,7 +175,7 @@ class StackBase(object):
                     else:
                         try:
                             __import__(plugin)
-                        except:
+                        except Exception:
                             if directory == PYMCA_PLUGINS_DIR:
                                 plugin = "PyMca5.PyMcaPlugins." + pluginName
                                 __import__(plugin)
@@ -185,7 +185,7 @@ class StackBase(object):
                         self.pluginInstanceDict[plugin] = \
                                 sys.modules[plugin].getStackPluginInstance(self)
                         self.pluginList.append(plugin)
-                except:
+                except Exception:
                     logger.debug("Problem importing module %s", plugin)
                     if logger.getEffectiveLevel() == logging.DEBUG:
                         raise
@@ -379,7 +379,7 @@ class StackBase(object):
         if positioners is not None:
             try:
                 self.setPositioners(positioners)
-            except:
+            except Exception:
                 logging.error("Error setting positioners. Ignoring them")
                 self._clearPositioners()
         for key in self.pluginInstanceDict.keys():

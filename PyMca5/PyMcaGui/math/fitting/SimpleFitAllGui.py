@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2018 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -187,7 +187,7 @@ class SimpleFitAllGui(SimpleFitGui):
                 try:
                     if os.path.exists(fileName):
                         os.remove(fileName)
-                except:
+                except Exception:
                     qt.QMessageBox.critical(
                         self, "Delete Error",
                         "ERROR while deleting file:\n%s" % fileName,
@@ -199,7 +199,7 @@ class SimpleFitAllGui(SimpleFitGui):
                 return
         try:
             self._startWork()
-        except:
+        except Exception:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setWindowTitle("Fitting All Error")

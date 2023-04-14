@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -69,7 +69,7 @@ if OpenGL.version.__version__ < '3.1.0':
         "PyOpenGL version >= 3.1.0 is required for OS Mesa backend.")
 try:
     from OpenGL.raw.osmesa import mesa
-except:
+except Exception:
     raise RuntimeError(
         """PyOpenGL is not set to use OSMesa.
          Add PYOPENGL_PLATFORM=osmesa to the environment variables.""")

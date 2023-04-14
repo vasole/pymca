@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2020-2022 European Synchrotron Radiation Facility
+# Copyright (c) 2020-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -40,7 +40,7 @@ _logger = logging.getLogger(__name__)
 try:
     from PyMca5.PyMcaIO import NexusUtils
     HAS_NEXUS_UTILS = True
-except:
+except Exception:
     # this should only happen if somebody uses this module out of the distribution
     HAS_NEXUS_UTILS = False
     _logger.info("PyMca5.PyMcaIO.NexusUtils could not be imported")

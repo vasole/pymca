@@ -52,7 +52,7 @@ from . import RenameCurveDialog
 try:
     from . import ColormapDialog
     COLORMAP_DIALOG = True
-except:
+except Exception:
     COLORMAP_DIALOG = False
 
 from .PyMca_Icons import IconDict
@@ -1073,7 +1073,7 @@ class PlotWindow(PlotWidget.PlotWidget):
                     idx = actionList.index(action)
         try:
             self.pluginInstanceDict[key].applyMethod(methods[idx])
-        except:
+        except Exception:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setWindowTitle("Plugin error")
@@ -1538,7 +1538,7 @@ class PlotWindow(PlotWidget.PlotWidget):
                                      text, self, qt.QRect())
             else:
                 qt.QToolTip.hideText()
-        except:
+        except Exception:
             print("Error trying to show mouse text <%s>" % text)
 
     def defaultSaveAction(self):
@@ -1655,7 +1655,7 @@ class PlotWindow(PlotWidget.PlotWidget):
                 ffile.write(self.array2SpecMca(y))
                 ffile.write("\n")
             ffile.close()
-        except:
+        except Exception:
             ffile.close()
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)

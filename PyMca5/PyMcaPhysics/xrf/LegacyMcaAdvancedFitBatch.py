@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -222,15 +222,12 @@ class McaAdvancedFitBatch(object):
             if HDF5SUPPORT:
                 if h5py.is_hdf5(inputfile):
                     self._HDF5 = True
-                    try:
-                        # if (len(self._filelist) == 1) && (self.mcaStep > 1)
-                        # it should attempt to avoid loading  many times
-                        # the stack into memory in case of multiple processes
-                        return HDF5Stack1D.HDF5Stack1D(self._filelist,
-                                                       self.selection)
-                    except:
-                        raise
-            
+                    # if (len(self._filelist) == 1) && (self.mcaStep > 1)
+                    # it should attempt to avoid loading  many times
+                    # the stack into memory in case of multiple processes
+                    return HDF5Stack1D.HDF5Stack1D(self._filelist,
+                                                   self.selection)
+
             ffile = self.__tryEdf(inputfile)
             if ffile is None:
                 ffile = self.__tryLucia(inputfile)
@@ -245,7 +242,7 @@ class McaAdvancedFitBatch(object):
                 ffile   = SpecFileLayer.SpecFileLayer()
                 ffile.SetSource(inputfile)
             return ffile
-        except:
+        except Exception:
             raise IOError("I do not know what to do with file %s" % inputfile)
 
     @property
@@ -294,7 +291,7 @@ class McaAdvancedFitBatch(object):
                             #It is a Diamond Stack
                             ffile=EDFStack.EDFStack(inputfile)
             return ffile
-        except:
+        except Exception:
             return None
 
     def __tryLucia(self, inputfile):
@@ -319,7 +316,7 @@ class McaAdvancedFitBatch(object):
         ffile = None
         try:
             ffile = AifiraMap.AifiraMap(inputfile)
-        except:
+        except Exception:
             ffile = None
         return ffile
 
@@ -353,7 +350,7 @@ class McaAdvancedFitBatch(object):
             self.__col = -1
             try:
                 cache_data = data[i, :, :]
-            except:
+            except Exception:
                 print("Error reading dataset row %d" % i)
                 print(sys.exc_info())
                 print("Batch resumed")
@@ -544,7 +541,7 @@ class McaAdvancedFitBatch(object):
                 if os.path.exists(self._concentrationsFile):
                     try:
                         os.remove(self._concentrationsFile)
-                    except:
+                    except Exception:
                         print("I could not delete existing concentrations file %s" %\
                               self._concentrationsFile)
             #print "self._concentrationsFile", self._concentrationsFile
@@ -556,7 +553,7 @@ class McaAdvancedFitBatch(object):
                     result = dict['result']
                     if 'concentrations' in dict:
                         concentrationsdone = 1
-                except:
+                except Exception:
                     print("Error trying to use result file %s" % fitfile)
                     print("Please, consider deleting it.")
                     print(sys.exc_info())
@@ -567,7 +564,7 @@ class McaAdvancedFitBatch(object):
                     #I make sure I take the fit limits configuration
                     self.mcafit.config['fit']['use_limit'] = 1
                     self.mcafit.setData(x,y, time=info.get("McaLiveTime", None))
-                except:
+                except Exception:
                     print("Error entering data of file with output = %s\n%s" %\
                           (filename, sys.exc_info()[1]))
                     # make sure the configuration is restored
@@ -601,14 +598,14 @@ class McaAdvancedFitBatch(object):
                                             fitresult=fitresult0,
                                             elementsfrommatrix=False,
                                             fluorates = self.mcafit._fluoRates)
-                        except:
+                        except Exception:
                             print("error in concentrations")
                             print(sys.exc_info()[0:-1])
                         concentrationsdone = True
                     else:
                         #just images
                         fitresult = self.mcafit.startfit(digest=0)
-                except:
+                except Exception:
                     print("Error fitting file with output = %s: %s)" %\
                           (filename, sys.exc_info()[1]))
                     if self.mcafit.config['fit'].get("strategyflag", False):
@@ -643,7 +640,7 @@ class McaAdvancedFitBatch(object):
                             concentrations = self._tool.processFitResult(config=tconf,
                                             fitresult=fitresult0,
                                             elementsfrommatrix=False)
-                        except:
+                        except Exception:
                             print("error in concentrations")
                             print(sys.exc_info()[0:-1])
                             #return
@@ -664,14 +661,14 @@ class McaAdvancedFitBatch(object):
                 if not os.path.exists(fitdir):
                     try:
                         os.mkdir(fitdir)
-                    except:
+                    except Exception:
                         print("I could not create directory %s" % fitdir)
                         return
                 fitdir = self.os_path_join(fitdir,filename+"_FITDIR")
                 if not os.path.exists(fitdir):
                     try:
                         os.mkdir(fitdir)
-                    except:
+                    except Exception:
                         print("I could not create directory %s" % fitdir)
                         return
                 if not os.path.isdir(fitdir):
@@ -689,10 +686,10 @@ class McaAdvancedFitBatch(object):
                         f['concentrations'] = concentrations
                         try:
                             os.remove(outfile)
-                        except:
+                        except Exception:
                             print("error deleting fit file")
                         f.write(outfile)
-                    except:
+                    except Exception:
                         print("Error writing concentrations to fit file")
                         print(sys.exc_info())
 
@@ -702,7 +699,7 @@ class McaAdvancedFitBatch(object):
                     name = self.os_path_join(self._outputdir,name)
                     try:
                         os.remove(name)
-                    except:
+                    except Exception:
                         pass
                     self.listfile=open(name,"w+")
                     self.listfile.write("fitfilelist = [")
@@ -729,7 +726,7 @@ class McaAdvancedFitBatch(object):
                             if not os.path.exists(imgdir):
                                 try:
                                     os.mkdir(imgdir)
-                                except:
+                                except Exception:
                                     print("I could not create directory %s" %\
                                           imgdir)
                                     return
@@ -779,7 +776,7 @@ class McaAdvancedFitBatch(object):
                     try:
                         self.__images[peak][self.__row, self.__col] = result[peak]['fitarea']
                         self.__sigmas[peak][self.__row, self.__col] = result[peak]['sigmaarea']
-                    except:
+                    except Exception:
                         pass
                 if self._concentrations:
                     layerlist = concentrations['layerlist']
@@ -792,7 +789,7 @@ class McaAdvancedFitBatch(object):
                                               concentrations[layer][self.__conKey][group]
                 try:
                     self.__images['chisq'][self.__row, self.__col] = result['chisq']
-                except:
+                except Exception:
                     print("Error on chisq row %d col %d" %\
                           (self.__row, self.__col))
                     print("File = %s\n" % filename)
@@ -808,7 +805,7 @@ class McaAdvancedFitBatch(object):
                             if not os.path.exists(imgdir):
                                 try:
                                     os.mkdir(imgdir)
-                                except:
+                                except Exception:
                                     print("I could not create directory %s" %\
                                           imgdir)
                                     return
@@ -833,7 +830,7 @@ class McaAdvancedFitBatch(object):
                     for roi in self._ROIimages[group].keys():
                         try:
                             self._ROIimages[group][roi][self.__row, self.__col] = dict[group][roi]
-                        except:
+                        except Exception:
                             print("error on (row,col) = %d,%d" %\
                                   (self.__row, self.__col))
                             print("File = %s" % filename)
@@ -886,13 +883,13 @@ class McaAdvancedFitBatch(object):
                 if not os.path.exists(dirname):
                     try:
                         os.mkdir(dirname)
-                    except:
+                    except Exception:
                         print("I could not create directory %s" % dirname)
                 Append = 0
                 if os.path.exists(edfname):
                     try:
                         os.remove(edfname)
-                    except:
+                    except Exception:
                         print("I cannot delete output file")
                         print("trying to append image to the end")
                         Append = 1
@@ -908,7 +905,7 @@ class McaAdvancedFitBatch(object):
             if os.path.exists(specname):
                 try:
                     os.remove(specname)
-                except:
+                except Exception:
                     pass
             specfile=open(specname,'w+')
             #specfile.write('\n')
@@ -952,7 +949,7 @@ class McaAdvancedFitBatch(object):
                     if not os.path.exists(dirname):
                         try:
                             os.mkdir(dirname)
-                        except:
+                        except Exception:
                             print("I could not create directory %s" % dirname)
                     edfout  = EdfFile.EdfFile(edfname)
                     edfout.WriteImage ({'Title':group+" "+roi} , self._ROIimages[group][roi],

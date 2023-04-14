@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -36,7 +36,7 @@ import numpy
 try:
     # try to import hdf5plugin
     import hdf5plugin
-except:
+except Exception:
     # but do not crash just because of it
     pass
 import h5py
@@ -57,14 +57,14 @@ SOURCE_TYPE = "HDF5"
 try:
     from silx.io import open as silxh5open
     logging.getLogger("silx.io.fabioh5").setLevel(logging.CRITICAL)
-except:
+except Exception:
     silxh5open = None
 
 def h5open(filename):
     try:
         # try to open as usual using h5py
         return h5py.File(filename, "r")
-    except:
+    except Exception:
         try:
             if h5py.version.hdf5_version_tuple < (1, 10):
                 # no reason to try SWMR mode
@@ -74,12 +74,12 @@ def h5open(filename):
                 return h5py.File(filename, "r", libver='latest', swmr=True)
             else:
                 raise
-        except:
+        except Exception:
             if silxh5open:
                 try:
                     _logger.info("Trying to open %s using silx" % filename)
                     return silxh5open(filename)
-                except:
+                except Exception:
                     _logger.info("Cannot open %s using silx" % filename)
             # give back the original error
             return h5py.File(filename, "r")
@@ -123,7 +123,7 @@ def h5py_sorting(object_list):
                            for o in object_list]
             sorting_list.sort()
             return [x[1] for x in sorting_list]
-    except:
+    except Exception:
         #The only way to reach this point is to have different
         #structures among the different entries. In that case
         #defaults to the unfiltered case
@@ -314,7 +314,7 @@ class NexusDataSource(object):
             index, entry = key.split(".")
             index = int(index)-1
             entry = int(entry)-1
-        except:
+        except Exception:
             #should we rise an error?
             _logger.debug("Error trying to interpret key = %s", key)
             return {}
@@ -375,7 +375,7 @@ class NexusDataSource(object):
         output.info = self.__getKeyInfo(actual_key)
         try:
             output.info["title"] = NexusTools.getTitle(phynxFile, entry)
-        except:
+        except Exception:
             txt = "Error reading title for path <%s>"
             _logger.warning(txt)
             output.info["title"] = ""
@@ -398,7 +398,7 @@ class NexusDataSource(object):
                                 if hasattr(value, "flat"):
                                     value = value.flat[0]
                         output.info['MotorValues'].append(value)
-            except:
+            except Exception:
                 # I cannot affort to fail here for something probably not used
                 _logger.debug("Error reading positioners\n%s", sys.exc_info())
         if "mca" in selection:
@@ -509,7 +509,7 @@ class NexusDataSource(object):
                        for idx in range(len(output.info["MotorNames"])):
                            value = output.info["MotorValues"][idx]
                            output.info['MotorValues'][idx] = value[single_idx]
-            except:
+            except Exception:
                 # import traceback
                 _logger.error("%s", sys.exc_info())
                 # print(("%s " % value) + ''.join(traceback.format_tb(trace)))
@@ -756,7 +756,7 @@ if __name__ == "__main__":
     try:
         sourcename=sys.argv[1]
         key       =sys.argv[2]
-    except:
+    except Exception:
         print("Usage: NexusDataSource <file> <key>")
         sys.exit()
     #one can use this:

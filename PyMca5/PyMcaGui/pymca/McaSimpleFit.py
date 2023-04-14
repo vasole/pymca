@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -104,11 +104,11 @@ class McaSimpleFit(qt.QWidget):
         self.specfit.setdata(var,**kw)
         try:
             self.info['xmin'] = "%.3f" % min(self.specfit.xdata[0], self.specfit.xdata[-1])
-        except:
+        except Exception:
             self.info['xmin'] = 'First'
         try:
             self.info['xmax'] = "%.3f" % max(self.specfit.xdata[0], self.specfit.xdata[-1])
-        except:
+        except Exception:
             self.info['xmax'] = 'Last'
         self.setheader(text="Fit of %s from %s %s to %s" % (self.info['legend'],
                                                             self.info['xlabel'],
@@ -190,7 +190,7 @@ class McaSimpleFit(qt.QWidget):
                                             self.info['xlabel'],
                                             self.info['xmin'],
                                             self.info['xmax'])
-        except:
+        except Exception:
             header = 'Fit of XXXXXXXXXX from Channel XXXXX to XXXX'
         if self.specfit.fitconfig['WeightFlag']:
             weight = "YES"
@@ -275,7 +275,7 @@ class McaSimpleFit(qt.QWidget):
                     page += 1
                 #painter.flush()
                 painter.end()
-            except:
+            except Exception:
                 #painter.flush()
                 painter.end()
                 msg =  qt.QMessageBox(self)

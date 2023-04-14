@@ -196,7 +196,7 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
     def threadFinished(self):
         try:
             self._threadFinished()
-        except:
+        except Exception:
             msg = qt.QMessageBox()
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setInformativeText(str(sys.exc_info()[1]))

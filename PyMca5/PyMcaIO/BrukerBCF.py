@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2022 European Synchrotron Radiation Facility
+# Copyright (c) 2022-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -45,7 +45,7 @@ try:
     from bcflight import bruker
     _logger.info("Bruker BCF file supported")
     HAS_BCF_SUPPORT = True
-except:
+except Exception:
     _logger.info("Bruker BCF file support not available")
     HAS_BCF_SUPPORT = False
 
@@ -72,7 +72,7 @@ class BrukerBCF(DataObject):
         try:
             self.data = reader.parse_hypermap(downsample=self._binning,
                                               lazy=False)
-        except:
+        except Exception:
             if "MemoryError" in "%s" % (sys.exc_info()[0],):
                 self._binning += 1
                 self.data = reader.parse_hypermap(downsample=self._binning,
@@ -112,7 +112,7 @@ class BrukerBCF(DataObject):
         if self._binning == 1:
             try:
                 live_times = get_live_times(root)
-            except:
+            except Exception:
                 _logger.warning("Error retrieving spectra live time")
                 live_times = None
             self.info["live_time"] = live_times
@@ -190,7 +190,7 @@ def isBrukerBCFFile(filename):
                 if owner:
                     fid.close()
                 result = True
-    except:
+    except Exception:
         if owner:
             fid.close()
     if result:

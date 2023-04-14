@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -930,7 +930,7 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
                 column = int((x[i] - x0) /deltaX)
                 try:
                     value = densityPlotMask[row, column]
-                except:
+                except Exception:
                     if row >= densityPlotMask.shape[0]:
                         row = densityPlotMask.shape[0] - 1
                     if column >= densityPlotMask.shape[1]:

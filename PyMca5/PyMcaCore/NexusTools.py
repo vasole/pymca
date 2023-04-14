@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2018-2022 European Synchrotron Radiation Facility
+# Copyright (c) 2018-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -39,14 +39,14 @@ try:
     # try to import hdf5plugin
     if hdf5plugin not in sys.modules:
         import hdf5plugin
-except:
+except Exception:
     # but do not crash just because of it
     pass
 import h5py
 from h5py import File, Dataset, Group
 try:
     from silx.io import is_dataset, is_group
-except:
+except Exception:
     def is_dataset(something):
         return False
 
@@ -123,7 +123,7 @@ def h5py_sorting(object_list):
                            for o in object_list]
             sorting_list.sort()
             return [x[1] for x in sorting_list]
-    except:
+    except Exception:
         #The only way to reach this point is to have different
         #structures among the different entries. In that case
         #defaults to the unfiltered case
@@ -588,7 +588,7 @@ def getScannedPositioners(h5file, path):
     entry_name = getEntryName(path, h5file=h5file)
     try:
         title = getTitle(h5file, path)
-    except:
+    except Exception:
         _logger.warning("Error getting title from entry <%s>" % entry_name)
         title = ""
     measurement = getMeasurementGroup(h5file, entry_name)
@@ -643,13 +643,13 @@ if __name__ == "__main__":
     import h5py
     try:
         sourcename=sys.argv[1]
-    except:
+    except Exception:
         print("Usage: NexusTools <file> <key>")
         sys.exit()
     try:
         from silx.io import open as h5open
         h5 = h5open(sourcename)
-    except:
+    except Exception:
         h5 = h5py.File(sourcename, 'r')
     entries = getNXClassGroups(h5, "/", ["NXentry", b"NXentry"], single=False)
     print("entries = ", entries)

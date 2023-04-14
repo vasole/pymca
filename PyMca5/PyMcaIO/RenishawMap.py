@@ -3,7 +3,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2021 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -184,7 +184,7 @@ def isRenishawMapFile(filename):
                 line = line.split("\t")
             y, x, wl, data = [float(item) for item in line]
             return True
-    except:
+    except Exception:
         # it is not a Renishaw map file
         pass
     return False

@@ -7,7 +7,7 @@
 # by Tim Rae
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -65,7 +65,7 @@ else:
 if QTCONSOLE:
     try:
         from qtconsole.rich_ipython_widget import RichJupyterWidget as RichIPythonWidget
-    except:
+    except Exception:
         from qtconsole.rich_ipython_widget import RichIPythonWidget
     from qtconsole.inprocess import QtInProcessKernelManager
 else:
@@ -97,7 +97,7 @@ class QIPythonWidget(RichIPythonWidget):
                 def _abort_queues(kernel):
                     pass
                 kernel_manager.kernel._abort_queues = _abort_queues
-        except:
+        except Exception:
             pass
         if BINDING in ["PySide", "PyQt4"]:
             kernel_manager.kernel.gui = 'qt4'
@@ -117,7 +117,7 @@ class QIPythonWidget(RichIPythonWidget):
                     self.kernel_manager.kernel.shell.magic('reset -sf')
                     kernel_client.stop_channels()
                     kernel_manager.shutdown_kernel()
-            except:
+            except Exception:
                 print("Error cleaning console variables")
                 kernel_client.stop_channels()
                 kernel_manager.shutdown_kernel()

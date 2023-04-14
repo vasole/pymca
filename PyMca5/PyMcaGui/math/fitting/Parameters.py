@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -324,7 +324,7 @@ class Parameters(QTable):
         else:
             try:
                 float(str(newvalue))
-            except:
+            except Exception:
                 return 0
         return 1
 
@@ -535,7 +535,7 @@ class Parameters(QTable):
                         if pos == 0:
                             best = param
                             return best, candidates
-                    except:
+                    except Exception:
                         pass
         #take the first
         return candidates[0], candidates
@@ -724,12 +724,12 @@ class Parameters(QTable):
                 try:
                     self.parameters[name]['cons1'] =\
                         float(str(self.parameters[name]['val1']))
-                except:
+                except Exception:
                     self.parameters[name]['cons1'] = 0
                 try:
                     self.parameters[name]['cons2'] =\
                         float(str(self.parameters[name]['val2']))
-                except:
+                except Exception:
                     self.parameters[name]['cons2'] = 0
                 if self.parameters[name]['cons1'] > self.parameters[name]['cons2']:
                     buf = self.parameters[name]['cons1']
@@ -745,7 +745,7 @@ class Parameters(QTable):
                 try:
                     self.parameters[name]['cons2'] =\
                         float(str(self.parameters[name]['val2']))
-                except:
+                except Exception:
                     error = 1
                     _logger.warning("Forcing factor to 1")
                     self.parameters[name]['cons2'] = 1.0
@@ -759,7 +759,7 @@ class Parameters(QTable):
                 try:
                     self.parameters[name]['cons2'] =\
                         float(str(self.parameters[name]['val2']))
-                except:
+                except Exception:
                     error = 1
                     _logger.warning("Forcing delta to 0")
                     self.parameters[name]['cons2'] = 0.0
@@ -773,7 +773,7 @@ class Parameters(QTable):
                 try:
                     self.parameters[name]['cons2'] =\
                         float(str(self.parameters[name]['val2']))
-                except:
+                except Exception:
                     error = 1
                     _logger.warning("Forcing sum to 0")
                     self.parameters[name]['cons2'] = 0.0

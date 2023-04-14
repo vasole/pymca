@@ -112,13 +112,13 @@ if BINDING == "PyQt5":
     try:
         from PyQt5.QtOpenGL import *
         HAS_OPENGL = True
-    except:
+    except Exception:
         _logger.info("PyQt5.QtOpenGL not available")
 
     try:
         from PyQt5.QtSvg import *
         HAS_SVG = True
-    except:
+    except Exception:
         _logger.info("PyQt5.QtSVG not available")
 
     Signal = pyqtSignal
@@ -134,14 +134,14 @@ elif BINDING == "PySide2":
     try:
         from PySide2.QtOpenGL import *
         HAS_OPENGL = True
-    except:
+    except Exception:
         _logger.info("PySide2.QtOpenGL not available")
 
 
     try:
         from PySide2.QtSvg import *
         HAS_SVG = True
-    except:
+    except Exception:
         _logger.info("PySide2.QtSVG not available")
     pyqtSignal = Signal
     pyqtSlot = Slot
@@ -392,12 +392,12 @@ class QFileDialog(_QFileDialog):
     def __init__(self, *args, **kwargs):
         try:
             _QFileDialog.__init__(self, *args, **kwargs)
-        except:
+        except Exception:
             # not all versions support kwargs
             _QFileDialog.__init__(self, *args)
         try:
             self.setOptions(_QFileDialog.DontUseNativeDialog)
-        except:
+        except Exception:
             print("WARNING: Cannot force default QFileDialog behavior")
 
 class HorizontalSpacer(QWidget):
@@ -422,7 +422,7 @@ class QToolButton(_QToolButton):
                 size = tb.iconSize()
                 if (size.width() > 15) and (size.height() > 15):
                     self.setIconSize(size)
-            except:
+            except Exception:
                 print("unable")
                 pass
 
@@ -446,7 +446,7 @@ if sys.version_info < (3,):
             try:
                 x = unicode(potentialQString, sys.getfilesystemencoding())
                 return x
-            except:
+            except Exception:
                 # on any error just keep going
                 pass
             # reasonable tries are 'utf-8' and 'latin-1'

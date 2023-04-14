@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -75,7 +75,7 @@ class PyMcaPrintPreview(qt.QDialog):
                     try:
                         l = len(home)
                         directory = os.path.join(home,"My Documents")
-                    except:
+                    except Exception:
                         home = '\\'
                         directory = '\\'
                     if os.path.isdir('%s' % directory):
@@ -250,7 +250,7 @@ class PyMcaPrintPreview(qt.QDialog):
             self.hide()
             self.accept()
             self._toBeCleared = True
-        except:
+        except Exception:
             painter.end()
             qt.QMessageBox.critical(self, "ERROR",
                                     'Printing problem:\n %s' % sys.exc_info()[1])

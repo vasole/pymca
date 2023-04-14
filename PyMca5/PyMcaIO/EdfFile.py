@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -100,12 +100,12 @@ import os.path #, tempfile, shutil
 try:
     import gzip
     GZIP = True
-except:
+except Exception:
     GZIP = False
 try:
     import bz2
     BZ2 = True
-except:
+except Exception:
     BZ2 = False
 try:
     from PyMca5.PyMcaIO import MarCCD
@@ -127,7 +127,7 @@ except ImportError:
 try:
     from PyMca5.FastEdf import extended_fread
     CAN_USE_FASTEDF = 1
-except:
+except Exception:
     CAN_USE_FASTEDF = 0
 
 _logger = logging.getLogger(__name__)
@@ -290,10 +290,10 @@ class  EdfFile(object):
                     elif os.path.basename(FileName).upper().endswith('EDF.GZ') or\
                          os.path.basename(FileName).upper().endswith('CCD.GZ'):
                         self.GZIP = True
-            except:
+            except Exception:
                 try:
                     self.File.close()
-                except:
+                except Exception:
                     pass
                 raise IOError("EdfFile: Error opening file")
 
@@ -425,7 +425,7 @@ class  EdfFile(object):
                         header[key.strip()] = val.strip(' ;\n')
                     line = infile.readline()
                     bytesread = bytesread + len(line)
-            except:
+            except Exception:
                 raise Exception("Error processing adsc header")
             # banned by bzip/gzip???
             try:
@@ -1070,7 +1070,7 @@ class  EdfFile(object):
     def __del__(self):
         try:
             self.__makeSureFileIsClosed()
-        except:
+        except Exception:
             pass
 
     def GetDefaultNumpyType(self, EdfType, index=None):

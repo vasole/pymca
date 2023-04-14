@@ -138,7 +138,7 @@ class SubprocessLogWidget(qt.QWidget):
         if self._p is not None:
             try:
                 self.stop()
-            except:
+            except Exception:
                 # this may happen if the process finished in the mean time
                 pass
         qt.QWidget.closeEvent(self, event)

@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -240,7 +240,7 @@ class SimpleFitGui(qt.QWidget):
 
         try:
             self.fitModule.importFunctions(functionsfile)
-        except:
+        except Exception:
             if _logger.getEffectiveLevel() == logging.DEBUG:
                 raise
             msg = qt.QMessageBox()
@@ -340,7 +340,7 @@ class SimpleFitGui(qt.QWidget):
             self.fitModule.estimate()
             self.setStatus()
             self.parametersTable.fillTableFromFit(self.fitModule.paramlist)
-        except:
+        except Exception:
             if _logger.getEffectiveLevel() == logging.DEBUG:
                 raise
             text = "%s:%s" % (sys.exc_info()[0], sys.exc_info()[1])
@@ -362,7 +362,7 @@ class SimpleFitGui(qt.QWidget):
         try:
             values,chisq,sigma,niter,lastdeltachi = self.fitModule.startFit()
             self.setStatus()
-        except:
+        except Exception:
             if _logger.getEffectiveLevel() == logging.DEBUG:
                 raise
             text = "%s:%s" % (sys.exc_info()[0], sys.exc_info()[1])

@@ -197,7 +197,7 @@ class DatasetSelectionPage(qt.QWizardPage):
             if hasattr(attr, "decode"):
                 try:
                     attr = attr.decode('utf-8')
-                except:
+                except Exception:
                     print("WARNING: Cannot decode NX_class attribute")
                     attr = None
         else:
@@ -216,7 +216,7 @@ class DatasetSelectionPage(qt.QWizardPage):
             if hasattr(attr, "decode"):
                 try:
                     attr = attr.decode('utf-8')
-                except:
+                except Exception:
                     print("WARNING: Cannot decode NX_class attribute")
                     continue
             if attr in ['NXdata', b'NXdata']:
@@ -277,7 +277,7 @@ class DatasetSelectionPage(qt.QWizardPage):
                                 if sys.version > '2.9':
                                     try:
                                         interpretation = interpretation.decode('utf-8')
-                                    except:
+                                    except Exception:
                                         print("WARNING: Cannot decode interpretation")
 
                             if 'axes' in nxData[key].attrs.keys():
@@ -285,7 +285,7 @@ class DatasetSelectionPage(qt.QWizardPage):
                                 if sys.version > '2.9':
                                     try:
                                         axes = axes.decode('utf-8')
-                                    except:
+                                    except Exception:
                                         print("WARNING: Cannot decode axes")
                                 axes = axes.split(":")
                                 for axis in axes:

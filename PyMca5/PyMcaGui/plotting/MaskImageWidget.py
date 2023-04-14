@@ -394,7 +394,7 @@ class MaskImageWidget(qt.QWidget):
             title = self.graphWidget.graph.getGraphTitle()
             if sys.version < '3.0':
                 title = qt.safe_str(title)
-        except:
+        except Exception:
             title = ""
         return title
 
@@ -1769,7 +1769,7 @@ class MaskImageWidget(qt.QWidget):
                     colormapType = 'logarithmic'
                 else:
                     colormapType = 'linear'
-            except:
+            except Exception:
                 colormapIndex, autoscale, vmin, vmax = self.colormap[0:4]
             ddict['linlogcolormap'] = colormapType
             if not autoscale:
