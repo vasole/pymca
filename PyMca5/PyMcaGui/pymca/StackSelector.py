@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -230,7 +230,7 @@ class StackSelector(object):
                 try:
                     stack.loadIndexedStack(filelist[0], begin, end,
                                            fileindex=fileindex)
-                except:
+                except Exception:
                     msg = qt.QMessageBox()
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setInformativeText("%s" % sys.exc_info()[1])
@@ -242,7 +242,7 @@ class StackSelector(object):
             if not omnicfile:
                 try:
                     stack.loadFileList(filelist, fileindex=fileindex)
-                except:
+                except Exception:
                     msg = qt.QMessageBox()
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText("%s" % sys.exc_info()[1])
@@ -459,7 +459,7 @@ if __name__ == "__main__":
                      sys.argv[1:],
                      options,
                      longoptions)
-    except:
+    except Exception:
         _logger.error(sys.exc_info()[1])
         sys.exit(1)
     fileindex = 0

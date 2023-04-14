@@ -223,7 +223,7 @@ def toolInfo():
         if not os.path.exists(os.path.join(rootdir, "PyMcaBatch.py")):
             # script usage case
             rootdir = os.path.dirname(EdfFileSimpleViewer.__file__)
-    except:
+    except Exception:
         # __file__ is not defined
         frozen = True
         rootdir = os.path.dirname(EdfFileSimpleViewer.__file__)
@@ -1103,7 +1103,7 @@ class McaBatchGUI(qt.QWidget):
                             qt.QMessageBox.critical(self,"ERROR", msg)
                             self.raise_()
                             return False
-                except:
+                except Exception:
                     _logger.warning("Cannot verify suitability of output directory")
         return True
 
@@ -1116,14 +1116,14 @@ class McaBatchGUI(qt.QWidget):
                 fileinfo = ffile.GetSourceInfo()
                 if fileinfo['KeyList'] == []:ffile=None
                 return "EdfFile"
-            except:
+            except Exception:
                 pass
             if (ffile is None):
                 ffile = SpecFileLayer.SpecFileLayer()
                 ffile.SetSource(inputfile)
             del ffile
             return "Specfile"
-        except:
+        except Exception:
             qt.QMessageBox.critical(self,
                                     sys.exc_info()[0],
                                     'I do not know what to do with file\n %s' % ffile)
@@ -1472,7 +1472,7 @@ class McaBatchGUI(qt.QWidget):
         if os.path.exists(listfile):
             try:
                 os.remove(listfile)
-            except:
+            except Exception:
                 _logger.error("Cannot delete file %s", listfile)
                 raise
         if config is None:
@@ -1512,7 +1512,7 @@ class McaBatchGUI(qt.QWidget):
         if self._showResult:
             try:
                 self._showProcessResults(edfoutlist, datoutlist)
-            except:
+            except Exception:
                 _logger.error("Failed plotting result (probably interrupted by the user)")
 
     def _mergeProcessResults(self):
@@ -1760,7 +1760,7 @@ class McaBatchWindow(qt.QWidget):
                 if os.path.exists(self.htmlindex):
                     try:
                         os.remove(self.htmlindex)
-                    except:
+                    except Exception:
                         _logger.warning("cannot delete file %s", self.htmlindex)
         nfiles = len(indexlist)
         self.status.setText("Processing file %s" % file)
@@ -1820,7 +1820,7 @@ class McaBatchWindow(qt.QWidget):
                     else:
                         self.__htmlReport(filename, key, outputdir,
                                           useExistingFiles, info, firstmca = False)
-            except:
+            except Exception:
                 _logger.warning("ERROR on REPORT %s", sys.exc_info())
                 _logger.warning("%s", sys.exc_info()[1])
                 _logger.warning("filename = %s key =%s " , filename, key)
@@ -1849,14 +1849,14 @@ class McaBatchWindow(qt.QWidget):
         if not os.path.exists(fitdir):
             try:
                 os.makedirs(fitdir)
-            except:
+            except Exception:
                 _logger.warning("I could not create directory %s", fitdir)
                 return
         fitdir = os.path.join(fitdir, filename+"_HTMLDIR")
         if not os.path.exists(fitdir):
             try:
                 os.makedirs(fitdir)
-            except:
+            except Exception:
                 _logger.warning("I could not create directory %s", fitdir)
                 return
         localindex = os.path.join(fitdir, "index.html")
@@ -1870,7 +1870,7 @@ class McaBatchWindow(qt.QWidget):
             if not useExistingFiles:
                 try:
                     os.remove(outfile)
-                except:
+                except Exception:
                     _logger.warning("cannot delete file %s", outfile)
                 useExistingResult = 0
         else:
@@ -1892,7 +1892,7 @@ class McaBatchWindow(qt.QWidget):
                 #code removed, concentrations in McaAdvancedFitBatch.py
                 try:
                     os.remove(self._concentrationsFile)
-                except:
+                except Exception:
                     pass
                 """
                 pass
@@ -2174,7 +2174,7 @@ def main():
                               mcaoffset=mcaoffset, chunk=chunk, selection=selection,
                               diagnostics=diagnostics, multipage=multipage,
                               tif=tif, edf=edf, csv=csv, h5=h5, dat=dat)
-        except:
+        except Exception:
             if exitonend:
                 _logger.warning("Error: ", sys.exc_info()[1])
                 _logger.warning("Quitting as requested")

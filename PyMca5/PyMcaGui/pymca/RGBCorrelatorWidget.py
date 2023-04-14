@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -65,7 +65,7 @@ try:
     NNMA = NNMADialog.NNMA
     from PyMca5.PyMcaGui.math import PCADialog
     PCA = PCADialog.PCA
-except:
+except Exception:
     NNMA = False
     PCA  = False
 
@@ -76,7 +76,7 @@ try:
     from tomogui.gui.ProjectWidget import ProjectWindow as TomoguiProjWindow
     from PyMca5.PyMcaGui.pymca.TomographyRecons import TomoReconsDialog
     TOMOGUI_FLAG = True
-except:
+except Exception:
     TOMOGUI_FLAG = False
 
 # Use QDataSource for complete test but requires too many imports
@@ -112,7 +112,7 @@ def isEdf(filename):
     else:
         try:
             twoChar = twoBytes.decode('utf-8')
-        except:
+        except Exception:
             twoChar = "__dummy__"
     filename = filename.lower()
     return twoChar in ["II", "MM", "\n{"] or\
@@ -723,7 +723,7 @@ class RGBCorrelatorWidget(qt.QWidget):
                     self.reset()
                 else:
                     self.setImageShape(shape)
-            except:
+            except Exception:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error reshaping: %s" % sys.exc_info()[1])
@@ -942,7 +942,7 @@ class RGBCorrelatorWidget(qt.QWidget):
                 self._addSingleFile(uri,
                                     filterused=filterused,
                                     ignoreStDev=ignoreStDev)
-        except:
+        except Exception:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Error adding file: %s" % sys.exc_info()[1])
@@ -972,7 +972,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         if isTif(filename):
             try:
                 self._addTifFile(filename, ignoreStDev=ignoreStDev)
-            except:
+            except Exception:
                 _logger.debug("Built-in tif support unsuccessful")
                 self._addQImageReadable(filename, ignoreStDev=ignoreStDev)
         elif isQImageReadable(filename):
@@ -1580,7 +1580,7 @@ class ImageShapeDialog(qt.QDialog):
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Invalid shape %d x %d" % (nrows, ncolumns))
                 msg.exec()
-        except:
+        except Exception:
             self.rows.setText("%g" % self._shape[0])
             self.columns.setText("%g" % self._shape[1])
             msg = qt.QMessageBox(self)
@@ -1643,7 +1643,7 @@ def main():
         try:
             import DataSource
             DataReader = DataSource.DataSource
-        except:
+        except Exception:
             from PyMca5.PyMcaCore import EdfFileDataSource
             DataReader = EdfFileDataSource.EdfFileDataSource
         for fname in filelist:

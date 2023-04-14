@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2019 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -783,7 +783,7 @@ class ScanWindow(BaseScanWindow):
                 # there is already a title
                 # no need to add a second one
                 return title
-        except:
+        except Exception:
             logger.warning('Problem accessing ScanWindow plot title')
         if self.scanWindowInfoWidget is not None:
             if not self.infoDockWidget.isHidden():
@@ -843,7 +843,7 @@ class ScanWindow(BaseScanWindow):
         outputFile, outputFilter = output
         try:
             self.saveOperation(outputFile, outputFilter)
-        except:
+        except Exception:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setWindowTitle("Save error")
@@ -878,7 +878,7 @@ class ScanWindow(BaseScanWindow):
         if fformat in ['EPS', 'PNG', 'SVG']:
             try:
                 self._graphicsSave(plot=self, filename=specFile)
-            except:
+            except Exception:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setWindowTitle("Save error")
@@ -1017,11 +1017,11 @@ class ScanWindow(BaseScanWindow):
         try:
             self.outputDir = os.path.dirname(outdir)
             PyMcaDirs.outputDir = os.path.dirname(outdir)
-        except:
+        except Exception:
             self.outputDir = "."
         try:
             outputFile = os.path.basename(outdir)
-        except:
+        except Exception:
             outputFile = outdir
         if len(outputFile) < 5:
             outputFile = outputFile + extension[-4:]

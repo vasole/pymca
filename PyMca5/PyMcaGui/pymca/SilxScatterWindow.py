@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2019-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2019-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -207,7 +207,7 @@ class SilxScatterWindow(qt.QWidget):
             self.dataObjectsDict[legend] = dataObject
             try:
                 self._xLabel, self._yLabel = self._getXYLabels(dataObject.info)
-            except:
+            except Exception:
                 self._xLabel, self._yLabel = "X", "Y"
 
         if self._plotEnabled:

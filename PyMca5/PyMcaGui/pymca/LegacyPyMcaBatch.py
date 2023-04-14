@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -601,14 +601,14 @@ class McaBatchGUI(qt.QWidget):
                 fileinfo = ffile.GetSourceInfo()
                 if fileinfo['KeyList'] == []:ffile=None
                 return "EdfFile"
-            except:
+            except Exception:
                 pass
             if (ffile is None):
                 ffile   = SpecFileLayer.SpecFileLayer()
                 ffile.SetSource(inputfile)
             del ffile
             return "Specfile"
-        except:
+        except Exception:
             qt.QMessageBox.critical(self,
                                     sys.exc_info()[0],
                                     'I do not know what to do with file\n %s' % ffile)
@@ -836,7 +836,7 @@ class McaBatchGUI(qt.QWidget):
                 if not os.path.exists(os.path.join(dirname, "LegacyPyMcaBatch.py")):
                     # script usage case
                     dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
-            except:
+            except Exception:
                 # __file__ is not defined
                 dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
                 frozen = True
@@ -968,7 +968,7 @@ class McaBatchGUI(qt.QWidget):
                 except UnicodeEncodeError:
                     try:
                         subprocess.call(cmd.encode(sys.getfilesystemencoding()))
-                    except:
+                    except Exception:
                         # be ready for any weird error like missing that encoding
                         try:
                             subprocess.call(cmd.encode('utf-8'))
@@ -984,7 +984,7 @@ class McaBatchGUI(qt.QWidget):
                 if not os.path.exists(os.path.join(dirname, "LegacyPyMcaBatch.py")):
                     # script usage case
                     dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
-            except:
+            except Exception:
                 # __file__ is not defined
                 dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
                 frozen = True
@@ -1098,7 +1098,7 @@ class McaBatchGUI(qt.QWidget):
         if os.path.exists(listfile):
             try:
                 os.remove(listfile)
-            except:
+            except Exception:
                 _logger.error("Cannot delete file %s", listfile)
                 raise
         if config is None:
@@ -1381,7 +1381,7 @@ class McaBatchWindow(qt.QWidget):
                 if os.path.exists(self.htmlindex):
                     try:
                         os.remove(self.htmlindex)
-                    except:
+                    except Exception:
                         _logger.warning("cannot delete file %s", self.htmlindex)
         nfiles = len(indexlist)-filebeginoffset-fileendoffset
         self.status.setText("Processing file %s" % file)
@@ -1442,7 +1442,7 @@ class McaBatchWindow(qt.QWidget):
                     else:
                         self.__htmlReport(filename, key, outputdir,
                                           useExistingFiles, info, firstmca = False)
-            except:
+            except Exception:
                 _logger.warning("ERROR on REPORT %s", sys.exc_info())
                 _logger.warning("%s", sys.exc_info()[1])
                 _logger.warning("filename = %s key =%s ", (filename, key))
@@ -1471,14 +1471,14 @@ class McaBatchWindow(qt.QWidget):
         if not os.path.exists(fitdir):
             try:
                 os.mkdir(fitdir)
-            except:
+            except Exception:
                 _logger.warning("I could not create directory %s", fitdir)
                 return
         fitdir = os.path.join(fitdir, filename+"_HTMLDIR")
         if not os.path.exists(fitdir):
             try:
                 os.mkdir(fitdir)
-            except:
+            except Exception:
                 _logger.warning("I could not create directory %s", fitdir)
                 return
         localindex = os.path.join(fitdir, "index.html")
@@ -1492,7 +1492,7 @@ class McaBatchWindow(qt.QWidget):
             if not useExistingFiles:
                 try:
                     os.remove(outfile)
-                except:
+                except Exception:
                     _logger.warning("cannot delete file %s", outfile)
                 useExistingResult = 0
         else:
@@ -1514,7 +1514,7 @@ class McaBatchWindow(qt.QWidget):
                 #code removed, concentrations in McaAdvancedFitBatch.py
                 try:
                     os.remove(self._concentrationsFile)
-                except:
+                except Exception:
                     pass
                 """
                 pass
@@ -1610,7 +1610,7 @@ class McaBatchWindow(qt.QWidget):
             try:
                 dirname = os.path.dirname(__file__)
                 frozen = False
-            except:
+            except Exception:
                 frozen = True
                 dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
             if not frozen:
@@ -1775,7 +1775,7 @@ def main():
                       concentrations=concentrations, fitfiles=fitfiles,
                       filebeginoffset=filebeginoffset,fileendoffset=fileendoffset,
                       mcaoffset=mcaoffset, chunk=chunk, selection=selection)
-        except:
+        except Exception:
             if exitonend:
                 _logger.warning("Error: ", sys.exc_info()[1])
                 _logger.warning("Quitting as requested")

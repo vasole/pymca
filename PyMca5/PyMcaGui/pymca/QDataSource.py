@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -66,7 +66,7 @@ try:
     from PyMca5.PyMcaCore import NexusDataSource
     from PyMca5.PyMcaGui.pymca import PyMcaNexusWidget
     import h5py
-except:
+except Exception:
     # HDF5 file format support is not mandatory
     NEXUS = False
 
@@ -95,7 +95,7 @@ def getSourceType(sourceName0):
                 f.close()
                 f = None
                 return NexusDataSource.SOURCE_TYPE
-            except:
+            except Exception:
                 pass
     if os.path.exists(sourceName):
         f = open(sourceName, 'rb')
@@ -138,7 +138,7 @@ def getSourceType(sourceName0):
                 ishdf5 = False
                 try:
                     ishdf5 = h5py.is_hdf5(sourceName)
-                except:
+                except Exception:
                     if sys.version > '2.9':
                         if sourceName.endswith('.h5') or\
                            sourceName.endswith('.hdf') or\
@@ -151,7 +151,7 @@ def getSourceType(sourceName0):
                     f.close()
                     f = None
                     return NexusDataSource.SOURCE_TYPE
-                except:
+                except Exception:
                     pass
             return SpecFileDataSource.SOURCE_TYPE
     else:
@@ -174,7 +174,7 @@ if __name__ == "__main__":
     try:
         sourcename=sys.argv[1]
         key       =sys.argv[2]
-    except:
+    except Exception:
         print("Usage: QDataSource <sourcename> <key>")
         sys.exit()
     #one can use this:

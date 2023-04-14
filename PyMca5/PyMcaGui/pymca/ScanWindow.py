@@ -59,7 +59,7 @@ MATPLOTLIB = True
 #otherways it cannot generate svg output
 try:
     import encodings.utf_8
-except:
+except Exception:
     #not a big problem
     pass
 
@@ -84,7 +84,7 @@ try:
             PLUGINS_DIR = userPluginsDirectory
         else:
             PLUGINS_DIR = [PLUGINS_DIR, userPluginsDirectory]
-except:
+except Exception:
     pass
 
 _logger = logging.getLogger(__name__)
@@ -749,12 +749,12 @@ class ScanWindow(PlotWindow.PlotWindow):
         try:
             self.outputDir  = os.path.dirname(outdir)
             PyMcaDirs.outputDir = os.path.dirname(outdir)
-        except:
+        except Exception:
             print("setting output directory to default")
             self.outputDir  = os.getcwd()
         try:
             outputFile = os.path.basename(outdir)
-        except:
+        except Exception:
             outputFile = outdir
         if len(outputFile) < 5:
             outputFile = outputFile + extension[-4:]
@@ -765,7 +765,7 @@ class ScanWindow(PlotWindow.PlotWindow):
     def _QSimpleOperation(self, operation):
         try:
             self._simpleOperation(operation)
-        except:
+        except Exception:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setInformativeText(str(sys.exc_info()[1]))
@@ -793,7 +793,7 @@ class ScanWindow(PlotWindow.PlotWindow):
             if filename[-3:].upper() in ['EPS', 'PNG', 'SVG']:
                 self.graphicsSave(filename)
                 return
-        except:
+        except Exception:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Graphics Saving Error: %s" % (sys.exc_info()[1]))

@@ -121,7 +121,7 @@ if __name__ == '__main__':
     try:
         # make sure hdf5plugins are imported
         import hdf5plugin
-    except:
+    except Exception:
         _logger.info("Failed to import hdf5plugin")
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
@@ -137,7 +137,7 @@ try:
     # try to import silx prior to importing matplotlib to prevent
     # unnecessary warning
     import silx.gui.plot
-except:
+except Exception:
     pass
 from PyMca5.PyMcaGui.pymca import PyMcaMdi
 IconDict = PyMcaMdi.IconDict
@@ -150,13 +150,13 @@ else:
 try:
     from PyMca5.PyMcaGui.physics.xrf import XRFMCPyMca
     XRFMC_FLAG = True
-except:
+except Exception:
     XRFMC_FLAG = False
 
 try:
     from PyMca5.PyMcaGui.pymca import SumRulesTool
     SUMRULES_FLAG = True
-except:
+except Exception:
     SUMRULES_FLAG = False
 
 # prefer lazy import to avoid OpenCL related crashes on startup
@@ -204,7 +204,7 @@ if __name__ == "__main__":
         splash.showMessage( 'PyMca %s' % __version__,
                 alignment,
                 qt.Qt.white)
-    except:
+    except Exception:
         # fall back to original implementation in case of troubles
         splash.showMessage( 'PyMca %s' % __version__,
                 qt.Qt.AlignLeft|qt.Qt.AlignBottom,
@@ -231,7 +231,7 @@ try:
        ("PySide2.QtOpenGL") in sys.modules or \
        ("PyQt5.QtOpenGL") in sys.modules:
         OBJECT3D = True
-except:
+except Exception:
     _logger.info("pyopengl not installed")
     OBJECT3D = False
 
@@ -249,7 +249,7 @@ else:
 
 try:
     from PyMca5.PyMcaGui.pymca import SilxScatterWindow
-except:
+except Exception:
     _logger.info("Cannot import SilxScatterWindow")
 
 # check that OpenGL is actually supported (ESRF rnice problems)
@@ -274,7 +274,7 @@ if sys.platform.startswith("linux"):
                     _logger.info("OpenGL >= 1.4 not available")
                     OPENGL_DRIVERS_OK = False
                     OBJECT3D = False
-        except:
+        except Exception:
             _logger.info("Cannot test OpenGL availability %s" % sys.exc_info()[1])
 
 # PyMca 3D disabled in favor of silx
@@ -291,7 +291,7 @@ try:
     from PyMca5.PyMcaGui.pymca import QStackWidget
     from PyMca5.PyMcaGui.pymca import StackSelector
     STACK = True
-except:
+except Exception:
     STACK = False
 from PyMca5.PyMcaGui.pymca import PyMcaPostBatch
 from PyMca5.PyMcaGui.pymca import RGBCorrelator
@@ -305,7 +305,7 @@ if QTVERSION > '4.3.0':
     try:
         from PyMca5.PyMcaCore import XiaCorrect
         XIA_CORRECT = True
-    except:
+    except Exception:
         pass
 
 SOURCESLIST = QDispatcher.QDataSource.source_types.keys()
@@ -410,7 +410,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             try:
                 defaultFileName = PyMca5.getDefaultSettingsFile()
                 self.configDir  = os.path.dirname(defaultFileName)
-            except:
+            except Exception:
                 if not ('fresh' in kw):
                     raise
             if not ('fresh' in kw):
@@ -526,7 +526,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
 
         try:
             self._dispatcherAddSelectionSlot(ddict)
-        except:
+        except Exception:
             if _logger.getEffectiveLevel() == logging.DEBUG:
                 raise
             msg = qt.QMessageBox(self)
@@ -592,7 +592,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                         if ('tth' in motor_mne) and ('th' in motor_mne):
                             #FOURC
                             hkl = True
-                except:
+                except Exception:
                     pass
                 if hkl:
                     imageWindow = PyMcaHKLImageWindow.PyMcaHKLImageWindow(
@@ -657,7 +657,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
     def dispatcherRemoveSelectionSlot(self, ddict):
         try:
             return self._dispatcherRemoveSelectionSlot(ddict)
-        except:
+        except Exception:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             txt = "Error: %s" % sys.exc_info()[1]
@@ -690,7 +690,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
     def dispatcherReplaceSelectionSlot(self, ddict):
         try:
             return self._dispatcherReplaceSelectionSlot(ddict)
-        except:
+        except Exception:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             txt = "Error: %s" % sys.exc_info()[1]
@@ -868,7 +868,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         try:
             d['ScanSimpleFit']['Configuration'].update(
                 self.scanWindow.scanFit.getConfiguration())
-        except:
+        except Exception:
             if _logger.getEffectiveLevel() == logging.DEBUG:
                 raise
             _logger.warning("Error getting ScanFit configuration")
@@ -954,7 +954,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                                     self.sourceWidget.selectorWidget[source].openFile(SourceName, justloaded=1)
                                 else:
                                     self.sourceWidget.selectorWidget[source].openFile(SourceName)
-                            except:
+                            except Exception:
                                 msg = qt.QMessageBox(self)
                                 msg.setIcon(qt.QMessageBox.Critical)
                                 txt = "Error: %s\n opening file %s" % (sys.exc_info()[1],SourceName )
@@ -967,7 +967,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                     if hasattr(selectorWidget,'setWidgetConfiguration'):
                         try:
                             selectorWidget.setWidgetConfiguration(ddict[source]['WidgetConfiguration'])
-                        except:
+                        except Exception:
                             msg = qt.QMessageBox(self)
                             msg.setIcon(qt.QMessageBox.Critical)
                             txt = "Error: %s\n configuring %s widget" % (sys.exc_info()[1], source )
@@ -1013,7 +1013,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                     if d['LastFit']['fitdone']:
                         try:
                             self.mcaWindow.advancedfit.fit()
-                        except:
+                        except Exception:
                             pass
                 else:
                     print("hidden")
@@ -1038,7 +1038,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                     if d['LastFit']['fitdone']:
                         try:
                             self.mcaWindow.advancedfit.fit()
-                        except:
+                        except Exception:
                             pass
                 else:
                     _logger.info("hidden")
@@ -1179,7 +1179,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         else:
             try:
                 self.splitter.insertWidget(0, self.sourceFrame)
-            except:
+            except Exception:
                 self.sourceFrame.setParent(self.splitter)
 
     def initSource(self):
@@ -1397,7 +1397,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 msg.setDetailedText(traceback.format_exc())
                 msg.exec()
                 return
-            except:
+            except Exception:
                 widget = None
                 del self._widgetDict[self.__imagingTool]
                 self.__imagingTool = None
@@ -1435,7 +1435,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                     if id(widget) != id(self):
                         if widget.parent() is None:
                             widget.close()
-                except:
+                except Exception:
                     _logger.debug("Error closing widget")
             from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
             PyMcaPrintPreview.resetSingletonPrintPreview()
@@ -1495,11 +1495,11 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         outputFile = outputFile[0]
         try:
             outputDir  = os.path.dirname(outputFile)
-        except:
+        except Exception:
             outputDir  = "."
         try:
             outputFile = os.path.basename(outputFile)
-        except:
+        except Exception:
             outputFile  = "PyMca.ini"
 
         #always overwrite for the time being
@@ -1522,7 +1522,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         try:
             self._saveAs(filename)
             self.configDir = outputDir
-        except:
+        except Exception:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Error Saving Configuration: %s" % (sys.exc_info()[1]))
@@ -1558,7 +1558,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                     # but we change the input dir to allow easy loading of the config file from the
                     # fit configuration window
                     PyMcaDirs.inputDir = os.path.dirname(source)
-        except:
+        except Exception:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setWindowTitle("Error opening data source")
@@ -1698,7 +1698,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                         _logger.debug("Module name = %s, %s",
                                       module.__name__,
                                       module.__revision__.replace("$", ""))
-            except:
+            except Exception:
                 pass
 
     def onPrint(self):
@@ -1786,7 +1786,7 @@ class MyQTextBrowser(qt.QTextBrowser):
                 return
             try:
                 self.report.show()
-            except:
+            except Exception:
                 self.report = qt.QTextBrowser()
                 self.report.setCaption(QString("PyMca Report"))
                 ddir=PyMcaDataDir.PYMCA_DOC_DIR
@@ -1848,7 +1848,7 @@ if __name__ == '__main__':
     try:
         for source in args:
             PyMcaMainWidgetInstance.sourceWidget.sourceSelector.openSource(source)
-    except:
+    except Exception:
         msg = qt.QMessageBox(PyMcaMainWidgetInstance)
         msg.setIcon(qt.QMessageBox.Critical)
         msg.setWindowTitle("Error opening data source")

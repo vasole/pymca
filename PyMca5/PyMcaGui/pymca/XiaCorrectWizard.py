@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2021 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "E. Papillon - ESRF Software group"
+__author__ = "E. Papillon - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -187,7 +187,7 @@ class XiaCorrectionWidget(qt.QWizardPage):
                 for det in detsplit:
                     try:
                         detno= int(det)
-                    except:
+                    except Exception:
                         detno= -1
                     if detno>=0:
                         dets.append(det)
