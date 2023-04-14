@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -241,7 +241,7 @@ class PluginsToolButton(qt.QToolButton, PluginLoader):
                     idx = actionNames.index(action)
         try:
             pluginInstances[key].applyMethod(methods[idx])
-        except:
+        except Exception:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setWindowTitle("Plugin error")
