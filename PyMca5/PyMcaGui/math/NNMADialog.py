@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -24,7 +24,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -52,7 +52,7 @@ class SimpleThread(qt.QThread):
     def run(self):
         try:
             self._result = self._function(*self._var, **self._kw )
-        except:
+        except Exception:
             if _logger.getEffectiveLevel() == logging.DEBUG:
                 raise
             self._result = ("Exception",) + sys.exc_info()
@@ -137,7 +137,7 @@ class NNMADialog(qt.QDialog):
                                     raise Exception(threadResult[1],
                                                 threadResult[2])
                     images, eigenvalues, eigenvectors = threadResult
-                except:
+                except Exception:
                     if isinstance(data, numpy.ndarray):
                         self._data.shape = old_shape
                     msg = qt.QMessageBox(self)

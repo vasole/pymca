@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -355,7 +355,7 @@ class SimpleFitConfigurationGui(qt.QDialog):
                         _logger.debug("Adding file %s", fileName)
                         self.simpleFitInstance.importFunctions(fileName)
                         currentFiles.append(fileName)
-                    except:
+                    except Exception:
                         if "library.zip" in fileName:
                             _logger.debug("Assuming PyMca supplied fit function")
                             continue
@@ -491,7 +491,7 @@ class SimpleFitConfigurationGui(qt.QDialog):
                 cfg.read(filename)
             self.initDir = os.path.dirname(filename)
             self.setConfiguration(cfg)
-        except:
+        except Exception:
             if _logger.getEffectiveLevel() == logging.DEBUG:
                 raise
             msg = qt.QMessageBox(self)
@@ -532,7 +532,7 @@ class SimpleFitConfigurationGui(qt.QDialog):
         try:
             cfg.write(filename)
             self.initDir = os.path.dirname(filename)
-        except:
+        except Exception:
             if _logger.getEffectiveLevel() == logging.DEBUG:
                 raise
             qt.QMessageBox.critical(self, "Save Parameters",
