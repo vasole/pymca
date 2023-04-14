@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -109,7 +109,7 @@ class EdfFileDataSource(object):
             index,image = key.split(".")
             index = int(index)-1
             image = int(image)-1
-        except:
+        except Exception:
             #should we rise an error?
             _logger.debug("Error trying to interpret key = %s", key)
             return {}
@@ -261,7 +261,7 @@ if __name__ == "__main__":
     try:
         sourcename=sys.argv[1]
         key       =sys.argv[2]
-    except:
+    except Exception:
         _logger.error("Usage: EdfFileDataSource <file> <key>")
         sys.exit()
     #one can use this:

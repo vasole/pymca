@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -227,7 +227,7 @@ class SpsDataSource(object):
                 labels = list(motors.keys())
                 try:
                     labels = [(int(x),x) for x in labels]
-                except:
+                except Exception:
                     _logger.warning("SpsDataSource error reverting to old behavior")
                     labels = [(x, x) for x in labels]
                 labels.sort()
@@ -279,7 +279,7 @@ class SpsDataSource(object):
                 # data is an array
                 info["McaCalib"] = data.tolist()[0]
                 info["env_updatecounter"] = updc
-            except:
+            except Exception:
                 # Some of our C modules return NULL without setting
                 # an exception ...
                 pass
@@ -293,7 +293,7 @@ class SpsDataSource(object):
                     info["EnvKey"] = envarray
                     info["Detectors"] = data.tolist()[0]
                     info["env_updatecounter"] = updc
-                except:
+                except Exception:
                     pass
         return info
 
@@ -365,7 +365,7 @@ def main():
         obj = DataSource(specname)
         data = obj.getData(arrayname)
         print("info = ", data.info)
-    except:
+    except Exception:
         # give usage instructions
         print("Usage: SpsDataSource <specversion> <arrayname>")
         sys.exit()

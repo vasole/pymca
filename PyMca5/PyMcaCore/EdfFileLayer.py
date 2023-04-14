@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -94,13 +94,13 @@ class EdfFileLayer(object):
                     for name in source_name:
                         try:
                             self.Source.append(EdfFile.EdfFile(name,fastedf=self.fastedf))
-                        except:
+                        except Exception:
                             # _logger.info("EdfFileLayer.SetSource: Error trying to read EDF file %s", name)
                             self.Source.append( None)
                 else:
                     try:
                         self.Source = EdfFile.EdfFile(source_name, fastedf=self.fastedf)
-                    except:
+                    except Exception:
                         # _logger.info("EdfFileLayer.SetSource: Error trying to read EDF file")
                         self.Source=None
         else:
@@ -138,7 +138,7 @@ class EdfFileLayer(object):
         """
         try:
             index = int(index)
-        except:
+        except Exception:
             pass
         if type(index) is not  type({}): return index
         for i in range(self.GetNumberPages()):
@@ -200,7 +200,7 @@ class EdfFileLayer(object):
                     index,image = key.split(".")
                     index = int(index)-1
                     image = int(image)-1
-                except:
+                except Exception:
                     _logger.error("Error trying to interpret key = %s", key)
                     return {}
                 source = self.Source[index]
@@ -450,7 +450,7 @@ if __name__ == "__main__":
             _logger.error("ERROR: cannot open file %s" % filename)
             sys.exit()
         #obj.LoadSource(key)
-    except:
+    except Exception:
         _logger.error("Usage: EdfFileData.py <filename> <image> <fastflag>")
         sys.exit()
     print(obj.GetSourceInfo())

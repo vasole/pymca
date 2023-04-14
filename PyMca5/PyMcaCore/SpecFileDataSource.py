@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -137,24 +137,24 @@ class SpecFileDataSource(object):
             if self.__fileHeaderList[0] == False:
                 try:
                     self.__fileHeaderList[0] = sel.fileheader('')
-                except:
+                except Exception:
                     _logger.debug("getSourceInfo %s", sys.exc_info()[1])
                     self.__fileHeaderList[0] = None
             try:
                 n = sel.nbmca()
-            except:
+            except Exception:
                 n = 0
             num_mca.append(n)
 
             try:
                 n = sel.lines()
-            except:
+            except Exception:
                 n= 0
             num_pts.append(n)
 
             try:
                 n = sel.command()
-            except:
+            except Exception:
                 n= ""
             commands.append(n)
         source_info["SourceName"] = self.__sourceNameList[0]
@@ -248,42 +248,42 @@ class SpecFileDataSource(object):
         if self.__fileHeaderList[index] == False:
             try:
                 self.__fileHeaderList[index] = scandata.fileheader('')
-            except:
+            except Exception:
                 _logger.debug("getScanInfo %s", sys.exc_info()[1])
                 self.__fileHeaderList[index] = None
         info["FileHeader"] = self.__fileHeaderList[index]
         try: info["Number"] = scandata.number()
-        except: info["Number"] = None
+        except Exception: info["Number"] = None
         try: info["Order"] = scandata.order()
-        except: info["Order"] = None
+        except Exception: info["Order"] = None
         try: info["Cols"] = scandata.cols()
-        except: info["Cols"] = 0
+        except Exception: info["Cols"] = 0
         try: info["Lines"] = scandata.lines()
-        except: info["Lines"] = 0
+        except Exception: info["Lines"] = 0
         try: info["Date"] = scandata.date()
-        except: info["Date"] = None
+        except Exception: info["Date"] = None
         if hasattr(scandata, "allmotors"):
             try:
                 info["MotorNames"] = scandata.allmotors()
-            except:
+            except Exception:
                 info["MotorNames"] = None
         else:
             try:
                 info["MotorNames"] = sourceObject.allmotors()
-            except:
+            except Exception:
                 info["MotorNames"] = None
         try: info["MotorValues"] = scandata.allmotorpos()
-        except: info["MotorValues"] = None
+        except Exception: info["MotorValues"] = None
         try: info["LabelNames"] = scandata.alllabels()
-        except: info["LabelNames"] = []
+        except Exception: info["LabelNames"] = []
         try: info["Command"] = scandata.command()
-        except: info["Command"] = None
+        except Exception: info["Command"] = None
         try: info["Header"] = scandata.header("")
-        except: info["Header"] = None
+        except Exception: info["Header"] = None
         try: info["NbMca"] = scandata.nbmca()
-        except: info["NbMca"] = 0
+        except Exception: info["NbMca"] = 0
         try: info["hkl"] =  scandata.hkl()
-        except: info["hkl"] =  None
+        except Exception: info["hkl"] =  None
         if info["NbMca"]:
             if info["Lines"] > 0 and info["NbMca"] % info["Lines"] == 0:
                 info["NbMcaDet"]= info["NbMca"] // info["Lines"]
@@ -302,7 +302,7 @@ class SpecFileDataSource(object):
                 mcainfo["McaPoint"]= int(mcano/info["NbMcaDet"])+(mcano%info["NbMcaDet"]>0)
                 mcainfo["McaDet"]= mcano-((mcainfo["McaPoint"]-1)*info["NbMcaDet"])
                 try: mcainfo["LabelValues"]= scandata.dataline(mcainfo["McaPoint"])
-                except: mcainfo["LabelValues"]= None
+                except Exception: mcainfo["LabelValues"]= None
             else:
                 mcainfo["McaPoint"]= 0
                 mcainfo["McaDet"]= mcano
@@ -325,7 +325,7 @@ class SpecFileDataSource(object):
                     cval= [ float(ctxt[1]), float(ctxt[2]), float(ctxt[3]) ]
                     mcainfo["McaCalib"]= cval
                 else:
-                #except:
+                #except Exception:
                     mcainfo["McaCalib"]=[0.0,1.0,0.0]
         ctime= scandata.header("@CTIME")
         if len(ctime):
@@ -343,7 +343,7 @@ class SpecFileDataSource(object):
                     mcainfo["McaPresetTime"]= float(ctxt[1])
                     mcainfo["McaLiveTime"]= float(ctxt[2])
                     mcainfo["McaRealTime"]= float(ctxt[3])
-                except:
+                except Exception:
                     pass
 
         chann = scandata.header("@CHANN")
@@ -376,7 +376,7 @@ class SpecFileDataSource(object):
         elif size==4:
             sel=self._sourceObjectList[index].select(sel_key)
             try: lines = sel.lines()
-            except: lines=0
+            except Exception: lines=0
             if nums[3]==0: mca_no=int(nums[2])
             else:          mca_no=((int(nums[3])-1)*lines)+int(nums[2])
         else:
@@ -648,14 +648,14 @@ class SpecFileDataSource(object):
         if scan_type&SF_SCAN:
             try:
                 scan_data= numpy.transpose(scan_obj.data()).copy()
-            except:
+            except Exception:
                 raise IOError("SF_SCAN read failed")
         elif scan_type&SF_MESH:
             try:
                 if raw:
                     try:
                         scan_data= numpy.transpose(scan_obj.data()).copy()
-                    except:
+                    except Exception:
                         raise IOError("SF_MESH read failed")
                 else:
                     scan_array = scan_obj.data()
@@ -664,17 +664,17 @@ class SpecFileDataSource(object):
                     for idx in range(mot2):
                         scan_data[:,idx,:] = numpy.transpose(scan_array[:,idx*mot1:(idx+1)*mot1]).copy()
                     scan_data = numpy.transpose(scan_data).copy()
-            except:
+            except Exception:
                 raise IOError("SF_MESH read failed")
         elif scan_type&SF_MCA:
             try:
                 scan_data = scan_obj.mca(1)
-            except:
+            except Exception:
                 raise IOError("SF_MCA read failed")
         elif scan_type&SF_NMCA:
             try:
                 scan_data = scan_obj.mca(1)
-            except:
+            except Exception:
                 raise IOError("SF_NMCA read failed")
 
         if scan_data is not None:
@@ -705,7 +705,7 @@ class SpecFileDataSource(object):
                 try:
                     mca_no= int(key_split[2])
                     scan_data= scan_obj.mca(mca_no)
-                except:
+                except Exception:
                     raise IOError("Single MCA read failed")
             if scan_data is not None:
                 scan_info.update(self.__getMcaInfo(mca_no, scan_obj, scan_info))
@@ -720,7 +720,7 @@ class SpecFileDataSource(object):
                     mca_no = (int(key_split[2])-1) * scan_info["NbMcaDet"] + \
                              int(key_split[3])
                     scan_data = scan_obj.mca(mca_no)
-                except:
+                except Exception:
                     raise IOError("SF_SCAN+SF_NMCA read failed")
             elif scan_type == SF_MESH + SF_MCA:
                 try:
@@ -732,14 +732,14 @@ class SpecFileDataSource(object):
                     _logger.debug("try to read mca number = %s", mca_no)
                     _logger.debug("total number of mca = %s", scan_info["NbMca"])
                     scan_data = scan_obj.mca(mca_no)
-                except:
+                except Exception:
                     raise IOError("SF_MESH+SF_MCA read failed")
             elif scan_type & SF_NMCA or scan_type & SF_MCA:
                 try:
                     mca_no = (int(key_split[2])-1) * scan_info["NbMcaDet"] + \
                              int(key_split[3])
                     scan_data = scan_obj.mca(mca_no)
-                except:
+                except Exception:
                     raise IOError("SF_MCA or SF_NMCA read failed")
             else:
                 raise TypeError("Unknown scan type!!!!!!!!!!!!!!!!")
@@ -755,15 +755,15 @@ class SpecFileDataSource(object):
         source = self._sourceObjectList[index]
         file_info={}
         try: file_info["Title"] = source.title()
-        except: file_info["Title"] = None
+        except Exception: file_info["Title"] = None
         try: file_info["User"] = source.user()
-        except: file_info["User"] = None
+        except Exception: file_info["User"] = None
         try: file_info["Date"] = source.date()
-        except: file_info["Date"] = None
+        except Exception: file_info["Date"] = None
         try: file_info["Epoch"] = source.epoch()
-        except: file_info["Epoch"] = None
+        except Exception: file_info["Epoch"] = None
         try: file_info["ScanNo"] = source.scanno()
-        except: file_info["ScanNo"] = None
+        except Exception: file_info["ScanNo"] = None
         return file_info
 
     def __getMeshSize(self, scan_array):

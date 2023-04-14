@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -150,7 +150,7 @@ class SPSLayer(object):
                 info["EnvKey"]= calibarray
                 info["McaCalib"]= data.tolist()[0]
                 info["env_updatecounter"]= updc
-            except:
+            except Exception:
                 pass
 
         if array in ["XIA_DATA", "XIA_BASELINE"]:
@@ -162,7 +162,7 @@ class SPSLayer(object):
                     info["EnvKey"]= envarray
                     info["Detectors"]= data.tolist()[0]
                     info["env_updatecounter"]= updc
-                except:
+                except Exception:
                     pass
 
         return info
@@ -286,7 +286,7 @@ if __name__ == "__main__":
         while(1):
             time.sleep(1)
             print(obj.RefreshPage(specname,arrayname))
-    except:
+    except Exception:
         print("Usage: SPSLayer.py <specversion> <specname>")
         sys.exit()
 

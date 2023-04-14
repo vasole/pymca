@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 E. Papillon, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -285,7 +285,7 @@ def parseArguments():
                 if ssum[0]==-1:
                     ssum= []
                 options["sums"].append(ssum)
-            except:
+            except Exception:
                 print("XiaCorrect ERROR: Cannot parse sum detectors")
                 print("\t%s"%arg)
                 sys.exit(0)

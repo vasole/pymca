@@ -3,7 +3,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -117,7 +117,7 @@ class PyMcaBatchBuildOutput(object):
             outfilename = os.path.join(outputdir, outfilename)
             try:
                 func(parts, outfilename)
-            except:
+            except Exception:
                 _logger.error("Error merging %s\n: %s", outfilename, sys.exc_info()[1])
                 continue
             outList.append(outfilename)
@@ -125,7 +125,7 @@ class PyMcaBatchBuildOutput(object):
                 for filename in parts:
                     try:
                         os.remove(filename)
-                    except:
+                    except Exception:
                         _logger.warning("Cannot delete file %s" % filename)
         return outList
 
