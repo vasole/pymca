@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2021 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -144,7 +144,7 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
             elif xLabel == info['selection']['cntlist'][1]:
                 self._motor1 = self._x
                 self._motor1Mne = self._xLabel
-        except:
+        except Exception:
             _logger.debug("XLabel should be one of the scanned motors")
 
         if "dmesh" in command:

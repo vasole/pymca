@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2020 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -59,14 +59,14 @@ try:
     sift = SIFTAlignmentWindow.sift
     ocl = SIFTAlignmentWindow.silx.opencl.ocl
     SIFT = True
-except:
+except Exception:
     _logger.info("SIFTAlignmentWindow not successful")
     SIFT = False
 
 try:
     import h5py
     HDF5 = True
-except:
+except Exception:
     HDF5 = False
 
 
@@ -202,7 +202,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                     dataGroup[info['xlabel']] = numpy.array(x, dtype=numpy.float32)
                     dataGroup[info['xlabel']].attrs['axis'] = numpy.int32(1)
                     axesAttribute = '%s:dim_1:dim_2' % info['xlabel']
-                except:
+                except Exception:
                     if _logger.getEffectiveLevel() == logging.DEBUG:
                         raise
                     dataGroup['dim_0'] = numpy.arange(stack.data.shape[mcaIndex]).astype(numpy.float32)
@@ -270,7 +270,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
         if not SIFT:
             try:
                 import pyopencl
-            except:
+            except Exception:
                 raise ImportError("PyOpenCL does not seem to be installed on your system")
         if ocl is None:
             raise ImportError("PyOpenCL does not seem to be installed on your system")
@@ -410,7 +410,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                 dataGroup[info['xlabel']] = numpy.array(x, dtype=numpy.float32)
                 dataGroup[info['xlabel']].attrs['axis'] = numpy.int32(1)
                 axesAttribute = '%s:dim_1:dim_2' % info['xlabel']
-            except:
+            except Exception:
                 if _logger.getEffectiveLevel() == logging.DEBUG:
                     raise
                 dataGroup['dim_0'] = numpy.arange(stack.data.shape[mcaIndex]).astype(numpy.float32)
@@ -603,7 +603,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                 dataGroup[info['xlabel']] = numpy.array(x, dtype=numpy.float32)
                 dataGroup[info['xlabel']].attrs['axis'] = numpy.int32(1)
                 axesAttribute = '%s:dim_1:dim_2' % info['xlabel']
-            except:
+            except Exception:
                 if _logger.getEffectiveLevel() == logging.DEBUG:
                     raise
                 dataGroup['dim_0'] = numpy.arange(stack.data.shape[mcaIndex]).astype(numpy.float32)

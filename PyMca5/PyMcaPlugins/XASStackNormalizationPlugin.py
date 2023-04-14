@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -284,7 +284,7 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
                                 post_edge_regions=post_edge_regions,
                                 algorithm=algorithm,
                                 algorithm_parameters=algorithm_parameters)[0:4]
-                except:
+                except Exception:
                     # what to do?
                     # for the data is clear (set to 0)
                     # for the jump 0 is also a good compromise
@@ -339,7 +339,7 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
                               post_edge_regions=post_edge_regions,
                               algorithm=algorithm,
                               algorithm_parameters=algorithm_parameters)[0:4]
-                except:
+                except Exception:
                     # what to do?
                     # for the data is clear (set to 0)
                     # for the jump 0 is also a good compromise

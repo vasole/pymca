@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -131,7 +131,7 @@ class KineticsPlugin(Plugin1DBase.Plugin1DBase):
                 if curve[2] == activeCurveLegend:
                     activeCurve = curve
                     break
-        except:
+        except Exception:
             activeCurve = curves[0]
             activeCurveLegend = curves[0][2]
 

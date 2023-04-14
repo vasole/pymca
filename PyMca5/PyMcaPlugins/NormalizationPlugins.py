@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -123,7 +123,7 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
             yMax = numpy.take(y, i1).max()
             try:
                 y = y/yMax
-            except:
+            except Exception:
                 continue
             if i == 0:
                 replace = (self._plotType != "MCA")
@@ -161,7 +161,7 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
                 ymax = numpy.nanmax(y)
                 if ymax != 0:
                     y = y / ymax
-            except:
+            except Exception:
                 print(sys.exc_info())
                 continue
             if i == 0:
@@ -199,7 +199,7 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
                 y = y - ymin
                 ysum = numpy.nansum(y)
                 y = y / ysum
-            except:
+            except Exception:
                 print(sys.exc_info())
                 continue
             if i == 0:
@@ -236,7 +236,7 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
                 ymin = numpy.nanmin(y)
                 y = y - ymin
                 y = y / numpy.trapz(y, x)
-            except:
+            except Exception:
                 print(sys.exc_info())
                 continue
             if i == 0:
