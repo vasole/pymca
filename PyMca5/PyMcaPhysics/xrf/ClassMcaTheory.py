@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -628,12 +628,12 @@ class McaTheory(object):
                                     #                      elements callback
                                     try:
                                         alphaIn  = self.config['attenuators'][attenuator][4]
-                                    except:
+                                    except Exception:
                                         print("warning, alphaIn set to 45 degrees")
                                         alphaIn  = 45.0
                                     try:
                                         alphaOut = self.config['attenuators'][attenuator][5]
-                                    except:
+                                    except Exception:
                                         print("warning, alphaOut set to 45 degrees")
                                         alphaOut  = 45.0
                                     matrixExcitationEnergy = Elements.Element[ele]['buildparameters']['energy']
@@ -855,12 +855,12 @@ class McaTheory(object):
                                 if i == 1:
                                     try:
                                         alphaIn  = self.config['attenuators']['Matrix'][4]
-                                    except:
+                                    except Exception:
                                         print("WARNING: Matrix incident angle set to 45 deg.")
                                         alphaIn  = 45.0
                                     try:
                                         alphaOut = self.config['attenuators']['Matrix'][5]
-                                    except:
+                                    except Exception:
                                         print("WARNING: Matrix outgoing angle set to 45 deg.")
                                         alphaOut  = 45.0
 
@@ -1192,7 +1192,7 @@ class McaTheory(object):
             else:
                 result=SpecfitFuns.SavitskyGolay(numpy.array(y).astype(numpy.float64),
                                     self.config['fit']['stripfilterwidth'])
-        except:
+        except Exception:
             print("Unsuccessful Savitsky-Golay smoothing: %s" % sys.exc_info())
             raise
             result=numpy.array(y).astype(numpy.float64)
@@ -2254,7 +2254,7 @@ class McaTheory(object):
                     self.sigmapar =fitresult[2]
                     self.__niter  =fitresult[3]
                     self.__lastdeltachi = fitresult[4]
-            except:
+            except Exception:
                 _logger.error( \
                     "Exception during strategy. Restoring configuration")
                 self.configure(self.__originalConfiguration)
@@ -2566,7 +2566,7 @@ class McaTheory(object):
         if outfile is not None:
             try:
                 os.remove(outfile)
-            except:
+            except Exception:
                 pass
             if info is not None:
                 d=ConfigDict.ConfigDict({'result':result, 'info':info})

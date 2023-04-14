@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -53,7 +53,7 @@ def getElementsInstance(dataDir=None, bindingEnergies=None, xcomFile=None):
     try:
         from PyMca5.PyMcaDataDir import PYMCA_DATA_DIR as pymcaDataDir
         from PyMca5 import getDataFile
-    except:
+    except Exception:
         _logger.info("Using fisx shell constants and ratios")
         pymcaDataDir = None
     if bindingEnergies is None:
@@ -491,7 +491,7 @@ def _getFisxMaterials(fitConfiguration):
                                               comment=comment)
                         fisxMaterial.setComposition(composition)
                         fisxMaterials.append(fisxMaterial)
-                    except:
+                    except Exception:
                         if len(materialName):
                             raise TypeError("Error defining material <%s>" % \
                                             materialName)
@@ -663,7 +663,7 @@ def  _getSecondaryCalculationLimitFromFitConfiguration(fitConfiguration):
     try:
         limit = float(\
             fitConfiguration["concentrations"]["secondarycalculationlimit"])
-    except:
+    except Exception:
         _logger.debug("Exception. Forcing no limit")
         limit = 0.0
     return limit
@@ -721,7 +721,7 @@ def _fisxFromFitConfigurationAction(fitConfiguration,
 
     try:
         secondary = fitConfiguration["concentrations"]["usemultilayersecondary"]
-    except:
+    except Exception:
         _logger.warning("Exception. Forcing tertiary")
         secondary = 2
 

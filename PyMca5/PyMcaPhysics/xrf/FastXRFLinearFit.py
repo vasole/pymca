@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -1055,7 +1055,7 @@ def main():
                      sys.argv[1:],
                      options,
                      longoptions)
-    except:
+    except Exception:
         print(sys.exc_info()[1])
         sys.exit(1)
     outputDir = None
