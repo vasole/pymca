@@ -136,7 +136,7 @@ from matplotlib import cm
 from matplotlib.font_manager import FontProperties
 try:
     from matplotlib.widgets import Cursor
-except:
+except Exception:
     print("matplotlib.widgets Cursor not available")
 
 from matplotlib.figure import Figure
@@ -217,7 +217,7 @@ class MatplotlibGraph(FigureCanvas):
                 # prevent use of offsets
                 self.ax.get_yaxis().get_major_formatter().set_useOffset(False)
                 self.ax.get_xaxis().get_major_formatter().set_useOffset(False)
-            except:
+            except Exception:
                 print("Error disabling matplotlib offsets")
         else:
             #this almost works

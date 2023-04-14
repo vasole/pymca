@@ -3,7 +3,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -38,7 +38,7 @@ import numpy
 from distutils.core import setup, Extension
 try:
     from Cython.Distutils import build_ext
-except:
+except Exception:
     build_ext = None
 
 c_files = glob.glob(os.path.join('src', 'InsidePolygonWithBounds.c'))
