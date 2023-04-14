@@ -42,7 +42,7 @@ if "hdf5plugin" not in sys.modules:
     # try to import hdf5plugins
     try:
         import hdf5plugin
-    except:
+    except Exception:
         _logger.info("Cannot import hdf5plugin")
 import h5py
 import weakref
@@ -121,7 +121,7 @@ def h5py_sorting(object_list, sorting_list=None):
             def getTitle(x):
                 try:
                     title = x["title"][()]
-                except:
+                except Exception:
                     # allow the title to be missing
                     title = ""
                 if hasattr(title, "dtype"):
@@ -135,7 +135,7 @@ def h5py_sorting(object_list, sorting_list=None):
             # by title and respecting actquisition order for equal title
             try:
                 ordered_list = h5py_sorting(object_list)
-            except:
+            except Exception:
                 ordered_list = object_list
             sorting_list = [(getTitle(o[1]), o) for o in ordered_list]
             sorted_list = sorted(sorting_list, key=itemgetter(0))
@@ -152,7 +152,7 @@ def h5py_sorting(object_list, sorting_list=None):
                            for o in object_list]
             sorting_list.sort()
             return [x[1] for x in sorting_list]
-    except:
+    except Exception:
         #The only way to reach this point is to have different
         #structures among the different entries. In that case
         #defaults to the unfiltered case
@@ -287,7 +287,7 @@ class H5NodeProxy(object):
                                                                finalList[i][0])
                     self._children = [H5NodeProxy(self.file, i[1], self)
                                       for i in finalList]
-                except:
+                except Exception:
                     # one cannot afford any error, so I revert to the old
                     # method where values where used instead of items
                     if 1 or _logger.getEffectiveLevel() == logging.DEBUG:
@@ -420,7 +420,7 @@ class H5NodeProxy(object):
             name = self.name
         try:
             return self.file[name]
-        except:
+        except Exception:
             _logger.critical("Cannot access HDF5 file path <%s>" % name)
             return name
 
@@ -465,7 +465,7 @@ class H5FileProxy(H5NodeProxy):
                     from PyMca5.PyMcaIO import HDF5Utils
                     return HDF5Utils.safe_hdf5_group_keys(file_path,
                                                       data_path=data_path)
-            except:
+            except Exception:
                 _logger.debug("Using standard approach")
                 return self.file[data_path].keys()
         else:
@@ -516,7 +516,7 @@ class FileModel(qt.QAbstractItemModel):
                     if isinstance(item, H5FileProxy):
                         try:
                             return MyQVariant(os.path.basename(item.file.filename))
-                        except:
+                        except Exception:
                             _logger.critical("Cannot retrieve file name")
                             return MyQVariant("Unknown file. Please refresh")
                     else:
@@ -542,16 +542,16 @@ class FileModel(qt.QAbstractItemModel):
                                             if hasattr(node, "asstr"):
                                                 try:
                                                     return MyQVariant("%s" % node.asstr()[()][0])
-                                                except:
+                                                except Exception:
                                                     return MyQVariant("%s" % node[()][0])
                                         else:
                                             #stored as a string
                                             try:
                                                 try:
                                                     return MyQVariant("%s" % node.asstr()[()])
-                                                except:
+                                                except Exception:
                                                     return MyQVariant("%s" % node[()])
-                                            except:
+                                            except Exception:
                                                 # issue #745
                                                 return MyQVariant("Unknown %s" % node)
                                 else:
@@ -573,7 +573,7 @@ class FileModel(qt.QAbstractItemModel):
                     if item.color == qt.Qt.blue:
                         return MyQVariant("Item has a double click NXdata associated action")
             return MyQVariant()
-        except:
+        except Exception:
             return MyQVariant("Unhandled exception filling tree. Reload?")
 
     def getNodeFromIndex(self, index):
@@ -795,7 +795,7 @@ class HDF5Widget(FileView):
                         filename = item.file.filename
                         if filename not in filelist:
                             filelist.append(filename)
-                    except:
+                    except Exception:
                         continue
         if len(filelist):
             for file in filelist:

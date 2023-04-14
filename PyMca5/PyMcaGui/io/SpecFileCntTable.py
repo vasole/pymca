@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -34,7 +34,7 @@ QTVERSION = qt.qVersion()
 try:
     import PyMca5.PyMcaGui.pymca.SilxGLWindow
     OBJECT3D = True
-except:
+except Exception:
     OBJECT3D = False
 
 class SpecFileCntTable(qt.QTableWidget):

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -44,7 +44,7 @@ if sys.version_info > (3, 5):
     try:
         from PyMca5.PyMcaCore import RedisTools
         BLISS = True
-    except:
+    except Exception:
         _logger.info("Bliss data file direct support not available")
 
 
@@ -185,7 +185,7 @@ class QSourceSelector(qt.QWidget):
             key = os.path.basename(filename[0])
             try:
                 self._emitSourceSelectedOrReloaded(filename, key)
-            except:
+            except Exception:
                 _logger.error("Problem opening %s" % filename[0])
             key = "%s" % session
             self._emitSourceSelectedOrReloaded([session], key)

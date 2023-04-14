@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -344,7 +344,7 @@ class HDF5InfoWidget(qt.QTabWidget):
                 newEvent = HDFInfoCustomEvent(ddict)
                 try:
                     qt.QApplication.postEvent(widget, newEvent)
-                except:
+                except Exception:
                     _logger.warning("Error notifying close event to widget", widget)
             self._notifyCloseEventToWidget = []
         return qt.QWidget.closeEvent(self, event)
@@ -394,7 +394,7 @@ def getInfo(hdf5File, node):
             if hasattr(id_type, "get_cset") and id_type.get_cset() == h5py.h5t.CSET_UTF8:
                 try:
                     dataw = data.asstr()
-                except:
+                except Exception:
                     _logger.warning("Cannot decode %s as utf-8" % data.name)
                     dataw = data
         if ("%s" % data.dtype).startswith("|S") or\
@@ -445,7 +445,7 @@ def getInfo(hdf5File, node):
                     if hasattr(id_type, "get_cset") and id_type.get_cset() == h5py.h5t.CSET_UTF8:
                         try:
                             memberObjectw = memberObject.asstr()
-                        except:
+                        except Exception:
                             _logger.warning("Cannot decode %s as utf-8" % \
                                             ddict['general'][member]['Name'])
                             memberObjectw = memberObject
