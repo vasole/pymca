@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -249,7 +249,7 @@ class FitParamWidget(FitParamForm):
     def __attPlotButtonSlot(self):
         try:
             self.computeEfficiency()
-        except:
+        except Exception:
             msg=qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             text = "Error %s" % sys.exc_info()[1]
@@ -406,7 +406,7 @@ class FitParamWidget(FitParamForm):
         before = self.getParameters()
         try:
             self._strategyDialog.setFitConfiguration(before)
-        except:
+        except Exception:
             msg=qt.QMessageBox(self)
             msg.setWindowTitle("Strategy Error: %s" % \
                                qt.safe_str(sys.exc_info()[1]))
@@ -674,7 +674,7 @@ class FitParamWidget(FitParamForm):
                     attpar.append(self.matrixGeometry.getParameters("AlphaScattering"))
                 else:
                     attpar.append(float(str(self.attTable.text(idx, 5))))
-            except:
+            except Exception:
                 if att.upper() not in ["MATRIX"]:
                     attpar= [0, '-', 0., 0., 1.0]
                 else:
@@ -726,7 +726,7 @@ class FitParamWidget(FitParamForm):
                 attpar.append(float(str(self.multilayerTable.text(idx, 3))))
                 attpar.append(float(str(self.multilayerTable.text(idx, 4))))
             #else:
-            except:
+            except Exception:
                 attpar= [0, '-', 0., 0.]
                 self.__parError("ATTENUATORS",
                                 "Multilayer parameters error on:\n%s\nReset it to zero." % att)
@@ -815,7 +815,7 @@ class FitParamWidget(FitParamForm):
             pars["deltaeta_factor"]= float(str(self.etaError.text()))
             pars["fixedeta_factor"]= int(self.etaCheck.isChecked())
             return pars
-        except:
+        except Exception:
             self.__parError("PEAK SHAPE",
                             "Peak Shape Parameter error on:\n%s" % err)
             return None
@@ -943,7 +943,7 @@ class FitParamWidget(FitParamForm):
                                 self.energyTable.getParameters()
             return pars
         #else:
-        except:
+        except Exception:
             self.__parError("FIT",
                             "Fit parameter error on:\n%s" % err)
             return None
@@ -1030,7 +1030,7 @@ class FitParamWidget(FitParamForm):
                         int(self.ignoreSpectrumCalibration.isChecked())
             return pars
         #else:
-        except:
+        except Exception:
             self.__parError("DETECTOR", "Detector parameter error on:\n%s"%err)
             return None
 
@@ -1217,7 +1217,7 @@ class FitParamDialog(qt.QDialog):
         #if 1:
             cfg.read(filename, sections)
             self.initDir = os.path.dirname(filename)
-        except:
+        except Exception:
         #else:
             #self.initDir = None
             msg=qt.QMessageBox(self)
@@ -1256,7 +1256,7 @@ class FitParamDialog(qt.QDialog):
             cfg.write(filename, sections)
             self.initDir = os.path.dirname(filename)
             return 1
-        except:
+        except Exception:
             qt.QMessageBox.critical(self, "Save Parameters",
                 "ERROR while saving parameters to\n%s"%filename,
                 qt.QMessageBox.Ok, qt.QMessageBox.NoButton, qt.QMessageBox.NoButton)

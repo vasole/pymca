@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V. Armando Sole - ESRF Data Analysis"
+__author__ = "V. Armando Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -42,7 +42,7 @@ _logger = logging.getLogger(__name__)
 try:
     from PyMca5.PyMcaGui.misc.TableWidget import TableWidget
     QTable = TableWidget
-except:
+except Exception:
     _logger.warning("Cannot import clipboard enabled table")
     QTable = qt.QTableWidget
 
@@ -240,7 +240,7 @@ class McaTable(QTable):
                     text = item.text()
                     try:
                         ddict[label] = float(str(text))
-                    except:
+                    except Exception:
                         ddict[label] = str(text)
                 col +=1
         self.sigMcaTableSignal.emit(ddict)

@@ -3,7 +3,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -202,7 +202,7 @@ class SampleConfiguration(qt.QWidget):
     def energySignal(self):
         try:
             energy = float(self.energyWidget.text())
-        except:
+        except Exception:
             energy = 0.0
         if energy <= 0.0:
             self.edgeSignal(self.edgeWidget.currentIndex())

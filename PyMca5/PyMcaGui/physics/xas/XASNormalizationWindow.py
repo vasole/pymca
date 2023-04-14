@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -346,7 +346,7 @@ class XASNormalizationWindow(qt.QWidget):
                                             emin=self.energy.min(),
                                             emax=self.energy.max())
                 self.__lastDict['edge_energy'] = edgeEnergy
-            except:
+            except Exception:
                 pass
         parameters = {}
         parameters['pre_edge_order'] = ddict['pre_edge']['polynomial']
@@ -364,7 +364,7 @@ class XASNormalizationWindow(qt.QWidget):
                                                             post_edge_regions=postRegions,
                                                             algorithm=algorithm,
                                                             algorithm_parameters=parameters)
-        except:
+        except Exception:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setWindowTitle("Normalization Error")

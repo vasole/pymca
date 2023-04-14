@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2020-2022 European Synchrotron Radiation Facility
+# Copyright (c) 2020-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -146,7 +146,7 @@ class TransmissionTableEditor(qt.QWidget):
                     self.loadTransmissionTable(filename)
                     self.inputDir = os.path.dirname(filename)
                     PyMcaDirs.inputDir = self.inputDir
-                except:
+                except Exception:
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText("Error transmission table: %s" % (sys.exc_info()[1]))
@@ -218,7 +218,7 @@ class TransmissionTableEditor(qt.QWidget):
         try:
             self.outputDir  = os.path.dirname(outputFile)
             PyMcaDirs.outputDir = os.path.dirname(outputFile)
-        except:
+        except Exception:
             self.outputDir  = "."
         if not outputFile.endswith('.csv'):
             outputFile += '.csv'
@@ -296,7 +296,7 @@ class TransmissionTableEditor(qt.QWidget):
         try:
             self._validateDict(ddict)
             self._transmissionTable = ddict
-        except:
+        except Exception:
             msg=qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setInformativeText(str(sys.exc_info()[1]))
