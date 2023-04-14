@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -182,7 +182,7 @@ class StackSimpleFit(object):
             try:
                 if self.mask[self._row, self._column]:
                     self.processStackData(i)
-            except:
+            except Exception:
                 _logger.warning("Error %s processing index = %d, row = %d column = %d",
                                 sys.exc_info()[1], i, self._row, self._column)
                 if _logger.getEffectiveLevel() == logging.DEBUG:

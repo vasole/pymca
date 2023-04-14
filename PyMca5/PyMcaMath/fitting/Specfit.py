@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -221,7 +221,7 @@ class Specfit(object):
                                                             sigmaywork,
                                                         self.filterlist[i][1],
                                                         self.filterlist[i][2])
-            except:
+            except Exception:
                 return filterstatus
         self.xdata=xwork
         self.ydata=ywork
@@ -255,12 +255,12 @@ class Specfit(object):
                 for item0 in item:
                         try:
                             newindex=int(item0)
-                        except:
+                        except Exception:
                             deleteerror=1
             else:
                 try:
                     newindex=int(item0)
-                except:
+                except Exception:
                     deleteerror=1
             if newindex not in index:
                 index.append(newindex)
@@ -466,7 +466,7 @@ class Specfit(object):
         bkg_esti_constrains = esti_bkg[1]
         try:
             zz = numpy.array(esti_bkg[2])
-        except:
+        except Exception:
             zz = numpy.zeros(numpy.shape(yy),numpy.float64)
         #added scaling support
         yscaling=1.0
@@ -569,45 +569,45 @@ class Specfit(object):
         try:
             f=os.path.basename(os.path.splitext(file)[0])
             newfun=__import__(f)
-        except:
+        except Exception:
             msg="Error importing module %s" % file
             #tkMessageBox.showerror('Error', msg)
             return 1
         try:
             init = newfun.INIT
             init()
-        except:
+        except Exception:
             pass
         try:
             theory=newfun.THEORY
-        except:
+        except Exception:
             _logger.debug("No theory name")
             theory = "%s" % file
         try:
             parameters=newfun.PARAMETERS
-        except:
+        except Exception:
             #tkMessageBox.showerror('Error',"Missing PARAMETERS list")
             return 1
 
         try:
             function=newfun.FUNCTION
-        except:
+        except Exception:
             #tkMessageBox.showerror('Error',"Missing FUNCTION")
             return 1
 
         try:
             estimate=newfun.ESTIMATE
-        except:
+        except Exception:
             estimate=None
 
         try:
             derivative=newfun.DERIVATIVE
-        except:
+        except Exception:
             derivative=None
 
         try:
             configure=newfun.CONFIGURE
-        except:
+        except Exception:
             configure=None
         badluck=0
         if type(theory) == type([]):
@@ -690,7 +690,7 @@ class Specfit(object):
                     constrains=param_constrains,
                     weightflag=self.fitconfig['WeightFlag'],
                     model_deriv=self.modelderiv)
-        except:
+        except Exception:
         #except 'LinearAlgebraError' :
             text = "%s" % sys.exc_info()[1]
             #if type(text) is not string._StringType:
@@ -803,7 +803,7 @@ class Specfit(object):
         self.bkg_internal_oldpars=pars
         try:
             idx = numpy.nonzero((self.xdata>=x[0]) & (self.xdata<=x[-1]))[0]
-        except:
+        except Exception:
             _logger.warning("ERROR %s", x)
         yy=numpy.take(self.ydata,idx)
         nrx=numpy.shape(x)[0]
@@ -1113,7 +1113,7 @@ class Specfit(object):
         result['xend']      = max(self.xdata[0], self.xdata[-1])
         try:
             result['fitstate']  = self.state
-        except:
+        except Exception:
             result['fitstate']  = 'Unknown'
         result['fitconfig'] = self.fitconfig
         result['config']    = self.configure()
@@ -1221,7 +1221,7 @@ class Specfit(object):
         try:
             chisq=numpy.sum(((yy-yfit)*(yy-yfit))/(numpy.fabs(yy)*len(yy)))
             scaling=1./chisq
-        except:
+        except Exception:
             scaling=1.0
         return scaling
 
@@ -1526,11 +1526,11 @@ class Specfit(object):
         #Still what to do with the first and last point ...
         try:
             derivfirst=numpy.array((y[1]-y[0])/(x[1]-x[0]))
-        except:
+        except Exception:
             derivfirst=numpy.array([])
         try:
             derivlast= numpy.array((y[-1]-y[-2])/(x[-1]-x[-2]))
-        except:
+        except Exception:
             derivlast=numpy.array([])
         result=numpy.zeros(len(i1)+1,numpy.float64)
         result[1:len(i1)]=0.5*((num[0:-1]/deno[0:-1])+\
