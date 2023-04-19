@@ -798,7 +798,7 @@ class QNexusWidget(qt.QWidget):
                 elif (len(mcaList)==0) and (nTabs > 2):
                     self.tableTab.removeTab(2)
             _logger.debug("currentTab = %s", currentTab)
-            if currentTab != "USER":
+            if currentTab not in ["USER", "AUTO"]:
                 if (len(mcaList) > 0) and (len(cntList) == 0):
                     idx = self.tableTabOrder.index("MCA")
                     self.tableTab.setCurrentIndex(idx)
