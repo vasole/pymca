@@ -929,6 +929,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                         try:
                             PyMcaDirs.inputDir = ddict[source] ['lastInputDir']
                         except ValueError:
+                            _logger.info("Cannot open directory <%s>" % ddict[source] ['lastInputDir'])
                             pass
                 if 'SourceName' in ddict[source]:
                     if type(ddict[source]['SourceName']) != type([]):
