@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -63,7 +63,8 @@ class CntSelectionType(qt.QWidget):
         self._sliceList = []
 
         self._index = qt.QSpinBox(self)
-        if shape is None:
+        if shape in [None, "None"]:
+            shape = None
             maximum = 0
         elif len(shape) in [0, 1]:
             maximum = 0
