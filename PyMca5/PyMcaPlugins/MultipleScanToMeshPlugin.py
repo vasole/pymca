@@ -70,7 +70,7 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
         self.methodDict['Mesh'] = [self._mesh,
                                    "Show mesh image",
                                    None]
-
+        self._silx = None
         self._rixsWidget = None
         self._lastFixedMotorMne = None
 
@@ -299,13 +299,34 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
                 raise RuntimeError("griddata function not available")
 
             if self._rixsWidget is None:
-                self._rixsWidget = MaskImageWidget.MaskImageWidget(\
-                                            imageicons=False,
-                                            selection=False,
-                                            aspect=True,
-                                            profileselection=True,
-                                            scanwindow=self)
-                self._rixsWidget.setLineProjectionMode('X')
+                try:
+                    from PyMca5.PyMcaGui.plotting import SilxMaskImageWidget
+                    self._rixsWidget = SilxMaskImageWidget.SilxMaskImageWidget()
+                    self._rixsWidget.setAlphaSliderVisible(False)
+                    self._rixsWidget.setBackgroundActionVisible(False)
+                    self._rixsWidget.setMedianFilterWidgetVisible(False)
+                    self._rixsWidget.setProfileToolbarVisible(True)
+                    self._rixsWidget.setProfileToolbarVisible(True)
+                    self._rixsWidget.setButtonBoxWidgetVisible(False)
+                    self._rixsWidget.group.removeAction(\
+                                    self._rixsWidget.getMaskAction())
+                    self._rixsWidget.slider.hide()
+                    if not hasattr(self._rixsWidget, "setXLabel"):
+                        self._rixsWidget.setXLabel = \
+                            self._rixsWidget.plot.setGraphXLabel
+                        self._rixsWidget.setYLabel = \
+                            self._rixsWidget.plot.setGraphYLabel
+                    self._silx = True
+                except Exception:
+                    _logger.info("Cannot use SilxMaskImageWidget")
+                    self._silx = False
+                    self._rixsWidget = MaskImageWidget.MaskImageWidget(\
+                                                imageicons=False,
+                                                selection=False,
+                                                aspect=True,
+                                                profileselection=True,
+                                                scanwindow=self)
+                    self._rixsWidget.setLineProjectionMode('X')
             #actualMax = zData.max()
             #actualMin = zData.min()
             #zz = numpy.where(numpy.isfinite(zz), zz, actualMax)
@@ -322,7 +343,14 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
                 self._rixsWidget.setYLabel("Emitted Energy (eV)")
             else:
                 self._rixsWidget.setYLabel("Energy Transfer (eV)")
-            self._rixsWidget.setImageData(zz,
+            if self._silx:
+                self._rixsWidget.setImages([zz],
+                                           labels=[""],
+                                           origin=(xScale[0], yScale[0]),
+                                           width=xScale[1] * zz.shape[1],
+                                           height=yScale[1]* zz.shape[0])
+            else:
+                self._rixsWidget.setImageData(zz,
                                           xScale=xScale,
                                           yScale=yScale)
             # self._rixsWidget.graph.replot()

@@ -503,6 +503,7 @@ class SilxMaskImageWidget(qt.QMainWindow):
         self.replaceImageButton.clicked.connect(self._replaceImageClicked)
 
         layout.addWidget(buttonBox)
+        self._buttonBox = buttonBox
 
         # median filter widget
         self._medianParameters = {'row_width': 1,
@@ -789,6 +790,16 @@ class SilxMaskImageWidget(qt.QMainWindow):
         :param visible: True to show tool button, False to hide it.
         """
         self.bgAction.setVisible(visible)
+
+    def setButtonBoxWidgetVisible(self, visible):
+        """Set visibility of the image actions widget
+
+        :param visible: True to show the buttons, False to hide them.
+        """
+        if visible:
+            self._buttonBox.show()
+        else:
+            self._buttonBox.hide()
 
     def setProfileToolbarVisible(self, visible):
         """Set visibility of the profile toolbar
