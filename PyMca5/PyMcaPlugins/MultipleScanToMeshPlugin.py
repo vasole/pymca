@@ -72,6 +72,7 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
                                    None]
 
         self._rixsWidget = None
+        self._lastFixedMotorMne = None
 
     #Methods to be implemented by the plugin
     def getMethods(self, plottype=None):
@@ -126,8 +127,9 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
 
         if self._xLabel not in \
            ["energy", "Energy", "Spec.Energy", "arr_hdh_ene", "Mono.Energy"]:
-            msg = "X axis does not correspond to a supported RIXS scan"
-            raise ValueError(msg)
+            if not self._xLabel.lower().startswith("energy"):
+                msg = "X axis does not correspond to a supported RIXS scan"
+                raise ValueError(msg)
 
         motorNames = allCurves[0][3]["MotorNames"]
         CHESS = False
@@ -146,12 +148,18 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
         elif "Spec.Energy" in motorNames:
             # ID26
             fixedMotorMne = "Spec.Energy"
+        elif (self._xLabel == "energy_enc") and ("spenean0" in motorNames):
+            # ID24-DCM
+            fixedMotorMne = "spenean0"
         else:
-            # TODO: Show a combobox to allow the selection of the "motor"
-            msg = "Cannot automatically recognize motor mnemomnic to be used"
-            raise ValueError(msg)
+            if self._lastFixedMotorMne is None:
+                # TODO: Show a combobox to allow the selection of the "motor"
+                pass
+            if self._lastFixedMotorMne not in motorNames:
+                self._lastFixedMotorMne = None
+                msg = "Cannot automatically recognize motor mnemomnic to be used"
+                raise ValueError(msg)
         fixedMotorIndex = allCurves[0][3]["MotorNames"].index(fixedMotorMne)
-
 
         #get the min and max values of the curves
         if fixedMotorMne != "Mono.Energy":
@@ -283,7 +291,10 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
                     # Natural neighbor interpolation not always possible
                     zz = griddata(xData, etData, zData, xx, yy, interp='linear')
             elif GRIDDATA == "scipy":
-                zz = griddata((xData, etData), zData, (xx, yy), method='cubic')
+                zz = griddata((xData, etData),
+                              zData,
+                              (xx, yy),
+                              method='linear')
             else:
                 raise RuntimeError("griddata function not available")
 
