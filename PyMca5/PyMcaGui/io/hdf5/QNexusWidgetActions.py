@@ -233,13 +233,14 @@ class QNexusWidgetActions(qt.QWidget):
             threed = False
         else:
             threed = True
-        self.set3DEnabled(threed)
-        self.meshBox.setChecked(twod)
         self.forceMcaBox.setChecked(mca)
         if auto == "ADD":
             self._setAutoAdd()
         elif auto == "OFF":
+            # this is compatible with 2d or 3d selections
             self._setAutoOff()
+            self.set3DEnabled(threed)
+            self.meshBox.setChecked(twod)
         elif auto == "REPLACE":
             self._setAutoReplace()
 

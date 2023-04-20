@@ -808,6 +808,57 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         ddict['SelectionType'] = text
         self.sigOtherSignals.emit(ddict)
 
+    def getWidgetConfiguration(self):
+        # just limited to the actions
+        ddict = {}
+        ddict["mca"]= self.forceMcaBox.isChecked()
+        if self.autoReplaceBox.isChecked():
+            ddict['auto'] = "REPLACE"
+        elif self.autoAddBox.isChecked():
+            ddict['auto'] = "ADD"
+        else:
+            ddict['auto'] = "OFF"
+        ddict["2d"]= self.meshBox.isChecked()
+        ddict["3d"]= self.object3DBox.isChecked()
+        ddict["mca"]= self.forceMcaBox.isChecked()
+        return ddict
+
+    def setWidgetConfiguration(self, ddict):
+        # just limited to the actions
+        mca = ddict.get("mca", False)
+        if mca in ["False", "0", 0, "", "false"]:
+            mca = False
+        else:
+            mca = True
+        auto = ddict.get("auto", "ADD")
+        twod = ddict.get("2d", "False")
+        if twod in ["False", "0", 0, "", "false"]:
+            twod = False
+        else:
+            twod = True
+        threed = ddict.get("3d", "False")
+        if threed in ["False", "0", 0, "", "false"]:
+            threed = False
+        else:
+            threed = True
+        self.forceMcaBox.setChecked(mca)
+        if auto == "ADD":
+            self._setAutoAdd()
+        elif auto == "OFF":
+            self._setAutoOff()
+            # this is compatible with 2D or 3D selections
+            if OBJECT3D:
+                if threed:
+                    self._setObject3DBox()
+                else:
+                    self.object3DBox.setChecked(False)
+            if twod:
+                self._setMeshBox()
+            else:
+                self.meshBox.setChecked(False)
+        elif auto == "REPLACE":
+            self._setAutoReplace()
+
 def test():
     from PyMca5.PyMcaGui.pymca import QDataSource
     a = qt.QApplication(sys.argv)
