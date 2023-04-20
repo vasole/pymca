@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2018 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2018-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -215,6 +215,34 @@ class QNexusWidgetActions(qt.QWidget):
         ddict["3d"]= self.object3DBox.isChecked()
         ddict["mca"]= self.forceMcaBox.isChecked()
         return ddict
+
+    def setConfiguration(self, ddict):
+        mca = ddict.get("mca", False)
+        if mca in ["False", "0", 0, "", "false"]:
+            mca = False
+        else:
+            mca = True
+        auto = ddict.get("auto", "ADD")
+        twod = ddict.get("2d", "False")
+        if twod in ["False", "0", 0, "", "false"]:
+            twod = False
+        else:
+            twod = True
+        threed = ddict.get("3d", "False")
+        if threed in ["False", "0", 0, "", "false"]:
+            threed = False
+        else:
+            threed = True
+        self.forceMcaBox.setChecked(mca)
+        if auto == "ADD":
+            self._setAutoAdd()
+        elif auto == "OFF":
+            # this is compatible with 2d or 3d selections
+            self._setAutoOff()
+            self.set3DEnabled(threed)
+            self.meshBox.setChecked(twod)
+        elif auto == "REPLACE":
+            self._setAutoReplace()
 
 if __name__ == "__main__":
     app = qt.QApplication([])

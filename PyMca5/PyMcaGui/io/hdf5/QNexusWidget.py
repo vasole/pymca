@@ -431,7 +431,10 @@ class QNexusWidget(qt.QWidget):
 
     def getWidgetConfiguration(self):
         cntSelection = self.cntTable.getCounterSelection()
-        ddict = {}
+        if hasattr(self, "actions"):
+            ddict =self.actions.getConfiguration()
+        else:
+            ddict = {}
         ddict['counters'] = cntSelection['cntlist']
         ddict['aliases'] = cntSelection['aliaslist']
         ddict['shapes'] = cntSelection['shapelist']
@@ -455,7 +458,8 @@ class QNexusWidget(qt.QWidget):
             else:
                 self._shapeList = [None,] * len(self._cntList)
         self.cntTable.build(self._cntList, self._aliasList, shapelist=self._shapeList)
-        _logger.debug("TODO - Add selection options")
+        if hasattr(self, "actions"):
+            self.actions.setConfiguration(ddict)
 
     def setDataSource(self, dataSource):
         self.data = dataSource
