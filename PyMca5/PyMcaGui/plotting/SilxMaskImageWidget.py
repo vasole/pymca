@@ -1078,7 +1078,7 @@ class SilxMaskImageWidget(qt.QMainWindow):
         self._origin = (xScale[0], yScale[0])
         self._deltaXY = (xScale[1], yScale[1])
         info = None
-        if 1:
+        if 0:
             self.plot.addImage(data,
                                legend="current",
                                origin=self._origin,
