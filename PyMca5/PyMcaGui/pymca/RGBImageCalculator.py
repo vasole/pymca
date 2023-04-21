@@ -144,7 +144,26 @@ class RGBImageCalculator(qt.QWidget):
         else:
             imageicons=False
 
-        self.graphWidget = MaskImageWidget.MaskImageWidget(self,
+        if 1:
+            from PyMca5.PyMcaGui.plotting import SilxMaskImageWidget
+            self.graphWidget = SilxMaskImageWidget.SilxMaskImageWidget()
+            self.graphWidget.setAlphaSliderVisible(False)
+            self.graphWidget.setBackgroundActionVisible(False)
+            self.graphWidget.setMedianFilterWidgetVisible(False)
+            self.graphWidget.setProfileToolbarVisible(True)
+            self.graphWidget.setProfileToolbarVisible(True)
+            self.graphWidget.setButtonBoxWidgetVisible(False)
+            self.graphWidget.group.removeAction(\
+                            self.graphWidget.getMaskAction())
+            self.graphWidget.slider.hide()
+            self.graphWidget.graph = self.graphWidget.plot
+            if not hasattr(self.graphWidget, "setXLabel"):
+                self.graphWidget.setXLabel = \
+                    self.graphWidget.plot.setGraphXLabel
+                self.graphWidget.setYLabel = \
+                    self.graphWidget.plot.setGraphYLabel
+        else:
+            self.graphWidget = MaskImageWidget.MaskImageWidget(self,
                                                            colormap=True,
                                                            standalonesave=True,
                                                            imageicons=imageicons,
@@ -199,8 +218,11 @@ class RGBImageCalculator(qt.QWidget):
 
         #it consumes too much CPU, therefore only on click
         #self.graphWidget.graph.canvas().setMouseTracking(1)
-        self.graphWidget.graphWidget.showInfo()
-        self.graphWidget.graphWidget.graph.sigPlotSignal.connect(\
+        if 1:
+            print("TODO")
+        else:
+            self.graphWidget.graphWidget.showInfo()
+            self.graphWidget.graphWidget.graph.sigPlotSignal.connect(\
                                 self._graphSignal)
 
     def plotImage(self, update=True):
@@ -289,7 +311,10 @@ class RGBImageCalculator(qt.QWidget):
 
     def setName(self, name):
         self.name.setText(name)
-        self.graphWidget.graph.setGraphTitle("%s" % name)
+        if 1:
+            print("TODO")
+        else:
+            self.graphWidget.graph.setGraphTitle("%s" % name)
 
     def _addImageClicked(self):
         _logger.debug("Add image clicked")

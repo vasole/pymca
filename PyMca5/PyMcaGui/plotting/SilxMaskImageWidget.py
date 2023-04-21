@@ -1068,6 +1068,38 @@ class SilxMaskImageWidget(qt.QMainWindow):
         #     self._maskParamsCache = _maskParamsCache
         #     self.resetMask(width, height, self._origin, self._deltaXY)
 
+    def setImageData(self, data, clearmask=False, xScale=None, yScale=None):
+        """ Compatibility method with PyMca when handling single images
+        """
+        if xScale is None:
+            xScale = [0.0, 1.0]
+        if yScale is None:
+            yScale = [0.0, 1.0]
+        self._origin = (xScale[0], yScale[0])
+        self._deltaXY = (xScale[1], yScale[1])
+        info = None
+        if 1:
+            self.plot.addImage(data,
+                               legend="current",
+                               origin=self._origin,
+                               scale=self._deltaXY,
+                               replace=False,
+                               z=0,
+                               info=info)
+            self.plot.setActiveImage("current")
+            self.slider.setValue(0)
+        else:
+            self.setImages([data],
+                       labels=[""],
+                       origin=self._origin,
+                       width=xScale[1] * data.shape[1],
+                       height=yScale[1]* data.shape[0])
+
+    def plotImage(self, update=True):
+        """ Compatibility method with PyMca when handling single images
+        """
+        pass
+
     def _updateBgScales(self, heights, widths):
         """Recalculate BG scales
         (e.g after a crop operation on :attr:`_bg_images`)"""
