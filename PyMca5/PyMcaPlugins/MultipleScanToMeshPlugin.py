@@ -306,7 +306,6 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
                     self._rixsWidget.setBackgroundActionVisible(False)
                     self._rixsWidget.setMedianFilterWidgetVisible(False)
                     self._rixsWidget.setProfileToolbarVisible(True)
-                    self._rixsWidget.setProfileToolbarVisible(True)
                     self._rixsWidget.setButtonBoxWidgetVisible(False)
                     self._rixsWidget.group.removeAction(\
                                     self._rixsWidget.getMaskAction())
