@@ -311,10 +311,7 @@ class RGBImageCalculator(qt.QWidget):
 
     def setName(self, name):
         self.name.setText(name)
-        if 1:
-            print("TODO")
-        else:
-            self.graphWidget.graph.setGraphTitle("%s" % name)
+        self.graphWidget.graph.setGraphTitle("%s" % name)
 
     def _addImageClicked(self):
         _logger.debug("Add image clicked")
