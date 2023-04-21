@@ -59,11 +59,12 @@ class RGBImageCalculator(qt.QWidget):
     sigReplaceImageClicked = qt.pyqtSignal(object)
 
     def __init__(self, parent=None, math=True, replace=False,
-                 scanwindow=None, selection=False):
+                 scanwindow=None, selection=False, usesilx=None):
         qt.QWidget.__init__(self, parent)
         self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
         self.setWindowTitle("PyMca - RGB Image Calculator")
 
+        self._useSilx = usesilx
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
@@ -144,24 +145,29 @@ class RGBImageCalculator(qt.QWidget):
         else:
             imageicons=False
 
-        if 1:
-            from PyMca5.PyMcaGui.plotting import SilxMaskImageWidget
-            self.graphWidget = SilxMaskImageWidget.SilxMaskImageWidget()
-            self.graphWidget.setAlphaSliderVisible(False)
-            self.graphWidget.setBackgroundActionVisible(False)
-            self.graphWidget.setMedianFilterWidgetVisible(False)
-            self.graphWidget.setProfileToolbarVisible(True)
-            self.graphWidget.setProfileToolbarVisible(True)
-            self.graphWidget.setButtonBoxWidgetVisible(False)
-            self.graphWidget.group.removeAction(\
-                            self.graphWidget.getMaskAction())
-            self.graphWidget.slider.hide()
-            self.graphWidget.graph = self.graphWidget.plot
-            if not hasattr(self.graphWidget, "setXLabel"):
-                self.graphWidget.setXLabel = \
-                    self.graphWidget.plot.setGraphXLabel
-                self.graphWidget.setYLabel = \
-                    self.graphWidget.plot.setGraphYLabel
+        if self._useSilx:
+            try:
+                from PyMca5.PyMcaGui.plotting import SilxMaskImageWidget
+                self.graphWidget = SilxMaskImageWidget.SilxMaskImageWidget()
+                self.graphWidget.setAlphaSliderVisible(False)
+                self.graphWidget.setBackgroundActionVisible(False)
+                self.graphWidget.setMedianFilterWidgetVisible(False)
+                self.graphWidget.setProfileToolbarVisible(True)
+                self.graphWidget.setProfileToolbarVisible(True)
+                self.graphWidget.setButtonBoxWidgetVisible(False)
+                self.graphWidget.group.removeAction(\
+                                self.graphWidget.getMaskAction())
+                self.graphWidget.slider.hide()
+                self.graphWidget.graph = self.graphWidget.plot
+                if not hasattr(self.graphWidget, "setXLabel"):
+                    self.graphWidget.setXLabel = \
+                        self.graphWidget.plot.setGraphXLabel
+                    self.graphWidget.setYLabel = \
+                        self.graphWidget.plot.setGraphYLabel
+            except Exception:
+                # should I default to silx or not handling the case of
+                # self._useSilx being None
+                raise
         else:
             self.graphWidget = MaskImageWidget.MaskImageWidget(self,
                                                            colormap=True,
@@ -218,9 +224,8 @@ class RGBImageCalculator(qt.QWidget):
 
         #it consumes too much CPU, therefore only on click
         #self.graphWidget.graph.canvas().setMouseTracking(1)
-        if 1:
-            import os
-            print("%s TODO: Add connection" % os.path.basename(__file__))
+        if self._useSilx:
+            self.graphWidget.showInfo()
             self.graphWidget.plot.sigPlotSignal.connect(\
                                 self._graphSignal)
         else:
@@ -363,7 +368,6 @@ class RGBImageCalculator(qt.QWidget):
 
     def _graphSignal(self, ddict):
         if ddict['event'] in ["mouseMoved", "MouseAt"]:
-            print(ddict)
             if self._imageData is None:
                 self.graphWidget.setInfoText("    X = ???? Y = ???? Z =????")
                 return
@@ -374,7 +378,7 @@ class RGBImageCalculator(qt.QWidget):
                                                         safe=True)
             z = self._imageData[r, c]
             if hasattr(self.graphWidget, "setInfoText"):
-                self.graphWidget.setInfoText("    X = %.2f Y = %.2f Z = %.7g" %\
+                self.graphWidget.setInfoText("    X = %.4g Y = %.4g Z = %.7g" %\
                                                (ddict['x'], ddict['y'], z))
             else:
                 self.graphWidget.graphWidget.setInfoText("    X = %.2f Y = %.2f Z = %.7g" %\
