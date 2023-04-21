@@ -463,6 +463,13 @@ class SilxMaskImageWidget(qt.QMainWindow):
         layout.addWidget(self.plot)
 
         print("%s TODO: Add info widget" % os.path.basename(__file__))
+        try:
+            from silx.gui.widgets import ElidedLabel
+            self.infoWidget = ElidedLabel.ElidedLabel(self)
+        except Exception:
+            self.infoWidget = qt.QLabel(self)
+        layout.addWidget(self.infoWidget)
+        self.infoWidget.hide()
 
         # Mask Widget
         self._maskToolsDockWidget = None
@@ -1102,10 +1109,14 @@ class SilxMaskImageWidget(qt.QMainWindow):
         """
         pass
 
+    def showInfo(self):
+        if self.infoWidget.isHidden():
+            self.infoWidget.show()
+
     def setInfoText(self, text):
         """ Compatibility method with PyMca when handling single images
         """
-        print("TODO show <%s>" % text)
+        self.infoWidget.setText(text)
 
     def _updateBgScales(self, heights, widths):
         """Recalculate BG scales
