@@ -462,6 +462,8 @@ class SilxMaskImageWidget(qt.QMainWindow):
 
         layout.addWidget(self.plot)
 
+        print("%s TODO: Add info widget" % os.path.basename(__file__))
+
         # Mask Widget
         self._maskToolsDockWidget = None
 
@@ -1099,6 +1101,11 @@ class SilxMaskImageWidget(qt.QMainWindow):
         """ Compatibility method with PyMca when handling single images
         """
         pass
+
+    def setInfoText(self, text):
+        """ Compatibility method with PyMca when handling single images
+        """
+        print("TODO show <%s>" % text)
 
     def _updateBgScales(self, heights, widths):
         """Recalculate BG scales

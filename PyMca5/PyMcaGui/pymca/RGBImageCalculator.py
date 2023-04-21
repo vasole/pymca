@@ -219,7 +219,10 @@ class RGBImageCalculator(qt.QWidget):
         #it consumes too much CPU, therefore only on click
         #self.graphWidget.graph.canvas().setMouseTracking(1)
         if 1:
-            print("TODO")
+            import os
+            print("%s TODO: Add connection" % os.path.basename(__file__))
+            self.graphWidget.plot.sigPlotSignal.connect(\
+                                self._graphSignal)
         else:
             self.graphWidget.graphWidget.showInfo()
             self.graphWidget.graphWidget.graph.sigPlotSignal.connect(\
@@ -360,6 +363,7 @@ class RGBImageCalculator(qt.QWidget):
 
     def _graphSignal(self, ddict):
         if ddict['event'] in ["mouseMoved", "MouseAt"]:
+            print(ddict)
             if self._imageData is None:
                 self.graphWidget.setInfoText("    X = ???? Y = ???? Z =????")
                 return
@@ -369,7 +373,11 @@ class RGBImageCalculator(qt.QWidget):
                                                         yScale=self._yScale,
                                                         safe=True)
             z = self._imageData[r, c]
-            self.graphWidget.graphWidget.setInfoText("    X = %.2f Y = %.2f Z = %.7g" %\
+            if hasattr(self.graphWidget, "setInfoText"):
+                self.graphWidget.setInfoText("    X = %.2f Y = %.2f Z = %.7g" %\
+                                               (ddict['x'], ddict['y'], z))
+            else:
+                self.graphWidget.graphWidget.setInfoText("    X = %.2f Y = %.2f Z = %.7g" %\
                                                (ddict['x'], ddict['y'], z))
 
     def closeEvent(self, event):
