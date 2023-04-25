@@ -300,22 +300,16 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
 
             if self._rixsWidget is None:
                 try:
-                    from PyMca5.PyMcaGui.plotting import SilxMaskImageWidget
-                    self._rixsWidget = SilxMaskImageWidget.SilxMaskImageWidget()
-                    self._rixsWidget.setAlphaSliderVisible(False)
-                    self._rixsWidget.setBackgroundActionVisible(False)
-                    self._rixsWidget.setMedianFilterWidgetVisible(False)
-                    self._rixsWidget.setProfileToolbarVisible(True)
-                    self._rixsWidget.setProfileToolbarVisible(True)
-                    self._rixsWidget.setButtonBoxWidgetVisible(False)
-                    self._rixsWidget.group.removeAction(\
-                                    self._rixsWidget.getMaskAction())
-                    self._rixsWidget.slider.hide()
+                    from PyMca5.PyMcaGui.pymca import RGBImageCalculator
+                    self._rixsWidget = \
+                            RGBImageCalculator.RGBImageCalculator( \
+                                math=False,
+                                usesilx=True)
                     if not hasattr(self._rixsWidget, "setXLabel"):
                         self._rixsWidget.setXLabel = \
-                            self._rixsWidget.plot.setGraphXLabel
+                            self._rixsWidget.graphWidget.plot.setGraphXLabel
                         self._rixsWidget.setYLabel = \
-                            self._rixsWidget.plot.setGraphYLabel
+                            self._rixsWidget.graphWidget.plot.setGraphYLabel
                     self._silx = True
                 except Exception:
                     _logger.info("Cannot use SilxMaskImageWidget")
@@ -344,11 +338,9 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
             else:
                 self._rixsWidget.setYLabel("Energy Transfer (eV)")
             if self._silx:
-                self._rixsWidget.setImages([zz],
-                                           labels=[""],
-                                           origin=(xScale[0], yScale[0]),
-                                           width=xScale[1] * zz.shape[1],
-                                           height=yScale[1]* zz.shape[0])
+                self._rixsWidget.graphWidget.setImageData(zz,
+                                          xScale=xScale,
+                                          yScale=yScale)
             else:
                 self._rixsWidget.setImageData(zz,
                                           xScale=xScale,

@@ -59,11 +59,12 @@ class RGBImageCalculator(qt.QWidget):
     sigReplaceImageClicked = qt.pyqtSignal(object)
 
     def __init__(self, parent=None, math=True, replace=False,
-                 scanwindow=None, selection=False):
+                 scanwindow=None, selection=False, usesilx=False):
         qt.QWidget.__init__(self, parent)
         self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
         self.setWindowTitle("PyMca - RGB Image Calculator")
 
+        self._useSilx = usesilx
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
@@ -144,7 +145,37 @@ class RGBImageCalculator(qt.QWidget):
         else:
             imageicons=False
 
-        self.graphWidget = MaskImageWidget.MaskImageWidget(self,
+        self.graphWidget = None
+        if self._useSilx or self._useSilx is None:
+            try:
+                from PyMca5.PyMcaGui.plotting import SilxMaskImageWidget
+                self.graphWidget = SilxMaskImageWidget.SilxMaskImageWidget()
+                self.graphWidget.setAlphaSliderVisible(False)
+                self.graphWidget.setBackgroundActionVisible(False)
+                self.graphWidget.setMedianFilterWidgetVisible(False)
+                self.graphWidget.setProfileToolbarVisible(True)
+                self.graphWidget.setProfileToolbarVisible(True)
+                self.graphWidget.setButtonBoxWidgetVisible(False)
+                self.graphWidget.group.removeAction(\
+                                self.graphWidget.getMaskAction())
+                self.graphWidget.slider.hide()
+                self.graphWidget.graph = self.graphWidget.plot
+                if not hasattr(self.graphWidget, "setXLabel"):
+                    self.graphWidget.setXLabel = \
+                        self.graphWidget.plot.setGraphXLabel
+                    self.graphWidget.setYLabel = \
+                        self.graphWidget.plot.setGraphYLabel
+                self._useSilx = True
+            except Exception:
+                if self._useSilx:
+                    raise
+                else:
+                    _logger.debug("Defaulting to not using silx")
+                    self._useSilx = False
+                    self.graphWidget = None
+        if self.graphWidget is None:
+            self._useSilx = False
+            self.graphWidget = MaskImageWidget.MaskImageWidget(self,
                                                            colormap=True,
                                                            standalonesave=True,
                                                            imageicons=imageicons,
@@ -199,8 +230,13 @@ class RGBImageCalculator(qt.QWidget):
 
         #it consumes too much CPU, therefore only on click
         #self.graphWidget.graph.canvas().setMouseTracking(1)
-        self.graphWidget.graphWidget.showInfo()
-        self.graphWidget.graphWidget.graph.sigPlotSignal.connect(\
+        if self._useSilx:
+            self.graphWidget.showInfo()
+            self.graphWidget.plot.sigPlotSignal.connect(\
+                                self._graphSignal)
+        else:
+            self.graphWidget.graphWidget.showInfo()
+            self.graphWidget.graphWidget.graph.sigPlotSignal.connect(\
                                 self._graphSignal)
 
     def plotImage(self, update=True):
@@ -347,7 +383,11 @@ class RGBImageCalculator(qt.QWidget):
                                                         yScale=self._yScale,
                                                         safe=True)
             z = self._imageData[r, c]
-            self.graphWidget.graphWidget.setInfoText("    X = %.2f Y = %.2f Z = %.7g" %\
+            if hasattr(self.graphWidget, "setInfoText"):
+                self.graphWidget.setInfoText("    X = %.4g Y = %.4g Z = %.7g" %\
+                                               (ddict['x'], ddict['y'], z))
+            else:
+                self.graphWidget.graphWidget.setInfoText("    X = %.2f Y = %.2f Z = %.7g" %\
                                                (ddict['x'], ddict['y'], z))
 
     def closeEvent(self, event):

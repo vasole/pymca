@@ -70,6 +70,7 @@ from silx.gui.plot import PlotToolButtons
 from silx.gui.plot.MaskToolsWidget import MaskToolsWidget, MaskToolsDockWidget
 from silx.gui.plot.AlphaSlider import NamedImageAlphaSlider
 from silx.gui.plot.Profile import ProfileToolBar
+from silx.gui.plot.tools.profile.manager import ProfileWindow
 
 from silx.gui import icons
 
@@ -111,6 +112,19 @@ def convertToRowAndColumn(x, y, shape,
         r = int(r)
     return r, c
 
+class MyProfileWindow(ProfileWindow):
+
+    def createPlot1D(self, parent, backend):
+        from PyMca5.PyMcaGui.pymca.SilxScanWindow import ScanWindow as PlotWindow
+        plot = PlotWindow(parent, backend=backend)
+        plot.setDataMargins(yMinMargin=0.1, yMaxMargin=0.1)
+        plot.setGraphYLabel('Profile')
+        plot.setGraphXLabel('')
+        # do not overwrite the title by the legend
+        plot.sigActiveCurveChanged.disconnect(plot._updateGraphTitle)
+        positionInfo = plot.getPositionInfoWidget()
+        positionInfo.setSnappingMode(positionInfo.SNAPPING_CURVE)
+        return plot
 
 class MyMaskToolsWidget(MaskToolsWidget):
     """Backport of the setSelectionMask behavior implemented in silx 0.6.0,
@@ -462,6 +476,14 @@ class SilxMaskImageWidget(qt.QMainWindow):
 
         layout.addWidget(self.plot)
 
+        try:
+            from silx.gui.widgets import ElidedLabel
+            self.infoWidget = ElidedLabel.ElidedLabel(self)
+        except Exception:
+            self.infoWidget = qt.QLabel(self)
+        layout.addWidget(self.infoWidget)
+        self.infoWidget.hide()
+
         # Mask Widget
         self._maskToolsDockWidget = None
 
@@ -584,8 +606,8 @@ class SilxMaskImageWidget(qt.QMainWindow):
         # Creating the toolbar also create actions for toolbuttons
         self._toolbar = self._createToolBar(title='Plot', parent=None)
         self.addToolBar(self._toolbar)
-
-        self._profile = ProfileToolBar(plot=self.plot)
+        self._profile = ProfileToolBar(plot=self.plot,
+                                       profileWindow=MyProfileWindow())
         self.addToolBar(self._profile)
         self.setProfileToolbarVisible(False)
 
@@ -1068,6 +1090,47 @@ class SilxMaskImageWidget(qt.QMainWindow):
         #     self._maskParamsCache = _maskParamsCache
         #     self.resetMask(width, height, self._origin, self._deltaXY)
 
+    def setImageData(self, data, clearmask=False, xScale=None, yScale=None):
+        """ Compatibility method with PyMca when handling single images
+        """
+        if xScale is None:
+            xScale = [0.0, 1.0]
+        if yScale is None:
+            yScale = [0.0, 1.0]
+        self._origin = (xScale[0], yScale[0])
+        self._deltaXY = (xScale[1], yScale[1])
+        info = None
+        if 0:
+            self.plot.addImage(data,
+                               legend="current",
+                               origin=self._origin,
+                               scale=self._deltaXY,
+                               replace=False,
+                               z=0,
+                               info=info)
+            self.plot.setActiveImage("current")
+            self.slider.setValue(0)
+        else:
+            self.setImages([data],
+                       labels=[""],
+                       origin=self._origin,
+                       width=xScale[1] * data.shape[1],
+                       height=yScale[1]* data.shape[0])
+
+    def plotImage(self, update=True):
+        """ Compatibility method with PyMca when handling single images
+        """
+        pass
+
+    def showInfo(self):
+        if self.infoWidget.isHidden():
+            self.infoWidget.show()
+
+    def setInfoText(self, text):
+        """ Compatibility method with PyMca when handling single images
+        """
+        self.infoWidget.setText(text)
+
     def _updateBgScales(self, heights, widths):
         """Recalculate BG scales
         (e.g after a crop operation on :attr:`_bg_images`)"""
@@ -1166,6 +1229,7 @@ class SilxMaskImageWidget(qt.QMainWindow):
 if __name__ == "__main__":
     app = qt.QApplication([])
     w = SilxMaskImageWidget()
+    w.setProfileToolbarVisible(True)
     w.show()
     w.setImages([numpy.array([[0, 1, 2], [2, 1, -1]])])
     app.exec()

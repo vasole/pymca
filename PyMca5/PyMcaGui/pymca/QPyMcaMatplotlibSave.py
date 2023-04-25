@@ -484,7 +484,7 @@ class RightWidget(qt.QWidget):
 
 class MyLineEdit(qt.QLineEdit):
     def sizeHint(self):
-        return qt.QSize(0.6 * qt.QLineEdit.sizeHint(self).width(),
+        return qt.QSize(int(0.6 * qt.QLineEdit.sizeHint(self).width()),
                         qt.QLineEdit.sizeHint(self).height())
 
 
