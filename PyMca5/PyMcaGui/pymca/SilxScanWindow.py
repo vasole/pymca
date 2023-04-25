@@ -222,7 +222,7 @@ class BaseScanWindow(PlotWindow):
 
             self.sigActiveCurveChanged.connect(self.__updateInfoWidget)
 
-        self.sigActiveCurveChanged.connect(self.__updateGraphTitle)
+        self.sigActiveCurveChanged.connect(self._updateGraphTitle)
         self.matplotlibDialog = None
 
         saveAction = self.getOutputToolBar().getSaveAction()
@@ -261,7 +261,7 @@ class BaseScanWindow(PlotWindow):
         x, y, legend, info, params = self.getCurve(legend)
         self.scanWindowInfoWidget.updateFromXYInfo(x, y, info)
 
-    def __updateGraphTitle(self, previous_legend, legend):
+    def _updateGraphTitle(self, previous_legend, legend):
         """Called on active curve changed, to update the graph title"""
         if legend is None and previous_legend is not None:
             self.setGraphTitle()
