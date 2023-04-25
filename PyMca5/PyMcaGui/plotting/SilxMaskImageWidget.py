@@ -113,12 +113,17 @@ def convertToRowAndColumn(x, y, shape,
     return r, c
 
 class MyProfileWindow(ProfileWindow):
+
     def createPlot1D(self, parent, backend):
         from PyMca5.PyMcaGui.pymca.SilxScanWindow import ScanWindow as PlotWindow
         plot = PlotWindow(parent, backend=backend)
         plot.setDataMargins(yMinMargin=0.1, yMaxMargin=0.1)
         plot.setGraphYLabel('Profile')
         plot.setGraphXLabel('')
+        # do not overwrite the title by the legend
+        plot.sigActiveCurveChanged.disconnect(plot._updateGraphTitle)
+        positionInfo = plot.getPositionInfoWidget()
+        positionInfo.setSnappingMode(positionInfo.SNAPPING_CURVE)
         return plot
 
 class MyMaskToolsWidget(MaskToolsWidget):
