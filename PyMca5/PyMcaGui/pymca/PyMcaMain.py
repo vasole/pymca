@@ -603,7 +603,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                     imageWindow = PyMcaImageWindow.PyMcaImageWindow(
                             name=legend,
                             correlator=self.imageWindowCorrelator,
-                            scanwindow=self.scanWindow)
+                            scanwindow=self.scanWindow,
+                            usesilx=None)
                 self.imageWindowDict[legend] = imageWindow
 
                 imageWindow.sigAddImageClicked.connect( \
