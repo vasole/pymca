@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -44,11 +44,13 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
     def __init__(self, parent = None,
                  name = "PyMca Image Window",
                  correlator = None,
-                 scanwindow=None):
+                 scanwindow=None,
+                 usesilx=False):
         RGBImageCalculator.RGBImageCalculator.__init__(self, parent,
                                                        math = False,
                                                        replace = True,
-                                                       scanwindow=scanwindow)
+                                                       scanwindow=scanwindow,
+                                                       usesilx=usesilx)
         self.setWindowTitle(name)
         self.correlator = correlator
         self.ownCorrelator = False
@@ -442,7 +444,7 @@ if __name__ == "__main__":
         w = PyMcaMain.PyMcaMain()
         w.show()
     else:
-        w = PyMcaImageWindow()
+        w = PyMcaImageWindow(usesilx=None)
         w.show()
     counter = 0
     def function(period = period):

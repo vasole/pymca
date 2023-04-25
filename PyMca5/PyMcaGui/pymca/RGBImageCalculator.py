@@ -59,7 +59,7 @@ class RGBImageCalculator(qt.QWidget):
     sigReplaceImageClicked = qt.pyqtSignal(object)
 
     def __init__(self, parent=None, math=True, replace=False,
-                 scanwindow=None, selection=False, usesilx=None):
+                 scanwindow=None, selection=False, usesilx=False):
         qt.QWidget.__init__(self, parent)
         self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
         self.setWindowTitle("PyMca - RGB Image Calculator")
@@ -145,7 +145,8 @@ class RGBImageCalculator(qt.QWidget):
         else:
             imageicons=False
 
-        if self._useSilx:
+        self.graphWidget = None
+        if self._useSilx or self._useSilx is None:
             try:
                 from PyMca5.PyMcaGui.plotting import SilxMaskImageWidget
                 self.graphWidget = SilxMaskImageWidget.SilxMaskImageWidget()
@@ -164,11 +165,16 @@ class RGBImageCalculator(qt.QWidget):
                         self.graphWidget.plot.setGraphXLabel
                     self.graphWidget.setYLabel = \
                         self.graphWidget.plot.setGraphYLabel
+                self._useSilx = True
             except Exception:
-                # should I default to silx or not handling the case of
-                # self._useSilx being None
-                raise
-        else:
+                if self._useSilx:
+                    raise
+                else:
+                    _logger.debug("Defaulting to not using silx")
+                    self._useSilx = False
+                    self.graphWidget = None
+        if self.graphWidget is None:
+            self._useSilx = False
             self.graphWidget = MaskImageWidget.MaskImageWidget(self,
                                                            colormap=True,
                                                            standalonesave=True,
