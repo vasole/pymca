@@ -70,6 +70,7 @@ from silx.gui.plot import PlotToolButtons
 from silx.gui.plot.MaskToolsWidget import MaskToolsWidget, MaskToolsDockWidget
 from silx.gui.plot.AlphaSlider import NamedImageAlphaSlider
 from silx.gui.plot.Profile import ProfileToolBar
+from silx.gui.plot.tools.profile.manager import ProfileWindow
 
 from silx.gui import icons
 
@@ -111,6 +112,14 @@ def convertToRowAndColumn(x, y, shape,
         r = int(r)
     return r, c
 
+class MyProfileWindow(ProfileWindow):
+    def createPlot1D(self, parent, backend):
+        from PyMca5.PyMcaGui.pymca.SilxScanWindow import ScanWindow as PlotWindow
+        plot = PlotWindow(parent, backend=backend)
+        plot.setDataMargins(yMinMargin=0.1, yMaxMargin=0.1)
+        plot.setGraphYLabel('Profile')
+        plot.setGraphXLabel('')
+        return plot
 
 class MyMaskToolsWidget(MaskToolsWidget):
     """Backport of the setSelectionMask behavior implemented in silx 0.6.0,
@@ -462,7 +471,6 @@ class SilxMaskImageWidget(qt.QMainWindow):
 
         layout.addWidget(self.plot)
 
-        print("%s TODO: Add info widget" % os.path.basename(__file__))
         try:
             from silx.gui.widgets import ElidedLabel
             self.infoWidget = ElidedLabel.ElidedLabel(self)
@@ -593,8 +601,8 @@ class SilxMaskImageWidget(qt.QMainWindow):
         # Creating the toolbar also create actions for toolbuttons
         self._toolbar = self._createToolBar(title='Plot', parent=None)
         self.addToolBar(self._toolbar)
-
-        self._profile = ProfileToolBar(plot=self.plot)
+        self._profile = ProfileToolBar(plot=self.plot,
+                                       profileWindow=MyProfileWindow())
         self.addToolBar(self._profile)
         self.setProfileToolbarVisible(False)
 
@@ -1216,6 +1224,7 @@ class SilxMaskImageWidget(qt.QMainWindow):
 if __name__ == "__main__":
     app = qt.QApplication([])
     w = SilxMaskImageWidget()
+    w.setProfileToolbarVisible(True)
     w.show()
     w.setImages([numpy.array([[0, 1, 2], [2, 1, -1]])])
     app.exec()
