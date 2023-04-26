@@ -39,9 +39,9 @@ _logger = logging.getLogger(__name__)
 
 
 USE_MOVE_TO_THREAD = False
-QTHREAD = os.getenv("PYMCA_USE_QTHREAD", True)
-if QTHREAD in ["False", False, "0", 0, ""]:
-    QTHREAD = False
+QTHREAD = os.getenv("PYMCA_USE_QTHREAD", False)
+if QTHREAD in ["True", "true", True, "1", 1]:
+    QTHREAD = True
 
 if QTHREAD:
     QThread = qt.QThread
