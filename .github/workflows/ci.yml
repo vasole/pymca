@@ -59,12 +59,12 @@ jobs:
             QT_BINDING: PyQt5
             XVFB_RUN: xvfb-run -a
 
-          #- name-suffix: "bdist_wheel"
-          #  os: macos-latest
-          #  python-version: 3.8
-          #  BUILD_COMMAND: bdist_wheel
-          #  QT_BINDING: PyQt5
-          #  XVFB_RUN: ""
+          - name-suffix: "PyQt6 bdist_wheel"
+            os: macos-latest
+            python-version: 3.11
+            BUILD_COMMAND: bdist_wheel
+            QT_BINDING: PyQt6
+            XVFB_RUN: ""
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -99,9 +99,9 @@ jobs:
             export DISPLAY=:99.0
             ;;
           macOS)
-            curl -o miniconda_installer.sh "https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh"
-            bash miniconda_installer.sh -b -p miniconda
-            export PATH="`pwd`/miniconda/bin":$PATH
+          # curl -o miniconda_installer.sh "https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh"
+          # bash miniconda_installer.sh -b -p miniconda
+          # export PATH="`pwd`/miniconda/bin":$PATH
             ;;
           esac
 
