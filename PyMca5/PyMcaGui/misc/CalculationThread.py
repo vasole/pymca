@@ -28,21 +28,30 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
+import os
 import time
 try:
     from PyMca5.PyMcaGui import PyMcaQt as qt
 except ImportError:
     import PyMcaQt as qt
+import logging
+_logger = logging.getLogger(__name__)
+
 
 USE_MOVE_TO_THREAD = False
-QTHREAD = True
+QTHREAD = os.getenv("PYMCA_USE_QTHREAD", True)
+if QTHREAD in ["False", False, "0", 0, ""]:
+    QTHREAD = False
+
 if QTHREAD:
     QThread = qt.QThread
+    _logger.info("Using Qt threads")
 else:
     import threading
     QThread =  threading.Thread
     # Python threads do not support moveToThread (untested)
     USE_MOVE_TO_THREAD = False
+    _logger.info("Using Python threads")
 
 class CalculationObject(qt.QObject):
     finished = qt.pyqtSignal()
