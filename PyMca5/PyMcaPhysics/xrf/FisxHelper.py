@@ -36,7 +36,11 @@ from fisx import DataDir
 from fisx import Elements as FisxElements
 from fisx import Material
 from fisx import Detector
-from fisx import Beam
+try:
+    from fisx import Beam
+except ImportError:
+    # old fisx version
+    Beam = None
 from fisx import XRF
 import time
 import sys
@@ -398,7 +402,7 @@ def getMultilayerFluorescence(multilayerSample,
     nEnergies = len(energyList)
     #secondary = 2
     #print(" SECONDARY = ", secondary)
-    if 1 or ThreadPoolExecutor and secondary and (nEnergies > 4 or nSampleLayers > 1):
+    if Beam and ThreadPoolExecutor and secondary and (nEnergies > 4 or nSampleLayers > 1):
         if (secondary <= 1) and (nSampleLayers > nEnergies):
             # one thread per layer
             # Sample layer parallelization
