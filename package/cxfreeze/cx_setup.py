@@ -74,6 +74,9 @@ excludes.append("multiprocessing")
 #includes.append('encodings.utf_8')
 #includes.append('encodings.latin_1')
 
+# needed by numpy.random
+includes.append('secrets')
+
 # exec_dict is a dictionnary whose keys are the name of the .exe files to be
 # generated and the values are the paths to the scripts to be frozen.
 exec_dict = {}
@@ -118,7 +121,6 @@ special_modules = [os.path.dirname(PyMca5.__file__),
                    os.path.dirname(matplotlib.__file__),
                    os.path.dirname(ctypes.__file__),
                    os.path.dirname(hdf5plugin.__file__)]
-
 try:
     import OpenGL
     special_modules += [os.path.dirname(OpenGL.__file__)]
