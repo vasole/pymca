@@ -438,8 +438,8 @@ class HDF5CounterTable(qt.QTableWidget):
             if i in self.xSelection:
                 if not widget.isChecked():
                     widget.setChecked(True)
+                    widget.setCurrentText(self.xSelectionType[self.xSelection.index(i)])
                 widget.setText(axisLabels[self.xSelection.index(i)])
-                widget.setCurrentText(self.xSelectionType[self.xSelection.index(i)])
             else:
                 if widget.isChecked():
                     widget.setChecked(False)
@@ -592,9 +592,7 @@ class CheckBoxItem(qt.QCheckBox):
 def main():
     app = qt.QApplication([])
     tab = HDF5CounterTable()
-    tab.build(["Cnt1", "Cnt2", "Cnt3"])
-    tab.setCounterSelection({'x':[1, 2], 'y':[4],
-                        'cntlist':["dummy", "Cnt0", "Cnt1", "Cnt2", "Cnt3"]})
+    tab.build(["Cnt1", "Cnt2", "Cnt3"], shapelist=[None, (10, 10), (10, 20)])
     tab.show()
     def slot(ddict):
         print("Received = ", ddict)
