@@ -36,16 +36,24 @@ from fisx import DataDir
 from fisx import Elements as FisxElements
 from fisx import Material
 from fisx import Detector
+try:
+    from fisx import Beam
+except ImportError:
+    # old fisx version
+    Beam = None
 from fisx import XRF
 import time
 import sys
+import numpy
 xcom = None
 
 _logger = logging.getLogger(__name__)
+
 try:
-    from fisx import TransmissionTable
-except ImportError:
-    _logger.warning("Consider to use fisx >= 1.2.0")
+    from concurrent.futures import ThreadPoolExecutor
+except Exception:
+    _logger.info("Cannot import ThreadPoolExecutor")
+    ThreadPoolExecutor = None
 
 def getElementsInstance(dataDir=None, bindingEnergies=None, xcomFile=None):
     if dataDir is None:
@@ -123,7 +131,6 @@ def getMultilayerFluorescence(multilayerSample,
                               materials=None,
                               secondaryCalculationLimit=None,
                               cache=1):
-
     if secondary is None:
         secondary=0
     if secondaryCalculationLimit is None:
@@ -390,14 +397,153 @@ def getMultilayerFluorescence(multilayerSample,
                   time.time() - t0)
         
     _logger.debug("Calling getMultilayerFluorescence")
-    t0 = time.time()
-    expectedFluorescence = xrf.getMultilayerFluorescence(actualElementsList,
+
+    nSampleLayers = len(multilayerSample)
+    nEnergies = len(energyList)
+    #secondary = 2
+    #print(" SECONDARY = ", secondary)
+    if Beam and ThreadPoolExecutor and secondary and (nEnergies > 4 or nSampleLayers > 1):
+        if (secondary <= 1) and (nSampleLayers > nEnergies):
+            # one thread per layer
+            # Sample layer parallelization
+            _logger.info("Threading by layers")
+            t0 = time.time()
+            pool = ThreadPoolExecutor(max_workers=min(os.cpu_count(), nSampleLayers))
+            ele = [x.split()[0] for x in actualElementsList]
+            family = [x.split()[1] for x in actualElementsList]
+            future = [None] * nSampleLayers
+            for i in range(nSampleLayers):
+                future[i] = pool.submit(xrf.getFluorescence,
+                                        ele, xcom, i, family,
+                                        secondary=secondary,
+                                        useGeometricEfficiency=useGeometricEfficiency,
+                                        useMassFractions=elementsFromMatrix,
+                                        secondaryCalculationLimit=secondaryCalculationLimit)
+            fluorescence = {}
+            for i in range(len(future)):
+                partialFluorescence = future[i].result()
+                for peakFamily in partialFluorescence:
+                    if peakFamily not in fluorescence:
+                        fluorescence[peakFamily] = partialFluorescence[peakFamily]
+                        continue
+                    for layer in partialFluorescence[peakFamily]:
+                        if layer not in fluorescence[peakFamily]:
+                            fluorescence[peakFamily][layer] = partialFluorescence[peakFamily][layer]
+                            continue
+                        for transition in partialFluorescence[peakFamily][layer]:
+                                msg = "This point should not be reached with layer parallerisation"
+                                _logger.critical(msg)
+                                if transition not in fluorescence[peakFamily][layer]:
+                                    fluorescence[peakFamily][layer][transition] = \
+                                                    partialFluorescence[peakFamily][layer][transition]
+                                    continue
+                                for key in partialFluorescence[peakFamily][layer][transition]:
+                                    if key not in fluorescence[peakFamily][layer][transition]:
+                                        fluorescence[peakFamily][layer][transition][key] = \
+                                                    partialFluorescence[peakFamily][layer][transition][key]
+                                    continue
+        elif (secondary <= 1) and (len(energyList) < 2) and len(actualElementsList) > 4:
+            # elements parallelization cannot work with tertiary excitation
+            # the speed up does not seem to be huge
+            _logger.info("Threading by elements")
+            t0 = time.time()
+            max_workers = min(os.cpu_count(), int(len(actualElementsList)/2))
+            pool = ThreadPoolExecutor(max_workers=max_workers)
+            ele = [x.split()[0] for x in actualElementsList]
+            family = [x.split()[1] for x in actualElementsList]
+            partialActualElementsList = [None] * max_workers
+            future = [None] * max_workers
+            for i in range(max_workers):
+                partialActualElementsList = actualElementsList[i::max_workers]
+                future[i] = pool.submit(xrf.getMultilayerFluorescence,
+                                        partialActualElementsList,
+                                        xcom,
+                                        secondary=secondary,
+                                        useGeometricEfficiency=useGeometricEfficiency,
+                                        useMassFractions=elementsFromMatrix,
+                                        secondaryCalculationLimit=secondaryCalculationLimit)
+            fluorescence = {}
+            for i in range(len(future)):
+                partialFluorescence = future[i].result()
+                for peakFamily in partialFluorescence:
+                    if peakFamily not in fluorescence:
+                        fluorescence[peakFamily] = partialFluorescence[peakFamily]
+                        continue
+                    msg = "This point should not be reached with element parallerisation"
+                    _logger.critical(msg)
+        else:
+            # multiple energies parallelization
+            _logger.info("Threading by energies")
+            t0 = time.time()
+            max_workers = min(os.cpu_count(), int(len(energyList)/10))
+            _logger.info("Number of workers = ", max_workers)
+            pool = ThreadPoolExecutor(max_workers=max_workers)
+            ele = [x.split()[0] for x in actualElementsList]
+            family = [x.split()[1] for x in actualElementsList]
+            beamList = [None] * max_workers
+            future = [None] * max_workers
+            # the beam is automatically normalized
+            totalBeamWeight = numpy.sum(weightList, dtype=numpy.float64)
+            beamWeight = [None] * max_workers
+            for i in range(max_workers):
+                beamList[i] = Beam()            
+                beamList[i].setBeam(energyList[i::max_workers],
+                                weightList[i::max_workers])
+                beamWeight[i] = numpy.sum(weightList[i::max_workers], dtype=numpy.float64)
+                future[i] = pool.submit(xrf.getMultilayerFluorescence,
+                                        actualElementsList,
+                                        xcom,
+                                        secondary=secondary,
+                                        useGeometricEfficiency=useGeometricEfficiency,
+                                        useMassFractions=elementsFromMatrix,
+                                        secondaryCalculationLimit=secondaryCalculationLimit,
+                                        overwritingBeam=beamList[i])
+            fluorescence = {}
+            for i in range(len(future)):
+                partialFluorescence = future[i].result()
+                for peakFamily in partialFluorescence:
+                    if peakFamily not in fluorescence:
+                        fluorescence[peakFamily] = {}
+                    for layer in partialFluorescence[peakFamily]:
+                        if layer not in fluorescence[peakFamily]:
+                            fluorescence[peakFamily][layer] = {}
+                        for transition in partialFluorescence[peakFamily][layer]:
+                                if transition not in fluorescence[peakFamily][layer]:
+                                    fluorescence[peakFamily][layer][transition] = {}
+                                for key in partialFluorescence[peakFamily][layer][transition]:
+                                    if key not in fluorescence[peakFamily][layer][transition]:
+                                        fluorescence[peakFamily][layer][transition][key] = 0.0
+                                    fluorescence[peakFamily][layer][transition][key] += \
+                                            partialFluorescence[peakFamily][layer][transition][key]* \
+                                            beamWeight[i] / totalBeamWeight
+        expectedFluorescence = fluorescence
+        print("THREADING ELAPSED = %s", time.time() - t0)
+    else:
+        # No possibility to use threads or no need
+        _logger.info("No Threading")
+        t0 = time.time()
+        expectedFluorescence = xrf.getMultilayerFluorescence(actualElementsList,
                             xcom,
                             secondary=secondary,
                             useGeometricEfficiency=useGeometricEfficiency,
                             useMassFractions=elementsFromMatrix,
                             secondaryCalculationLimit=secondaryCalculationLimit)
-    _logger.info("C++ elapsed TWO = %s", time.time() - t0)
+        if 0:
+            # This whould be equivalent
+            overwritingBeam = Beam()
+            overwritingBeam.setBeam(energyList, weights=weightList)
+            expectedFluorescence = xrf.getMultilayerFluorescence(actualElementsList,
+                                    xcom,
+                                    secondary=secondary,
+                                    useGeometricEfficiency=useGeometricEfficiency,
+                                    useMassFractions=elementsFromMatrix,
+                                    secondaryCalculationLimit=secondaryCalculationLimit,
+                                    overwritingBeam=overwritingBeam)
+        print("C++ elapsed TWO = %s", time.time() - t0)
+    # check if the two dictionnaries are idential
+    # print("Are they equal ? = ", _compareResults(fluorescence, expectedFluorescence))
+    # expectedFluorescence = fluorescence
+
     if not elementsFromMatrix:
         # If one element was present in one layer and not on others, PyMca only
         # calculated contributions from the layers in which the element was
@@ -413,6 +559,31 @@ def getMultilayerFluorescence(multilayerSample,
                     if element not in xcom.getComposition(layerMaterial):
                         expectedFluorescence[key][iLayer] = {}
     return expectedFluorescence
+
+def _compareResults(fluorescence, expectedFluorescence, atol=1.0e-6, rtol=1.0e-4):
+    """
+    Returns 0 if not equal, 1 if equal within tolerance, 2 if identical 
+    """
+    if fluorescence == expectedFluorescence:
+        return 2
+    for peakFamily in expectedFluorescence:
+        for layer in expectedFluorescence[peakFamily]:
+            for transition in expectedFluorescence[peakFamily][layer]:
+                for key in expectedFluorescence[peakFamily][layer][transition]:
+                    if expectedFluorescence[peakFamily][layer][transition][key] != \
+                           fluorescence[peakFamily][layer][transition][key]:
+                        tmpDouble = expectedFluorescence[peakFamily][layer][transition][key] \
+                                    - fluorescence[peakFamily][layer][transition][key]
+                        relative = tmpDouble/max(fluorescence[peakFamily][layer][transition][key],
+                                                  expectedFluorescence[peakFamily][layer][transition][key])
+                        if abs(tmpDouble) > atol or (relative > rtol):
+                            print("Offending key = %s" % key)
+                            print("delta = %f" % tmpDouble)
+                            print("relative = %f" % relative)
+                            print(expectedFluorescence[peakFamily][layer][transition][key])
+                            print(fluorescence[peakFamily][layer][transition][key])
+                            return 0
+    return 1
 
 def _getFisxMaterials(fitConfiguration):
     """
