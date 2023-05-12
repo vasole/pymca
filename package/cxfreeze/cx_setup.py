@@ -238,7 +238,7 @@ build_options = {
     "includes": includes,
     "include_files": include_files,
     "excludes": excludes,
-    "create_shared_zip": False}
+    "zip_exclude_packages":["*"]}
     #"compressed": True, }
 
 if sys.platform.startswith("darwin") and cxVersion not in ["6.11.1"]:
