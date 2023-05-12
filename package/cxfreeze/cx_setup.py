@@ -118,7 +118,7 @@ special_modules = [os.path.dirname(PyMca5.__file__),
                    os.path.dirname(matplotlib.__file__),
                    os.path.dirname(ctypes.__file__),
                    os.path.dirname(hdf5plugin.__file__)]
-excludes += ["numpy"]
+#excludes += ["numpy"]
 
 try:
     import OpenGL
