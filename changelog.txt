@@ -1,7 +1,7 @@
 VERSION 5.8.2
 -------------
 
-- XRF. Allow multithreading with fisx > 1.3.1
+- XRF. Allow multithreading with fisx > 1.3.0
 
 - GUI. Save user preferences concerning default actions.
 
