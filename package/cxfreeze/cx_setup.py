@@ -118,7 +118,6 @@ special_modules = [os.path.dirname(PyMca5.__file__),
                    os.path.dirname(matplotlib.__file__),
                    os.path.dirname(ctypes.__file__),
                    os.path.dirname(hdf5plugin.__file__)]
-excludes += ["numpy"]
 
 try:
     import OpenGL
@@ -236,7 +235,8 @@ build_options = {
     "packages": packages,
     "includes": includes,
     "include_files": include_files,
-    "excludes": excludes, }
+    "excludes": excludes,
+    "create_shared_zip": False}
     #"compressed": True, }
 
 if sys.platform.startswith("darwin") and cxVersion not in ["6.11.1"]:
