@@ -427,6 +427,36 @@ class HDF5CounterTable(qt.QTableWidget):
             if len(self.monSelection) > 1:
                 self.monSelection = self.monSelection[-1:]
                 self.monSelectionType = self.monSelectionType[-1:]
+
+        index = ddict.get("type", "")
+        if index.lower().startswith("index") and ddict["column"] == 2 and ddict["state"]:
+            # we have a selection based on a index
+            referenceWidget = self.cellWidget(ddict['row'], ddict['column'])
+            refIndex = index
+            refValue = referenceWidget._index.value()
+            refMin = referenceWidget._index.minimum()
+            refMax = referenceWidget._index.maximum()
+            # try to synchronize all other indices
+            for i in range(len(self.xSelectionType)):
+                if self.xSelectionType[i].lower().startswith("index"):
+                    widget = self.cellWidget(self.xSelection[i], 1)
+                    if widget._index.minimum() == refMin and widget._index.maximum() == refMax:
+                        widget._index.setValue(refValue)
+                        self.xSelectionType[i] = refIndex
+            for i in range(len(self.ySelectionType)):
+                if i == ddict["column"]:
+                    continue
+                if self.ySelectionType[i].lower().startswith("index"):
+                    widget = self.cellWidget(self.ySelection[i], 2)
+                    if widget._index.minimum() == refMin and widget._index.maximum() == refMax:
+                        widget._index.setValue(refValue)
+                        self.ySelectionType[i] = refIndex
+            for i in range(len(self.monSelectionType)):
+                if self.monSelectionType[i].lower().startswith("index"):
+                    widget = self.cellWidget(self.monSelection[i], 3)
+                    if widget._index.minimum() == refMin and widget._index.maximum() == refMax:
+                        widget._index.setValue(refValue)
+                        self.monSelectionType[i] = refIndex
         self._update()
 
     def _update(self, emit=True):
@@ -592,9 +622,7 @@ class CheckBoxItem(qt.QCheckBox):
 def main():
     app = qt.QApplication([])
     tab = HDF5CounterTable()
-    tab.build(["Cnt1", "Cnt2", "Cnt3"])
-    tab.setCounterSelection({'x':[1, 2], 'y':[4],
-                        'cntlist':["dummy", "Cnt0", "Cnt1", "Cnt2", "Cnt3"]})
+    tab.build(["Cnt1", "Cnt2", "Cnt3", "Cnt 4", "Cnt 5"], shapelist=[None, (10, 10), (10, 20), (10, 10), (20, 10)])
     tab.show()
     def slot(ddict):
         print("Received = ", ddict)
