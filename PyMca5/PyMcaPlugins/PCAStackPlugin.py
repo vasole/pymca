@@ -52,7 +52,7 @@ import logging
 
 from PyMca5 import StackPluginBase
 from PyMca5.PyMcaMath.mva import KMeansModule
-from PyMca5.PyMcaGui import CalculationThread
+from PyMca5.PyMcaGui.misc import CalculationThread
 
 from PyMca5.PyMcaGui.math.PCAWindow import PCAParametersDialog
 from PyMca5.PyMcaGui import StackPluginResultsWindow

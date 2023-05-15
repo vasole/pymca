@@ -64,7 +64,7 @@ import logging
 import traceback
 from PyMca5 import StackPluginBase
 from PyMca5.PyMcaCore import StackROIBatch
-from PyMca5.PyMcaGui import CalculationThread
+from PyMca5.PyMcaGui.misc import CalculationThread
 from PyMca5.PyMcaGui import StackPluginResultsWindow
 from PyMca5.PyMcaGui import StackROIBatchWindow
 from PyMca5.PyMcaGui import PyMca_Icons as PyMca_Icons

@@ -61,7 +61,7 @@ functions:
 import numpy
 import logging
 from PyMca5 import StackPluginBase
-from PyMca5.PyMcaGui import CalculationThread
+from PyMca5.PyMcaGui.misc import CalculationThread
 
 from PyMca5.PyMcaGui.math.NNMAWindow import NNMAParametersDialog
 from PyMca5.PyMcaGui import StackPluginResultsWindow

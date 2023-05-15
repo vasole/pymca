@@ -46,7 +46,7 @@ from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import FFTAlignmentWindow
 from PyMca5.PyMcaMath import ImageRegistration
 from PyMca5.PyMcaMath.fitting import SpecfitFuns
-from PyMca5.PyMcaGui import CalculationThread
+from PyMca5.PyMcaGui.misc import CalculationThread
 from PyMca5.PyMcaIO import ArraySave
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from PyMca5.PyMcaIO import specfilewrapper
