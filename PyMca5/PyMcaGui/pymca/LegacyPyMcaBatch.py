@@ -35,6 +35,11 @@ import subprocess
 import logging
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
+if sys.platform.startswith("darwin"):
+    import threading
+    QThread = threading.Thread
+else:
+    QThread = qt.QThread
 
 QTVERSION = qt.qVersion()
 try:
@@ -774,7 +779,8 @@ class McaBatchGUI(qt.QWidget):
             def cleanup():
                 b.pleasePause = 0
                 b.pleaseBreak = 1
-                b.wait()
+                if hasattr(b, "wait"):
+                    b.wait()
                 qApp = qt.QApplication.instance()
                 qApp.processEvents()
                 qApp = None
@@ -808,7 +814,8 @@ class McaBatchGUI(qt.QWidget):
             def cleanup():
                 b.pleasePause = 0
                 b.pleaseBreak = 1
-                b.wait()
+                if hasattr(b, "wait"):
+                    b.wait()
                 qApp = qt.QApplication.instance()
                 qApp.processEvents()
 
@@ -1163,7 +1170,7 @@ class McaBatchGUI(qt.QWidget):
         else:
             work.buildOutput(delete=True)
 
-class McaBatch(McaAdvancedFitBatch.McaAdvancedFitBatch, qt.QThread):
+class McaBatch(McaAdvancedFitBatch.McaAdvancedFitBatch, QThread):
     def __init__(self, parent, configfile, filelist=None, outputdir = None,
                      roifit = None, roiwidth=None, overwrite=1,
                      filestep=1, mcastep=1, concentrations=0,
@@ -1183,7 +1190,7 @@ class McaBatch(McaAdvancedFitBatch.McaAdvancedFitBatch, qt.QThread):
                                                          chunk=chunk,
                                                          selection=selection,
                                                          lock=lock)
-        qt.QThread.__init__(self)
+        QThread.__init__(self)
         self.parent = parent
         self.pleasePause = 0
 
@@ -1791,7 +1798,8 @@ def main():
         def cleanup():
             b.pleasePause = 0
             b.pleaseBreak = 1
-            b.wait()
+            if hasattr(b, "wait"):
+                b.wait()
             qApp = qt.QApplication.instance()
             qApp.processEvents()
 

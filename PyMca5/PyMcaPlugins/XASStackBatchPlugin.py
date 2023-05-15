@@ -46,8 +46,8 @@ import os
 import logging
 import traceback
 from PyMca5 import StackPluginBase
-from PyMca5.PyMcaGui import CalculationThread
-# only EDGE and JUMP are always small enough to be shown ...
+from PyMca5.PyMcaGui.misc import CalculationThread
+# only EDGE and JUMP are always small enough to be shown
 from PyMca5.PyMcaGui import StackPluginResultsWindow
 from PyMca5.PyMcaGui import StackXASBatchWindow
 from PyMca5.PyMcaGui import PyMca_Icons as PyMca_Icons

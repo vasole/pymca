@@ -36,12 +36,19 @@ import time
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaIO import EDFStack
 from PyMca5.PyMcaIO import SpecFileStack
+
+if sys.platform.startswith("darwin"):
+    import threading
+    QThread = threading.Thread
+else:
+    QThread = qt.QThread
+
 DEBUG = 0
 
-class SimpleThread(qt.QThread):
+class SimpleThread(QThread):
     def __init__(self, function, *var, **kw):
         if kw is None:kw={}
-        qt.QThread.__init__(self)
+        QThread.__init__(self)
         self._function = function
         self._var      = var
         self._kw       = kw

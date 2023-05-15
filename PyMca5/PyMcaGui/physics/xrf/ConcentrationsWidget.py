@@ -37,6 +37,12 @@ _logger.debug("ConcentrationsWidget is in debug mode")
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 
+if sys.platform.startswith("darwin"):
+    import threading
+    QThread = threading.Thread
+else:
+    QThread = qt.QThread
+
 if hasattr(qt, 'QString'):
     QString = qt.QString
 else:
@@ -213,11 +219,11 @@ class Concentrations(qt.QWidget):
         return result
 
 
-class SimpleThread(qt.QThread):
+class SimpleThread(QThread):
     def __init__(self, function, *var, **kw):
         if kw is None:
             kw = {}
-        qt.QThread.__init__(self)
+        QThread.__init__(self)
         self._function = function
         self._var = var
         self._kw = kw

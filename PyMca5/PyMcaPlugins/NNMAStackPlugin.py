@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2021 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -61,7 +61,7 @@ functions:
 import numpy
 import logging
 from PyMca5 import StackPluginBase
-from PyMca5.PyMcaGui import CalculationThread
+from PyMca5.PyMcaGui.misc import CalculationThread
 
 from PyMca5.PyMcaGui.math.NNMAWindow import NNMAParametersDialog
 from PyMca5.PyMcaGui import StackPluginResultsWindow
@@ -183,7 +183,6 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
         self.widget = None
         self.thread = CalculationThread.CalculationThread(\
                             calculation_method=self.actualCalculation)
-        self.thread.finished.connect(self.threadFinished)
         self.configurationWidget.show()
         message = "Please wait. NNMA Calculation going on."
         _logger.debug("NNMAStackPlugin starting thread")
@@ -193,6 +192,7 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
                                 message=message,
                                 parent=self.configurationWidget)
         _logger.debug("NNMAStackPlugin waitingMessageDialog passed")
+        self.threadFinished()
 
     def actualCalculation(self):
         _logger.debug("NNMAStackPlugin actualCalculation")

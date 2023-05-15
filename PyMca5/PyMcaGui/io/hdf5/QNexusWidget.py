@@ -459,7 +459,8 @@ class QNexusWidget(qt.QWidget):
                 self._shapeList = [None,] * len(self._cntList)
         self.cntTable.build(self._cntList, self._aliasList, shapelist=self._shapeList)
         if hasattr(self, "actions"):
-            self.actions.setConfiguration(ddict)
+            if hasattr(self.actions, "setConfiguration"):
+                self.actions.setConfiguration(ddict)
 
     def setDataSource(self, dataSource):
         self.data = dataSource

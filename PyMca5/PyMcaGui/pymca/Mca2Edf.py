@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -44,6 +44,11 @@ from PyMca5.PyMcaIO import EdfFile
 from PyMca5.PyMcaCore import SpecFileLayer
 from PyMca5 import PyMcaDirs
 
+if sys.platform.startswith("darwin"):
+    import threading
+    QThread = threading.Thread
+else:
+    QThread = qt.QThread
 
 class Mca2EdfGUI(qt.QWidget):
     def __init__(self,parent=None,name="Mca to Edf Conversion",fl=qt.Qt.WDestructiveClose,
@@ -241,12 +246,12 @@ class Mca2EdfGUI(qt.QWidget):
         b.start()
 
 
-class Mca2EdfBatch(qt.QThread):
+class Mca2EdfBatch(QThread):
     def __init__(self, parent, filelist=None, outputdir = None, filestep = 1):
         self._filelist  = filelist
         self.outputdir = outputdir
         self.filestep  = filestep
-        qt.QThread.__init__(self)
+        QThread.__init__(self)
         self.parent = parent
         self.pleasePause = 0
 
