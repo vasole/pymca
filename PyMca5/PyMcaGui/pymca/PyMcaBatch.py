@@ -43,6 +43,11 @@ except ImportError:
     from collections import MutableMapping
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
+if sys.platform.startswith("darwin"):
+    import threading
+    QThread =  threading.Thread
+else:
+    QThread = qt.QThread
 
 QTVERSION = qt.qVersion()
 try:
@@ -283,8 +288,9 @@ def launchThread(thread, window):
         window.close()
         thread.pleasePause = 0
         thread.pleaseBreak = 1
-        thread.quit()
-        thread.wait()
+        if hasattr(thread, "quit"):
+            thread.quit()
+            thread.wait()
         app = qt.QApplication.instance()
         app.processEvents()
     def pause():
@@ -1557,15 +1563,14 @@ class McaBatchGUI(qt.QWidget):
             cmd = '%s "%s"' % (self._datviewer_path, datoutlist[0])
             launchProcess(cmd, independent=True)
 
-
-class McaBatch(McaAdvancedFitBatch.McaAdvancedFitBatch, qt.QThread):
+class McaBatch(McaAdvancedFitBatch.McaAdvancedFitBatch, QThread):
     """
     Batch fitting thread
     """
 
     def __init__(self, parent, configfile, **kwargs):
         McaAdvancedFitBatch.McaAdvancedFitBatch.__init__(self, configfile, **kwargs)
-        qt.QThread.__init__(self)
+        QThread.__init__(self)
         self.parent = parent
         self.pleasePause = 0
 
@@ -1580,18 +1585,13 @@ class McaBatch(McaAdvancedFitBatch.McaAdvancedFitBatch, qt.QThread):
                  'filebeginoffset':self.fileBeginOffset,
                  'fileendoffset':self.fileEndOffset,
                  'event':'onNewFile'}
-        if QTVERSION < '4.0.0':
-            self.postEvent(self.parent, McaCustomEvent.McaCustomEvent(ddict))
-        else:
-            qt.QApplication.postEvent(self.parent, McaCustomEvent.McaCustomEvent(ddict))
-        if self.pleasePause:self.__pauseMethod()
+        qt.QApplication.postEvent(self.parent, McaCustomEvent.McaCustomEvent(ddict))
+        if self.pleasePause:
+            self.__pauseMethod()
 
     def onImage(self, key, keylist):
         ddict = {'key':key, 'keylist':keylist, 'event':'onImage'}
-        if QTVERSION < '4.0.0':
-            self.postEvent(self.parent, McaCustomEvent.McaCustomEvent(ddict))
-        else:
-            qt.QApplication.postEvent(self.parent, McaCustomEvent.McaCustomEvent(ddict))
+        qt.QApplication.postEvent(self.parent, McaCustomEvent.McaCustomEvent(ddict))
 
     def onMca(self, imca, nmca, filename=None, key=None, info=None):
         _logger.debug("onMca key = %s", key)
@@ -1605,11 +1605,9 @@ class McaBatch(McaAdvancedFitBatch.McaAdvancedFitBatch, qt.QThread):
                  'useExistingFiles':self.useExistingFiles,
                  'roifit':self.roiFit,
                  'event':'onMca'}
-        if QTVERSION < '4.0.0':
-            self.postEvent(self.parent, McaCustomEvent.McaCustomEvent(ddict))
-        else:
-            qt.QApplication.postEvent(self.parent, McaCustomEvent.McaCustomEvent(ddict))
-        if self.pleasePause:self.__pauseMethod()
+        qt.QApplication.postEvent(self.parent, McaCustomEvent.McaCustomEvent(ddict))
+        if self.pleasePause:
+            self.__pauseMethod()
 
     def onEnd(self):
         _logger.debug("onEnd")
