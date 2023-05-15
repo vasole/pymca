@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2020 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -42,7 +42,7 @@ eigenvectors are computed and displayed in another window.
 """
 # TODO: explain PCA methods and regions
 # TODO: provide a practical use case for a PCA. Isolating elements?
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -192,12 +192,12 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
         else:
             self.thread = CalculationThread.CalculationThread(\
                             calculation_method=self.actualCalculation)
-            self.thread.finished.connect(self.threadFinished)
             self.thread.start()
             message = "Please wait. PCA Calculation going on."
             CalculationThread.waitingMessageDialog(self.thread,
                                 message=message,
                                 parent=self.configurationWidget)
+            self.threadFinished()
 
     def actualCalculation(self):
         pcaParameters = self.configurationWidget.getParameters()
