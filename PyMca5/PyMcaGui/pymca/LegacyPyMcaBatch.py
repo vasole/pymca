@@ -779,7 +779,8 @@ class McaBatchGUI(qt.QWidget):
             def cleanup():
                 b.pleasePause = 0
                 b.pleaseBreak = 1
-                b.wait()
+                if hasattr(b, "wait"):
+                    b.wait()
                 qApp = qt.QApplication.instance()
                 qApp.processEvents()
                 qApp = None
@@ -813,7 +814,8 @@ class McaBatchGUI(qt.QWidget):
             def cleanup():
                 b.pleasePause = 0
                 b.pleaseBreak = 1
-                b.wait()
+                if hasattr(b, "wait"):
+                    b.wait()
                 qApp = qt.QApplication.instance()
                 qApp.processEvents()
 
@@ -1796,7 +1798,8 @@ def main():
         def cleanup():
             b.pleasePause = 0
             b.pleaseBreak = 1
-            b.wait()
+            if hasattr(b, "wait"):
+                b.wait()
             qApp = qt.QApplication.instance()
             qApp.processEvents()
 
