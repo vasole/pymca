@@ -35,9 +35,9 @@ import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 if sys.platform.startswith("darwin"):
     import threading
-    QThread =  threading.Thread
+    QThread = threading.Thread
 else:
-    QThread = QThread
+    QThread = qt.QThread
 
 try:
     from . import PCAWindow

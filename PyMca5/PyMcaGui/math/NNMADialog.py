@@ -37,7 +37,7 @@ if sys.platform.startswith("darwin"):
     import threading
     QThread =  threading.Thread
 else:
-    QThread = QThread
+    QThread = qt.QThread
 
 from . import NNMAWindow
 NNMA = True
