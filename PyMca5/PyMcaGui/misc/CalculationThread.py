@@ -273,7 +273,7 @@ def waitingMessageDialog(thread, message=None, parent=None,
             if QTHREAD:
                 qt.QThread.msleep(1000)
             else:
-                time.sleep(2)
+                time.sleep(1)
     else:
         while (thread.isRunning()):
             updateInfo = update_callback()
@@ -288,5 +288,5 @@ def waitingMessageDialog(thread, message=None, parent=None,
             if QTHREAD:
                 qt.QThread.msleep(1000)
             else:
-                time.sleep(2)
+                time.sleep(1)
     msg.close()
