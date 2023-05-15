@@ -468,8 +468,8 @@ class HDF5CounterTable(qt.QTableWidget):
             if i in self.xSelection:
                 if not widget.isChecked():
                     widget.setChecked(True)
+                    widget.setCurrentText(self.xSelectionType[self.xSelection.index(i)])
                 widget.setText(axisLabels[self.xSelection.index(i)])
-                widget.setCurrentText(self.xSelectionType[self.xSelection.index(i)])
             else:
                 if widget.isChecked():
                     widget.setChecked(False)
