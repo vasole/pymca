@@ -33,6 +33,12 @@ import numpy
 import time
 import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
+if sys.platform.startswith("darwin"):
+    import threading
+    QThread =  threading.Thread
+else:
+    QThread = QThread
+
 from . import NNMAWindow
 NNMA = True
 
@@ -40,10 +46,10 @@ NNMA = True
 _logger = logging.getLogger(__name__)
 
 
-class SimpleThread(qt.QThread):
+class SimpleThread(QThread):
     def __init__(self, function, *var, **kw):
         if kw is None:kw={}
-        qt.QThread.__init__(self)
+        QThread.__init__(self)
         self._function = function
         self._var      = var
         self._kw       = kw
