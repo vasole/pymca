@@ -7,6 +7,8 @@ VERSION 5.8.2
 
 - GUI. Recover loading of user-saved HDF5 selection tables. 
 
+- GUI. Synchronize index-based Signal selections with Monitor and Axes on HDF5 files.
+
 - GUI. Compatibility with PyQt6 shipped with Qt 6.4.3
 
 - 1d-Plots. When one plot axis is frozen, reset zoom based on displayed portion of the active curve.
