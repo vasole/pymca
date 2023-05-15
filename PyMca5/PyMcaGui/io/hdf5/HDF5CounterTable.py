@@ -108,7 +108,7 @@ class CntSelectionType(qt.QWidget):
         elif len(shape) == 2:
             if shape[0] == 1:
                 self._selectionType.hide()
-                    
+
     def setChecked(self, value):
         if value:
             self._selection.setChecked(True)
@@ -632,4 +632,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
