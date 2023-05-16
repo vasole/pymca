@@ -1142,7 +1142,7 @@ class McaBatchGUI(qt.QWidget):
             self.inputDir =  os.getcwd()
         wdir = self.inputDir
         wfilter = self.inputFilter
-        filetypes = "McaFiles (*.mca)\nEdfFiles (*.edf)\n"
+        filetypes = "McaFiles (*.mca)\nEdfFiles (*.edf)\nCSV (*.csv *.CSV)\n"
         if HDF5SUPPORT:
             filetypes += "HDF5 (*.nxs *.h5 *.hdf *.hdf5)\n"
         filetypes += "SpecFiles (*.spec)\nSpecFiles (*.dat)\nAll files (*)"
@@ -1169,7 +1169,8 @@ class McaBatchGUI(qt.QWidget):
         fileList = ConfigurationFileDialogs.getFitConfigurationFilePath(self,
                                                 currentdir=wdir,
                                                 mode="OPEN",
-                                                single=True)
+                                                single=True,
+                                                currentfilter="Fit configuration files (*.cfg)")
 
         if fileList:
             self.setConfigFile(fileList[0])
