@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -32,19 +32,6 @@ from InsidePolygonWithBounds cimport PointsInsidePolygonF as _pnpolyf
 from InsidePolygonWithBounds cimport PointsInsidePolygonInt as _pnpolyInt32
 cimport numpy
 import numpy
-
-# From numpy_common.pxi to avoid warnings while compiling C code
-# See this thread:
-# https://mail.python.org/pipermail//cython-devel/2012-March/002137.html
-cdef extern from *:
-    bint FALSE "0"
-    void import_array()
-    void import_umath()
-
-if FALSE:
-    import_array()
-    import_umath()
-
 
 include "MinMax.pyx"
 
