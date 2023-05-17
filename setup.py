@@ -347,59 +347,6 @@ def build_PyMcaSciPy(ext_modules):
     ext_modules.append(module)
 
 
-def build_plotting_ctools(ext_modules):
-    packages.append('PyMca5.PyMcaGraph.ctools')
-    basedir = os.path.join('PyMca5', 'PyMcaGraph', 'ctools', '_ctools')
-    c_files = [os.path.join(basedir, 'src', 'InsidePolygonWithBounds.c'),
-               os.path.join(basedir, 'src', 'MinMaxImpl.c'),
-               os.path.join(basedir, 'src', 'Colormap.c')]
-    cython_dir = os.path.join(basedir, 'cython')
-    if build_ext:
-        # delete previously generated code (if any)
-        for fname in glob.glob(os.path.join(cython_dir, '*.c')):
-            try:
-                os.remove(fname)
-            except Exception:
-                print("Cannot delete previously generated code <%s>" % fname)
-                raise
-        src = [os.path.join(basedir, 'cython', '_ctools.pyx')]
-    else:
-        inSrc = os.path.join(cython_dir, 'default', '_ctools.c')
-        outSrc = os.path.join(cython_dir, '_ctools.c')
-        inFile = open(inSrc, 'rb')
-        inLines = inFile.readlines()
-        inFile.close()
-        if os.path.exists(outSrc):
-            outFile = open(outSrc, 'rb')
-            outLines = outFile.readlines()
-            outFile.close()
-            if outLines != inLines:
-                os.remove(outSrc)
-        if not os.path.exists(outSrc):
-            outFile = open(outSrc, 'wb')
-            outFile.writelines(inLines)
-            outFile.close()
-        src = [outSrc]
-    src += c_files
-
-    if sys.platform == 'win32':
-        extra_compile_args = []
-        extra_link_args = []
-    else:
-        extra_compile_args = []
-        extra_link_args = []
-
-    module = Extension(name="PyMca5.PyMcaGraph.ctools._ctools",
-                       sources=src,
-                       include_dirs=[numpy.get_include(),
-                                     os.path.join(basedir, "include")],
-                       extra_compile_args=extra_compile_args,
-                       extra_link_args=extra_link_args,
-                       language="c",)
-
-    ext_modules.append(module)
-
-
 def build_xas_xas(ext_modules):
     basedir = os.path.join('PyMca5', 'PyMcaPhysics', 'xas', '_xas')
     c_files = [os.path.join(basedir, 'src', 'polspl.c'),
@@ -458,7 +405,6 @@ build_PyMcaIOHelper(ext_modules)
 build__cython_kmeans(ext_modules)
 
 build_PyMcaSciPy(ext_modules)
-build_plotting_ctools(ext_modules)
 build_xas_xas(ext_modules)
 
 
