@@ -87,7 +87,7 @@ class ImageListStatsWidget(qt.QTabWidget):
         rheight = self.tableWidget.horizontalHeader().sizeHint().height()
         self.tableWidget.setMinimumHeight(5*rheight)
         self.addTab(self.tableWidget, "Stats")
-        self.addTab(self.correlationWidget, "Correlation")
+        self.addTab(self.correlationWidget, "Pearson Correlation")
 
     def setImageList(self, images, image_names=None):
         if images is None:
