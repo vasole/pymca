@@ -296,7 +296,12 @@ class NumpyArrayTableModel(qt.QAbstractTableModel):
 
 if __name__ == "__main__":
     a = qt.QApplication([])
-    w = qt.QTableView()
+    try:
+        from .TableWidget import TableView
+    except Exception:
+        print("Cannot use PyMca Table")
+        TableView = qt.QTableView
+    w = TableView()
     d = numpy.random.normal(0,1, (5, 1000,1000))
     for i in range(5):
         d[i, :, :] += i
