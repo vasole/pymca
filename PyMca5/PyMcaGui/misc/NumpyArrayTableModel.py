@@ -43,6 +43,8 @@ class NumpyArrayTableModel(qt.QAbstractTableModel):
         self._array  = narray
         self._bgcolors = None
         self._fgcolors = None
+        self._hLabels = None
+        self._vLabels = None
 
         self._format = fmt
         self._index  = []
@@ -193,6 +195,8 @@ class NumpyArrayTableModel(qt.QAbstractTableModel):
         self._array = data
         self._bgcolors = None
         self._fgcolors = None
+        self._hLabels = None
+        self._vLabels = None
         self.assignDataFunction(perspective)
         if len(data.shape) > 3:
             self._index = []
@@ -294,6 +298,21 @@ class NumpyArrayTableModel(qt.QAbstractTableModel):
     def setFormat(self, fmt):
         self._format = fmt
 
+    def headerData(self, section, orientation, role=qt.Qt.DisplayRole):
+        if self._hLabels and orientation == qt.Qt.Horizontal and role == qt.Qt.DisplayRole:
+            if section < len(self._hLabels):
+                return "%s" % self._hLabels[section]
+        if self._vLabels and orientation == qt.Qt.Vertical and role == qt.Qt.DisplayRole:
+            if section < len(self._vLabels):
+                return "%s" % self._vLabels[section]
+        return super().headerData(section, orientation, role)
+
+    def setHorizontalHeaderLabels(self, labels):
+        self._hLabels = labels
+
+    def setVerticalHeaderLabels(self, labels):
+        self._vLabels = labels
+
 if __name__ == "__main__":
     a = qt.QApplication([])
     try:
@@ -309,6 +328,8 @@ if __name__ == "__main__":
     #m = NumpyArrayTableModel(None, numpy.arange(100.), fmt="%.5f")
     #m = NumpyArrayTableModel(None, numpy.ones((100,20)), fmt="%.5f")
     m = NumpyArrayTableModel(None, d, fmt = "%.5f")
+    m.setVerticalHeaderLabels(["Row %d" % i for i in range(d.shape[1])])
+    m.setHorizontalHeaderLabels(["Column %d" % i for i in range(d.shape[2])])
     w.setModel(m)
     m.setCurrentArrayIndex(4)
     #m.setArrayData(numpy.ones((100,)))
