@@ -33,25 +33,61 @@ import numpy
 import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui.misc import TableWidget
+from PyMca5.PyMcaGui.misc import NumpyArrayTableModel
+from PyMca5.PyMcaGraph import Colormap 
 logger = logging.getLogger(__name__)
 
-class ImageListStatsWidget(TableWidget.TableWidget):
-    def __init__(self, parent=None, cut=False, paste=False):
-        super(ImageListStatsWidget, self).__init__(parent=parent, cut=cut, paste=paste)
+def arrayListPearsonCorrelation(imageList, mask=None):
+    # the input imageList can be a 3D array or a list of images
+    # the mask accounts for selected pixels
+    # non-finite values are excluded
+    if mask is not None:
+        mask = mask.flatten()
+    correlation = numpy.zeros((len(imageList), len(imageList)), dtype=numpy.float64)
+    for i in range(len(imageList)):
+        if mask is None:
+            image0 = imageList[i].flatten()
+        else:
+            image0 = imageList[i].flatten()[mask > 0]
+        for j in range(len(imageList)):
+            if mask is None:
+                image1 = imageList[j].flatten()
+            else:
+                image1 = imageList[j].flatten()[mask > 0]
+            goodIndex = numpy.isfinite(image0) & numpy.isfinite(image1)
+            image0 = image0[goodIndex]
+            image1 = image1[goodIndex]
+            image0_mean = image0.sum(dtype=numpy.float64) / image0.size
+            image1_mean = image1.sum(dtype=numpy.float64) / image0.size
+            image0 = image0 - image0_mean
+            image1 = image1 - image1_mean
+            cov = numpy.sum(image0 * image1) / image0.size
+            stdImage0 = (numpy.sum(image0 * image0) /image0.size)**0.5
+            stdImage1 = (numpy.sum(image1 * image1) /image1.size)**0.5
+            correlation[i, j] = cov /(stdImage0 * stdImage1)
+    return correlation
+
+class ImageListStatsWidget(qt.QTabWidget):
+    def __init__(self, parent=None):
+        super(ImageListStatsWidget, self).__init__(parent=parent)
+        self.tableWidget = TableWidget.TableWidget(parent=None, cut=False, paste=False)
+        self.correlationWidget = TableWidget.TableView(parent=None, cut=False, paste=False)
         self.imageList = None
         self.imageMask = None
         labels = ["Name", "Maximum", "Minimum", "N", "Mean", "std"]
         self._stats = [x.lower() for x in labels]
-        self.setColumnCount(len(self._stats))
+        self.tableWidget.setColumnCount(len(self._stats))
         for i in range(len(labels)):
-            item = self.horizontalHeaderItem(i)
+            item = self.tableWidget.horizontalHeaderItem(i)
             if item is None:
                 item = qt.QTableWidgetItem(labels[i],
                                            qt.QTableWidgetItem.Type)
             item.setText(labels[i])
-            self.setHorizontalHeaderItem(i,item)
-        rheight = self.horizontalHeader().sizeHint().height()
-        self.setMinimumHeight(5*rheight)
+            self.tableWidget.setHorizontalHeaderItem(i,item)
+        rheight = self.tableWidget.horizontalHeader().sizeHint().height()
+        self.tableWidget.setMinimumHeight(5*rheight)
+        self.addTab(self.tableWidget, "Stats")
+        self.addTab(self.correlationWidget, "Correlation")
 
     def setImageList(self, images, image_names=None):
         if images is None:
@@ -103,24 +139,21 @@ class ImageListStatsWidget(TableWidget.TableWidget):
 
     def updateStats(self):
         if self.imageList in [None, []]:
-            self.setRowCount(0)
+            self.tableWidget.setRowCount(0)
             return
         statsList = []
         mask = self.imageMask
-        if mask is None:
-            mask = numpy.zeros(self.imageList[0].shape, dtype=numpy.uint8)
-        mask = mask.flatten()
+        if mask is not None:
+            mask = mask.flatten()
+            if mask.min() == mask.max():
+                if mask.min() == 0:
+                    mask = None
         results = []
         for idx, imageName in enumerate(self.imageNames):
             result = {}
             image = self.imageList[idx].flatten()
-            if mask.min() == mask.max():
-                if mask.min() == 0:
-                    # whole image
-                    pass
-                else:
-                    # only masked image
-                    image = image[mask > 0]
+            if mask is None:
+                pass
             else:
                 image = image[mask > 0]
             image = numpy.array(image[numpy.isfinite(image)], dtype=numpy.float64)
@@ -131,24 +164,31 @@ class ImageListStatsWidget(TableWidget.TableWidget):
             result['mean'] = image.mean()
             result['std'] = image.std()
             results.append(result)
+
+        # calculate pearson correlation
+        correlation = arrayListPearsonCorrelation(self.imageList, mask)
+        m = NumpyArrayTableModel.NumpyArrayTableModel(None, correlation, fmt = "%.5f")
+        self.correlationWidget.setModel(m)
+        bg = Colormap.applyColormap(correlation, colormap="temperature", norm="linear")
+        m.setArrayColors(bg[0])
         self._fillTable(results)
 
     def _fillTable(self, results):
-        nRows = self.rowCount()
-        nColumns = self.columnCount()
-        self.setRowCount(len(results))
+        nRows = self.tableWidget.rowCount()
+        nColumns = self.tableWidget.columnCount()
+        self.tableWidget.setRowCount(len(results))
         for row, result in enumerate(results):
             for column, stat in enumerate(self._stats):
                 if column == 0:
                     text = result[stat]
                 else:
                     text = "%g" % result[stat]
-                item = self.item(row, column)
+                item = self.tableWidget.item(row, column)
                 if item is None:
                     item = qt.QTableWidgetItem(text, qt.QTableWidgetItem.Type)
                     item.setTextAlignment(qt.Qt.AlignHCenter | qt.Qt.AlignVCenter)
                     item.setFlags(qt.Qt.ItemIsEnabled | qt.Qt.ItemIsSelectable)
-                    self.setItem(row, column, item)
+                    self.tableWidget.setItem(row, column, item)
                 else:
                     item.setText(text)
 
