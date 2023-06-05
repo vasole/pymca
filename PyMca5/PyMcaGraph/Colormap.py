@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2020 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 # ###########################################################################*/
-__author__ = "T. Vincent - ESRF Data Analysis"
+__author__ = "T. Vincent - ESRF"
 __contact__ = "thomas.vincent@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -63,7 +63,7 @@ _CMAP_GRAY[:, 3] = 255
 _CMAP_REVERSED_GRAY = 255 - np.indices((256, 4), dtype=np.uint8)[0]
 _CMAP_REVERSED_GRAY[:, 3] = 255
 
-_INDICES = np.arange(256, dtype=np.int)
+_INDICES = np.arange(256, dtype=np.uint8)
 _CMAP_TEMPERATURE = np.asarray(np.dstack((
     np.interp(_INDICES, (128, 192), (0, 255)),
     np.interp(_INDICES, (0, 64, 192, 255), (0, 255, 255, 0)),
