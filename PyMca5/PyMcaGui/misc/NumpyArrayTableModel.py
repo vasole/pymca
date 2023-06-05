@@ -41,8 +41,11 @@ class NumpyArrayTableModel(qt.QAbstractTableModel):
         if narray is None:
             narray = numpy.array([])
         self._array  = narray
+        self._bgcolors = None
+        self._fgcolors = None
+
         self._format = fmt
-        self._index  = 0
+        self._index  = [0]
         self.assignDataFunction(perspective)
 
     def rowCount(self, parent=None):
@@ -52,7 +55,38 @@ class NumpyArrayTableModel(qt.QAbstractTableModel):
         return self._columnCount(parent)
 
     def data(self, index, role=qt.Qt.DisplayRole):
-        return self._data(index, role)
+        if not index.isValid():
+            return MyQVariant()
+        row = index.row()
+        col = index.column()
+        selection = tuple(self._index + [row, col])
+        if role == qt.Qt.BackgroundRole and self._bgcolors is not None:
+            r, g, b = self._bgcolors[selection][0:3]
+            if self._bgcolors.shape[-1] == 3:
+                return qt.QColor(r, g, b)
+            if self._bgcolors.shape[-1] == 4:
+                a = self._bgcolors[selection][3]
+                return qt.QColor(r, g, b, a)
+        elif role == qt.Qt.ForegroundRole:
+            if self._fgcolors is not None:
+                r, g, b = self._fgcolors[selection][0:3]
+                if self._fgcolors.shape[-1] == 3:
+                    return qt.QColor(r, g, b)
+                if self._fgcolors.shape[-1] == 4:
+                    a = self._fgcolors[selection][3]
+                    return qt.QColor(r, g, b, a)
+
+            # no fg color given, use black or white
+            # based on luminosity threshold
+            elif self._bgcolors is not None:
+                r, g, b = self._bgcolors[selection][0:3]
+                lum = 0.21 * r + 0.72 * g + 0.07 * b
+                if lum < 128:
+                    return qt.QColor(qt.Qt.white)
+                else:
+                    return qt.QColor(qt.Qt.black)
+        else:
+            return self._data(index, role)
 
     def _rowCount1D(self, parent=None):
         return 1
@@ -66,6 +100,7 @@ class NumpyArrayTableModel(qt.QAbstractTableModel):
                 # row = 0
                 col = index.column()
                 return MyQVariant(self._format % self._array[col])
+
         return MyQVariant()
 
     def _rowCount2D(self, parent=None):
@@ -149,20 +184,58 @@ class NumpyArrayTableModel(qt.QAbstractTableModel):
         """
         setStackData(self, data, perspective=0)
         data is a 3D array
-        dimension is the array dimension acting as index of images
+        perspective is the array dimension acting as index of images
         """
         if qt.qVersion() > "4.6":
             self.beginResetModel()
         else:
             self.reset()
         self._array = data
+        self._bgcolors = None
+        self._fgcolors = None
         self.assignDataFunction(perspective)
         if len(data.shape) > 3:
             self._index = []
             for i in range(len(data.shape) - 2):
                 self._index.append(0)
+        elif len(data.shape) == 3:
+            self._index = [0]
+        else:
+            self._index = []
         if qt.qVersion() > "4.6":
             self.endResetModel()
+
+    def setArrayColors(self, bgcolors=None, fgcolors=None):
+        """Set the colors for all table cells by passing an array
+        of RGB or RGBA values (integers between 0 and 255).
+
+        The shape of the colors array must be consistent with the data shape.
+
+        If the data array is n-dimensional, the colors array must be
+        (n+1)-dimensional, with the first n-dimensions identical to the data
+        array dimensions, and the last dimension length-3 (RGB) or
+        length-4 (RGBA).
+
+        :param bgcolors: RGB or RGBA colors array, defining the background color
+            for each cell in the table.
+        :param fgcolors: RGB or RGBA colors array, defining the foreground color
+            (text color) for each cell in the table.
+        """
+        # array must be RGB or RGBA
+        valid_shapes = (self._array.shape + (3,), self._array.shape + (4,))
+        errmsg = "Inconsistent shape for color array, should be %s or %s" % valid_shapes
+
+        if bgcolors is not None:
+            bgcolors = numpy.array(bgcolors, copy=False)
+            assert bgcolors.shape in valid_shapes, errmsg
+
+        self._bgcolors = bgcolors
+
+        if fgcolors is not None:
+            fgcolors = numpy.array(fgcolors, copy=False)
+            assert fgcolors.shape in valid_shapes, errmsg
+
+        self._fgcolors = fgcolors
 
     def assignDataFunction(self, dimension):
         shape = self._array.shape
@@ -195,13 +268,10 @@ class NumpyArrayTableModel(qt.QAbstractTableModel):
             self._dimension = dimension
 
     def setCurrentArrayIndex(self, index):
-        """
-        This method is ignored if the current array does not
-        not a 3-dimensional array.
-        """
         shape = self._array.shape
         if len(shape) < 3:
             # index is ignored
+            self._index = []
             return
         if len(shape) == 3:
             shape = self._array.shape[self._dimension]
@@ -209,9 +279,11 @@ class NumpyArrayTableModel(qt.QAbstractTableModel):
                 index = index[0]
             if (index < 0) or (index >= shape):
                 raise ValueError("Index must be an integer lower than %d" % shape)
-            self._index = index
+            self._index = [index]
         else:
             # Only N-dimensional arrays of images supported
+            print("NOT SUPPORTED YET")
+            return
             for i in range(len(index)):
                 idx = index[i]
                 if (idx < 0) or (idx >= shape[i]):
@@ -235,5 +307,8 @@ if __name__ == "__main__":
     w.setModel(m)
     m.setCurrentArrayIndex(4)
     #m.setArrayData(numpy.ones((100,)))
+    from PyMca5.PyMcaGraph import Colormap
+    bg = Colormap.applyColormap(d, colormap="temperature",norm="linear")
+    m.setArrayColors(bg[0])
     w.show()
     a.exec()
