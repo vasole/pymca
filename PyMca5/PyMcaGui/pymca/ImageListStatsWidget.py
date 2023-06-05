@@ -171,6 +171,9 @@ class ImageListStatsWidget(qt.QTabWidget):
         self.correlationWidget.setModel(m)
         bg = Colormap.applyColormap(correlation, colormap="temperature", norm="linear")
         m.setArrayColors(bg[0])
+        m.setHorizontalHeaderLabels(self.imageNames)
+        m.setVerticalHeaderLabels(self.imageNames)
+
         self._fillTable(results)
 
     def _fillTable(self, results):
