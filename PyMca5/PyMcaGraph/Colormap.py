@@ -37,7 +37,7 @@ __doc__ = """Convert data to a RGBA colormap."""
 
 import numpy as np
 from . import ctools
-
+from . import MatplotlibColormaps
 
 # default colormaps ###########################################################
 
@@ -87,6 +87,9 @@ COLORMAPS = {
 }
 """Dictionary of default colormaps."""
 
+# Add matplotlib colormaps
+for key in MatplotlibColormaps.cmaps:
+    COLORMAPS[key] = MatplotlibColormaps.cmaps[key]
 
 # colormap ####################################################################
 
@@ -134,6 +137,6 @@ if __name__ == "__main__":
 
         filename = 'demoColormap_%s.ppm' % colormap
         print('Write generated RGB image to: %s' % filename)
-        with open(filename, 'w') as f:
-            f.write('P6\n%d %d\n255\n' % (pixmap.shape[1], pixmap.shape[0]))
+        with open(filename, 'wb') as f:
+            f.write(('P6\n%d %d\n255\n' % (pixmap.shape[1], pixmap.shape[0])).encode('utf-8'))
             f.write(pixmap[:, :, 0:3].tobytes())
