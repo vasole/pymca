@@ -67,7 +67,7 @@ excludes = []
 includes = []
 
 # This module basically does not work with frozen versions
-excludes.append("multiprocessing")
+#excludes.append("multiprocessing")
 
 #some standard encodings
 #includes.append('encodings.ascii')
@@ -204,7 +204,35 @@ import collections
 special_modules += [os.path.dirname(collections.__file__)]
 
 # no scipy (huge package not used by PyMca)
-excludes += ["scipy"]
+#excludes += ["scipy"]
+# community requested modules
+try:
+    import scipy
+    special_modules.append(os.path.dirname(scipy.__file__))
+except ImportError:
+    print("scipy not available, not added to the frozen executables")
+
+try:
+    import sklearn
+    import threadpoolctl
+    import joblib
+    import prompt_toolkit
+    #special_modules.append(os.path.dirname(sklearn.__file__))
+    includes.append("sklearn")
+    special_modules.append(os.path.dirname(joblib.__file__))
+    special_modules.append(threadpoolctl.__file__)
+    special_modules.append(os.path.dirname(prompt_toolkit.__file__))
+except ImportError:
+    print("scikit-learn not available, not added to the frozen executables")
+    sklearn = None
+
+try:
+    import umap
+    import pynndescent
+    includes.append("umap")
+    special_modules.append(os.path.dirname(pynndescent.__file__))
+except ImportError:
+    print("umap-learn not available, not added to the frozen executables")
 
 # give some time to read the output
 time.sleep(2)
@@ -240,6 +268,9 @@ build_options = {
     "excludes": excludes,
     "zip_exclude_packages":["*"]}
     #"compressed": True, }
+
+if sklearn:
+    build_options["include_msvcr"] = True
 
 if sys.platform.startswith("darwin") and cxVersion not in ["6.11.1"]:
     # something got wrong starting with cx_Freeze 6.12.0
