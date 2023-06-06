@@ -228,9 +228,11 @@ except ImportError:
 
 try:
     import umap
-    special_modules.append(os.path.dirname(umap.__file__))
+    import pynndescent
+    includes.append("umap")
+    special_modules.append(os.path.dirname(pynndescent.__file__))
 except ImportError:
-    print("umap not available, not added to the frozen executables")
+    print("umap-learn not available, not added to the frozen executables")
 
 # give some time to read the output
 time.sleep(2)
