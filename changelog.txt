@@ -1,3 +1,10 @@
+VERSION 5.8.4
+-------------
+
+- XRF. Correct configuration error when number of energies is more than 4 but less than 10.
+
+- RGB Correlator. Add the possibility to calculate the correlation coefficient of selected pixels.
+
 VERSION 5.8.3
 -------------
 
