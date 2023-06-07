@@ -77,7 +77,7 @@ def _labelMdp(x, k):
      
 def _labelScikitLearn(x, k):
     from sklearn.cluster import KMeans
-    km = KMeans(n_clusters=k)
+    km = KMeans(n_clusters=k, init='k-means++', n_init=10)
     km.fit(x)
     labels = km.labels_
     #labels = km.predict(x)
