@@ -167,7 +167,7 @@ class ImageListStatsWidget(qt.QTabWidget):
 
         # calculate pearson correlation
         correlation = arrayListPearsonCorrelation(self.imageList, mask)
-        m = NumpyArrayTableModel.NumpyArrayTableModel(None, correlation, fmt = "%.5f")
+        m = NumpyArrayTableModel.NumpyArrayTableModel(None, correlation, fmt = "%.3f")
         self.correlationWidget.setModel(m)
         colormap = Colormap.COLORMAPS.get("viridis", "temperature")
         bg = Colormap.applyColormap(correlation, colormap=colormap, norm="linear")
