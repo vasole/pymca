@@ -52,6 +52,7 @@ DataReader = EdfFileDataSource.EdfFileDataSource
 USE_STRING = False
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
+
 if hasattr(qt, "QString"):
     QString = qt.QString
     QStringList = qt.QStringList
@@ -62,12 +63,14 @@ else:
 QTVERSION = qt.qVersion()
 try:
     from PyMca5.PyMcaGui.math import NNMADialog
+
     NNMA = NNMADialog.NNMA
     from PyMca5.PyMcaGui.math import PCADialog
+
     PCA = PCADialog.PCA
 except Exception:
     NNMA = False
-    PCA  = False
+    PCA = False
 
 KMEANS = RGBImageCalculator.KMEANS
 
@@ -75,13 +78,14 @@ try:
     import tomogui.gui.utils.icons
     from tomogui.gui.ProjectWidget import ProjectWindow as TomoguiProjWindow
     from PyMca5.PyMcaGui.pymca.TomographyRecons import TomoReconsDialog
+
     TOMOGUI_FLAG = True
 except Exception:
     TOMOGUI_FLAG = False
 
 # Use QDataSource for complete test but requires too many imports
 # TODO: then why have all format tests in the same module?
-#def isHdf5(filename):
+# def isHdf5(filename):
 #    import QDataSource
 #    sourceType = QDataSource.getSourceType(filename).upper()
 #    return sourceType.startswith("HDF5")
@@ -89,12 +93,20 @@ try:
     import h5py
 except ImportError:
     h5py = None
+
     def isHdf5(filename):
-        return os.path.splitext(filename)[-1].lower()\
-            in ('.h5', '.nxs', '.hdf', '.hdf5')
+        return os.path.splitext(filename)[-1].lower() in (
+            ".h5",
+            ".nxs",
+            ".hdf",
+            ".hdf5",
+        )
+
 else:
+
     def isHdf5(filename):
         return h5py.is_hdf5(filename)
+
     from PyMca5.PyMcaGui.io.hdf5 import HDF5Widget
     from PyMca5.PyMcaIO import NexusUtils
 
@@ -102,41 +114,48 @@ else:
 def isEdf(filename):
     # Complete Test but requires too many imports
     # TODO: then why have have all format tests in the same module?
-    #import QDataSource
-    #sourceType = QDataSource.getSourceType(filename).upper()
-    #return sourceType.startswith("EDFFILE")
-    with open(filename, 'rb') as f:
+    # import QDataSource
+    # sourceType = QDataSource.getSourceType(filename).upper()
+    # return sourceType.startswith("EDFFILE")
+    with open(filename, "rb") as f:
         twoBytes = f.read(2)
-    if sys.version < '3.0':
+    if sys.version < "3.0":
         twoChar = twoBytes
     else:
         try:
-            twoChar = twoBytes.decode('utf-8')
+            twoChar = twoBytes.decode("utf-8")
         except Exception:
             twoChar = "__dummy__"
     filename = filename.lower()
-    return twoChar in ["II", "MM", "\n{"] or\
-        twoChar[0] in ["{"] or\
-        filename.endswith('cbf')or\
-        (filename.endswith('spe') and twoChar[0] not in ['$'])
+    return (
+        twoChar in ["II", "MM", "\n{"]
+        or twoChar[0] in ["{"]
+        or filename.endswith("cbf")
+        or (filename.endswith("spe") and twoChar[0] not in ["$"])
+    )
 
 
 def isTif(filename):
-    return os.path.splitext(filename)[-1].lower()\
-        in ('.tif', '.tiff')
+    return os.path.splitext(filename)[-1].lower() in (".tif", ".tiff")
 
 
 def isQImageReadable(filename):
-    return os.path.splitext(filename)[-1].lower()\
-        in ('.jpg', '.jpeg', '.png', '.tif', '.tiff')
+    return os.path.splitext(filename)[-1].lower() in (
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".tif",
+        ".tiff",
+    )
 
 
 def makeQimageBW(qimage):
     height = qimage.height()
-    width  = qimage.width()
+    width = qimage.width()
     if qimage.format() == qt.QImage.Format_Indexed8:
-        pixmap0 = numpy.frombuffer(qimage.bits().asstring(width * height),
-                                    dtype=numpy.uint8)
+        pixmap0 = numpy.frombuffer(
+            qimage.bits().asstring(width * height), dtype=numpy.uint8
+        )
         pixmap = numpy.zeros((height * width, 4), numpy.uint8)
         pixmap[:, 0] = pixmap0[:]
         pixmap[:, 1] = pixmap0[:]
@@ -145,24 +164,22 @@ def makeQimageBW(qimage):
         pixmap.shape = height, width, 4
     else:
         image = qimage.convertToFormat(qt.QImage.Format_ARGB32)
-        pixmap0 = numpy.frombuffer(image.bits().asstring(width * height * 4),
-                                    dtype=numpy.uint8)
+        pixmap0 = numpy.frombuffer(
+            image.bits().asstring(width * height * 4), dtype=numpy.uint8
+        )
         pixmap = numpy.array(pixmap0, copy=True)
     pixmap.shape = height, width, -1
-    return pixmap[:,:,0] * 0.114 +\
-        pixmap[:,:,1] * 0.587 +\
-        pixmap[:,:,2] * 0.299
+    return pixmap[:, :, 0] * 0.114 + pixmap[:, :, 1] * 0.587 + pixmap[:, :, 2] * 0.299
 
 
 _logger = logging.getLogger(__name__)
 
 
 class RGBCorrelatorWidget(qt.QWidget):
-
     sigRGBCorrelatorWidgetSignal = qt.pyqtSignal(object)
     sigMaskImageWidgetSignal = qt.pyqtSignal(object)
 
-    def __init__(self, parent = None, bgrx = False, replace = False, image_shape=None):
+    def __init__(self, parent=None, bgrx=False, replace=False, image_shape=None):
         qt.QWidget.__init__(self, parent)
         self.replaceOption = replace
         self.setWindowTitle("RGBCorrelatorWidget")
@@ -175,7 +192,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.labelWidget.mainLayout.setSpacing(0)
         alignment = qt.Qt.AlignVCenter | qt.Qt.AlignCenter
         self.toolBar = qt.QWidget(self)
-        #hbox = qt.QWidget(self.labelWidget)
+        # hbox = qt.QWidget(self.labelWidget)
         hbox = self.toolBar
         hbox.mainLayout = qt.QHBoxLayout(hbox)
         hbox.mainLayout.setContentsMargins(0, 0, 0, 0)
@@ -207,23 +224,20 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.profileButton.setToolTip("Show selected images profile")
         if TOMOGUI_FLAG:
             self.tomographyButton = qt.QToolButton(hbox)
-            tomoguiIcon = tomogui.gui.utils.icons.getQIcon('tomogui')
+            tomoguiIcon = tomogui.gui.utils.icons.getQIcon("tomogui")
             self.tomographyButton.setIcon(tomoguiIcon)
             self.tomographyButton.setToolTip("Run tomography reconstruction")
             self.tomographyButton.clicked.connect(self._showTomoReconsDialog)
 
-        #label1 = MyQLabel(self.labelWidget, color = qt.Qt.black)
-        label1 = MyQLabel(self.labelWidget, color = qt.Qt.black)
+        label1 = MyQLabel(self.labelWidget, color=qt.Qt.black)
         label1.setAlignment(alignment)
         label1.setText("Image Size")
-        self.__sizeLabel = MyQLabel(self.labelWidget,
-                                    bold = True,
-                                    color = qt.Qt.red)
+        self.__sizeLabel = MyQLabel(self.labelWidget, bold=True, color=qt.Qt.red)
         self.__sizeLabel.setAlignment(alignment)
         self.__sizeLabel.setText("No image set")
 
-        #self.__rowLineEdit = qt.QLineEdit(self.labelWidget)
-        #self.__columnLineEdit = qt.QLineEdit(self.labelWidget)
+        # self.__rowLineEdit = qt.QLineEdit(self.labelWidget)
+        # self.__columnLineEdit = qt.QLineEdit(self.labelWidget)
         self.__imageResizeButton = qt.QPushButton(self.labelWidget)
         self.__imageResizeButton.setText("Reshape")
 
@@ -237,12 +251,12 @@ class RGBCorrelatorWidget(qt.QWidget):
             hbox.mainLayout.addWidget(self.tomographyButton)
         hbox.mainLayout.addWidget(qt.HorizontalSpacer(self.toolBar))
 
-        #hbox.mainLayout.addWidget(label1)
+        # hbox.mainLayout.addWidget(label1)
         self.labelWidget.mainLayout.addWidget(label1, 0, 0)
         self.labelWidget.mainLayout.addWidget(self.__sizeLabel, 0, 1)
 
-        #self.labelWidget.mainLayout.addWidget(self.__rowLineEdit, 1, 0)
-        #self.labelWidget.mainLayout.addWidget(self.__columnLineEdit, 1, 1)
+        # self.labelWidget.mainLayout.addWidget(self.__rowLineEdit, 1, 0)
+        # self.labelWidget.mainLayout.addWidget(self.__columnLineEdit, 1, 1)
         self.labelWidget.mainLayout.addWidget(self.__imageResizeButton, 0, 2)
 
         self.colormapType = 0
@@ -267,9 +281,10 @@ class RGBCorrelatorWidget(qt.QWidget):
 
         self.buttonGroup.setExclusive(True)
 
-        self.sliderWidget = RGBCorrelatorSlider.RGBCorrelatorSlider(self,
-                                        autoscalelimits=[5.0, 80.0])
-        self.tableWidget  = RGBCorrelatorTable.RGBCorrelatorTable(self)
+        self.sliderWidget = RGBCorrelatorSlider.RGBCorrelatorSlider(
+            self, autoscalelimits=[5.0, 80.0]
+        )
+        self.tableWidget = RGBCorrelatorTable.RGBCorrelatorTable(self)
 
         self.mainLayout.addWidget(self.toolBar)
         self.mainLayout.addWidget(self.labelWidget)
@@ -293,28 +308,27 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.__redLabel = None
         self.__greenLabel = None
         self.__blueLabel = None
-        self.__redImageData   = None
+        self.__redImageData = None
         self.__greenImageData = None
-        self.__blueImageData  = None
-        self.__redMin     = 0.0
-        self.__redMax     = 100.0
-        self.__greenMin   = 0.0
-        self.__greenMax   = 100.0
-        self.__blueMin   = 0.0
-        self.__blueMax     = 0.0
+        self.__blueImageData = None
+        self.__redMin = 0.0
+        self.__redMax = 100.0
+        self.__greenMin = 0.0
+        self.__greenMax = 100.0
+        self.__blueMin = 0.0
+        self.__blueMax = 0.0
         self.__redImage = None
         self.__greenImage = None
         self.__blueImage = None
-        self.outputDir   = None
+        self.outputDir = None
 
         self.loadButton.clicked.connect(self._addFileList)
         self.saveButton.clicked.connect(self.saveButtonClicked)
         self._saveButtonMenu = qt.QMenu()
-        self._saveButtonMenu.addAction(QString("Save all"),
-                                    self.saveImageList)
-        self._saveButtonMenu.addAction(QString("Save selected"),
-                                    self.saveSelectedImages)
-
+        self._saveButtonMenu.addAction(QString("Save all"), self.saveImageList)
+        self._saveButtonMenu.addAction(
+            QString("Save selected"), self.saveSelectedImages
+        )
 
         self.removeButton.clicked.connect(self.removeButtonClicked)
 
@@ -326,7 +340,7 @@ class RGBCorrelatorWidget(qt.QWidget):
 
         self._calculationMenu = None
         self.scatterPlotWidget = None
-        self.pcaDialog  = None
+        self.pcaDialog = None
         self.nnmaDialog = None
         self.kMeansDialog = None
         self._tomoguiWindow = None
@@ -349,36 +363,43 @@ class RGBCorrelatorWidget(qt.QWidget):
             return self.showCalculationDialog()
         if self._calculationMenu is None:
             self._calculationMenu = qt.QMenu()
-            self._calculationMenu.addAction(QString("Image Statistics"),
-                                            self.showStatisticsDialog)
-            self._calculationMenu.addAction(QString("Image Calculator"),
-                                            self.showCalculationDialog)
-            self._calculationMenu.addAction(QString("Scatter Plot"),
-                                            self.showScatterPlotDialog)
+            self._calculationMenu.addAction(
+                QString("Image Statistics"), self.showStatisticsDialog
+            )
+            self._calculationMenu.addAction(
+                QString("Image Calculator"), self.showCalculationDialog
+            )
+            self._calculationMenu.addAction(
+                QString("Scatter Plot"), self.showScatterPlotDialog
+            )
             if PCA:
                 if PCADialog.MDP:
-                    self._calculationMenu.addAction(QString("PCA/ICA Analysis"),
-                                            self.showPCADialog)
+                    self._calculationMenu.addAction(
+                        QString("PCA/ICA Analysis"), self.showPCADialog
+                    )
                 else:
-                    self._calculationMenu.addAction(QString("PCA Analysis"),
-                                            self.showPCADialog)
+                    self._calculationMenu.addAction(
+                        QString("PCA Analysis"), self.showPCADialog
+                    )
             if NNMA:
-                self._calculationMenu.addAction(QString("NNMA Analysis"),
-                                            self.showNNMADialog)
+                self._calculationMenu.addAction(
+                    QString("NNMA Analysis"), self.showNNMADialog
+                )
             if KMEANS:
-                self._calculationMenu.addAction(QString("K-Means Clustering"),
-                                            self.showKMeansDialog)
+                self._calculationMenu.addAction(
+                    QString("K-Means Clustering"), self.showKMeansDialog
+                )
         self._calculationMenu.exec(self.cursor().pos())
 
     def _showTomoReconsDialog(self):
         def getSinograms(ids):
             datas = []
             for id in ids:
-                assert 'image' in self._imageDict[id]
-                datas.append(self._imageDict[id]['image'])
+                assert "image" in self._imageDict[id]
+                datas.append(self._imageDict[id]["image"])
             return datas
 
-        assert(TOMOGUI_FLAG is True)
+        assert TOMOGUI_FLAG is True
         diag = TomoReconsDialog(entries=self._imageList)
         if diag.exec():
             if self._tomoguiWindow is None:
@@ -387,14 +408,14 @@ class RGBCorrelatorWidget(qt.QWidget):
             self._tomoguiWindow.clean()
             reconsType = diag.getReconstructionType()
             sinoIDs = diag.getSinogramsToRecons()
-            self._tomoguiWindow.setSinoToRecons(reconsType=reconsType,
-                                                sinograms=getSinograms(sinoIDs),
-                                                names=sinoIDs)
+            self._tomoguiWindow.setSinoToRecons(
+                reconsType=reconsType, sinograms=getSinograms(sinoIDs), names=sinoIDs
+            )
             if diag.hasIt() is True:
-                it = self._imageDict[diag.getIt()]['image']
+                it = self._imageDict[diag.getIt()]["image"]
                 self._tomoguiWindow.setIt(it=it, name=diag.getIt())
             if diag.hasI0() is True:
-                i0 = self._imageDict[diag.getI0()]['image']
+                i0 = self._imageDict[diag.getI0()]["image"]
                 self._tomoguiWindow.setI0(i0=i0, name=diag.getI0())
             # by default do not reconstruct log
             self._tomoguiWindow.setLogRecons(False)
@@ -410,192 +431,205 @@ class RGBCorrelatorWidget(qt.QWidget):
 
     def _sliderSlot(self, ddict):
         _logger.debug("RGBCorrelatorWidget._sliderSlot()")
-        if self.__imageLength is None: return
+        if self.__imageLength is None:
+            return
         tableDict = self.tableWidget.getElementSelection()
-        if ddict['event'] == 'redChanged':
-            self.__redMin = ddict['min']
-            self.__redMax = ddict['max']
-            if len(tableDict['r']):
-                self.__recolor(['r'])
-        elif ddict['event'] == 'greenChanged':
-            self.__greenMin = ddict['min']
-            self.__greenMax = ddict['max']
-            if len(tableDict['g']):
-                self.__recolor(['g'])
-        elif ddict['event'] == 'blueChanged':
-            self.__blueMin = ddict['min']
-            self.__blueMax = ddict['max']
-            if len(tableDict['b']):
-                self.__recolor(['b'])
-        elif ddict['event'] == 'allChanged':
-            self.__redMin = ddict['red'][0]
-            self.__redMax = ddict['red'][1]
-            self.__greenMin = ddict['green'][0]
-            self.__greenMax = ddict['green'][1]
-            self.__blueMin = ddict['blue'][0]
-            self.__blueMax = ddict['blue'][1]
-            if not len(tableDict['r']):
-                if not len(tableDict['g']):
-                    if not len(tableDict['b']):
+        if ddict["event"] == "redChanged":
+            self.__redMin = ddict["min"]
+            self.__redMax = ddict["max"]
+            if len(tableDict["r"]):
+                self.__recolor(["r"])
+        elif ddict["event"] == "greenChanged":
+            self.__greenMin = ddict["min"]
+            self.__greenMax = ddict["max"]
+            if len(tableDict["g"]):
+                self.__recolor(["g"])
+        elif ddict["event"] == "blueChanged":
+            self.__blueMin = ddict["min"]
+            self.__blueMax = ddict["max"]
+            if len(tableDict["b"]):
+                self.__recolor(["b"])
+        elif ddict["event"] == "allChanged":
+            self.__redMin = ddict["red"][0]
+            self.__redMax = ddict["red"][1]
+            self.__greenMin = ddict["green"][0]
+            self.__greenMax = ddict["green"][1]
+            self.__blueMin = ddict["blue"][0]
+            self.__blueMax = ddict["blue"][1]
+            if not len(tableDict["r"]):
+                if not len(tableDict["g"]):
+                    if not len(tableDict["b"]):
                         return
-            self.__recolor(['r', 'g', 'b'])
+            self.__recolor(["r", "g", "b"])
 
     def _tableSlot(self, ddict):
         _logger.debug("RGBCorrelatorWidget._tableSlot()")
-        if self.__imageLength is None: return
-        if ddict['r'] == []:ddict['r'] = None
-        if ddict['g'] == []:ddict['g'] = None
-        if ddict['b'] == []:ddict['b'] = None
+        if self.__imageLength is None:
+            return
+        if ddict["r"] == []:
+            ddict["r"] = None
+        if ddict["g"] == []:
+            ddict["g"] = None
+        if ddict["b"] == []:
+            ddict["b"] = None
 
-        if ddict['r'] is None:
+        if ddict["r"] is None:
             self.__redImageData = numpy.zeros(self.__imageShape).astype(numpy.float64)
             self.__redLabel = None
         else:
-            self.__redLabel = ddict['elementlist'][ddict['r'][0]]
-            self.__redImageData = self._imageDict[self.__redLabel]['image']
+            self.__redLabel = ddict["elementlist"][ddict["r"][0]]
+            self.__redImageData = self._imageDict[self.__redLabel]["image"]
 
-        if ddict['g'] is None:
+        if ddict["g"] is None:
             self.__greenImageData = numpy.zeros(self.__imageShape).astype(numpy.float64)
             self.__greenLabel = None
         else:
-            self.__greenLabel = ddict['elementlist'][ddict['g'][0]]
-            self.__greenImageData = self._imageDict[self.__greenLabel]['image']
+            self.__greenLabel = ddict["elementlist"][ddict["g"][0]]
+            self.__greenImageData = self._imageDict[self.__greenLabel]["image"]
 
-        if ddict['b'] is None:
+        if ddict["b"] is None:
             self.__blueImageData = numpy.zeros(self.__imageShape).astype(numpy.float64)
             self.__blueLabel = None
         else:
-            self.__blueLabel = ddict['elementlist'][ddict['b'][0]]
-            self.__blueImageData = self._imageDict[self.__blueLabel]['image']
-        self.__recolor(['r', 'g', 'b'])
+            self.__blueLabel = ddict["elementlist"][ddict["b"][0]]
+            self.__blueImageData = self._imageDict[self.__blueLabel]["image"]
+        self.__recolor(["r", "g", "b"])
 
-    def __recolor(self, color = None):
+    def __recolor(self, color=None):
         if color is None:
-            colorlist = ['r', 'g', 'b']
+            colorlist = ["r", "g", "b"]
         elif type(color) == type(""):
             colorlist = [color]
         else:
             colorlist = color * 1
         ddict = {}
-        ddict['event'] = 'updated'
-        if 'r' in colorlist:
-            #get slider
+        ddict["event"] = "updated"
+        if "r" in colorlist:
+            # get slider
             label = self.__redLabel
             if label is None:
                 valmin = 0.0
                 valmax = 1.0
             else:
-                valmin = self._imageDict[label]['min']
-                valmax = self._imageDict[label]['max']
-                delta  = 0.01 * (valmax  - valmin)
+                valmin = self._imageDict[label]["min"]
+                valmax = self._imageDict[label]["max"]
+                delta = 0.01 * (valmax - valmin)
                 valmin = valmin + delta * self.__redMin
                 valmax = valmin + delta * self.__redMax
             if USE_STRING:
-                red, size, minmax = self.getColorImage(self.__redImageData,
-                                     spslut.RED,
-                                     valmin,
-                                     valmax, 0)
+                red, size, minmax = self.getColorImage(
+                    self.__redImageData, spslut.RED, valmin, valmax, 0
+                )
                 self.__redImage = numpy.array(red).astype(numpy.uint8)
-                ddict['red'] = red
+                ddict["red"] = red
             else:
-                red, size, minmax = self.getColorImage(self.__redImageData,
-                                     spslut.RED,
-                                     valmin,
-                                     valmax, 1)
+                red, size, minmax = self.getColorImage(
+                    self.__redImageData, spslut.RED, valmin, valmax, 1
+                )
                 self.__redImage = red
-                ddict['red'] = red.tobytes()
+                ddict["red"] = red.tobytes()
 
-            ddict['size']= size
-        if 'g' in colorlist:
-            #get slider
+            ddict["size"] = size
+        if "g" in colorlist:
+            # get slider
             label = self.__greenLabel
             if label is None:
                 valmin = 0.0
                 valmax = 1.0
             else:
-                valmin = self._imageDict[label]['min']
-                valmax = self._imageDict[label]['max']
-                delta  = 0.01 * (valmax  - valmin)
+                valmin = self._imageDict[label]["min"]
+                valmax = self._imageDict[label]["max"]
+                delta = 0.01 * (valmax - valmin)
                 valmin = valmin + delta * self.__greenMin
                 valmax = valmin + delta * self.__greenMax
             if USE_STRING:
-                green, size, minmax = self.getColorImage(self.__greenImageData,
-                                     spslut.GREEN,
-                                     valmin,
-                                     valmax)
+                green, size, minmax = self.getColorImage(
+                    self.__greenImageData, spslut.GREEN, valmin, valmax
+                )
                 self.__greenImage = numpy.array(green).astype(numpy.uint8)
-                ddict['green'] = green
+                ddict["green"] = green
             else:
-                green, size, minmax = self.getColorImage(self.__greenImageData,
-                                     spslut.GREEN,
-                                     valmin,
-                                     valmax,1)
+                green, size, minmax = self.getColorImage(
+                    self.__greenImageData, spslut.GREEN, valmin, valmax, 1
+                )
                 self.__greenImage = green
-                ddict['green'] = green.tobytes()
-            ddict['size']= size
+                ddict["green"] = green.tobytes()
+            ddict["size"] = size
 
-        if 'b' in colorlist:
-            #get slider
+        if "b" in colorlist:
+            # get slider
             label = self.__blueLabel
             if label is None:
                 valmin = 0.0
                 valmax = 1.0
             else:
-                valmin = self._imageDict[label]['min']
-                valmax = self._imageDict[label]['max']
-                #if valmax == valmin:valmax = valmin + 1
-                delta  = 0.01 * (valmax  - valmin)
+                valmin = self._imageDict[label]["min"]
+                valmax = self._imageDict[label]["max"]
+                # if valmax == valmin:valmax = valmin + 1
+                delta = 0.01 * (valmax - valmin)
                 valmin = valmin + delta * self.__blueMin
                 valmax = valmin + delta * self.__blueMax
             if USE_STRING:
-                blue, size, minmax = self.getColorImage(self.__blueImageData,
-                                         spslut.BLUE,
-                                         valmin,
-                                         valmax)
+                blue, size, minmax = self.getColorImage(
+                    self.__blueImageData, spslut.BLUE, valmin, valmax
+                )
                 self.__blueImage = numpy.array(blue).astype(numpy.uint8)
-                ddict['blue'] = blue
+                ddict["blue"] = blue
             else:
-                blue, size, minmax = self.getColorImage(self.__blueImageData,
-                                         spslut.BLUE,
-                                         valmin,
-                                         valmax,1)
+                blue, size, minmax = self.getColorImage(
+                    self.__blueImageData, spslut.BLUE, valmin, valmax, 1
+                )
                 self.__blueImage = blue
-                ddict['blue'] = blue.tobytes()
-            ddict['size'] = size
+                ddict["blue"] = blue.tobytes()
+            ddict["size"] = size
         image = self.__redImage + self.__greenImage + self.__blueImage
-        ddict['image'] = image
+        ddict["image"] = image
         self.sigRGBCorrelatorWidgetSignal.emit(ddict)
 
     def _colormapTypeChange(self, val):
         self.colormapType = val
         self.__recolor()
 
-    def getColorImage(self, image, colormap,
-                      datamin=None, datamax=None,
-                      arrayflag = 0):
-        COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
-                        spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
+    def getColorImage(self, image, colormap, datamin=None, datamax=None, arrayflag=0):
+        COLORMAPLIST = [
+            spslut.GREYSCALE,
+            spslut.REVERSEGREY,
+            spslut.TEMP,
+            spslut.RED,
+            spslut.GREEN,
+            spslut.BLUE,
+            spslut.MANY,
+        ]
         if colormap not in COLORMAPLIST:
             raise ValueError("Unknown color scheme %s" % colormap)
 
         if (datamin is None) or (datamax is None):
-            #spslut already calculates min and max
-            #tmp = numpy.ravel(image)
-            (image_buffer, size, minmax)= spslut.transform(image,
-                                     (1,0),
-                                     (self.colormapType,3.0),
-                                      self.bgrx, colormap,
-                                      1,
-                                      (0,1), (0,255),arrayflag)
-                                     #(min(tmp),max(tmp)))
+            # spslut already calculates min and max
+            # tmp = numpy.ravel(image)
+            (image_buffer, size, minmax) = spslut.transform(
+                image,
+                (1, 0),
+                (self.colormapType, 3.0),
+                self.bgrx,
+                colormap,
+                1,
+                (0, 1),
+                (0, 255),
+                arrayflag,
+            )
+            # (min(tmp),max(tmp)))
         else:
-            (image_buffer, size, minmax)= spslut.transform(image,
-                                     (1,0),
-                                     (self.colormapType,3.0),
-                                      self.bgrx, colormap,
-                                      0,
-                                     (datamin, datamax),
-                                     (0,255), arrayflag)
+            (image_buffer, size, minmax) = spslut.transform(
+                image,
+                (1, 0),
+                (self.colormapType, 3.0),
+                self.bgrx,
+                colormap,
+                0,
+                (datamin, datamax),
+                (0, 255),
+                arrayflag,
+            )
 
         return image_buffer, size, minmax
 
@@ -604,14 +638,15 @@ class RGBCorrelatorWidget(qt.QWidget):
         if label is None:
             label = "Unnamed 00"
             i = 0
-            while(label in self._imageList):
+            while label in self._imageList:
                 i += 1
                 label = "Unnamed %02d" % i
         if not len(image):
             return
         firstTime = False
         if self.__imageLength is None:
-            if not len(image.shape): return
+            if not len(image.shape):
+                return
             self.__imageLength = 1
             for value in image.shape:
                 self.__imageLength *= value
@@ -626,29 +661,31 @@ class RGBCorrelatorWidget(qt.QWidget):
             for value in image.shape:
                 length *= value
             if length == self.__imageLength:
-                image = numpy.resize(image,
-                          (self.__imageShape[0], self.__imageShape[1]))
+                image = numpy.resize(
+                    image, (self.__imageShape[0], self.__imageShape[1])
+                )
             else:
-                raise ValueError("Image cannot be reshaped to %d x %d" % \
-                          (self.__imageShape[0], self.__imageShape[1]))
+                raise ValueError(
+                    "Image cannot be reshaped to %d x %d"
+                    % (self.__imageShape[0], self.__imageShape[1])
+                )
 
         if label not in self._imageList:
             self._imageList.append(label)
         self._imageDict[label] = {}
-        self._imageDict[label]['image'] = image
+        self._imageDict[label]["image"] = image
         tmp = numpy.ravel(image)
-        self._imageDict[label]['min'] = min(tmp)
-        self._imageDict[label]['max'] = max(tmp)
+        self._imageDict[label]["min"] = min(tmp)
+        self._imageDict[label]["max"] = max(tmp)
 
         self.tableWidget.build(self._imageList)
         i = 0
         for label in self._imageList:
-            mintext = "%g" % self._imageDict[label]['min']
-            maxtext = "%g" % self._imageDict[label]['max']
+            mintext = "%g" % self._imageDict[label]["min"]
+            maxtext = "%g" % self._imageDict[label]["max"]
             item = self.tableWidget.item(i, 4)
             if item is None:
-                item = qt.QTableWidgetItem(mintext,
-                                       qt.QTableWidgetItem.Type)
+                item = qt.QTableWidgetItem(mintext, qt.QTableWidgetItem.Type)
                 item.setTextAlignment(qt.Qt.AlignHCenter | qt.Qt.AlignVCenter)
                 item.setFlags(qt.Qt.ItemIsEnabled)
                 self.tableWidget.setItem(i, 4, item)
@@ -656,8 +693,7 @@ class RGBCorrelatorWidget(qt.QWidget):
                 item.setText(mintext)
             item = self.tableWidget.item(i, 5)
             if item is None:
-                item = qt.QTableWidgetItem(maxtext,
-                                       qt.QTableWidgetItem.Type)
+                item = qt.QTableWidgetItem(maxtext, qt.QTableWidgetItem.Type)
                 item.setTextAlignment(qt.Qt.AlignHCenter | qt.Qt.AlignVCenter)
                 item.setFlags(qt.Qt.ItemIsEnabled)
                 self.tableWidget.setItem(i, 5, item)
@@ -665,11 +701,11 @@ class RGBCorrelatorWidget(qt.QWidget):
                 item.setText(maxtext)
             i += 1
         if firstTime:
-            self.tableWidget.setElementSelection({'r':[0]})
-                                                 #, 'g':[0],'b':[0]})
+            self.tableWidget.setElementSelection({"r": [0]})
+            # , 'g':[0],'b':[0]})
             self.sliderWidget.autoScaleFromAToB()
-            #self.__recolor()
-            #self.tableWidget._update()
+            # self.__recolor()
+            # self.tableWidget._update()
         if self.calculationDialog is not None:
             self.calculationDialog.imageList = self._imageList
             self.calculationDialog.imageDict = self._imageDict
@@ -687,13 +723,17 @@ class RGBCorrelatorWidget(qt.QWidget):
             self.removeImage(label)
 
     def removeImage(self, label):
-        if label not in self._imageList:return
+        if label not in self._imageList:
+            return
         self._imageDict[label] = {}
         del self._imageDict[label]
         del self._imageList[self._imageList.index(label)]
-        if self.__redLabel == label:   self.__redLabel = None
-        if self.__greenLabel == label: self.__greenLabel = None
-        if self.__blueLabel == label:self.__blueLabel = None
+        if self.__redLabel == label:
+            self.__redLabel = None
+        if self.__greenLabel == label:
+            self.__greenLabel = None
+        if self.__blueLabel == label:
+            self.__blueLabel = None
         self.tableWidget.build(self._imageList)
         self.tableWidget._update()
         if self.calculationDialog is not None:
@@ -702,7 +742,7 @@ class RGBCorrelatorWidget(qt.QWidget):
 
     def removeImageSlot(self, ddict):
         if type(ddict) == type({}):
-            self.removeImage(ddict['label'])
+            self.removeImage(ddict["label"])
         else:
             self.removeImage(ddict)
 
@@ -711,7 +751,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.addImageSlot(ddict)
 
     def _imageResizeSlot(self):
-        dialog = ImageShapeDialog(self, shape = self.__imageShape)
+        dialog = ImageShapeDialog(self, shape=self.__imageShape)
         dialog.setModal(True)
         ret = dialog.exec()
         if ret:
@@ -719,7 +759,7 @@ class RGBCorrelatorWidget(qt.QWidget):
             dialog.close()
             del dialog
             try:
-                if (shape[0]*shape[1]) <= 0:
+                if (shape[0] * shape[1]) <= 0:
                     self.reset()
                 else:
                     self.setImageShape(shape)
@@ -729,34 +769,38 @@ class RGBCorrelatorWidget(qt.QWidget):
                 msg.setText("Error reshaping: %s" % sys.exc_info()[1])
                 msg.exec()
 
-
     def setImageShape(self, shape):
         length = numpy.prod(shape, dtype=int)
         if self.__imageLength is None:
             self.__imageLength = length
         elif length != self.__imageLength:
-            raise ValueError("New length %d different of old length %d" % \
-                    (length, self.__imageLength))
+            raise ValueError(
+                "New length %d different of old length %d"
+                % (length, self.__imageLength)
+            )
         self.__imageShape = shape
         self._updateSizeLabel()
         for key in self._imageDict.keys():
-            self._imageDict[key]['image'].shape = shape
+            self._imageDict[key]["image"].shape = shape
         self.tableWidget._update()
 
     def transposeImages(self):
-        if self.__imageLength is None: return
-        shape=[self.__imageShape[0], self.__imageShape[1]]
+        if self.__imageLength is None:
+            return
+        shape = [self.__imageShape[0], self.__imageShape[1]]
         shape.reverse()
         length = 1
         for value in shape:
             length *= value
         if length != self.__imageLength:
-            raise ValueError("New length %d different of old length %d" % \
-                    (length, self.__imageLength))
+            raise ValueError(
+                "New length %d different of old length %d"
+                % (length, self.__imageLength)
+            )
         self.__imageShape = (shape[0], shape[1])
         self._updateSizeLabel()
         for key in self._imageDict.keys():
-            self._imageDict[key]['image'] = self._imageDict[key]['image'].T
+            self._imageDict[key]["image"] = self._imageDict[key]["image"].T
         self.tableWidget._update()
 
     def _updateSizeLabel(self):
@@ -767,32 +811,31 @@ class RGBCorrelatorWidget(qt.QWidget):
         n = len(self.__imageShape)
         for i in range(n):
             value = self.__imageShape[i]
-            if i == (n-1):
+            if i == (n - 1):
                 text += " %d" % value
             else:
                 text += " %d x" % value
         self.__sizeLabel.setText(text)
 
-
     def reset(self):
-        #ask the possible graph client to delete the image
-        self._tableSlot({'r':[],'g':[],'b':[]})
+        # ask the possible graph client to delete the image
+        self._tableSlot({"r": [], "g": [], "b": []})
         self._imageList = []
         self._imageDict = {}
         self.__imageLength = self.__imageLengthOriginal
         self.__imageShape = self.__imageShapeOriginal
-        self.__redLabel    = None
-        self.__greenLabel  = None
-        self.__blueLabel   = None
-        self.__redImageData   = None
+        self.__redLabel = None
+        self.__greenLabel = None
+        self.__blueLabel = None
+        self.__redImageData = None
         self.__greenImageData = None
-        self.__blueImageData  = None
-        self.__redMin     = 0.0
-        self.__redMax     = 100.0
-        self.__greenMin   = 0.0
-        self.__greenMax   = 100.0
-        self.__blueMin   = 0.0
-        self.__blueMax     = 0.0
+        self.__blueImageData = None
+        self.__redMin = 0.0
+        self.__redMax = 100.0
+        self.__greenMin = 0.0
+        self.__greenMax = 100.0
+        self.__blueMin = 0.0
+        self.__blueMax = 0.0
         self.__redImage = None
         self.__greenImage = None
         self.__blueImage = None
@@ -807,28 +850,32 @@ class RGBCorrelatorWidget(qt.QWidget):
         if self.outputDir is not None:
             if os.path.exists(self.outputDir):
                 initdir = self.outputDir
-        formatlist = ["ASCII Files *.dat",
-                      "EDF Files *.edf",
-                      "EDF(Float32) Files *.edf",
-                      "Single TIFF(Float32 Mono) Files *.tif",
-                      "Single TIFF(Mono) Files *.tif",
-                      "Several TIFF(Float32 Mono) Files *.tif",
-                      "Several TIFF(Mono) Files *.tif",
-                      "HDF5 Files *.h5 *.nxs *.hdf *.hdf5",
-                      'CSV(, separated) Files *.csv',
-                      'CSV(; separated) Files *.csv',
-                      'CSV(tab separated) Files *.csv']
+        formatlist = [
+            "ASCII Files *.dat",
+            "EDF Files *.edf",
+            "EDF(Float32) Files *.edf",
+            "Single TIFF(Float32 Mono) Files *.tif",
+            "Single TIFF(Mono) Files *.tif",
+            "Several TIFF(Float32 Mono) Files *.tif",
+            "Several TIFF(Mono) Files *.tif",
+            "HDF5 Files *.h5 *.nxs *.hdf *.hdf5",
+            "CSV(, separated) Files *.csv",
+            "CSV(; separated) Files *.csv",
+            "CSV(tab separated) Files *.csv",
+        ]
         if self._saveFilter is None:
-            self._saveFilter =formatlist[0]
-        filelist, filterused = PyMcaFileDialogs.getFileList(parent=self,
-                                                filetypelist=formatlist,
-                                                message="Get output filename",
-                                                currentdir=initdir,
-                                                mode="SAVE",
-                                                getfilter=True,
-                                                single=True,
-                                                currentfilter=self._saveFilter,
-                                                native=False)
+            self._saveFilter = formatlist[0]
+        filelist, filterused = PyMcaFileDialogs.getFileList(
+            parent=self,
+            filetypelist=formatlist,
+            message="Get output filename",
+            currentdir=initdir,
+            mode="SAVE",
+            getfilter=True,
+            single=True,
+            currentfilter=self._saveFilter,
+            native=False,
+        )
         self._saveFilter = "%s" % filterused
         if len(filelist):
             return filelist[0], filterused
@@ -842,27 +889,31 @@ class RGBCorrelatorWidget(qt.QWidget):
             if os.path.exists(self.outputDir):
                 initdir = self.outputDir
 
-        formatlist = ["ASCII Files *.dat",
-                      "EDF Files *.edf",
-                      "EDF(Float32) Files *.edf",
-                      "TIFF(Float32 Mono) Files *.tif",
-                      "TIFF(Mono) Files *.tif",
-                      "HDF5 Files *.h5 *.nxs *.hdf *.hdf5",
-                      'CSV(, separated) Files *.csv',
-                      'CSV(; separated) Files *.csv',
-                      'CSV(tab separated) Files *.csv']
+        formatlist = [
+            "ASCII Files *.dat",
+            "EDF Files *.edf",
+            "EDF(Float32) Files *.edf",
+            "TIFF(Float32 Mono) Files *.tif",
+            "TIFF(Mono) Files *.tif",
+            "HDF5 Files *.h5 *.nxs *.hdf *.hdf5",
+            "CSV(, separated) Files *.csv",
+            "CSV(; separated) Files *.csv",
+            "CSV(tab separated) Files *.csv",
+        ]
         if self._saveFilter in [None, ""]:
-            self._saveFilter =formatlist[0]
+            self._saveFilter = formatlist[0]
 
-        filename, self._saveFilter = PyMcaFileDialogs.getFileList(self,
-                                                filetypelist=formatlist,
-                                                message="Provide output file",
-                                                currentdir=initdir,
-                                                mode="SAVE",
-                                                getfilter=True,
-                                                single=False,
-                                                currentfilter=self._saveFilter,
-                                                native=None)
+        filename, self._saveFilter = PyMcaFileDialogs.getFileList(
+            self,
+            filetypelist=formatlist,
+            message="Provide output file",
+            currentdir=initdir,
+            mode="SAVE",
+            getfilter=True,
+            single=False,
+            currentfilter=self._saveFilter,
+            native=None,
+        )
         if not len(filename):
             return ""
 
@@ -872,13 +923,13 @@ class RGBCorrelatorWidget(qt.QWidget):
             filterused = "." + self._saveFilter[-3:]
             PyMcaDirs.outputDir = os.path.dirname(filename)
             if len(filename) < 4:
-                filename = filename+ filterused
-            elif filename[-4:] != filterused :
-                if filterused in ['.tif'] and filename[-4:] == 'tiff':
-                    #do not append .tif to the file name
+                filename = filename + filterused
+            elif filename[-4:] != filterused:
+                if filterused in [".tif"] and filename[-4:] == "tiff":
+                    # do not append .tif to the file name
                     pass
                 else:
-                    filename = filename+ filterused
+                    filename = filename + filterused
         return filename
 
     def getInputFileName(self, getfilter=False):
@@ -887,17 +938,19 @@ class RGBCorrelatorWidget(qt.QWidget):
         filedialog.setFileMode(qt.QFileDialog.FileMode.ExistingFiles)
         filedialog.setAcceptMode(qt.QFileDialog.AcceptMode.AcceptOpen)
         filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict["gioconda16"])))
-        formatlist = ["ASCII Files *dat",
-                      "EDF Files *edf",
-                      "EDF Files *ccd",
-                      "CSV Files *csv",
-                      "TIFF Files *tiff *tif",
-                      "HDF5 Files *.h5 *.nxs *.hdf *.hdf5",
-                      "TextImage Files *txt",
-                      "All Files *"]
+        formatlist = [
+            "ASCII Files *dat",
+            "EDF Files *edf",
+            "EDF Files *ccd",
+            "CSV Files *csv",
+            "TIFF Files *tiff *tif",
+            "HDF5 Files *.h5 *.nxs *.hdf *.hdf5",
+            "TextImage Files *txt",
+            "All Files *",
+        ]
         strlist = QStringList()
         for f in formatlist:
-                strlist.append(f)
+            strlist.append(f)
         if hasattr(filedialog, "setFilters"):
             filedialog.setFilters(strlist)
         else:
@@ -936,12 +989,10 @@ class RGBCorrelatorWidget(qt.QWidget):
         if not filelist:
             return
         if filterused is None:
-            filterused = ''
+            filterused = ""
         try:
             for uri in filelist:
-                self._addSingleFile(uri,
-                                    filterused=filterused,
-                                    ignoreStDev=ignoreStDev)
+                self._addSingleFile(uri, filterused=filterused, ignoreStDev=ignoreStDev)
         except Exception:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
@@ -959,7 +1010,7 @@ class RGBCorrelatorWidget(qt.QWidget):
     def _addSingleFile(self, uri, filterused=None, ignoreStDev=True):
         if not uri:
             return
-        filename = uri.split('::')[0]
+        filename = uri.split("::")[0]
         self.outputDir = os.path.dirname(filename)
         if not os.path.isfile(filename):
             msg = qt.QMessageBox(self)
@@ -968,7 +1019,7 @@ class RGBCorrelatorWidget(qt.QWidget):
             msg.exec()
             return
         if filterused is None:
-            filterused = ''
+            filterused = ""
         if isTif(filename):
             try:
                 self._addTifFile(filename, ignoreStDev=ignoreStDev)
@@ -979,33 +1030,32 @@ class RGBCorrelatorWidget(qt.QWidget):
             self._addQImageReadable(filename, ignoreStDev=ignoreStDev)
         elif isEdf(filename):
             self._addEdfFile(filename, ignoreStDev=ignoreStDev)
-        elif isHdf5(filename.split('::')[0]):
+        elif isHdf5(filename.split("::")[0]):
             self._addHf5File(uri, ignoreStDev=ignoreStDev)
         elif filterused.upper().startswith("TEXTIMAGE"):
             self._addTxtFile(filename, ignoreStDev=ignoreStDev)
         else:
             extension = os.path.splitext(filename)[-1].lower()
-            csv = extension == '.csv'
+            csv = extension == ".csv"
             self._addBatchDatFile(filename, csv=csv, ignoreStDev=ignoreStDev)
 
     def _ignoreStDevFile(self, filename):
-        return bool(re.search(r'_s[A-Z][a-z_]', filename))
+        return bool(re.search(r"_s[A-Z][a-z_]", filename))
 
     def _ignoreStDevLabel(self, label):
-        return bool(re.match(r's\([A-Z][a-z_]', label))
+        return bool(re.match(r"s\([A-Z][a-z_]", label))
 
     def _addEdfFile(self, filename, ignoreStDev=True):
         source = DataReader(filename)
-        for key in source.getSourceInfo()['KeyList']:
+        for key in source.getSourceInfo()["KeyList"]:
             dataObject = source.getDataObject(key)
             label = dataObject.info.get("Title", key)
             if ignoreStDev and self._ignoreStDevLabel(label):
                 continue
-            self.addImage(dataObject.data,
-                os.path.basename(filename)+" "+label)
+            self.addImage(dataObject.data, os.path.basename(filename) + " " + label)
 
     def _addHf5File(self, uri, ignoreStDev=True):
-        tmp = uri.split('::')
+        tmp = uri.split("::")
         if len(tmp) == 1:
             tmp = uri, None
         filename, h5path = tmp
@@ -1022,12 +1072,12 @@ class RGBCorrelatorWidget(qt.QWidget):
                     h5path = None
         # Prompt for missing HDF5 path
         if not h5path:
-            tmp = HDF5Widget.getUri(parent=self,
-                                    filename=filename,
-                                    message='Select Group or Dataset')
+            tmp = HDF5Widget.getUri(
+                parent=self, filename=filename, message="Select Group or Dataset"
+            )
             if not tmp:
                 return
-            tmp = tmp.split('::')
+            tmp = tmp.split("::")
             if len(tmp) == 2:
                 h5path = tmp[1]
         if not h5path:
@@ -1038,28 +1088,38 @@ class RGBCorrelatorWidget(qt.QWidget):
                 # Select datasets with the same number of elements
                 def match(dset):
                     return dset.size == self.__imageLength
+
             else:
                 # Select only 1D or 2D datasets
                 def match(dset):
                     return dset.ndim == 1 or dset.ndim == 2
+
             # If `h5path` is an instance of NXdata, only the signals
             # (including auxilary signals) are considered for `match`.
             datasets = NexusUtils.selectDatasets(hdf5File[h5path], match=match)
             if not datasets:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
-                msg.setText("No (valid) datasets were found in '{}::{}'".format(filename, h5path))
+                msg.setText(
+                    "No (valid) datasets were found in '{}::{}'".format(
+                        filename, h5path
+                    )
+                )
                 msg.exec()
                 self._addHf5File(filename, ignoreStDev=ignoreStDev)
             elif len({dset.size for dset in datasets}) > 1:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
-                msg.setText("'{}::{}' contains datasets with different sizes. Select datasets separately.".format(filename, h5path))
+                msg.setText(
+                    "'{}::{}' contains datasets with different sizes. Select datasets separately.".format(
+                        filename, h5path
+                    )
+                )
                 msg.exec()
                 self._addHf5File(filename, ignoreStDev=ignoreStDev)
             else:
                 for dset in datasets:
-                    label = '/'.join(dset.name.split('/')[-2:])
+                    label = "/".join(dset.name.split("/")[-2:])
                     self.addImage(dset[()], label)
 
     def _addQImageReadable(self, filename, ignoreStDev=True):
@@ -1072,29 +1132,34 @@ class RGBCorrelatorWidget(qt.QWidget):
             msg.setText("Cannot read file %s as an image" % filename)
             msg.exec()
         else:
-            #add as black and white
+            # add as black and white
             self.addImage(makeQimageBW(qimage), os.path.basename(filename))
 
     def _addTifFile(self, filename, ignoreStDev=True):
-        tif = TiffIO.TiffIO(filename, mode='rb')
+        tif = TiffIO.TiffIO(filename, mode="rb")
         nImages = tif.getNumberOfImages()
         for nImage in range(nImages):
-            info = tif.getInfo(nImage)['info']
+            info = tif.getInfo(nImage)["info"]
             imgData = tif.getImage(nImage)
             title = os.path.basename(filename)
-            label = info.get('Title', "1.%d"  % (nImage))
+            label = info.get("Title", "1.%d" % (nImage))
             if ignoreStDev and self._ignoreStDevLabel(label):
                 continue
-            title = os.path.basename(filename)+" "+label
+            title = os.path.basename(filename) + " " + label
             if len(imgData.shape) == 3:
-                #color image
+                # color image
                 colorIndex = 0
-                for component in ['R', 'G', 'B']:
-                    self.addImage(imgData[:,:,colorIndex].astype(numpy.float64), title + '_' + component)
+                for component in ["R", "G", "B"]:
+                    self.addImage(
+                        imgData[:, :, colorIndex].astype(numpy.float64),
+                        title + "_" + component,
+                    )
                     colorIndex += 1
-                data = imgData[:,:,0] * 0.114 +\
-                        imgData[:,:,1] * 0.587 +\
-                        imgData[:,:,2] * 0.299
+                data = (
+                    imgData[:, :, 0] * 0.114
+                    + imgData[:, :, 1] * 0.587
+                    + imgData[:, :, 2] * 0.299
+                )
                 self.addImage(data, title)
             else:
                 self.addImage(imgData, title)
@@ -1115,16 +1180,16 @@ class RGBCorrelatorWidget(qt.QWidget):
         f.close()
         if (sys.version_info > (3, 0)) and hasattr(lines, "decode"):
             lines = lines.decode()
-        lines = lines.replace("\r","\n")
-        lines = lines.replace("\n\n","\n")
-        lines = lines.replace(",","  ")
-        lines = lines.replace("\t","  ")
-        lines = lines.replace(";","  ")
-        lines = lines.replace('"','')
+        lines = lines.replace("\r", "\n")
+        lines = lines.replace("\n\n", "\n")
+        lines = lines.replace(",", "  ")
+        lines = lines.replace("\t", "  ")
+        lines = lines.replace(";", "  ")
+        lines = lines.replace('"', "")
         lines = lines.split("\n")
-        labels = lines[0].replace("\n","").split("  ")
+        labels = lines[0].replace("\n", "").split("  ")
         i = 1
-        while (not len(lines[-i].replace("\n",""))):
+        while not len(lines[-i].replace("\n", "")):
             i += 1
         nlabels = len(labels)
         nrows = len(lines) - i
@@ -1137,12 +1202,12 @@ class RGBCorrelatorWidget(qt.QWidget):
             iterationList = range(2, nlabels)
         totalArray = numpy.zeros((nrows, nlabels), numpy.float64)
         for i in range(nrows):
-            totalArray[i, :] = [float(x) for x in lines[i+1].split()]
-        nrows = int(max(totalArray[:,0]) + 1)
-        ncols = int(max(totalArray[:,1]) + 1)
-        singleArray = numpy.zeros((nrows* ncols, 1), numpy.float64)
+            totalArray[i, :] = [float(x) for x in lines[i + 1].split()]
+        nrows = int(max(totalArray[:, 0]) + 1)
+        ncols = int(max(totalArray[:, 1]) + 1)
+        singleArray = numpy.zeros((nrows * ncols, 1), numpy.float64)
         for i in iterationList:
-            singleArray[:, 0] = totalArray[:,i] * 1
+            singleArray[:, 0] = totalArray[:, i] * 1
             self.addImage(numpy.resize(singleArray, (nrows, ncols)), labels[i])
 
     def saveButtonClicked(self):
@@ -1157,7 +1222,7 @@ class RGBCorrelatorWidget(qt.QWidget):
             row = item.row()
             if row >= nImages:
                 errorText = "Requested to save non existing \nimage number %d." % row
-                qt.QMessageBox.critical(self,"ValueError", errorText)
+                qt.QMessageBox.critical(self, "ValueError", errorText)
                 return
             saveList.append(row)
         saveList.sort()
@@ -1171,8 +1236,9 @@ class RGBCorrelatorWidget(qt.QWidget):
         else:
             imageList = imagelist
         if not len(imageList):
-            qt.QMessageBox.information(self,"No Data",
-                            "Image list is empty.\nNothing to be saved")
+            qt.QMessageBox.information(
+                self, "No Data", "Image list is empty.\nNothing to be saved"
+            )
             return
         if filename is None:
             filename, filterused = self.getOutputFileNameAndFilter()
@@ -1184,22 +1250,20 @@ class RGBCorrelatorWidget(qt.QWidget):
         datalist = []
         labels = []
         for label in imageList:
-            datalist.append(self._imageDict[label]['image'])
+            datalist.append(self._imageDict[label]["image"])
             # prevent problems when reading back the saved data
-            labels.append(label.replace(" ","_").replace(",", "_").replace(";","_"))
+            labels.append(label.replace(" ", "_").replace(",", "_").replace(";", "_"))
 
         fileRoot = os.path.splitext(filename)[0]
         fileExtension = os.path.splitext(filename)[-1].lower()
         if fileExtension in [".edf"]:
-            if 'Float32'in self._saveFilter:
+            if "Float32" in self._saveFilter:
                 dtype = numpy.float32
-                ArraySave.save2DArrayListAsEDF(datalist,
-                                               filename,
-                                               labels, dtype)
+                ArraySave.save2DArrayListAsEDF(datalist, filename, labels, dtype)
             else:
                 ArraySave.save2DArrayListAsEDF(datalist, filename, labels)
         elif fileExtension in [".tif", ".tiff"]:
-            if 'Float32'in self._saveFilter:
+            if "Float32" in self._saveFilter:
                 dtype = numpy.float32
             else:
                 dtype = None
@@ -1213,16 +1277,13 @@ class RGBCorrelatorWidget(qt.QWidget):
             if severalFiles:
                 for idx in range(len(labels)):
                     fname = fileRoot + labels[idx] + fileExtension
-                    ArraySave.save2DArrayListAsMonochromaticTiff(\
-                                                    [datalist[idx]],
-                                                    fname,
-                                                    labels=[labels[idx]],
-                                                    dtype=dtype)
+                    ArraySave.save2DArrayListAsMonochromaticTiff(
+                        [datalist[idx]], fname, labels=[labels[idx]], dtype=dtype
+                    )
             else:
-                ArraySave.save2DArrayListAsMonochromaticTiff(datalist,
-                                                         filename,
-                                                         labels=labels,
-                                                         dtype=dtype)
+                ArraySave.save2DArrayListAsMonochromaticTiff(
+                    datalist, filename, labels=labels, dtype=dtype
+                )
         elif fileExtension in [".csv"]:
             if "," in self._saveFilter:
                 csvseparator = ","
@@ -1230,24 +1291,23 @@ class RGBCorrelatorWidget(qt.QWidget):
                 csvseparator = ";"
             else:
                 csvseparator = "\t"
-            ArraySave.save2DArrayListAsASCII(datalist, filename, labels,
-                                             csv=True,
-                                             csvseparator=csvseparator)
+            ArraySave.save2DArrayListAsASCII(
+                datalist, filename, labels, csv=True, csvseparator=csvseparator
+            )
         else:
-            ArraySave.save2DArrayListAsASCII(datalist, filename, labels,
-                                             csv=False)
+            ArraySave.save2DArrayListAsASCII(datalist, filename, labels, csv=False)
 
     def showStatisticsDialog(self):
         if self.statisticsDialog is None:
-            self.statisticsDialog = StackPluginResultsWindow.StackPluginResultsWindow(usetab=False)
+            self.statisticsDialog = StackPluginResultsWindow.StackPluginResultsWindow(
+                usetab=False
+            )
             self.statisticsDialog.setWindowTitle("Image Statistics")
-            self.statisticsDialog.sigMaskImageWidgetSignal.connect( \
-                                self.maskImageSlot)
+            self.statisticsDialog.sigMaskImageWidgetSignal.connect(self.maskImageSlot)
             self.statisticsDialog.showStatsWidget()
 
         images = [self._imageDict[x]["image"] for x in self._imageList]
-        self.statisticsDialog.setStackPluginResults(images,
-                                                    image_names=self._imageList)
+        self.statisticsDialog.setStackPluginResults(images, image_names=self._imageList)
         self.statisticsDialog.setSelectionMask(self.getSelectionMask())
         self.statisticsDialog.showStatsWidget()
         if self.statisticsDialog.isHidden():
@@ -1257,25 +1317,26 @@ class RGBCorrelatorWidget(qt.QWidget):
     def showCalculationDialog(self):
         if self.calculationDialog is None:
             selection = True
-            self.calculationDialog = RGBImageCalculator.RGBImageCalculator(\
-                                        replace=self.replaceOption,
-                                        selection=selection)
+            self.calculationDialog = RGBImageCalculator.RGBImageCalculator(
+                replace=self.replaceOption, selection=selection
+            )
             self.calculationDialog.sigAddImageClicked.connect(self.addImageSlot)
-            self.calculationDialog.sigRemoveImageClicked.connect( \
-                         self.removeImage)
+            self.calculationDialog.sigRemoveImageClicked.connect(self.removeImage)
             if self.replaceOption:
-                self.calculationDialog.sigReplaceImageClicked.connect( \
-                         self.replaceImageSlot)
+                self.calculationDialog.sigReplaceImageClicked.connect(
+                    self.replaceImageSlot
+                )
             if selection:
-                self.calculationDialog.graphWidget.sigMaskImageWidgetSignal.connect( \
-                                self.maskImageSlot)
-                self.calculationDialog.graphWidget.setSelectionMask( \
-                                    self.getSelectionMask())
+                self.calculationDialog.graphWidget.sigMaskImageWidgetSignal.connect(
+                    self.maskImageSlot
+                )
+                self.calculationDialog.graphWidget.setSelectionMask(
+                    self.getSelectionMask()
+                )
         self.calculationDialog.imageList = self._imageList
         self.calculationDialog.imageDict = self._imageDict
         if self.calculationDialog.isHidden():
-            self.calculationDialog.graphWidget.setSelectionMask( \
-                                    self.getSelectionMask())
+            self.calculationDialog.graphWidget.setSelectionMask(self.getSelectionMask())
             self.calculationDialog.show()
         self.calculationDialog.raise_()
 
@@ -1283,24 +1344,22 @@ class RGBCorrelatorWidget(qt.QWidget):
         itemList = self.tableWidget.selectedItems()
         if len(itemList) < 1:
             errorText = "Please select at least one image"
-            qt.QMessageBox.critical(self,"ValueError", errorText)
+            qt.QMessageBox.critical(self, "ValueError", errorText)
             return
         if self.kMeansDialog is None:
             selection = True
-            self.kMeansDialog = RGBImageCalculator.RGBImageCalculator(math="kmeans",
-                                            replace=self.replaceOption,
-                                            selection=selection)
+            self.kMeansDialog = RGBImageCalculator.RGBImageCalculator(
+                math="kmeans", replace=self.replaceOption, selection=selection
+            )
             self.kMeansDialog.sigAddImageClicked.connect(self.addImageSlot)
-            self.kMeansDialog.sigRemoveImageClicked.connect( \
-                         self.removeImage)
+            self.kMeansDialog.sigRemoveImageClicked.connect(self.removeImage)
             if self.replaceOption:
-                self.kMeansDialog.sigReplaceImageClicked.connect( \
-                         self.replaceImageSlot)
+                self.kMeansDialog.sigReplaceImageClicked.connect(self.replaceImageSlot)
             if selection:
-                self.kMeansDialog.graphWidget.sigMaskImageWidgetSignal.connect( \
-                                self.maskImageSlot)
-                self.kMeansDialog.graphWidget.setSelectionMask( \
-                                    self.getSelectionMask())
+                self.kMeansDialog.graphWidget.sigMaskImageWidgetSignal.connect(
+                    self.maskImageSlot
+                )
+                self.kMeansDialog.graphWidget.setSelectionMask(self.getSelectionMask())
 
         # TODO: just pass a list or an array of images instead of a dict
         nImages = len(self._imageList)
@@ -1308,35 +1367,38 @@ class RGBCorrelatorWidget(qt.QWidget):
         for item in itemList:
             row = item.row()
             if row >= nImages:
-                errorText = "Requested to work with non existing \nimage number %d." % row
-                qt.QMessageBox.critical(self,"ValueError", errorText)
+                errorText = (
+                    "Requested to work with non existing \nimage number %d." % row
+                )
+                qt.QMessageBox.critical(self, "ValueError", errorText)
                 return
             label = self._imageList[row]
-            dataDict[label] = {"image": self._imageDict[label]['image']}
+            dataDict[label] = {"image": self._imageDict[label]["image"]}
         self.kMeansDialog.graphWidget.setImageData(None, clearmask=False)
         self.kMeansDialog.imageDict = dataDict
         if self.kMeansDialog.isHidden():
-            self.kMeansDialog.graphWidget.setSelectionMask( \
-                                self.getSelectionMask())
+            self.kMeansDialog.graphWidget.setSelectionMask(self.getSelectionMask())
             self.kMeansDialog.show()
         self.kMeansDialog.raise_()
 
     def showScatterPlotDialog(self):
         if self.scatterPlotWidget is None:
-            self.scatterPlotWidget = \
-                ScatterPlotCorrelatorWidget.ScatterPlotCorrelatorWidget(\
-                                    labels=("Legend", "X", "Y"),
-                                    types=("Text","RadioButton", "RadioButton"))
-            self.scatterPlotWidget.sigMaskScatterWidgetSignal.connect( \
-                                                      self.maskImageSlot)
+            self.scatterPlotWidget = (
+                ScatterPlotCorrelatorWidget.ScatterPlotCorrelatorWidget(
+                    labels=("Legend", "X", "Y"),
+                    types=("Text", "RadioButton", "RadioButton"),
+                )
+            )
+            self.scatterPlotWidget.sigMaskScatterWidgetSignal.connect(
+                self.maskImageSlot
+            )
         # I should check if the list is to be updated instead of systematically
         # send it
         initialize = True
         for label in self._imageList:
             item = self._imageDict[label]["image"]
             if initialize:
-                self.scatterPlotWidget.setSelectableItemList([item],
-                                                             labels=[label])
+                self.scatterPlotWidget.setSelectableItemList([item], labels=[label])
                 initialize = False
             else:
                 self.scatterPlotWidget.addSelectableItem(item, label=label)
@@ -1351,27 +1413,28 @@ class RGBCorrelatorWidget(qt.QWidget):
         for item in itemList:
             row = item.row()
             if row >= nImages:
-                errorText = "Requested to work with non existing \nimage number %d." % row
-                qt.QMessageBox.critical(self,"ValueError", errorText)
+                errorText = (
+                    "Requested to work with non existing \nimage number %d." % row
+                )
+                qt.QMessageBox.critical(self, "ValueError", errorText)
                 return
             label = self._imageList[row]
-            datalist.append(self._imageDict[label]['image'])
+            datalist.append(self._imageDict[label]["image"])
         return datalist
 
     def showPCADialog(self):
         if self.pcaDialog is None:
-            selection=True
-            self.pcaDialog = PCADialog.PCADialog(rgbwidget=self,
-                                                 selection=selection)
-            self.pcaDialog.pcaWindow.\
-                    buildAndConnectImageButtonBox(self.replaceOption)
-            self.pcaDialog.pcaWindow.sigMaskImageWidgetSignal.connect(\
-                         self.maskImageSlot)
+            selection = True
+            self.pcaDialog = PCADialog.PCADialog(rgbwidget=self, selection=selection)
+            self.pcaDialog.pcaWindow.buildAndConnectImageButtonBox(self.replaceOption)
+            self.pcaDialog.pcaWindow.sigMaskImageWidgetSignal.connect(
+                self.maskImageSlot
+            )
 
         datalist = self.getSelectedDataList()
         if len(datalist) < 2:
             errorText = "Please select at least two images"
-            qt.QMessageBox.critical(self,"ValueError", errorText)
+            qt.QMessageBox.critical(self, "ValueError", errorText)
             return
 
         self.pcaDialog.setData(datalist)
@@ -1381,18 +1444,17 @@ class RGBCorrelatorWidget(qt.QWidget):
 
     def showNNMADialog(self):
         if self.nnmaDialog is None:
-            selection=True
-            self.nnmaDialog = NNMADialog.NNMADialog(rgbwidget=self,
-                                                 selection=selection)
-            self.nnmaDialog.nnmaWindow.\
-                        buildAndConnectImageButtonBox(self.replaceOption)
-            self.nnmaDialog.nnmaWindow.sigMaskImageWidgetSignal.connect(\
-                         self.maskImageSlot)
+            selection = True
+            self.nnmaDialog = NNMADialog.NNMADialog(rgbwidget=self, selection=selection)
+            self.nnmaDialog.nnmaWindow.buildAndConnectImageButtonBox(self.replaceOption)
+            self.nnmaDialog.nnmaWindow.sigMaskImageWidgetSignal.connect(
+                self.maskImageSlot
+            )
 
         datalist = self.getSelectedDataList()
         if len(datalist) < 2:
             errorText = "Please select at least two images"
-            qt.QMessageBox.critical(self,"ValueError", errorText)
+            qt.QMessageBox.critical(self, "ValueError", errorText)
             return
 
         self.nnmaDialog.setData(datalist)
@@ -1401,23 +1463,25 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.nnmaDialog.raise_()
 
     def maskImageSlot(self, ddict):
-        if ddict['event'] == "addImageClicked":
-            ddict['label'] = ddict['title']
+        if ddict["event"] == "addImageClicked":
+            ddict["label"] = ddict["title"]
             self.addImageSlot(ddict)
             return
-        if ddict['event'] == "replaceImageClicked":
-            ddict['label'] = ddict['title']
+        if ddict["event"] == "replaceImageClicked":
+            ddict["label"] = ddict["title"]
             self.replaceImageSlot(ddict)
             return
-        if ddict['event'] == "removeImageClicked":
-            ddict['label'] = ddict['title']
+        if ddict["event"] == "removeImageClicked":
+            ddict["label"] = ddict["title"]
             self.removeImageSlot(ddict)
             return
-        if ddict['event'] in ["selectionMaskChanged",
-                              "resetSelection",
-                              "invertSelection"]:
+        if ddict["event"] in [
+            "selectionMaskChanged",
+            "resetSelection",
+            "invertSelection",
+        ]:
             mask = ddict.get("current", None)
-            self.setSelectionMask(mask, instance_id=ddict['id'])
+            self.setSelectionMask(mask, instance_id=ddict["id"])
             self.sigMaskImageWidgetSignal.emit(ddict)
             return
 
@@ -1444,7 +1508,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         return self._lastMask
 
     def addImageSlot(self, ddict):
-        self.addImage(ddict['image'], ddict['label'])
+        self.addImage(ddict["image"], ddict["label"])
 
     def closeEvent(self, event):
         if self.calculationDialog is not None:
@@ -1473,7 +1537,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         itemList = self.tableWidget.selectedItems()
         if len(itemList) < 1:
             errorText = "Please select at least one row in the table"
-            qt.QMessageBox.critical(self,"ValueError", errorText)
+            qt.QMessageBox.critical(self, "ValueError", errorText)
             return
         profileList = []
         imageList = []
@@ -1485,30 +1549,32 @@ class RGBCorrelatorWidget(qt.QWidget):
 
         for index in profileList:
             name = self._imageList[index]
-            imageList.append(self._imageDict[name]['image'])
+            imageList.append(self._imageDict[name]["image"])
             imageNames.append(name)
-        self.profileImageList(imagelist=imageList,
-                           imagenames=imageNames)
-
+        self.profileImageList(imagelist=imageList, imagenames=imageNames)
 
     def profileImageList(self, imagelist=None, imagenames=None):
         if imagelist in [None, []]:
             return
         if self.profileImageListWidget is None:
-             self.profileImageListWidget= ExternalImagesWindow.ExternalImagesWindow(None,\
-                                        crop=False,
-                                        imageicons=False,
-                                        profileselection=True,
-                                        depthselection=True)
-        self.profileImageListWidget.setImageList(imagelist=imagelist, imagenames=imagenames)
+            self.profileImageListWidget = ExternalImagesWindow.ExternalImagesWindow(
+                None,
+                crop=False,
+                imageicons=False,
+                profileselection=True,
+                depthselection=True,
+            )
+        self.profileImageListWidget.setImageList(
+            imagelist=imagelist, imagenames=imagenames
+        )
         self.profileImageListWidget.show()
 
 
 class ImageShapeDialog(qt.QDialog):
-    def __init__(self, parent = None, shape = None):
+    def __init__(self, parent=None, shape=None):
         qt.QDialog.__init__(self, parent)
         self.mainLayout = qt.QGridLayout(self)
-        label1 = MyQLabel(self, bold = False, color= qt.Qt.black)
+        label1 = MyQLabel(self, bold=False, color=qt.Qt.black)
         label1.setText("Number of rows    = ")
         self.rows = qt.QLineEdit(self)
         self._size = None
@@ -1516,17 +1582,17 @@ class ImageShapeDialog(qt.QDialog):
         if shape is not None:
             self.rows.setText("%g" % shape[0])
             self.columns.setText("%g" % shape[1])
-            self._size  = shape[0] * shape[1]
+            self._size = shape[0] * shape[1]
             self._shape = shape
-            if QTVERSION < '4.0.0':
+            if QTVERSION < "4.0.0":
                 self.setCaption("Resize %d x %d image" % (shape[0], shape[1]))
             else:
                 self.setWindowTitle("Reshape %d x %d image" % (shape[0], shape[1]))
-        label2 = MyQLabel(self, bold = False, color= qt.Qt.black)
+        label2 = MyQLabel(self, bold=False, color=qt.Qt.black)
         label2.setText("Number of columns = ")
         self.cancelButton = qt.QPushButton(self)
         self.cancelButton.setText("Dismiss")
-        self.okButton    = qt.QPushButton(self)
+        self.okButton = qt.QPushButton(self)
         self.okButton.setText("Accept")
 
         self.cancelButton.setAutoDefault(False)
@@ -1549,7 +1615,7 @@ class ImageShapeDialog(qt.QDialog):
         nrows, ncolumns = self.getImageShape()
         size = nrows * ncolumns
         if size and size != self._size:
-            self.columns.setText("%g" % (self._size/float(nrows)))
+            self.columns.setText("%g" % (self._size / float(nrows)))
 
     def _columnsChanged(self):
         if not self._size:
@@ -1557,19 +1623,24 @@ class ImageShapeDialog(qt.QDialog):
         nrows, ncolumns = self.getImageShape()
         size = nrows * ncolumns
         if size and size != self._size:
-            self.rows.setText("%g" % (self._size/float(ncolumns)))
+            self.rows.setText("%g" % (self._size / float(ncolumns)))
 
     def getImageShape(self):
         text = "%s" % self.rows.text()
-        if len(text): nrows = int(float(text))
-        else: nrows = 0
+        if len(text):
+            nrows = int(float(text))
+        else:
+            nrows = 0
         text = "%s" % self.columns.text()
-        if len(text): ncolumns = int(float(text))
-        else: ncolumns = 0
+        if len(text):
+            ncolumns = int(float(text))
+        else:
+            ncolumns = 0
         return nrows, ncolumns
 
     def accept(self):
-        if self._size is None:return qt.QDialog.accept(self)
+        if self._size is None:
+            return qt.QDialog.accept(self)
         nrows, ncolumns = self.getImageShape()
         try:
             if (nrows * ncolumns) == self._size:
@@ -1591,67 +1662,71 @@ class ImageShapeDialog(qt.QDialog):
 
 
 class MyQLabel(qt.QLabel):
-    def __init__(self,parent=None,name=None,fl=0,bold=True, color= qt.Qt.red):
-        qt.QLabel.__init__(self,parent)
-        if qt.qVersion() <'4.0.0':
+    def __init__(self, parent=None, name=None, fl=0, bold=True, color=qt.Qt.red):
+        qt.QLabel.__init__(self, parent)
+        if qt.qVersion() < "4.0.0":
             self.color = color
-            self.bold  = bold
+            self.bold = bold
         else:
             palette = self.palette()
             role = self.foregroundRole()
-            palette.setColor(role,color)
+            palette.setColor(role, color)
             self.setPalette(palette)
             self.font().setBold(bold)
 
+    if qt.qVersion() < "4.0.0":
 
-    if qt.qVersion() < '4.0.0':
         def drawContents(self, painter):
             painter.font().setBold(self.bold)
-            pal =self.palette()
-            pal.setColor(qt.QColorGroup.Foreground,self.color)
+            pal = self.palette()
+            pal.setColor(qt.QColorGroup.Foreground, self.color)
             self.setPalette(pal)
-            qt.QLabel.drawContents(self,painter)
+            qt.QLabel.drawContents(self, painter)
             painter.font().setBold(0)
+
 
 def main():
     from PyMca5.PyMcaGui.plotting import RGBCorrelatorGraph
+
     app = qt.QApplication([])
     app.lastWindowClosed.connect(app.quit)
 
     container = qt.QSplitter()
-    #containerLayout = qt.QHBoxLayout(container)
+    # containerLayout = qt.QHBoxLayout(container)
     w = RGBCorrelatorWidget(container)
     graph = RGBCorrelatorGraph.RGBCorrelatorGraph(container)
+
     def slot(ddict):
-        if 'image' in ddict:
-            image_buffer = ddict['image']
-            size = ddict['size']
+        if "image" in ddict:
+            image_buffer = ddict["image"]
+            size = ddict["size"]
             image_buffer.shape = size[1], size[0], 4
             graph.graph.addImage(image_buffer)
             graph.graph.replot()
+
     w.sigRGBCorrelatorWidgetSignal.connect(slot)
     import getopt
-    options=''
-    longoptions=[]
-    opts, args = getopt.getopt(
-                    sys.argv[1:],
-                    options,
-                    longoptions)
+
+    options = ""
+    longoptions = []
+    opts, args = getopt.getopt(sys.argv[1:], options, longoptions)
     for opt, arg in opts:
         pass
-    filelist=args
+    filelist = args
     if len(filelist):
         try:
             import DataSource
+
             DataReader = DataSource.DataSource
         except Exception:
             from PyMca5.PyMcaCore import EdfFileDataSource
+
             DataReader = EdfFileDataSource.EdfFileDataSource
         for fname in filelist:
             source = DataReader(fname)
-            for key in source.getSourceInfo()['KeyList']:
+            for key in source.getSourceInfo()["KeyList"]:
                 dataObject = source.getDataObject(key)
-                w.addImage(dataObject.data, os.path.basename(fname)+" "+key)
+                w.addImage(dataObject.data, os.path.basename(fname) + " " + key)
     else:
         array1 = numpy.arange(10000)
         array2 = numpy.resize(numpy.arange(10000), (100, 100))
@@ -1661,10 +1736,11 @@ def main():
         w.addImage(array2)
         w.addImage(array3)
         w.setImageShape([100, 100])
-    #containerLayout.addWidget(w)
-    #containerLayout.addWidget(graph)
+    # containerLayout.addWidget(w)
+    # containerLayout.addWidget(graph)
     container.show()
     app.exec()
+
 
 if __name__ == "__main__":
     main()
