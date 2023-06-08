@@ -1240,6 +1240,7 @@ class RGBCorrelatorWidget(qt.QWidget):
     def showStatisticsDialog(self):
         if self.statisticsDialog is None:
             self.statisticsDialog = StackPluginResultsWindow.StackPluginResultsWindow(usetab=False)
+            self.statisticsDialog.setWindowTitle("Image Statistics")
             self.statisticsDialog.sigMaskImageWidgetSignal.connect( \
                                 self.maskImageSlot)
             self.statisticsDialog.showStatsWidget()
