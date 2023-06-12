@@ -100,7 +100,7 @@ class PCAParametersDialog(qt.QDialog):
             self.buttonGroup.idClicked[int].connect(self._slot)
         else:
             # deprecated
-            _logger.debug("Using deprecated signal")
+            print("PCAWindow. Using deprecated signal")
             self.buttonGroup.buttonClicked[int].connect(self._slot)
 
         self.mainLayout.addWidget(self.methodOptions)

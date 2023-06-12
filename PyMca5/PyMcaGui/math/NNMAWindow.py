@@ -71,7 +71,7 @@ class NNMAParametersDialog(qt.QDialog):
             self.buttonGroup.idClicked[int].connect(self._slot)
         else:
             # deprecated
-            _logger.debug("Using deprecated signal")
+            print("NNMAWindow. Using deprecated signal")
             self.buttonGroup.buttonClicked[int].connect(self._slot)
 
 
