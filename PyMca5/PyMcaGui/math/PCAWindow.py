@@ -1,4 +1,4 @@
-#/*##########################################################################
+# /*##########################################################################
 # Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
@@ -31,6 +31,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import numpy
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui.plotting import PyMca_Icons
+
 IconDict = PyMca_Icons.IconDict
 from PyMca5.PyMcaGui.plotting import MaskImageWidget
 from PyMca5.PyMcaGui.pymca import ScanWindow
@@ -45,11 +46,15 @@ else:
 MDP = PCAModule.MDP
 MATPLOTLIB = MaskImageWidget.MATPLOTLIB
 QTVERSION = MaskImageWidget.QTVERSION
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class PCAParametersDialog(qt.QDialog):
-    def __init__(self, parent=None, options=[1, 2, 3, 4, 5, 10],
-                 regions=False, index=-1):
+    def __init__(
+        self, parent=None, options=[1, 2, 3, 4, 5, 10], regions=False, index=-1
+    ):
         qt.QDialog.__init__(self, parent)
         self.setWindowTitle("PCA Configuration Dialog")
         self.mainLayout = qt.QVBoxLayout(self)
@@ -57,22 +62,27 @@ class PCAParametersDialog(qt.QDialog):
         self.mainLayout.setSpacing(0)
 
         self.methodOptions = qt.QGroupBox(self)
-        self.methodOptions.setTitle('PCA Method to use')
-        self.methods = ['Covariance', 'Correlation',
-                        'Expectation Max.',
-                        'Cov. Multiple Arrays',
-                        'Corr. Multiple Arrays']
+        self.methodOptions.setTitle("PCA Method to use")
+        self.methods = [
+            "Covariance",
+            "Correlation",
+            "Expectation Max.",
+            "Cov. Multiple Arrays",
+            "Corr. Multiple Arrays",
+        ]
         self._multipleIndex = [3, 4]
-        self.functions = [PCAModule.numpyCovariancePCA,
-                          PCAModule.numpyCorrelationPCA,
-                          PCAModule.expectationMaximizationPCA,
-                          PCAModule.multipleArrayCovariancePCA,
-                          PCAModule.multipleArrayCorrelationPCA]
+        self.functions = [
+            PCAModule.numpyCovariancePCA,
+            PCAModule.numpyCorrelationPCA,
+            PCAModule.expectationMaximizationPCA,
+            PCAModule.multipleArrayCovariancePCA,
+            PCAModule.multipleArrayCorrelationPCA,
+        ]
         self.methodOptions.mainLayout = qt.QGridLayout(self.methodOptions)
         self.methodOptions.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.methodOptions.mainLayout.setSpacing(2)
         if MDP and (index != 0):
-            #self.methods.append("MDP (PCA + ICA)")
+            # self.methods.append("MDP (PCA + ICA)")
             self.methods.append("MDP (SVD float32)")
             self.methods.append("MDP (SVD float64)")
             self.methods.append("MDP ICA (float32)")
@@ -88,7 +98,7 @@ class PCAParametersDialog(qt.QDialog):
             row = int(i / 5)
             col = i % 5
             self.methodOptions.mainLayout.addWidget(rButton, row, col)
-            #self.l.setAlignment(rButton, qt.Qt.AlignHCenter)
+            # self.l.setAlignment(rButton, qt.Qt.AlignHCenter)
             if i == 1:
                 rButton.setChecked(True)
             rButton.setText(item)
@@ -100,12 +110,12 @@ class PCAParametersDialog(qt.QDialog):
             self.buttonGroup.idClicked[int].connect(self._slot)
         else:
             # deprecated
-            _logger.debug("Using deprecated signal")
+            _logger.debug("PCAWindow. Using deprecated signal")
             self.buttonGroup.buttonClicked[int].connect(self._slot)
 
         self.mainLayout.addWidget(self.methodOptions)
 
-        #built in speed options
+        # built in speed options
         self.speedOptions = qt.QGroupBox(self)
         self.speedOptions.setTitle("Speed Options")
         self.speedOptions.mainLayout = qt.QGridLayout(self.speedOptions)
@@ -125,20 +135,19 @@ class PCAParametersDialog(qt.QDialog):
             self.binningCombo.addItem("%d" % option)
         self.speedOptions.mainLayout.addWidget(labelPC, 0, 0)
         self.speedOptions.mainLayout.addWidget(self.nPC, 0, 1)
-        #self.speedOptions.mainLayout.addWidget(qt.HorizontalSpacer(self), 0, 2)
+        # self.speedOptions.mainLayout.addWidget(qt.HorizontalSpacer(self), 0, 2)
         self.speedOptions.mainLayout.addWidget(self.binningLabel, 1, 0)
         self.speedOptions.mainLayout.addWidget(self.binningCombo, 1, 1)
-        self.binningCombo.activated[int].connect( \
-                     self._updatePlotFromBinningCombo)
+        self.binningCombo.activated[int].connect(self._updatePlotFromBinningCombo)
         if regions:
             self.__regions = True
             self.__addRegionsWidget()
         else:
             self.__regions = False
-            #the optional plot
+            # the optional plot
             self.graph = None
 
-        #the OK button
+        # the OK button
         hbox = qt.QWidget(self)
         hboxLayout = qt.QHBoxLayout(hbox)
         hboxLayout.setContentsMargins(0, 0, 0, 0)
@@ -159,46 +168,41 @@ class PCAParametersDialog(qt.QDialog):
         self.okButton.clicked.connect(self.accept)
 
     def __addRegionsWidget(self):
-        #Region handling
+        # Region handling
         self.regionsWidget = RegionsWidget(self)
         self.regionsWidget.setEnabled(True)
-        self.regionsWidget.sigRegionsWidgetSignal.connect( \
-            self.regionsWidgetSlot)
-        #the plot
+        self.regionsWidget.sigRegionsWidgetSignal.connect(self.regionsWidgetSlot)
+        # the plot
         self.graph = ScanWindow.ScanWindow(self)
         self.graph.setEnabled(False)
         self.graph.sigPlotSignal.connect(self._graphSlot)
         if not self.__regions:
-            #I am adding after instantiation
+            # I am adding after instantiation
             self.mainLayout.insertWidget(2, self.regionsWidget)
             self.mainLayout.addWidget(self.graph)
         self.__regions = True
 
     def regionsWidgetSlot(self, ddict):
         if ddict["nRegions"] > 0:
-            fromValue = ddict['from']
-            toValue   = ddict['to']
+            fromValue = ddict["from"]
+            toValue = ddict["to"]
             self.graph.setEnabled(True)
             self.graph.clearMarkers()
-            self.graph.insertXMarker(fromValue,
-                                      'From',
-                                       text='From',
-                                       color='blue',
-                                       draggable=True)
-            self.graph.insertXMarker(toValue,
-                                     'To',
-                                      text= 'To',
-                                      color='blue',
-                                      draggable=True)
+            self.graph.insertXMarker(
+                fromValue, "From", text="From", color="blue", draggable=True
+            )
+            self.graph.insertXMarker(
+                toValue, "To", text="To", color="blue", draggable=True
+            )
             self.graph.replot()
         else:
             self.graph.clearMarkers()
             self.graph.setEnabled(False)
 
     def _graphSlot(self, ddict):
-        if ddict['event'] == "markerMoved":
-            marker = ddict['label']
-            value = ddict['x']
+        if ddict["event"] == "markerMoved":
+            marker = ddict["label"]
+            value = ddict["x"]
             signal = False
             if marker == "From":
                 self.regionsWidget.fromLine.setText("%f" % value)
@@ -273,35 +277,35 @@ class PCAParametersDialog(qt.QDialog):
         self.graph.addCurve(x, y, legend=self._legend, replace=True)
 
     def setParameters(self, ddict):
-        if 'options' in ddict:
+        if "options" in ddict:
             self.binningCombo.clear()
-            for option in ddict['options']:
+            for option in ddict["options"]:
                 self.binningCombo.addItem("%d" % option)
-        if 'binning' in ddict:
-            option = "%d" % ddict['binning']
+        if "binning" in ddict:
+            option = "%d" % ddict["binning"]
             for i in range(self.binningCombo.count()):
                 if str(self.binningCombo.itemText(i)) == option:
                     self.binningCombo.setCurrentIndex(i)
-        if 'npc' in ddict:
-            self.nPC.setValue(ddict['npc'])
-        if 'method' in ddict:
-            self.buttonGroup.buttons()[ddict['method']].setChecked(True)
-            if ddict['method'] not in self._multipleIndex:
+        if "npc" in ddict:
+            self.nPC.setValue(ddict["npc"])
+        if "method" in ddict:
+            self.buttonGroup.buttons()[ddict["method"]].setChecked(True)
+            if ddict["method"] not in self._multipleIndex:
                 self.binningCombo.setEnabled(True)
             else:
                 self.binningCombo.setEnabled(False)
-        if 'regions' in ddict:
+        if "regions" in ddict:
             self.regionsWidget.setRegions(regions)
         return
 
     def getParameters(self):
         ddict = {}
-        ddict['binning'] = int(self.binningCombo.currentText())
-        ddict['npc'] = self.nPC.value()
+        ddict["binning"] = int(self.binningCombo.currentText())
+        ddict["npc"] = self.nPC.value()
         i = self.buttonGroup.checkedId()
-        ddict['method'] = i
-        ddict['methodlabel'] = self.methods[i]
-        ddict['function'] = self.functions[i]
+        ddict["method"] = i
+        ddict["methodlabel"] = self.methods[i]
+        ddict["function"] = self.functions[i]
         mask = None
         if self.__regions:
             regions = self.regionsWidget.getRegions()
@@ -310,24 +314,27 @@ class PCAParametersDialog(qt.QDialog):
             else:
                 mask = numpy.zeros(self._binnedX.shape, dtype=numpy.uint8)
                 for region in regions:
-                    mask[(self._binnedX >= region[0]) *\
-                         (self._binnedX <= region[1])] = 1
-            ddict['regions'] = regions
+                    mask[
+                        (self._binnedX >= region[0]) * (self._binnedX <= region[1])
+                    ] = 1
+            ddict["regions"] = regions
             # try to simplify life to the caller but can be hard if
             # spectral_binning has been applied because of the ambiguity
             # about if the spectral_mask is to be applied before or after
             # binning. The use of the 'regions' should be less prone to errors
-            ddict['spectral_mask'] = mask
+            ddict["spectral_mask"] = mask
         else:
-            ddict['regions'] = []
-            ddict['spectral_mask'] = mask
+            ddict["regions"] = []
+            ddict["spectral_mask"] = mask
         return ddict
+
 
 class RegionsWidget(qt.QGroupBox):
     sigRegionsWidgetSignal = qt.pyqtSignal(object)
-    def __init__(self, parent=None, nregions=10, limits=[0.0, 1000.]):
+
+    def __init__(self, parent=None, nregions=10, limits=[0.0, 1000.0]):
         qt.QGroupBox.__init__(self, parent)
-        self.setTitle('Spectral Regions')
+        self.setTitle("Spectral Regions")
         self.mainLayout = qt.QGridLayout(self)
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(2)
@@ -425,13 +432,13 @@ class RegionsWidget(qt.QGroupBox):
 
     def mySignal(self):
         current = self.currentRegionSpinBox.value() - 1
-        ddict={}
-        ddict['event'] = 'regionChanged'
-        ddict['nRegions'] = self.nRegionsSpinBox.value()
-        ddict['current'] = current
+        ddict = {}
+        ddict["event"] = "regionChanged"
+        ddict["nRegions"] = self.nRegionsSpinBox.value()
+        ddict["current"] = current
         if current >= 0:
-            ddict['from'] = self.regionList[current][0]
-            ddict['to'] = self.regionList[current][1]
+            ddict["from"] = self.regionList[current][0]
+            ddict["to"] = self.regionList[current][1]
         self.sigRegionsWidgetSignal.emit(ddict)
 
     def getRegions(self):
@@ -461,12 +468,13 @@ class RegionsWidget(qt.QGroupBox):
             self._editingSlot(signal=False)
         self._regionsChanged(self, nRegions)
 
+
 class PCAWindow(MaskImageWidget.MaskImageWidget):
     def __init__(self, *var, **kw):
         ddict = {}
-        ddict['usetab'] = True
+        ddict["usetab"] = True
         ddict.update(kw)
-        ddict['standalonesave'] = False
+        ddict["standalonesave"] = False
         MaskImageWidget.MaskImageWidget.__init__(self, *var, **ddict)
         self.slider = qt.QSlider(self)
         self.slider.setOrientation(qt.Qt.Horizontal)
@@ -481,52 +489,52 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
         self.slider.valueChanged[int].connect(self._showImage)
 
         self.imageList = None
-        self.imageNames=None
+        self.imageNames = None
         self.eigenValues = None
         self.eigenVectors = None
         self.vectorNames = None
         self.vectorGraphTitles = None
         standalonesave = kw.get("standalonesave", True)
         if standalonesave:
-            self.graphWidget.saveToolButton.clicked.connect( \
-                         self._saveToolButtonSignal)
+            self.graphWidget.saveToolButton.clicked.connect(self._saveToolButtonSignal)
             self._saveMenu = qt.QMenu()
-            self._saveMenu.addAction(QString("Image Data"),
-                                     self.saveImageList)
-            self._saveMenu.addAction(QString("Standard Graphics"),
-                                     self.graphWidget._saveIconSignal)
+            self._saveMenu.addAction(QString("Image Data"), self.saveImageList)
+            self._saveMenu.addAction(
+                QString("Standard Graphics"), self.graphWidget._saveIconSignal
+            )
             if MATPLOTLIB:
-                self._saveMenu.addAction(QString("Matplotlib") ,
-                                             self._saveMatplotlibImage)
+                self._saveMenu.addAction(
+                    QString("Matplotlib"), self._saveMatplotlibImage
+                )
         self.multiplyIcon = qt.QIcon(qt.QPixmap(IconDict["swapsign"]))
         infotext = "Multiply image by -1"
-        self.multiplyButton = self.graphWidget._addToolButton(\
-                                        self.multiplyIcon,
-                                        self._multiplyIconChecked,
-                                        infotext,
-                                        toggle=False,
-                                        position=12)
+        self.multiplyButton = self.graphWidget._addToolButton(
+            self.multiplyIcon,
+            self._multiplyIconChecked,
+            infotext,
+            toggle=False,
+            position=12,
+        )
 
         # The density plot widget
-        self.scatterPlotWidget = ScatterPlotCorrelatorWidget.ScatterPlotCorrelatorWidget(None,
-                                    labels=["Legend",
-                                            "X",
-                                            "Y"],
-                                    types=["Text",
-                                           "RadioButton",
-                                           "RadioButton"],
-                                    maxNRois=1)
+        self.scatterPlotWidget = (
+            ScatterPlotCorrelatorWidget.ScatterPlotCorrelatorWidget(
+                None,
+                labels=["Legend", "X", "Y"],
+                types=["Text", "RadioButton", "RadioButton"],
+                maxNRois=1,
+            )
+        )
         self.__scatterPlotWidgetDataToUpdate = True
         self.__maskToScatterConnected = True
         self.sigMaskImageWidgetSignal.connect(self._internalSlot)
-        self.scatterPlotWidget.sigMaskScatterWidgetSignal.connect( \
-                                              self._internalSlot)
+        self.scatterPlotWidget.sigMaskScatterWidgetSignal.connect(self._internalSlot)
 
         # add the command to show it to the menu
         if hasattr(self, "_additionalSelectionMenu"):
-            self.additionalSelectionMenu().addAction(\
-                                            QString("Show scatter plot"),
-                                            self.showScatterPlot)
+            self.additionalSelectionMenu().addAction(
+                QString("Show scatter plot"), self.showScatterPlot
+            )
 
     def sizeHint(self):
         return qt.QSize(400, 400)
@@ -563,8 +571,14 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
         if moveslider:
             self.slider.setValue(index)
 
-    def setPCAData(self, images, eigenvalues=None, eigenvectors=None,
-                   imagenames=None, vectornames=None):
+    def setPCAData(
+        self,
+        images,
+        eigenvalues=None,
+        eigenvectors=None,
+        imagenames=None,
+        vectornames=None,
+    ):
         self.eigenValues = eigenvalues
         self.eigenVectors = eigenvectors
         if type(images) == type([]):
@@ -622,18 +636,22 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
             # only the the scatter plot to be updated unless hidden
             if self.scatterPlotWidget.isHidden():
                 return
-            if ddict["event"] in ["selectionMaskChanged",
-                                  "resetSelection",
-                                  "invertSelection"]:
+            if ddict["event"] in [
+                "selectionMaskChanged",
+                "resetSelection",
+                "invertSelection",
+            ]:
                 mask = self.getSelectionMask()
                 if mask is None:
                     mask = numpy.zeros(self.imageList[0].shape, numpy.uint8)
                 self.scatterPlotWidget.setSelectionMask(mask)
         elif ddict["id"] == id(self.scatterPlotWidget):
             # signal generated by the scatter plot
-            if ddict["event"] in ["selectionMaskChanged",
-                                  "resetSelection",
-                                  "invertSelection"]:
+            if ddict["event"] in [
+                "selectionMaskChanged",
+                "resetSelection",
+                "invertSelection",
+            ]:
                 mask = self.scatterPlotWidget.getSelectionMask()
                 super(PCAWindow, self).setSelectionMask(mask, plot=True)
                 ddict["id"] = id(self)
@@ -654,9 +672,10 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
         labels = []
         for i in range(len(self.imageList)):
             labels.append(self.imageNames[i].replace(" ", "_"))
-        return MaskImageWidget.MaskImageWidget.saveImageList(self,
-                                                             imagelist=self.imageList,
-                                                             labels=labels)
+        return MaskImageWidget.MaskImageWidget.saveImageList(
+            self, imagelist=self.imageList, labels=labels
+        )
+
     def setImageList(self, imagelist):
         self.imageList = imagelist
         self.eigenValues = None
@@ -673,12 +692,14 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
         # make sure it is visible
         self.scatterPlotWidget.raise_()
 
+
 def test2():
     app = qt.QApplication([])
     app.lastWindowClosed.connect(app.quit)
     dialog = PCAParametersDialog()
-    dialog.setParameters({'options': [1,3,5,7,9], 'method': 1, 'npc': 8,
-                          'binning': 3})
+    dialog.setParameters(
+        {"options": [1, 3, 5, 7, 9], "method": 1, "npc": 8, "binning": 3}
+    )
     dialog.setModal(True)
     ret = dialog.exec()
     if ret:
@@ -693,17 +714,20 @@ def test():
     data = numpy.arange(20000)
     data.shape = 2, 100, 100
     data[1, 0:100, 0:50] = 100
-    container.setPCAData(data, eigenvectors=[numpy.arange(100.),
-                                             numpy.arange(100.) + 10],
-                         imagenames=["I1", "I2"], vectornames=["V1", "V2"])
+    container.setPCAData(
+        data,
+        eigenvectors=[numpy.arange(100.0), numpy.arange(100.0) + 10],
+        imagenames=["I1", "I2"],
+        vectornames=["V1", "V2"],
+    )
     container.show()
 
     def theSlot(ddict):
-        print(ddict['event'])
+        print(ddict["event"])
 
     container.sigMaskImageWidgetSignal.connect(theSlot)
     app.exec()
 
+
 if __name__ == "__main__":
     test()
-
