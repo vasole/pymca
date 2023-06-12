@@ -1,4 +1,4 @@
-#/*##########################################################################
+# /*##########################################################################
 # Copyright (C) 2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
@@ -30,6 +30,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 import numpy
 
+
 def arrayListMeanRatioAndMedianRatio(imageList, mask=None):
     # the input imageList can be a 3D array or a list of images
     # the mask accounts for selected pixels
@@ -52,9 +53,7 @@ def arrayListMeanRatioAndMedianRatio(imageList, mask=None):
             goodIndex = numpy.isfinite(image0) & numpy.isfinite(image1)
             image0 = image0[goodIndex]
             image1 = image1[goodIndex]
-            mean_ratio = image0 / numpy.array(image1,
-                                              copy=False,
-                                              dtype=numpy.float64)
+            mean_ratio = image0 / numpy.array(image1, copy=False, dtype=numpy.float64)
             goodIndex = numpy.isfinite(mean_ratio)
             mean_ratio = mean_ratio[goodIndex]
             median_ratio = numpy.median(mean_ratio)
@@ -62,6 +61,7 @@ def arrayListMeanRatioAndMedianRatio(imageList, mask=None):
             result_mean[i, j] = mean_ratio
             result_median[i, j] = median_ratio
     return result_mean, result_median
+
 
 def arrayListPearsonCorrelation(imageList, mask=None):
     # the input imageList can be a 3D array or a list of images
@@ -88,7 +88,7 @@ def arrayListPearsonCorrelation(imageList, mask=None):
             image0 = image0 - image0_mean
             image1 = image1 - image1_mean
             cov = numpy.sum(image0 * image1) / image0.size
-            stdImage0 = (numpy.sum(image0 * image0) /image0.size)**0.5
-            stdImage1 = (numpy.sum(image1 * image1) /image1.size)**0.5
-            correlation[i, j] = cov /(stdImage0 * stdImage1)
+            stdImage0 = (numpy.sum(image0 * image0) / image0.size) ** 0.5
+            stdImage1 = (numpy.sum(image1 * image1) / image1.size) ** 0.5
+            correlation[i, j] = cov / (stdImage0 * stdImage1)
     return correlation
