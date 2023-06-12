@@ -34,43 +34,16 @@ import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui.misc import TableWidget
 from PyMca5.PyMcaGui.misc import NumpyArrayTableModel
-from PyMca5.PyMcaGraph import Colormap 
+from PyMca5.PyMcaGraph import Colormap
+from PyMca5.PyMcaMath import ImageListStats
 logger = logging.getLogger(__name__)
-
-def arrayListPearsonCorrelation(imageList, mask=None):
-    # the input imageList can be a 3D array or a list of images
-    # the mask accounts for selected pixels
-    # non-finite values are excluded
-    if mask is not None:
-        mask = mask.flatten()
-    correlation = numpy.zeros((len(imageList), len(imageList)), dtype=numpy.float64)
-    for i in range(len(imageList)):
-        if mask is None:
-            image0 = imageList[i].flatten()
-        else:
-            image0 = imageList[i].flatten()[mask > 0]
-        for j in range(len(imageList)):
-            if mask is None:
-                image1 = imageList[j].flatten()
-            else:
-                image1 = imageList[j].flatten()[mask > 0]
-            goodIndex = numpy.isfinite(image0) & numpy.isfinite(image1)
-            image0 = image0[goodIndex]
-            image1 = image1[goodIndex]
-            image0_mean = image0.sum(dtype=numpy.float64) / image0.size
-            image1_mean = image1.sum(dtype=numpy.float64) / image0.size
-            image0 = image0 - image0_mean
-            image1 = image1 - image1_mean
-            cov = numpy.sum(image0 * image1) / image0.size
-            stdImage0 = (numpy.sum(image0 * image0) /image0.size)**0.5
-            stdImage1 = (numpy.sum(image1 * image1) /image1.size)**0.5
-            correlation[i, j] = cov /(stdImage0 * stdImage1)
-    return correlation
 
 class ImageListStatsWidget(qt.QTabWidget):
     def __init__(self, parent=None):
         super(ImageListStatsWidget, self).__init__(parent=parent)
         self.tableWidget = TableWidget.TableWidget(parent=None, cut=False, paste=False)
+        self.meanRatioWidget = TableWidget.TableView(parent=None, cut=False, paste=False)
+        self.medianRatioWidget = TableWidget.TableView(parent=None, cut=False, paste=False)
         self.correlationWidget = TableWidget.TableView(parent=None, cut=False, paste=False)
         self.imageList = None
         self.imageMask = None
@@ -87,6 +60,8 @@ class ImageListStatsWidget(qt.QTabWidget):
         rheight = self.tableWidget.horizontalHeader().sizeHint().height()
         self.tableWidget.setMinimumHeight(5*rheight)
         self.addTab(self.tableWidget, "Stats")
+        self.addTab(self.meanRatioWidget, "Mean Ratio")
+        self.addTab(self.medianRatioWidget, "Median Ratio")
         self.addTab(self.correlationWidget, "Pearson Correlation")
 
     def setImageList(self, images, image_names=None):
@@ -165,8 +140,31 @@ class ImageListStatsWidget(qt.QTabWidget):
             result['std'] = image.std()
             results.append(result)
 
+        # calculate mean and median ratios
+        meanR, medianR = ImageListStats.arrayListMeanRatioAndMedianRatio(self.imageList,
+                                                                    mask)
+        m = NumpyArrayTableModel.NumpyArrayTableModel(None,
+                                                      meanR,
+                                                      fmt = "%.3e")
+        self.meanRatioWidget.setModel(m)
+        #colormap = Colormap.COLORMAPS.get("viridis", "temperature")
+        #bg = Colormap.applyColormap(correlation, colormap=colormap, norm="linear")
+        #m.setArrayColors(bg[0])
+        m.setHorizontalHeaderLabels(self.imageNames)
+        m.setVerticalHeaderLabels(self.imageNames)
+
+        m = NumpyArrayTableModel.NumpyArrayTableModel(None,
+                                                      medianR,
+                                                      fmt = "%.3e")
+        self.medianRatioWidget.setModel(m)
+        #colormap = Colormap.COLORMAPS.get("viridis", "temperature")
+        #bg = Colormap.applyColormap(correlation, colormap=colormap, norm="linear")
+        #m.setArrayColors(bg[0])
+        m.setHorizontalHeaderLabels(self.imageNames)
+        m.setVerticalHeaderLabels(self.imageNames)
+
         # calculate pearson correlation
-        correlation = arrayListPearsonCorrelation(self.imageList, mask)
+        correlation = ImageListStats.arrayListPearsonCorrelation(self.imageList, mask)
         m = NumpyArrayTableModel.NumpyArrayTableModel(None, correlation, fmt = "%.3f")
         self.correlationWidget.setModel(m)
         colormap = Colormap.COLORMAPS.get("viridis", "temperature")
