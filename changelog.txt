@@ -1,3 +1,8 @@
+VERSION 5.8.5
+-------------
+
+- RGB Correlator. Add the possibility to calculate the mean ratio and the median ratio of selected pixels.
+
 VERSION 5.8.4
 -------------
 

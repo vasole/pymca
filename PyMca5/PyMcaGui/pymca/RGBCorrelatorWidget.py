@@ -1,4 +1,4 @@
-#/*##########################################################################
+# /*##########################################################################
 # Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
@@ -1306,8 +1306,28 @@ class RGBCorrelatorWidget(qt.QWidget):
             self.statisticsDialog.sigMaskImageWidgetSignal.connect(self.maskImageSlot)
             self.statisticsDialog.showStatsWidget()
 
-        images = [self._imageDict[x]["image"] for x in self._imageList]
-        self.statisticsDialog.setStackPluginResults(images, image_names=self._imageList)
+        itemList = self.tableWidget.selectedItems()
+        if len(itemList) < 1:
+            images = [self._imageDict[x]["image"] for x in self._imageList]
+            self.statisticsDialog.setStackPluginResults(
+                images, image_names=self._imageList
+            )
+        else:
+            rowList = []
+            imageList = []
+            imageNames = []
+            for item in itemList:
+                row = item.row()
+                rowList.append(row)
+
+            for index in rowList:
+                name = self._imageList[index]
+                imageList.append(self._imageDict[name]["image"])
+                imageNames.append(name)
+            self.statisticsDialog.setStackPluginResults(
+                imageList, image_names=imageNames
+            )
+
         self.statisticsDialog.setSelectionMask(self.getSelectionMask())
         self.statisticsDialog.showStatsWidget()
         if self.statisticsDialog.isHidden():
