@@ -46,6 +46,7 @@ MDP = PCAModule.MDP
 MATPLOTLIB = MaskImageWidget.MATPLOTLIB
 QTVERSION = MaskImageWidget.QTVERSION
 
+_logger = logging.getLogger(__name__)
 
 class PCAParametersDialog(qt.QDialog):
     def __init__(self, parent=None, options=[1, 2, 3, 4, 5, 10],
@@ -100,7 +101,7 @@ class PCAParametersDialog(qt.QDialog):
             self.buttonGroup.idClicked[int].connect(self._slot)
         else:
             # deprecated
-            print("PCAWindow. Using deprecated signal")
+            _logger.debug("PCAWindow. Using deprecated signal")
             self.buttonGroup.buttonClicked[int].connect(self._slot)
 
         self.mainLayout.addWidget(self.methodOptions)

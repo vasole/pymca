@@ -31,6 +31,9 @@ import numpy
 from PyMca5.PyMcaGui.math import PCAWindow
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaMath.mva import NNMAModule
+import logging
+
+_logger = logging.getLogger(__name__)
 
 class NNMAParametersDialog(qt.QDialog):
     def __init__(self, parent=None, options=[1, 2, 3, 4, 5, 10], regions=False):
@@ -71,7 +74,7 @@ class NNMAParametersDialog(qt.QDialog):
             self.buttonGroup.idClicked[int].connect(self._slot)
         else:
             # deprecated
-            print("NNMAWindow. Using deprecated signal")
+            _logger.debug("Using deprecated signal")
             self.buttonGroup.buttonClicked[int].connect(self._slot)
 
 
