@@ -46,6 +46,7 @@ else:
 MDP = PCAModule.MDP
 MATPLOTLIB = MaskImageWidget.MATPLOTLIB
 QTVERSION = MaskImageWidget.QTVERSION
+import logging
 
 _logger = logging.getLogger(__name__)
 
