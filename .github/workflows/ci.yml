@@ -28,7 +28,7 @@ jobs:
             os: ubuntu-latest
             python-version: 3.7
             BUILD_COMMAND: sdist
-            QT_BINDING: PyQt5
+            QT_BINDING: PyQt5==5.14.1
             XVFB_RUN: xvfb-run -a
 
           - name-suffix: "PySide6 sdist"
