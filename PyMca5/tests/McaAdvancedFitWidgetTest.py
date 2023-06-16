@@ -166,6 +166,19 @@ class TestMcaAdvancedFitWidget(TestCaseQt):
                         "Peaks spectrum not working!!")
 
         time.sleep(1)
+
+        # calculate concentrations
+        tabBar = widget.mainTab.tabBar()
+        idx = -1
+        for i in range(tabBar.count()):
+            if tabBar.tabText(i).lower().startswith("concentrations"):
+                idx = i
+                break
+        self.assertTrue(idx >= 0, "CONCENTRATIONS tab not found!!")
+        tabBar.setCurrentIndex(idx)
+        widget._tabChanged(idx)
+        time.sleep(1)
+
         from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
         PyMcaPrintPreview.resetSingletonPrintPreview()
 

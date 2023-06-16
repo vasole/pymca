@@ -33,11 +33,7 @@ import time
 import numpy
 import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
-if sys.platform.startswith("darwin"):
-    import threading
-    QThread = threading.Thread
-else:
-    QThread = qt.QThread
+from PyMca5.PyMcaGui.misc import CalculationThread
 
 try:
     from . import PCAWindow
@@ -48,24 +44,6 @@ except ImportError:
     MDP = False
 
 _logger = logging.getLogger(__name__)
-
-class SimpleThread(QThread):
-    def __init__(self, function, *var, **kw):
-        if kw is None:
-            kw = {}
-        QThread.__init__(self)
-        self._function = function
-        self._var = var
-        self._kw = kw
-        self._result = None
-
-    def run(self):
-        try:
-            self._result = self._function(*self._var, **self._kw)
-        except Exception:
-            if _logger.getEffectiveLevel() == logging.DEBUG:
-                raise
-            self._result = ("Exception",) + sys.exc_info()
 
 
 class PCADialog(qt.QDialog):
@@ -245,43 +223,22 @@ class PCADialog(qt.QDialog):
 
     def _submitThread(self, function, *var, **kw):
         message = "Please Wait: PCA Going On"
-        sthread = SimpleThread(function, *var, **kw)
-        return self._startThread(sthread, message)
-
-    def _startThread(self, sthread, message):
-        sthread.start()
-        msg = qt.QDialog(self, qt.Qt.FramelessWindowHint)
-        msg.setModal(1)
-        msg.setWindowTitle("Please Wait")
-        layout = qt.QHBoxLayout(msg)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-        l1 = qt.QLabel(msg)
-        l1.setFixedWidth(l1.fontMetrics().maxWidth()*len('##'))
-        l2 = qt.QLabel(msg)
-        l2.setText("%s" % message)
-        l3 = qt.QLabel(msg)
-        l3.setFixedWidth(l3.fontMetrics().maxWidth()*len('##'))
-        layout.addWidget(l1)
-        layout.addWidget(l2)
-        layout.addWidget(l3)
-        msg.show()
-        qApp = qt.QApplication.instance()
-        qApp.processEvents()
-        i = 0
-        ticks = ['-', '\\', "|", "/", "-", "\\", '|', '/']
-        while (sthread.isRunning()):
-            i = (i + 1) % 8
-            l1.setText(ticks[i])
-            l3.setText(" " + ticks[i])
-            qApp = qt.QApplication.instance()
-            qApp.processEvents()
-            time.sleep(2)
-        msg.close()
-        result = sthread._result
-        del sthread
-        self.raise_()
-        return result
+        thread = CalculationThread.CalculationThread(
+                                      calculation_method=function,
+                                      calculation_vars = var,
+                                      calculation_kw = kw,
+                                      expand_vars=True,
+                                      expand_kw=True)
+        thread.start()
+        CalculationThread.waitingMessageDialog(thread,
+                                              message=message,
+                                              parent=self,
+                                              modal=True
+                                              update_callback=None,
+                                              frameless=True)
+        threadResult = thread.getResult()
+        self.raise_()        
+        return threadResult
 
 if __name__ == "__main__":
     _logger.setLevel(logging.DEBUG)

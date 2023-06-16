@@ -1,3 +1,8 @@
+VERSION 5.8.6
+-------------
+
+- XRF. Correct threading issue on MacOS introduced in version 5.8.2
+
 VERSION 5.8.5
 -------------
 
