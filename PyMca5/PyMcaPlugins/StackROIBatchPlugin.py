@@ -160,16 +160,15 @@ class StackROIBatchPlugin(StackPluginBase.StackPluginBase):
             self.thread = CalculationThread.CalculationThread(\
                             calculation_method=self.actualCalculation)
             self.thread.result = self.actualCalculation()
-            self.threadFinished()
         else:
             self.thread = CalculationThread.CalculationThread(\
                             calculation_method=self.actualCalculation)
-            self.thread.finished.connect(self.threadFinished)
             self.thread.start()
             message = "Please wait. Calculation going on."
             CalculationThread.waitingMessageDialog(self.thread,
                                 parent=self.configurationWidget,
                                 message=message)
+        self.threadFinished()
 
     def actualCalculation(self):
         activeCurve = self.getActiveCurve()
