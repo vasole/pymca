@@ -33,6 +33,7 @@ import numpy
 import time
 import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaGui.misc import CalculationThread
 from . import NNMAWindow
 NNMA = True
 
