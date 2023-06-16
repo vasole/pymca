@@ -233,7 +233,7 @@ class PCADialog(qt.QDialog):
         CalculationThread.waitingMessageDialog(thread,
                                               message=message,
                                               parent=self,
-                                              modal=True
+                                              modal=True,
                                               update_callback=None,
                                               frameless=True)
         threadResult = thread.getResult()
