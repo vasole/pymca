@@ -40,8 +40,10 @@ from PyMca5.PyMcaGui import PyMcaQt as qt
 if sys.platform.startswith("darwin"):
     import threading
     QThread = threading.Thread
+    QTHREAD = False
 else:
     QThread = qt.QThread
+    QTHREAD = True
 
 if hasattr(qt, 'QString'):
     QString = qt.QString
@@ -223,20 +225,31 @@ class SimpleThread(QThread):
     def __init__(self, function, *var, **kw):
         if kw is None:
             kw = {}
-        QThread.__init__(self)
+        if QTHREAD:
+            QThread.__init__(self, None)
+        else:
+            QThread.__init__(self)
+            self._threadRunning = False
         self._function = function
         self._var = var
         self._kw = kw
         self._result = None
+
+    if not QTHREAD:
+        def isRunning(self):
+            return self._threadRunning
 
     def run(self):
         if _logger.getEffectiveLevel() == logging.DEBUG:
             self._result = self._function(*self._var, **self._kw)
         else:
             try:
+                self._threadRunning = True
                 self._result = self._function(*self._var, **self._kw)
             except Exception:
                 self._result = ("Exception",) + sys.exc_info()
+            finally:
+                self._threadRunning = False
 
 
 class ConcentrationsWidget(qt.QWidget):
