@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -275,6 +275,8 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
         super(StackPluginResultsWindow, self).setSelectionMask(*var, **kw)
         if not self.scatterPlotWidget.isHidden():
             self._updateScatterPlotWidget()
+        if self.statsWidget is not None:
+            self.statsWidget.setSelectionMask(self.getSelectionMask())
 
     def showScatterPlot(self):
         if self.scatterPlotWidget.isHidden():
