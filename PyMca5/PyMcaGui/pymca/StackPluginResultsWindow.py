@@ -1,5 +1,5 @@
-#/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# /*##########################################################################
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -31,6 +31,7 @@ import os
 import sys
 import numpy
 from PyMca5.PyMcaGui import PyMcaQt as qt
+
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:
@@ -43,30 +44,32 @@ from PyMca5.PyMcaGui.pymca import ImageListStatsWidget
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from PyMca5.PyMcaIO import ArraySave
 
+
 class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
     def __init__(self, *var, **kw):
         ddict = {}
-        ddict['usetab'] = kw.get("usetab",True)
-        ddict['aspect'] = kw.get("aspect",True)
-        ddict['profileselection'] = kw.get("profileselection",True)
+        ddict["usetab"] = kw.get("usetab", True)
+        ddict["aspect"] = kw.get("aspect", True)
+        ddict["profileselection"] = kw.get("profileselection", True)
         ddict.update(kw)
-        ddict['standalonesave'] = False
+        ddict["standalonesave"] = False
         MaskImageWidget.MaskImageWidget.__init__(self, *var, **ddict)
         self.slider = qt.QSlider(self)
         self.slider.setOrientation(qt.Qt.Horizontal)
         self.slider.setMinimum(0)
         self.slider.setMaximum(0)
-        if ddict['usetab']:
+        if ddict["usetab"]:
             # The 1D graph
             self.spectrumGraph = ScanWindow.ScanWindow(self)
             self.spectrumGraph.enableOwnSave(False)
-            self.spectrumGraph.sigIconSignal.connect( \
-                                    self._spectrumGraphIconSlot)
+            self.spectrumGraph.sigIconSignal.connect(self._spectrumGraphIconSlot)
             self.spectrumGraph.saveMenu = qt.QMenu()
-            self.spectrumGraph.saveMenu.addAction(QString("Save From Current"),
-                                                  self.saveCurrentSpectrum)
-            self.spectrumGraph.saveMenu.addAction(QString("Save From All"),
-                                                  self.saveAllSpectra)
+            self.spectrumGraph.saveMenu.addAction(
+                QString("Save From Current"), self.saveCurrentSpectrum
+            )
+            self.spectrumGraph.saveMenu.addAction(
+                QString("Save From All"), self.saveAllSpectra
+            )
             self.mainTab.addTab(self.spectrumGraph, "VECTORS")
 
         self.mainLayout.addWidget(self.slider)
@@ -79,43 +82,42 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
         self.spectrumGraphTitles = None
         standalonesave = kw.get("standalonesave", True)
         if standalonesave:
-            self.graphWidget.saveToolButton.clicked.connect(\
-                                         self._saveToolButtonSignal)
+            self.graphWidget.saveToolButton.clicked.connect(self._saveToolButtonSignal)
             self._saveMenu = qt.QMenu()
-            self._saveMenu.addAction(QString("Image Data"),
-                                     self.saveImageList)
-            self._saveMenu.addAction(QString("Standard Graphics"),
-                                     self.graphWidget._saveIconSignal)
-            self._saveMenu.addAction(QString("Matplotlib") ,
-                             self._saveMatplotlibImage)
+            self._saveMenu.addAction(QString("Image Data"), self.saveImageList)
+            self._saveMenu.addAction(
+                QString("Standard Graphics"), self.graphWidget._saveIconSignal
+            )
+            self._saveMenu.addAction(QString("Matplotlib"), self._saveMatplotlibImage)
         self.multiplyIcon = qt.QIcon(qt.QPixmap(IconDict["swapsign"]))
         infotext = "Multiply image by -1"
-        self.multiplyButton = self.graphWidget._addToolButton(\
-                                        self.multiplyIcon,
-                                        self._multiplyIconChecked,
-                                        infotext,
-                                        toggle = False,
-                                        position = 12)
+        self.multiplyButton = self.graphWidget._addToolButton(
+            self.multiplyIcon,
+            self._multiplyIconChecked,
+            infotext,
+            toggle=False,
+            position=12,
+        )
 
         # The density plot widget
         self.__scatterPlotWidgetDataToUpdate = True
-        self.scatterPlotWidget = ScatterPlotCorrelatorWidget.ScatterPlotCorrelatorWidget(None,
-                                    labels=["Legend",
-                                            "X",
-                                            "Y"],
-                                    types=["Text",
-                                           "RadioButton",
-                                           "RadioButton"],
-                                    maxNRois=1)
+        self.scatterPlotWidget = (
+            ScatterPlotCorrelatorWidget.ScatterPlotCorrelatorWidget(
+                None,
+                labels=["Legend", "X", "Y"],
+                types=["Text", "RadioButton", "RadioButton"],
+                maxNRois=1,
+            )
+        )
         self.__scatterPlotWidgetDataToUpdate = True
         self.__maskToScatterConnected = True
         self.sigMaskImageWidgetSignal.connect(self._internalSlot)
-        self.scatterPlotWidget.sigMaskScatterWidgetSignal.connect( \
-                                              self._internalSlot)
+        self.scatterPlotWidget.sigMaskScatterWidgetSignal.connect(self._internalSlot)
 
         # add the command to show it to the menu
-        self.additionalSelectionMenu().addAction(QString("Show scatter plot"),
-                                                 self.showScatterPlot)
+        self.additionalSelectionMenu().addAction(
+            QString("Show scatter plot"), self.showScatterPlot
+        )
 
         # The stats widget
         self.statsWidget = None
@@ -149,9 +151,9 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
             self.spectrumGraph.replot()
 
     def buildAndConnectImageButtonBox(self, replace=True, multiple=False):
-        super(StackPluginResultsWindow, self).\
-                                buildAndConnectImageButtonBox(replace=replace,
-                                                            multiple=multiple)
+        super(StackPluginResultsWindow, self).buildAndConnectImageButtonBox(
+            replace=replace, multiple=multiple
+        )
 
     def showImage(self, index=0, moveslider=True):
         if self.imageList is None:
@@ -164,9 +166,15 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
         if moveslider:
             self.slider.setValue(index)
 
-    def setStackPluginResults(self, images, spectra=None,
-                   image_names = None, spectra_names = None,
-                   xvalues=None, spectra_titles=None):
+    def setStackPluginResults(
+        self,
+        images,
+        spectra=None,
+        image_names=None,
+        spectra_names=None,
+        xvalues=None,
+        spectra_titles=None,
+    ):
         self.spectrumList = spectra
         if type(images) == type([]):
             self.imageList = images
@@ -180,13 +188,13 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
             nimages = images.shape[0]
             self.imageList = [0] * nimages
             for i in range(nimages):
-                self.imageList[i] = images[i,:]
+                self.imageList[i] = images[i, :]
                 if 0:
-                    #leave the data as they originally come
+                    # leave the data as they originally come
                     if self.imageList[i].max() < 0:
                         self.imageList[i] *= -1
                         if self.spectrumList is not None:
-                            self.spectrumList [i] *= -1
+                            self.spectrumList[i] *= -1
             if image_names is None:
                 self.imageNames = []
                 for i in range(nimages):
@@ -195,7 +203,7 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
                 self.imageNames = image_names
 
         if self.imageList is not None:
-            self.slider.setMaximum(len(self.imageList)-1)
+            self.slider.setMaximum(len(self.imageList) - 1)
             self.showImage(0)
         else:
             self.slider.setMaximum(0)
@@ -246,9 +254,11 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
             # only the the scatter plot to be updated unless hidden
             if self.scatterPlotWidget.isHidden():
                 return
-            if ddict["event"] in ["selectionMaskChanged",
-                                  "resetSelection",
-                                  "invertSelection"]:
+            if ddict["event"] in [
+                "selectionMaskChanged",
+                "resetSelection",
+                "invertSelection",
+            ]:
                 mask = self.getSelectionMask()
                 if mask is None:
                     mask = numpy.zeros(self.imageList[0].shape, numpy.uint8)
@@ -258,12 +268,13 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
 
         elif ddict["id"] == id(self.scatterPlotWidget):
             # signal generated by the scatter plot
-            if ddict["event"] in ["selectionMaskChanged",
-                                  "resetSelection",
-                                  "invertSelection"]:
+            if ddict["event"] in [
+                "selectionMaskChanged",
+                "resetSelection",
+                "invertSelection",
+            ]:
                 mask = self.scatterPlotWidget.getSelectionMask()
-                super(StackPluginResultsWindow, self).setSelectionMask(mask,
-                                                                    plot=True)
+                super(StackPluginResultsWindow, self).setSelectionMask(mask, plot=True)
                 ddict["id"] = id(self)
                 try:
                     self.__maskToScatterConnected = False
@@ -275,6 +286,8 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
         super(StackPluginResultsWindow, self).setSelectionMask(*var, **kw)
         if not self.scatterPlotWidget.isHidden():
             self._updateScatterPlotWidget()
+        if self.statsWidget is not None:
+            self.statsWidget.setSelectionMask(self.getSelectionMask())
 
     def showScatterPlot(self):
         if self.scatterPlotWidget.isHidden():
@@ -287,10 +300,10 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
             return
         labels = []
         for i in range(len(self.imageList)):
-            labels.append(self.imageNames[i].replace(" ","_"))
-        return MaskImageWidget.MaskImageWidget.saveImageList(self,
-                                                             imagelist=self.imageList,
-                                                             labels=labels)
+            labels.append(self.imageNames[i].replace(" ", "_"))
+        return MaskImageWidget.MaskImageWidget.saveImageList(
+            self, imagelist=self.imageList, labels=labels
+        )
 
     def _spectrumGraphIconSlot(self, ddict):
         if ddict["event"] == "iconClicked" and ddict["key"] == "save":
@@ -300,21 +313,25 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
         return self.spectrumGraph._QSimpleOperation("save")
 
     def saveAllSpectra(self):
-        fltrs = ['Raw ASCII *.txt',
-                 '","-separated CSV *.csv',
-                 '";"-separated CSV *.csv',
-                 '"tab"-separated CSV *.csv',
-                 'OMNIC CSV *.csv']
+        fltrs = [
+            "Raw ASCII *.txt",
+            '","-separated CSV *.csv',
+            '";"-separated CSV *.csv',
+            '"tab"-separated CSV *.csv',
+            "OMNIC CSV *.csv",
+        ]
         message = "Enter file name to be used as root"
-        fileList, fileFilter = PyMcaFileDialogs.getFileList(parent=self,
-                                                            filetypelist=fltrs,
-                                                            message=message,
-                                                            currentdir=None,
-                                                            mode="SAVE",
-                                                            getfilter=True,
-                                                            single=True,
-                                                            currentfilter=None,
-                                                            native=None)
+        fileList, fileFilter = PyMcaFileDialogs.getFileList(
+            parent=self,
+            filetypelist=fltrs,
+            message=message,
+            currentdir=None,
+            mode="SAVE",
+            getfilter=True,
+            single=True,
+            currentfilter=None,
+            native=None,
+        )
         if not len(fileList):
             return
 
@@ -335,7 +352,7 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
             # extension is csv but saved as ASCII
             csv = False
             ext = "csv"
-            csvseparator = ","        
+            csvseparator = ","
         else:
             csv = True
             ext = "csv"
@@ -356,22 +373,23 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
             x = self.xValues[index]
             y = self.spectrumList[index]
             filename = os.path.join(dirname, root + fmt % (index, ext))
-            ArraySave.saveXY(x, y, filename, ylabel=legend,
-                             csv=csv, csvseparator=csvseparator)
+            ArraySave.saveXY(
+                x, y, filename, ylabel=legend, csv=csv, csvseparator=csvseparator
+            )
 
     def setImageList(self, imagelist):
         self.imageList = imagelist
         self.spectrumList = None
         if imagelist is not None:
-            self.slider.setMaximum(len(self.imageList)-1)
+            self.slider.setMaximum(len(self.imageList) - 1)
             self.showImage(0)
 
     def _addAllImageClicked(self):
         ddict = {}
-        ddict['event'] = "addAllClicked"
-        ddict['images'] = self.imageList
-        ddict['titles'] = self.imageNames
-        ddict['id'] = id(self)
+        ddict["event"] = "addAllClicked"
+        ddict["images"] = self.imageList
+        ddict["titles"] = self.imageNames
+        ddict["id"] = id(self)
         self.emitMaskImageSignal(ddict)
 
     def showStatsWidget(self):
@@ -383,6 +401,7 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
         self.statsWidget.setImageList(self.imageList, image_names=self.imageNames)
         self.statsWidget.show()
 
+
 def test():
     app = qt.QApplication([])
     app.lastWindowClosed.connect(app.quit)
@@ -390,18 +409,24 @@ def test():
     container = StackPluginResultsWindow()
     data = numpy.arange(20000)
     data.shape = 2, 100, 100
-    data[1, 0:100,0:50] = 100
-    container.setStackPluginResults(data, spectra=[numpy.arange(100.), numpy.arange(100.)+10],
-                                image_names=["I1", "I2"], spectra_names=["V1", "V2"])
+    data[1, 0:100, 0:50] = 100
+    container.setStackPluginResults(
+        data,
+        spectra=[numpy.arange(100.0), numpy.arange(100.0) + 10],
+        image_names=["I1", "I2"],
+        spectra_names=["V1", "V2"],
+    )
     container.show()
     container.showStatsWidget()
+
     def theSlot(ddict):
-        print(ddict['event'])
+        print(ddict["event"])
 
     container.sigMaskImageWidgetSignal.connect(theSlot)
     app.exec()
 
+
 if __name__ == "__main__":
     import numpy
-    test()
 
+    test()
