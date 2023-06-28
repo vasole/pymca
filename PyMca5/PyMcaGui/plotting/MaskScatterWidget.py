@@ -191,7 +191,7 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         image = numpy.histogram2d(y[idx], x[idx],
                                   bins=bins,
                                   #range=(binsY, binsX),
-                                  normed=False)
+                                  density=False)
         self._binsX = image[2]
         self._binsY = image[1]
         self._bins = bins
@@ -240,7 +240,7 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         self.yScale = (y0, deltaY)
         binsX = numpy.arange(bins[0]) * deltaX
         binsY = numpy.arange(bins[1]) * deltaY
-        image = numpy.histogram2d(y[idx], x[idx], bins=(binsY, binsX), normed=False)
+        image = numpy.histogram2d(y[idx], x[idx], bins=(binsY, binsX), density=False)
         self._binsX = image[2]
         self._binsY = image[1]
         self._bins = bins
@@ -258,13 +258,13 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
                     mask = numpy.round(numpy.histogram2d(y[idx], x[idx],
                                        bins=(binsY, binsX),
                                        weights=weights,
-                                       normed=True)[0] * weightsSum * volume).astype(numpy.uint8)
+                                       density=True)[0] * weightsSum * volume).astype(numpy.uint8)
                 else:
                     #print("GOOD PATH")
                     mask = numpy.histogram2d(y[idx], x[idx],
                                              bins=(binsY, binsX),
                                              weights=weights,
-                                             normed=False)[0]
+                                             density=False)[0]
                     mask[mask > 0] = 1
                 #print(mask.min(), mask.max())
                 self._densityPlotWidget.setSelectionMask(mask, plot=False)

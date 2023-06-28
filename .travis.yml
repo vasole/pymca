@@ -117,13 +117,13 @@ script:
     # Dependencies
     - if [ "$TRAVIS_CPU_ARCH" == "ppc64le" ];
       then
-          pip install matplotlib==3.6.2 --pre --trusted-host www.silx.org --find-links http://www.silx.org/pub/wheelhouse/;
+          pip install matplotlib==3.7.1 --pre --trusted-host www.silx.org --find-links http://www.silx.org/pub/wheelhouse/;
       else
           pip install matplotlib;
       fi
     - if [ "$TRAVIS_CPU_ARCH" == "ppc64le" ];
       then
-          pip install h5py --pre --trusted-host www.silx.org --find-links http://www.silx.org/pub/wheelhouse/;
+          pip install h5py==3.8.0 --pre --trusted-host www.silx.org --find-links http://www.silx.org/pub/wheelhouse/;
       else
           pip install h5py;
       fi
