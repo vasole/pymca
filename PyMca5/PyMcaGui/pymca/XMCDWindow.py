@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -2053,10 +2053,16 @@ class XMCDFileDialog(qt.QFileDialog):
 
     def appendChecked(self, state):
         if state == qt.Qt.Unchecked:
-            self.setConfirmOverwrite(True)
+            if hasattr(self, "setConfirmOverwrite"):
+                self.setConfirmOverwrite(True)
+            else:
+                self.setOption(qt.QFileDialog.DontConfirmOverwrite, False)
             self.setFileMode(qt.QFileDialog.AnyFile)
         else:
-            self.setConfirmOverwrite(False)
+            if hasattr(self, "setConfirmOverwrite"):
+                self.setConfirmOverwrite(False)
+            else:
+                self.setOption(qt.QFileDialog.DontConfirmOverwrite, True)
             self.setFileMode(qt.QFileDialog.ExistingFile)
 
 def getSaveFileName(parent, caption, directory, filter):
