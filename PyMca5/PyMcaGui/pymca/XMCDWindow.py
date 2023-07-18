@@ -968,7 +968,7 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
                 if scanno == 2:
                     # Case: Scan appended to file containing
                     # a single scan. Make sure, that the first
-                    # scan is also written to seperate file and
+                    # scan is also written to separate file and
                     # the corresponding cfg-file is copied
                     # 1. Create filename of first scan
                     sepFirstFileName = sepFile[0] + '_01' + sepFile[1]
@@ -980,21 +980,21 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
                     sepFirstConfName = sepFile[0] + '_01' + '.cfg'
                     sepFirstConfName = pathjoin(dirname(filename),sepFirstConfName)
                     # Copy contents
-                    firstSeperateFile = open(sepFirstFileName, 'wb')
-                    firstSeperateConf = open(sepFirstConfName, 'wb')
+                    firstSeparateFile = open(sepFirstFileName, 'wb')
+                    firstSeparateConf = open(sepFirstConfName, 'wb')
                     filehandle = open(filename, 'rb')
                     confhandle = open(confname, 'rb')
                     firstFile = filehandle.read()
                     firstConf = confhandle.read()
-                    firstSeperateFile.write(firstFile)
-                    firstSeperateConf.write(firstConf)
-                    firstSeperateFile.close()
-                    firstSeperateConf.close()
+                    firstSeparateFile.write(firstFile)
+                    firstSeparateConf.write(firstConf)
+                    firstSeparateFile.close()
+                    firstSeparateConf.close()
                 filehandle = open(filename, 'ab')
-                seperateFile = open(sepFileName, 'wb')
+                separateFile = open(sepFileName, 'wb')
             else:
                 filehandle = open(filename, 'wb')
-                seperateFile = None
+                separateFile = None
         except IOError:
             msg = qt.QMessageBox(text="Unable to open '%s'"%filename)
             msg.exec()
@@ -1045,7 +1045,7 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
             else:
                 header += ('#L ' + self.getGraphXTitle() + '  ' + delim.join(legends) + NEWLINE)
 
-        for fh in [filehandle, seperateFile]:
+        for fh in [filehandle, separateFile]:
             if fh is not None:
                 if sys.version < "3.0":
                     fh.write(bytes(NEWLINE))
@@ -1065,7 +1065,7 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
 
         # Emit saveOptionsSignal to save config file
         self.saveOptionsSignal.emit(splitext(filename)[0])
-        if seperateFile is not None:
+        if separateFile is not None:
             self.saveOptionsSignal.emit(splitext(sepFileName)[0])
 
     def add(self):
@@ -1997,6 +1997,7 @@ class XMCDWidget(qt.QWidget):
                 ret.append(dict(zip(namesList,  valuesList)))
             else:
                 _logger.warning("Number of motors and values does not match!")
+                ret.append({})
         return ret
 
     def _setLists(self):
