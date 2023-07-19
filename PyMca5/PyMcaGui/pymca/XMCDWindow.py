@@ -934,7 +934,7 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
                 ret = ' '.join([ret, value])
         return ret
 
-    def _saveIconSignal(self):
+    def _saveIconSignalReplacement(self, motors=None):
         saveDir = PyMcaDirs.outputDir
         filter = 'spec File (*.spec);;Any File (*.*)'
         try:
@@ -1033,6 +1033,30 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
             lines = comment.splitlines()[:97]
             for (idx, line) in enumerate(lines):
                 header += ('#U%.2d %s'%(idx+3, line) + NEWLINE)
+
+        # Write motor mnemonics and positions of first selected scan
+        if isinstance(motors, dict):
+            if len(motors):
+                motorNames=[x for x in motors]
+                motorValues=[motors[x] for x in motors]
+                motorNamesText = ""
+                motorValuesText = ""
+                motorsPerLine = 5
+                n = 0
+                while n < len(motors):
+                    idx = n // motorsPerLine
+                    motorNamesText += "#O%d" % idx
+                    motorValuesText += "#P%d" % idx
+                    for i in range(idx * motorsPerLine,
+                                   min((idx+1) * motorsPerLine, len(motors))):
+                        motorNamesText += "  " + motorNames[i]
+                        motorValuesText += "  " + motorValues[i]
+                        n += 1
+                    motorNamesText += NEWLINE
+                    motorValuesText += NEWLINE
+                header += motorNamesText
+                header += motorValuesText
+        
         header += '#N %d'%ncols + NEWLINE
         if ext == '.spec':
             if hasattr(self, 'getGraphXLabel'):
@@ -1449,6 +1473,7 @@ class XMCDWidget(qt.QWidget):
         #self.cBoxList = []
         self.analysisWindow = XMCDScanWindow(origin=plotWindow,
                                              parent=None)
+        self.analysisWindow.enableOwnSave(False)
         self.optsWindow = XMCDOptions(self, self.motorNamesList)
 
         helpFileName = pathjoin(PyMcaDataDir.PYMCA_DOC_DIR,
@@ -1653,7 +1678,7 @@ class XMCDWidget(qt.QWidget):
         self.expSelectorShortcut = qt.QShortcut(qt.QKeySequence('Tab'), self)
         self.expSelectorShortcut.activated.connect(self.activateExpCB)
         self.saveShortcut = qt.QShortcut(qt.QKeySequence('Ctrl+S'), self)
-        self.saveShortcut.activated.connect(self.analysisWindow._saveIconSignal)
+        self.saveShortcut.activated.connect(self._saveIconSignal)
 
         # Connects
         self.expCBox.currentIndexChanged[int].connect(self.updateTree)
@@ -1666,6 +1691,7 @@ class XMCDWidget(qt.QWidget):
         self.list.selectionModifiedSignal.connect(self.updateSelectionDict)
         self.setSelectionSignal.connect(self.analysisWindow.processSelection)
         self.analysisWindow.saveOptionsSignal.connect(self.optsWindow.saveOptions)
+        self.analysisWindow.sigIconSignal.connect(self._saveIconSignal)
         self.optsWindow.accepted.connect(self.updateTree)
         buttonUpdate.clicked.connect(self.updatePlots)
         buttonOptions.clicked.connect(self.showOptionsWindow)
@@ -1676,6 +1702,23 @@ class XMCDWidget(qt.QWidget):
 
     def sizeHint(self):
         return self.list.sizeHint() + self.analysisWindow.sizeHint()
+
+    def _saveIconSignal(self, ddict):
+        key = ddict.get("key", None)
+        if key and key=="save":
+            if not len(self.selectionDict['A']):
+                msg = qt.QMessageBox()
+                msg.setWindowTitle('XLD/XMCD Error')
+                msg.setText('At lease one scan needs to be  as A')
+                msg.exec()
+                return
+
+            # extract the motors from the first curve selected as A
+            legend = self.selectionDict["A"][0]
+            idx = self.legendList.index(legend)
+            motors = self.motorsList[idx]
+            print(motors)
+            self.analysisWindow._saveIconSignalReplacement(motors=motors)
 
     def activateExpCB(self):
         self.expCBox.setFocus(qt.Qt.TabFocusReason)
@@ -2015,7 +2058,7 @@ class XMCDWidget(qt.QWidget):
             self.motorsList
         """
         if self.plotWindow is not None:
-            curves = self.plotWindow.getAllCurves()
+            curves = self.plotWindow.getAllCurves()[:4]
         else:
             _logger.debug('_setLists -- Set self.plotWindow before calling self._setLists')
             return
@@ -2096,9 +2139,9 @@ def main():
     y1 =  10*x + 10000.*numpy.exp(-0.5*(x-600)**2/400) + 1500*numpy.random.random(1000)
     y2 =  10*x + 10000.*numpy.exp(-0.5*(x-400)**2/400) + 1500*numpy.random.random(1000)
 
-    swin.newCurve(x, y2, legend="Curve2", xlabel='ene_st2', ylabel='Ihor', info=info2, replot=False, replace=False)
-    swin.newCurve(x, y0, legend="Curve0", xlabel='ene_st0', ylabel='Iver', info=info0, replot=False, replace=False)
-    swin.newCurve(x, y1, legend="Curve1", xlabel='ene_st1', ylabel='Ihor', info=info1, replot=False, replace=False)
+    swin.addCurve(x, y2, legend="Curve2", xlabel='ene_st2', ylabel='Ihor', info=info2, replot=False, replace=True)
+    swin.addCurve(x, y0, legend="Curve0", xlabel='ene_st0', ylabel='Iver', info=info0, replot=False, replace=False)
+    swin.addCurve(x, y1, legend="Curve1", xlabel='ene_st1', ylabel='Ihor', info=info1, replot=True, replace=False)
 
     # info['Key'] is overwritten when using newCurve
     swin.dataObjectsDict['Curve2 Ihor'].info['Key'] = '1.1'
