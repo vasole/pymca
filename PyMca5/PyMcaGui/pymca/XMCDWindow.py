@@ -1929,17 +1929,8 @@ class XMCDWidget(qt.QWidget):
         self.setSelectionSignal.emit(self.selectionDict['A'],
                                      self.selectionDict['B'])
 
-    def updatePlots(self,
-                    newLegends = None,
-                    newMotorValues = None):
-        # Check if curves in plotWindow changed..
-        curves = self.plotWindow.getAllCurves(just_legend=True)
-        if curves == self.legendList:
-            # ..if not, just replot to account for zoom
-            self.triggerXMCD()
-            return
+    def updatePlots(self):
         self._setLists()
-
         self.motorNamesList = [''] + self._getAllMotorNames()
         self.motorNamesList.sort()
         self.optsWindow.updateMotorList(self.motorNamesList)
