@@ -1,5 +1,5 @@
-#/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# /*##########################################################################
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -52,9 +52,10 @@ _logger = logging.getLogger(__name__)
 if _logger.getEffectiveLevel() == logging.DEBUG:
     numpy.set_printoptions(threshold=50)
 
-NEWLINE = '\n'
-class TreeWidgetItem(qt.QTreeWidgetItem):
+NEWLINE = "\n"
 
+
+class TreeWidgetItem(qt.QTreeWidgetItem):
     __legendColumn = 1
 
     def __init__(self, parent, itemList):
@@ -62,96 +63,101 @@ class TreeWidgetItem(qt.QTreeWidgetItem):
 
     def __lt__(self, other):
         col = self.treeWidget().sortColumn()
-        val      = self.text(col)
+        val = self.text(col)
         valOther = other.text(col)
         if val == valOther:
             ret = False
-        elif val in ['---']:
+        elif val in ["---"]:
             ret = True
         elif col > self.__legendColumn:
             try:
-                ret  = (float(val) < float(valOther))
+                ret = float(val) < float(valOther)
             except ValueError:
-                ret  = val < valOther
+                ret = val < valOther
         else:
-            ret  = val < valOther
+            ret = val < valOther
         return ret
 
-class XMCDOptions(qt.QDialog):
 
+class XMCDOptions(qt.QDialog):
     def __init__(self, parent, mList, full=True):
         qt.QDialog.__init__(self, parent)
-        self.setWindowTitle('XLD/XMCD Options')
+        self.setWindowTitle("XLD/XMCD Options")
         self.setModal(True)
         self.motorList = mList
         self.saved = False
 
         # Buttons
-        buttonOK = qt.QPushButton('OK')
-        buttonOK.setToolTip('Accept the configuration')
-        buttonCancel = qt.QPushButton('Cancel')
-        buttonCancel.setToolTip('Return to XMCD Analysis\nwithout changes')
+        buttonOK = qt.QPushButton("OK")
+        buttonOK.setToolTip("Accept the configuration")
+        buttonCancel = qt.QPushButton("Cancel")
+        buttonCancel.setToolTip("Return to XMCD Analysis\nwithout changes")
         if full:
-            buttonSave = qt.QPushButton('Save')
-            buttonSave.setToolTip('Save configuration to *.cfg-File')
-        buttonLoad = qt.QPushButton('Load')
-        buttonLoad.setToolTip('Load existing configuration from *.cfg-File')
+            buttonSave = qt.QPushButton("Save")
+            buttonSave.setToolTip("Save configuration to *.cfg-File")
+        buttonLoad = qt.QPushButton("Load")
+        buttonLoad.setToolTip("Load existing configuration from *.cfg-File")
 
         # OptionLists and ButtonGroups
         # GroupBox can be generated from self.getGroupBox
-        normOpts = ['No &normalization',
-                    'Normalize &after average',
-                    'Normalize &before average']
-        xrangeOpts = ['&First curve in sequence',
-                      'Active &curve',
-                      '&Use equidistant x-range']
+        normOpts = [
+            "No &normalization",
+            "Normalize &after average",
+            "Normalize &before average",
+        ]
+        xrangeOpts = [
+            "&First curve in sequence",
+            "Active &curve",
+            "&Use equidistant x-range",
+        ]
         # ButtonGroups
-        normBG   = qt.QButtonGroup(self)
+        normBG = qt.QButtonGroup(self)
         xrangeBG = qt.QButtonGroup(self)
         # ComboBoxes
         normMeth = qt.QComboBox()
-        normMeth.addItems(['(y-min(y))/trapz(max(y)-min(y),x)',
-                           'y/max(y)',
-                           '(y-min(y))/(max(y)-min(y))',
-                           '(y-min(y))/sum(max(y)-min(y))'])
+        normMeth.addItems(
+            [
+                "(y-min(y))/trapz(max(y)-min(y),x)",
+                "y/max(y)",
+                "(y-min(y))/(max(y)-min(y))",
+                "(y-min(y))/sum(max(y)-min(y))",
+            ]
+        )
         normMeth.setEnabled(False)
         self.optsDict = {
-            'normalization' : normBG,
-            'normalizationMethod' : normMeth,
-            'xrange' : xrangeBG
+            "normalization": normBG,
+            "normalizationMethod": normMeth,
+            "xrange": xrangeBG,
         }
         for idx in range(5):
             # key: motor0, motor1, ...
-            key = 'motor%d'%idx
+            key = "motor%d" % idx
             tmp = qt.QComboBox()
             tmp.addItems(mList)
             self.optsDict[key] = tmp
         # Subdivide into GroupBoxes
-        normGroupBox = self.getGroupBox('Normalization',
-                                        normOpts,
-                                        normBG)
-        xrangeGroupBox = self.getGroupBox('Interpolation x-range',
-                                          xrangeOpts,
-                                          xrangeBG)
-        motorGroupBox = qt.QGroupBox('Motors')
+        normGroupBox = self.getGroupBox("Normalization", normOpts, normBG)
+        xrangeGroupBox = self.getGroupBox("Interpolation x-range", xrangeOpts, xrangeBG)
+        motorGroupBox = qt.QGroupBox("Motors")
 
         # Layouts
         mainLayout = qt.QVBoxLayout()
         buttonLayout = qt.QHBoxLayout()
         normLayout = qt.QHBoxLayout()
         motorLayout = qt.QGridLayout()
-        if full: buttonLayout.addWidget(buttonSave)
+        if full:
+            buttonLayout.addWidget(buttonSave)
         buttonLayout.addWidget(buttonLoad)
         buttonLayout.addWidget(qt.HorizontalSpacer())
         buttonLayout.addWidget(buttonOK)
         buttonLayout.addWidget(buttonCancel)
-        normLayout.addWidget(qt.QLabel('Method:'))
+        normLayout.addWidget(qt.QLabel("Method:"))
         normLayout.addWidget(normMeth)
         for idx in range(5):
-            label = qt.QLabel('Motor %d:'%(idx+1))
-            cbox  = self.optsDict['motor%d'%idx]
-            motorLayout.addWidget(label,idx,0)
-            motorLayout.addWidget(cbox,idx,1)
+            label = qt.QLabel("Motor %d:" % (idx + 1))
+            cbox = self.optsDict["motor%d" % idx]
+            motorLayout.addWidget(label, idx, 0)
+            motorLayout.addWidget(cbox, idx, 1)
         motorGroupBox.setLayout(motorLayout)
         normGroupBox.layout().addLayout(normLayout)
         mainLayout.addWidget(normGroupBox)
@@ -180,8 +186,8 @@ class XMCDOptions(qt.QDialog):
         qt.QDialog.showEvent(self, event)
 
     def updateMotorList(self, mList):
-        for (key, obj) in self.optsDict.items():
-            if key.startswith('motor') and isinstance(obj, qt.QComboBox):
+        for key, obj in self.optsDict.items():
+            if key.startswith("motor") and isinstance(obj, qt.QComboBox):
                 curr = obj.currentText()
                 obj.clear()
                 obj.addItems(mList)
@@ -209,7 +215,7 @@ class XMCDOptions(qt.QDialog):
         groupBox = qt.QGroupBox(title, None)
         gbLayout = qt.QVBoxLayout(None)
         gbLayout.addStretch(1)
-        for (idx, radioText) in enumerate(optionList):
+        for idx, radioText in enumerate(optionList):
             radio = qt.QRadioButton(radioText)
             gbLayout.addWidget(radio)
             if buttongroup:
@@ -223,12 +229,12 @@ class XMCDOptions(qt.QDialog):
     def normalizationMethod(self, ident):
         ret = None
         normDict = {
-            'toMaximum'       : r'y/max(y)',
-            'offsetAndMaximum': r'(y-min(y))/(max(y)-min(y))',
-            'offsetAndCounts' : r'(y-min(y))/sum(max(y)-min(y))',
-            'offsetAndArea'   : r'(y-min(y))/trapz(max(y)-min(y),x)'
+            "toMaximum": r"y/max(y)",
+            "offsetAndMaximum": r"(y-min(y))/(max(y)-min(y))",
+            "offsetAndCounts": r"(y-min(y))/sum(max(y)-min(y))",
+            "offsetAndArea": r"(y-min(y))/trapz(max(y)-min(y),x)",
         }
-        for (name, eq) in normDict.items():
+        for name, eq in normDict.items():
             if ident == name:
                 return eq
             if ident == eq:
@@ -249,15 +255,16 @@ class XMCDOptions(qt.QDialog):
 
     def saveOptions(self, filename=None):
         saveDir = PyMcaDirs.outputDir
-        filter = ['PyMca (*.cfg)']
+        filter = ["PyMca (*.cfg)"]
         if filename is None:
             try:
-                filename = PyMcaFileDialogs.\
-                            getFileList(parent=self,
-                                filetypelist=filter,
-                                message='Save XLD/XMCD Analysis Configuration',
-                                mode='SAVE',
-                                single=True)[0]
+                filename = PyMcaFileDialogs.getFileList(
+                    parent=self,
+                    filetypelist=filter,
+                    message="Save XLD/XMCD Analysis Configuration",
+                    mode="SAVE",
+                    single=True,
+                )[0]
             except IndexError:
                 # Returned list is empty
                 return
@@ -265,20 +272,20 @@ class XMCDOptions(qt.QDialog):
         if len(filename) == 0:
             self.saved = False
             return False
-        if not str(filename).endswith('.cfg'):
-            filename += '.cfg'
+        if not str(filename).endswith(".cfg"):
+            filename += ".cfg"
         confDict = ConfigDict.ConfigDict()
         tmp = self.getOptions()
-        for (key, value) in tmp.items():
-            if key.startswith('Motor') and len(value) == 0:
-                tmp[key] = 'None'
-        confDict['XMCDOptions'] = tmp
+        for key, value in tmp.items():
+            if key.startswith("Motor") and len(value) == 0:
+                tmp[key] = "None"
+        confDict["XMCDOptions"] = tmp
         try:
             confDict.write(filename)
         except IOError:
             msg = qt.QMessageBox()
-            msg.setWindowTitle('XLD/XMCD Options Error')
-            msg.setText('Unable to write configuration to \'%s\''%filename)
+            msg.setWindowTitle("XLD/XMCD Options Error")
+            msg.setText("Unable to write configuration to '%s'" % filename)
             msg.exec()
         self.saved = True
         return True
@@ -288,74 +295,76 @@ class XMCDOptions(qt.QDialog):
 
     def loadOptions(self):
         openDir = PyMcaDirs.outputDir
-        ffilter = 'PyMca (*.cfg)'
-        filename = qt.QFileDialog.\
-                    getOpenFileName(self,
-                                    'Load XLD/XMCD Analysis Configuration',
-                                    openDir,
-                                    ffilter)
+        ffilter = "PyMca (*.cfg)"
+        filename = qt.QFileDialog.getOpenFileName(
+            self, "Load XLD/XMCD Analysis Configuration", openDir, ffilter
+        )
         confDict = ConfigDict.ConfigDict()
         try:
             confDict.read(filename)
         except IOError:
             msg = qt.QMessageBox()
-            msg.setTitle('XMCD Options Error')
-            msg.setText('Unable to read configuration file \'%s\''%filename)
+            msg.setTitle("XMCD Options Error")
+            msg.setText("Unable to read configuration file '%s'" % filename)
             return
-        if 'XMCDOptions'not in confDict:
+        if "XMCDOptions" not in confDict:
             return
         try:
-            self.setOptions(confDict['XMCDOptions'])
+            self.setOptions(confDict["XMCDOptions"])
         except ValueError as e:
-            _logger.debug('loadOptions -- int conversion failed:\n'
-                          'Invalid value for option \'%s\'', e)
+            _logger.debug(
+                "loadOptions -- int conversion failed:\n"
+                "Invalid value for option '%s'",
+                e,
+            )
             msg = qt.QMessageBox()
-            msg.setWindowTitle('XMCD Options Error')
-            msg.setText('Configuration file \'%s\' corruted' % filename)
+            msg.setWindowTitle("XMCD Options Error")
+            msg.setText("Configuration file '%s' corruted" % filename)
             msg.exec()
             return
         except KeyError as e:
-            _logger.debug('loadOptions -- invalid identifier:\n'
-                          'option \'%s\' not found', e)
+            _logger.debug(
+                "loadOptions -- invalid identifier:\n" "option '%s' not found", e
+            )
 
             msg = qt.QMessageBox()
-            msg.setWindowTitle('XMCD Options Error')
-            msg.setText('Configuration file \'%s\' corruted' % filename)
+            msg.setWindowTitle("XMCD Options Error")
+            msg.setText("Configuration file '%s' corruted" % filename)
             msg.exec()
             return
         self.saved = True
 
     def getOptions(self):
         ddict = {}
-        for (option, obj) in self.optsDict.items():
+        for option, obj in self.optsDict.items():
             if isinstance(obj, qt.QButtonGroup):
                 ddict[option] = obj.checkedId()
             elif isinstance(obj, qt.QComboBox):
                 tmp = str(obj.currentText())
-                if option == 'normalizationMethod':
+                if option == "normalizationMethod":
                     tmp = self.normalizationMethod(tmp)
-                if option.startswith('motor') and (not len(tmp)):
-                    tmp = 'None'
+                if option.startswith("motor") and (not len(tmp)):
+                    tmp = "None"
                 ddict[option] = tmp
             else:
-                ddict[option] = 'None'
+                ddict[option] = "None"
         return ddict
 
     def getMotors(self):
-        motors = sorted([key for key in self.optsDict.keys()\
-                         if key.startswith('motor')])
-        return [str(self.optsDict[motor].currentText()) \
-                for motor in motors]
+        motors = sorted(
+            [key for key in self.optsDict.keys() if key.startswith("motor")]
+        )
+        return [str(self.optsDict[motor].currentText()) for motor in motors]
 
     def setOptions(self, ddict):
         for option in ddict.keys():
             obj = self.optsDict[option]
             if isinstance(obj, qt.QComboBox):
                 name = ddict[option]
-                if option == 'normalizationMethod':
+                if option == "normalizationMethod":
                     name = self.normalizationMethod(name)
-                if option.startswith('Motor') and name == 'None':
-                    name = ''
+                if option.startswith("Motor") and name == "None":
+                    name = ""
                 idx = obj.findText(QString(name))
                 obj.setCurrentIndex(idx)
             elif isinstance(obj, qt.QButtonGroup):
@@ -365,60 +374,60 @@ class XMCDOptions(qt.QDialog):
                     raise ValueError(option)
                 button = self.optsDict[option].button(idx)
                 if type(button) == type(qt.QRadioButton()):
-                        button.setChecked(True)
+                    button.setChecked(True)
+
 
 class XMCDScanWindow(ScanWindow.ScanWindow):
-
     xmcdToolbarOptions = {
-        'logx': False,
-        'logy': False,
-        'flip': False,
-        'fit': False,
-        'roi': False,
+        "logx": False,
+        "logy": False,
+        "flip": False,
+        "fit": False,
+        "roi": False,
     }
 
     plotModifiedSignal = qt.pyqtSignal()
-    saveOptionsSignal  = qt.pyqtSignal('QString')
+    saveOptionsSignal = qt.pyqtSignal("QString")
 
-    def __init__(self,
-                 origin,
-                 parent=None):
+    def __init__(self, origin, parent=None):
         """
         :param origin: Plot window containing the data on which the analysis is performed
         :type origin: ScanWindow
         :param parent: Parent Widget, None per default
         :type parent: QWidget
         """
-        ScanWindow.ScanWindow.__init__(self,
-                               parent,
-                               name='XLD/XMCD Analysis',
-                               specfit=None,
-                               plugins=False,
-                               newplot=False,
-                               **self.xmcdToolbarOptions)
-        if hasattr(self, 'pluginsIconFlag'):
+        ScanWindow.ScanWindow.__init__(
+            self,
+            parent,
+            name="XLD/XMCD Analysis",
+            specfit=None,
+            plugins=False,
+            newplot=False,
+            **self.xmcdToolbarOptions
+        )
+        if hasattr(self, "pluginsIconFlag"):
             self.pluginsIconFlag = False
         self.plotWindow = origin
-        if hasattr(self, 'scanWindowInfoWidget'):
+        if hasattr(self, "scanWindowInfoWidget"):
             if self.scanWindowInfoWidget:
                 self.scanWindowInfoWidget.hide()
 
         # Buttons to push spectra to main Window
         buttonWidget = qt.QWidget()
-        buttonAdd = qt.QPushButton('Add', self)
-        buttonAdd.setToolTip('Add active curve to main window')
-        buttonReplace = qt.QPushButton('Replace', self)
+        buttonAdd = qt.QPushButton("Add", self)
+        buttonAdd.setToolTip("Add active curve to main window")
+        buttonReplace = qt.QPushButton("Replace", self)
         buttonReplace.setToolTip(
-            'Replace all curves in main window '
-           +'with active curve in analysis window')
-        buttonAddAll = qt.QPushButton('Add all', self)
-        buttonAddAll.setToolTip(
-            'Add all curves in analysis window '
-           +'to main window')
-        buttonReplaceAll = qt.QPushButton('Replace all', self)
+            "Replace all curves in main window "
+            + "with active curve in analysis window"
+        )
+        buttonAddAll = qt.QPushButton("Add all", self)
+        buttonAddAll.setToolTip("Add all curves in analysis window " + "to main window")
+        buttonReplaceAll = qt.QPushButton("Replace all", self)
         buttonReplaceAll.setToolTip(
-            'Replace all curves in main window '
-           +'with all curves from analysis window')
+            "Replace all curves in main window "
+            + "with all curves from analysis window"
+        )
         self.graphBottomLayout.addWidget(qt.HorizontalSpacer())
         self.graphBottomLayout.addWidget(buttonAdd)
         self.graphBottomLayout.addWidget(buttonAddAll)
@@ -431,14 +440,14 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
         buttonReplaceAll.clicked.connect(self.replaceAll)
 
         # Copy spectra from origin
-        self.selectionDict = {'A':[], 'B':[]}
+        self.selectionDict = {"A": [], "B": []}
         self.curvesDict = {}
         self.optsDict = {
-            'normAfterAvg'  : False,
-            'normBeforeAvg' : False,
-            'useActive'     : False,
-            'equidistant'   : False,
-            'normalizationMethod' : self.NormOffsetAndArea
+            "normAfterAvg": False,
+            "normBeforeAvg": False,
+            "useActive": False,
+            "equidistant": False,
+            "normalizationMethod": self.NormOffsetAndArea,
         }
         self.xRange = None
 
@@ -446,84 +455,82 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
         self.avgA = None
         self.avgB = None
         self.xmcd = None
-        self.xas  = None
+        self.xas = None
 
-        if hasattr(self, '_buildLegendWidget'):
+        if hasattr(self, "_buildLegendWidget"):
             self._buildLegendWidget()
 
     def sizeHint(self):
         if self.parent():
-            height = .5 * self.parent().height()
+            height = 0.5 * self.parent().height()
         else:
             height = self.height()
         return qt.QSize(self.width(), int(height))
 
     def processOptions(self, options):
-        tmp = { 'equidistant': False,
-                'useActive': False,
-                'normAfterAvg': False,
-                'normBeforeAvg': False,
-                'normalizationMethod': None
+        tmp = {
+            "equidistant": False,
+            "useActive": False,
+            "normAfterAvg": False,
+            "normBeforeAvg": False,
+            "normalizationMethod": None,
         }
-        xRange = options['xrange']
-        normalization = options['normalization']
-        normMethod = options['normalizationMethod']
+        xRange = options["xrange"]
+        normalization = options["normalization"]
+        normMethod = options["normalizationMethod"]
         # xRange Options. Default: Use first scan
         if xRange == 1:
-            tmp['useActive']   = True
+            tmp["useActive"] = True
         elif xRange == 2:
-            tmp['equidistant'] = True
+            tmp["equidistant"] = True
         # Normalization Options. Default: No Normalization
         if normalization == 1:
-            tmp['normAfterAvg']  = True
+            tmp["normAfterAvg"] = True
         elif normalization == 2:
-            tmp['normBeforeAvg'] = True
+            tmp["normBeforeAvg"] = True
         # Normalization Method. Default: offsetAndArea
-        tmp['normalizationMethod'] = self.setNormalizationMethod(normMethod)
+        tmp["normalizationMethod"] = self.setNormalizationMethod(normMethod)
         # Trigger reclaculation
         self.optsDict = tmp
-        groupA = self.selectionDict['A']
-        groupB = self.selectionDict['B']
+        groupA = self.selectionDict["A"]
+        groupB = self.selectionDict["B"]
         self.processSelection(groupA, groupB)
 
     def setNormalizationMethod(self, fname):
-        if fname == 'toMaximum':
+        if fname == "toMaximum":
             func = self.NormToMaximum
-        elif fname == 'offsetAndMaximum':
+        elif fname == "offsetAndMaximum":
             func = self.NormToOffsetAndMaximum
-        elif fname == 'offsetAndCounts':
+        elif fname == "offsetAndCounts":
             func = self.NormOffsetAndCounts
         else:
             func = self.NormOffsetAndArea
         return func
 
-    def NormToMaximum(self,x,y):
-        ymax  = numpy.max(y)
-        ynorm = y/ymax
+    def NormToMaximum(self, x, y):
+        ymax = numpy.max(y)
+        ynorm = y / ymax
         return ynorm
 
-    def NormToOffsetAndMaximum(self,x,y):
+    def NormToOffsetAndMaximum(self, x, y):
         ynorm = y - numpy.min(y)
-        ymax  = numpy.max(ynorm)
+        ymax = numpy.max(ynorm)
         ynorm /= ymax
         return ynorm
 
     def NormOffsetAndCounts(self, x, y):
         ynorm = y - numpy.min(y)
-        ymax  = numpy.sum(ynorm)
+        ymax = numpy.sum(ynorm)
         ynorm /= ymax
         return ynorm
 
-    def NormOffsetAndArea(self,  x, y):
+    def NormOffsetAndArea(self, x, y):
         ynorm = y - numpy.min(y)
-        ymax  = numpy.trapz(ynorm,  x)
+        ymax = numpy.trapz(ynorm, x)
         ynorm /= ymax
         return ynorm
 
-    def interpXRange(self,
-                     xRange=None,
-                     equidistant=False,
-                     xRangeList=None):
+    def interpXRange(self, xRange=None, equidistant=False, xRangeList=None):
         """
         Input
         -----
@@ -551,7 +558,7 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
             keys = sorted(self.curvesDict.keys())
             xRangeList = [self.curvesDict[k].x[0] for k in keys]
         if not len(xRangeList):
-            _logger.debug('interpXRange -- Nothing to do')
+            _logger.debug("interpXRange -- Nothing to do")
             return None
 
         num = 0
@@ -562,14 +569,13 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
             if x.max() < xmax:
                 xmax = x.max()
         if xmin >= xmax:
-            raise ValueError('No overlap between curves')
+            raise ValueError("No overlap between curves")
             pass
 
         if equidistant:
             for x in xRangeList:
-                curr = numpy.nonzero((x >= xmin) &
-                                     (x <= xmax))[0].size
-                num = curr if curr>num else num
+                curr = numpy.nonzero((x >= xmin) & (x <= xmax))[0].size
+                num = curr if curr > num else num
             num = int(num)
             # Exclude first and last point
             out = numpy.linspace(xmin, xmax, num, endpoint=False)[1:]
@@ -579,17 +585,16 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
             else:
                 x = xRangeList[0]
             # Ensure monotonically increasing x-range
-            if not numpy.all(numpy.diff(x)>0.):
-                mask = numpy.nonzero(numpy.diff(x)>0.)[0]
+            if not numpy.all(numpy.diff(x) > 0.0):
+                mask = numpy.nonzero(numpy.diff(x) > 0.0)[0]
                 x = numpy.take(x, mask)
             # Exclude the endpoints
-            mask = numpy.nonzero((x > xmin) &
-                                 (x < xmax))[0]
+            mask = numpy.nonzero((x > xmin) & (x < xmax))[0]
             out = numpy.sort(numpy.take(x, mask))
-        _logger.debug('interpXRange -- Resulting xrange:')
-        _logger.debug('\tmin = %f', out.min())
-        _logger.debug('\tmax = %f', out.max())
-        _logger.debug('\tnum = %f', len(out))
+        _logger.debug("interpXRange -- Resulting xrange:")
+        _logger.debug("\tmin = %f", out.min())
+        _logger.debug("\tmax = %f", out.max())
+        _logger.debug("\tnum = %f", len(out))
         return out
 
     def processSelection(self, groupA, groupB):
@@ -604,35 +609,35 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
         all = self.getAllCurves(just_legend=True)
         self.removeCurves(all)
         self.avgB, self.avgA = None, None
-        self.xas, self.xmcd  = None, None
+        self.xas, self.xmcd = None, None
 
-        self.selectionDict['A'] = groupA[:]
-        self.selectionDict['B'] = groupB[:]
+        self.selectionDict["A"] = groupA[:]
+        self.selectionDict["B"] = groupB[:]
         self.curvesDict = self.copyCurves(groupA + groupB)
 
-        if (len(self.curvesDict) == 0) or\
-                ((len(self.selectionDict['A']) == 0) and
-                 (len(self.selectionDict['B']) == 0)):
+        if (len(self.curvesDict) == 0) or (
+            (len(self.selectionDict["A"]) == 0) and (len(self.selectionDict["B"]) == 0)
+        ):
             # Nothing to do
             return
 
         # Make sure to use active curve when specified
-        if self.optsDict['useActive']:
+        if self.optsDict["useActive"]:
             # Get active curve
             active = self.plotWindow.getActiveCurve()
             if active:
-                _logger.debug('processSelection -- xrange: use active')
+                _logger.debug("processSelection -- xrange: use active")
                 x, y, leg, info = active[0:4]
                 xRange = self.interpXRange(xRange=x)
             else:
                 return
-        elif self.optsDict['equidistant']:
-            _logger.debug('processSelection -- xrange: use equidistant')
+        elif self.optsDict["equidistant"]:
+            _logger.debug("processSelection -- xrange: use equidistant")
             xRange = self.interpXRange(equidistant=True)
         else:
-            _logger.debug('processSelection -- xrange: use first')
+            _logger.debug("processSelection -- xrange: use first")
             xRange = self.interpXRange()
-        if hasattr(self.plotWindow, 'graph'):
+        if hasattr(self.plotWindow, "graph"):
             activeLegend = self.plotWindow.graph.getActiveCurve(justlegend=True)
         else:
             activeLegend = self.plotWindow.getActiveCurve(just_legend=True)
@@ -643,10 +648,10 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
         xlabel, ylabel = self.extractLabels(active.info)
 
         # Calculate averages and add them to the plot
-        normalization = self.optsDict['normalizationMethod']
-        normBefore = self.optsDict['normBeforeAvg']
-        normAfter  = self.optsDict['normAfterAvg']
-        for idx in ['A','B']:
+        normalization = self.optsDict["normalizationMethod"]
+        normBefore = self.optsDict["normBeforeAvg"]
+        normAfter = self.optsDict["normAfterAvg"]
+        for idx in ["A", "B"]:
             sel = self.selectionDict[idx]
             if not len(sel):
                 continue
@@ -662,32 +667,33 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
                     yVals = tmp.y[0]
                 xvalList.append(xVals)
                 yvalList.append(yVals)
-            avg_x, avg_y = self.specAverage(xvalList,
-                                            yvalList,
-                                            xRange)
+            avg_x, avg_y = self.specAverage(xvalList, yvalList, xRange)
             if normAfter:
                 avg_y = normalization(avg_x, avg_y)
-            avgName = 'avg_' + idx
-            #info = {'xlabel': xlabel, 'ylabel': ylabel}
+            avgName = "avg_" + idx
+            # info = {'xlabel': xlabel, 'ylabel': ylabel}
             info = {}
-            if idx == 'A':
-                #info.update({'plot_color':'red'})
-                color="red"
+            if idx == "A":
+                # info.update({'plot_color':'red'})
+                color = "red"
             else:
-                #info.update({'plot_color':'blue'})
-                color="blue"
-            self.addCurve(avg_x, avg_y,
-                          legend=avgName,
-                          info=info,
-                          xlabel=xlabel,
-                          ylabel=ylabel,
-                          color=color)
-            if idx == 'A':
+                # info.update({'plot_color':'blue'})
+                color = "blue"
+            self.addCurve(
+                avg_x,
+                avg_y,
+                legend=avgName,
+                info=info,
+                xlabel=xlabel,
+                ylabel=ylabel,
+                color=color,
+            )
+            if idx == "A":
                 self.avgA = self.dataObjectsList[-1]
-            if idx == 'B':
+            if idx == "B":
                 self.avgB = self.dataObjectsList[-1]
 
-        if (self.avgA and self.avgB):
+        if self.avgA and self.avgB:
             self.performXMCD()
             self.performXAS()
 
@@ -717,11 +723,11 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
             if tmp:
                 tmp = copy.deepcopy(tmp)
                 xarr, yarr = tmp.x, tmp.y
-                #if len(tmp.x) == len(tmp.y):
+                # if len(tmp.x) == len(tmp.y):
                 xprocArr, yprocArr = [], []
-                for (x,y) in zip(xarr,yarr):
+                for x, y in zip(xarr, yarr):
                     # Sort
-                    idx = numpy.argsort(x, kind='mergesort')
+                    idx = numpy.argsort(x, kind="mergesort")
                     xproc = numpy.take(x, idx)
                     yproc = numpy.take(y, idx)
                     # Ravel, Increase
@@ -762,10 +768,9 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
             Average spectrum. In case of invalid input,
             (None, None) tuple is returned.
         """
-        if (len(xarr) != len(yarr)) or\
-           (len(xarr) == 0) or (len(yarr) == 0):
-            _logger.debug('specAverage -- invalid input!')
-            _logger.debug('Array lengths do not match or are 0')
+        if (len(xarr) != len(yarr)) or (len(xarr) == 0) or (len(yarr) == 0):
+            _logger.debug("specAverage -- invalid input!")
+            _logger.debug("Array lengths do not match or are 0")
             return None, None
 
         same = True
@@ -786,8 +791,8 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
 
         xsort = []
         ysort = []
-        for (x,y) in zip(xarr, yarr):
-            if numpy.all(numpy.diff(x) > 0.):
+        for x, y in zip(xarr, yarr):
+            if numpy.all(numpy.diff(x) > 0.0):
                 # All values sorted
                 xsort.append(x)
                 ysort.append(y)
@@ -813,41 +818,39 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
                 if xmax < xmax0:
                     xmax0 = xmax
             if xmax <= xmin:
-                _logger.debug('specAverage --\n'
-                              'No overlap between spectra!')
+                _logger.debug("specAverage --\n" "No overlap between spectra!")
                 return numpy.array([]), numpy.array([])
 
         # Clip xRange to maximal overlap in spectra
         if xRange is None:
             xRange = xsort[0]
-        mask = numpy.nonzero((xRange>=xmin0) &
-                             (xRange<=xmax0))[0]
+        mask = numpy.nonzero((xRange >= xmin0) & (xRange <= xmax0))[0]
         xnew = numpy.take(xRange, mask)
         ynew = numpy.zeros(len(xnew))
 
         # Perform average
-        for (x, y) in zip(xsort, ysort):
+        for x, y in zip(xsort, ysort):
             if same:
                 ynew += y
             else:
                 yinter = numpy.interp(xnew, x, y)
-                ynew   += numpy.asarray(yinter)
+                ynew += numpy.asarray(yinter)
         num = len(yarr)
         ynew /= num
         return xnew, ynew
 
     def extractLabels(self, info):
-        xlabel = 'X'
-        ylabel = 'Y'
-        sel = info.get('selection', None)
-        labelNames = info.get('LabelNames',[])
+        xlabel = "X"
+        ylabel = "Y"
+        sel = info.get("selection", None)
+        labelNames = info.get("LabelNames", [])
         if not len(labelNames):
             pass
         elif len(labelNames) == 2:
-                [xlabel, ylabel] = labelNames
+            [xlabel, ylabel] = labelNames
         elif sel:
-            xsel = sel.get('x',[])
-            ysel = sel.get('y',[])
+            xsel = sel.get("x", [])
+            ysel = sel.get("y", [])
             if len(xsel) > 0:
                 x = xsel[0]
                 xlabel = labelNames[x]
@@ -862,28 +865,29 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
             a = self.dataObjectsDict[self.avgA]
             b = self.dataObjectsDict[self.avgB]
         else:
-            _logger.debug('performXAS -- Data not found: ')
-            _logger.debug('\tavg_m = %f', self.avgA)
-            _logger.debug('\tavg_p = %f', self.avgB)
+            _logger.debug("performXAS -- Data not found: ")
+            _logger.debug("\tavg_m = %f", self.avgA)
+            _logger.debug("\tavg_p = %f", self.avgB)
             return
-        if numpy.all( a.x[0] == b.x[0] ):
-            avg = .5*(b.y[0] + a.y[0])
+        if numpy.all(a.x[0] == b.x[0]):
+            avg = 0.5 * (b.y[0] + a.y[0])
         else:
-            _logger.debug('performXAS -- x ranges are not the same! ')
-            _logger.debug('Force interpolation')
-            avg = self.performAverage([a.x[0], b.x[0]],
-                                      [a.y[0], b.y[0]],
-                                       b.x[0])
-        xmcdLegend = 'XAS'
+            _logger.debug("performXAS -- x ranges are not the same! ")
+            _logger.debug("Force interpolation")
+            avg = self.performAverage([a.x[0], b.x[0]], [a.y[0], b.y[0]], b.x[0])
+        xmcdLegend = "XAS"
         xlabel, ylabel = self.extractLabels(a.info)
-        #info = {'xlabel': xlabel, 'ylabel': ylabel, 'plot_color': 'pink'}
+        # info = {'xlabel': xlabel, 'ylabel': ylabel, 'plot_color': 'pink'}
         info = {}
-        self.addCurve(a.x[0], avg,
-                      legend=xmcdLegend,
-                      info=info,
-                      xlabel=xlabel,
-                      ylabel=ylabel,
-                      color="pink")
+        self.addCurve(
+            a.x[0],
+            avg,
+            legend=xmcdLegend,
+            info=info,
+            xlabel=xlabel,
+            ylabel=ylabel,
+            color="pink",
+        )
         self.xas = self.dataObjectsList[-1]
 
     def performXMCD(self):
@@ -892,29 +896,32 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
             a = self.dataObjectsDict[self.avgA]
             b = self.dataObjectsDict[self.avgB]
         else:
-            _logger.debug('performXMCD -- Data not found:')
+            _logger.debug("performXMCD -- Data not found:")
             return
-        if numpy.all( a.x[0] == b.x[0] ):
+        if numpy.all(a.x[0] == b.x[0]):
             diff = b.y[0] - a.y[0]
         else:
-            _logger.debug('performXMCD -- x ranges are not the same! ')
-            _logger.debug('Force interpolation using p Average xrange')
+            _logger.debug("performXMCD -- x ranges are not the same! ")
+            _logger.debug("Force interpolation using p Average xrange")
             # Use performAverage d = 2 * avg(y1, -y2)
             # and force interpolation on p-xrange
-            diff = 2. * self.performAverage([a.x[0], b.x[0]],
-                                            [-a.y[0], b.y[0]],
-                                            b.x[0])
-        xmcdLegend = 'XMCD'
+            diff = 2.0 * self.performAverage(
+                [a.x[0], b.x[0]], [-a.y[0], b.y[0]], b.x[0]
+            )
+        xmcdLegend = "XMCD"
         xlabel, ylabel = self.extractLabels(a.info)
-        #info = {'xlabel': xlabel, 'ylabel': ylabel, 'plot_yaxis': 'right', 'plot_color': 'green'}
-        info={}
-        self.addCurve(b.x[0], diff,
-                      legend=xmcdLegend,
-                      info=info,
-                      color="green",
-                      xlabel=xlabel,
-                      ylabel=ylabel,
-                      yaxis="right")
+        # info = {'xlabel': xlabel, 'ylabel': ylabel, 'plot_yaxis': 'right', 'plot_color': 'green'}
+        info = {}
+        self.addCurve(
+            b.x[0],
+            diff,
+            legend=xmcdLegend,
+            info=info,
+            color="green",
+            xlabel=xlabel,
+            ylabel=ylabel,
+            yaxis="right",
+        )
         # DELETE ME self.graph.mapToY2(' '.join([xmcdLegend, ylabel]))
         self._zoomReset()
         self.xmcd = self.dataObjectsList[-1]
@@ -926,22 +933,24 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
         stored selectionDict.
         """
         sel = self.selectionDict[idx]
-        ret = '%s: '%idx
+        ret = "%s: " % idx
         for legend in sel:
             curr = self.curvesDict[legend]
             value = curr.info.get(key, None)
             if value:
-                ret = ' '.join([ret, value])
+                ret = " ".join([ret, value])
         return ret
 
-    def _saveIconSignal(self):
+    def _saveIconSignalReplacement(self, motors=None):
         saveDir = PyMcaDirs.outputDir
-        filter = 'spec File (*.spec);;Any File (*.*)'
+        filter = "spec File (*.spec);;Any File (*.*)"
         try:
-            (filelist, append, comment) = getSaveFileName(parent=self,
-                                                          caption='Save XMCD Analysis',
-                                                          filter=filter,
-                                                          directory=saveDir)
+            (filelist, append, comment) = getSaveFileName(
+                parent=self,
+                caption="Save XMCD Analysis",
+                filter=filter,
+                directory=saveDir,
+            )
             filename = filelist[0]
         except IndexError:
             # Returned list is empty
@@ -951,60 +960,60 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
             return
 
         if append:
-            specf  = specfile.Specfile(filename)
+            specf = specfile.Specfile(filename)
             scanno = specf.scanno() + 1
         else:
             scanno = 1
 
         ext = splitext(filename)[1]
         if not len(ext):
-            ext = '.spec'
+            ext = ".spec"
             filename += ext
         try:
             if append:
                 sepFile = splitext(basename(filename))
-                sepFileName = sepFile[0] + '_%.2d'%scanno + sepFile[1]
-                sepFileName = pathjoin(dirname(filename),sepFileName)
+                sepFileName = sepFile[0] + "_%.2d" % scanno + sepFile[1]
+                sepFileName = pathjoin(dirname(filename), sepFileName)
                 if scanno == 2:
                     # Case: Scan appended to file containing
                     # a single scan. Make sure, that the first
-                    # scan is also written to seperate file and
+                    # scan is also written to separate file and
                     # the corresponding cfg-file is copied
                     # 1. Create filename of first scan
-                    sepFirstFileName = sepFile[0] + '_01' + sepFile[1]
-                    sepFirstFileName = pathjoin(dirname(filename),sepFirstFileName)
+                    sepFirstFileName = sepFile[0] + "_01" + sepFile[1]
+                    sepFirstFileName = pathjoin(dirname(filename), sepFirstFileName)
                     # 2. Guess filename of first config
-                    confname = sepFile[0] + '.cfg'
-                    confname = pathjoin(dirname(filename),confname)
+                    confname = sepFile[0] + ".cfg"
+                    confname = pathjoin(dirname(filename), confname)
                     # 3. Create new filename of first config
-                    sepFirstConfName = sepFile[0] + '_01' + '.cfg'
-                    sepFirstConfName = pathjoin(dirname(filename),sepFirstConfName)
+                    sepFirstConfName = sepFile[0] + "_01" + ".cfg"
+                    sepFirstConfName = pathjoin(dirname(filename), sepFirstConfName)
                     # Copy contents
-                    firstSeperateFile = open(sepFirstFileName, 'wb')
-                    firstSeperateConf = open(sepFirstConfName, 'wb')
-                    filehandle = open(filename, 'rb')
-                    confhandle = open(confname, 'rb')
+                    firstSeparateFile = open(sepFirstFileName, "wb")
+                    firstSeparateConf = open(sepFirstConfName, "wb")
+                    filehandle = open(filename, "rb")
+                    confhandle = open(confname, "rb")
                     firstFile = filehandle.read()
                     firstConf = confhandle.read()
-                    firstSeperateFile.write(firstFile)
-                    firstSeperateConf.write(firstConf)
-                    firstSeperateFile.close()
-                    firstSeperateConf.close()
-                filehandle = open(filename, 'ab')
-                seperateFile = open(sepFileName, 'wb')
+                    firstSeparateFile.write(firstFile)
+                    firstSeparateConf.write(firstConf)
+                    firstSeparateFile.close()
+                    firstSeparateConf.close()
+                filehandle = open(filename, "ab")
+                separateFile = open(sepFileName, "wb")
             else:
-                filehandle = open(filename, 'wb')
-                seperateFile = None
+                filehandle = open(filename, "wb")
+                separateFile = None
         except IOError:
-            msg = qt.QMessageBox(text="Unable to open '%s'"%filename)
+            msg = qt.QMessageBox(text="Unable to open '%s'" % filename)
             msg.exec()
             return
 
-        title = ''
+        title = ""
         legends = self.dataObjectsList
         tmpLegs = sorted(self.curvesDict.keys())
         if len(tmpLegs) > 0:
-            title += self.curvesDict[tmpLegs[0]].info.get('selectionlegend','')
+            title += self.curvesDict[tmpLegs[0]].info.get("selectionlegend", "")
             # Keep plots in the order they were added!
             curves = [self.dataObjectsDict[leg] for leg in legends]
             yVals = [curve.y[0] for curve in curves]
@@ -1020,52 +1029,83 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
             ncols = outArray.shape[1]
         else:
             ncols = 1
-        delim = ' '
-        title = 'XMCD Analysis ' + title
-        header  = '#S %d %s'%(scanno,title) + NEWLINE
-        header += ('#U00 Selected in Group ' +\
-                   self.selectionInfo('A', 'Key') + NEWLINE)
-        header += ('#U01 Selected in Group ' +\
-                   self.selectionInfo('B', 'Key') + NEWLINE)
+        delim = " "
+        title = "XMCD Analysis " + title
+        header = "#S %d %s" % (scanno, title) + NEWLINE
+        header += "#U00 Selected in Group " + self.selectionInfo("A", "Key") + NEWLINE
+        header += "#U01 Selected in Group " + self.selectionInfo("B", "Key") + NEWLINE
         # Write Comments
         if len(comment) > 0:
-            header += ('#U02 User commentary:' + NEWLINE)
+            header += "#U02 User commentary:" + NEWLINE
             lines = comment.splitlines()[:97]
-            for (idx, line) in enumerate(lines):
-                header += ('#U%.2d %s'%(idx+3, line) + NEWLINE)
-        header += '#N %d'%ncols + NEWLINE
-        if ext == '.spec':
-            if hasattr(self, 'getGraphXLabel'):
-                header += ('#L ' + self.getGraphXLabel() + '  ' + '  '.join(legends) + NEWLINE)
-            else:
-                header += ('#L ' + self.getGraphXTitle() + '  ' + '  '.join(legends) + NEWLINE)
-        else:
-            if hasattr(self, 'getGraphXLabel'):
-                header += ('#L ' + self.getGraphXLabel() + '  ' + '  '.join(legends) + NEWLINE)
-            else:
-                header += ('#L ' + self.getGraphXTitle() + '  ' + delim.join(legends) + NEWLINE)
+            for idx, line in enumerate(lines):
+                header += "#U%.2d %s" % (idx + 3, line) + NEWLINE
 
-        for fh in [filehandle, seperateFile]:
+        # Write motor mnemonics and positions of first selected scan
+        if isinstance(motors, dict):
+            if len(motors):
+                motorNames = [x for x in motors]
+                motorValues = [motors[x] for x in motors]
+                motorNamesText = ""
+                motorValuesText = ""
+                motorsPerLine = 5
+                n = 0
+                while n < len(motors):
+                    idx = n // motorsPerLine
+                    motorNamesText += "#O%d" % idx
+                    motorValuesText += "#P%d" % idx
+                    for i in range(
+                        idx * motorsPerLine, min((idx + 1) * motorsPerLine, len(motors))
+                    ):
+                        motorNamesText += "  " + motorNames[i]
+                        motorValuesText += "  " + motorValues[i]
+                        n += 1
+                    motorNamesText += NEWLINE
+                    motorValuesText += NEWLINE
+                header += motorNamesText
+                header += motorValuesText
+
+        header += "#N %d" % ncols + NEWLINE
+        if ext == ".spec":
+            if hasattr(self, "getGraphXLabel"):
+                header += (
+                    "#L " + self.getGraphXLabel() + "  " + "  ".join(legends) + NEWLINE
+                )
+            else:
+                header += (
+                    "#L " + self.getGraphXTitle() + "  " + "  ".join(legends) + NEWLINE
+                )
+        else:
+            if hasattr(self, "getGraphXLabel"):
+                header += (
+                    "#L " + self.getGraphXLabel() + "  " + "  ".join(legends) + NEWLINE
+                )
+            else:
+                header += (
+                    "#L " + self.getGraphXTitle() + "  " + delim.join(legends) + NEWLINE
+                )
+
+        for fh in [filehandle, separateFile]:
             if fh is not None:
                 if sys.version < "3.0":
                     fh.write(bytes(NEWLINE))
                     fh.write(bytes(header))
                     for line in outArray:
-                        tmp = delim.join(['%f'%num for num in line])
+                        tmp = delim.join(["%f" % num for num in line])
                         fh.write(bytes(tmp + NEWLINE))
                     fh.write(bytes(NEWLINE))
                 else:
-                    fh.write(bytes(NEWLINE, 'ascii'))
-                    fh.write(bytes(header, 'ascii'))
+                    fh.write(bytes(NEWLINE, "ascii"))
+                    fh.write(bytes(header, "ascii"))
                     for line in outArray:
-                        tmp = delim.join(['%f'%num for num in line])
-                        fh.write(bytes(tmp + NEWLINE, 'ascii'))
-                    fh.write(bytes(NEWLINE, 'ascii'))
+                        tmp = delim.join(["%f" % num for num in line])
+                        fh.write(bytes(tmp + NEWLINE, "ascii"))
+                    fh.write(bytes(NEWLINE, "ascii"))
                 fh.close()
 
         # Emit saveOptionsSignal to save config file
         self.saveOptionsSignal.emit(splitext(filename)[0])
-        if seperateFile is not None:
+        if separateFile is not None:
             self.saveOptionsSignal.emit(splitext(sepFileName)[0])
 
     def add(self):
@@ -1074,34 +1114,28 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
         activeCurve = self.getActiveCurve()
         if activeCurve is None:
             return
-        (xVal,  yVal,  legend,  info) = activeCurve[0:4]
-        #if 'selectionlegend' in info:
+        (xVal, yVal, legend, info) = activeCurve[0:4]
+        # if 'selectionlegend' in info:
         #    newLegend = info['selectionlegend']
-        #elif 'operation' in info:
+        # elif 'operation' in info:
         #    newLegend = (str(operation) + ' ' + self.title)
-        #else:
+        # else:
         #    newLegend = (legend + ' ' + self.title)
         newLegend = legend
-        self.plotWindow.addCurve(xVal,
-                                 yVal,
-                                 legend=newLegend,
-                                 info=info)
+        self.plotWindow.addCurve(xVal, yVal, legend=newLegend, info=info)
         self.plotModifiedSignal.emit()
 
     def addAll(self):
         for curve in self.getAllCurves():
             (xVal, yVal, legend, info) = curve[0:4]
-            #if 'selectionlegend' in info:
+            # if 'selectionlegend' in info:
             #    newLegend = info['selectionlegend']
-            #elif 'operation' in info:
+            # elif 'operation' in info:
             #    newLegend = (str(operation) + ' ' + self.title)
-            #else:
+            # else:
             #    newLegend = (legend + ' ' + self.title)
             newLegend = legend
-            self.plotWindow.addCurve(xVal,
-                                     yVal,
-                                     legend=newLegend,
-                                     info=info)
+            self.plotWindow.addCurve(xVal, yVal, legend=newLegend, info=info)
         self.plotModifiedSignal.emit()
 
     def replace(self):
@@ -1110,46 +1144,38 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
         activeCurve = self.getActiveCurve()
         if activeCurve is None:
             return
-        (xVal,  yVal,  legend,  info) = activeCurve[0:4]
-        if 'selectionlegend' in info:
-            newLegend = info['selectionlegend']
-        elif 'operation' in info:
-            newLegend = (str(info['operation']) + ' ' + self.title)
+        (xVal, yVal, legend, info) = activeCurve[0:4]
+        if "selectionlegend" in info:
+            newLegend = info["selectionlegend"]
+        elif "operation" in info:
+            newLegend = str(info["operation"]) + " " + self.title
         else:
-            newLegend = (legend + self.title)
-        self.plotWindow.addCurve(xVal,
-                                 yVal,
-                                 legend=newLegend,
-                                 info=info,
-                                 replace=True)
+            newLegend = legend + self.title
+        self.plotWindow.addCurve(xVal, yVal, legend=newLegend, info=info, replace=True)
         self.plotModifiedSignal.emit()
 
     def replaceAll(self):
         allCurves = self.getAllCurves()
-        for (idx, curve) in enumerate(allCurves):
+        for idx, curve in enumerate(allCurves):
             (xVal, yVal, legend, info) = curve[0:4]
-            if 'selectionlegend' in info:
-                newLegend = info['selectionlegend']
-            elif 'operation' in info:
-                newLegend = (str(info['operation']) + ' ' + self.title)
+            if "selectionlegend" in info:
+                newLegend = info["selectionlegend"]
+            elif "operation" in info:
+                newLegend = str(info["operation"]) + " " + self.title
             else:
-                newLegend = (legend + ' ' + self.title)
+                newLegend = legend + " " + self.title
             if idx == 0:
-                self.plotWindow.addCurve(xVal,
-                                         yVal,
-                                         legend=newLegend,
-                                         info=info,
-                                         replace=True)
+                self.plotWindow.addCurve(
+                    xVal, yVal, legend=newLegend, info=info, replace=True
+                )
             else:
-                self.plotWindow.addCurve(xVal,
-                                         yVal,
-                                         legend=newLegend,
-                                         info=info)
+                self.plotWindow.addCurve(xVal, yVal, legend=newLegend, info=info)
         self.plotModifiedSignal.emit()
 
+
 class XMCDMenu(qt.QMenu):
-    def __init__(self,  parent, title=None):
-        qt.QMenu.__init__(self,  parent)
+    def __init__(self, parent, title=None):
+        qt.QMenu.__init__(self, parent)
         if title:
             self.setTitle(title)
 
@@ -1161,52 +1187,52 @@ class XMCDMenu(qt.QMenu):
         """
         if not update:
             self.clear()
-        for (name, function) in actionList:
-            if name == '$SEPARATOR':
+        for name, function in actionList:
+            if name == "$SEPARATOR":
                 self.addSeparator()
                 continue
-            if name != '':
+            if name != "":
                 fName = name
             else:
                 fName = function.func_name
-            act = qt.QAction(fName,  self)
+            act = qt.QAction(fName, self)
             # Force triggered() instead of triggered(bool)
             # to ensure proper interaction with default parameters
             act.triggered.connect(function)
             self.addAction(act)
 
-class XMCDTreeWidget(qt.QTreeWidget):
 
-    __colGroup   = 0
-    __colLegend  = 1
-    __colScanNo  = 2
+class XMCDTreeWidget(qt.QTreeWidget):
+    __colGroup = 0
+    __colLegend = 1
+    __colScanNo = 2
     __colCounter = 3
     selectionModifiedSignal = qt.pyqtSignal()
 
-    def __init__(self,  parent, groups = ['B','A','D'], color=True):
-        qt.QTreeWidget.__init__(self,  parent)
+    def __init__(self, parent, groups=["B", "A", "D"], color=True):
+        qt.QTreeWidget.__init__(self, parent)
         # Last identifier in groups is the ignore instruction
         self.groupList = groups
-        self.actionList  = []
-        self.contextMenu = qt.QMenu('Perform',  self)
+        self.actionList = []
+        self.contextMenu = qt.QMenu("Perform", self)
         self.color = color
         self.colorDict = {
-            groups[0] : qt.QBrush(qt.QColor(220, 220, 255)),
-            groups[1] : qt.QBrush(qt.QColor(255, 210, 210)),
-            '': qt.QBrush(qt.QColor(255, 255, 255))
+            groups[0]: qt.QBrush(qt.QColor(220, 220, 255)),
+            groups[1]: qt.QBrush(qt.QColor(255, 210, 210)),
+            "": qt.QBrush(qt.QColor(255, 255, 255)),
         }
 
     def sizeHint(self):
         vscrollbar = self.verticalScrollBar()
         width = vscrollbar.width()
         for i in range(self.columnCount()):
-            width += (2 + self.columnWidth(i))
-        return qt.QSize( int(width), 20*22)
+            width += 2 + self.columnWidth(i)
+        return qt.QSize(int(width), 20 * 22)
 
     def setContextMenu(self, menu):
         self.contextMenu = menu
 
-    def contextMenuEvent(self,  event):
+    def contextMenuEvent(self, event):
         if event.reason() == event.Mouse:
             pos = event.globalPos()
             item = self.itemAt(event.pos())
@@ -1247,9 +1273,9 @@ class XMCDTreeWidget(qt.QTreeWidget):
         the items of selected rows are returned.
         """
         out = []
-        convert = (convertType != str)
-        if ncol > (self.columnCount()-1):
-            _logger.debug('getColum -- Selected column out of bounds')
+        convert = convertType != str
+        if ncol > (self.columnCount() - 1):
+            _logger.debug("getColum -- Selected column out of bounds")
             raise IndexError("Selected column '%d' out of bounds" % ncol)
         if selectedOnly:
             sel = self.selectedItems()
@@ -1263,14 +1289,14 @@ class XMCDTreeWidget(qt.QTreeWidget):
                     tmp = convertType(tmp)
                 except (TypeError, ValueError):
                     if convertType == float:
-                        tmp = float('NaN')
+                        tmp = float("NaN")
                     else:
-                        _logger.debug('getColum -- Conversion failed!')
+                        _logger.debug("getColum -- Conversion failed!")
                         raise TypeError
             out += [tmp]
         return out
 
-    def build(self,  items,  headerLabels):
+    def build(self, items, headerLabels):
         """
         (Re-) Builds the tree display
 
@@ -1282,7 +1308,7 @@ class XMCDTreeWidget(qt.QTreeWidget):
         self.clear()
         self.setHeaderLabels(headerLabels)
         for item in items:
-            treeItem = TreeWidgetItem(self,  item)
+            treeItem = TreeWidgetItem(self, item)
             if self.color:
                 idx = str(treeItem.text(self.__colGroup))
                 for i in range(self.columnCount()):
@@ -1296,12 +1322,12 @@ class XMCDTreeWidget(qt.QTreeWidget):
         the identifier given in idx.
         """
         if idx not in self.groupList:
-            raise ValueError('XMCDTreeWidget: invalid identifer \'%s\'' % idx)
+            raise ValueError("XMCDTreeWidget: invalid identifer '%s'" % idx)
         sel = self.selectedItems()
         if idx == self.groupList[-1]:
             # Last identifier in self.groupList
             # is the dummy identifier
-            idx = ''
+            idx = ""
         for item in sel:
             item.setText(self.__colGroup, idx)
             if self.color:
@@ -1329,35 +1355,36 @@ class XMCDTreeWidget(qt.QTreeWidget):
             root = self.invisibleRootItem()
             sel = [root.child(i) for i in range(root.childCount())]
         # Try to sort for scanNo
-        #self.sortItems(self.__colLegend, qt.Qt.AscendingOrder)
+        # self.sortItems(self.__colLegend, qt.Qt.AscendingOrder)
         self.sortItems(self.__colScanNo, qt.Qt.AscendingOrder)
         if not seq:
-            seq, chk = qt.QInputDialog.\
-                getText(None,
-                        'Sequence Dialog',
-                        'Valid identifiers are: ' + ', '.join(self.groupList),
-                        qt.QLineEdit.Normal,
-                        'Enter sequence')
+            seq, chk = qt.QInputDialog.getText(
+                None,
+                "Sequence Dialog",
+                "Valid identifiers are: " + ", ".join(self.groupList),
+                qt.QLineEdit.Normal,
+                "Enter sequence",
+            )
         seq = str(seq).upper()
         if not chk:
             return
         for idx in seq:
             if idx not in self.groupList:
                 invalidMsg = qt.QMessageBox(None)
-                invalidMsg.setText('Invalid identifier. Try again.')
+                invalidMsg.setText("Invalid identifier. Try again.")
                 invalidMsg.setStandardButtons(qt.QMessageBox.Ok)
                 invalidMsg.exec()
                 return
         if len(sel) != len(seq):
             # Assume pattern and repeat
-            seq = seq * (len(sel)//len(seq) + 1)
-            #invalidMsg = qt.QMessageBox(None)
-            #invalidMsg.setText('Sequence length does not match item count.')
-            #invalidMsg.setStandardButtons(qt.QMessageBox.Ok)
-            #invalidMsg.exec()
-        for (idx, item) in zip(seq, sel):
+            seq = seq * (len(sel) // len(seq) + 1)
+            # invalidMsg = qt.QMessageBox(None)
+            # invalidMsg.setText('Sequence length does not match item count.')
+            # invalidMsg.setStandardButtons(qt.QMessageBox.Ok)
+            # invalidMsg.exec()
+        for idx, item in zip(seq, sel):
             if idx == self.groupList[-1]:
-                idx = ''
+                idx = ""
             item.setText(self.__colGroup, idx)
             if self.color:
                 for i in range(self.columnCount()):
@@ -1380,10 +1407,10 @@ class XMCDTreeWidget(qt.QTreeWidget):
             root = self.invisibleRootItem()
             sel = [root.child(i) for i in range(root.childCount())]
         for item in sel:
-            item.setText(self.__colGroup,'')
+            item.setText(self.__colGroup, "")
             if self.color:
                 for i in range(self.columnCount()):
-                    item.setBackground(i, self.colorDict[''])
+                    item.setBackground(i, self.colorDict[""])
         self.selectionModifiedSignal.emit()
 
     def getSelection(self):
@@ -1397,11 +1424,11 @@ class XMCDTreeWidget(qt.QTreeWidget):
         out = dict((group, []) for group in self.groupList)
         root = self.invisibleRootItem()
         for i in range(root.childCount()):
-            item   = root.child(i)
-            group  = str(item.text(0))
+            item = root.child(i)
+            group = str(item.text(0))
             legend = str(item.text(1))
-            #nCols  = item.columnCount()
-            #legend = str(item.text(nCols-1))
+            # nCols  = item.columnCount()
+            # legend = str(item.text(nCols-1))
             if len(group) == 0:
                 group = self.groupList[-1]
             out[group] += [legend]
@@ -1409,21 +1436,13 @@ class XMCDTreeWidget(qt.QTreeWidget):
             value.sort()
         return out
 
-class XMCDWidget(qt.QWidget):
 
-    toolbarOptions = {
-        'logx': False,
-        'logy': False,
-        'flip': False,
-        'fit': False
-    }
+class XMCDWidget(qt.QWidget):
+    toolbarOptions = {"logx": False, "logy": False, "flip": False, "fit": False}
 
     setSelectionSignal = qt.pyqtSignal(object, object)
 
-    def __init__(self,  parent,
-                        plotWindow,
-                        beamline,
-                        nSelectors = 5):
+    def __init__(self, parent, plotWindow, beamline, nSelectors=5):
         """
         Input
         -----
@@ -1436,184 +1455,185 @@ class XMCDWidget(qt.QWidget):
             <Group> <Legend> <ScanNo> <Counter> <Motor 1> ... <Motor5>
         """
         qt.QWidget.__init__(self, parent)
-        self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['peak'])))
+        self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict["peak"])))
         self.plotWindow = plotWindow
         self.legendList = []
         self.motorsList = []
-        self.infoList   = []
+        self.infoList = []
         # Set self.plotWindow before calling self._setLists!
         self._setLists()
-        self.motorNamesList = [''] + self._getAllMotorNames()
+        self.motorNamesList = [""] + self._getAllMotorNames()
         self.motorNamesList.sort()
         self.numCurves = len(self.legendList)
-        #self.cBoxList = []
-        self.analysisWindow = XMCDScanWindow(origin=plotWindow,
-                                             parent=None)
+        # self.cBoxList = []
+        self.analysisWindow = XMCDScanWindow(origin=plotWindow, parent=None)
+        self.analysisWindow.enableOwnSave(False)
         self.optsWindow = XMCDOptions(self, self.motorNamesList)
 
-        helpFileName = pathjoin(PyMcaDataDir.PYMCA_DOC_DIR,
-                                "HTML",
-                                "XMCDInfotext.html")
+        helpFileName = pathjoin(PyMcaDataDir.PYMCA_DOC_DIR, "HTML", "XMCDInfotext.html")
         self.helpFileBrowser = qt.QTextBrowser()
         self.helpFileBrowser.setWindowTitle("XMCD Help")
         self.helpFileBrowser.setLineWrapMode(qt.QTextEdit.FixedPixelWidth)
         self.helpFileBrowser.setLineWrapColumnOrWidth(500)
-        self.helpFileBrowser.resize(520,300)
+        self.helpFileBrowser.resize(520, 300)
         try:
             helpFileHandle = open(helpFileName)
             helpFileHTML = helpFileHandle.read()
             helpFileHandle.close()
             self.helpFileBrowser.setHtml(helpFileHTML)
         except IOError:
-            _logger.debug('XMCDWindow -- init: Unable to read help file')
+            _logger.debug("XMCDWindow -- init: Unable to read help file")
             self.helpFileBrowser = None
 
-        self.selectionDict = {'D': [],
-                              'B': [],
-                              'A': []}
-        self.setSizePolicy(qt.QSizePolicy.MinimumExpanding,
-                           qt.QSizePolicy.Expanding)
+        self.selectionDict = {"D": [], "B": [], "A": []}
+        self.setSizePolicy(qt.QSizePolicy.MinimumExpanding, qt.QSizePolicy.Expanding)
 
         self.setWindowTitle("XLD/XMCD Analysis")
 
-        buttonOptions = qt.QPushButton('Options', self)
+        buttonOptions = qt.QPushButton("Options", self)
         buttonOptions.setToolTip(
-            'Set normalization and interpolation\n'
-           +'method and motors shown')
+            "Set normalization and interpolation\n" + "method and motors shown"
+        )
 
-        buttonInfo = qt.QPushButton('Info')
+        buttonInfo = qt.QPushButton("Info")
         buttonInfo.setToolTip(
-            'Shows a describtion of the plugins features\n'
-           +'and gives instructions on how to use it')
+            "Shows a describtion of the plugins features\n"
+            + "and gives instructions on how to use it"
+        )
 
-        updatePixmap  = qt.QPixmap(IconDict["reload"])
-        buttonUpdate  = qt.QPushButton(
-                            qt.QIcon(updatePixmap), '', self)
-        buttonUpdate.setIconSize(qt.QSize(21,21))
+        updatePixmap = qt.QPixmap(IconDict["reload"])
+        buttonUpdate = qt.QPushButton(qt.QIcon(updatePixmap), "", self)
+        buttonUpdate.setIconSize(qt.QSize(21, 21))
         buttonUpdate.setToolTip(
-            'Update curves in XMCD Analysis\n'
-           +'by checking the plot window')
+            "Update curves in XMCD Analysis\n" + "by checking the plot window"
+        )
 
         self.list = XMCDTreeWidget(self)
-        labels = ['Group', 'Legend', 'S#','Counter']+\
-            (['']*nSelectors)
-        ncols  = len(labels)
+        labels = ["Group", "Legend", "S#", "Counter"] + ([""] * nSelectors)
+        ncols = len(labels)
         self.list.setColumnCount(ncols)
         self.list.setHeaderLabels(labels)
         self.list.setSortingEnabled(True)
-        self.list.setSelectionMode(
-            qt.QAbstractItemView.ExtendedSelection)
+        self.list.setSelectionMode(qt.QAbstractItemView.ExtendedSelection)
         listContextMenu = XMCDMenu(None)
         listContextMenu.setActionList(
-              [('Perform analysis', self.triggerXMCD),
-               ('$SEPARATOR', None),
-               ('Set as A', self.setAsA),
-               ('Set as B', self.setAsB),
-               ('Enter sequence', self.list._setSelectionToSequenceSlot),
-               ('Remove selection', self.list._clearSelectionSlot),
-               ('$SEPARATOR', None),
-               ('Invert selection', self.list.invertSelection),
-               ('Remove curve(s)', self.removeCurve_)])
+            [
+                ("Perform analysis", self.triggerXMCD),
+                ("$SEPARATOR", None),
+                ("Set as A", self.setAsA),
+                ("Set as B", self.setAsB),
+                ("Enter sequence", self.list._setSelectionToSequenceSlot),
+                ("Remove selection", self.list._clearSelectionSlot),
+                ("$SEPARATOR", None),
+                ("Invert selection", self.list.invertSelection),
+                ("Remove curve(s)", self.removeCurve_),
+            ]
+        )
         self.list.setContextMenu(listContextMenu)
         self.expCBox = qt.QComboBox(self)
-        self.expCBox.setToolTip('Select configuration of predefined\n'
-                               +'experiment or configure new experiment')
+        self.expCBox.setToolTip(
+            "Select configuration of predefined\n"
+            + "experiment or configure new experiment"
+        )
 
         self.experimentsDict = {
-            'Generic Dichroism': {
-                  'xrange': 0,
-                  'normalization': 0,
-                  'normalizationMethod': 'offsetAndArea',
-                  'motor0': '',
-                  'motor1': '',
-                  'motor2': '',
-                  'motor3': '',
-                  'motor4': ''
+            "Generic Dichroism": {
+                "xrange": 0,
+                "normalization": 0,
+                "normalizationMethod": "offsetAndArea",
+                "motor0": "",
+                "motor1": "",
+                "motor2": "",
+                "motor3": "",
+                "motor4": "",
             },
-            'ID08: XMCD 9 Tesla Magnet': {
-                  'xrange': 0,
-                  'normalization': 0,
-                  'normalizationMethod': 'offsetAndArea',
-                  'motor0': 'phaseD',
-                  'motor1': 'magnet',
-                  'motor2': '',
-                  'motor3': '',
-                  'motor4': ''
+            "ID08: XMCD 9 Tesla Magnet": {
+                "xrange": 0,
+                "normalization": 0,
+                "normalizationMethod": "offsetAndArea",
+                "motor0": "phaseD",
+                "motor1": "magnet",
+                "motor2": "",
+                "motor3": "",
+                "motor4": "",
             },
-            'ID08: XMCD 5 Tesla Magnet': {
-                  'xrange': 0,
-                  'normalization': 0,
-                  'normalizationMethod': 'offsetAndArea',
-                  'motor0': 'PhaseD',
-                  'motor1': 'oxPS',
-                  'motor2': '',
-                  'motor3': '',
-                  'motor4': ''
+            "ID08: XMCD 5 Tesla Magnet": {
+                "xrange": 0,
+                "normalization": 0,
+                "normalizationMethod": "offsetAndArea",
+                "motor0": "PhaseD",
+                "motor1": "oxPS",
+                "motor2": "",
+                "motor3": "",
+                "motor4": "",
             },
-            'ID08: XLD 5 Tesla Magnet': {
-                  'xrange': 0,
-                  'normalization': 0,
-                  'normalizationMethod': 'offsetAndArea',
-                  'motor0': 'PhaseD',
-                  'motor1': '',
-                  'motor2': '',
-                  'motor3': '',
-                  'motor4': ''
+            "ID08: XLD 5 Tesla Magnet": {
+                "xrange": 0,
+                "normalization": 0,
+                "normalizationMethod": "offsetAndArea",
+                "motor0": "PhaseD",
+                "motor1": "",
+                "motor2": "",
+                "motor3": "",
+                "motor4": "",
             },
-            'ID08: XLD 9 Tesla Magnet': {
-                  'xrange': 0,
-                  'normalization': 0,
-                  'normalizationMethod': 'offsetAndArea',
-                  'motor0': 'phaseD',
-                  'motor1': '',
-                  'motor2': '',
-                  'motor3': '',
-                  'motor4': ''
+            "ID08: XLD 9 Tesla Magnet": {
+                "xrange": 0,
+                "normalization": 0,
+                "normalizationMethod": "offsetAndArea",
+                "motor0": "phaseD",
+                "motor1": "",
+                "motor2": "",
+                "motor3": "",
+                "motor4": "",
             },
-            'ID12: XMCD (Flipper)': {
-                  'xrange': 0,
-                  'normalization': 0,
-                  'normalizationMethod': 'offsetAndArea',
-                  'motor0': 'BRUKER',
-                  'motor1': 'OXFORD',
-                  'motor2': 'CRYO',
-                  'motor3': '',
-                  'motor4': ''
+            "ID12: XMCD (Flipper)": {
+                "xrange": 0,
+                "normalization": 0,
+                "normalizationMethod": "offsetAndArea",
+                "motor0": "BRUKER",
+                "motor1": "OXFORD",
+                "motor2": "CRYO",
+                "motor3": "",
+                "motor4": "",
             },
-            'ID12: XMCD': {
-                  'xrange': 0,
-                  'normalization': 0,
-                  'normalizationMethod': 'offsetAndArea',
-                  'motor0': 'Phase',
-                  'motor1': 'PhaseA',
-                  'motor2': 'BRUKER',
-                  'motor3': 'OXFORD',
-                  'motor4': 'CRYO'
+            "ID12: XMCD": {
+                "xrange": 0,
+                "normalization": 0,
+                "normalizationMethod": "offsetAndArea",
+                "motor0": "Phase",
+                "motor1": "PhaseA",
+                "motor2": "BRUKER",
+                "motor3": "OXFORD",
+                "motor4": "CRYO",
             },
-            'ID12: XLD (quater wave plate)': {
-                  'xrange': 0,
-                  'normalization': 0,
-                  'normalizationMethod': 'offsetAndArea',
-                  'motor0': '',
-                  'motor1': '',
-                  'motor2': '',
-                  'motor3': '',
-                  'motor4': ''
-            }
+            "ID12: XLD (quater wave plate)": {
+                "xrange": 0,
+                "normalization": 0,
+                "normalizationMethod": "offsetAndArea",
+                "motor0": "",
+                "motor1": "",
+                "motor2": "",
+                "motor3": "",
+                "motor4": "",
+            },
         }
         self.expCBox.addItems(
-                        ['Generic Dichroism',
-                         'ID08: XLD 9 Tesla Magnet',
-                         'ID08: XLD 5 Tesla Magnet',
-                         'ID08: XMCD 9 Tesla Magnet',
-                         'ID08: XMCD 5 Tesla Magnet',
-                         'ID12: XLD (quater wave plate)',
-                         'ID12: XMCD (Flipper)',
-                         'ID12: XMCD',
-                         'Add new configuration'])
+            [
+                "Generic Dichroism",
+                "ID08: XLD 9 Tesla Magnet",
+                "ID08: XLD 5 Tesla Magnet",
+                "ID08: XMCD 9 Tesla Magnet",
+                "ID08: XMCD 5 Tesla Magnet",
+                "ID12: XLD (quater wave plate)",
+                "ID12: XMCD (Flipper)",
+                "ID12: XMCD",
+                "Add new configuration",
+            ]
+        )
         self.expCBox.insertSeparator(len(self.experimentsDict))
 
-        topLayout  = qt.QHBoxLayout()
+        topLayout = qt.QHBoxLayout()
         topLayout.addWidget(buttonUpdate)
         topLayout.addWidget(buttonOptions)
         topLayout.addWidget(buttonInfo)
@@ -1628,44 +1648,44 @@ class XMCDWidget(qt.QWidget):
         leftWidget = qt.QWidget(self)
         leftWidget.setLayout(leftLayout)
 
-        self.analysisWindow.setSizePolicy(qt.QSizePolicy.Minimum, qt.QSizePolicy.Minimum)
-        #self.splitter = qt.QSplitter(qt.Qt.Horizontal, self)
+        self.analysisWindow.setSizePolicy(
+            qt.QSizePolicy.Minimum, qt.QSizePolicy.Minimum
+        )
+        # self.splitter = qt.QSplitter(qt.Qt.Horizontal, self)
         self.splitter = qt.QSplitter(qt.Qt.Vertical, self)
         self.splitter.addWidget(leftWidget)
         self.splitter.addWidget(self.analysisWindow)
         stretch = int(leftWidget.width())
         # If window size changes, only the scan window size changes
-        self.splitter.setStretchFactor(
-                    self.splitter.indexOf(self.analysisWindow),1)
+        self.splitter.setStretchFactor(self.splitter.indexOf(self.analysisWindow), 1)
 
         mainLayout = qt.QVBoxLayout()
-        mainLayout.setContentsMargins(0,0,0,0)
+        mainLayout.setContentsMargins(0, 0, 0, 0)
         mainLayout.addWidget(self.splitter)
         self.setLayout(mainLayout)
 
         # Shortcuts
-        self.updateShortcut = qt.QShortcut(qt.QKeySequence('F5'), self)
+        self.updateShortcut = qt.QShortcut(qt.QKeySequence("F5"), self)
         self.updateShortcut.activated.connect(self.updatePlots)
-        self.optionsWindowShortcut = qt.QShortcut(qt.QKeySequence('Alt+O'), self)
+        self.optionsWindowShortcut = qt.QShortcut(qt.QKeySequence("Alt+O"), self)
         self.optionsWindowShortcut.activated.connect(self.showOptionsWindow)
-        self.helpFileShortcut = qt.QShortcut(qt.QKeySequence('F1'), self)
+        self.helpFileShortcut = qt.QShortcut(qt.QKeySequence("F1"), self)
         self.helpFileShortcut.activated.connect(self.showInfoWindow)
-        self.expSelectorShortcut = qt.QShortcut(qt.QKeySequence('Tab'), self)
+        self.expSelectorShortcut = qt.QShortcut(qt.QKeySequence("Tab"), self)
         self.expSelectorShortcut.activated.connect(self.activateExpCB)
-        self.saveShortcut = qt.QShortcut(qt.QKeySequence('Ctrl+S'), self)
-        self.saveShortcut.activated.connect(self.analysisWindow._saveIconSignal)
+        self.saveShortcut = qt.QShortcut(qt.QKeySequence("Ctrl+S"), self)
+        self.saveShortcut.activated.connect(self._saveIconSignal)
 
         # Connects
         self.expCBox.currentIndexChanged[int].connect(self.updateTree)
         if hasattr(self.expCBox, "textActivated"):
-            self.expCBox.textActivated[str].connect(\
-                                    self.selectExperiment)
+            self.expCBox.textActivated[str].connect(self.selectExperiment)
         else:
-            self.expCBox.currentIndexChanged['QString'].connect(\
-                                    self.selectExperiment)
+            self.expCBox.currentIndexChanged["QString"].connect(self.selectExperiment)
         self.list.selectionModifiedSignal.connect(self.updateSelectionDict)
         self.setSelectionSignal.connect(self.analysisWindow.processSelection)
         self.analysisWindow.saveOptionsSignal.connect(self.optsWindow.saveOptions)
+        self.analysisWindow.sigIconSignal.connect(self._saveIconSignal)
         self.optsWindow.accepted.connect(self.updateTree)
         buttonUpdate.clicked.connect(self.updatePlots)
         buttonOptions.clicked.connect(self.showOptionsWindow)
@@ -1677,16 +1697,34 @@ class XMCDWidget(qt.QWidget):
     def sizeHint(self):
         return self.list.sizeHint() + self.analysisWindow.sizeHint()
 
+    def _saveIconSignal(self, ddict):
+        key = ddict.get("key", None)
+        if key and key == "save":
+            if not len(self.selectionDict["A"]):
+                msg = qt.QMessageBox()
+                msg.setWindowTitle("XLD/XMCD Error")
+                msg.setText("At lease one scan needs to be  as A")
+                msg.exec()
+                return
+
+            # extract the motors from the first curve selected as A
+            legend = self.selectionDict["A"][0]
+            idx = self.legendList.index(legend)
+            motors = self.motorsList[idx]
+            print(motors)
+            self.analysisWindow._saveIconSignalReplacement(motors=motors)
+
     def activateExpCB(self):
         self.expCBox.setFocus(qt.Qt.TabFocusReason)
 
     def addExperiment(self):
-        exp, chk = qt.QInputDialog.\
-                        getText(self,
-                                'Configure new experiment',
-                                'Enter experiment title',
-                                qt.QLineEdit.Normal,
-                                'ID00: <Title>')
+        exp, chk = qt.QInputDialog.getText(
+            self,
+            "Configure new experiment",
+            "Enter experiment title",
+            qt.QLineEdit.Normal,
+            "ID00: <Title>",
+        )
         if chk and (not exp.isEmpty()):
             exp = str(exp)
             opts = XMCDOptions(self, self.motorNamesList, False)
@@ -1695,10 +1733,10 @@ class XMCDWidget(qt.QWidget):
                 cBox = self.expCBox
                 new = [cBox.itemText(i) for i in range(cBox.count())][0:-2]
                 new += [exp]
-                new.append('Add new configuration')
+                new.append("Add new configuration")
                 cBox.clear()
                 cBox.addItems(new)
-                cBox.insertSeparator(len(new)-1)
+                cBox.insertSeparator(len(new) - 1)
                 idx = cBox.findText([exp][0])
                 if idx < 0:
                     cBox.setCurrentIndex(0)
@@ -1718,19 +1756,18 @@ class XMCDWidget(qt.QWidget):
     def showInfoWindow(self):
         if self.helpFileBrowser is None:
             msg = qt.QMessageBox()
-            msg.setWindowTitle('XLD/XMCD Error')
-            msg.setText('No help file found.')
+            msg.setWindowTitle("XLD/XMCD Error")
+            msg.setText("No help file found.")
             msg.exec()
             return
         else:
             self.helpFileBrowser.show()
             self.helpFileBrowser.raise_()
 
-
-# Implement new assignment routines here BEGIN
+    # Implement new assignment routines here BEGIN
     def selectExperiment(self, exp):
         exp = str(exp)
-        if exp == 'Add new configuration':
+        if exp == "Add new configuration":
             self.addExperiment()
             self.updateTree()
         elif exp in self.experimentsDict:
@@ -1738,123 +1775,114 @@ class XMCDWidget(qt.QWidget):
                 # Sets motors 0 to 4 in optsWindow
                 self.optsWindow.setOptions(self.experimentsDict[exp])
             except ValueError:
-                self.optsWindow.setOptions(
-                        self.experimentsDict['Generic Dichroism'])
+                self.optsWindow.setOptions(self.experimentsDict["Generic Dichroism"])
                 return
             # Get motor values from tree
             self.updateTree()
-            values0 = numpy.array(
-                        self.list.getColumn(4, convertType=float))
-            values1 = numpy.array(
-                        self.list.getColumn(5, convertType=float))
-            values2 = numpy.array(
-                        self.list.getColumn(6, convertType=float))
-            values3 = numpy.array(
-                        self.list.getColumn(7, convertType=float))
-            values4 = numpy.array(
-                        self.list.getColumn(8, convertType=float))
+            values0 = numpy.array(self.list.getColumn(4, convertType=float))
+            values1 = numpy.array(self.list.getColumn(5, convertType=float))
+            values2 = numpy.array(self.list.getColumn(6, convertType=float))
+            values3 = numpy.array(self.list.getColumn(7, convertType=float))
+            values4 = numpy.array(self.list.getColumn(8, convertType=float))
             # Determine p/m selection
-            if exp.startswith('ID08: XLD'):
+            if exp.startswith("ID08: XLD"):
                 values = values0
                 mask = numpy.where(numpy.isfinite(values))[0]
                 minmax = values.take(mask)
                 if len(minmax):
                     vmin = minmax.min()
                     vmax = minmax.max()
-                    vpivot = .5 * (vmax + vmin)
+                    vpivot = 0.5 * (vmax + vmin)
                 else:
-                    vpivot = 0.
-                    values = numpy.array(
-                                [float('NaN')]*len(self.legendList))
-            elif exp.startswith('ID08: XMCD'):
+                    vpivot = 0.0
+                    values = numpy.array([float("NaN")] * len(self.legendList))
+            elif exp.startswith("ID08: XMCD"):
                 mask = numpy.where(numpy.isfinite(values0))[0]
                 polarization = values0.take(mask)
                 values1 = values1.take(mask)
                 signMagnets = numpy.sign(values1)
-                if len(polarization)==0:
-                    vpivot = 0.
-                    values = numpy.array(
-                                [float('NaN')]*len(self.legendList))
-                elif numpy.all(signMagnets>=0.) or\
-                   numpy.all(signMagnets<=0.) or\
-                   numpy.all(signMagnets==0.):
+                if len(polarization) == 0:
+                    vpivot = 0.0
+                    values = numpy.array([float("NaN")] * len(self.legendList))
+                elif (
+                    numpy.all(signMagnets >= 0.0)
+                    or numpy.all(signMagnets <= 0.0)
+                    or numpy.all(signMagnets == 0.0)
+                ):
                     vmin = polarization.min()
                     vmax = polarization.max()
-                    vpivot = .5 * (vmax + vmin)
+                    vpivot = 0.5 * (vmax + vmin)
                     values = polarization
                 else:
-                    vpivot = 0.
+                    vpivot = 0.0
                     values = polarization * signMagnets
-            elif exp.startswith('ID12: XLD (quater wave plate)'):
+            elif exp.startswith("ID12: XLD (quater wave plate)"):
                 # Extract counters from third column
                 counters = self.list.getColumn(3, convertType=str)
                 polarization = []
                 for counter in counters:
                     # Relevant counters Ihor, Iver resp. Ihor0, Iver0, etc.
-                    if 'hor' in counter:
-                        pol = -1.
-                    elif 'ver' in counter:
-                        pol =  1.
+                    if "hor" in counter:
+                        pol = -1.0
+                    elif "ver" in counter:
+                        pol = 1.0
                     else:
-                        pol = float('nan')
+                        pol = float("nan")
                     polarization += [pol]
                 values = numpy.asarray(polarization, dtype=float)
-                vpivot = 0.
-            elif exp.startswith('ID12: XMCD (Flipper)'):
+                vpivot = 0.0
+            elif exp.startswith("ID12: XMCD (Flipper)"):
                 # Extract counters from third column
                 counters = self.list.getColumn(1, convertType=str)
                 polarization = []
                 for counter in counters:
                     # Relevant counters: Fminus/Fplus resp. Rminus/Rplus
-                    if 'minus' in counter:
-                        pol = 1.
-                    elif 'plus' in counter:
-                        pol = -1.
+                    if "minus" in counter:
+                        pol = 1.0
+                    elif "plus" in counter:
+                        pol = -1.0
                     else:
-                        pol = float('nan')
+                        pol = float("nan")
                     polarization += [pol]
                 magnets = values0 + values1 + values2
-                values = numpy.asarray(polarization, dtype=float)*\
-                            magnets
-                vpivot = 0.
-            elif exp.startswith('ID12: XMCD'):
+                values = numpy.asarray(polarization, dtype=float) * magnets
+                vpivot = 0.0
+            elif exp.startswith("ID12: XMCD"):
                 # Sum over phases..
                 polarization = values0 + values1
                 # ..and magnets
                 magnets = values2 + values3 + values4
                 signMagnets = numpy.sign(magnets)
-                if numpy.all(signMagnets==0.):
+                if numpy.all(signMagnets == 0.0):
                     values = polarization
                 else:
-                    values = numpy.sign(polarization)*\
-                                numpy.sign(magnets)
-                vpivot = 0.
+                    values = numpy.sign(polarization) * numpy.sign(magnets)
+                vpivot = 0.0
             else:
-                values = numpy.array([float('NaN')]*len(self.legendList))
-                vpivot = 0.
+                values = numpy.array([float("NaN")] * len(self.legendList))
+                vpivot = 0.0
             # Sequence is generate according to values and vpivot
-            seq = ''
+            seq = ""
             for x in values:
-                if str(x) == 'nan':
-                    seq += 'D'
-                elif x<vpivot:
+                if str(x) == "nan":
+                    seq += "D"
+                elif x < vpivot:
                     # Minus group
-                    seq += 'A'
+                    seq += "A"
                 else:
                     # Plus group
-                    seq += 'B'
+                    seq += "B"
             self.list.setSelectionToSequence(seq)
-# Implement new assignment routines here END
+
+    # Implement new assignment routines here END
 
     def triggerXMCD(self):
-        groupA = self.selectionDict['A']
-        groupB = self.selectionDict['B']
+        groupA = self.selectionDict["A"]
+        groupB = self.selectionDict["B"]
         self.analysisWindow.processSelection(groupA, groupB)
 
     def removeCurve_(self):
-        sel = self.list.getColumn(1,
-                                  selectedOnly=True,
-                                  convertType=str)
+        sel = self.list.getColumn(1, selectedOnly=True, convertType=str)
         for legend in sel:
             self.plotWindow.removeCurve(legend)
             for selection in self.selectionDict.values():
@@ -1862,7 +1890,7 @@ class XMCDWidget(qt.QWidget):
                     selection.remove(legend)
             # Remove from XMCDScanWindow.curvesDict
             if legend in self.analysisWindow.curvesDict.keys():
-                del(self.analysisWindow.curvesDict[legend])
+                del self.analysisWindow.curvesDict[legend]
             # Remove from XMCDScanWindow.selectionDict
             for selection in self.analysisWindow.selectionDict.values():
                 if legend in selection:
@@ -1877,89 +1905,79 @@ class XMCDWidget(qt.QWidget):
         selDict = self.list.getSelection()
         # self.selectionDict -> Uses ScanNumbers instead of legends...
         newDict = {}
-        for (idx, selList) in selDict.items():
+        for idx, selList in selDict.items():
             if idx not in newDict.keys():
                 newDict[idx] = []
             for legend in selList:
                 newDict[idx] += [legend]
         self.selectionDict = newDict
-        self.setSelectionSignal.emit(self.selectionDict['A'],
-                                     self.selectionDict['B'])
+        self.setSelectionSignal.emit(self.selectionDict["A"], self.selectionDict["B"])
 
-    def updatePlots(self,
-                    newLegends = None,
-                    newMotorValues = None):
-        # Check if curves in plotWindow changed..
-        curves = self.plotWindow.getAllCurves(just_legend=True)
-        if curves == self.legendList:
-            # ..if not, just replot to account for zoom
-            self.triggerXMCD()
-            return
+    def updatePlots(self):
         self._setLists()
-
-        self.motorNamesList = [''] + self._getAllMotorNames()
+        self.motorNamesList = [""] + self._getAllMotorNames()
         self.motorNamesList.sort()
         self.optsWindow.updateMotorList(self.motorNamesList)
         self.updateTree()
         experiment = str(self.expCBox.currentText())
-        if experiment != 'Generic Dichroism':
+        if experiment != "Generic Dichroism":
             self.selectExperiment(experiment)
         return
 
     def updateTree(self):
-        mList  = self.optsWindow.getMotors()
-        labels = ["Group",'Legend','S#','Counter'] + mList
-        items  = []
+        mList = self.optsWindow.getMotors()
+        labels = ["Group", "Legend", "S#", "Counter"] + mList
+        items = []
         for i in range(len(self.legendList)):
             # Loop through rows
             # Each row is represented by QStringList
             legend = self.legendList[i]
             values = self.motorsList[i]
             info = self.infoList[i]
-            selection = ''
+            selection = ""
             # Determine Group from selectionDict
-            for (idx, v) in self.selectionDict.items():
-                if (legend in v) and (idx != 'D'):
+            for idx, v in self.selectionDict.items():
+                if (legend in v) and (idx != "D"):
                     selection = idx
                     break
             # Add filename, scanNo, counter
-            #sourceName = info.get('SourceName','')
-            #if isinstance(sourceName,list):
+            # sourceName = info.get('SourceName','')
+            # if isinstance(sourceName,list):
             #    filename = basename(sourceName[0])
-            #else:
+            # else:
             #    filename = basename(sourceName)
             filename = legend
-            scanNo = info.get('Key','')
-            counter = info.get('ylabel',None)
+            scanNo = info.get("Key", "")
+            counter = info.get("ylabel", None)
             if counter is None:
-                selDict = info.get('selection',{})
+                selDict = info.get("selection", {})
                 if len(selDict) == 0:
-                    counter = ''
+                    counter = ""
                 else:
                     # When do multiple selections occur?
                     try:
-                        yIdx = selDict['y'][0]
-                        cntList = selDict['cnt_list']
+                        yIdx = selDict["y"][0]
+                        cntList = selDict["cnt_list"]
                         counter = cntList[yIdx]
                     except Exception:
-                        counter = ''
+                        counter = ""
             tmp = QStringList([selection, filename, scanNo, counter])
             # Determine value for each motor
             for m in mList:
                 if len(m) == 0:
-                    tmp.append('')
+                    tmp.append("")
                 else:
-                    tmp.append(str(values.get(m, '---')))
+                    tmp.append(str(values.get(m, "---")))
             items.append(tmp)
-        self.list.build(items,  labels)
+        self.list.build(items, labels)
         for idx in range(self.list.columnCount()):
             self.list.resizeColumnToContents(idx)
 
     def setAsA(self):
-        self.list.setSelectionAs('A')
+        self.list.setSelectionAs("A")
 
     def setAsB(self):
-        self.list.setSelectionAs('B')
+        self.list.setSelectionAs("B")
 
     def _getAllMotorNames(self):
         names = []
@@ -1970,10 +1988,10 @@ class XMCDWidget(qt.QWidget):
         names.sort()
         return names
 
-    def _convertInfoDictionary(self,  infosList):
+    def _convertInfoDictionary(self, infosList):
         ret = []
-        for info in infosList :
-            motorNames = info.get('MotorNames',  None)
+        for info in infosList:
+            motorNames = info.get("MotorNames", None)
             if motorNames is not None:
                 if type(motorNames) == str:
                     namesList = motorNames.split()
@@ -1983,7 +2001,7 @@ class XMCDWidget(qt.QWidget):
                     namesList = []
             else:
                 namesList = []
-            motorValues = info.get('MotorValues',  None)
+            motorValues = info.get("MotorValues", None)
             if motorNames is not None:
                 if type(motorValues) == str:
                     valuesList = motorValues.split()
@@ -1994,9 +2012,10 @@ class XMCDWidget(qt.QWidget):
             else:
                 valuesList = []
             if len(namesList) == len(valuesList):
-                ret.append(dict(zip(namesList,  valuesList)))
+                ret.append(dict(zip(namesList, valuesList)))
             else:
                 _logger.warning("Number of motors and values does not match!")
+                ret.append({})
         return ret
 
     def _setLists(self):
@@ -2014,17 +2033,19 @@ class XMCDWidget(qt.QWidget):
             self.motorsList
         """
         if self.plotWindow is not None:
-            curves = self.plotWindow.getAllCurves()
+            curves = self.plotWindow.getAllCurves()[:4]
         else:
-            _logger.debug('_setLists -- Set self.plotWindow before calling self._setLists')
+            _logger.debug(
+                "_setLists -- Set self.plotWindow before calling self._setLists"
+            )
             return
         # nCurves = len(curves)
-        self.legendList = [leg for (xvals, yvals,  leg,  info) in curves]
-        self.infoList   = [info for (xvals, yvals,  leg,  info) in curves]
+        self.legendList = [leg for (xvals, yvals, leg, info) in curves]
+        self.infoList = [info for (xvals, yvals, leg, info) in curves]
         # Try to recover the scan number from the legend, if not set
         # Requires additional import:
-        #from re import search as regexpSearch
-        #for ddict in self.infoList:
+        # from re import search as regexpSearch
+        # for ddict in self.infoList:
         #    key = ddict.get('Key','')
         #    if len(key)== 0:
         #        selectionlegend = ddict['selectionlegend']
@@ -2034,13 +2055,14 @@ class XMCDWidget(qt.QWidget):
         #            ddict['Key'] = scanNo
         self.motorsList = self._convertInfoDictionary(self.infoList)
 
+
 class XMCDFileDialog(qt.QFileDialog):
     def __init__(self, parent, caption, directory, filter):
         qt.QFileDialog.__init__(self, parent, caption, directory, filter)
 
-        saveOptsGB = qt.QGroupBox('Save options', self)
-        self.appendBox = qt.QCheckBox('Append to existing file', self)
-        self.commentBox = qt.QTextEdit('Enter comment', self)
+        saveOptsGB = qt.QGroupBox("Save options", self)
+        self.appendBox = qt.QCheckBox("Append to existing file", self)
+        self.commentBox = qt.QTextEdit("Enter comment", self)
 
         mainLayout = self.layout()
         optsLayout = qt.QGridLayout()
@@ -2053,11 +2075,18 @@ class XMCDFileDialog(qt.QFileDialog):
 
     def appendChecked(self, state):
         if state == qt.Qt.Unchecked:
-            self.setConfirmOverwrite(True)
+            if hasattr(self, "setConfirmOverwrite"):
+                self.setConfirmOverwrite(True)
+            else:
+                self.setOption(qt.QFileDialog.DontConfirmOverwrite, False)
             self.setFileMode(qt.QFileDialog.AnyFile)
         else:
-            self.setConfirmOverwrite(False)
+            if hasattr(self, "setConfirmOverwrite"):
+                self.setConfirmOverwrite(False)
+            else:
+                self.setOption(qt.QFileDialog.DontConfirmOverwrite, True)
             self.setFileMode(qt.QFileDialog.ExistingFile)
+
 
 def getSaveFileName(parent, caption, directory, filter):
     dial = XMCDFileDialog(parent, caption, directory, filter)
@@ -2066,41 +2095,88 @@ def getSaveFileName(parent, caption, directory, filter):
     comment = None
     files = []
     if dial.exec():
-        append  = dial.appendBox.isChecked()
+        append = dial.appendBox.isChecked()
         comment = str(dial.commentBox.toPlainText())
-        if comment == 'Enter comment':
-            comment = ''
+        if comment == "Enter comment":
+            comment = ""
         files = [qt.safe_str(fn) for fn in dial.selectedFiles()]
     return (files, append, comment)
+
 
 def main():
     # Create dummy ScanWindow
     swin = ScanWindow.ScanWindow()
-    info0 = {'xlabel': 'foo',
-             'ylabel': 'arb',
-             'MotorNames': 'oxPS PhaseA Phase BRUKER CRYO OXFORD',
-             'MotorValues': '1 -6.27247094 -3.11222732 6.34150808 -34.75892563 21.99607165'}
-    info1 = {'MotorNames': 'PhaseD oxPS PhaseA Phase BRUKER CRYO OXFORD',
-             'MotorValues': '0.470746882688 0.25876374531 -0.18515967 -28.31216591 18.54513221 -28.09735532 -26.78833172'}
-    info2 = {'MotorNames': 'PhaseD oxPS PhaseA Phase BRUKER CRYO OXFORD',
-             'MotorValues': '-9.45353059 -25.37448851 24.37665651 18.88048044 -0.26018745 2 0.901968648111 '}
-    x = numpy.arange(100.,1100.)
-    y0 =  10*x + 10000.*numpy.exp(-0.5*(x-500)**2/400) + 1500*numpy.random.random(1000)
-    y1 =  10*x + 10000.*numpy.exp(-0.5*(x-600)**2/400) + 1500*numpy.random.random(1000)
-    y2 =  10*x + 10000.*numpy.exp(-0.5*(x-400)**2/400) + 1500*numpy.random.random(1000)
+    info0 = {
+        "xlabel": "foo",
+        "ylabel": "arb",
+        "MotorNames": "oxPS PhaseA Phase BRUKER CRYO OXFORD",
+        "MotorValues": "1 -6.27247094 -3.11222732 6.34150808 -34.75892563 21.99607165",
+    }
+    info1 = {
+        "MotorNames": "PhaseD oxPS PhaseA Phase BRUKER CRYO OXFORD",
+        "MotorValues": "0.470746882688 0.25876374531 -0.18515967 -28.31216591 18.54513221 -28.09735532 -26.78833172",
+    }
+    info2 = {
+        "MotorNames": "PhaseD oxPS PhaseA Phase BRUKER CRYO OXFORD",
+        "MotorValues": "-9.45353059 -25.37448851 24.37665651 18.88048044 -0.26018745 2 0.901968648111 ",
+    }
+    x = numpy.arange(100.0, 1100.0)
+    y0 = (
+        10 * x
+        + 10000.0 * numpy.exp(-0.5 * (x - 500) ** 2 / 400)
+        + 1500 * numpy.random.random(1000)
+    )
+    y1 = (
+        10 * x
+        + 10000.0 * numpy.exp(-0.5 * (x - 600) ** 2 / 400)
+        + 1500 * numpy.random.random(1000)
+    )
+    y2 = (
+        10 * x
+        + 10000.0 * numpy.exp(-0.5 * (x - 400) ** 2 / 400)
+        + 1500 * numpy.random.random(1000)
+    )
 
-    swin.newCurve(x, y2, legend="Curve2", xlabel='ene_st2', ylabel='Ihor', info=info2, replot=False, replace=False)
-    swin.newCurve(x, y0, legend="Curve0", xlabel='ene_st0', ylabel='Iver', info=info0, replot=False, replace=False)
-    swin.newCurve(x, y1, legend="Curve1", xlabel='ene_st1', ylabel='Ihor', info=info1, replot=False, replace=False)
+    swin.addCurve(
+        x,
+        y2,
+        legend="Curve2",
+        xlabel="ene_st2",
+        ylabel="Ihor",
+        info=info2,
+        replot=False,
+        replace=True,
+    )
+    swin.addCurve(
+        x,
+        y0,
+        legend="Curve0",
+        xlabel="ene_st0",
+        ylabel="Iver",
+        info=info0,
+        replot=False,
+        replace=False,
+    )
+    swin.addCurve(
+        x,
+        y1,
+        legend="Curve1",
+        xlabel="ene_st1",
+        ylabel="Ihor",
+        info=info1,
+        replot=True,
+        replace=False,
+    )
 
     # info['Key'] is overwritten when using newCurve
-    swin.dataObjectsDict['Curve2 Ihor'].info['Key'] = '1.1'
-    swin.dataObjectsDict['Curve0 Iver'].info['Key'] = '34.1'
-    swin.dataObjectsDict['Curve1 Ihor'].info['Key'] = '123.1'
+    swin.dataObjectsDict["Curve2 Ihor"].info["Key"] = "1.1"
+    swin.dataObjectsDict["Curve0 Iver"].info["Key"] = "34.1"
+    swin.dataObjectsDict["Curve1 Ihor"].info["Key"] = "123.1"
 
-    w = XMCDWidget(None, swin, 'ID08', nSelectors = 5)
+    w = XMCDWidget(None, swin, "ID08", nSelectors=5)
     w.show()
     return w
+
 
 #    helpFileBrowser = qt.QTextBrowser()
 #    helpFileBrowser.setLineWrapMode(qt.QTextEdit.FixedPixelWidth)
@@ -2113,7 +2189,7 @@ def main():
 #    helpFileBrowser.show()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = qt.QApplication([])
     w = main()
     app.exec()
