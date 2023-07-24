@@ -985,6 +985,11 @@ class MatplotlibGraph(FigureCanvas):
                 ddict['y'] = artist.get_ydata()
                 ddict['xdata'] = artist.get_xdata()
                 ddict['ydata'] = artist.get_ydata()
+                # matplotlib 3.7.x was giving different output than previous versions
+                for key in ["x", "y", "xdata", "ydata"]:
+                    if hasattr(ddict[key], "__len__"):
+                        if len(ddict[key]) == 1:
+                            ddict[key] = ddict[key][0]
                 self._callback(ddict)
             self._pickingInfo = {}
             return
