@@ -2044,7 +2044,7 @@ class XMCDWidget(qt.QWidget):
             self.motorsList
         """
         if self.plotWindow is not None:
-            curves = self.plotWindow.getAllCurves()[:4]
+            curves = self.plotWindow.getAllCurves()
         else:
             _logger.debug(
                 "_setLists -- Set self.plotWindow before calling self._setLists"
