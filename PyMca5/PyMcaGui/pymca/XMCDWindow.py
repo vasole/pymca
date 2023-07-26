@@ -1617,6 +1617,16 @@ class XMCDWidget(qt.QWidget):
                 "motor3": "",
                 "motor4": "",
             },
+            "ID32: XMCD / XMLD": {
+                "xrange": 0,
+                "normalization": 0,
+                "normalizationMethod": "offsetAndArea",
+                "motor0": "HU88CP",
+                "motor1": "HU88AP",
+                "motor2": "magnet",
+                "motor3": "",
+                "motor4": "",
+            },
         }
         self.expCBox.addItems(
             [
@@ -1628,6 +1638,7 @@ class XMCDWidget(qt.QWidget):
                 "ID12: XLD (quater wave plate)",
                 "ID12: XMCD (Flipper)",
                 "ID12: XMCD",
+                "ID32: XMCD / XMLD",
                 "Add new configuration",
             ]
         )
