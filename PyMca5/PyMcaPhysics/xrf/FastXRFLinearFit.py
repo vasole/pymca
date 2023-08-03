@@ -736,10 +736,15 @@ class FastXRFLinearFit(object):
     @staticmethod
     def _fitDtypeResult(data):
         if data.dtype not in [numpy.float32, numpy.float64]:
-            if data.itemsize < 5:
-                return numpy.float32
-            else:
-                return numpy.float64
+            if hasattr(data, "itemsize"):
+                if data.itemsize < 5:
+                    return numpy.float32
+                else:
+                    return numpy.float64
+            elif (data.nbytes / data.size) < 5:
+                    return numpy.float32
+                else:
+                    return numpy.float64
         else:
             return data.dtype
 
