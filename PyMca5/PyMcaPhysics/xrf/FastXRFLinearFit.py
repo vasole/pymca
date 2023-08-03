@@ -742,9 +742,9 @@ class FastXRFLinearFit(object):
                 else:
                     return numpy.float64
             elif (data.nbytes / data.size) < 5:
-                    return numpy.float32
-                else:
-                    return numpy.float64
+                return numpy.float32
+            else:
+                return numpy.float64
         else:
             return data.dtype
 
