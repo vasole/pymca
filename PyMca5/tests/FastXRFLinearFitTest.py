@@ -118,10 +118,9 @@ class testFastXRFLinearFit(unittest.TestCase):
         scanlist = None
         selection = {"y": "/data"}
         dataStack = HDF5Stack1D.HDF5Stack1D([fname], selection, scanlist=scanlist)
-        h5 = h5py.File(fname, "r")
         with outbuffer.saveContext():
             fastFit.fitMultipleSpectra(
-                y=h5["/data"],
+                y=dataStack,
                 weight=weight,
                 refit=refit,
                 concentrations=concentrations,
@@ -137,7 +136,18 @@ class testFastXRFLinearFit(unittest.TestCase):
                 concentrations=concentrations,
                 outbuffer=outbuffer,
             )
+        # test dynamic reading of integer data
+        with outbuffer.saveContext():
+            fastFit.fitMultipleSpectra(
+                y=h5["/data_int32"],
+                weight=weight,
+                refit=refit,
+                concentrations=concentrations,
+                outbuffer=outbuffer,
+            )
 
+        h5.close()
+        h5 = None
 
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()
