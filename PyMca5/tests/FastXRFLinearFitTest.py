@@ -1,4 +1,4 @@
-#/*##########################################################################
+# /*##########################################################################
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
@@ -45,6 +45,7 @@ from PyMca5.PyMcaPhysics.xrf.XRFBatchFitOutput import OutputBuffer
 
 try:
     import h5py
+
     HAS_H5PY = True
 except ImportError:
     HAS_H5PY = False
@@ -54,11 +55,10 @@ _logger = logging.getLogger(__name__)
 
 
 class testFastXRFLinearFit(unittest.TestCase):
-
     _rtolLegacy = 1e-5
 
     def setUp(self):
-        self.path = tempfile.mkdtemp(prefix='pymca')
+        self.path = tempfile.mkdtemp(prefix="pymca")
         super(testFastXRFLinearFit, self).setUp()
 
     def tearDown(self):
@@ -67,25 +67,20 @@ class testFastXRFLinearFit(unittest.TestCase):
     @unittest.skipUnless(HAS_H5PY, "h5py not installed")
     def testCommand(self):
         from PyMca5.PyMcaIO import HDF5Stack1D
+
         # generate the data
         data, livetime = XrfData.generateXRFData()
         configuration = XrfData.generateXRFConfig()
-        configuration['fit']['stripalgorithm'] = 1
+        configuration["fit"]["stripalgorithm"] = 1
 
         # create HDF5 file
         fname = os.path.join(self.path, "FastXRF.h5")
         h5 = h5py.File(fname, "w")
-        h5['/data'] = data
-        h5['/data_int32'] = (data * 1000).astype(numpy.int32)
+        h5["/data"] = data
+        h5["/data_int32"] = (data * 1000).astype(numpy.int32)
         h5.flush()
         h5.close()
 
-        # test issue with dynamic loading of integer data
-        scanlist = None
-        selection = {"y" : "/data_int32"}
-        dataStack = HDF5Stack1D.HDF5Stack1D([fname],
-                                            selection,
-                                            scanlist=scanlist)
         fastFit = FastXRFLinearFit.FastXRFLinearFit()
         fastFit.setFitConfiguration(configuration)
 
@@ -111,38 +106,63 @@ class testFastXRFLinearFit(unittest.TestCase):
         overwrite = 1
         multipage = 0
 
-        outbuffer = OutputBuffer(outputDir=outputDir,
-                             outputRoot=outputRoot,
-                             fileEntry=fileEntry,
-                             fileProcess=fileProcess,
-                             diagnostics=diagnostics,
-                             tif=tif, edf=edf, csv=csv,
-                             h5=h5, dat=dat,
-                             multipage=multipage,
-                             overwrite=overwrite)
+        outbuffer = OutputBuffer(
+            outputDir=outputDir,
+            outputRoot=outputRoot,
+            fileEntry=fileEntry,
+            fileProcess=fileProcess,
+            diagnostics=diagnostics,
+            tif=tif,
+            edf=edf,
+            csv=csv,
+            h5=h5,
+            dat=dat,
+            multipage=multipage,
+            overwrite=overwrite,
+        )
 
+        # test standard reading
+        scanlist = None
+        selection = {"y": "/data"}
+        dataStack = HDF5Stack1D.HDF5Stack1D([fname], selection, scanlist=scanlist)
+        h5 = h5py.File(fname, "r")
+        with outbuffer.saveContext():
+            fastFit.fitMultipleSpectra(
+                y=h5["/data"],
+                weight=weight,
+                refit=refit,
+                concentrations=concentrations,
+                outbuffer=outbuffer,
+            )
         # test dynamic reading
         h5 = h5py.File(fname, "r")
         with outbuffer.saveContext():
-            fastFit.fitMultipleSpectra(y=h5['/data'],
-                                       weight=weight,
-                                       refit=refit,
-                                       concentrations=concentrations,
-                                       outbuffer=outbuffer)        
+            fastFit.fitMultipleSpectra(
+                y=h5["/data"],
+                weight=weight,
+                refit=refit,
+                concentrations=concentrations,
+                outbuffer=outbuffer,
+            )
+
 
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()
     if auto:
-        testSuite.addTest(unittest.TestLoader().loadTestsFromTestCase(testFastXRFLinearFit))
+        testSuite.addTest(
+            unittest.TestLoader().loadTestsFromTestCase(testFastXRFLinearFit)
+        )
     else:
         # use a predefined order
         testSuite.addTest(testPyMcaBatch("testCommand"))
     return testSuite
 
+
 def test(auto=False):
     return unittest.TextTestRunner(verbosity=2).run(getSuite(auto=auto))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     if len(sys.argv) > 1:
         auto = False
     else:
