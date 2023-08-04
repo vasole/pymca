@@ -45,7 +45,7 @@ from PyMca5.tests.XrfTest import test as testXrf
 from PyMca5.tests.McaStackViewTest import test as testMcaStackView
 from PyMca5.tests.NexusUtilsTest import test as testNexusUtils
 from PyMca5.tests.StackInfoTest import test as testStackInfo
-from PyMca5.tests.FastXRFLinearFit import test as testFastXRFLinearFit
+from PyMca5.tests.FastXRFLinearFitTest import test as testFastXRFLinearFit
 
 def testAll():
     from PyMca5.tests.TestAll import main as testAll
