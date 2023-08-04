@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,13 +26,14 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V. Armando Sole - ESRF Data Analysis"
+__author__ = "V. Armando Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
 
 from PyMca5.tests.ConfigDictTest import test as testConfigDict
+from PyMca5.tests.DataTest import test as testDataTest
 from PyMca5.tests.EdfFileTest import test as testEdfFile
 from PyMca5.tests.ROIBatchTest import test as testROIBatch
 from PyMca5.tests.ElementsTest import test as testElements
@@ -44,6 +45,7 @@ from PyMca5.tests.XrfTest import test as testXrf
 from PyMca5.tests.McaStackViewTest import test as testMcaStackView
 from PyMca5.tests.NexusUtilsTest import test as testNexusUtils
 from PyMca5.tests.StackInfoTest import test as testStackInfo
+from PyMca5.tests.FastXRFLinearFitTest import test as testFastXRFLinearFit
 
 def testAll():
     from PyMca5.tests.TestAll import main as testAll
