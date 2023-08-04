@@ -34,11 +34,8 @@ import unittest
 import sys
 import os
 import numpy
-from random import randint
 import tempfile
 import shutil
-from glob import glob
-import logging
 from PyMca5.tests import XrfData
 from PyMca5.PyMcaPhysics.xrf import FastXRFLinearFit
 from PyMca5.PyMcaPhysics.xrf.XRFBatchFitOutput import OutputBuffer
@@ -49,10 +46,6 @@ try:
     HAS_H5PY = True
 except ImportError:
     HAS_H5PY = False
-
-
-_logger = logging.getLogger(__name__)
-
 
 class testFastXRFLinearFit(unittest.TestCase):
     _rtolLegacy = 1e-5
