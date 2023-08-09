@@ -739,12 +739,10 @@ class FastXRFLinearFit(object):
             if hasattr(data, "itemsize"):
                 if data.itemsize < 5:
                     return numpy.float32
-                else:
-                    return numpy.float64
-            elif (data.nbytes / data.size) < 5:
-                return numpy.float32
-            else:
-                return numpy.float64
+            elif hasattr(data, "nbytes"):
+                if (data.nbytes / data.size) < 5:
+                    return numpy.float32
+            return numpy.float64
         else:
             return data.dtype
 
