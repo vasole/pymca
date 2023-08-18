@@ -99,15 +99,18 @@ elif 'PyQt6.QtCore' in sys.modules:
     QtGui.QApplication = QtWidgets.QApplication
 else:
     try:
-        from PyQt4 import QtCore, QtGui
-        matplotlib.rcParams['backend'] = 'Qt4Agg'
+        from PyQt5 import QtCore, QtGui, QtWidgets
+        QtGui.QApplication = QtWidgets.QApplication
+        matplotlib.rcParams['backend'] = 'Qt5Agg'
     except ImportError:
         try:
-            from PyQt5 import QtCore, QtGui, QtWidgets
+            from PyQt6 import QtCore, QtGui, QtWidgets
             QtGui.QApplication = QtWidgets.QApplication
             matplotlib.rcParams['backend'] = 'Qt5Agg'
         except ImportError:
-            from PySide import QtCore, QtGui
+            from PySide6 import QtCore, QtGui, QtWidgets
+            QtGui.QApplication = QtWidgets.QApplication
+            matplotlib.rcParams['backend'] = 'Qt5Agg'
 if ("PyQt4.QtCore" in sys.modules) or ("PySide.QtCore" in sys.modules):
     from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
     TK = False
@@ -1670,6 +1673,8 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             axes.fill_between(x, 1.0e-8, y)
         #curveList[-1].set_fillstyle('bottom')
         if hasattr(curveList[-1], "set_marker"):
+            if symbol is None:
+                symbol = "None"
             curveList[-1].set_marker(symbol)
         curveList[-1]._plot_info = {'color':color,
                                       'linewidth':linewidth,
