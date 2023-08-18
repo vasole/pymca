@@ -200,7 +200,9 @@ class Plot(PlotBase.PlotBase):
 
         # zoom handling (should we take care of it?)
         self.enableZoom = self.setZoomModeEnabled
-        self.setZoomModeEnabled(True)
+        # next line was giving troubles with silx backend(s) issue #1026
+        if backend in ["matplotlib", "mpl"]:
+            self.setZoomModeEnabled(True)
 
         self._defaultDataMargins = (0., 0., 0., 0.)
 
