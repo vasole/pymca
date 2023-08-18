@@ -62,7 +62,6 @@ test_script:
     - "%VENV_TEST_DIR%\\Scripts\\activate.bat"
 
     # Install the generated wheel package to test it
-    - "pip install matplotlib --no-cache"
     - "pip install silx"
     - "pip install PyQt5"
     - "FOR %%F IN (dist\\PyMca5*.*) DO (
