@@ -1,3 +1,10 @@
+VERSION 5.9.0
+-------------
+
+- IO. Compatibility with h5py 2.10 (Ubuntu 20.04)
+
+- GUI. Compatibility with Matplotlib 3.8
+
 VERSION 5.8.9
 -------------
 
