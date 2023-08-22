@@ -35,6 +35,9 @@ safe_str = qt.safe_str
 from PyMca5.PyMcaGui.io.hdf5 import QNexusWidget
 from PyMca5.PyMcaCore import NexusDataSource
 from PyMca5 import PyMcaDirs
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class IntroductionPage(qt.QWizardPage):

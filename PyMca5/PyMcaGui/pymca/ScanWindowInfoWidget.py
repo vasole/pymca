@@ -31,6 +31,10 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 import numpy
 from PyMca5.PyMcaGui import PyMcaQt as qt
+import logging
+
+_logger = logging.getLogger(__name__)
+
 QTVERSION = qt.qVersion()
 
 """

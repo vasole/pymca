@@ -284,7 +284,7 @@ class StackBase(object):
             elif self.mcaIndex == 0:
                 mcaMax = numpy.nanmax(numpy.nanmax(self._stack.data, axis=-1), axis=-1)
             else:
-                _logger.info("Unsupported index for max spectrum calculation")
+                logger.info("Unsupported index for max spectrum calculation")
         else:
             t0 = time.time()
             shape = self._stack.data.shape
