@@ -153,6 +153,12 @@ class StackIndexWidget(qt.QWidget):
             self.buttonGroup.buttonClicked[int].connect(self._slot)
 
     def _slot(self, button):
+        if hasattr(button, "text"):
+            # received a button
+            pass
+        else:
+            # received an integer
+            button = self.buttonGroup.button(button)
         if "first" in safe_str(button.text()).lower():
             self._stackIndex =  0
         else:
