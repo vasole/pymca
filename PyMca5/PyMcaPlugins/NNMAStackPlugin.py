@@ -138,8 +138,8 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
         mcaIndex = stack.info.get('McaIndex')
         shape = stack.data.shape
         stack = None
-        if mcaIndex not in [-1, len(shape) - 1]:
-            raise IndexError("NNMA does not support stacks of images yet")
+        if mcaIndex not in [0, -1, len(shape) - 1]:
+            raise IndexError("NNMA only support stacks of images or spectra")
             return
         if self.configurationWidget is None:
             self.configurationWidget = NNMAParametersDialog(None, regions=True)
@@ -225,9 +225,23 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
                 self._status.setText(text)
 
         oldShape = stack.data.shape
-        result = function(stack, **ddict)
-        if stack.data.shape != oldShape:
-            stack.data.shape = oldShape
+        mcaIndex = stack.info.get('McaIndex')
+        if mcaIndex == 0:
+            # image stack. We need a copy
+            _logger.info("NNMAStackPlugin converting to stack of spectra")
+            data = numpy.zeros(oldShape[1:] + oldShape[0:1], dtype=numpy.float32)
+            data.shape = -1, oldShape[0]
+            for i in range(oldShape[0]):
+                tmpData = stack.data[i]
+                tmpData.shape = -1
+                data[:, i] = tmpData
+            data.shape = oldShape[1:] + oldShape[0:1]
+            result = function(data, **ddict)
+            data = None
+        else:
+            result = function(stack, **ddict)
+            if stack.data.shape != oldShape:
+                stack.data.shape = oldShape
         return result
 
     def threadFinished(self):
