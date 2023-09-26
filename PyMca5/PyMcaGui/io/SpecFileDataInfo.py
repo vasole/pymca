@@ -109,13 +109,17 @@ class SpecFileDataInfo(qt.QTabWidget):
             self.__adjustTable(table)
             self.addTab(table, "Info")
 
-    def __createTable(self, rows, head_par, head_val):
+    def __createTable(self, rows, head_par, head_val, index=False):
         table= QTable()
-        table.setColumnCount(2)
+        if index:
+            labels = ["Index"]
+        else:
+            labels = []
+        labels = labels + [head_par, head_val]
+        table.setColumnCount(len(labels))
         table.setRowCount(rows)
-        table.setSelectionMode(qt.QTableWidget.NoSelection)
+        #table.setSelectionMode(qt.QTableWidget.NoSelection)
         table.verticalHeader().hide()
-        labels = [head_par, head_val]
         for i in range(len(labels)):
             item = table.horizontalHeaderItem(i)
             if item is None:
@@ -165,15 +169,17 @@ class SpecFileDataInfo(qt.QTabWidget):
                 print("Incorrent number of labels or values")
                 return
             if num:
-                table= self.__createTable(num, "Motor", "Position")
+                table= self.__createTable(num, "Motor", "Position", index=True)
+                numbers = list(range(num))
                 if sys.version_info > (3, 3):
                     sorted_list = sorted(names, key=str.casefold)
                 else:
                     sorted_list = sorted(names)
                 for i in range(num):
                     idx = names.index(sorted_list[i])
-                    table.setText(i, 0, str(names[idx]))
-                    table.setText(i, 1, str(pos[idx]))
+                    table.setText(i, 0, "%d" % numbers[idx])
+                    table.setText(i, 1, str(names[idx]))
+                    table.setText(i, 2, str(pos[idx]))
                 self.__adjustTable(table)
                 self.addTab(table, "Motors")
 
