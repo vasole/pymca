@@ -30,25 +30,19 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 from PyMca5.PyMcaGui import PyMcaQt as qt
 
-try:
-    from silx.gui.widgets.TableWidget import TableWidget
-except ImportError:
-    from PyMca5.PyMcaGui.misc.TableWidget import TableWidget
+from PyMca5.PyMcaGui.misc.TableWidget import TableWidget
 
 QTVERSION = qt.qVersion()
 
 class QTable(TableWidget):
     def setText(self, row, col, text):
-        if qt.qVersion() < "4.0.0":
-            QTable.setText(self, row, col, text)
+        item = self.item(row, col)
+        if item is None:
+            item = qt.QTableWidgetItem(text,
+                                       qt.QTableWidgetItem.Type)
+            self.setItem(row, col, item)
         else:
-            item = self.item(row, col)
-            if item is None:
-                item = qt.QTableWidgetItem(text,
-                                           qt.QTableWidgetItem.Type)
-                self.setItem(row, col, item)
-            else:
-                item.setText(text)
+            item.setText(text)
 
 class SpecFileDataInfoCustomEvent(qt.QEvent):
     def __init__(self, ddict):
@@ -84,13 +78,10 @@ class SpecFileDataInfo(qt.QTabWidget):
     ]
 
     def __init__(self, info, parent=None, name="DataSpecFileInfo", fl=0):
-        if QTVERSION < '4.0.0':
-            qt.QTabWidget.__init__(self, parent, name, fl)
-            self.setContentsMargins(5, 5, 5, 5)
-        else:
-            qt.QTabWidget.__init__(self, parent)
-            if name is not None:self.setWindowTitle(name)
-            self._notifyCloseEventToWidget = []
+        qt.QTabWidget.__init__(self, parent)
+        if name is not None:
+            self.setWindowTitle(name)
+        self._notifyCloseEventToWidget = []
         self.info= info
         self.__createInfoTable()
         self.__createMotorTable()
@@ -99,14 +90,13 @@ class SpecFileDataInfo(qt.QTabWidget):
         self.__createEDFHeaderText()
         self.__createFileHeaderText()
 
-    if QTVERSION > '4.0.0':
-        def sizeHint(self):
-            return qt.QSize(2 * qt.QTabWidget.sizeHint(self).width(),
-                            3 * qt.QTabWidget.sizeHint(self).height())
+    def sizeHint(self):
+        return qt.QSize(2 * qt.QTabWidget.sizeHint(self).width(),
+                        3 * qt.QTabWidget.sizeHint(self).height())
 
-        def notifyCloseEventToWidget(self, widget):
-            if widget not in self._notifyCloseEventToWidget:
-                self._notifyCloseEventToWidget.append(widget)
+    def notifyCloseEventToWidget(self, widget):
+        if widget not in self._notifyCloseEventToWidget:
+            self._notifyCloseEventToWidget.append(widget)
 
     def __createInfoTable(self):
         pars= [ par for par in self.InfoTableItems if par[0] in self.info.keys() ]
@@ -120,40 +110,27 @@ class SpecFileDataInfo(qt.QTabWidget):
             self.addTab(table, "Info")
 
     def __createTable(self, rows, head_par, head_val):
-        if qt.qVersion() < '4.0.0':
-            table= QTable(self)
-        else:
-            table= QTable()
+        table= QTable()
         table.setColumnCount(2)
         table.setRowCount(rows)
-        if qt.qVersion() < '4.0.0':
-            table.setReadOnly(1)
-            table.setSelectionMode(QTable.SingleRow)
-        else:
-            table.setSelectionMode(qt.QTableWidget.NoSelection)
+        table.setSelectionMode(qt.QTableWidget.NoSelection)
         table.verticalHeader().hide()
-        if qt.qVersion() < '4.0.0':
-            table.setLeftMargin(0)
-            table.horizontalHeader().setLabel(0, head_par)
-            table.horizontalHeader().setLabel(1, head_val)
-        else:
-            labels = [head_par, head_val]
-            for i in range(len(labels)):
-                item = table.horizontalHeaderItem(i)
-                if item is None:
-                    item = qt.QTableWidgetItem(labels[i],
-                                               qt.QTableWidgetItem.Type)
-                item.setText(labels[i])
-                table.setHorizontalHeaderItem(i,item)
+        labels = [head_par, head_val]
+        for i in range(len(labels)):
+            item = table.horizontalHeaderItem(i)
+            if item is None:
+                item = qt.QTableWidgetItem(labels[i],
+                                           qt.QTableWidgetItem.Type)
+            item.setText(labels[i])
+            table.setHorizontalHeaderItem(i,item)
         return table
 
     def __adjustTable(self, table):
         for col in range(table.columnCount()):
             table.resizeColumnToContents(col)
-        if qt.qVersion() > '4.0.0':
-            rheight = table.horizontalHeader().sizeHint().height()
-            for row in range(table.rowCount()):
-                table.setRowHeight(row, rheight)
+        rheight = table.horizontalHeader().sizeHint().height()
+        for row in range(table.rowCount()):
+            table.setRowHeight(row, rheight)
 
     def __createMotorTable(self):
         nameKeys = ["MotorNames", "motor_mne"]
@@ -241,12 +218,8 @@ class SpecFileDataInfo(qt.QTabWidget):
             return
         text= self.info.get("Header", None)
         if text is not None:
-            if qt.qVersion() < '4.0.0':
-                wid = qt.QTextEdit(self)
-                wid.setText("\n".join(text))
-            else:
-                wid = qt.QTextEdit()
-                wid.insertHtml("<BR>".join(text))
+            wid = qt.QTextEdit()
+            wid.insertHtml("<BR>".join(text))
             wid.setReadOnly(1)
             self.addTab(wid, "Scan Header")
 
@@ -274,12 +247,8 @@ class SpecFileDataInfo(qt.QTabWidget):
     def __createFileHeaderText(self):
         text= self.info.get("FileHeader", None)
         if text not in [None, []]:
-            if qt.qVersion() < '4.0.0':
-                wid = qt.QTextEdit(self)
-                wid.setText("\n".join(text))
-            else:
-                wid = qt.QTextEdit()
-                wid.insertHtml("<BR>".join(text))
+            wid = qt.QTextEdit()
+            wid.insertHtml("<BR>".join(text))
             wid.setReadOnly(1)
             self.addTab(wid, "File Header")
 
