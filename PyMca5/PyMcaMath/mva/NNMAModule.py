@@ -373,13 +373,9 @@ def nnma(stack, ncomponents, binning=None,
     original_intensity = numpy.sum(data)
 
     #final values
-    if kmeans:
-        n_more = 1
-    else:
-        n_more = 0
-    new_images  = numpy.zeros((ncomponents + n_more, r*c), numpy.float32)
-    new_vectors = numpy.zeros((X.shape[0]+n_more, X.shape[1]), numpy.float32)
-    values      = numpy.zeros((ncomponents+n_more,), numpy.float32)
+    new_images  = numpy.zeros((ncomponents, r*c), numpy.float32)
+    new_vectors = numpy.zeros((X.shape[0], X.shape[1]), numpy.float32)
+    values      = numpy.zeros((ncomponents,), numpy.float32)
     for i in range(ncomponents):
         idx = sorted_idx[i]
         if 1:
@@ -396,7 +392,7 @@ def nnma(stack, ncomponents, binning=None,
             new_images[i, maskview] = numpy.sum(numpy.dot(Atmp, Xtmp), axis=1)
         new_vectors[i,:] = X[idx,:]
         values[i] = 100.*total_nnma_intensity[idx][0]/original_intensity
-    new_images.shape = ncomponents + n_more, r, c
+    new_images.shape = ncomponents, r, c
     return new_images, values, new_vectors
 
 if __name__ == "__main__":
