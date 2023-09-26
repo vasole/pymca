@@ -171,17 +171,25 @@ class SpecFileDataInfo(qt.QTabWidget):
             if num:
                 table= self.__createTable(num, "Motor", "Position", index=True)
                 numbers = list(range(num))
-                if sys.version_info > (3, 3):
-                    sorted_list = sorted(names, key=str.casefold)
-                else:
-                    sorted_list = sorted(names)
-                for i in range(num):
-                    idx = names.index(sorted_list[i])
-                    table.setText(i, 0, "%d" % numbers[idx])
-                    table.setText(i, 1, str(names[idx]))
-                    table.setText(i, 2, str(pos[idx]))
+                def sort_column(column, table=table, numbers=numbers, names=names, positions=pos):
+                    if column == 1:
+                        sorted_list = sorted(names, key=str.casefold)
+                        sorted_list = [names.index(x) for x in sorted_list]
+                    else:
+                        sorted_list = [int(x) for x in numbers]
+                    for i in range(num):
+                        idx = sorted_list[i]
+                        table.setText(i, 0, "%d" % numbers[idx])
+                        table.setText(i, 1, str(names[idx]))
+                        table.setText(i, 2, str(pos[idx]))
+                sort_column(0)
+                tip = "Copy selection to clipboard with CTRL-C."
+                tip += "\nDoubleclick on Index or Motor header to sort accordingly."
+                table.setToolTip(tip)
                 self.__adjustTable(table)
                 self.addTab(table, "Motors")
+                headerView = table.horizontalHeader()
+                headerView.sectionDoubleClicked[int].connect(sort_column)
 
     def __createCounterTable(self):
         nameKeys = ["LabelNames", "counter_mne"]
