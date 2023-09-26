@@ -63,7 +63,7 @@ The common parameters when calling such a function are:
                              from numpy or sparse from scipy.sparse
                              package
 
-            k           --   number of componnets to estimate
+            k           --   number of components to estimate
 
             Astart
             Xstart      --   matrices to start iterations. Maybe None
@@ -185,17 +185,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 import numpy
 import logging
-try:
-    import os
-    os.environ["MDP_DISABLE_SKLEARN"] = "yes"
-    import mdp
-    if mdp.__version__ >= '2.6':
-        MDP = True
-    else:
-        MDP = False
-except Exception:
-    MDP = False
-
 from . import py_nnma
 
 
@@ -223,8 +212,8 @@ def nnma(stack, ncomponents, binning=None,
          mask=None, spectral_mask=None,
          function=None, eps=5e-5, verbose=VERBOSE,
          maxcount=1000, kmeans=False):
-    if kmeans and (not MDP):
-        raise ValueError("K Means not supported")
+    if kmeans:
+        raise ValueError("K Means not supported by this module")
     #I take the defaults for the other parameters
     param = dict(alpha=.1, tau=2, regul=1e-2, sparse_par=1e-1, psi=1e-3)
     if function is None:
@@ -408,16 +397,6 @@ def nnma(stack, ncomponents, binning=None,
         new_vectors[i,:] = X[idx,:]
         values[i] = 100.*total_nnma_intensity[idx][0]/original_intensity
     new_images.shape = ncomponents + n_more, r, c
-    if kmeans:
-        classifier = mdp.nodes.KMeansClassifier(ncomponents)
-        for i in range(ncomponents):
-            classifier.train(new_vectors[i:i+1])
-        k = 0
-        for i in range(r):
-            for j in range(c):
-                spectrum = data[k:k+1,:]
-                new_images[-1, i,j] = classifier.label(spectrum)[0]
-                k += 1
     return new_images, values, new_vectors
 
 if __name__ == "__main__":
