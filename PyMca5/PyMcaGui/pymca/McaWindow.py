@@ -1031,7 +1031,7 @@ class McaWindow(ScanWindow):
                                                 legend=legend,
                                                 info=curveinfo,
                                                 own=True)
-                            if calibrationOrder == 'ID18':
+                            if calibrationOrder in ["ID14", "ID18"]:
                                 self.setGraphXLabel('Time')
                             else:
                                 self.setGraphXLabel('Energy')
@@ -1076,7 +1076,7 @@ class McaWindow(ScanWindow):
                                               legend=legend,
                                               info=curveinfo,
                                               own=True)
-                            if calibrationOrder == 'ID18':
+                            if calibrationOrder in ["ID14", "ID18"]:
                                 self.setGraphXLabel('Time')
                             else:
                                 self.setGraphXLabel('Energy')
