@@ -1128,7 +1128,7 @@ class CalibrationParameters(qt.QWidget):
             self.CLabel.setText("Vr:")
             self.CText.setReadOnly(0)
             self.CFixed.show()
-        elif qstring in ["ID14", "ID18":
+        elif qstring in ["ID14", "ID18"]:
             self.caldict[self.currentcal]['order'] = 'ID14'
             self.CLabel.setText("C:")
             self.CText.setReadOnly(1)
