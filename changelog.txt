@@ -1,3 +1,12 @@
+VERSION 5.9.2
+-------------
+
+- ROI Imaging. It is now possible to apply NNMA on stacks of images.
+
+- ROI Imaging. HDF5 stacks of images could not be selected due to a bug introduced in 5.8.2.
+
+- MCA. Correct ID18 calibration issues.
+
 VERSION 5.9.0
 -------------
 
