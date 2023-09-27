@@ -808,6 +808,8 @@ class McaCalWidget(qt.QDialog):
         """
         if order == "TOF":
             return self.calculateTOF(usedpeaks)
+        if order in ["ID18", " ID14"]:
+            order = 2
         if len(usedpeaks) == 1:
             if (usedpeaks[0][0] - 0.0) > 1.0E-20:
                 return [0.0, usedpeaks[0][1]/usedpeaks[0][0], 0.0]
