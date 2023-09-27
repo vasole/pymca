@@ -429,7 +429,7 @@ class McaCalWidget(qt.QDialog):
             self.current  = current
             order = dict['caldict'][current]['order']
             self.caldict[current]['order'] = order
-            if order == "ID18":
+            if order in ["ID18", "ID14"]:
                 result = self.timeCalibratorCalibration()
                 if result is None:
                     return
@@ -1026,7 +1026,7 @@ class CalibrationParameters(qt.QWidget):
                                        options=['1st','2nd'])
             else:
                 self.orderbox = SimpleComboBox(parw,
-                                       options=['1st','2nd','TOF', 'ID18'])
+                                       options=['1st','2nd','TOF', 'ID14'])
         layout.addWidget(lab)
         layout.addWidget(self.orderbox)
         lab= qt.QLabel("A:", parw)
@@ -1128,8 +1128,8 @@ class CalibrationParameters(qt.QWidget):
             self.CLabel.setText("Vr:")
             self.CText.setReadOnly(0)
             self.CFixed.show()
-        elif qstring == "ID18":
-            self.caldict[self.currentcal]['order'] = 'ID18'
+        elif qstring in ["ID14", "ID18":
+            self.caldict[self.currentcal]['order'] = 'ID14'
             self.CLabel.setText("C:")
             self.CText.setReadOnly(1)
             if QTVERSION > '4.0.0':
