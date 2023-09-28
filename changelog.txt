@@ -1,4 +1,4 @@
-VERSION 5.9.2
+VERSION 5.9.1
 -------------
 
 - ROI Imaging. It is now possible to apply NNMA on stacks of images.
