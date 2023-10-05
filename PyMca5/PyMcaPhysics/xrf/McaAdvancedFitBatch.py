@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -802,6 +802,8 @@ class McaAdvancedFitBatch(object):
                     concentrations = None
                     _logger.error("error in concentrations")
                     _logger.error(str(sys.exc_info()[0:-1]))
+                    self._restoreFitConfig(filename,
+                                           'calculating concentrations')
             else:
                 #just images
                 fitresult = self.mcafit.startfit(digest=0)
