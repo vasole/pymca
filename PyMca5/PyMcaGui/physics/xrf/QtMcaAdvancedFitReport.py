@@ -739,6 +739,9 @@ class QtMcaAdvancedFitReport:
             for peak0 in iterator:
                 name  = peak0+"esc"
                 peak  = peak0+"esc"
+                if name not in result[group]:
+                    # i.e. peak0 = "Al K" and Si detector
+                    continue
                 if result[group][name]['ratio'] > 0.0:
                     text += '<tr><td></td>'
                     energy = ("%.3f" % (result[group][peak]['energy']))
