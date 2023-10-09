@@ -35,6 +35,7 @@ import subprocess
 import signal
 import atexit
 import logging
+import traceback
 from glob import glob
 from contextlib import contextmanager
 try:
@@ -1822,6 +1823,10 @@ class McaBatchWindow(qt.QWidget):
             except Exception:
                 _logger.warning("ERROR on REPORT %s", sys.exc_info())
                 _logger.warning("%s", sys.exc_info()[1])
+                try:
+                    _logger.warning("%s", ''.join(traceback.format_tb(sys.exc_info()[2])))
+                except Exception:
+                    pass
                 _logger.warning("filename = %s key =%s " , filename, key)
                 _logger.warning("If your batch is stopped, please report this")
                 _logger.warning("error sending the above mentioned file and the")
