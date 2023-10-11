@@ -45,7 +45,10 @@ for l in ['de_DE.utf8', 'fr_FR.utf8']:
     else:
         other_locale = l
         break
-locale.setlocale(locale.LC_ALL, current_locale)
+try:
+    locale.setlocale(locale.LC_ALL, current_locale)
+except Exception:
+    other_locale = False
 
 class testSpecfile(unittest.TestCase):
     def setUp(self):
