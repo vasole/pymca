@@ -46,16 +46,19 @@ for l in ['de_DE.utf8', 'fr_FR.utf8']:
         other_locale = l
         break
 
-# cleanup python 3.12 issue on same machines
-if isinstance(current_locale, tuple):
-    # if the returned tuple is (None, 'UTF-8') it cannot restore the locale
-    current_as_list = list(current_locale)
-    for i in range(len(current_as_list)):
-        if current_as_list[i] is None:
-            current_as_list[i] = ''
-    current_locale = tuple(current_as_list)
-
-locale.setlocale(locale.LC_ALL, current_locale)
+try:
+    locale.setlocale(locale.LC_ALL, current_locale)
+except locale.Error:
+    # cleanup python 3.12 issue on same machines
+    if isinstance(current_locale, tuple):
+        # if the returned tuple is (None, 'UTF-8') it cannot restore the locale
+        current_as_list = list(current_locale)
+        for i in range(len(current_as_list)):
+            if current_as_list[i] is None:
+                current_as_list[i] = ''
+        current_locale = tuple(current_as_list)
+        print(f"Patched locale <{current_locale}>") 
+        locale.setlocale(locale.LC_ALL, current_locale)
 
 class testSpecfile(unittest.TestCase):
     def setUp(self):
@@ -101,7 +104,7 @@ class testSpecfile(unittest.TestCase):
         gc.collect()
         # restore saved locale
         locale.setlocale(locale.LC_ALL, current_locale)
-
+        
         if self.specfileClass is not None:
             if os.path.exists(self.fname):
                 os.remove(self.fname)
