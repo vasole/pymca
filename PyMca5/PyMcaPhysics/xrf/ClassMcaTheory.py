@@ -227,6 +227,8 @@ class McaTheory(object):
             energyscatter = []
 
             for i in range(len(self.config['fit']['energy'])):
+                if self.config['fit']['energy'][i] == "None":
+                    self.config['fit']['energy'][i] = None
                 if self.config['fit']['energyflag'][i]:
                     if self.config['fit']['energy'][i] is not None:
                         energyflag.append(self.config['fit']['energyflag'][i])
