@@ -55,9 +55,8 @@ except locale.Error:
         current_as_list = list(current_locale)
         for i in range(len(current_as_list)):
             if current_as_list[i] is None:
-                current_as_list[i] = ''
-        current_locale = tuple(current_as_list)
-        print(f"Patched locale <{current_locale}>") 
+                print(f"Returned locale <{current_locale}> reset to None")
+                current_locale = None
         locale.setlocale(locale.LC_ALL, current_locale)
 
 class testSpecfile(unittest.TestCase):
