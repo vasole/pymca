@@ -33,8 +33,13 @@ import logging
 _logger = logging.getLogger(__name__)
 
 from bliss.config import get_sessions_list
-from bliss.config.settings import scan as rdsscan
-from bliss.data.node import get_node, get_nodes
+try:
+    from blissdata.settings import scan as rdsscan
+    from blissdata.data.node import get_node, get_nodes
+except ImportError:
+    _logger.info("Trying deprecated access to Redis")
+    from bliss.config.settings import scan as rdsscan
+    from bliss.data.node import get_node, get_nodes
 
 _NODE_TYPES = [ "channel",
                 "lima",
