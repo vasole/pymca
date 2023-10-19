@@ -7,6 +7,7 @@ import subprocess
 import time
 import logging
 
+import PyInstaller
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 from PyInstaller.config import CONF
 
@@ -379,7 +380,13 @@ def cleanup_cache(topdir):
 
 def replace_module(name):
     dest = os.path.join(DISTDIR, script_n[0])
-    target = os.path.join(dest, os.path.basename(name))
+    if sys.platform.startswith("darwin") and PyInstaller.__version__ >= '6.0.0':
+        target = os.path.join(dest, "special_modules")
+        if not os.path.exists(target):
+            os.mkdir(target)
+        target = os.path.join(target, os.path.basename(name))
+    else:
+        target = os.path.join(dest, os.path.basename(name))
     print("source = ", name)
     print("dest = ", target)
     if os.path.exists(target):
@@ -517,6 +524,18 @@ if sys.platform.startswith("darwin"):
     if os.path.exists(dest):
         shutil.rmtree(dest)
     os.rename(source, dest)
+
+    # relocate the special modules
+    special_modules_dir = os.path.join(dest, "Contents", "MacOS", "special_modules")
+    if os.path.exists(special_modules_dir):
+        source = os.path.join(special_modules_dir, "*")
+        dest = os.path.join(dest, "Contents", "Frameworks")
+        cmd = "cp -Rf %s %s" % (source, dest)
+        print(cmd)
+        os.system(cmd)
+        source = source[:-1]
+        print("deleting %s" % source)
+        shutil.rmtree(source)
 
     # Pack the application
     destination = os.path.join(SPECPATH, "artifacts")
