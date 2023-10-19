@@ -418,7 +418,7 @@ if SILX:
         fname_dir = os.path.join(DISTDIR, script_n[0], "special_modules", "silx", "gui","qt")
     else:
         fname_dir = os.path.join(DISTDIR, script_n[0], "silx", "gui","qt")
-    for name in ["_qt", "__init__.py"]:
+    for name in ["_qt.py", "__init__.py"]:
         fname = os.path.join(fname_dir, name)
         if os.path.exists(fname):
             logger.info("###################################################################")
