@@ -414,7 +414,10 @@ for fname in script_n:
 
 # patch silx
 if SILX:
-    fname = os.path.join(DISTDIR, script_n[0], "silx", "gui","qt","_qt.py")
+    if sys.platform.startswith("darwin") and PyInstaller.__version__ >= '6.0.0':
+        fname = os.path.join(DISTDIR, script_n[0], "special_modules", "silx", "gui","qt","_qt.py")
+    else:
+        fname = os.path.join(DISTDIR, script_n[0], "silx", "gui","qt","_qt.py")
     if os.path.exists(fname):
         logger.info("###################################################################")
         logger.info("Patching silx")
@@ -425,8 +428,17 @@ if SILX:
         f.close()
         f = open(fname, "w")
         for line in content:
-            f.write(line.replace("from PyQt5.uic import loadUi", "pass"))
+            #f.write(line.replace("from PyQt5.uic import loadUi", "pass"))
+            if "import loadUi" in line:
+                f.write(line.replace("from ", "pass #"))
+            else:
+                f.write(line)
         f.close()
+    else:
+        logger.info("###################################################################")
+        logger.info("Cannot patch silx. File not found")
+        logger.info(fname)
+        logger.info("###################################################################")
 
 # patch OpenCL
 if OPENCL:
