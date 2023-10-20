@@ -3,7 +3,7 @@
 
  Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 
- The PyMca X-ray Fluorescence Toolkit is developed at the ESRF by the Software group.
+ The PyMca X-ray Fluorescence Toolkit is developed at the ESRF.
 
  PyMca follows the very permissive MIT license. However, this frozen binary
 uses GPL-licensed code and therefore this binary follows the GPL license that follows.
