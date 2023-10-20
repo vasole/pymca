@@ -57,7 +57,7 @@ Examples of source installation
 
 You will need the following dependencies installed:
 
--  `python <https://www.python.org/>`_ (3.7 or higher
+-  `python <https://www.python.org/>`_ (3.8 or higher
    recommended)
 -  `numpy <https://www.numpy.org/>`_
 -  `fisx <https://github.com/vasole/fisx>`_
@@ -74,9 +74,6 @@ running python installation with one of the following combinations:
    have a commercial PyQt6 license)
 -  ``PySide6`` + ``matplotlib`` (PyMca license will be
    `MIT <https://tldrlegal.com/license/mit-license>`_ because PySide6 is
-   `LGPL <https://www.gnu.org/licenses/lgpl-3.0.en.html>`_)
--  ``PySide2`` + ``matplotlib`` (PyMca license will be
-   `MIT <https://tldrlegal.com/license/mit-license>`_ because PySide2 is
    `LGPL <https://www.gnu.org/licenses/lgpl-3.0.en.html>`_)
 
 If you want to embed ``PyMca`` in your own graphical applications, I
