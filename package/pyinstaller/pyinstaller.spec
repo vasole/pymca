@@ -644,7 +644,7 @@ else:
     frozenDir = target
 
     #  generation of the NSIS executable
-    nsis = os.path.join("\Program Files (x86)", "NSIS", "makensis.exe")
+    nsis = os.path.join(r"\Program Files (x86)", "NSIS", "makensis.exe")
     if sys.platform.startswith("win") and os.path.exists(nsis):
         # check if we can perform the packaging
         outFile = os.path.join(SPECPATH, "nsisscript.nsi")
