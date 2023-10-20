@@ -819,7 +819,10 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         else:
             ddict['auto'] = "OFF"
         ddict["2d"]= self.meshBox.isChecked()
-        ddict["3d"]= self.object3DBox.isChecked()
+        if hasattr(self, "object3DBox"):
+            ddict["3d"] = self.object3DBox.isChecked()
+        else:
+            ddict["3d"] = False
         ddict["mca"]= self.forceMcaBox.isChecked()
         return ddict
 
