@@ -186,7 +186,7 @@ class specfilewrapper(object):
                 f = open(filename, 'rb')
                 raw_content = f.read()
                 f.close()
-                expr = '([-+]?\d+)\t\r\n'
+                expr = r'([-+]?\d+)\t\r\n'
                 self.data = [float(i) for i in re.split(expr,raw_content) if i != '']
                 self.data = numpy.array(self.data, numpy.float32)
             else:
