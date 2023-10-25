@@ -1114,9 +1114,7 @@ class TiffIO(object):
         info["date"] = date
         info["sampleFormat"] = sampleFormat
 
-        outputIFD = ""
-        if sys.version > '2.6':
-            outputIFD = eval('b""')
+        outputIFD = b""
 
         fmt = st + "H"
         outputIFD += struct.pack(fmt, nDirectoryEntries)
