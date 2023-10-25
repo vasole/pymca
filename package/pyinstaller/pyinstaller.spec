@@ -551,6 +551,12 @@ if sys.platform.startswith("darwin"):
         source = source[:-1]
         print("deleting %s" % source)
         shutil.rmtree(source)
+        # remove the duplicated _internal directory
+        internal_modules_dir = os.path.join( \
+            DISTDIR, "PyMca%s.app" % version, "Contents", "MacOS", "_internal")
+        if os.path.exists(internal_modules_dir):
+             print("deleting %s" % internal_modules_dir)
+             shutil.rmtree(internal_modules_dir)
 
     # Pack the application
     destination = os.path.join(SPECPATH, "artifacts")
