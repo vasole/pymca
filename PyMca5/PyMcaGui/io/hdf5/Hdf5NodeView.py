@@ -110,6 +110,7 @@ class Plot2DWithPlugins(Plot2D):
                     method="getPlugin2DInstance",
                     directoryList=PLUGINS_DIR)
         self._toolbar.addWidget(pluginsToolButton)
+        self.getIntensityHistogramAction().setVisible(True)
 
 
 class Plot2DViewWithPlugins(DataViews._Plot2dView):
