@@ -331,7 +331,7 @@ class RGBImageCalculator(qt.QWidget):
         _logger.debug("Add image clicked")
         if self._imageData is None:
             return
-        if self._imageData == []:
+        if len(self._imageData) == 0:
             return
         text = "%s" % self.name.text()
         if not len(text):

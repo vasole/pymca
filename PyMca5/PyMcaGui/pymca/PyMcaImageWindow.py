@@ -88,7 +88,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
             self._connectCorrelator()
         if self._imageData is None:
             return
-        if self._imageData == []:
+        if len(self._imageData) == 0:
             return
 
         if not RGBImageCalculator.RGBImageCalculator._addImageClicked(self):

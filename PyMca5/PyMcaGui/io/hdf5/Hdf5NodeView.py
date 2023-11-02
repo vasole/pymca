@@ -110,6 +110,10 @@ class Plot2DWithPlugins(Plot2D):
                     method="getPlugin2DInstance",
                     directoryList=PLUGINS_DIR)
         self._toolbar.addWidget(pluginsToolButton)
+        if hasattr(self, "getIntensityHistogramAction"):
+            self.getIntensityHistogramAction().setVisible(True)
+        else:
+            print("Plot2D getIntensityHistogramAction missing")
 
 
 class Plot2DViewWithPlugins(DataViews._Plot2dView):
@@ -117,7 +121,6 @@ class Plot2DViewWithPlugins(DataViews._Plot2dView):
         widget = Plot2DWithPlugins(parent=parent)
         widget.setDefaultColormap(self.defaultColormap())
         widget.getColormapAction().setColorDialog(self.defaultColorDialog())
-        widget.getIntensityHistogramAction().setVisible(True)
         widget.setKeepDataAspectRatio(False)
         widget.getXAxis().setLabel('X')
         widget.getYAxis().setLabel('Y')

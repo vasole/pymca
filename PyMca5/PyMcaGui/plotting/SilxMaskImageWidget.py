@@ -579,6 +579,11 @@ class SilxMaskImageWidget(qt.QMainWindow):
                 PlotActions.ColormapAction(plot=self.plot, parent=self))
         self.addAction(self.colormapAction)
 
+        self.pixelIntensitiesHistoAction = self.group.addAction(
+                PlotActions.PixelIntensitiesHistoAction(plot=self.plot, parent=self))
+        self.addAction(self.pixelIntensitiesHistoAction)
+        self.pixelIntensitiesHistoAction.setVisible(True)
+
         self.copyAction = self.group.addAction(
                 PlotActions.CopyAction(plot=self.plot, parent=self))
         self.addAction(self.copyAction)
@@ -675,8 +680,8 @@ class SilxMaskImageWidget(qt.QMainWindow):
         index = objects.index(self.colormapAction)
         objects.insert(index + 1, self.keepDataAspectRatioButton)
         objects.insert(index + 2, self.yAxisInvertedButton)
-        objects.insert(index + 3, self.saveToolbutton)
-        objects.insert(index + 4, self.backgroundButton)
+        objects.insert(index + 4, self.saveToolbutton)
+        objects.insert(index + 5, self.backgroundButton)
         for obj in objects:
             if isinstance(obj, qt.QAction):
                 toolbar.addAction(obj)
