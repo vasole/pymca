@@ -583,6 +583,11 @@ class SilxMaskImageWidget(qt.QMainWindow):
                 PlotActions.CopyAction(plot=self.plot, parent=self))
         self.addAction(self.copyAction)
 
+        self.pixelIntensitiesHistoAction = self.group.addAction(
+                PlotActions.PixelIntensitiesHistoAction(plot=self.plot, parent=self))
+        self.addAction(self.pixelIntensitiesHistoAction)
+        self.pixelIntensitiesHistoAction.setVisible(True)
+
         self.group.addAction(self.getMaskAction())
 
         # Init toolbuttons
