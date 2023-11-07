@@ -65,7 +65,11 @@ logging.disable(logging.ERROR)
 
 import silx
 from silx.gui.plot import PlotWidget
-from silx.gui.plot import PlotActions
+try:
+    from silx.gui.plot import PlotActions
+except ImportError:
+    from PyMca5.PyMcaGui.plotting import SilxPlotActions as PlotActions
+
 from silx.gui.plot import PlotToolButtons
 from silx.gui.plot.MaskToolsWidget import MaskToolsWidget, MaskToolsDockWidget
 from silx.gui.plot.AlphaSlider import NamedImageAlphaSlider
