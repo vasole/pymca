@@ -51,6 +51,8 @@ build_script:
     - "pip freeze"
 
     # Build
+    # --no-isolation complains about oldest-supported-numpy not being installed
+    - "python -c \"text=open('pyproject.toml').read().replace('oldest-supported-','');open('pyproject.toml','w').write(text)\""
     - "python -m build --no-isolation --wheel"
     - ps: "ls dist"
 
