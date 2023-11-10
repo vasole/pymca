@@ -15,8 +15,8 @@ environment:
         VENV_TEST_DIR: "venv_test"
 
     matrix:
-        # Python 3.11
-        - PYTHON_DIR: "C:\\Python311-x64"
+        # Python 3.12
+        - PYTHON_DIR: "C:\\Python312-x64"
 
 branches:
     only:
@@ -40,16 +40,20 @@ build_script:
     - "%VENV_BUILD_DIR%\\Scripts\\activate.bat"
 
     # Install build dependencies
-    - "pip install wheel"
-    - "pip install numpy"
-    - "pip install cython"
+    - "pip install --upgrade build"
+    - "pip install --upgrade setuptools"
+    - "pip install --upgrade wheel"
+    - "pip install --upgrade numpy"
+    - "pip install --upgrade cython"
 
     # Print Python info
     - "python ci\\info_platform.py"
     - "pip freeze"
 
     # Build
-    - "python setup.py bdist_wheel"
+    # --no-isolation complains about oldest-supported-numpy not being installed
+    - "python -c \"text=open('pyproject.toml').read().replace('oldest-supported-','');open('pyproject.toml','w').write(text)\""
+    - "python -m build --no-isolation --wheel"
     - ps: "ls dist"
 
     # Leave build virtualenv
@@ -62,7 +66,8 @@ test_script:
     - "%VENV_TEST_DIR%\\Scripts\\activate.bat"
 
     # Install the generated wheel package to test it
-    - "pip install silx"
+    # silx is not yet ready for Python 3.12
+    # - "pip install silx"
     - "pip install PyQt5"
     - "FOR %%F IN (dist\\PyMca5*.*) DO (
         pip install --pre %%F
