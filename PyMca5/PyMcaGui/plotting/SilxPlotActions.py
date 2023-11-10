@@ -33,5 +33,3 @@ except ImportError:
     from silx.gui.plot.actions.control import *
     from silx.gui.plot.actions.io import *
     from silx.gui.plot.actions.histogram import PixelIntensitiesHistoAction
-
-    
