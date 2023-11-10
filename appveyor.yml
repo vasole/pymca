@@ -15,8 +15,8 @@ environment:
         VENV_TEST_DIR: "venv_test"
 
     matrix:
-        # Python 3.11
-        - PYTHON_DIR: "C:\\Python311-x64"
+        # Python 3.12
+        - PYTHON_DIR: "C:\\Python312-x64"
 
 branches:
     only:
@@ -49,7 +49,7 @@ build_script:
     - "pip freeze"
 
     # Build
-    - "python setup.py bdist_wheel"
+    - "python -m build --no-isolation --wheel"
     - ps: "ls dist"
 
     # Leave build virtualenv
