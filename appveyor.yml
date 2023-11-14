@@ -53,7 +53,7 @@ build_script:
     - "pip freeze"
 
     # Build
-    - "python -m build --no-isolation --wheel"
+    - "python -m build --wheel"
     - ps: "ls dist"
 
     # Leave build virtualenv
