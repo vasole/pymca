@@ -351,6 +351,47 @@ elif BINDING == 'PyQt6':
         QAbstractItemView.AnyKeyPressed = QAbstractItemView.EditTrigger.AnyKeyPressed
         QAbstractItemView.AllEditTriggers = QAbstractItemView.EditTrigger.AllEditTriggers
 
+    if not hasattr(QPalette, "Normal"):
+        QPalette.Disabled = QPalette.ColorGroup.Disabled
+        QPalette.Active = QPalette.ColorGroup.Active
+        QPalette.Inactive = QPalette.ColorGroup.Inactive
+        QPalette.Normal = QPalette.ColorGroup.Normal
+
+        QPalette.Window = QPalette.ColorRole.Window
+        QPalette.WindowText = QPalette.ColorRole.WindowText
+        QPalette.Base = QPalette.ColorRole.Base
+        QPalette.AlternateBase = QPalette.ColorRole.AlternateBase
+        QPalette.ToolTipBase = QPalette.ColorRole.ToolTipBase
+        QPalette.ToolTipText = QPalette.ColorRole.ToolTipText
+        QPalette.PlaceholderText = QPalette.ColorRole.PlaceholderText
+        QPalette.Text = QPalette.ColorRole.Text
+        QPalette.Button = QPalette.ColorRole.Button
+        QPalette.ButtonText = QPalette.ColorRole.ButtonText
+        QPalette.BrightText = QPalette.ColorRole.BrightText
+
+        try:
+            from silx.gui import qt as SilxQt
+            if not hasattr(SilxQt.QPalette, "Normal"):
+                SilxQt.QPalette.Disabled = SilxQt.QPalette.ColorGroup.Disabled
+                SilxQt.QPalette.Active = SilxQt.QPalette.ColorGroup.Active
+                SilxQt.QPalette.Inactive = SilxQt.QPalette.ColorGroup.Inactive
+                SilxQt.QPalette.Normal = SilxQt.QPalette.ColorGroup.Normal
+
+                SilxQt.QPalette.Window = SilxQt.QPalette.ColorRole.Window
+                SilxQt.QPalette.WindowText = SilxQt.QPalette.ColorRole.WindowText
+                SilxQt.QPalette.Base = SilxQt.QPalette.ColorRole.Base
+                SilxQt.QPalette.AlternateBase = SilxQt.QPalette.ColorRole.AlternateBase
+                SilxQt.QPalette.ToolTipBase = SilxQt.QPalette.ColorRole.ToolTipBase
+                SilxQt.QPalette.ToolTipText = SilxQt.QPalette.ColorRole.ToolTipText
+                SilxQt.QPalette.PlaceholderText = SilxQt.QPalette.ColorRole.PlaceholderText
+                SilxQt.QPalette.Text = SilxQt.QPalette.ColorRole.Text
+                SilxQt.QPalette.Button = SilxQt.QPalette.ColorRole.Button
+                SilxQt.QPalette.ButtonText = SilxQt.QPalette.ColorRole.ButtonText
+                SilxQt.QPalette.BrightText = SilxQt.QPalette.ColorRole.BrightText
+        except Exception:
+            _logger.info("Exception patching silx")
+            pass
+
     # use a (bad) replacement for QDesktopWidget
     class QDesktopWidget:
         def height(self):
