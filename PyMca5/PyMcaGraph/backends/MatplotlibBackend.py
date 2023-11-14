@@ -1606,7 +1606,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                 scatterPlot = True
         if scatterPlot:
             # scatter plot
-            if color.dtype not in [numpy.float32, numpy.float]:
+            if color.dtype not in [numpy.float32, numpy.float64]:
                 actualColor = color / 255.
             else:
                 actualColor = color
