@@ -251,10 +251,11 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
         if type(result) == type((1,)):
             #if we receive a tuple there was an error
             if len(result):
-                if isinstance(result[0], str) and result[0] == "Exception":                        self._status.setText("Ready after calculation error")
-                        self.configurationWidget.setEnabled(True)
-                        raise Exception(result[1], result[2])
-                        return
+                if isinstance(result[0], str) and result[0] == "Exception":
+                    self._status.setText("Ready after calculation error")
+                    self.configurationWidget.setEnabled(True)
+                    raise Exception(result[1], result[2])
+                    return
         self._status.setText("Ready")
         curve = self.configurationWidget.getSpectrum(binned=True)
         if curve not in [None, []]:
