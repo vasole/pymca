@@ -209,7 +209,7 @@ class StackROIBatchPlugin(StackPluginBase.StackPluginBase):
         if type(result) == type((1,)):
             #if we receive a tuple there was an error
             if len(result):
-                if result[0] == "Exception":
+                if isinstance(result[0], str) and result[0] == "Exception":
                     # somehow this exception is not caught
                     raise Exception(result[1], result[2])#, result[3])
                     return

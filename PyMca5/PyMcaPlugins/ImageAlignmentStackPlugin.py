@@ -156,9 +156,10 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                 # result[0] contains the string "Exception" in case
                 # of error. However, direct comparison will raise an
                 # error
-                if type(result[0]) == type('Exception'):
-                    # exception occurred
-                    raise Exception(result[1], result[2], result[3])
+                if isinstance(result[0], str):
+                    if result[0] == 'Exception':
+                        # exception occurred
+                        raise Exception(result[1], result[2], result[3])
                 else:
                     shifts = result
                 result = self.__shiftStack(stack,
@@ -306,9 +307,10 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                                                     crop=crop, filename=filename)
                 if result is not None:
                     if len(result):
-                        if result[0] == 'Exception':
-                            # exception occurred
-                            raise Exception(result[1], result[2], result[3])
+                        if isinstance(result[0], str):
+                            if result[0] == 'Exception':
+                                # exception occurred
+                                raise Exception(result[1], result[2], result[3])
             if filename is None:
                 self.setStack(stack)
 
