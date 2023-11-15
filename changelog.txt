@@ -1,3 +1,16 @@
+VERSION 5.9.2
+-------------
+
+- XRF. Prevent considering twice the same element when using the SingleLayerStrategy.
+
+- Packaging. Compatibility with PyInstaller 6.x
+
+- GUI. Improved PyQt6 compatibility.
+
+- GUI. Compatibility with current silx master branch.
+
+- GUI. Add histogram of pixel intensities to image views (requires silx).
+
 VERSION 5.9.1
 -------------
 

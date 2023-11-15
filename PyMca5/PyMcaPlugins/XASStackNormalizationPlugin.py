@@ -187,8 +187,8 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
                                             post_edge_regions=post_edge_regions,
                                             algorithm=algorithm,
                                             algorithm_parameters=algorithm_parameters)
-            if result[0] == 'Exception':
-                # exception occurred
+            if isinstance(result[0], str) and result[0] == 'Exception':
+                # handled exception occurred
                 raise Exception(result[1], result[2], result[3])
             else:
                 edges, jumps, errors = result
