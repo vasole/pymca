@@ -454,7 +454,9 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
                     color = self._selectionColors[i].copy()
                     if useAlpha:
                         if len(color) == 4:
-                            if type(color[3]) in [numpy.uint8, numpy.int]:
+                            if type(color[3]) in [numpy.uint8,
+                                                  numpy.int32,
+                                                  numpy.int64]:
                                 color[3] = self._alphaLevel
                     # a copy of the input info is needed in order not
                     # to set the main curve to that color
