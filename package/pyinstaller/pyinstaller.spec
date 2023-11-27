@@ -1,6 +1,6 @@
 # -*- mode: python -*-
 import sys
-import os.path
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -155,21 +155,40 @@ for i in range(len(script_a)):
                           script_a[i].zipped_data,
                           cipher=block_cipher))
 
-    script_exe.append(
-        EXE(
-            script_pyz[i],
-            script_a[i].scripts,
-            script_a[i].dependencies,
-            [],
-            exclude_binaries=True,
-            name=script_n[i],
-            debug=False,
-            bootloader_ignore_signals=False,
-            strip=False,
-            upx=False,
-            console=True,
-            icon=icon)
-        )
+    arch = os.getenv("PYMCA_PYINSTALLER_TARGET_ARCH") 
+    if arch:
+        script_exe.append(
+            EXE(
+                script_pyz[i],
+                script_a[i].scripts,
+                script_a[i].dependencies,
+                [],
+                exclude_binaries=True,
+                name=script_n[i],
+                debug=False,
+                bootloader_ignore_signals=False,
+                strip=False,
+                upx=False,
+                console=True,
+                icon=icon,
+                target_arch=arch)
+            )
+    else:
+        script_exe.append(
+            EXE(
+                script_pyz[i],
+                script_a[i].scripts,
+                script_a[i].dependencies,
+                [],
+                exclude_binaries=True,
+                name=script_n[i],
+                debug=False,
+                bootloader_ignore_signals=False,
+                strip=False,
+                upx=False,
+                console=True,
+                icon=icon)
+            )
     script_col.append(
         COLLECT(
             script_exe[i],
