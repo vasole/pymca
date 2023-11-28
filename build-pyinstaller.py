@@ -7,21 +7,17 @@ cmd = r"cd %s; pyinstaller pyinstaller.spec --noconfirm --workpath %s --distpath
                os.path.join(".", "build-" + sys.platform),
                os.path.join(".", "dist-" + sys.platform))
 
-# patch PyOpenGL
+# patch PyOpenGL without importing it
 try:
-    import OpenGL
-    if OpenGL.__version__ == '3.1.7':
-        fname = OpenGL.__file__
-        if fname[-1] == "c":
-            fname = fname[:-1]
+    import fisx
+    fname = os.path.join(os.path.dirname(os.path.dirname(fisx.__file__)), "OpenGL", "__init__.py")
+    if os.path.exists(fname):
         infile = open(fname, "rb").read()
         infile = infile.replace(b'_bi + ".CArgObject",' ,
                                 b'("_ctypes" if sys.version_info[:2] >= (3,12) else _bi) + ".CArgObject",')
         outfile = open(fname, "wb").write(infile)
         infile = None
         outfile = None
-except ImportError:
-    pass
 except Exception:
     print("Cannot patch PyOpenGL")
 
