@@ -7,6 +7,24 @@ cmd = r"cd %s; pyinstaller pyinstaller.spec --noconfirm --workpath %s --distpath
                os.path.join(".", "build-" + sys.platform),
                os.path.join(".", "dist-" + sys.platform))
 
+# patch PyOpenGL
+try:
+    import OpenGL
+    if OpenGL.__version__ == '3.1.7':
+        fname = OpenGL.__file__
+        if fname[-1] == "c":
+            fname = fname[:-1]
+        infile = open(fname, "rb").read()
+        infile = infile.replace(b'_bi + ".CArgObject",' ,
+                                b'("_ctypes" if sys.version_info[:2] >= (3,12) else _bi) + ".CArgObject",')
+        outfile = open(fname, "wb").write(infile)
+        infile = None
+        outfile = None
+except ImportError:
+    pass
+except Exception:
+    print("Cannot patch PyOpenGL")
+
 if sys.platform.startswith("darwin"):
     if "arm64" in sys.argv:
         os.putenv("PYMCA_PYINSTALLER_TARGET_ARCH", "arm64")
