@@ -127,11 +127,7 @@ if __name__ == '__main__':
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 QTVERSION = qt.qVersion()
-if sys.platform == 'darwin':
-    if backend is not None:
-        if backend.lower() in ["gl", "opengl"]:
-            if hasattr(qt, 'QOpenGLWidget'):
-                print("Warning: OpenGL backend not fully supported")
+
 try:
     import silx
     # try to import silx prior to importing matplotlib to prevent
