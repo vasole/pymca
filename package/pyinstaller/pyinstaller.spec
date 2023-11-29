@@ -51,8 +51,9 @@ excludes = ["fabio", "hdf5plugin", "silx"]
 # if this module is included, the interactive console does not work
 excludes.append("debugpy")
 
-# This module basically does not work with frozen versions
-excludes.append("multiprocessing")
+if sys.platform.startswith("win"):
+    # This module basically does not work with frozen versions
+    excludes.append("multiprocessing")
 
 
 # get the script list
