@@ -61,7 +61,7 @@ The table shows three columns:
 
 While columns one and two can not be edited, shift values
 can be entered by hand. Another way of setting the shift values is to load them from a existing
-\*.shift file using the Load button.
+*.shift file using the Load button.
 
 Once the shift values are set, they can either be directly applied to the data present in the
 plot window, using the *Apply* button, or the data can be stored in memory. The latter options allow
