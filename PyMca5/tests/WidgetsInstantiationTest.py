@@ -111,6 +111,21 @@ class TestPlotWindow(TestCaseQt):
         widget.show()
         self.qapp.processEvents()
 
+class TestQPyMcaMatplotlibSave1D(TestCaseQt):
+    def setUp(self):
+        super(TestQPyMcaMatplotlibSave1D, self).setUp()
+
+    def testShow(self):
+        from PyMca5.PyMcaGui.pymca import QPyMcaMatplotlibSave1D
+        widget = QPyMcaMatplotlibSave1D.QPyMcaMatplotlibSave()
+        widget.setLimits(0, 3, 0, 9)
+        widget.addDataToPlot([0, 1, 2, 3], [0, 1, 4, 9], legend="1")
+        widget.show()
+        self.qapp.processEvents()
+        from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
+        PyMcaPrintPreview.resetSingletonPrintPreview()
+
+
 class TestScanWindow(TestCaseQt):
     def setUp(self):
         super(TestScanWindow, self).setUp()
@@ -254,6 +269,7 @@ def getSuite(auto=True):
                         TestXASNormalizationWindow,
                         TestMaskImageWidget,
                         TestScanWindow,
+                        TestQPyMcaMatplotlibSave1D,
                         TestMcaCalWidget,
                         TestMcaWindow,
                         TestMaterialEditor,

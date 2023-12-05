@@ -490,6 +490,8 @@ class QPyMcaMatplotlibSave(FigureCanvas):
                       linestyle = None,
                       marker=None,
                       alias = None,**kw):
+        x = numpy.array(x, copy=False)
+        y = numpy.array(y, copy=False)
         if self.limitsSet is not None:
             n = self._filterData(x, y)
             if not len(n):
