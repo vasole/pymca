@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -39,16 +39,8 @@ IconDict = PyMca_Icons.IconDict
 
 from matplotlib import __version__ as matplotlib_version
 from matplotlib.font_manager import FontProperties
-if qt.BINDING in ["PyQt5", "PySide2"]:
-    import matplotlib
-    matplotlib.rcParams['backend']='Qt5Agg'
-    from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-elif qt.BINDING in ["PyQt6", "PySide6"]:
-    import matplotlib
-    matplotlib.rcParams['backend']='Qt5Agg'
-    from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-else:
-    from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+import matplotlib
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
 _logger = logging.getLogger(__name__)
@@ -223,7 +215,7 @@ class MatplotlibCurveTable(qt.QTableWidget):
 class ComboBoxItem(qt.QComboBox):
     sigComboBoxItemSignal = qt.pyqtSignal(object)
     def __init__(self, parent, row, col, options=[1,2,3]):
-        qt.QCheckBox.__init__(self, parent)
+        qt.QComboBox.__init__(self, parent)
         self.__row = row
         self.__col = col
         for option in options:
