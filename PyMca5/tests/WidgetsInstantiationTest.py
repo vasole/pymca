@@ -117,9 +117,13 @@ class TestQPyMcaMatplotlibSave1D(TestCaseQt):
 
     def testShow(self):
         from PyMca5.PyMcaGui.pymca import QPyMcaMatplotlibSave1D
-        widget = QPyMcaMatplotlibSave1D.QPyMcaMatplotlibSave()
-        widget.setLimits(0, 3, 0, 9)
-        widget.addDataToPlot([0, 1, 2, 3], [0, 1, 4, 9], legend="1")
+        widget = QPyMcaMatplotlibSave1D.QPyMcaMatplotlibSaveDialog()
+        w = widget.plot
+        w.setLimits(0, 3, 0, 9)
+        w.addDataToPlot([0, 1, 2, 3], [0, 1, 4, 9], legend="1")
+        widget.setXLabel('Channel')
+        widget.setYLabel('Counts')
+        w.plotLegends()
         widget.show()
         self.qapp.processEvents()
         from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
