@@ -72,6 +72,8 @@ elif hasattr(sys, 'argv') and ('--binding=PySide2' in sys.argv):
 elif hasattr(sys, 'argv') and ('--binding=PySide6' in sys.argv):
     # argv might not be defined for embedded python (e.g., in Qt designer)
     BINDING = 'PySide6'
+else:
+    BINDING = os.environ.get("QT_API", None)
 
 if BINDING is None: # Try the different bindings
     try:
@@ -87,19 +89,19 @@ if BINDING is None: # Try the different bindings
             if "PySide6" in sys.modules:
                 del sys.modules["PySide6"]
             try:
-                import PySide2.QtCore
-                BINDING = "PySide2"
+                import PyQt6.QtCore
+                BINDING = "PyQt6"
             except ImportError:
-                if 'PySide2' in sys.modules:
-                    del sys.modules["PySide2"]
+                if 'PyQt6' in sys.modules:
+                    del sys.modules["PyQt6"]
                 try:
-                    import PyQt6.QtCore  # noqa
-                    BINDING = "PyQt6"
+                    import PySide2.QtCore  # noqa
+                    BINDING = "PySide2"
                 except ImportError:
-                    if 'PyQt6' in sys.modules:
-                        del sys.modules["PyQt6"]
+                    if 'PySide2' in sys.modules:
+                        del sys.modules["PySide2"]
                     raise ImportError(
-                    'No Qt wrapper found. Install PyQt5, PySide2, PySide6 or PyQt6.')
+                    'No Qt wrapper found. Install PyQt5, PySide6 or PyQt6.')
 
 _logger.info("BINDING set to %s" % BINDING)
 
@@ -470,7 +472,7 @@ class QToolButton(_QToolButton):
                 if (size.width() > 15) and (size.height() > 15):
                     self.setIconSize(size)
             except Exception:
-                print("unable")
+                print("unable to setIconSize")
                 pass
 
 if sys.version_info < (3,):
