@@ -105,7 +105,7 @@ if BINDING is None: # Try the different bindings
 
 _logger.info("BINDING set to %s" % BINDING)
 
-if BINDING == "PyQt5":
+if BINDING.lower() == "pyqt5":
     from PyQt5.QtCore import *
     from PyQt5.QtGui import *
     from PyQt5.QtWidgets import *
@@ -126,7 +126,7 @@ if BINDING == "PyQt5":
     Signal = pyqtSignal
     Slot = pyqtSlot
 
-elif BINDING == "PySide2":
+elif BINDING.lower() == "pyside2":
     # try PySide2 (experimental)
     from PySide2.QtCore import *
     from PySide2.QtGui import *
@@ -193,7 +193,7 @@ elif BINDING == "PySide2":
                                                 _platform_plugin_path
             _logger.info("QT_QPA_PLATFORM_PLUGIN_PATH set to <%s>" % \
                              _platform_plugin_path)
-elif BINDING == 'PySide6':
+elif BINDING.lower() == 'pyside6':
     _logger.debug('Using PySide6 bindings')
     import PySide6
 
@@ -234,7 +234,7 @@ elif BINDING == 'PySide6':
             screen = QApplication.instance().primaryScreen() 
             return screen.availableGeometry().width()
 
-elif BINDING == 'PyQt6':
+elif BINDING.lower() == 'pyqt6':
     _logger.debug('Using PyQt6 bindings')
     import enum
     from PyQt6 import QtCore
@@ -419,7 +419,7 @@ elif BINDING == 'PyQt6':
     class QObject(QObject, _Foo): pass
 
 else:
-    raise ImportError('No Qt wrapper found. Install one of PyQt5, PySide2, PySide6, PyQt6')
+    raise ImportError('No Qt wrapper found. Install one of PyQt5, PySide6, PyQt6')
 
 # provide a exception handler but not implement it by default
 def exceptionHandler(type_, value, trace):
@@ -513,7 +513,7 @@ if sys.version_info < (3,):
 else:
     safe_str = str
 
-if BINDING=="PySide2":
+if BINDING.lower()=="pyside2":
     _logger = logging.warning("PyMca PySide2 support deprecated and not reliable")
 
 class CLocaleQDoubleValidator(QDoubleValidator):
