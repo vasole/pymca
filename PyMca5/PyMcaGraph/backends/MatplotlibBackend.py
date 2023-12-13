@@ -76,8 +76,11 @@ elif 'PySide2.QtCore' in sys.modules:
 elif 'PyQt5.QtCore' in sys.modules:
     from PyQt5 import QtCore, QtGui, QtWidgets
     QtGui.QApplication = QtWidgets.QApplication
-elif 'PySide6.QtCore' in sys.modules or 'PyQt6.QtCore' in sys.modules:
+elif 'PySide6.QtCore' in sys.modules:
     from PySide6 import QtCore, QtGui, QtWidgets
+    QtGui.QApplication = QtWidgets.QApplication
+elif 'PyQt6.QtCore' in sys.modules:
+    from PyQt6 import QtCore, QtGui, QtWidgets
     QtGui.QApplication = QtWidgets.QApplication
 else:
     try:
