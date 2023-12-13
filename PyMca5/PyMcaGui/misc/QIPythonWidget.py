@@ -32,7 +32,7 @@ __author__ = "Tim Rae, V.A. Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-# Set the QT API
+
 import os
 import sys
 

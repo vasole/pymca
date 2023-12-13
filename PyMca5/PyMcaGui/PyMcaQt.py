@@ -103,9 +103,10 @@ if BINDING is None: # Try the different bindings
                     raise ImportError(
                     'No Qt wrapper found. Install PyQt5, PySide6 or PyQt6.')
 
-_logger.info("BINDING set to %s" % BINDING)
+    _logger.info("BINDING set to %s" % BINDING)
 
 if BINDING.lower() == "pyqt5":
+    BINDING = "PyQt5"
     from PyQt5.QtCore import *
     from PyQt5.QtGui import *
     from PyQt5.QtWidgets import *
@@ -127,7 +128,7 @@ if BINDING.lower() == "pyqt5":
     Slot = pyqtSlot
 
 elif BINDING.lower() == "pyside2":
-    # try PySide2 (experimental)
+    BINDING = "PySide2"
     from PySide2.QtCore import *
     from PySide2.QtGui import *
     from PySide2.QtWidgets import *
@@ -195,6 +196,7 @@ elif BINDING.lower() == "pyside2":
                              _platform_plugin_path)
 elif BINDING.lower() == 'pyside6':
     _logger.debug('Using PySide6 bindings')
+    BINDING = "PySide6"
     import PySide6
 
     from PySide6.QtCore import *  # noqa
@@ -236,6 +238,7 @@ elif BINDING.lower() == 'pyside6':
 
 elif BINDING.lower() == 'pyqt6':
     _logger.debug('Using PyQt6 bindings')
+    BINDING = "PyQt6"
     import enum
     from PyQt6 import QtCore
     if QtCore.PYQT_VERSION < int("0x60300", 16):
@@ -420,6 +423,8 @@ elif BINDING.lower() == 'pyqt6':
 
 else:
     raise ImportError('No Qt wrapper found. Install one of PyQt5, PySide6, PyQt6')
+
+_logger.info("PyMcaQt.BINDING set to %s" % BINDING)
 
 # provide a exception handler but not implement it by default
 def exceptionHandler(type_, value, trace):
