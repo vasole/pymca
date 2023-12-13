@@ -72,6 +72,8 @@ elif hasattr(sys, 'argv') and ('--binding=PySide2' in sys.argv):
 elif hasattr(sys, 'argv') and ('--binding=PySide6' in sys.argv):
     # argv might not be defined for embedded python (e.g., in Qt designer)
     BINDING = 'PySide6'
+else:
+    BINDING = os.environ.get("QT_API", None)
 
 if BINDING is None: # Try the different bindings
     try:
@@ -87,23 +89,24 @@ if BINDING is None: # Try the different bindings
             if "PySide6" in sys.modules:
                 del sys.modules["PySide6"]
             try:
-                import PySide2.QtCore
-                BINDING = "PySide2"
+                import PyQt6.QtCore
+                BINDING = "PyQt6"
             except ImportError:
-                if 'PySide2' in sys.modules:
-                    del sys.modules["PySide2"]
+                if 'PyQt6' in sys.modules:
+                    del sys.modules["PyQt6"]
                 try:
-                    import PyQt6.QtCore  # noqa
-                    BINDING = "PyQt6"
+                    import PySide2.QtCore  # noqa
+                    BINDING = "PySide2"
                 except ImportError:
-                    if 'PyQt6' in sys.modules:
-                        del sys.modules["PyQt6"]
+                    if 'PySide2' in sys.modules:
+                        del sys.modules["PySide2"]
                     raise ImportError(
-                    'No Qt wrapper found. Install PyQt5, PySide2, PySide6 or PyQt6.')
+                    'No Qt wrapper found. Install PyQt5, PySide6 or PyQt6.')
 
-_logger.info("BINDING set to %s" % BINDING)
+    _logger.info("BINDING set to %s" % BINDING)
 
-if BINDING == "PyQt5":
+if BINDING.lower() == "pyqt5":
+    BINDING = "PyQt5"
     from PyQt5.QtCore import *
     from PyQt5.QtGui import *
     from PyQt5.QtWidgets import *
@@ -124,8 +127,8 @@ if BINDING == "PyQt5":
     Signal = pyqtSignal
     Slot = pyqtSlot
 
-elif BINDING == "PySide2":
-    # try PySide2 (experimental)
+elif BINDING.lower() == "pyside2":
+    BINDING = "PySide2"
     from PySide2.QtCore import *
     from PySide2.QtGui import *
     from PySide2.QtWidgets import *
@@ -191,8 +194,9 @@ elif BINDING == "PySide2":
                                                 _platform_plugin_path
             _logger.info("QT_QPA_PLATFORM_PLUGIN_PATH set to <%s>" % \
                              _platform_plugin_path)
-elif BINDING == 'PySide6':
+elif BINDING.lower() == 'pyside6':
     _logger.debug('Using PySide6 bindings')
+    BINDING = "PySide6"
     import PySide6
 
     from PySide6.QtCore import *  # noqa
@@ -232,8 +236,9 @@ elif BINDING == 'PySide6':
             screen = QApplication.instance().primaryScreen() 
             return screen.availableGeometry().width()
 
-elif BINDING == 'PyQt6':
+elif BINDING.lower() == 'pyqt6':
     _logger.debug('Using PyQt6 bindings')
+    BINDING = "PyQt6"
     import enum
     from PyQt6 import QtCore
     if QtCore.PYQT_VERSION < int("0x60300", 16):
@@ -417,7 +422,9 @@ elif BINDING == 'PyQt6':
     class QObject(QObject, _Foo): pass
 
 else:
-    raise ImportError('No Qt wrapper found. Install one of PyQt5, PySide2, PySide6, PyQt6')
+    raise ImportError('No Qt wrapper found. Install one of PyQt5, PySide6, PyQt6')
+
+_logger.info("PyMcaQt.BINDING set to %s" % BINDING)
 
 # provide a exception handler but not implement it by default
 def exceptionHandler(type_, value, trace):
@@ -470,7 +477,7 @@ class QToolButton(_QToolButton):
                 if (size.width() > 15) and (size.height() > 15):
                     self.setIconSize(size)
             except Exception:
-                print("unable")
+                print("unable to setIconSize")
                 pass
 
 if sys.version_info < (3,):
@@ -511,7 +518,7 @@ if sys.version_info < (3,):
 else:
     safe_str = str
 
-if BINDING=="PySide2":
+if BINDING.lower()=="pyside2":
     _logger = logging.warning("PyMca PySide2 support deprecated and not reliable")
 
 class CLocaleQDoubleValidator(QDoubleValidator):

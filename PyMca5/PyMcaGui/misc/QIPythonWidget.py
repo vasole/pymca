@@ -32,23 +32,13 @@ __author__ = "Tim Rae, V.A. Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-# Set the QT API
+
 import os
 import sys
 
 from PyMca5.PyMcaGui.PyMcaQt import QApplication, QWidget, \
                                     QPushButton, QVBoxLayout, QMessageBox, \
                                     BINDING
-
-# this seems to be obsolete stuff
-if BINDING == "PySide":
-    os.environ['QT_API'] = 'pyside'
-elif BINDING == "PySide2":
-    os.environ['QT_API'] = 'pyside2'
-elif BINDING == "PyQt4":
-    os.environ['QT_API'] = 'pyqt'
-else:
-    os.environ['QT_API'] = 'pyqt5'
 
 QTCONSOLE = True
 if sys.version_info < (3,):

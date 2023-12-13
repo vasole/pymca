@@ -38,9 +38,7 @@ from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 
 #this is installation dependent I guess
-from matplotlib import rcParams
 from matplotlib import __version__ as matplotlib_version
-#rcParams['numerix'] = "numeric"
 from matplotlib.font_manager import FontProperties
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
