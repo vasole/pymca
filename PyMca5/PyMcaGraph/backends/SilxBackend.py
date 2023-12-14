@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2019-2020 European Synchrotron Radiation Facility
+# Copyright (c) 2019-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -57,11 +57,14 @@ class SilxBackend(PlotWidget):
     def addItem(self, *var, **kw):
         if len(var) < 2:
             if len(var) == 0:
-                return PlotWidget.addItem(self, **kw)
+                item = PlotWidget.addItem(self, **kw)
             else:
-                return PlotWidget.addItem(self, *var, **kw)
+                item = PlotWidget.addItem(self, *var, **kw)
         else:
-            return self.__addItem(*var, **kw)
+            item = self.__addItem(*var, **kw)
+        if hasattr(item, "getName"):
+            item = item.getName()
+        return item
 
     def __addItem(self, xdata, ydata, legend=None, info=None,
                 replace=False, replot=True,
@@ -92,6 +95,8 @@ class SilxBackend(PlotWidget):
                 kw["resetzoom"] = True
             del kw["replot"]
         result = PlotWidget.addCurve(self, *var, **kw)
+        if hasattr(result, "getName"):
+            result = result.getName()
         allCurves = self.getAllCurves(just_legend=True)
         if len(allCurves) == 1:
             self.setActiveCurve(allCurves[0])
@@ -112,7 +117,10 @@ class SilxBackend(PlotWidget):
             if origin is None and scale is None:
                 kw["origin"] = xScale[0], yScale[0]
                 kw["scale"] = xScale[1], yScale[1]
-        return PlotWidget.addImage(self, *var, **kw)
+        result = PlotWidget.addImage(self, *var, **kw)
+        if hasattr(result, "getName"):
+            result = result.getName()
+        return result
 
     def setActiveCurve(self, legend, replot=True):
         return PlotWidget.setActiveCurve(self, legend)
@@ -125,17 +133,26 @@ class SilxBackend(PlotWidget):
     def insertXMarker(self, *var, **kw):
         if "replot" in kw:
             del kw["replot"]
-        return self.addXMarker(*var, **kw)
+        result = self.addXMarker(*var, **kw)
+        if hasattr(result, "getName"):
+            result = result.getName()
+        return result
 
     def insertYMarker(self, *var, **kw):
         if "replot" in kw:
             del kw["replot"]
-        return self.addYMarker(*var, **kw)
+        result = self.addYMarker(*var, **kw)
+        if hasattr(result, "getName"):
+            result = result.getName()
+        return result
 
     def insertMarker(self, *var, **kw):
         if "replot" in kw:
             del kw["replot"]
-        return self.addMarker(*var, **kw)
+        result = self.addMarker(*var, **kw)
+        if hasattr(result, "getName"):
+            result = result.getName()
+        return result
 
     def removeCurve(self, *var, **kw):
         if "replot" in kw:
