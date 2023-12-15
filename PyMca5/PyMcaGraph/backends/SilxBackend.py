@@ -34,6 +34,7 @@ __doc__ = """
 Silx Plot Backend.
 """
 
+import silx
 from silx.gui import qt
 from silx.gui.plot import PlotWidget
 import numpy
@@ -79,12 +80,21 @@ class SilxBackend(PlotWidget):
         linestyle = kw.get("linestyle", "-")
         linewidth = kw.get("linewidth", 1.0)
         linebgcolor = kw.get("linebgcolor", None)
-        return m(self, xdata, ydata, legend=legend,
-                 replace=replace,
-                 shape=shape, color=color, fill=fill,
-                 overlay=overlay, z=z, linestyle=linestyle,
-                 linewidth=linewidth,
-                 linebgcolor=linebgcolor)
+        linebgcolor = kw.get("gapcolor", linebgcolor)
+        if silx.version_info < (1, 2):
+            return m(self, xdata, ydata, legend=legend,
+                     replace=replace,
+                     shape=shape, color=color, fill=fill,
+                     overlay=overlay, z=z, linestyle=linestyle,
+                     linewidth=linewidth,
+                     linebgcolor=linebgcolor)
+        else:
+            return m(self, xdata, ydata, legend=legend,
+                     replace=replace,
+                     shape=shape, color=color, fill=fill,
+                     overlay=overlay, z=z, linestyle=linestyle,
+                     linewidth=linewidth,
+                     gapcolor=linebgcolor)
 
     def _zoomBack(self, pos):
         self.getLimitsHistory().pop()
