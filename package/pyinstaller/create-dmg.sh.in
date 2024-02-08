@@ -62,7 +62,7 @@ echo 'Fixing permissions.'
 chmod -Rf go-w "${TEMPLATE}" || true
 
 # Makes the disk image window open automatically when mounted.
-/usr/sbin/bless -openfolder "${MOUNT_POINT}"
+#/usr/sbin/bless -openfolder "${MOUNT_POINT}" # -openfolder not supported on Ventura Apple Silicon
 
 # Hides background directory even more.
 SetFile -a V "${MOUNT_POINT}"/.background
