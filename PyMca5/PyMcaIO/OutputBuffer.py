@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2019-2022 European Synchrotron Radiation Facility
+# Copyright (c) 2019-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -830,16 +830,35 @@ class OutputBuffer(MutableMapping):
                                                                  fileName,
                                                                  labels=[title],
                                                                  dtype=numpy.float32)
+        if self.csv or self.dat:
+            # only same shapes can be saved
+            goodIndices = []
+            for i in range(len(imageTitleLabels)):
+                if imageList[i].shape == imageList[0].shape:
+                    goodIndices.append(i)
+                else:
+                    txt = "Skip ASCII saving of badly shaped image {}".format(imageTitleLabels[i]) 
+                    _logger.info(txt)
+            if len(goodIndices) == len((imageTitleLabels)):
+                goodImageList = imageList
+                goodImageTitleLabels = imageTitleLabels
+            else:
+                goodImageList = []
+                goodImageTitleLabels = []
+                for i in goodIndices:
+                    goodImageList.append(imageList[i])
+                    goodImageTitleLabels.append(imageTitleLabels[i])
+
         if self.csv:
             fileName = self.filename('.csv')
             self._checkOverwrite(fileName)
-            ArraySave.save2DArrayListAsASCII(imageList, fileName, csv=True,
-                                             labels=imageTitleLabels)
+            ArraySave.save2DArrayListAsASCII(goodImageList, fileName, csv=True,
+                                             labels=goodImageTitleLabels)
         if self.dat:
             fileName = self.filename('.dat')
             self._checkOverwrite(fileName)
-            ArraySave.save2DArrayListAsASCII(imageList, fileName, csv=False,
-                                             labels=imageTitleLabels)
+            ArraySave.save2DArrayListAsASCII(goodImageList, fileName, csv=False,
+                                             labels=goodImageTitleLabels)
 
         if self.cfg and self._configurationkey in self:
             fileName = self.filename('.cfg')
