@@ -1,5 +1,5 @@
 # /*##########################################################################
-# Copyright (C) 1995-2018 European Synchrotron Radiation Facility
+# Copyright (C) 1995-2024 European Synchrotron Radiation Facility
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -791,10 +791,11 @@ sfSaveScan(SpecFile *sf, SfCursor *cursor,int *error) {
 static void
 sfAssignScanNumbers(SpecFile *sf) {
 
-  int                    i;
-  char                  *ptr;
-  char                   buffer[50];
-  char                   buffer2[50];
+  int  i;
+  long bytesread;
+  char *ptr;
+  char buffer[50];
+  char buffer2[50];
 
   register   ObjectList *object,
                         *object2;
@@ -805,7 +806,11 @@ sfAssignScanNumbers(SpecFile *sf) {
         scan = (SpecScan *) object->contents;
 
         lseek(sf->fd,scan->offset,SEEK_SET);
-        read(sf->fd,buffer,sizeof(buffer));
+        bytesread = read(sf->fd,buffer,sizeof(buffer));
+        if (bytesread <= 4) {
+            continue;
+        }
+
         buffer[49] = '\0';
 
         for ( ptr = buffer+3,i=0; *ptr != ' ';ptr++,i++) buffer2[i] = *ptr;
