@@ -436,8 +436,11 @@ for fname in script_n:
 
 # patch silx
 if SILX:
-    if sys.platform.startswith("darwin") and PyInstaller.__version__ >= '6.0.0':
-        fname_dir = os.path.join(DISTDIR, script_n[0], "special_modules", "silx", "gui","qt")
+    if PyInstaller.__version__ >= '6.0.0':
+        if sys.platform.startswith("darwin"):
+            fname_dir = os.path.join(DISTDIR, script_n[0], "special_modules", "silx", "gui","qt")
+        else:
+            fname_dir = os.path.join(DISTDIR, script_n[0], "_internal", "silx", "gui","qt")
     else:
         fname_dir = os.path.join(DISTDIR, script_n[0], "silx", "gui","qt")
     for name in ["_qt.py", "__init__.py"]:
@@ -468,7 +471,10 @@ if SILX:
 # patch OpenCL
 if OPENCL:
     # pyopencl __init__.py needs to be patched
-    exe_win_dir = os.path.join(DISTDIR, script_n[0])
+    if PyInstaller.__version__ >= '6.0.0':
+        exe_win_dir = os.path.join(DISTDIR, script_n[0], "_internal")
+    else:
+        exe_win_dir = os.path.join(DISTDIR, script_n[0])
     initFile = os.path.join(exe_win_dir, "pyopencl", "__init__.py")
     logger.info("###################################################################")
     logger.info("Patching pyopencl file")
