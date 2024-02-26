@@ -399,8 +399,11 @@ def cleanup_cache(topdir):
 
 def replace_module(name):
     dest = os.path.join(DISTDIR, script_n[0])
-    if sys.platform.startswith("darwin") and PyInstaller.__version__ >= '6.0.0':
-        target = os.path.join(dest, "special_modules")
+    if PyInstaller.__version__ >= '6.0.0':
+        if sys.platform.startswith("darwin"):
+            target = os.path.join(dest, "special_modules")
+        else:
+            target = os.path.join(dest, "_internal")
         if not os.path.exists(target):
             os.mkdir(target)
         target = os.path.join(target, os.path.basename(name))
