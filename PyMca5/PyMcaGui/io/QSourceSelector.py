@@ -39,14 +39,17 @@ from PyMca5.PyMcaIO import spswrap as sps
 from PyMca5 import PyMcaDirs
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 
-BLISS = False
-if sys.version_info > (3, 5):
-    try:
-        from PyMca5.PyMcaCore import RedisTools
-        BLISS = True
-    except Exception:
-        _logger.info("Bliss data file direct support not available")
+#Fixme just a quick fix ... dropin replacement of bliss with tiled/bluesky
+BLISS = True
+# if sys.version_info > (3, 5):
+#     try:
+#         from PyMca5.PyMcaCore import RedisTools
+#         BLISS = True
+#     except Exception:
+#         _logger.info("Bliss data file direct support not available")
 
+from PyMca5.PyMcaCore import TiledTools
+#from PyMca5.PyMcaCore import RedisTools
 
 class QSourceSelector(qt.QWidget):
     sigSourceSelectorSignal = qt.pyqtSignal(object)
@@ -156,7 +159,7 @@ class QSourceSelector(qt.QWidget):
         if specsession is None:
             if sourcename in sps.getspeclist():
                 specsession=True
-            elif BLISS and sourcename in RedisTools.get_sessions_list():
+            elif BLISS and sourcename in TiledTools.get_sessions_list():
                 specsession = "bliss"
             else:
                 specsession=False
@@ -168,25 +171,26 @@ class QSourceSelector(qt.QWidget):
         if specsession == "bliss":
             specsession = False
             session = filename
-            node = RedisTools.get_node(session)
+            node = TiledTools.get_node(session)
             if not node:
                 txt = "No REDIS information retrieved from session %s"  % \
                         session
                 raise IOError(txt)
-            filename = RedisTools.get_session_filename(node)
-            if not len(filename):
-                txt = "Cannot retrieve last output filename from session %s"  % \
-                        session
-                raise IOError(txt)
-            if not os.path.exists(filename):         
-                txt = "Last output file <%s>  does not exist"  % filename
-                raise IOError(txt)
-            filename = [filename]
-            key = os.path.basename(filename[0])
-            try:
-                self._emitSourceSelectedOrReloaded(filename, key)
-            except Exception:
-                _logger.error("Problem opening %s" % filename[0])
+            #NOT GOING HERE AS WE DON'T WANT TO BE HYBRID FILE+DB FOR TILED
+            #
+            # if not len(filename):
+            #     txt = "Cannot retrieve last output filename from session %s"  % \
+            #             session
+            #     raise IOError(txt)
+            # if not os.path.exists(filename):         
+            #     txt = "Last output file <%s>  does not exist"  % filename
+            #     raise IOError(txt)
+            # filename = [filename]
+            # key = os.path.basename(filename[0])
+            # try:
+            #     self._emitSourceSelectedOrReloaded(filename, key)
+            # except Exception:
+            #     _logger.error("Problem opening %s" % filename[0])
             key = "%s" % session
             self._emitSourceSelectedOrReloaded([session], key)
             return
@@ -289,12 +293,12 @@ class QSourceSelector(qt.QWidget):
     def openBlissOrSpec(self):
         if not BLISS:
             return self.openSpec()
-        sessionList = RedisTools.get_sessions_list()
+        sessionList = TiledTools.get_sessions_list()
         if not len(sessionList):
             return self.openSpec()
         activeList = []
         for session in sessionList:
-            node = RedisTools.get_node(session)
+            node = TiledTools.get_node(session)
             if node:
                 activeList.append(session)
         if not len(activeList):
