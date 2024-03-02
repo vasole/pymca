@@ -1,5 +1,7 @@
 from tiled.client import from_uri,from_profile
 
+from databroker.queries import TimeRange
+
 ##fixme ... needs arg to connect to corret service
 #def get_tiled_connection():
 #    return from_uri("https://tiled-demo.blueskyproject.io")
@@ -23,7 +25,7 @@ class TiledAdaptor(object):
         if host=="opls":
             #specific hack for shen beamtime, just to reduce the scope
             from tiled.queries import FullText
-            self._client = self._client.search(FullText("shen"))
+            self._client = self._client.search(TimeRange(since='2024-03-02 01:00', until='2024-03-02 02:00'))
         elif prefix:
             self._client = TiledAdaptor.get_nested(self._client,prefix.split("/"))
 
@@ -84,7 +86,7 @@ class TiledAdaptor(object):
 #very simplistic and "bad" coding ... just going global tiled connection for now
 
 #just to be a little quicker ... only work against fxi first   
-#_TILED_CLIENT_opls=TiledAdaptor("opls")
+_TILED_CLIENT_opls=TiledAdaptor("opls")
 _TILED_CLIENT_fxi=TiledAdaptor("https://tiled-demo.blueskyproject.io","fxi/raw")
 
 
@@ -94,7 +96,7 @@ def get_sessions_list():
 def get_node(path):
     #path ... to be resolved from tiled...
     if path=="opls":
-        return _TILED_CLIENT_fxi #_TILED_CLIENT_opls
+        return _TILED_CLIENT_opls
     if path=="demo:fxi":
         return _TILED_CLIENT_fxi
     else:
