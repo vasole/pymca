@@ -1,6 +1,7 @@
 from tiled.client import from_uri,from_profile
 
 from databroker.queries import TimeRange
+from tiled.queries import In
 
 ##fixme ... needs arg to connect to corret service
 #def get_tiled_connection():
@@ -25,7 +26,9 @@ class TiledAdaptor(object):
         if host=="opls":
             #specific hack for shen beamtime, just to reduce the scope
             from tiled.queries import FullText
-            self._client = self._client.search(TimeRange(since='2024-03-02 01:00', until='2024-03-02 02:00'))
+            #self._client = self._client.search(TimeRange(since='2024-03-02 01:00', until='2024-03-02 02:00'))
+            self._client = self._client.search(In("plan_name",["reflection_scan","rel_scan"])).search(TimeRange(since='2024-03-01', until='2024-03-02 07:00'))
+
         elif prefix:
             self._client = TiledAdaptor.get_nested(self._client,prefix.split("/"))
 

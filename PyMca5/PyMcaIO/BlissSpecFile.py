@@ -233,15 +233,18 @@ class TiledScan(object):
 
         _logger.info("data shape %s ",data.shape) 
         i = 0
-        for key in keys:
-            cdata = numpy.array(self._primary_data[key])
-            n = cdata.size
-            if n >= n_expected:
-                data[i] = cdata[:n_expected]
-            else:
-                data[i, :n] = cdata
-                data[i, n:n_expected] = numpy.nan
-            i += 1
+        try:
+            for key in keys:
+                cdata = numpy.array(self._primary_data[key])
+                n = cdata.size
+                if n >= n_expected:
+                    data[i] = cdata[:n_expected]
+                else:
+                    data[i, :n] = cdata
+                    data[i, n:n_expected] = numpy.nan
+                i += 1
+        except Exception as e:
+            print(e)
         _logger.info("data shape %s, data %s",data.shape,data)
         return data
 
@@ -289,7 +292,7 @@ class TiledScan(object):
         _logger.info("mca called")
         return 0
         
-
+""" 
 class BlissSpecScan(object):
     def __init__(self, scanNode):
         _logger.info("__init__ called %s" % scanNode.name)
@@ -364,9 +367,7 @@ class BlissSpecScan(object):
         return ordered
 
     def alllabels(self):
-        """
-        These are the labels associated to the counters
-        """
+        #These are the labels associated to the counters
         _logger.info("alllabels called")
         self._read_counters()
         return [key for key in self._counters]
@@ -498,7 +499,7 @@ class BlissSpecScan(object):
             raise IndexError("Mca numbering starts at 1")
         elif number > self.nbmca():
             raise IndexError("Only %d MCAs in file" % self.nbmca())
-        return self._spectra[0][number - 1]
+        return self._spectra[0][number - 1] """
 
 def isBlissSpecFile(filename):
     if os.path.exists(filename):
