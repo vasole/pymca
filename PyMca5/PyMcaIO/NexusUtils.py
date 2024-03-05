@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2019 European Synchrotron Radiation Facility
+# Copyright (c) 2019-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -199,7 +199,7 @@ def isNxClass(h5group, *classes):
     Nexus class of existing h5py.Group (None when no Nexus instance)
 
     :param h5py.Group h5group:
-    :param \*classes: list(str) of Nexus classes
+    :param *classes: list(str) of Nexus classes
     :returns bool:
     """
     return nxClass(h5group) in classes
@@ -208,7 +208,7 @@ def isNxClass(h5group, *classes):
 def raiseIsNxClass(h5group, *classes):
     """
     :param h5py.Group h5group:
-    :param \*classes: list(str) of Nexus classes
+    :param *classes: list(str) of Nexus classes
     :raises RuntimeError:
     """
     if isNxClass(h5group, *classes):
@@ -218,7 +218,7 @@ def raiseIsNxClass(h5group, *classes):
 def raiseIsNotNxClass(h5group, *classes):
     """
     :param h5py.Group h5group:
-    :param \*classes: list(str) of Nexus classes
+    :param *classes: list(str) of Nexus classes
     :raises RuntimeError:
     """
     if not isNxClass(h5group, *classes):
