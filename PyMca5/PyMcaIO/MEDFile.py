@@ -199,7 +199,7 @@ class MEDFile(object):
                     x, sroi, item = tag.split('_')
                     iroi = int(sroi)
                     if item == "label":
-                        labels = str2str(val, delim='\&')
+                        labels = str2str(val, delim=r'&')
                         if labels[-1] == '':
                             labels = labels[:-1]
                         _roi_n[iroi] = labels
