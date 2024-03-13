@@ -41,16 +41,20 @@ import time
 import logging
 _logger = logging.getLogger(__name__)
 
-try:
-    import RedisTools as redis
-    HAS_REDIS = True
-except Exception:
-    try:
-        import PyMca5.PyMcaCore.RedisTools as redis
-        HAS_REDIS = True
-    except Exception:
-        _logger.info("Cannot import PyMca5.PyMcaCore.RedisTools")
-        HAS_REDIS = False
+from PyMca5.PyMcaCore import TiledTools
+HAS_REDIS = True
+
+
+# try:
+#     import RedisTools as redis
+#     HAS_REDIS = True
+# except Exception:
+#     try:
+#         import PyMca5.PyMcaCore.RedisTools as redis
+#         HAS_REDIS = True
+#     except Exception:
+#         _logger.info("Cannot import PyMca5.PyMcaCore.RedisTools")
+#         HAS_REDIS = False
 
 if HAS_REDIS:
     from collections import OrderedDict
@@ -59,28 +63,28 @@ class BlissSpecFile(object):
     def __init__(self, filename, nscans=10):
         """
         filename is the name of the bliss session
+
+        nscans to be ignored for tiled
         """
-        if not HAS_REDIS:
-            raise ImportError("Could not import RedisTools")
-        if filename not in redis.get_sessions_list():
-            raise IOError("Session <%s> not available" % filename)
         self._scan_nodes = []
         self._session = filename
-        self._filename = redis.get_session_filename(self._session)
-        self._scan_nodes = redis.get_session_scan_list(self._session,
-                                                  self._filename)
-        if len(self._scan_nodes) > nscans:
-            self._scan_nodes = self._scan_nodes[-10:]
+        # self._filename = redis.get_session_filename(self._session)
+        self._tiledAdaptor=TiledTools.get_node(filename)
+
+        #prefer to refer directly to tiled root, therefor no scan_nodes
+        #self._scan_nodes = TiledTools.get_node(filename)
+
         self.list()
         self.__lastTime = 0
         self.__lastKey = "0.0"
+        self._updatedOnce=False
 
     def list(self):
         """
         Return a string with all the scan keys separated by ,
         """
-        _logger.debug("list method called")
-        scanlist = ["%s" % scan.name.split("_")[0] for scan in self._scan_nodes]
+        _logger.info("list method called")
+        scanlist = [f"{x.metadata['summary']['scan_id']}" for x in self._tiledAdaptor.client.values()]
         self._list = ["%s.1" % idx for idx in scanlist]
         return ",".join(scanlist)
 
@@ -90,7 +94,9 @@ class BlissSpecFile(object):
         """
         _logger.info("__getitem__ called %s" % item)
         t0 = time.time()
+        _logger.info("trying to access %s",item)
         key = self._list[item]
+        _logger.info("got item %s", key)
         if key == self.__lastKey and (t0 - self.__lastTime) < 1:
             # less than one second since last call, return cached value
             _logger.info("Returning cached value for key %s" % key)
@@ -98,7 +104,7 @@ class BlissSpecFile(object):
             if key == self.__lastKey:
                 _logger.info("Re-reading value for key %s" % key)
             self.__lastKey = key
-            self.__lastItem = BlissSpecScan(self._scan_nodes[item])
+            self.__lastItem = TiledScan(key,self._tiledAdaptor)
             self.__lastTime = time.time()
         return self.__lastItem
 
@@ -115,54 +121,181 @@ class BlissSpecFile(object):
         """
         Gives back the number of scans in the file
         """
-        _logger.debug("scanno called")
-        return len(self._scan_nodes)
+        _logger.info("scanno called")
+        return len(self._tiledAdaptor._client)
 
     def allmotors(self):
-        _logger.debug("allmotors called")
+        _logger.info("allmotors called")
         return []
 
     def isUpdated(self):
-        _logger.debug("BlissSpecFile is updated called")
-        # get last scan
-        scan_nodes = redis.get_session_scan_list(self._session,
-                                                  self._filename)
-        if not len(scan_nodes):
-            # if we get no scans, information was emptied/lost and we'll get errors in any case
-            # just say the file was updated. Perhaps the application asks for an update
-            return True
-        scanlist = ["%s" % scan.name.split("_")[0] for scan in scan_nodes]
-        keylist = ["%s.1" % idx for idx in scanlist]
-        scankey = keylist[-1]
-
-        # if the last node is different, there are new data
-        if scankey != self._list[-1]:
+        _logger.info("BlissSpecFile is updated called")
+        
+        if not self._updatedOnce:
+            self._updatedOnce=True
             return True
 
-        # if the number of points or of mcas in the last node are different there are new data
-        # the problem is how to obtain the previous number of points and mcas but in any case
-        # we are going to read again the last scan
-        if self.__lastKey == scankey:
-            # we have old data available
-            previous_npoints = self.__lastItem.lines()
-            previous_nmca = self.__lastItem.nbmca()
+        #FIXME: UPDATE not implemented for tiled
 
-        # read back (I do not force to read for the time being)
-        scan = self.select(scankey)
-        npoints = scan.lines()
-        nmca = scan.nbmca()
-        if self.__lastKey == scankey:
-            if npoints > previous_npoints or nmca > previous_nmca:
-                _logger.info("BlissSpecFile <%s> updated. New last scan data" % self._session)
-                return True
-        # there might be new points or mcas in the last scan, but that is easy and fast
-        # to check by the main application because data are in cache
-        _logger.debug("BlissSpecFile <%s> NOT updated." % self._session)
+        # # get last scan
+        # scan_nodes = redis.get_session_scan_list(self._session,
+        #                                           self._filename)
+        # if not len(scan_nodes):
+        #     # if we get no scans, information was emptied/lost and we'll get errors in any case
+        #     # just say the file was updated. Perhaps the application asks for an update
+        #     return True
+        # scanlist = ["%s" % scan.name.split("_")[0] for scan in scan_nodes]
+        # keylist = ["%s.1" % idx for idx in scanlist]
+        # scankey = keylist[-1]
+
+        # # if the last node is different, there are new data
+        # if scankey != self._list[-1]:
+        #     return True
+
+        # # if the number of points or of mcas in the last node are different there are new data
+        # # the problem is how to obtain the previous number of points and mcas but in any case
+        # # we are going to read again the last scan
+        # if self.__lastKey == scankey:
+        #     # we have old data available
+        #     previous_npoints = self.__lastItem.lines()
+        #     previous_nmca = self.__lastItem.nbmca()
+
+        # # read back (I do not force to read for the time being)
+        # scan = self.select(scankey)
+        # npoints = scan.lines()
+        # nmca = scan.nbmca()
+        # if self.__lastKey == scankey:
+        #     if npoints > previous_npoints or nmca > previous_nmca:
+        #         _logger.info("BlissSpecFile <%s> updated. New last scan data" % self._session)
+        #         return True
+        # # there might be new points or mcas in the last scan, but that is easy and fast
+        # # to check by the main application because data are in cache
+        # _logger.info("BlissSpecFile <%s> NOT updated." % self._session)
         return False
 
+class TiledScan(object):
+    def __init__(self, scan_ref, tiled_adaptor):
+        self._scan_id=int(scan_ref.split(".")[0])
+        self._scoped_tiled=tiled_adaptor.get_node(scan_id=self._scan_id)
+        
+        #following the nsls2 specific structure in tiled
+        self._counters=None
+        
+        try:
+            self._primary_data=self._scoped_tiled["primary"]["data"]
+            self._tiledAdaptor=tiled_adaptor
+            self._read_counters()
+        except Exception:
+            print("Scan ", scan_ref, "not valid")
+            self._counters={}
+
+
+
+
+    def _read_counters(self, force=False):
+        _logger.info("_red_counters")
+        self._counters={x:(y.shape) for x,y in self._primary_data.items() if len(y.shape)==1}
+
+    def _sort_counters(self, counters):
+        _logger.info("_sort_counters")
+       
+    def alllabels(self):
+        """
+        These are the labels associated to the counters
+        """
+        _logger.info("alllabels called")
+        if self._counters is None:
+            self.read_counters()
+        return [key for key in self._counters]
+
+    def allmotors(self):
+        _logger.info("allmotors called")
+
+    def allmotorpos(self):
+        _logger.info("allmotorpos called")
+
+    def cols(self):
+        _logger.info("cols called")
+
+    def command(self):
+        _logger.info("command called")
+        return "still to be added"
+        #return self._scan_info.get("title", "No COMMAND")
+
+    def data(self):
+        # somehow I have to manage to get the same number of points in all counters
+        _logger.info("TiledScan data called")
+        keys = list(self._counters.keys())
+        n_expected = self.lines()
+        _logger.info("TiledScan data before data")
+        data = numpy.empty((len(keys), n_expected), dtype=numpy.float32)
+        _logger.info("TiledScan data after data")
+
+        _logger.info("data shape %s ",data.shape) 
+        i = 0
+        try:
+            for key in keys:
+                cdata = numpy.array(self._primary_data[key])
+                n = cdata.size
+                if n >= n_expected:
+                    data[i] = cdata[:n_expected]
+                else:
+                    data[i, :n] = cdata
+                    data[i, n:n_expected] = numpy.nan
+                i += 1
+        except Exception as e:
+            print(e)
+        _logger.info("data shape %s, data %s",data.shape,data)
+        return data
+
+    def datacol(self, col):
+        _logger.info("datacol called")
+        return self.data()[col, :]
+
+    def dataline(self,line):
+        _logger.info("dataline called")
+        return self.data()[:, line]
+
+    def date(self):
+        _logger.info("date called")
+        return "2024-04-23"  #FIXME
+
+    def fileheader(self, key=''):
+        _logger.info("fileheader called")
+        # this implementations returns the scan header instead of the correct
+        # keys #E (file), #D (date) #O0 (motor names)
+        
+
+    def header(self,key):
+        _logger.info("header called")
+
+    def order(self):
+        _logger.info("order called")
+        return 1
+
+    def number(self):
+       _logger.info("number called")
+        
+    def lines(self):
+        _logger.info("lines called")
+        if self._counters is None:
+            self._read_counters()
+        ##return number of counters
+        
+        return max(self._counters.values())[0]
+    
+    def nbmca(self):
+        _logger.info("nbmca called")
+        return 0
+
+    def mca(self,number):
+        _logger.info("mca called")
+        return 0
+        
+""" 
 class BlissSpecScan(object):
     def __init__(self, scanNode):
-        _logger.debug("__init__ called %s" % scanNode.name)
+        _logger.info("__init__ called %s" % scanNode.name)
         self._node = scanNode
         self._identification = scanNode.name.split("_")[0] + ".1"
         self._scan_info = redis.scan_info(self._node)
@@ -234,20 +367,18 @@ class BlissSpecScan(object):
         return ordered
 
     def alllabels(self):
-        """
-        These are the labels associated to the counters
-        """
-        _logger.debug("alllabels called")
+        #These are the labels associated to the counters
+        _logger.info("alllabels called")
         self._read_counters()
         return [key for key in self._counters]
 
     def allmotors(self):
-        _logger.debug("allmotors called")
+        _logger.info("allmotors called")
         positioners = self._motors.get("positioners_start", {})
         return [key for key in positioners if not hasattr(positioners[key], "endswith")]
 
     def allmotorpos(self):
-        _logger.debug("allmotorpos called")
+        _logger.info("allmotorpos called")
         positioners = self._motors.get("positioners_start", {})
         return [positioners[key] for key in positioners if not hasattr(positioners[key], "endswith")]
 
@@ -262,7 +393,7 @@ class BlissSpecScan(object):
 
     def data(self):
         # somehow I have to manage to get the same number of points in all counters
-        _logger.info("data called")
+        _logger.info("BlissSpecScan data called")
         self._read_counters(force=True)
         counters = self._counters
         keys = list(counters.keys())
@@ -368,7 +499,7 @@ class BlissSpecScan(object):
             raise IndexError("Mca numbering starts at 1")
         elif number > self.nbmca():
             raise IndexError("Only %d MCAs in file" % self.nbmca())
-        return self._spectra[0][number - 1]
+        return self._spectra[0][number - 1] """
 
 def isBlissSpecFile(filename):
     if os.path.exists(filename):

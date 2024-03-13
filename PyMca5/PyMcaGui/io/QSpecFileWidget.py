@@ -390,6 +390,10 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         if not len(sel):
             return
         info = self.data.getKeyInfo(sel[0])
+        _logger.info("__selectionChanged info data %s",self.data)
+        _logger.info("__selectionChanged info %s",info)
+        _logger.info("__selectionChanged sel %s",sel)
+        _logger.info("__selectionChanged sel[0] %s",sel[0])
         self.mcaTable.build(info)
         if False:
             # This does not work properly yet
