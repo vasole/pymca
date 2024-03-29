@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2019 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -216,25 +216,21 @@ def getElementCrossSections(element, energy=None, forced_shells=None):
     elif energy is None:
         energy = EPDL97_DICT[element]['EPDL97']['energy']
 
-    try:
-        n = len(energy)
-    except TypeError:
-        energy = numpy.array([energy])
-    if type(energy) in [type(1), type(1.0)]:
-        energy = numpy.array([energy])
-    elif type(energy) in [type([]), type((1,))]:
-        energy = numpy.array(energy)
+    if hasattr(energy, "__len__"):
+        energy = numpy.array(energy, copy=True)
+    else:
+        energy = numpy.array([energy], copy=True)
 
     binding = EPDL97_DICT[element]['binding']
     wdata = EPDL97_DICT[element]['EPDL97']
     ddict = {}
     ddict['energy']     = energy
-    ddict['coherent']   = 0.0 * energy
-    ddict['compton']    = 0.0 * energy
-    ddict['photo']      = 0.0 * energy
-    ddict['pair']       = 0.0 * energy
-    ddict['all other']  = 0.0 * energy
-    ddict['total']      = 0.0 * energy
+    ddict['coherent']   = numpy.zeros(energy.shape, dtype=numpy.float64)
+    ddict['compton']    = numpy.zeros(energy.shape, dtype=numpy.float64)
+    ddict['photo']      = numpy.zeros(energy.shape, dtype=numpy.float64)
+    ddict['pair']       = numpy.zeros(energy.shape, dtype=numpy.float64)
+    ddict['all other']  = numpy.zeros(energy.shape, dtype=numpy.float64)
+    ddict['total']      = numpy.zeros(energy.shape, dtype=numpy.float64)
     atomic_shells = ['M5', 'M4', 'M3', 'M2', 'M1', 'L3', 'L2', 'L1', 'K']
     for key in atomic_shells:
         ddict[key] = 0.0 * energy
@@ -255,6 +251,8 @@ def getElementCrossSections(element, energy=None, forced_shells=None):
             j0 = 0
         else:
             j0 = numpy.max(numpy.nonzero(wdata['energy'] < x), axis=1)
+            if hasattr(j0, "__len__"):
+                j0 = j0[0]
             j1 = j0 + 1
         x0 = wdata['energy'][j0]
         x1 = wdata['energy'][j1]
