@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2023 V.A. Sole, ESRF - D. Dale CHESS
+# Copyright (C) 2004-2024 V.A. Sole, ESRF - D. Dale CHESS
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -469,7 +469,9 @@ class H5FileProxy(H5NodeProxy):
                 _logger.debug("Using standard approach")
                 return self.file[data_path].keys()
         else:
-            return super().raw_keys()
+            file_path = self.file.filename
+            data_path = self.name
+            return self.file[data_path].keys()
 
     def raw_values(self):
         for _, value in self.raw_items():
