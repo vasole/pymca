@@ -262,7 +262,9 @@ class H5NodeProxy(object):
         if self.__sorting or not self._children:
             # obtaining the lock here is necessary, otherwise application can
             # freeze if navigating tree while data is processing
-            if not isinstance(name, h5py.File):
+            print(self.file)
+            if not isinstance(self.file, h5py.File):
+                    items = list(self.raw_items())
                     tmpList = list(self.raw_values())
                     finalList = tmpList
                     for i in range(len(finalList)):
