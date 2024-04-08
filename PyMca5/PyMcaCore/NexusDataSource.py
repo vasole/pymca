@@ -256,6 +256,7 @@ class NexusDataSource(object):
             except TypeError:
                 try:
                     phynxInstance = h5open(name)
+                    print(phynxInstance)
                 except IOError:
                     if 'FAMILY DRIVER' in sys.exc_info()[1].args[0].upper():
                         FAMILY = True
