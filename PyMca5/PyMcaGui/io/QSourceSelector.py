@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -225,7 +225,11 @@ class QSourceSelector(qt.QWidget):
                     filename = [filename]
             if not os.path.exists(filename[0]):
                 if '%' not in filename[0]:
-                    raise IOError("File %s does not exist" % filename[0])
+                    if filename[0].startswith("tiled"):
+                        print("TODO: Tiled")
+                        pass
+                    else:
+                        raise IOError("File %s does not exist" % filename[0])
             #check if it is a stack
             if len(filename) > 1:
                 key = "STACK from %s to %s" % (filename[0], filename[-1])

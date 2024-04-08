@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -689,6 +689,9 @@ class QNexusWidget(qt.QWidget):
             mcaList = []
             mcaShapeList = []
             if posixpath.dirname(entryName) != entryName:
+                if ddict["file"].startswith("https:"):
+                    print("TODO better handling of tiled sources")
+                    ddict["file"] = "tiled:" + ddict["file"]
                 h5file = HDF5Widget.h5open(ddict['file'])
                 try:
                     measurement = NexusTools.getMeasurementGroup(h5file,
