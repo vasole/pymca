@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -242,6 +242,8 @@ class NexusDataSource(object):
                 if '%' in name:
                    phynxInstance = h5py.File(name, 'r',
                                               driver='family')
+                elif name.startswith("tiled"):
+                    print("trying tiled source")
                 else:
                     raise IOError("File %s does not exists" % name)
             try:
