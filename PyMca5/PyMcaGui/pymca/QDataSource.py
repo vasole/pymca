@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -154,6 +154,8 @@ def getSourceType(sourceName0):
                 except Exception:
                     pass
             return SpecFileDataSource.SOURCE_TYPE
+    elif sourceName.startswith("tiled:"):
+        return NexusDataSource.SOURCE_TYPE
     else:
         return QSpsDataSource.SOURCE_TYPE
 
