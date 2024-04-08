@@ -262,14 +262,22 @@ class H5NodeProxy(object):
         if self.__sorting or not self._children:
             # obtaining the lock here is necessary, otherwise application can
             # freeze if navigating tree while data is processing
-            if 1: #with self.file.plock:
+            if not isinstance(name, h5py.File):
+                    tmpList = list(self.raw_values())
+                    finalList = tmpList
+                    for i in range(len(finalList)):
+                        finalList[i]._posixPath = posixpath.join(self.name,
+                                                               items[i][0])
+                    self._children = [H5NodeProxy(self.file, i, self)
+                                      for i in finalList]
+            else: #with self.file.plock:
                 if 1:
                     try:
                         # this returns (str, str) in case of dealing with a broken link
                         items = list(self.raw_items())
                     except Exception:
-                       items = []
-                       _logger.warning("Cannot obtain items list. Ignoring")
+                        items = []
+                        _logger.warning("Cannot obtain items list. Ignoring")
                 else:
                     # this returns (str, None) in case of dealing with a broken link
                     items = list(self.getNode(self.name).items())
