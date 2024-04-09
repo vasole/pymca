@@ -263,7 +263,10 @@ class H5NodeProxy(object):
             # obtaining the lock here is necessary, otherwise application can
             # freeze if navigating tree while data is processing
             print(self.file)
-            if not isinstance(self.file, h5py.File):
+            print("self.name ", self.name)
+            print("Enter this line for tiled support")
+            print("Trying currently to fully support SPEC as HDF5")
+            if 0 and not isinstance(self.file, h5py.File):
                     items = list(self.raw_items())
                     tmpList = list(self.raw_values())
                     finalList = tmpList
@@ -287,7 +290,12 @@ class H5NodeProxy(object):
                     # better handling of external links
                     finalList = h5py_sorting(items, sorting_list=self.__sorting_list)
                     for i in range(len(finalList)):
-                        if finalList[i][1] and not isinstance(finalList[i][1], str):
+                        # avoid an error at silx level with the linechecking "if finalList[i][1] and "
+                        finalListIsTrue = True
+                        if hasattr(finalList[i][1], "shape"):
+                            if not len(finalList[i][1].shape):
+                                 finalListIsTrue = False
+                        if finalListIsTrue and not isinstance(finalList[i][1], str):
                             finalList[i][1]._posixPath = posixpath.join(self.name,
                                                                finalList[i][0])
                         else:
