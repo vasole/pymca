@@ -165,6 +165,7 @@ class QSourceSelector(qt.QWidget):
     def openFile(self, filename=None, justloaded=None, specsession=False):
         _logger.debug("openfile = %s", filename)
         staticDialog = False
+        fileFilter = None
         if specsession == "bliss":
             specsession = False
             session = filename
@@ -243,11 +244,12 @@ class QSourceSelector(qt.QWidget):
                                     "No shared memory source named %s" % key)
                 return
 
-        self._emitSourceSelectedOrReloaded(filename, key)
+        self._emitSourceSelectedOrReloaded(filename, key, filefilter=fileFilter)
 
-    def _emitSourceSelectedOrReloaded(self, filename, key):
+    def _emitSourceSelectedOrReloaded(self, filename, key, filefilter=None):
         ddict = {}
         ddict["event"] = "NewSourceSelected"
+        ddict["filter"] = filefilter
         if key in self.mapCombo.keys():
             if self.mapCombo[key] == filename:
                 #Reloaded event

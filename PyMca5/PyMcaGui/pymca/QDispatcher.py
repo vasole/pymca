@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -62,6 +62,8 @@ class QDispatcher(qt.QWidget):
                         "JCAMP-DX Files (*.jdx *.JDX *.dx *.DX)"]
         if QDataSource.NEXUS:
             fileTypeList.append("HDF5 Files (*.nxs *.hdf *.h5 *.hdf5)")
+            if "silx" in sys.modules:
+                fileTypeList.append("HDF5-like Files (*)")
         fileTypeList.append("All Files (*)")
 
         self.sourceSelector = QSourceSelector.QSourceSelector(self,
@@ -250,7 +252,15 @@ class QDispatcher(qt.QWidget):
         _logger.debug("_sourceSelectorSlot(self, ddict)")
         _logger.debug("ddict = %s", ddict)
         if ddict["event"] == "NewSourceSelected":
-            source = QDataSource.QDataSource(ddict["sourcelist"])
+            # use the supplied filter in case of HDF5-like (silx)
+            ffilter = ddict.get("filter", "None")
+            if ffilter in [None, "None"]:
+                source_type = None
+            elif ffilter.startswith("HDF5"):
+                source_type = QDataSource.NexusDataSource.SOURCE_TYPE
+            else:
+                source_type = None
+            source = QDataSource.QDataSource(ddict["sourcelist"], source_type=source_type)
             self.sourceList.append(source)
             sourceType = source.sourceType
             self.selectorWidget[sourceType].setDataSource(source)
@@ -373,4 +383,5 @@ def test():
     app.exec()
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
     test()
