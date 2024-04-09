@@ -262,10 +262,6 @@ class H5NodeProxy(object):
         if self.__sorting or not self._children:
             # obtaining the lock here is necessary, otherwise application can
             # freeze if navigating tree while data is processing
-            print(self.file)
-            print("self.name ", self.name)
-            print("Enter this line for tiled support")
-            print("Trying currently to fully support SPEC as HDF5")
             if 0 and not isinstance(self.file, h5py.File):
                     items = list(self.raw_items())
                     tmpList = list(self.raw_values())
@@ -680,6 +676,7 @@ class FileModel(qt.QAbstractItemModel):
         ddict = {}
         ddict['event'] = "fileAppended"
         ddict['filename'] = filename
+        print("filename = ", filename)
         self.sigFileAppended.emit(ddict)
         return phynxFile
 
@@ -892,6 +889,10 @@ class HDF5Widget(FileView):
         ddict = {}
         ddict['event'] = event
         ddict['file']  = item.file.filename
+        # awful patch to support tiled sources where silx removes "tiled:" from the name
+        print("TODO: Issue with silx removing tiled: from the file name")
+        if ddict['file'].startswith("http"):
+            ddict['file'] = "tiled:" + ddict['file']
         ddict['name']  = item.name
         ddict['type']  = item.type
         ddict['dtype'] = item.dtype
@@ -1141,6 +1142,7 @@ if __name__ == "__main__":
     app = qt.QApplication(sys.argv)
     fileModel = FileModel()
     fileView = HDF5Widget(fileModel)
+    print("sys.argv[1]", sys.argv[1])
     phynxFile = fileModel.openFile(sys.argv[1])
     def mySlot(ddict):
         print(ddict)
