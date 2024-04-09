@@ -689,9 +689,6 @@ class QNexusWidget(qt.QWidget):
             mcaList = []
             mcaShapeList = []
             if posixpath.dirname(entryName) != entryName:
-                if ddict["file"].startswith("https:"):
-                    print("TODO better handling of tiled sources")
-                    ddict["file"] = "tiled:" + ddict["file"]
                 h5file = HDF5Widget.h5open(ddict['file'])
                 try:
                     measurement = NexusTools.getMeasurementGroup(h5file,
@@ -829,7 +826,7 @@ class QNexusWidget(qt.QWidget):
                         elif auto == "REPLACE":
                             self._replaceAction()
         if ddict['event'] == "itemDoubleClicked":
-            if ddict['type'] in ['Dataset']:
+            if ddict['type'] in ['Dataset', "TiledDataset"]:
                 currentIndex = self.tableTab.currentIndex()
                 text = safe_str(self.tableTab.tabText(currentIndex))
                 if text.upper() != "USER":
@@ -1034,6 +1031,11 @@ class QNexusWidget(qt.QWidget):
                 #nothing to plot
                 continue
             mcaIdx = 0
+            if filename not in self.data.sourceName:
+                print("TODO silx tiled handling")
+                if ("tiled:" + filename) in self.data.sourceName:
+                    filename = "tiled:" + filename 
+
             for yMca in mcaSelection['selectionindex']:
                 sel = {}
                 sel['SourceName'] = self.data.sourceName * 1
@@ -1101,6 +1103,7 @@ class QNexusWidget(qt.QWidget):
                     else:
                         actualDatasetPath = posixpath.join(entry,
                                                 cntSelection['cntlist'][yCnt])
+                    print("actualDatasetPath = ", actualDatasetPath)
                     try:
                         actualDataset = phynxFile[actualDatasetPath]
                     except KeyError:
