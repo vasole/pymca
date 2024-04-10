@@ -262,16 +262,7 @@ class H5NodeProxy(object):
         if self.__sorting or not self._children:
             # obtaining the lock here is necessary, otherwise application can
             # freeze if navigating tree while data is processing
-            if 0 and not isinstance(self.file, h5py.File):
-                    items = list(self.raw_items())
-                    tmpList = list(self.raw_values())
-                    finalList = tmpList
-                    for i in range(len(finalList)):
-                        finalList[i]._posixPath = posixpath.join(self.name,
-                                                               items[i][0])
-                    self._children = [H5NodeProxy(self.file, i, self)
-                                      for i in finalList]
-            else: #with self.file.plock:
+            if 1: #with self.file.plock:
                 if 1:
                     try:
                         # this returns (str, str) in case of dealing with a broken link
@@ -676,7 +667,6 @@ class FileModel(qt.QAbstractItemModel):
         ddict = {}
         ddict['event'] = "fileAppended"
         ddict['filename'] = filename
-        print("filename = ", filename)
         self.sigFileAppended.emit(ddict)
         return phynxFile
 
@@ -890,8 +880,8 @@ class HDF5Widget(FileView):
         ddict['event'] = event
         ddict['file']  = item.file.filename
         # awful patch to support tiled sources where silx removes "tiled:" from the name
-        print("TODO: Issue with silx removing tiled: from the file name")
         if ddict['file'].startswith("http"):
+            print("TODO: Issue with silx removing tiled: from the file name")
             ddict['file'] = "tiled:" + ddict['file']
         ddict['name']  = item.name
         ddict['type']  = item.type
@@ -1142,7 +1132,6 @@ if __name__ == "__main__":
     app = qt.QApplication(sys.argv)
     fileModel = FileModel()
     fileView = HDF5Widget(fileModel)
-    print("sys.argv[1]", sys.argv[1])
     phynxFile = fileModel.openFile(sys.argv[1])
     def mySlot(ddict):
         print(ddict)
