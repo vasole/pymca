@@ -1084,6 +1084,9 @@ class QNexusWidget(qt.QWidget):
                 #deal with the case the "entry" is a dataset hunging at root level
                 if isinstance(phynxFile[entry], h5py.Dataset):
                     entry = "/"
+                elif hasattr(phynxFile[entry], "shape"):
+                    # HDF5-like dataset at top level
+                    entry = "/"
                 sel['selection']['entry'] = entry
                 sel['selection']['key'] = "%d.%d" % (fileIndex+1, entryIndex+1)
                 sel['selection']['x'] = cntSelection['x']
