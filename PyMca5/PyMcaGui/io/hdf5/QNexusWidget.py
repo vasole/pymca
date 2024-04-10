@@ -1083,11 +1083,11 @@ class QNexusWidget(qt.QWidget):
                 sel['selection']['sourcename'] = filename
                 #deal with the case the "entry" is a dataset hunging at root level
                 if isinstance(phynxFile[entry], h5py.Dataset):
-                    _logger.info("HDF5 dataset at root level)
+                    _logger.info("HDF5 dataset at root level")
                     entry = "/"
                 elif hasattr(phynxFile[entry], "shape"):
                     # HDF5-like dataset at top level
-                    _logger.info("HDF5-like dataset at root level)
+                    _logger.info("HDF5-like dataset at root level")
                     entry = "/"
                 sel['selection']['entry'] = entry
                 sel['selection']['key'] = "%d.%d" % (fileIndex+1, entryIndex+1)
