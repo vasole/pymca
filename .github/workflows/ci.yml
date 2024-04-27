@@ -31,13 +31,6 @@ jobs:
             QT_BINDING: PyQt5==5.14.1
             XVFB_RUN: xvfb-run -a
 
-          - name-suffix: "PySide6 sdist"
-            os: ubuntu-latest
-            python-version: 3.8
-            BUILD_COMMAND: sdist
-            QT_BINDING: PySide6
-            XVFB_RUN: xvfb-run -a
-
           - name-suffix: "PySide6 bdist_wheel"
             os: ubuntu-latest
             python-version: "3.10"
