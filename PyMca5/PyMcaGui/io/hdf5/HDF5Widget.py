@@ -880,9 +880,9 @@ class HDF5Widget(FileView):
         ddict['event'] = event
         ddict['file']  = item.file.filename
         # awful patch to support tiled sources where silx removes "tiled:" from the name
-        if ddict['file'].startswith("http"):
-            print("TODO: Issue with silx removing tiled: from the file name")
-            ddict['file'] = "tiled:" + ddict['file']
+        #if ddict['file'].startswith("http"):
+        #    print("TODO: Issue with silx removing tiled: from the file name")
+        #    ddict['file'] = "tiled:" + ddict['file']
         ddict['name']  = item.name
         ddict['type']  = item.type
         ddict['dtype'] = item.dtype

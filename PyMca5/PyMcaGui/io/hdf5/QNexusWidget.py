@@ -1033,7 +1033,6 @@ class QNexusWidget(qt.QWidget):
             mcaIdx = 0
             if filename not in self.data.sourceName:
                 if ("tiled:" + filename) in self.data.sourceName:
-                    print("TODO silx tiled handling")
                     filename = "tiled:" + filename 
 
             for yMca in mcaSelection['selectionindex']:

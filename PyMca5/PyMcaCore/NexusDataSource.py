@@ -60,6 +60,8 @@ try:
 except Exception:
     silxh5open = None
 
+_logger = logging.getLogger(__name__)
+
 def h5open(filename):
     try:
         # try to open as usual using h5py
@@ -83,8 +85,6 @@ def h5open(filename):
                     _logger.info("Cannot open %s using silx" % filename)
             # give back the original error
             return h5py.File(filename, "r")
-
-_logger = logging.getLogger(__name__)
 
 #sorting method
 def h5py_sorting(object_list):
@@ -242,8 +242,8 @@ class NexusDataSource(object):
                 if '%' in name:
                    phynxInstance = h5py.File(name, 'r',
                                               driver='family')
-                elif name.startswith("tiled"):
-                    print("trying tiled source")
+                elif name.startswith("tiled") or name.startswith("http"):
+                    _logger.debug("trying silx source")
                 else:
                     raise IOError("File %s does not exists" % name)
             try:
@@ -256,7 +256,6 @@ class NexusDataSource(object):
             except TypeError:
                 try:
                     phynxInstance = h5open(name)
-                    print(phynxInstance)
                 except IOError:
                     if 'FAMILY DRIVER' in sys.exc_info()[1].args[0].upper():
                         FAMILY = True

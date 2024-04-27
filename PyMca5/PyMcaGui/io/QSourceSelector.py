@@ -226,8 +226,8 @@ class QSourceSelector(qt.QWidget):
                     filename = [filename]
             if not os.path.exists(filename[0]):
                 if '%' not in filename[0]:
-                    if filename[0].startswith("tiled"):
-                        print("TODO: Tiled")
+                    if filename[0].startswith("tiled") or \
+                       filename[0].startswith("http"):
                         pass
                     else:
                         raise IOError("File %s does not exist" % filename[0])

@@ -70,7 +70,7 @@ test_script:
     - "pip install silx"
     - "pip install PyQt5"
     - "FOR %%F IN (dist\\PyMca5*.*) DO (
-        pip install %%F
+        pip install --pre %%F
       )"
 
     # Print Python info

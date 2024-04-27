@@ -154,7 +154,10 @@ def getSourceType(sourceName0):
                 except Exception:
                     pass
             return SpecFileDataSource.SOURCE_TYPE
-    elif sourceName.startswith("tiled:"):
+    elif sourceName.startswith("tiled:") or \
+         sourceName.startswith(r"http:/") or \
+         sourceName.startswith(r"https:/"):
+        # only chance is to use silx via an h5py-like API
         return NexusDataSource.SOURCE_TYPE
     else:
         return QSpsDataSource.SOURCE_TYPE
