@@ -154,7 +154,7 @@ def getSourceType(sourceName0):
                 except Exception:
                     pass
             return SpecFileDataSource.SOURCE_TYPE
-    elif sourceName.startswith("tiled:") or \
+    elif (sourceName.startswith("tiled") and ("http" in sourceName)) or \
          sourceName.startswith(r"http:/") or \
          sourceName.startswith(r"https:/"):
         # only chance is to use silx via an h5py-like API
