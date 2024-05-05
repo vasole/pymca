@@ -27,12 +27,14 @@ __author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+import os
 import sys
 import posixpath
 import h5py
 import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaCore import DataObject
+from PyMca5.PyMcaCore.NexusDataSource import silxh5open
 from PyMca5.PyMcaGui.io.hdf5 import QNexusWidget
 from PyMca5.PyMcaGui.pymca import QStackWidget
 from PyMca5.PyMcaIO import HDF5Stack1D
@@ -160,7 +162,16 @@ class PyMcaNexusWidget(QNexusWidget.QNexusWidget):
             stack = phynxFile[name]
         else:
             #create a new instance
-            phynxFile = h5py.File(filename, 'r')
+            if os.path.exists(filename):
+                # this already tries silx
+                phynxFile = h5py.File(filename, "r")
+            elif '%' in name:
+                try:
+                    phynxFile = h5py.File(name, 'r', driver='family')
+                except Exception:
+                    phynxFile = silxh5open(filename)
+            else:
+                phynxFile = silxh5open(filename)
             stack = phynxFile[name]
 
         # try to find out the "energy" axis
