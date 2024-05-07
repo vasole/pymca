@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2020-2023 European Synchrotron Radiation Facility
+# Copyright (c) 2020-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -64,7 +64,7 @@ else:
 def _labelCythonKMeans(x, k):
     labels, means, iterations, converged = _kmeans.kmeans(x, k)
     return {
-        "labels": numpy.array(labels, dtype=numpy.int32, copy=False),
+        "labels": numpy.asarray(labels, dtype=numpy.int32),
         "means": means,
         "iterations": iterations,
         "converged": converged,
@@ -79,7 +79,7 @@ def _labelMdp(x, k):
         classifier.train(x[i : i + 1])
     # classifier.train(x)
     labels = classifier.label(x)
-    return {"labels": numpy.array(labels, dtype=numpy.int32, copy=False)}
+    return {"labels": numpy.asarray(labels, dtype=numpy.int32)}
 
 
 def _labelScikitLearn(x, k):
@@ -91,7 +91,7 @@ def _labelScikitLearn(x, k):
     # labels = km.predict(x)
     converged = len(km.cluster_centers_) == len(labels)
     return {
-        "labels": numpy.array(labels, dtype=numpy.int32, copy=False),
+        "labels": numpy.asarray(labels, dtype=numpy.int32),
         "means": km.cluster_centers_,
         "iterations": km.n_iter_,
         "converged": converged,

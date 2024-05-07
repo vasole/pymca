@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -44,8 +44,8 @@ class SimpleMath(object):
                        "SG smoothed 5 point"]
 
     def derivate(self,xdata,ydata, xlimits=None, option=None):
-        x=numpy.array(xdata, copy=False, dtype=numpy.float64)
-        y=numpy.array(ydata, copy=False, dtype=numpy.float64)
+        x=numpy.asarray(xdata, dtype=numpy.float64)
+        y=numpy.asarray(ydata, dtype=numpy.float64)
         if xlimits is not None:
             i1=numpy.nonzero((xdata>=xlimits[0])&\
                                (xdata<=xlimits[1]))[0]
@@ -211,7 +211,7 @@ class SimpleMath(object):
         else:
             ydata=self.y
         f=[0.25,0.5,0.25]
-        result=numpy.array(ydata, copy=False, dtype=numpy.float64)
+        result=numpy.asarray(ydata, dtype=numpy.float64)
         if len(result) > 1:
             result[1:-1]=numpy.convolve(result,f,mode=0)
             result[0]=0.5*(result[0]+result[1])
