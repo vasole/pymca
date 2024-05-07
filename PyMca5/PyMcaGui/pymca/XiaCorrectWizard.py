@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -477,13 +477,13 @@ class XiaCorrectWizard(qt.QWizard):
         self.addPage(self.output)
         #, "Output Directory")
 
-        finish= self.button(self.FinishButton)
+        finish= self.button(qt.QWizard.FinishButton)
         font= finish.font()
         font.setBold(1)
         finish.setFont(font)
         finish.setText("Start")
 
-        nnext = self.button(self.NextButton)
+        nnext = self.button(qt.QWizard.NextButton)
         nnext.clicked.connect(self.next)
 
         #self.setFinishEnabled(self.output, 1)
