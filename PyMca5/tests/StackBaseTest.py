@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -41,7 +41,7 @@ class DummyArray(object):
 
         This allows detection of the PyMca bug track issue 3544665
         """
-        self.data = numpy.array(data, copy=False)
+        self.data = numpy.asarray(data)
 
     def __getitem__(self, *var):
         if len(var) == 1:
