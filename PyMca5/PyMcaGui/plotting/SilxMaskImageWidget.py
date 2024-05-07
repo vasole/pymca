@@ -1,5 +1,5 @@
 # /*#########################################################################
-# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -142,7 +142,7 @@ class MyMaskToolsWidget(MaskToolsWidget):
                  The mask can be cropped or padded to fit active image,
                  the returned shape is that of the active image.
         """
-        mask = numpy.array(mask, copy=False, dtype=numpy.uint8)
+        mask = numpy.asarray(mask, dtype=numpy.uint8)
         if len(mask.shape) != 2:
             # _logger.error('Not an image, shape: %d', len(mask.shape))
             return None

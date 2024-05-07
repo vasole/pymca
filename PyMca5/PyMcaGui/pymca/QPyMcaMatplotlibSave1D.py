@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -482,8 +482,8 @@ class QPyMcaMatplotlibSave(FigureCanvas):
                       linestyle = None,
                       marker=None,
                       alias = None,**kw):
-        x = numpy.array(x, copy=False)
-        y = numpy.array(y, copy=False)
+        x = numpy.asarray(x)
+        y = numpy.asarray(y)
         if self.limitsSet is not None:
             n = self._filterData(x, y)
             if not len(n):
