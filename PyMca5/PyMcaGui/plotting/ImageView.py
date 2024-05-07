@@ -2,10 +2,10 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 # ###########################################################################*/
-__author__ = "T. Vincent - ESRF Data Analysis"
+__author__ = "T. Vincent - ESRF"
 __contact__ = "thomas.vincent@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -754,7 +754,11 @@ class ImageView(qt.QWidget):
             self._imagePlot.removeImage(self._imageLegend, replot=False)
             return
 
-        data = np.array(image, order='C', copy=copy)
+        if copy:
+            data = np.array(image, order='C', copy=True)
+        else:
+            data = np.asarray(image, order='C')
+
         assert data.size != 0
         assert len(data.shape) == 2
         height, width = data.shape
