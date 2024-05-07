@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -280,7 +280,7 @@ class XASNormalizationWindow(qt.QWidget):
             self.energy = numpy.arange(len(spectrum)).astype(numpy.float64)
         else:
             self.energy = energy
-        self.spectrum = numpy.array(spectrum, dtype=numpy.float64, copy=False) 
+        self.spectrum = numpy.asarray(spectrum, dtype=numpy.float64) 
         self.parametersWidget = XASNormalizationParametersWidget(self)
         self.graph = PlotWindow.PlotWindow(self, backend=backend,
                                            plugins=False, newplot=False)

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -230,13 +230,13 @@ class NumpyArrayTableModel(qt.QAbstractTableModel):
         errmsg = "Inconsistent shape for color array, should be %s or %s" % valid_shapes
 
         if bgcolors is not None:
-            bgcolors = numpy.array(bgcolors, copy=False)
+            bgcolors = numpy.asarray(bgcolors)
             assert bgcolors.shape in valid_shapes, errmsg
 
         self._bgcolors = bgcolors
 
         if fgcolors is not None:
-            fgcolors = numpy.array(fgcolors, copy=False)
+            fgcolors = numpy.asarray(fgcolors)
             assert fgcolors.shape in valid_shapes, errmsg
 
         self._fgcolors = fgcolors
