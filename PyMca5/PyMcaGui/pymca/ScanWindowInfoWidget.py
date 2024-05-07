@@ -29,7 +29,7 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
-f.array
+
 import numpy
 from PyMca5.PyMcaGui import PyMcaQt as qt
 import logging
