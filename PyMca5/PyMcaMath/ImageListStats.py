@@ -1,5 +1,5 @@
 # /*##########################################################################
-# Copyright (C) 2023 European Synchrotron Radiation Facility
+# Copyright (C) 2023-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -53,7 +53,7 @@ def arrayListMeanRatioAndMedianRatio(imageList, mask=None):
             goodIndex = numpy.isfinite(image0) & numpy.isfinite(image1)
             image0 = image0[goodIndex]
             image1 = image1[goodIndex]
-            mean_ratio = image0 / numpy.array(image1, copy=False, dtype=numpy.float64)
+            mean_ratio = image0 / numpy.asarray(image1, dtype=numpy.float64)
             goodIndex = numpy.isfinite(mean_ratio)
             mean_ratio = mean_ratio[goodIndex]
             median_ratio = numpy.median(mean_ratio)

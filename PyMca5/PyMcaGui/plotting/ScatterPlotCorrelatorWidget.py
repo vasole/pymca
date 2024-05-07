@@ -1,8 +1,8 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
-# the ESRF by the Software group.
+# the ESRF.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -87,7 +87,10 @@ class ScatterPlotCorrelatorWidget(MaskScatterWidget.MaskScatterWidget):
 
     def addSelectableItem(self, item, label=None, copy=True):
         # we always keep a copy by default
-        item = numpy.array(item, dtype=numpy.float32, copy=copy)
+        if copy:
+            item = numpy.array(item, dtype=numpy.float32, copy=True)
+        else:
+            item = numpy.asarray(item, dtype=numpy.float32)
         if label is None:
             label = "Unnamed 00"
             i = 0

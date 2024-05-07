@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -117,7 +117,7 @@ class Shape2D(object):
     def __init__(self, points, fill='solid', stroke=True,
                  fillColor=(0., 0., 0., 1.), strokeColor=(0., 0., 0., 1.),
                  strokeClosed=True):
-        self.vertices = np.array(points, dtype=np.float32, copy=False)
+        self.vertices = np.asarray(points, dtype=np.float32)
         self.strokeClosed = strokeClosed
 
         self._indices = buildFillMaskIndices(len(self.vertices))

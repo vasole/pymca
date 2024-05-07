@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -170,7 +170,7 @@ class StackROIBatch(object):
                     rawSum = 0.0
                     netSum = 0.0
                 else:
-                    roichunk = numpy.array(chunk[:, idx[j]], copy=False, dtype=numpy.float64)
+                    roichunk = numpy.asarray(chunk[:, idx[j]], dtype=numpy.float64)
                     rawSum = roichunk.sum(axis=1, dtype=numpy.float64)
                     deltaX = xw[j][iXMaxList[j]] - xw[j][iXMinList[j]]
                     left = roichunk[:, iXMinList[j]]

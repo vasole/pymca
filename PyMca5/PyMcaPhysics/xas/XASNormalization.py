@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -51,7 +51,7 @@ def e2k(energy, e0=0.0, units="eV"):
         e2k(energy, e0=0.0): converts from E (eV) to k (A^-1)
         note: we use the convention that points with E<e0 will have negative k
     """
-    energy = numpy.array(energy, copy=False, dtype=numpy.float64)
+    energy = numpy.asarray(energy, dtype=numpy.float64)
     if units.lower() != "ev":
         energy *= 1000.
         e0 *= 1000.
@@ -144,8 +144,8 @@ def estimateXANESEdge(spectrum, energy=None, npoints=5, full=False,
     if sanitize:
         if energy is None:
             energy = numpy.arange(len(spectrum))
-        x = numpy.array(energy, dtype=numpy.float64, copy=False)
-        y = numpy.array(spectrum, dtype=numpy.float64, copy=False)
+        x = numpy.asarray(energy, dtype=numpy.float64)
+        y = numpy.asarray(spectrum, dtype=numpy.float64)
         # make sure data are sorted
         idx = energy.argsort(kind='mergesort')
         x = numpy.take(energy, idx)

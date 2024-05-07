@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -1323,7 +1323,7 @@ class OpenGLPlotCanvas(PlotBackend):
                     RuntimeWarning)
                 data = np.array(data, dtype=np.float32, order='C')
             else:
-                data = np.array(data, copy=False, order='C')
+                data = np.asarray(data, order='C')
             assert data.dtype in (np.float32, np.uint8, np.uint16)
 
             if colormap is None:
@@ -1447,8 +1447,8 @@ class OpenGLPlotCanvas(PlotBackend):
             yMin, yMax = yList
             yList = np.array((yMin, yMax, yMax, yMin))
         else:
-            xList = np.array(xList, copy=False)
-            yList = np.array(yList, copy=False)
+            xList = np.asarray(xList)
+            yList = np.asarray(yList)
 
         if self._plotFrame.xAxis.isLog and xList.min() <= 0.:
             raise RuntimeError(
@@ -1501,13 +1501,13 @@ class OpenGLPlotCanvas(PlotBackend):
         if legend is None:
             legend = self._UNNAMED_ITEM
 
-        x = np.array(x, dtype=np.float32, copy=False, order='C')
-        y = np.array(y, dtype=np.float32, copy=False, order='C')
+        x = np.asarray(x, dtype=np.float32, order='C')
+        y = np.asarray(y, dtype=np.float32, order='C')
         if xerror is not None:
-            xerror = np.array(xerror, dtype=np.float32, copy=False, order='C')
+            xerror = np.asarray(xerror, dtype=np.float32, order='C')
             assert np.all(xerror >= 0.)
         if yerror is not None:
-            yerror = np.array(yerror, dtype=np.float32, copy=False, order='C')
+            yerror = np.asarray(yerror, dtype=np.float32, order='C')
             assert np.all(yerror >= 0.)
 
         behaviors = set()

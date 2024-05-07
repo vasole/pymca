@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2022 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -28,6 +28,7 @@ __author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+
 
 import numpy
 from PyMca5.PyMcaGui import PyMcaQt as qt
@@ -67,7 +68,7 @@ class SpecArithmetic(object):
           - index of peak position in array xdata
             This result may accelerate the fwhm search.
         """
-        ydata = numpy.array(ydata, copy=False)
+        ydata = numpy.asarray(ydata)
         ymax = ydata[numpy.isfinite(ydata)].max()
         idx = self.__give_index(ymax, ydata)
         return xdata[idx], ymax, idx

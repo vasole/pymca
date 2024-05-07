@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -383,7 +383,7 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
             self._selectionMask = mask
         else:
             x, y = selectionCurve[0:2]
-            x = numpy.array(x, copy=False)
+            x = numpy.asarray(x)
             if hasattr(mask, "size"):
                 if mask.size == x.size:
                     if self._selectionMask is None:

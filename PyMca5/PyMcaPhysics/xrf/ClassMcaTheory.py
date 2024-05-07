@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -1639,8 +1639,8 @@ class McaTheory(object):
             return a*a
         elif (self.__CONTINUUM == CONTINUUM_LIST.index('Linear Polynomial')) and \
              (PARAMETERS[index] == ( 'A%d' % (index-PARAMETERS.index('Sum')-1))):
-            param=numpy.array(param0, copy=False)
-            x=numpy.array(t0, copy=False)
+            param=numpy.asarray(param0)
+            x=numpy.asarray(t0)
             zero = param[0]
             gain = param[1] * 1.0
             energy=zero + gain * x

@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -292,7 +292,10 @@ class StackBase(object):
                 self._stackImageData = numpy.zeros((shape[0], shape[1]),
                                                 dtype=numpy.float64)
                 mcaData0 = numpy.zeros((shape[2],), numpy.float64)
-                mcaMax = mcaData0 + numpy.NINF
+                if hasattr(numpy, "NINF"):
+                    mcaMax = mcaData0 + numpy.NINF
+                else:
+                    mcaMax = mcaData0 - numpy.inf
                 step = 1
                 for i in range(shape[0]):
                     tmpData = self._stack.data[i:i+step,:,:]
@@ -307,7 +310,10 @@ class StackBase(object):
                 self._stackImageData = numpy.zeros((shape[1], shape[2]),
                                                 dtype=numpy.float64)
                 mcaData0 = numpy.zeros((shape[0],), numpy.float64)
-                mcaMax = mcaData0 + numpy.NINF
+                if hasattr(numpy, "NINF"):
+                    mcaMax = mcaData0 + numpy.NINF
+                else:
+                    mcaMax = mcaData0 - numpy.inf
                 step = 1
                 for i in range(shape[0]):
                     tmpData = self._stack.data[i:i+step,:,:]

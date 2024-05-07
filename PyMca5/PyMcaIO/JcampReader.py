@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -231,7 +231,7 @@ class JcampReader(object):
             yValues = values[1::2]
         xFactor = float(self.info.get("XFACTOR", 1.0))
         yFactor = float(self.info.get("YFACTOR", 1.0))
-        return x * xFactor, numpy.array(yValues, copy=False) * yFactor
+        return x * xFactor, numpy.asarray(yValues) * yFactor
 
     def parseDataOld(self, dataLines):
         if self.info['XYDATA'].upper().strip() not in ["(X++(Y..Y))", "(XY..XY)"]:

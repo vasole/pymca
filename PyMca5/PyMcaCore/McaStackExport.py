@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2020-2023 European Synchrotron Radiation Facility
+# Copyright (c) 2020-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -182,17 +182,17 @@ def exportStack(stack, h5object, path, channels=None, calibration=None):
     # get the calibration
     if calibration is None:
         calibration = info.get('McaCalib', [0.0, 1.0, 0.0])
-    h5g["calibration"] = numpy.array(calibration, copy=False)
+    h5g["calibration"] = numpy.asarray(calibration)
 
     # get the time
     for key in ["McaLiveTime", "live_time"]:
         if key in info and info[key] is not None:
             # TODO: live time can actually be elapsed time!!!
-            h5g["live_time"] =  numpy.array(info[key], copy=False)
+            h5g["live_time"] =  numpy.asarray(info[key])
 
     for key in ["preset_time", "elapsed_time"]:
         if key in info and info[key] is not None:
-            h5g[key] =  numpy.array(info[key], copy=False)
+            h5g[key] =  numpy.asarray(info[key])
 
     # get the channels
     if channels is None:
@@ -202,7 +202,7 @@ def exportStack(stack, h5object, path, channels=None, calibration=None):
                     channels = stack.x[0]
 
     if channels is not None:
-        h5g["channels"] = numpy.array(channels, copy=False)
+        h5g["channels"] = numpy.asarray(channels)
 
     # the positioners
     posKey = "positioners"
@@ -214,7 +214,7 @@ def exportStack(stack, h5object, path, channels=None, calibration=None):
             posGroup.attrs[att] = u"NXcollection"
         for key in info[posKey]:
             if key not in posGroup:
-                posGroup[key] = numpy.array(info[posKey][key], copy=False)
+                posGroup[key] = numpy.asarray(info[posKey][key])
 
     # the scales for the common rectangular map case
     if "xScale" in info and "yScale" in info:
