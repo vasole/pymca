@@ -40,7 +40,7 @@ DAMAGE.
 /* adding next line may raise errors ...
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 */
-#include "numpy/noprefix.h"
+#include "numpy/arrayobject.h"
 
 #include <setjmp.h>
 
@@ -51,7 +51,7 @@ typedef struct {
 
 typedef struct {
   char *data;
-  intp numels;
+  npy_intp numels;
   int elsize;
   char *zero;        /* Pointer to Representation of zero */
 } Generic_Vector;
@@ -59,9 +59,9 @@ typedef struct {
 typedef struct {
   char *data;
   int  nd;
-  intp  *dimensions;
+  npy_intp  *dimensions;
   int  elsize;
-  intp  *strides;
+  npy_intp  *strides;
   char *zero;         /* Pointer to Representation of zero */
 } Generic_Array;
 

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -32,7 +32,7 @@ or saved to a file.
 
 This plugin also allows to apply the results from a file.
 """
-__author__ = "V.A. Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
@@ -686,8 +686,8 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
         nxEntry = hdf.require_group(entryName)
         if 'NX_class' not in nxEntry.attrs:
             nxEntry.attrs['NX_class'] = 'NXentry'.encode('utf-8')
-        nxEntry['title'] = numpy.string_("PyMca saved 3D Array".encode('utf-8'))
-        nxEntry['start_time'] = numpy.string_(ArraySave.getDate().encode('utf-8'))
+        nxEntry['title'] = numpy.bytes_("PyMca saved 3D Array".encode('utf-8'))
+        nxEntry['start_time'] = numpy.bytes_(ArraySave.getDate().encode('utf-8'))
 
         alignmentGroup = nxEntry.require_group('Alignment')
         dataGroup = nxEntry.require_group('Data')
@@ -697,7 +697,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
     def finishHDF5File(self, hdf):
         #add final date
         toplevelEntry = hdf["entry_000"]
-        toplevelEntry['end_time'] = numpy.string_(ArraySave.getDate().encode('utf-8'))
+        toplevelEntry['end_time'] = numpy.bytes_(ArraySave.getDate().encode('utf-8'))
         hdf.flush()
         hdf.close()
 

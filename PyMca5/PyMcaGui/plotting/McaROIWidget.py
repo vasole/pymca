@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -337,7 +337,11 @@ class McaROITable(qt.QTableWidget):
     def build(self):
         self.fillFromROIDict(roilist=self.roilist,roidict=self.roidict)
 
-    def fillFromROIDict(self,roilist=[],roidict={},currentroi=None):
+    def fillFromROIDict(self, roilist=None, roidict=None, currentroi=None):
+        if roilist is None:
+            roilist = []
+        if roidict is None:
+            roidict = {}
         self.building = True
         line0  = 0
         self.roilist = []
