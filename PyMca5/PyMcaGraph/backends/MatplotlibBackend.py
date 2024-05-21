@@ -483,14 +483,24 @@ class MatplotlibGraph(FigureCanvas):
                         self.__markerMoving = False
                     if self.__markerMoving:
                         if 'xmarker' in artist._plot_options:
-                            artist.set_xdata(event.xdata)
+                            data = event.xdata
+                            if not numpy.iterable(data):
+                                data = [data, ]
+                            artist.set_xdata(data)
                         elif 'ymarker' in artist._plot_options:
-                            artist.set_ydata(event.ydata)
+                            data = event.ydata
+                            if not numpy.iterable(data):
+                                data = [data, ]
+                            artist.set_ydata(data)
                         else:
                             xData, yData = event.xdata, event.ydata
                             if artist._constraint is not None:
                                 # Apply marker constraint
                                 xData, yData = artist._constraint(xData, yData)
+                            if not numpy.iterable(xData):
+                                xData = [xData, ]
+                            if not numpy.iterable(yData):
+                                yData = [yData, ]
                             artist.set_xdata(xData)
                             artist.set_ydata(yData)
                     if BLITTING and hasattr(artist.figure, "canvas"):
@@ -635,7 +645,7 @@ class MatplotlibGraph(FigureCanvas):
         return color
 
     def onMouseMoved(self, event):
-        if 1 or DEBUG:
+        if DEBUG:
             print("onMouseMoved, event = ",event.xdata, event.ydata)
         if event.inaxes != self.ax:
             if DEBUG:
@@ -741,14 +751,20 @@ class MatplotlibGraph(FigureCanvas):
                 artist = self._pickingInfo['artist']
                 infoText = self._pickingInfo['infoText']
                 if 'xmarker' in artist._plot_options:
-                    artist.set_xdata(event.xdata)
+                    data = event.xdata
+                    if not numpy.iterable(data):
+                        data = [data, ]
+                    artist.set_xdata(data)
                     ymin, ymax = self.ax.get_ylim()
                     delta = abs(ymax - ymin)
                     ymax = max(ymax, ymin) - 0.005 * delta
                     if infoText is not None:
                         infoText.set_position((event.xdata, ymax))
                 elif 'ymarker' in artist._plot_options:
-                    artist.set_ydata(event.ydata)
+                    data = event.ydata
+                    if not numpy.iterable(data):
+                        data = [data, ]
+                    artist.set_ydata(data)
                     if infoText is not None:
                         infoText.set_position((event.xdata, event.ydata))
                 else:
@@ -756,6 +772,10 @@ class MatplotlibGraph(FigureCanvas):
                     if artist._constraint is not None:
                         # Apply marker constraint
                         xData, yData = artist._constraint(xData, yData)
+                    if not numpy.iterable(xData):
+                        xData = [xData, ]
+                    if not numpy.iterable(yData):
+                        yData = [yData, ]
                     artist.set_xdata(xData)
                     artist.set_ydata(yData)
                     if infoText is not None:
