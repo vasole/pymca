@@ -1618,7 +1618,7 @@ class McaTheory(object):
             #numerical derivative
             x=numpy.array(t0)
             delta = (param0[index] + numpy.equal(param0[index],0.0)) * 0.00001
-            newpar = param0.__copy__()
+            newpar = param0.copy()
             newpar[index] = param0[index] + delta
             f1 = self.mcatheory(newpar, x)
             newpar[index] = param0[index] - delta
@@ -1657,7 +1657,7 @@ class McaTheory(object):
             #print "index = ",index
             x=numpy.array(t0)
             delta = (param0[index] + numpy.equal(param0[index],0.0)) * 0.00001
-            newpar = param0.__copy__()
+            newpar = param0.copy()
             newpar[index] = param0[index] + delta
             f1 = self.linearMcaTheory(newpar, x)
             newpar[index] = param0[index] - delta
@@ -1803,7 +1803,7 @@ class McaTheory(object):
             #print "index = ",index
             x=numpy.array(t0)
             delta = (param0[index] + numpy.equal(param0[index],0.0)) * 0.00001
-            newpar = param0.__copy__()
+            newpar = param0.copy()
             newpar[index] = param0[index] + delta
             f1 = self.mcatheory(newpar, x)
             newpar[index] = param0[index] - delta

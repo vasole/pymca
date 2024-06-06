@@ -248,7 +248,7 @@ def LinearLeastSquaresFit(model0,parameters0,data0,maxiter,
     weight = selfweight
     iiter  = maxiter
     niter = 0
-    newpar = parameters.__copy__()
+    newpar = parameters.copy()
     while (iiter>0):
         niter+=1
         chisq0, alpha0, beta,\
@@ -330,7 +330,7 @@ def RestreinedLeastSquaresFit(model0,parameters0,data0,maxiter,
     if ONED:
         data = numpy.array(data0)
         x = data[1:2,0]
-    fittedpar = parameters.__copy__()
+    fittedpar = parameters.copy()
     flambda = 0.001
     iiter = maxiter
     niter = 0
@@ -392,7 +392,7 @@ def RestreinedLeastSquaresFit(model0,parameters0,data0,maxiter,
         flag = 0
         lastdeltachi = chisq0
         while flag == 0:
-            newpar = parameters.__copy__()
+            newpar = parameters.copy()
             if(1):
                 alpha = alpha0 + flambda * numpy.identity(nr) * alpha0
                 deltapar = numpy.dot(beta, inv(alpha))
@@ -448,7 +448,7 @@ def RestreinedLeastSquaresFit(model0,parameters0,data0,maxiter,
                     iiter = 0
             else:
                 flag = 1
-                fittedpar = newpar.__copy__()
+                fittedpar = newpar.copy()
                 lastdeltachi = (chisq0-chisq)/(chisq0+(chisq0==0))
                 if (lastdeltachi) < deltachi:
                     iiter = 0
@@ -518,7 +518,7 @@ def ChisqAlphaBeta(model0, parameters, x,y,weight, constrains,model_deriv=None,l
     ##############
     # Prior to each call to the function one has to re-calculate the
     # parameters
-    pwork = parameters.__copy__()
+    pwork = parameters.copy()
     for i in range(n_free):
         pwork [free_index[i]] = fitparam [i]
     newpar = getparameters(pwork.tolist(),constrains)
@@ -527,7 +527,7 @@ def ChisqAlphaBeta(model0, parameters, x,y,weight, constrains,model_deriv=None,l
         raise ValueError("No free parameters to fit")
     for i in range(n_free):
         if model_deriv is None:
-            #pwork = parameters.__copy__()
+            #pwork = parameters.copy()
             pwork [free_index[i]] = fitparam [i] + delta [i]
             newpar = getparameters(pwork.tolist(),constrains)
             newpar=numpy.take(newpar,noigno)
