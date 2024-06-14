@@ -44,6 +44,7 @@ from PyMca5.PyMcaIO import OlympusCSVFileParser
 from PyMca5.PyMcaIO import ThermoEMSFileParser
 from PyMca5.PyMcaIO import JcampFileParser
 from PyMca5.PyMcaIO import BlissSpecFile
+from PyMca5.PyMcaIO import TASSpecFileParser
 
 _logger = logging.getLogger(__name__)
 
@@ -142,6 +143,9 @@ def Specfile(filename):
                 qxas = True
         if (not qxas) and line0.startswith('<<'):
                 amptek = True
+        if (not qxas) and (not amptek) and TASSpecFileParser.isTASSpecFile(filename):
+            _logger.debug("Recognized as a TAS spec file")
+            return TASSpecFileParser.TASSpecFileParser(filename)
         if (not qxas) and (not amptek) and Fit2DChiFileParser.isFit2DChiFile(filename):
             return Fit2DChiFileParser.Fit2DChiFileParser(filename)
         if (not qxas) and (not amptek) and APSMEDFileParser.isAPSMEDFile(filename):
