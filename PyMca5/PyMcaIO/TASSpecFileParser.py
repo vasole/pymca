@@ -65,8 +65,8 @@ class TASSpecFileParser(object):
                     _logger.debug(f'templine: {templine}')
                     data.append([float(x) for x in templine])
             else:
-                # might need to handle this differently, 
-                #lots of spaces between Pt. and s1
+                #labels
+                line = line.replace("#","")
                 labels = line[:-1].replace("\t", "  ").split("  ")
                 # remove any empty strings in list
                 labels = [i for i in labels if i]
