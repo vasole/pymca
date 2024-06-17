@@ -41,10 +41,13 @@ class TASSpecFileParser(object):
         data = []
         while len(line)>1:
             if '=' in line:
-                key, value = line[:-1].split('=')
-                if key == '# scan = ':
-                    header[0] = '#S 1 %s' % value
-                    _logger.debug(f'READ IN SCAN NAME: {value}')
+                #key, value = line[:-1].split(' = ')
+                key, value = line.split(' = ')
+                _logger.debug(f'READ IN LINE/KEY/VALUE: {line} {key} {value}')
+                if key == '# scan_title':
+                    # header[0] = '#S 1 %s' % value
+                    header.insert(0, '#S 1 %s' % value)
+                    _logger.debug(f'READ IN SCAN NAME: {header} {value}')
                 if 'date' in key:
                     header.append('#D %s' % value)
                     _logger.debug("READ IN DATE")
@@ -57,7 +60,7 @@ class TASSpecFileParser(object):
                 if '#' in line:
                     reading_data=False
                 else:
-                    templine = line[:-1].replace("\t", "  ").split("  ") 
+                    templine = line.replace("\t", "  ").split("  ") 
                     # remove any empty strings in list
                     templine = [i for i in templine if i]
                     # remove spaces from elements in list
@@ -67,7 +70,7 @@ class TASSpecFileParser(object):
             else:
                 #labels
                 line = line.replace("#","")
-                labels = line[:-1].replace("\t", "  ").split("  ")
+                labels = line.replace("\t", "  ").split("  ")
                 # remove any empty strings in list
                 labels = [i for i in labels if i]
                 reading_data = True
