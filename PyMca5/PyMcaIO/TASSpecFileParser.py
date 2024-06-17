@@ -35,47 +35,42 @@ class TASSpecFileParser(object):
             raise IOError("File %s does not exists"  % filename)
         _fileObject = BufferedFile(filename)
 
-        #Only one measurement per file
         header = []
-        header.append('#S 1  %s Unknown command' % os.path.basename(filename))
-
-        #read the data
         line = _fileObject.readline()
-        self.motorNames = []
-        self.motorValues = []
-        readingMetaData = False
-        endReached = False
-        readingData = False
+        reading_data = False
         data = []
         while len(line)>1:
-            if not readingData:
-                header.append(line[:-1])
-            #if readingMetaData:
-            #    if '</MetaDataAtStart>' in line:
-            #        readingMetaData = False
-            ### Can probably use this block for TAS 
-            ###    elif '=' in line:
-            ###        key, value = line[:-1].split('=')
-            ###        if 'datestring' in key:
-            ###            header.append('#D %s' % value)
-            ###        elif 'scancommand' in key:
-            ###            header[0] = '#S 1 %s' % value
-            ###        else:
-            ###            self.motorNames.append(key)
-            ###            self.motorValues.append(value)
-            #elif '<MetaDataAtStart>' in line: ### Can replace this with "proposal"
-            #    readingMetaData = True
-            #elif '&END' in line:
-            #    endReached = True
-            #elif endReached:
-                if readingData:
-                    tmpLine = line[:-1].replace("\t", "  ").split("  ")
-                    data.append([float(x) for x in tmpLine])
+            if '=' in line:
+                key, value = line[:-1].split('=')
+                if key == '# scan = ':
+                    header[0] = '#S 1 %s' % value
+                    _logger.debug(f'READ IN SCAN NAME: {value}')
+                if 'date' in key:
+                    header.append('#D %s' % value)
+                    _logger.debug("READ IN DATE")
+            #if 'def_x' in key:
+            # set default x axis value   
+            elif 'scan completed.' in line:
+                _logger.debug("file reading complete")
+                #header.append(header.append(line))
+            elif reading_data == True:
+                if '#' in line:
+                    reading_data=False
                 else:
-                    labels = line[:-1].replace("\t", "  ").split("  ")
-                    readingData = True
+                    templine = line[:-1].replace("\t", "  ").split("  ") 
+                    # remove any empty strings in list
+                    templine = [i for i in templine if i]
+                    # remove spaces from elements in list
+                    templine = [i.strip(' ') for i in templine]
+                    _logger.debug(f'templine: {templine}')
+                    data.append([float(x) for x in templine])
             else:
-                _logger.debug("Unhandled line %s", line[:-1])
+                #labels
+                line = line.replace("#","")
+                labels = line[:-1].replace("\t", "  ").split("  ")
+                # remove any empty strings in list
+                labels = [i for i in labels if i]
+                reading_data = True
             line = _fileObject.readline()
         header.append("#N %d" % len(labels))
         txt = "#L "
@@ -83,7 +78,6 @@ class TASSpecFileParser(object):
             txt += "  %s" % label
         header.append(txt + "\n")
         data = numpy.array(data)
-
         #create an abstract scan object
         self._scan = [TASSpecFileScan(data,
                               scantype='SCAN',
