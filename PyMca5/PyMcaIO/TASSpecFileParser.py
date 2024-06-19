@@ -44,13 +44,14 @@ class TASSpecFileParser(object):
                 #key, value = line[:-1].split(' = ')
                 key, value = line.split(' = ')
                 _logger.debug(f'READ IN LINE/KEY/VALUE: {line} {key} {value}')
-                if key == '# scan_title':
+                #if key == '# scan_title':
+                if key == '# command':
                     # header[0] = '#S 1 %s' % value
                     header.insert(0, '#S 1 %s' % value)
                     _logger.debug(f'READ IN SCAN NAME: {header} {value}')
                 if 'date' in key:
                     header.append('#D %s' % value)
-                    _logger.debug("READ IN DATE")
+                    _logger.debug(f"READ IN DATE:  {header} {value}" )
             #if 'def_x' in key:
             # set default x axis value   
             elif 'scan completed.' in line:
