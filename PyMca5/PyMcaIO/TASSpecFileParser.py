@@ -52,6 +52,12 @@ class TASSpecFileParser(object):
                 if 'date' in key:
                     header.append('#D %s' % value)
                     _logger.debug(f"READ IN DATE:  {header} {value}" )
+                if 'plane_normal' in key:   # Update q
+                    header.append('#Q %s' % value.replace(","," "))
+                    _logger.debug(f"READ IN Q:  {header} {value}" )
+                if 'time' in key:   # Update time
+                    header.append('#T %s' % value)
+                    _logger.debug(f"READ IN Time:  {header} {value}" )
             #if 'def_x' in key:
             # set default x axis value   
             elif 'scan completed.' in line:
