@@ -107,7 +107,7 @@ class TASSpecFileParser(object):
         """
         Gives back the number of scans in the file
         """
-        return len(self_scan)
+        return len(self._scan)
 
     def list(self):
         return "1:1" #?
