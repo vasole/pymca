@@ -47,9 +47,9 @@ if sys.platform.startswith("win"):
     import ctypes
     from ctypes.wintypes import MAX_PATH
 
-if os.path.exists(os.path.join(\
-    os.path.dirname(os.path.dirname(__file__)), 'bootstrap.py')):
-    raise ImportError('PyMca cannot be imported from source directory')
+#if os.path.exists(os.path.join(\
+#    os.path.dirname(os.path.dirname(__file__)), 'bootstrap.py')):
+#    raise ImportError('PyMca cannot be imported from source directory')
 
 def version():
     return __version__

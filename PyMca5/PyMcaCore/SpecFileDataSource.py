@@ -239,6 +239,9 @@ class SpecFileDataSource(object):
         sourceObject = self._sourceObjectList[index]
         scandata= sourceObject.select(scankey)
 
+        _logger.info("__getScanInfo %s", scandata)
+
+
         info={}
         info["SourceType"] = SOURCE_TYPE
         #doubts about if refer to the list or to the individual file

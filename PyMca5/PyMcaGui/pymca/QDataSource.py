@@ -42,6 +42,9 @@ from PyMca5.PyMcaIO import BlissSpecFile
 from PyMca5.PyMcaGui.io import QEdfFileWidget
 from PyMca5.PyMcaGui.io import QSpecFileWidget
 
+import logging
+_logger = logging.getLogger(__name__)
+
 if sys.platform == "win32":
     source_types = { SpecFileDataSource.SOURCE_TYPE: SpecFileDataSource.SpecFileDataSource,
                      EdfFileDataSource.SOURCE_TYPE:  EdfFileDataSource.EdfFileDataSource}
@@ -80,6 +83,10 @@ def getSourceType(sourceName0):
         sourceName = sourceName0[0]
     else:
         sourceName = sourceName0
+
+    #FIXME: just a quick and dirty fix to get going with tiled
+    if sourceName == "opls" or sourceName == "demo:fxi":
+        return SpecFileDataSource.SOURCE_TYPE
 
     if BlissSpecFile.isBlissSpecFile(sourceName):
         # wrapped as SpecFile
@@ -172,6 +179,8 @@ def QDataSource(name=None, source_type=None):
     except KeyError:
         #ERROR invalid source type
         raise TypeError("Invalid Source Type, source type should be one of %s" % source_types.keys())
+    _logger.debug("source_types %s", source_types, )
+    _logger.debug("sourceClass %s, name %s", sourceClass, name)
     return sourceClass(name)
 
 

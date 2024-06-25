@@ -76,6 +76,11 @@ else:
         return var[0]
 
 def Specfile(filename):
+
+    #FIXME: just a quick and dirty fix to get going with tiled
+    if filename == "opls" or filename == "demo:fxi":
+        return BlissSpecFile.BlissSpecFile(filename)
+    
     if BlissSpecFile.isBlissSpecFile(filename):
         return BlissSpecFile.BlissSpecFile(filename)
     if sys.version_info < (3, 0):
