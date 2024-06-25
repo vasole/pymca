@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop">
+    <id>pymcapostbatch</id>
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+  <name>PyMca Post-batch tool aka RGB Correlator</name>
+  <summary>Tool for post-processing treatment of data</summary>
+  <description>
+Tool to compare images and find correlations among them. It provides graphical and mathematical tools.
+  </description>
+  <url type="homepage">https://github.com/vasole/pymca</url>
+  <url type="bugtracker">https://github.com/vasole/pymca/issues</url>
+  <url type="faq">https://sourceforge.net/p/pymca/mailman/pymca-users/</url>
+  <url type="help">http://www.silx.org/doc/pymca/latest/</url>
+  <screenshots>
+    <screenshot type="default">
+      <image>http://www.silx.org/doc/PyMca/latest/_static/PyMca_256x256.png</image>
+      <caption>PyMca RGB Correlator</caption>
+    </screenshot>
+  </screenshots>
+  <developer_name>V. Armando Sole</developer_name>
+  <update_contact>sole@esrf.fr</update_contact>
+</component>

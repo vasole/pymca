@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop">
+    <id>peakidentifier</id>
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+  <name>Peak Identifier</name>
+  <summary>Helper to identify x-ray emission lines</summary>
+  <description>
+Given an x-ray energy and a threshold, this tool provides the different x-ray emission lines matching the provided energy within the supplied threshold.
+  </description>
+  <url type="homepage">https://github.com/vasole/pymca</url>
+  <url type="bugtracker">https://github.com/vasole/pymca/issues</url>
+  <url type="faq">https://sourceforge.net/p/pymca/mailman/pymca-users/</url>
+  <url type="help">http://www.silx.org/doc/pymca/latest/</url>
+  <screenshots>
+    <screenshot type="default">
+      <image>http://www.silx.org/doc/PyMca/latest/_images/quantification_06.png</image>
+      <caption>Peak Identifier</caption>
+    </screenshot>
+  </screenshots>
+  <developer_name>V. Armando Sole</developer_name>
+  <update_contact>sole@esrf.fr</update_contact>
+</component>
