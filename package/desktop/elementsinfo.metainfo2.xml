@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop">
+    <id>elementsinfo</id>
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+  <name>Elements Info</name>
+  <summary>Periodic Table with XRF-related information</summary>
+  <description>
+Direct access to binding energies, shell transitions and fluorescence yields.
+  </description>
+  <url type="homepage">https://github.com/vasole/pymca</url>
+  <url type="bugtracker">https://github.com/vasole/pymca/issues</url>
+  <url type="faq">https://sourceforge.net/p/pymca/mailman/pymca-users/</url>
+  <url type="help">http://www.silx.org/doc/pymca/latest/</url>
+  <screenshots>
+    <screenshot type="default">
+      <image>http://www.silx.org/doc/PyMca/latest/_images/xraydata_01.png</image>
+      <caption>Elements Infor</caption>
+    </screenshot>
+  </screenshots>
+  <developer_name>V. Armando Sole</developer_name>
+  <update_contact>sole@esrf.fr</update_contact>
+</component>
