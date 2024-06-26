@@ -41,13 +41,23 @@ class TASSpecFileParser(object):
         data = []
         while len(line)>1:
             if '=' in line:
-                key, value = line[:-1].split('=')
-                if key == '# scan = ':
-                    header[0] = '#S 1 %s' % value
-                    _logger.debug(f'READ IN SCAN NAME: {value}')
+                #key, value = line[:-1].split(' = ')
+                key, value = line.split(' = ')
+                _logger.debug(f'READ IN LINE/KEY/VALUE: {line} {key} {value}')
+                #if key == '# scan_title':
+                if key == '# command':
+                    # header[0] = '#S 1 %s' % value
+                    header.insert(0, '#S 1 %s' % value)
+                    _logger.debug(f'READ IN SCAN NAME: {header} {value}')
                 if 'date' in key:
                     header.append('#D %s' % value)
-                    _logger.debug("READ IN DATE")
+                    _logger.debug(f"READ IN DATE:  {header} {value}" )
+                if 'plane_normal' in key:   # Update q
+                    header.append('#Q %s' % value.replace(","," "))
+                    _logger.debug(f"READ IN Q:  {header} {value}" )
+                if 'time' in key:   # Update time
+                    header.append('#T %s' % value)
+                    _logger.debug(f"READ IN Time:  {header} {value}" )
             #if 'def_x' in key:
             # set default x axis value   
             elif 'scan completed.' in line:
@@ -57,7 +67,7 @@ class TASSpecFileParser(object):
                 if '#' in line:
                     reading_data=False
                 else:
-                    templine = line[:-1].replace("\t", "  ").split("  ") 
+                    templine = line.replace("\t", "  ").split("  ") 
                     # remove any empty strings in list
                     templine = [i for i in templine if i]
                     # remove spaces from elements in list
@@ -67,7 +77,7 @@ class TASSpecFileParser(object):
             else:
                 #labels
                 line = line.replace("#","")
-                labels = line[:-1].replace("\t", "  ").split("  ")
+                labels = line.replace("\t", "  ").split("  ")
                 # remove any empty strings in list
                 labels = [i for i in labels if i]
                 reading_data = True
@@ -97,7 +107,7 @@ class TASSpecFileParser(object):
         """
         Gives back the number of scans in the file
         """
-        return len(self_scan)
+        return len(self._scan)
 
     def list(self):
         return "1:1" #?
