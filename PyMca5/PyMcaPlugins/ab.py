@@ -1,4 +1,4 @@
-#PyMca5.PyMcaGui.pymca.PyMcaMain
+from PyMca5.PyMcaGui.pymca.PyMcaMain import PyMcaMain
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaCore import Plugin1DBase
 
@@ -32,10 +32,11 @@ class TASPlugin(Plugin1DBase.Plugin1DBase):
 if __name__ == "__main__":
     from PyMca5.PyMcaGui.plotting.PlotWindow import PlotWindow
     app = qt.QApplication([])
-    plot = PlotWindow(roi=True, fit=True)
-    plot.show()
+    #plot = PlotWindow(roi=True, fit=True)
+    #plot.show()
+    wind = PyMcaMain()
     app.exec()
 
-    active_curve = getActiveCurve()
-    x,y,legend0,info=active_curve
+    #active_curve = getActiveCurve()
+    #x,y,legend0,info=active_curve
             
