@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -60,8 +60,8 @@ The table shows three columns:
    units of the plot windows x-axis.
 
 While columns one and two can not be edited, shift values
-can be entered by hand. Another way of setting the shift values is to load them from a existing
-*.shift file using the Load button.
+can be entered by hand. Another way of setting the shift values is to load them from a
+existing .shift file using the Load button.
 
 Once the shift values are set, they can either be directly applied to the data present in the
 plot window, using the *Apply* button, or the data can be stored in memory. The latter options allow

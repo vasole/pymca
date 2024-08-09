@@ -18,7 +18,7 @@ Stack plugin API
 .. autoclass:: StackPluginBase
     :members:
 
-.. autoattribute:: MENU_TEXT
+.. autodata:: MENU_TEXT
 
 .. autofunction:: getStackPluginInstance
 
