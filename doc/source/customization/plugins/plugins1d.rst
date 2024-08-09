@@ -18,7 +18,7 @@ Overview
 .. autoclass:: Plugin1DBase
     :members:
 
-.. autoattribute:: MENU_TEXT
+.. autodata:: MENU_TEXT
 
 .. autofunction:: getPlugin1DInstance
 
