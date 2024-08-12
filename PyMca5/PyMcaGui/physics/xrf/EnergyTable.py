@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2024 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -39,6 +39,7 @@ from PyMca5.PyMcaCore import PyMcaDirs
 from PyMca5.PyMcaGui.plotting import PyMca_Icons as Icons
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 qt = QXTube.qt
+QTable = qt.QTableWidget
 
 QTVERSION = qt.qVersion()
 
@@ -280,23 +281,23 @@ class EnergyTab(qt.QWidget):
         self.__calculating = 0
         self.tubeButtonClicked()
 
-QTable = qt.QTableWidget
-
 class EnergyTable(QTable):
     sigEnergyTableSignal = qt.pyqtSignal(object)
     def __init__(self, parent=None, name="Energy Table",
-                     energylist=None, weightlist=None, flaglist=None,offset=None,scatterlist=None):
+                     energylist=None, weightlist=None, flaglist=None,offset=None,scatterlist=None,scattercolor=None):
         QTable.__init__(self, parent)
         if energylist is  None:energylist=[]
         if weightlist is  None:weightlist  =[]
         if flaglist   is  None:flaglist  =[]
-        if scatterlist   is  None:scatterlist  =[]
+        if scatterlist   is  None:scatterlist  = []
+        if scattercolor is None: scattercolor = qt.QColor(255, 20, 147)
         if offset is None:offset = 0
         self.energyList  = energylist
         self.weightList  = weightlist
         self.flagList    = flaglist
         self.offset      = offset
         self.scatterList = scatterlist
+        self._scatterColor = scattercolor
         self.verticalHeader().hide()
         self.dataColumns = 30
         if QTVERSION < '4.0.0':
@@ -341,9 +342,27 @@ class EnergyTable(QTable):
         for i in range(self.dataColumns):
             _logger.debug("column adjustment missing")
         self.cellChanged[int, int].connect(self.mySlot)
+        if hasattr(self, "cellDoubleClicked"):
+            self.cellDoubleClicked[int, int].connect(self._doubleClickSlot)
 
     def _itemSlot(self, *var):
         self.mySlot(self.currentRow(), self.currentColumn())
+
+    def _doubleClickSlot(self, row, col):
+        _logger.debug("cell %d %d double clicked" % (row, col))
+        if col // self.dataColumns:
+            _logger.debug("Not an Energy column")
+            return
+        item = self.cellWidget(row, col)
+        if item is None:
+            return
+        oldcolor = item.color
+        if oldcolor != self._scatterColor:
+            item.setColor(self._scatterColor)
+        else:
+            item.setColor(qt.Qt.white)
+        item.repaint(item.rect())
+        self.cellChanged.emit(row, col)
 
     def __build(self,nrows=None):
         #self.setNumRows(int(nrows/2))
@@ -370,9 +389,10 @@ class EnergyTable(QTable):
                 if idx < len(self.scatterList):
                     if (self.scatterList[idx] is not None)and \
                        (self.scatterList[idx] != "None"):
-                        if self.scatterList[idx]:color = qt.QColor(255, 20, 147)
+                        if self.scatterList[idx]:
+                            color = self._scatterColor
             elif idx == 0:
-                color = qt.QColor(255, 20, 147)
+                color = self._scatterColor
             if QTVERSION < '4.0.0':
                 #item= qttable.QCheckTableItem(self, text)
                 self.viewport().setPaletteBackgroundColor(color)
@@ -384,6 +404,8 @@ class EnergyTable(QTable):
                     item= ColorQTableItem(self, text, color)
                     self.setCellWidget(r, 0+coloffset, item)
                     item.stateChanged[int].connect(self._itemSlot)
+                    if hasattr(item, "setToolTip"):
+                        item.setToolTip("Double click on empty space at the to toggle inclusion as scatter peak (different color)")
                 else:
                     item.setText(text)
                 oldcolor = item.color
@@ -467,7 +489,7 @@ class EnergyTable(QTable):
                     continue
                 else:
                     energyflag = int(item.isChecked())
-            if item.color == qt.Qt.white:
+            if item.color != self._scatterColor:
                 scatterflag = 0
             else:
                 scatterflag = 1
@@ -589,7 +611,7 @@ class EnergyTable(QTable):
                             flag = 1
                         else:
                             flag = 0
-                        if selfitem.color != qt.Qt.white:
+                        if selfitem.color == self._scatterColor:
                             scatterflag = 1
                         else:
                             scatterflag = 0
