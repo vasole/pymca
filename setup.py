@@ -208,23 +208,23 @@ data_files = [
         glob_pymca5("attdata", "*"),
     ),
     (
-        os.path.join(PYMCA_DOC_DIR + "HTML"),
+        os.path.join(PYMCA_DOC_DIR, "HTML"),
         glob_pymca5("PyMcaData", "HTML", "*.*"),
     ),
     (
-        os.path.join(PYMCA_DOC_DIR + "HTML", "IMAGES"),
+        os.path.join(PYMCA_DOC_DIR, "HTML", "IMAGES"),
         glob_pymca5("PyMcaData", "HTML", "IMAGES", "*"),
     ),
     (
-        os.path.join(PYMCA_DOC_DIR + "HTML", "PyMCA_files"),
+        os.path.join(PYMCA_DOC_DIR, "HTML", "PyMCA_files"),
         glob_pymca5("PyMcaData", "HTML", "PyMCA_files", "*"),
     ),
     (
-        os.path.join(PYMCA_DATA_DIR + "EPDL97"),
+        os.path.join(PYMCA_DATA_DIR, "EPDL97"),
         glob_pymca5("EPDL97", "*.DAT"),
     ),
     (
-        os.path.join(PYMCA_DATA_DIR + "EPDL97"),
+        os.path.join(PYMCA_DATA_DIR, "EPDL97"),
         glob_pymca5("EPDL97", "LICENSE"),
     ),
 ]
