@@ -264,7 +264,7 @@ sources = glob.glob('*.c')
 script_files = glob_pymca5('scripts', '*')
 if sys.platform == "win32":
     define_macros = [('WIN32', None)]
-    script_files += glob.glob('scripts', '*.bat')
+    script_files += glob.glob(os.path.join('scripts', '*.bat'))
     script_files.append(os.path.join('scripts', 'pymca_win_post_install.py'))
 else:
     define_macros = []
