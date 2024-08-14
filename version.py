@@ -69,7 +69,7 @@ RELEASE_LEVEL_VALUE = {"dev": 0,
 
 def get_major_minor_micro():
     __version__ = None
-    ffile = open(os.path.join('PyMca5', '__init__.py'), 'r').readlines()
+    ffile = open(os.path.join('src', 'PyMca5', '__init__.py'), 'r').readlines()
     for line in ffile:
         if line.startswith('__version__'):
             #remove spaces and split
