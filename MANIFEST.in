@@ -15,26 +15,26 @@ include requirements.txt
 recursive-include doc *.py *.rst *.html *.ico *.png *.jpg
 recursive-include doc/man *.1
 recursive-include icons *.icns *.ico *_256x256.png
-recursive-include PyMca5/EPDL97 *.DAT
-include PyMca5/EPDL97/LICENSE
-recursive-include PyMca5/PyMca *.py
-recursive-include PyMca5/PyMcaCore *.py
-recursive-include PyMca5/PyMcaData *.dict *.dat *.cfg *.png *.mat *.html *.pdf *.xml *.gif *.wmz *.mso *.DICT *.TXT *.lib *.mca *.spe
-recursive-include PyMca5/PyMcaGraph *.py *.pyx *.pxd *.c *.h
-recursive-include PyMca5/PyMcaGui *.py
-recursive-include PyMca5/PyMcaIO *.py *.c *.h *.in
-include PyMca5/PyMcaIO/sps/LICENSE
-recursive-include PyMca5/PyMcaMath *.py *.c *.cl
-include PyMca5/PyMcaMath/mva/py_nnma/LICENSE
-include PyMca5/PyMcaMath/mva/py_nnma/README
-include PyMca5/PyMcaMath/mva/_cython_kmeans/kmeans.pyx
-include PyMca5/PyMcaMath/mva/_cython_kmeans/default/kmeans.c
-include PyMca5/PyMcaMath/PyMcaSciPy/signal/LICENSE.txt
-recursive-include PyMca5/PyMcaMisc *.py
-recursive-include PyMca5/PyMcaPhysics *.py
-recursive-include PyMca5/PyMcaPhysics/xas *.pyx *.pxd *.c *.h
-recursive-include PyMca5/PyMcaPlugins *.py
-recursive-include PyMca5/scripts *
-recursive-include PyMca5/tests *.py
+recursive-include src/PyMca5/EPDL97 *.DAT
+include src/PyMca5/EPDL97/LICENSE
+recursive-include src/PyMca5/PyMca *.py
+recursive-include src/PyMca5/PyMcaCore *.py
+recursive-include src/PyMca5/PyMcaData *.dict *.dat *.cfg *.png *.mat *.html *.pdf *.xml *.gif *.wmz *.mso *.DICT *.TXT *.lib *.mca *.spe
+recursive-include src/PyMca5/PyMcaGraph *.py *.pyx *.pxd *.c *.h
+recursive-include src/PyMca5/PyMcaGui *.py
+recursive-include src/PyMca5/PyMcaIO *.py *.c *.h *.in
+include src/PyMca5/PyMcaIO/sps/LICENSE
+recursive-include src/PyMca5/PyMcaMath *.py *.c *.cl
+include src/PyMca5/PyMcaMath/mva/py_nnma/LICENSE
+include src/PyMca5/PyMcaMath/mva/py_nnma/README
+include src/PyMca5/PyMcaMath/mva/_cython_kmeans/kmeans.pyx
+include src/PyMca5/PyMcaMath/mva/_cython_kmeans/default/kmeans.c
+include src/PyMca5/PyMcaMath/PyMcaSciPy/signal/LICENSE.txt
+recursive-include src/PyMca5/PyMcaMisc *.py
+recursive-include src/PyMca5/PyMcaPhysics *.py
+recursive-include src/PyMca5/PyMcaPhysics/xas *.pyx *.pxd *.c *.h
+recursive-include src/PyMca5/PyMcaPlugins *.py
+recursive-include src/PyMca5/scripts *
+recursive-include src/PyMca5/tests *.py
 recursive-include scripts *.py *.bat
 recursive-include package *
