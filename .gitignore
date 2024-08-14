@@ -60,8 +60,8 @@ coverage.xml
 docs/_build/
 
 # cython generated files
-PyMca5/PyMcaGraph/ctools/_ctools/cython/*.c
-PyMca5/PyMcaPhysics/xas/_xas/cython/*.c
+src/PyMca5/PyMcaGraph/ctools/_ctools/cython/*.c
+src/PyMca5/PyMcaPhysics/xas/_xas/cython/*.c
 
 # PyCharm meta data
 .idea/

@@ -57,12 +57,21 @@ PYMCA_SCRIPTS_DIR = None
 PYMCA_DATA_DIR = os.getenv("PYMCA_DATA_DIR")
 PYMCA_DOC_DIR = os.getenv("PYMCA_DOC_DIR")
 
-
 assert (PYMCA_DATA_DIR is None) == (PYMCA_DOC_DIR is None), \
     "error: PYMCA_DATA_DIR and PYMCA_DOC_DIR must be both set (debian " + \
     "packaging) or both be unset (pip install or frozen binary)."
 
-defaultDataPath = os.path.join('PyMca5', 'PyMcaData')
+setupDirectory = os.path.dirname(os.path.relpath(__file__)) or "."
+srcDirectory = os.path.join(setupDirectory, 'src')
+srcPyMca5Directory = os.path.join(srcDirectory, 'PyMca5')
+
+def pymca5_path(*args):
+    return os.path.join(srcPyMca5Directory, *args)
+
+def glob_pymca5(*args):
+    return glob.glob(pymca5_path(*args))
+
+defaultDataPath = pymca5_path('PyMcaData')
 if PYMCA_DATA_DIR is None and PYMCA_DOC_DIR is None:
     PYMCA_DATA_DIR = PYMCA_DOC_DIR = defaultDataPath
     DISTUTILS = False
@@ -118,7 +127,7 @@ if build_ext is not None:
     if not use_cython():
         build_ext = None
 
-fid = open(os.path.join('PyMca5', '__init__.py'), 'r')
+fid = open(pymca5_path('__init__.py'), 'r')
 ffile = fid.readlines()
 fid.close()
 
@@ -168,72 +177,102 @@ if PYMCA_DATA_DIR == defaultDataPath and PYMCA_DOC_DIR == defaultDataPath:
 else:
     # used by debian packaging (PYMCA_DATA_DIR & PYMCA_DOC_DIR set by the packager)
     use_smart_install_data_class = False
+
 package_data = {}
-data_files = [(PYMCA_DATA_DIR, ['LICENSE',
-                                'LICENSE.GPL',
-                                'LICENSE.LGPL',
-                                'LICENSE.MIT',
-                                'changelog.txt',
-                                'copyright',
-                                'PyMca5/PyMcaData/Scofield1973.dict',
-                                'PyMca5/PyMcaData/McaTheory.cfg',
-                                'PyMca5/PyMcaData/PyMcaSplashImage.png',
-                                'PyMca5/PyMcaData/KShellRatesScofieldHS.dat',
-                                'PyMca5/PyMcaData/LShellRatesCampbell.dat',
-                                'PyMca5/PyMcaData/LShellRatesScofieldHS.dat',
-                                'PyMca5/PyMcaData/EXAFS_Cu.dat',
-                                'PyMca5/PyMcaData/EXAFS_Ge.dat',
-                                'PyMca5/PyMcaData/Steel.cfg',
-                                'PyMca5/PyMcaData/Steel.spe',
-                                'PyMca5/PyMcaData/XRFSpectrum.mca']),
-              (PYMCA_DATA_DIR + '/attdata', glob.glob('PyMca5/PyMcaData/attdata/*')),
-              (PYMCA_DOC_DIR + '/HTML', glob.glob('PyMca5/PyMcaData/HTML/*.*')),
-              (PYMCA_DOC_DIR + '/HTML/IMAGES', glob.glob('PyMca5/PyMcaData/HTML/IMAGES/*')),
-              (PYMCA_DOC_DIR + '/HTML/PyMCA_files', glob.glob('PyMca5/PyMcaData/HTML/PyMCA_files/*')),
-              (PYMCA_DATA_DIR + '/EPDL97', glob.glob('PyMca5/EPDL97/*.DAT')),
-              (PYMCA_DATA_DIR + '/EPDL97', ['PyMca5/EPDL97/LICENSE'])]
+
+data_files = [
+    (
+        PYMCA_DATA_DIR,
+        [
+            "LICENSE",
+            "LICENSE.GPL",
+            "LICENSE.LGPL",
+            "LICENSE.MIT",
+            "changelog.txt",
+            "copyright",
+            os.path.join("PyMca5", "PyMcaData", "Scofield1973.dict"),
+            os.path.join("PyMca5", "PyMcaData", "McaTheory.cfg"),
+            os.path.join("PyMca5", "PyMcaData", "PyMcaSplashImage.png"),
+            os.path.join("PyMca5", "PyMcaData", "KShellRatesScofieldHS.dat"),
+            os.path.join("PyMca5", "PyMcaData", "LShellRatesCampbell.dat"),
+            os.path.join("PyMca5", "PyMcaData", "LShellRatesScofieldHS.dat"),
+            os.path.join("PyMca5", "PyMcaData", "EXAFS_Cu.dat"),
+            os.path.join("PyMca5", "PyMcaData", "EXAFS_Ge.dat"),
+            os.path.join("PyMca5", "PyMcaData", "Steel.cfg"),
+            os.path.join("PyMca5", "PyMcaData", "Steel.spe"),
+            os.path.join("PyMca5", "PyMcaData", "XRFSpectrum.mca"),
+        ],
+    ),
+    (
+        os.path.join(PYMCA_DATA_DIR, "attdata"),
+        glob_pymca5("attdata", "*"),
+    ),
+    (
+        os.path.join(PYMCA_DOC_DIR, "HTML"),
+        glob_pymca5("PyMcaData", "HTML", "*.*"),
+    ),
+    (
+        os.path.join(PYMCA_DOC_DIR, "HTML", "IMAGES"),
+        glob_pymca5("PyMcaData", "HTML", "IMAGES", "*"),
+    ),
+    (
+        os.path.join(PYMCA_DOC_DIR, "HTML", "PyMCA_files"),
+        glob_pymca5("PyMcaData", "HTML", "PyMCA_files", "*"),
+    ),
+    (
+        os.path.join(PYMCA_DATA_DIR, "EPDL97"),
+        glob_pymca5("EPDL97", "*.DAT"),
+    ),
+    (
+        os.path.join(PYMCA_DATA_DIR, "EPDL97"),
+        glob_pymca5("EPDL97", "LICENSE"),
+    ),
+]
 
 if not DISTUTILS:
-    package_data["PyMca5"] = ['PyMcaData/Scofield1973.dict',
-                              'PyMcaData/McaTheory.cfg',
-                              'PyMcaData/PyMcaSplashImage.png',
-                              'PyMcaData/KShellRatesScofieldHS.dat',
-                              'PyMcaData/LShellRatesCampbell.dat',
-                              'PyMcaData/LShellRatesScofieldHS.dat',
-                              'PyMcaData/EXAFS_Cu.dat',
-                              'PyMcaData/EXAFS_Ge.dat',
-                              'PyMcaData/Steel.cfg',
-                              'PyMcaData/Steel.spe',
-                              'PyMcaData/XRFSpectrum.mca',
-                              'PyMcaData/attdata/*',
-                              'PyMcaData/HTML/*.*',
-                              'PyMcaData/HTML/IMAGES/*',
-                              'PyMcaData/HTML/PyMca_files/*',
+    package_data["PyMca5"] = [os.path.join('PyMcaData', 'Scofield1973.dict'),
+                              os.path.join('PyMcaData', 'McaTheory.cfg'),
+                              os.path.join('PyMcaData', 'PyMcaSplashImage.png'),
+                              os.path.join('PyMcaData', 'KShellRatesScofieldHS.dat'),
+                              os.path.join('PyMcaData', 'LShellRatesCampbell.dat'),
+                              os.path.join('PyMcaData', 'LShellRatesScofieldHS.dat'),
+                              os.path.join('PyMcaData', 'EXAFS_Cu.dat'),
+                              os.path.join('PyMcaData', 'EXAFS_Ge.dat'),
+                              os.path.join('PyMcaData', 'Steel.cfg'),
+                              os.path.join('PyMcaData', 'Steel.spe'),
+                              os.path.join('PyMcaData', 'XRFSpectrum.mca'),
+                              os.path.join('PyMcaData', 'attdata', '*'),
+                              os.path.join('PyMcaData', 'HTML', '*.*'),
+                              os.path.join('PyMcaData', 'HTML', 'IMAGES', '*'),
+                              os.path.join('PyMcaData', 'HTML', 'PyMca_files', '*'),
                               ]
     # missing files added derived class
     data_files = None
 
+
 SIFT_OPENCL_FILES = []
-if os.path.exists(os.path.join("PyMca5", "PyMcaMath", "sift")):
+if os.path.exists(pymca5_path("PyMcaMath", "sift")):
     packages.append('PyMca5.PyMcaMath.sift')
     if 'PyMca5' in package_data:
-        package_data['PyMca5'].append('PyMcaMath/sift/*.cl')
+        package_data['PyMca5'].append(
+            os.path.join('PyMcaMath', 'sift', '*.cl')
+        )
     else:
-        package_data['PyMca5'] = ['PyMcaMath/sift/*.cl']
+        package_data['PyMca5'] = [os.path.join('PyMcaMath', 'sift', '*.cl')]
 sources = glob.glob('*.c')
+
+script_files = glob_pymca5('scripts', '*')
 if sys.platform == "win32":
     define_macros = [('WIN32', None)]
-    script_files = glob.glob('PyMca5/scripts/*')
-    script_files += glob.glob('scripts/*.bat')
-    script_files.append('scripts/pymca_win_post_install.py')
+    script_files += glob.glob(os.path.join('scripts', '*.bat'))
+    script_files.append(os.path.join('scripts', 'pymca_win_post_install.py'))
 else:
     define_macros = []
-    script_files = glob.glob('PyMca5/scripts/*')
 
 
 def build_FastEdf(ext_modules):
     module = Extension(name='PyMca5.FastEdf',
-                       sources=glob.glob('PyMca5/PyMcaIO/edf/*.c'),
+                       sources=glob_pymca5('PyMcaIO', 'edf', '*.c'),
                        define_macros=define_macros,
                        include_dirs=[numpy.get_include()])
     ext_modules.append(module)
@@ -254,8 +293,8 @@ def build_specfile(ext_modules):
     if sys.version >= '3.0':
         srcfiles[-1] += '3'
     sources = []
-    specfile_source_dir = os.path.join('PyMca5', 'PyMcaIO', 'specfile', 'src')
-    specfile_include_dir = os.path.join('PyMca5', 'PyMcaIO', 'specfile', 'include')
+    specfile_source_dir = pymca5_path('PyMcaIO', 'specfile', 'src')
+    specfile_include_dir = pymca5_path('PyMcaIO', 'specfile', 'include')
     for ffile in srcfiles:
         sources.append(os.path.join(specfile_source_dir, ffile+'.c'))
     module = Extension(name='PyMca5.PyMcaIO.specfile',
@@ -268,9 +307,9 @@ def build_specfile(ext_modules):
 
 def build_specfit(ext_modules):
     module = Extension(name='PyMca5.PyMcaMath.fitting.SpecfitFuns',
-                       sources=glob.glob('PyMca5/PyMcaMath/fitting/specfit/*.c'),
+                       sources=glob_pymca5('PyMcaMath', 'fitting', 'specfit', '*.c'),
                        define_macros=define_macros,
-                       include_dirs=['PyMca5/PyMcaMath/fitting/specfit',
+                       include_dirs=[pymca5_path('PyMcaMath', 'fitting', 'specfit'),
                                      numpy.get_include()])
     ext_modules.append(module)
 
@@ -286,29 +325,29 @@ def build_sps(ext_modules):
         extra_compile_args = []
 
     module = Extension(name='PyMca5.spslut',
-                       sources=['PyMca5/PyMcaIO/sps/Src/sps_lut.c',
-                                'PyMca5/PyMcaIO/sps/Src/spslut_py.c'],
+                       sources=[pymca5_path('PyMcaIO', 'sps', 'Src', 'sps_lut.c'),
+                                pymca5_path('PyMcaIO', 'sps', 'Src', 'spslut_py.c')],
                        define_macros=define_macros,
                        extra_compile_args=extra_compile_args,
-                       include_dirs=['PyMca5/PyMcaIO/sps/Include',
+                       include_dirs=[pymca5_path('PyMcaIO', 'sps', 'Include'),
                                      numpy.get_include()])
     ext_modules.append(module)
     if sys.platform != "win32":
         module = Extension(name='PyMca5.PyMcaIO.sps',
-                           sources=['PyMca5/PyMcaIO/sps/Src/sps.c',
-                                    'PyMca5/PyMcaIO/sps/Src/sps_py.c'],
+                           sources=[pymca5_path('PyMcaIO', 'sps', 'Src', 'sps.c'),
+                                    pymca5_path('PyMcaIO', 'sps', 'Src', 'sps_py.c')],
                            define_macros=define_macros,
                            extra_compile_args=extra_compile_args,
-                           include_dirs=['PyMca5/PyMcaIO/sps/Include',
+                           include_dirs=[pymca5_path('PyMcaIO', 'sps', 'Include'),
                                          numpy.get_include()])
         ext_modules.append(module)
 
 
 def build_PyMcaIOHelper(ext_modules):
     module = Extension(name='PyMca5.PyMcaIO.PyMcaIOHelper',
-                       sources=glob.glob('PyMca5/PyMcaIO/PyMcaIOHelper/*.c'),
+                       sources=glob_pymca5('PyMcaIO', 'PyMcaIOHelper', '*.c'),
                        define_macros=define_macros,
-                       include_dirs=['PyMca5/PyMcaIO/PyMcaIOHelper',
+                       include_dirs=[pymca5_path('PyMcaIO', 'PyMcaIOHelper'),
                                      numpy.get_include()])
     ext_modules.append(module)
 
@@ -325,9 +364,9 @@ def build__cython_kmeans(ext_modules):
     extra_link_args= []
 
     if build_ext:
-        sources = ['PyMca5/PyMcaMath/mva/_cython_kmeans/kmeans.pyx']
+        sources = [pymca5_path('PyMcaMath', 'mva', '_cython_kmeans', 'kmeans.pyx')]
     else:
-        sources = ['PyMca5/PyMcaMath/mva/_cython_kmeans/default/kmeans.c']
+        sources = [pymca5_path('PyMcaMath', 'mva', '_cython_kmeans', 'default', 'kmeans.c')]
     module = Extension(name='PyMca5.PyMcaMath.mva._cython_kmeans',
                        sources=sources,
                        define_macros=[],
@@ -341,7 +380,7 @@ def build_PyMcaSciPy(ext_modules):
     packages.append('PyMca5.PyMcaMath.PyMcaSciPy')
     packages.append('PyMca5.PyMcaMath.PyMcaSciPy.signal')
     module = Extension(name='PyMca5.PyMcaMath.PyMcaSciPy.signal.mediantools',
-                       sources=glob.glob('PyMca5/PyMcaMath/PyMcaSciPy/signal/*.c'),
+                       sources=glob_pymca5('PyMcaMath', 'PyMcaSciPy', 'signal', '*.c'),
                        define_macros=[],
                        include_dirs=[numpy.get_include()])
     ext_modules.append(module)
@@ -349,7 +388,7 @@ def build_PyMcaSciPy(ext_modules):
 
 def build_plotting_ctools(ext_modules):
     packages.append('PyMca5.PyMcaGraph.ctools')
-    basedir = os.path.join('PyMca5', 'PyMcaGraph', 'ctools', '_ctools')
+    basedir = pymca5_path('PyMcaGraph', 'ctools', '_ctools')
     c_files = [os.path.join(basedir, 'src', 'InsidePolygonWithBounds.c'),
                os.path.join(basedir, 'src', 'MinMaxImpl.c'),
                os.path.join(basedir, 'src', 'Colormap.c')]
@@ -401,7 +440,7 @@ def build_plotting_ctools(ext_modules):
 
 
 def build_xas_xas(ext_modules):
-    basedir = os.path.join('PyMca5', 'PyMcaPhysics', 'xas', '_xas')
+    basedir = pymca5_path('PyMcaPhysics', 'xas', '_xas')
     c_files = [os.path.join(basedir, 'src', 'polspl.c'),
                os.path.join(basedir, 'src', 'bessel0.c')]
     cython_dir = os.path.join(basedir, 'cython')
@@ -511,12 +550,10 @@ class smart_build_py(build_py):
         if not DISTUTILS:
             # package_data cannot deal with data files outside the package
             target = os.path.join(self.build_lib, "PyMca5", "PyMcaData")
-            dirname = os.path.dirname(os.path.relpath(__file__))
-            if not len(dirname):
-                dirname = "."
+            
             for fname in ["LICENSE", "LICENSE.GPL", "LICENSE.LGPL", "LICENSE.MIT",
                           "copyright", "changelog.txt"]:
-                src = os.path.join(dirname, fname)
+                src = os.path.join(setupDirectory, fname)
                 dest = os.path.join(target, fname)
                 print("copying %s to %s" % (src, dest))
                 self.copy_file(src, dest)
@@ -526,7 +563,7 @@ class smart_build_py(build_py):
                 os.mkdir(target)
 
             for fname in ["EADL.DAT", "EPDL97.DAT", "LICENSE"]:
-                src = os.path.join(dirname, "PyMca5", "EPDL97", fname)
+                src = pymca5_path("EPDL97", fname)
                 dest = os.path.join(target, fname)
                 print("copying %s to %s" % (src, dest))
                 self.copy_file(src, dest)
@@ -575,7 +612,7 @@ class smart_install_scripts(install_scripts):
             print("PyMca scripts to be installed in %s" % self.install_dir)
         self.outfiles = self.copy_tree(self.build_dir, self.install_dir)
         self.outfiles = []
-        for filein in glob.glob('PyMca5/scripts/*'):
+        for filein in glob_pymca5('scripts', '*'):
             filedest = os.path.join(self.install_dir, os.path.basename(filein))
             if os.path.exists(filedest):
                 os.remove(filedest)
@@ -752,7 +789,13 @@ class sdist_debian(sdist):
 
     def prune_file_list(self):
         sdist.prune_file_list(self)
-        to_remove = ["doc/build", "doc/pdf", "doc/html", "pylint", "epydoc"]
+        to_remove = [
+            os.path.join("doc", "build"),
+            os.path.join("doc", "pdf"),
+            os.path.join("doc", "html"),
+            "pylint",
+            "epydoc"
+        ]
         print("Removing files for debian")
         for rm in to_remove:
             self.filelist.exclude_pattern(pattern="*", anchor=False, prefix=rm)
@@ -890,6 +933,7 @@ distrib = setup(name="PyMca5",
                 download_url="https://github.com/vasole/pymca/archive/v%s.tar.gz" % __version__,
                 long_description=long_description,
                 packages=packages,
+                package_dir={'': 'src'},
                 platforms='any',
                 ext_modules=ext_modules,
                 data_files=data_files,
