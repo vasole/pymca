@@ -1,6 +1,8 @@
 import h5py
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaCore.NexusTools import getStartingPositionersGroup
+
 from . import HDF5Info
 
 
@@ -94,7 +96,7 @@ def get_motor_positions(hdf5File, node):
     if not isinstance(nxentry, h5py.Group):
         return dict()
 
-    nxpositioners = nxentry.get("instrument/positioners_start", None)
+    nxpositioners = getStartingPositionersGroup(hdf5File, nxentry_name)
     if nxpositioners is None or not isinstance(nxpositioners, h5py.Group):
         return dict()
 
