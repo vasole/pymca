@@ -33,13 +33,50 @@ import logging
 _logger = logging.getLogger(__name__)
 
 from bliss.config import get_sessions_list
-try:
-    from blissdata.settings import scan as rdsscan
-    from blissdata.data.node import get_node, get_nodes
-except ImportError:
-    _logger.info("Trying deprecated access to Redis")
-    from bliss.config.settings import scan as rdsscan
-    from bliss.data.node import get_node, get_nodes
+my_get_sessions_list = None
+import os
+from blissdata.redis_engine.store import DataStore
+# initialize some defaults
+DATA_STORE = None
+BEACON_HOST = os.getenv("BEACON_HOST")
+SESSION_LIST = []
+SESSION = None
+if BEACON_HOST is not None:
+    try:
+        DATA_STORE = DataStore("redis://%s2" % BEACON_HOST[:-1])
+    except Exception:
+        _logger.info("DATA_STORE not initialized")
+        DATA_STORE = None
+print("DATA_STORE = %s" % DATA_STORE)
+
+def my_get_sessions_list(data_store=DATA_STORE):
+    timestamp, scan_name =data_store.get_last_scan()
+    scan = data_store.load_scan(scan_name)
+    last_session = scan.session
+    timestamp, scan_list = data_store.search_existing_scans()
+    if len(scan_list) > 20:
+        scan_list = scan_list[-20:]
+    session_list = [last_session]
+    for scan_name in scan_list:
+        scan = data_store.load_scan(scan_name)
+        if scan.session not in session_list:
+            session_list.append(scan.session)
+    return session_list
+get_sessions_list = my_get_sessions_list
+def get_node(session_name):
+    # dummy usage
+    return session_name
+
+if DATA_STORE:
+    try:
+        SESSION_LIST = get_sessions_list(DATA_STORE)
+        SESSION = SESSION_LIST[0]
+    except Exception:
+        SESSION = None
+        SESSION_LIST = []
+
+print("SESSION = %s" % SESSION)
+print("SESSION_LIST = %s" % SESSION_LIST)
 
 _NODE_TYPES = [ "channel",
                 "lima",
@@ -111,26 +148,18 @@ def _check_dimension(node, dimension=None):
     else:
         return False
 
-def get_session_scan_list(session, filename=None):
+def get_session_scan_list(session, filename=None, data_store=DATA_STORE):
     """
     Returns a sorted list of actual scans. Last scan is last.
     """
-    nodes = list(_get_session_scans(session))
-    try:
-        nodes = sorted(nodes, key=lambda k: k.info["start_timestamp"])
-    except KeyError:
-        # slower but safe method
-        if _logger.getEffectiveLevel() == logging.DEBUG:
-            for node in nodes:
-                if "start_timestamp" not in node.info:
-                    _logger.debug("start_timestamp missing in <%s>" % node.name)
-                    break
-        nodes = [node for node in nodes if "start_timestamp" in node.info]
-        nodes = sorted(nodes, key=lambda k: k.info["start_timestamp"])
+    timestamp, keys = data_store.search_existing_scans(session=session)
+    if len(keys) > 10:
+        scans = [data_store.load_scan(scan_name) for scan_name in keys[-10:]]
+    else:
+        scans = [data_store.load_scan(scan_name) for scan_name in keys[-10:]]
     if filename:
-        nodes = [node for node in nodes
-                     if scan_info(node)["filename"] == filename]
-    return nodes
+        scans = [scan for scan in scans if scan.info["filename"] == filename]
+    return scans
 
 def _get_session_scans(session):
     if hasattr(session, "name"):
@@ -153,32 +182,20 @@ def _get_session_scans(session):
                  hasattr(node.name, "startswith") and not node.name.startswith("_")
             )
 
-def get_session_last_scan(session):
+def get_session_last_scan(session, data_store=DATA_STORE):
     return get_session_scan_list(session)[-1]
 
-def get_session_filename(session):
+def get_session_filename(session, data_store=DATA_STORE):
     """
     Return filename associated to last session scan or an empty string
     """
-    try:
-        info = get_session_last_scan(session).info.get_all()
-    except Exception:
-        _logger.warning("Error reading info from last scan")
-        _logger.warning("attempting slower method")
-        info = {}
-        scan_list = get_session_scan_list(session)
-        scan_list.reverse()
-        for scan in scan_list:
-            try:
-                info = scan.info.get_all()
-            except Exception:
-                info = {}
-            if "filename" in info:
-                break   
-    return info.get("filename", "")
+    return get_filename(session, data_store=data_store)
 
-def get_scan_list(session_node):
-    return get_node_list(session_node, node_type="scan", filter="scan")
+def get_scan_list(session_node, data_store=DATA_STORE):
+    if my_get_sessions_list is None:
+        return get_node_list(session_node, node_type="scan", filter="scan")
+    else:
+        print("CALLED")
 
 def get_data_channels(node, unique=False):
     return get_node_list(node, node_type="channel", filter="channel", dimension=0, unique=unique)
@@ -193,18 +210,21 @@ def get_spectra(node, unique=False):
     else:
         return []
 
-def get_filename(session_node):
-    scan_list = get_scan_list(session_node)
+def get_filename(session_node, data_store=DATA_STORE):
     filename = ""
-    if len(scan_list):
-        info = scan_info(scan_list[-1])
-        if "filename" in info:
-            filename = info["filename"]
-    return filename
+    scan_list = get_session_scan_list(session_node, data_store=data_store)
+    info = scan_list[-1].info
+    return info.get("filename", "")
 
 def get_filenames(node):
     filenames = []
-    if node.type == "scan":
+    #print(dir(node))
+    #print(node.info.keys())
+    if hasattr(node, "info"):
+        info = node.info
+        if "filename" in info:
+            filenames.append(info["filename"])
+    elif node.type == "scan":
         info = scan_info(node)
         if "filename" in info:
             filenames.append(info["filename"])
@@ -216,6 +236,7 @@ def get_filenames(node):
                 filename = info["filename"]
                 if filename not in filenames:
                     filenames.append(filename)
+    #print("FILENAMES from node", filenames)
     return filenames
 
 def get_last_spectrum_instances(session_node, offset=None):
@@ -362,8 +383,7 @@ def scan_info(scan_node):
         # ONLY MANAGE THE FIRST ACQUISITION BRANCH (multi-top-masters scan are ignored)
         top_master, channels = next(iter(scan_info["acquisition_chain"].items()))
         """
-
-    return scan_node.info.get_all()
+    return scan_node.info
 
 if __name__ == "__main__":
     import sys
@@ -387,6 +407,8 @@ if __name__ == "__main__":
         if not session_node:
             print("\tNot Available")
             continue
+        filename = get_filename(session_node)
+        print(filename)
         scans = get_session_scan_list(session_node)
         for scan in scans:
             filenames = get_filenames(scan)
@@ -397,6 +419,7 @@ if __name__ == "__main__":
                 if nFiles > 1:
                     print("WARNING, more than one file associated to scan")
                 filename = filenames[-1]
+            print('*************** ', filename)
             sInfo = scan_info(scan)
             print(list(sInfo.keys()))
             title = sInfo.get("title", "No COMMAND")
@@ -412,8 +435,11 @@ if __name__ == "__main__":
             scan = scans[-1]
         print("SCAN = %s" % scan)
         print("NAME = %s" % scan.name)
-        print("TITLE = %s" % scan_info(scan).get("title", "No COMMAND"))
-        print("ACQUISITION_CHAIN = ", scan_info(scan).get("acquisition_chain", None))
+        print("NUMBER = %d" % scan.number)
+        print("SESSION = %s" % scan.session)
+        info = scan_info(scan) # scan.info
+        print("TITLE = %s" % info.get("title", "No COMMAND"))
+        print("ACQUISITION_CHAIN = ", info.get("acquisition_chain", None))
         #for master in scan_info(scan)["acquisition_chain"]:
         #    print(" master = ", master)
         #    print(" channels = ", list(scan_info(scan)[master].keys()))

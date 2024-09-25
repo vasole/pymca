@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2024 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -165,7 +165,6 @@ class QSourceSelector(qt.QWidget):
     def openFile(self, filename=None, justloaded=None, specsession=False):
         _logger.debug("openfile = %s", filename)
         staticDialog = False
-        fileFilter = None
         if specsession == "bliss":
             specsession = False
             session = filename
@@ -226,11 +225,7 @@ class QSourceSelector(qt.QWidget):
                     filename = [filename]
             if not os.path.exists(filename[0]):
                 if '%' not in filename[0]:
-                    if filename[0].startswith("tiled") or \
-                       filename[0].startswith("http"):
-                        pass
-                    else:
-                        raise IOError("File %s does not exist" % filename[0])
+                    raise IOError("File %s does not exist" % filename[0])
             #check if it is a stack
             if len(filename) > 1:
                 key = "STACK from %s to %s" % (filename[0], filename[-1])
@@ -244,12 +239,11 @@ class QSourceSelector(qt.QWidget):
                                     "No shared memory source named %s" % key)
                 return
 
-        self._emitSourceSelectedOrReloaded(filename, key, filefilter=fileFilter)
+        self._emitSourceSelectedOrReloaded(filename, key)
 
-    def _emitSourceSelectedOrReloaded(self, filename, key, filefilter=None):
+    def _emitSourceSelectedOrReloaded(self, filename, key):
         ddict = {}
         ddict["event"] = "NewSourceSelected"
-        ddict["filter"] = filefilter
         if key in self.mapCombo.keys():
             if self.mapCombo[key] == filename:
                 #Reloaded event
