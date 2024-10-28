@@ -279,9 +279,14 @@ class H5NodeProxy(object):
                     for i in range(len(finalList)):
                         # avoid an error at silx level with the linechecking "if finalList[i][1] and "
                         finalListIsTrue = True
-                        if hasattr(finalList[i][1], "shape"):
-                            if not len(finalList[i][1].shape):
-                                 finalListIsTrue = False
+                        dataset = finalList[i][1]
+                        if hasattr(dataset, "shape"):
+                            if not len(dataset.shape):
+                                # it can still be a string
+                                if hasattr(dataset, "dtype") and safe_str(dataset.dtype).startswith("|S"):
+                                    pass
+                                else:
+                                    finalListIsTrue = False
                         if finalListIsTrue and not isinstance(finalList[i][1], str):
                             finalList[i][1]._posixPath = posixpath.join(self.name,
                                                                finalList[i][0])
