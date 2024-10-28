@@ -291,8 +291,8 @@ class H5NodeProxy(object):
                                         pass
                                     else:
                                         finalListIsTrue = False
-                                else:
-                                    finalListIsTrue = False
+                            else:
+                                finalListIsTrue = False
                         if finalListIsTrue and not isinstance(finalList[i][1], str):
                             finalList[i][1]._posixPath = posixpath.join(self.name,
                                                                finalList[i][0])
