@@ -283,8 +283,14 @@ class H5NodeProxy(object):
                         if hasattr(dataset, "shape"):
                             if not len(dataset.shape):
                                 # it can still be a string
-                                if hasattr(dataset, "dtype") and safe_str(dataset.dtype).startswith("|S"):
-                                    pass
+                                if hasattr(dataset, "dtype"):
+                                    if safe_str(dataset.dtype).startswith("|S"):
+                                        pass
+                                    elif safe_str(dataset.dtype) == "object":
+                                        # issue 1059
+                                        pass
+                                    else:
+                                        finalListIsTrue = False
                                 else:
                                     finalListIsTrue = False
                         if finalListIsTrue and not isinstance(finalList[i][1], str):
