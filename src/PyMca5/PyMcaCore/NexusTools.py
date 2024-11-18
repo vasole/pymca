@@ -515,9 +515,7 @@ def getStartingPositionersGroup(h5file, path):
     Retrieve the start positioners group associated to a path
     retrieving them from the same entry.
 
-    It assumes they are either in:
-
-    - NXentry/NXinstrument/positioners_start or
+    This method assumes the positioner group is NXentry/NXinstrument/positioners_start.
 
     """
     entry_path = getEntryName(path, h5file=h5file)
