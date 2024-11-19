@@ -12,7 +12,7 @@ Stand-alone Executable
 
 Stand-alone applications (aka. frozen binaries) are supplied for Windows and MacOS and can be downloaded from `here <https://sourceforge.net/projects/pymca/files/pymca/>`_. Just download the installer for your platform.
 
-On Windows, the latest Microsoft Visual C++ Redistributable needs to be installed before installing PyMca. It is likely that you already have it installed, but in case the application crashes at startup, please make sure it is installed.
+On Windows, the Microsoft Visual C++ Redistributable needs to be installed for using the PyMca frozen binary. It is likely that you already have it installed, but in case the application crashes at startup, please make sure it is installed.
 The installer can be downloaded from the `Microsoft website <https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist>`_. There are no additional dependencies on macOS.
 
 
