@@ -10,7 +10,9 @@ make use of different features of *PyMca* in your own Python programs.
 Stand-alone Executable
 ----------------------
 
-Stand-alone applications (aka. frozen binaries) are supplied for Windows and MacOS. They do not require any additional dependency and can be downloaded from `here <https://sourceforge.net/projects/pymca/files/pymca/>`_. Just download the installer for your platform.
+Stand-alone applications (aka. frozen binaries) are supplied for Windows and MacOS and can be downloaded from `here <https://sourceforge.net/projects/pymca/files/pymca/>`_. Just download the installer for your platform.
+
+On Windows, the latest Microsoft Visual C++ Redistributable needs to be installed before installing PyMca. The installer can be downloaded from the `Microsoft website <https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist>`_. There are no additional dependencies on macOS.
 
 
 Python module
