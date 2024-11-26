@@ -360,7 +360,7 @@ class EnergyTable(QTable):
         if oldcolor != self._scatterColor:
             item.setColor(self._scatterColor)
         else:
-            item.setColor(qt.Qt.white)
+            item.setColor(qt.QColor(255, 255, 255))
         item.repaint(item.rect())
         self.cellChanged.emit(row, col)
 
@@ -384,7 +384,7 @@ class EnergyTable(QTable):
                 rowoffset= (-int(idx/self.__rows))*(nrows //self.dataColumns)
                 coloffset=  3*int(idx/self.__rows)
             r = idx + rowoffset
-            color = qt.Qt.white
+            color = qt.QColor(255, 255, 255)
             if len(self.scatterList):
                 if idx < len(self.scatterList):
                     if (self.scatterList[idx] is not None)and \
@@ -405,7 +405,7 @@ class EnergyTable(QTable):
                     self.setCellWidget(r, 0+coloffset, item)
                     item.stateChanged[int].connect(self._itemSlot)
                     if hasattr(item, "setToolTip"):
-                        item.setToolTip("Double click on empty space at the to toggle inclusion as scatter peak (different color)")
+                        item.setToolTip("Double click on empty space at the end to toggle inclusion as scatter peak (different color)")
                 else:
                     item.setText(text)
                 oldcolor = item.color
@@ -632,9 +632,9 @@ class EnergyTable(QTable):
         return ddict
 
 class ColorQTableItem(qt.QCheckBox):
-         def __init__(self, table, text, color=qt.Qt.white,bold=0):
+         def __init__(self, table, text, color=qt.QColor(255, 255, 255), bold=0):
             qt.QCheckBox.__init__(self, table)
-            self.color = color
+            self.setColor(color)
             self.bold  = bold
             self.setText(text)
             #this is one critical line
@@ -642,6 +642,8 @@ class ColorQTableItem(qt.QCheckBox):
 
          def setColor(self, color):
              self.color = color
+             if hasattr(color, "name"):
+                 self.setStyleSheet("background-color: %s" % color.name())
 
          def paintEvent(self, painter):
             #this is the other (self.palette() is not appropriate)
@@ -660,7 +662,7 @@ def main(args):
     energy = numpy.arange(100.).astype(numpy.float64)+ 1.5
     weight = numpy.ones(len(energy), numpy.float64)
     flag  = numpy.zeros(len(energy), dtype=numpy.int32).tolist()
-    scatterlist = numpy.zeros(len(energy))
+    scatterlist = numpy.zeros(len(energy)).astype(numpy.int8)
     scatterlist[0:10] = 1
     tab.setParameters(energy, weight, flag, scatterlist)
     tab.sigEnergyTableSignal.connect(dummy)
