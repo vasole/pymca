@@ -515,7 +515,11 @@ def getStartingPositionersGroup(h5file, path):
     Retrieve the start positioners group associated to a path
     retrieving them from the same entry.
 
-    This method assumes the positioner group is NXentry/NXinstrument/positioners_start.
+    It assumes they are either in:
+
+    - NXentry/NXinstrument/positioners_start or 
+    - NXentry/NXinstrument/positioners or
+    - NXentry/measurement/pre_scan_snapshot
 
     """
     entry_path = getEntryName(path, h5file=h5file)
@@ -528,7 +532,32 @@ def getStartingPositionersGroup(h5file, path):
                 positioners = instrument[key]
                 if not isGroup(positioners):
                     positioners = None
+    if positioners is None:
+        positioners = getPositionersGroup(h5file, path)
     return positioners
+
+def getStartingPositionerValues(h5file, path):
+    """
+    Retrieve the start positioners names, values and units associated to a path
+    retrieving them from the same entry.
+
+    It assumes they are either in:
+
+    - NXentry/NXinstrument/positioners_start or 
+    - NXentry/NXinstrument/positioners or
+    - NXentry/measurement/pre_scan_snapshot
+
+    """
+    nxpositioners = getStartingPositionersGroup(h5file, path)
+    positions = list()
+    if nxpositioners is None:
+        return positions
+    for name, dset in nxpositioners.items():
+        if not isinstance(dset, h5py.Dataset):
+            continue
+        idx = (0,) * dset.ndim
+        positions.append((name, dset[idx], dset.attrs.get("units", "")))
+    return positions
 
 def getMeasurementGroup(h5file, path):
     """
