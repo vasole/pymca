@@ -65,14 +65,20 @@ class NexusMotorInfoWidget(qt.QWidget):
 
 class NexusInfoWidget(HDF5Info.HDF5InfoWidget):
 
+    def __init__(self, parent=None, info=None, nxclass=None):
+        self._nxclass = nxclass
+        super().__init__(parent=parent, info=info)
+
     def _build(self):
         super()._build()
-        self.motorInfoWidget = NexusMotorInfoWidget(self)
-        self.addTab(self.motorInfoWidget, "Motors")
+        if self._nxclass in ("NXentry", b"NXentry"):
+            self.motorInfoWidget = NexusMotorInfoWidget(self)
+            self.addTab(self.motorInfoWidget, "Motors")
 
     def setInfoDict(self, ddict):
         super().setInfoDict(ddict)
-        self.motorInfoWidget.setInfoDict(ddict)
+        if self._nxclass in ("NXentry", b"NXentry"):
+            self.motorInfoWidget.setInfoDict(ddict)
 
 
 def getInfo(hdf5File, node):
