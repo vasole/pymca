@@ -1,3 +1,33 @@
+#/*##########################################################################
+# Copyright (C) 2024 European Synchrotron Radiation Facility
+#
+# This file is part of the PyMca X-ray Fluorescence Toolkit developed at
+# the ESRF.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
+#############################################################################*/
+__author__ = "M. Spitoni"
+__contact__ = "sole@esrf.fr"
+__license__ = "MIT"
+__copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+
 import h5py
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
@@ -65,14 +95,20 @@ class NexusMotorInfoWidget(qt.QWidget):
 
 class NexusInfoWidget(HDF5Info.HDF5InfoWidget):
 
+    def __init__(self, parent=None, info=None, nxclass=None):
+        self._nxclass = nxclass
+        super().__init__(parent=parent, info=info)
+
     def _build(self):
         super()._build()
-        self.motorInfoWidget = NexusMotorInfoWidget(self)
-        self.addTab(self.motorInfoWidget, "Motors")
+        if self._nxclass in ("NXentry", b"NXentry"):
+            self.motorInfoWidget = NexusMotorInfoWidget(self)
+            self.addTab(self.motorInfoWidget, "Motors")
 
     def setInfoDict(self, ddict):
         super().setInfoDict(ddict)
-        self.motorInfoWidget.setInfoDict(ddict)
+        if self._nxclass in ("NXentry", b"NXentry"):
+            self.motorInfoWidget.setInfoDict(ddict)
 
 
 def getInfo(hdf5File, node):
