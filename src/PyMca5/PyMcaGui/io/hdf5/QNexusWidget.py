@@ -47,7 +47,7 @@ else:
     QString = str
 
 from . import HDF5Widget
-from . import HDF5Info
+from . import NexusInfo
 from . import HDF5CounterTable
 from . import HDF5McaTable
 from . import QNexusWidgetActions
@@ -123,7 +123,7 @@ class QNexusWidget(qt.QWidget):
         self._autoCntList = []
         self._autoAliasList = []
         self._defaultModel = HDF5Widget.FileModel()
-        self.getInfo = HDF5Info.getInfo
+        self.getInfo = NexusInfo.getInfo
         self._modelDict = {}
         self._widgetDict = {}
         self._lastWidgetId = None
@@ -507,8 +507,9 @@ class QNexusWidget(qt.QWidget):
             phynxFile  = self.data._sourceObjectList[fileIndex]
         else:
             phynxFile  = HDF5Widget.h5open(filename)
+
         info = self.getInfo(phynxFile, name)
-        widget = HDF5Info.HDF5InfoWidget()
+        widget = NexusInfo.NexusInfoWidget()
         widget.notifyCloseEventToWidget(self)
         title = os.path.basename(filename)
         title += " %s" % name
@@ -531,6 +532,7 @@ class QNexusWidget(qt.QWidget):
                     del self._widgetDict[wid]
             widget._sourceObjectWeakReference = weakref.ref(phynxFile,
                                                  sourceObjectDestroyed)
+
         widget.setInfoDict(info)
         # todo: this first `if` block can be dropped when silx is a hard dependency
         if dset and Hdf5NodeView is None:

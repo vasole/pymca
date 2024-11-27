@@ -62,6 +62,7 @@ docs/_build/
 # cython generated files
 src/PyMca5/PyMcaGraph/ctools/_ctools/cython/*.c
 src/PyMca5/PyMcaPhysics/xas/_xas/cython/*.c
+src/PyMca5/PyMcaMath/mva/_cython_kmeans/*.c
 
 # PyCharm meta data
 .idea/
