@@ -84,9 +84,9 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         self._selectionColors = numpy.zeros((len(self.colorList), 4), numpy.uint8)
         self._alphaLevel = None
         for i in range(len(self.colorList)):
-            self._selectionColors[i, 0] = eval("0x" + self.colorList[i][-2:])
-            self._selectionColors[i, 1] = eval("0x" + self.colorList[i][3:-2])
-            self._selectionColors[i, 2] = eval("0x" + self.colorList[i][1:3])
+            self._selectionColors[i, 0] = int(self.colorList[i][-2:], 16)
+            self._selectionColors[i, 1] = int(self.colorList[i][3:-2], 16)
+            self._selectionColors[i, 2] = int(self.colorList[i][1:3], 16)
             self._selectionColors[i, 3] = 0xff
         self._maxNRois = maxNRois
         self._nRoi = 1
