@@ -2912,7 +2912,7 @@ def _updateElementDict(symbol, dict, energy=None, minenergy=MINENERGY, minrate=0
     if 'rays' in dict:
         for rays in dict['rays']:
             for transition in dict[rays]:
-                #print "transition deleted = ",transition
+                #print("transition deleted = ",transition)
                 del dict[transition]
             #print "rays deleted = ",rays
             del dict[rays]

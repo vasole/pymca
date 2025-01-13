@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2025 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -289,6 +289,10 @@ ElementMShellTransitions = ElementM1ShellTransitions     +  \
                            ElementM3ShellTransitions[2:] +  \
                            ElementM4ShellTransitions[2:] +  \
                            ElementM5ShellTransitions[2:]
+
+for i in range(len(ElementMShellTransitions)):
+    ElementMShellTransitions[i]+="*"
+
 nele = len(ElementM1ShellRates)
 elements = range(1,nele+1)
 weights = []
