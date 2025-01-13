@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2025 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -119,7 +119,7 @@ class PeakButtonList(qt.QWidget):
     # emitted object is a list
     sigSelectionChanged = qt.pyqtSignal(object)
     def __init__(self, parent=None, name="PeakButtonList",
-                 peaklist=['K','Ka','Kb','L','L1','L2','L3','M'],
+                 peaklist=['K','Ka','Kb','L','L1','L2','L3','M', 'M1', 'M2', 'M3', 'M4', 'M5'],
                  fl=0):
         qt.QWidget.__init__(self,parent)
         self.peaklist = peaklist
@@ -228,7 +228,7 @@ class FitPeakSelect(qt.QWidget):
         line.setFrameShadow(qt.QFrame.Sunken)
 
         self.peaks = PeakButtonList(self)
-        self.peaks.setDisabled(['K','Ka','Kb','L','L1','L2','L3','M'])
+        self.peaks.setDisabled(['K','Ka','Kb','L','L1','L2','L3','M', 'M1', 'M2', 'M3', 'M4', 'M5'])
 
         self.energyTable.sigEnergyTableSignal.connect(self._energyTableAction)
         self.table.sigElementClicked.connect(self.elementClicked)
@@ -328,19 +328,19 @@ class FitPeakSelect(qt.QWidget):
         elif z > 17:
             #self.peaks.setDisabled(['Ka','Kb','M'])
             #disabled = ['Ka','Kb','M']
-            disabled = ['M']
+            disabled = ['M', 'M1', 'M2', 'M3', 'M4', 'M5']
         elif z > 2:
             #self.peaks.setDisabled(['Ka','Kb','L','L1','L2','L3','M'])
             #disabled = ['Ka','Kb','L','L1','L2','L3','M']
-            disabled = ['L','L1','L2','L3','M']
+            disabled = ['L','L1','L2','L3','M', 'M1', 'M2', 'M3', 'M4', 'M5']
         else:
             #self.peaks.setDisabled(['K','Ka','Kb','L','L1','L2','L3','M'])
             #disabled = ['Ka','Kb','L','L1','L2','L3','M']
-            disabled = ['Ka', 'Kb','L','L1','L2','L3','M']
+            disabled = ['Ka', 'Kb','L','L1','L2','L3','M', 'M1', 'M2', 'M3', 'M4', 'M5']
 
         ele = symbol
         if self.energyValue is not None:
-            for peak in ['K', 'Ka', 'Kb', 'L','L1','L2','L3','M']:
+            for peak in ['K', 'Ka', 'Kb', 'L','L1','L2','L3','M', 'M1', 'M2', 'M3', 'M4', 'M5']:
                 if peak not in disabled:
                     if peak == 'L':
                         if Elements.Element[ele]['binding']['L3'] > self.energyValue:
