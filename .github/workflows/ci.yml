@@ -26,7 +26,7 @@ jobs:
         include:
           - name-suffix: "(Minimum Versions)"
             os: ubuntu-latest
-            python-version: 3.8
+            python-version: 3.9
             BUILD_COMMAND: --sdist
             QT_BINDING: PyQt5==5.14.1
             XVFB_RUN: xvfb-run -a
@@ -132,7 +132,6 @@ jobs:
 
       - name: Install from source package
         run: |
-          pip install --upgrade cython
           for filename in dist/*ca5-5.*; do
             echo "\nInstall $filename"
             pip install --pre $filename
