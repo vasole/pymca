@@ -132,7 +132,7 @@ jobs:
 
       - name: Install from source package
         run: |
-          for filename in dist/PyMca5*.*; do
+          for filename in dist/*ca5-5.*; do
             echo "\nInstall $filename"
             pip install --pre $filename
           done
