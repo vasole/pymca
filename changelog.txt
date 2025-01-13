@@ -1,6 +1,8 @@
 VERSION 5.9.3
 -------------
 
+- XRF. Allow to fit M subshells
+
 - Compatibility with numpy 2.0
 
 - GUI. Compatibility with matplotlib 3.9.0
