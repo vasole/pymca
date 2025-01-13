@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2025 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -189,16 +189,28 @@ ElementShellTransitions = [KShell.ElementKShellTransitions,
                            LShell.ElementL1ShellTransitions,
                            LShell.ElementL2ShellTransitions,
                            LShell.ElementL3ShellTransitions,
-                           MShell.ElementMShellTransitions]
+                           MShell.ElementMShellTransitions,
+                           MShell.ElementM1ShellTransitions,
+                           MShell.ElementM2ShellTransitions,
+                           MShell.ElementM3ShellTransitions,
+                           MShell.ElementM4ShellTransitions,
+                           MShell.ElementM5ShellTransitions]
 ElementShellRates = [KShell.ElementKShellRates,
                      KShell.ElementKAlphaRates,
                      KShell.ElementKBetaRates,
                      LShell.ElementLShellRates,
                      LShell.ElementL1ShellRates,
                      LShell.ElementL2ShellRates,
-                     LShell.ElementL3ShellRates,MShell.ElementMShellRates]
+                     LShell.ElementL3ShellRates,
+                     MShell.ElementMShellRates,
+                     MShell.ElementM1ShellRates,
+                     MShell.ElementM2ShellRates,
+                     MShell.ElementM3ShellRates,
+                     MShell.ElementM4ShellRates,
+                     MShell.ElementM5ShellRates]
 
-ElementXrays      = ['K xrays', 'Ka xrays', 'Kb xrays', 'L xrays','L1 xrays','L2 xrays','L3 xrays','M xrays']
+ElementXrays      = ['K xrays', 'Ka xrays', 'Kb xrays', 'L xrays','L1 xrays','L2 xrays','L3 xrays','M xrays',
+                     'M1 xrays', 'M2 xrays', 'M3 xrays', 'M4 xrays', 'M5 xrays']
 
 def getsymbol(z):
     if (z > 0) and (z<=len(ElementList)):
@@ -2909,9 +2921,9 @@ def _updateElementDict(symbol, dict, energy=None, minenergy=MINENERGY, minrate=0
     z = getz(ele)
     for n in range(len(ElementXrays)):
         rays = ElementXrays[n]
-        if   (rays == 'L xrays'):
+        if rays == 'L xrays':
             shellrates = getElementLShellRates(ele,energy=energy,photoweights=photoweights)
-        elif (rays == 'M xrays'):
+        elif rays == 'M xrays':
             shellrates = getElementMShellRates(ele,energy=energy,photoweights=photoweights)
         else:
             shellrates = ElementShellRates[n][z-1]
