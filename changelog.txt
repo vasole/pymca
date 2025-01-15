@@ -1,7 +1,10 @@
-VERSION 5.9.3
+VERSION 5.9.4
 -------------
 
 - XRF. Allow to fit M subshells
+
+VERSION 5.9.3
+-------------
 
 - Compatibility with numpy 2.0
 
