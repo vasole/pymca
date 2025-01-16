@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2025 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -42,7 +42,7 @@ def getXMSOFileFluorescenceInformation(xmsoFile):
     f = ElementTree.parse(xmsoFile)
     ddict = {}
     root = f.getroot()
-    transitions = ['K', 'Ka', 'Kb', 'L', 'L1', 'L2', 'L3', 'M']
+    transitions = ['K', 'Ka', 'Kb', 'L', 'L1', 'L2', 'L3', 'M', 'M1', 'M2', 'M3', 'M4', 'M5']
     for i in root.iter('fluorescence_line_counts'):
         _logger.debug("%s", i.attrib)
         for key in ['symbol', 'total_counts']:
@@ -116,11 +116,10 @@ def test(xmsoFile='t.xmso'):
             if line == "z":
                 #atomic number
                 continue
-            if 1 or line in ['K', 'Ka', 'Kb', 'L', 'L1', 'L2', 'L3', 'M']:
-                correction1 = ddict[element][line]['correction_factor'][1]
-                correctionn = ddict[element][line]['correction_factor'][-1]
-                print("Element %s Line %s Correction 2 = %f Correction n = %f" %\
-                            (element, line,correction1, correctionn))
+            correction1 = ddict[element][line]['correction_factor'][1]
+            correctionn = ddict[element][line]['correction_factor'][-1]
+            print("Element %s Line %s Correction 2 = %f Correction n = %f" %\
+                        (element, line,correction1, correctionn))
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
