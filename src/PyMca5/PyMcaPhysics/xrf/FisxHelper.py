@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2025 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -941,7 +941,7 @@ def _fisxFromFitConfigurationAction(fitConfiguration,
 def getFisxCorrectionFactors(*var, **kw):
     expectedFluorescence = getMultilayerFluorescence(*var, **kw)
     ddict = {}
-    transitions = ['K', 'Ka', 'Kb', 'L', 'L1', 'L2', 'L3', 'M']
+    transitions = ['K', 'Ka', 'Kb', 'L', 'L1', 'L2', 'L3', 'M', 'M1', 'M2', 'M3', 'M4', 'M5']
     if kw["secondary"] == 2:
         nItems = 3
     else:
