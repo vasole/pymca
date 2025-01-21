@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2025 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -46,18 +46,21 @@ for l in ['de_DE.utf8', 'fr_FR.utf8']:
         other_locale = l
         break
 
-try:
-    locale.setlocale(locale.LC_ALL, current_locale)
-except locale.Error:
-    # cleanup python 3.12 issue on same machines
-    if isinstance(current_locale, tuple):
-        # if the returned tuple is (None, 'UTF-8') it cannot restore the locale
-        current_as_list = list(current_locale)
-        for i in range(len(current_as_list)):
-            if current_as_list[i] is None:
-                print(f"Returned locale <{current_locale}> reset to None")
-                current_locale = None
+if other_locale:
+    try:
         locale.setlocale(locale.LC_ALL, current_locale)
+    except locale.Error:
+        # cleanup python 3.12 issue on same machines
+        if isinstance(current_locale, tuple):
+            # if the returned tuple is (None, 'UTF-8') it cannot restore the locale
+            current_as_list = list(current_locale)
+            for i in range(len(current_as_list)):
+                if current_as_list[i] is None:
+                    print(f"Returned locale <{current_locale}> reset to None")
+                    current_locale = None
+                else:
+                    current_locale = current_as_list[0]
+            locale.setlocale(locale.LC_ALL, current_locale)
 
 class testSpecfile(unittest.TestCase):
     def setUp(self):
