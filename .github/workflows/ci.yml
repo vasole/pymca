@@ -52,6 +52,20 @@ jobs:
             QT_BINDING: PyQt6
             XVFB_RUN: ""
 
+          - name-suffix: "PyQt6 wheel"
+            os: windows-latest
+            python-version: "3.13"
+            BUILD_COMMAND: --wheel
+            QT_BINDING: PyQt6
+            XVFB_RUN: ""
+
+          - name-suffix: "PySide6 wheel"
+            os: windows-latest
+            python-version: "3.13"
+            BUILD_COMMAND: --wheel
+            QT_BINDING: PySide6
+            XVFB_RUN: ""
+
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -60,9 +74,8 @@ jobs:
           fetch-depth: 0
 
       - name: Install OS dependencies
+        if: runner.os == 'Linux' 
         run: |
-          case "${{ runner.os }}" in
-          Linux)
             sudo apt-get update -yy
             sudo apt-get install -yy \
               libxkbcommon-x11-0 \
@@ -83,13 +96,6 @@ jobs:
               libxcb1
             #export QT_QPA_PLATFORM=offscreen
             export DISPLAY=:99.0
-            ;;
-          macOS)
-          # curl -o miniconda_installer.sh "https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh"
-          # bash miniconda_installer.sh -b -p miniconda
-          # export PATH="`pwd`/miniconda/bin":$PATH
-            ;;
-          esac
 
       - name: Set up Python
         uses: actions/setup-python@v2
@@ -126,16 +132,15 @@ jobs:
            pip list
 
       - name: Generate source package or wheel
+        env:
+          MACOSX_DEPLOYMENT_TARGET: "10.9"
         run: |
           python -m build ${{ matrix.BUILD_COMMAND }}
           ls dist
 
-      - name: Install from source package
+      - name: Install
         run: |
-          for filename in dist/*ca5-5.*; do
-            echo "\nInstall $filename"
-            pip install --pre $filename
-          done
+         pip install --pre "$(ls dist/*ca5-5.*)"
 
       - name: Run the tests
         run: |
