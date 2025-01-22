@@ -74,9 +74,8 @@ jobs:
           fetch-depth: 0
 
       - name: Install OS dependencies
+        if: runner.os == 'Linux' 
         run: |
-          case "${{ runner.os }}" in
-          Linux)
             sudo apt-get update -yy
             sudo apt-get install -yy \
               libxkbcommon-x11-0 \
@@ -97,13 +96,6 @@ jobs:
               libxcb1
             #export QT_QPA_PLATFORM=offscreen
             export DISPLAY=:99.0
-            ;;
-          macOS)
-          # curl -o miniconda_installer.sh "https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh"
-          # bash miniconda_installer.sh -b -p miniconda
-          # export PATH="`pwd`/miniconda/bin":$PATH
-            ;;
-          esac
 
       - name: Set up Python
         uses: actions/setup-python@v2
@@ -140,6 +132,8 @@ jobs:
            pip list
 
       - name: Generate source package or wheel
+        env:
+          MACOSX_DEPLOYMENT_TARGET: "10.9"
         run: |
           python -m build ${{ matrix.BUILD_COMMAND }}
           ls dist
