@@ -52,6 +52,20 @@ jobs:
             QT_BINDING: PyQt6
             XVFB_RUN: ""
 
+          - name-suffix: "PyQt6 wheel"
+            os: windows-latest
+            python-version: "3.13"
+            BUILD_COMMAND: --wheel
+            QT_BINDING: PyQt6
+            XVFB_RUN: ""
+
+          - name-suffix: "PySide6 wheel"
+            os: windows-latest
+            python-version: "3.13"
+            BUILD_COMMAND: --wheel
+            QT_BINDING: PySide6
+            XVFB_RUN: ""
+
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
