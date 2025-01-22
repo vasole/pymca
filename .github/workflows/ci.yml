@@ -138,12 +138,9 @@ jobs:
           python -m build ${{ matrix.BUILD_COMMAND }}
           ls dist
 
-      - name: Install from source package
+      - name: Install
         run: |
-          for filename in dist/*ca5-5.*; do
-            echo "\nInstall $filename"
-            pip install --pre $filename
-          done
+         pip install --pre "$(ls dist/*ca5-5.*)"
 
       - name: Run the tests
         run: |
