@@ -105,7 +105,8 @@ class testSpecfile(unittest.TestCase):
         # this should free the handle
         gc.collect()
         # restore saved locale
-        locale.setlocale(locale.LC_ALL, current_locale)
+        if other_locale:
+            locale.setlocale(locale.LC_ALL, current_locale)
         
         if self.specfileClass is not None:
             if os.path.exists(self.fname):
