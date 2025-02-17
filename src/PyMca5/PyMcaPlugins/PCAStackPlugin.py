@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2025 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -181,25 +181,11 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
             self._kMeansWidget = None
             self._executeFunctionAndParameters()
 
-    def _executeFunctionAndParameters(self):
-        self.widget = None
-        self.configurationWidget.show()
-        if _logger.getEffectiveLevel() == logging.DEBUG:
-            self.thread = CalculationThread.CalculationThread(\
-                            calculation_method=self.actualCalculation)
-            self.thread.result = self.actualCalculation()
-            self.threadFinished()
-        else:
-            self.thread = CalculationThread.CalculationThread(\
-                            calculation_method=self.actualCalculation)
-            self.thread.start()
-            message = "Please wait. PCA Calculation going on."
-            CalculationThread.waitingMessageDialog(self.thread,
-                                message=message,
-                                parent=self.configurationWidget)
-            self.threadFinished()
-
-    def actualCalculation(self):
+    def _getFunctionAndParameters(self):
+        """
+        Get the function, vars and kw for the calculation thread
+        """
+        #obtain the parameters for the calculation
         pcaParameters = self.configurationWidget.getParameters()
         self._status.setText("Calculation going on")
         self.configurationWidget.setEnabled(False)
@@ -228,6 +214,13 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
             spatial_mask = numpy.isfinite(self.getStackOriginalImage())
             pcaParameters['mask'] = spatial_mask
         pcaParameters["legacy"] = False
+        return function, None, pcaParameters
+
+    def _executeFunctionAndParameters(self):
+        _logger.debug("_executeFunctionAndParameters")
+        self.widget = None
+        self.configurationWidget.show()
+        function, dummy, pcaParameters = self._getFunctionAndParameters()
         _logger.info("PCA function %s" % function.__name__)
         _logger.info("PCA parameters %s" % pcaParameters)
         if "Multiple" in self.__methodlabel:
@@ -235,10 +228,7 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
             oldShapes = []
             for stack in stackList:
                 oldShapes.append(stack.data.shape)
-            result = function(stackList, **pcaParameters)
-            for i in range(len(stackList)):
-                stackList[i].data.shape = oldShapes[i]
-            return result
+            inputStack = stackList
         else:
             stack = self.getStackDataObject()
             if isinstance(stack, numpy.ndarray):
@@ -248,14 +238,47 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
                     text += " WARNING: Non floating point data."
                     self._status.setText(text)
             oldShape = stack.data.shape
-            result = function(stack, **pcaParameters)
-            if stack.data.shape != oldShape:
-                stack.data.shape = oldShape
-        return result
+            inputStack = stack
 
-    def threadFinished(self):
-        result = self.thread.getResult()
-        self.thread = None
+        try:
+            if _logger.getEffectiveLevel() == logging.DEBUG:
+                result = function(inputStack, **pcaParameters)
+                self.threadFinished(result)
+            else:
+                thread = CalculationThread.CalculationThread(\
+                                calculation_method=function,
+                                calculation_vars=inputStack,
+                                calculation_kw=pcaParameters,
+                                expand_vars=False,
+                                expand_kw=True)
+                thread.start()
+                message = "Please wait. PCA Calculation going on."
+                CalculationThread.waitingMessageDialog(thread,
+                                    message=message,
+                                    parent=self.configurationWidget,
+                                    modal=True,
+                                    update_callback=None,
+                                    frameless=False)
+                result = thread.getResult()
+                self.threadFinished(result)
+        except Exception:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setWindowTitle("Calculation error")
+                msg.setText("Error on PCA calculation")
+                msg.setInformativeText(str(sys.exc_info()[1]))
+                msg.setDetailedText(traceback.format_exc())
+                msg.exec()
+        finally:
+            if "Multiple" in self.__methodlabel:
+                for i in range(len(stackList)):
+                    stackList[i].data.shape = oldShapes[i]
+            else:
+                if stack.data.shape != oldShape:
+                    stack.data.shape = oldShape
+
+    def threadFinished(self, result):
+        _logger.info("threadFinished")
         if type(result) == type((1,)):
             #if we receive a tuple there was an error
             if len(result):
@@ -265,6 +288,7 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
                     raise Exception(result[1], result[2])
                     return
         self._status.setText("Ready")
+
         curve = self.configurationWidget.getSpectrum(binned=True)
         if curve not in [None, []]:
             xValues = curve[0]

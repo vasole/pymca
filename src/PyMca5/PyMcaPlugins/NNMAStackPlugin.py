@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2025 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -178,23 +178,10 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
         if ret:
             self._executeFunctionAndParameters()
 
-    def _executeFunctionAndParameters(self):
-        _logger.debug("NNMAStackPlugin _executeFunctionAndParameters")
-        self.widget = None
-        self.thread = CalculationThread.CalculationThread(\
-                            calculation_method=self.actualCalculation)
-        self.configurationWidget.show()
-        message = "Please wait. NNMA Calculation going on."
-        _logger.debug("NNMAStackPlugin starting thread")
-        self.thread.start()
-        _logger.debug("NNMAStackPlugin waitingMessageDialog")
-        CalculationThread.waitingMessageDialog(self.thread,
-                                message=message,
-                                parent=self.configurationWidget)
-        _logger.debug("NNMAStackPlugin waitingMessageDialog passed")
-        self.threadFinished()
-
-    def actualCalculation(self):
+    def _getFunctionAndParameters(self):
+        """
+        Get the function, vars and kw for the calculation thread
+        """
         _logger.debug("NNMAStackPlugin actualCalculation")
         nnmaParameters = self.configurationWidget.getParameters()
         self._status.setText("Calculation going on")
@@ -216,6 +203,16 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
             spatial_mask = numpy.isfinite(self.getStackOriginalImage())
             ddict['mask'] = spatial_mask
         del nnmaParameters
+        return function, None, ddict
+
+    def _executeFunctionAndParameters(self):
+        _logger.debug("_executeFunctionAndParameters")
+        self.widget = None
+        self.configurationWidget.show()
+        function, dummy, ddict = self._getFunctionAndParameters()
+        _logger.info("NNMA function %s" % function.__name__)
+        _logger.info("NNMA parameters %s" % ddict)
+
         stack = self.getStackDataObject()
         if isinstance(stack, numpy.ndarray):
             if stack.data.dtype not in [numpy.float64, numpy.float32]:
@@ -236,18 +233,48 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
                 tmpData.shape = -1
                 data[:, i] = tmpData
             data.shape = oldShape[1:] + oldShape[0:1]
-            result = function(data, **ddict)
-            data = None
         else:
-            result = function(stack, **ddict)
-            if stack.data.shape != oldShape:
-                stack.data.shape = oldShape
-        return result
+            data = stack
+        try:
+            if _logger.getEffectiveLevel() == logging.DEBUG:
+                result = function(inputStack, **ddict)
+                self.threadFinished(result)
+            else:
+                thread = CalculationThread.CalculationThread(\
+                                calculation_method=function,
+                                calculation_vars=data,
+                                calculation_kw=ddict,
+                                expand_vars=False,
+                                expand_kw=True)
+                thread.start()
+                message = "Please wait. NNMA Calculation going on."
+                _logger.debug("NNMAStackPlugin waitingMessageDialog")
+                CalculationThread.waitingMessageDialog(thread,
+                                    message=message,
+                                    parent=self.configurationWidget,
+                                    modal=True,
+                                    update_callback=None,
+                                    frameless=False)
+                _logger.debug("NNMAStackPlugin waitingMessageDialog passed")
+                result = thread.getResult()
+                self.threadFinished(result)
+        except Exception:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setWindowTitle("Calculation error")
+                msg.setText("Error on NNMA calculation")
+                msg.setInformativeText(str(sys.exc_info()[1]))
+                msg.setDetailedText(traceback.format_exc())
+                msg.exec()
+        finally:
+            if mcaIndex == 0:
+                data = None
+            else:
+                if stack.data.shape != oldShape:
+                    stack.data.shape = oldShape
 
-    def threadFinished(self):
-        _logger.debug("NNMAStackPlugin threadFinished")
-        result = self.thread.result
-        self.thread = None
+    def threadFinished(self, result):
+        _logger.info("threadFinished")
         if type(result) == type((1,)):
             #if we receive a tuple there was an error
             if len(result):
@@ -258,6 +285,8 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
                     return
         self._status.setText("Ready")
         curve = self.configurationWidget.getSpectrum(binned=True)
+
+        
         if curve not in [None, []]:
             xValues = curve[0]
         else:
