@@ -181,11 +181,10 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
             self._kMeansWidget = None
             self._executeFunctionAndParameters()
 
-
-    def _executeFunctionAndParameters(self):
-        self.widget = None
-        self.configurationWidget.show()
-
+    def _getFunctionAndParameters(self):
+        """
+        Get the function, vars and kw for the calculation thread
+        """
         #obtain the parameters for the calculation
         pcaParameters = self.configurationWidget.getParameters()
         self._status.setText("Calculation going on")
@@ -215,6 +214,13 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
             spatial_mask = numpy.isfinite(self.getStackOriginalImage())
             pcaParameters['mask'] = spatial_mask
         pcaParameters["legacy"] = False
+        return function, None, pcaParameters
+
+    def _executeFunctionAndParameters(self):
+        _logger.debug("_executeFunctionAndParameters")
+        self.widget = None
+        self.configurationWidget.show()
+        function, dummy, pcaParameters = self._getFunctionAndParameters()
         _logger.info("PCA function %s" % function.__name__)
         _logger.info("PCA parameters %s" % pcaParameters)
         if "Multiple" in self.__methodlabel:
@@ -252,14 +258,14 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
                                     parent=self.configurationWidget,
                                     modal=True,
                                     update_callback=None,
-                                    frameless=True)
+                                    frameless=False)
                 result = thread.getResult()
                 self.threadFinished(result)
         except Exception:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
-                msg.setWindowTitle("Configuration error")
-                msg.setText("Error configuring fit:")
+                msg.setWindowTitle("Calculation error")
+                msg.setText("Error on PCA calculation")
                 msg.setInformativeText(str(sys.exc_info()[1]))
                 msg.setDetailedText(traceback.format_exc())
                 msg.exec()
@@ -272,6 +278,7 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
                     stack.data.shape = oldShape
 
     def threadFinished(self, result):
+        _logger.info("threadFinished")
         if type(result) == type((1,)):
             #if we receive a tuple there was an error
             if len(result):
@@ -281,6 +288,7 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
                     raise Exception(result[1], result[2])
                     return
         self._status.setText("Ready")
+
         curve = self.configurationWidget.getSpectrum(binned=True)
         if curve not in [None, []]:
             xValues = curve[0]
