@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2025 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -233,8 +233,8 @@ class StackSimpleFitWindow(qt.QWidget):
     def progressBarUpdate(self, idx, total):
         self._index = int(idx)
         self._total = int(total)
-        if idx % 10 == 0:
-            print("Fited %d of %d" % (idx, total))
+        if idx % 100 == 0:
+            print("Fitted %d of %d" % (idx, total))
 
     def threadFinished(self):
         self.setEnabled(True)
