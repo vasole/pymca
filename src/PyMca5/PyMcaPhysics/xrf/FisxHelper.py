@@ -476,7 +476,7 @@ def getMultilayerFluorescence(multilayerSample,
             _logger.info("Threading by energies")
             t0 = time.time()
             max_workers = min(os.cpu_count(), int(len(energyList)/2))
-            _logger.info("Number of workers = ", max_workers)
+            _logger.info("Number of workers = %d" % max_workers)
             pool = ThreadPoolExecutor(max_workers=max_workers)
             ele = [x.split()[0] for x in actualElementsList]
             family = [x.split()[1] for x in actualElementsList]

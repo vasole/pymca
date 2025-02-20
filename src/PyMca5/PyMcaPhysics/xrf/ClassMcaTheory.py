@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2024 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2025 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -2212,6 +2212,8 @@ class McaTheory(object):
         self.sigmapar =fitresult[2]
         self.__niter  =fitresult[3]
         self.__lastdeltachi = fitresult[4]
+        if self.__niter >= self.MAXITER:
+            print("WARNING: Needed %d iterations" % self.__niter) 
 
         callStrategy = False
         if currentIteration is None:
@@ -2256,6 +2258,8 @@ class McaTheory(object):
                     self.sigmapar =fitresult[2]
                     self.__niter  =fitresult[3]
                     self.__lastdeltachi = fitresult[4]
+                    if self.__niter >= self.MAXITER:
+                        print("WARNING: Needed %d iterations" % self.__niter) 
             except Exception:
                 _logger.error( \
                     "Exception during strategy. Restoring configuration")

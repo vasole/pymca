@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2024 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2025 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -424,7 +424,7 @@ class EnergyTable(QTable):
                 item.setChecked(False)
                 self.setText(r, 1+coloffset,"")
             if idx < len(self.weightList):
-                self.setText(r, 2+coloffset,"%g" % self.weightList[idx])
+                self.setText(r, 2+coloffset,"%.8g" % self.weightList[idx])
             else:
                 self.setText(r, 2+coloffset,"")
 
