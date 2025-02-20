@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2024 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2025 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -455,7 +455,7 @@ def RestreinedLeastSquaresFit(model0,parameters0,data0,maxiter,
                 chisq0 = chisq
                 flambda = flambda / 10.0
                 #print "iter = ",iter,"chisq = ", chisq
-            iiter = iiter -1
+        iiter = iiter - 1
     sigma0 = numpy.sqrt(abs(numpy.diag(inv(alpha0))))
     sigmapar = getsigmaparameters(fittedpar,sigma0,constrains)
     if not fulloutput:
