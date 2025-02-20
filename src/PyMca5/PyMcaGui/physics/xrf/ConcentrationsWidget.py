@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2023 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2025 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -382,7 +382,7 @@ class ConcentrationsWidget(qt.QWidget):
                 self.fundamentalWidget.autoTimeCheckBox.setChecked(False)
                 self.fundamentalWidget.time.setEnabled(True)
             else:
-                self.fundamentalWidget.time.setText("%.6g" % self._liveTime)
+                self.fundamentalWidget.time.setText("%.8g" % self._liveTime)
                 self.fundamentalWidget.time.setEnabled(False)
                 if signal:
                     self._mySignal()
@@ -570,16 +570,16 @@ class ConcentrationsWidget(qt.QWidget):
             #self.referenceCombo.setCurrentText(QString("Auto"))
             self.referenceLine.setText(QString("Auto"))
 
-        self.fundamentalWidget.flux.setText("%.6g" % ddict['flux'])
-        self.fundamentalWidget.area.setText("%.6g" % ddict['area'])
-        self.fundamentalWidget.distance.setText("%.6g" % ddict['distance'])
+        self.fundamentalWidget.flux.setText("%.8g" % ddict['flux'])
+        self.fundamentalWidget.area.setText("%.8g" % ddict['area'])
+        self.fundamentalWidget.distance.setText("%.8g" % ddict['distance'])
         if ddict['time'] is not None:
-            self.fundamentalWidget.time.setText("%.6g" % ddict['time'])
+            self.fundamentalWidget.time.setText("%.8g" % ddict['time'])
         autotime = ddict.get("useautotime", False)
         if autotime:
             self.fundamentalWidget.autoTimeCheckBox.setChecked(True)
             if self._liveTime is not None:
-                self.fundamentalWidget.time.setText("%.6g" % self._liveTime)
+                self.fundamentalWidget.time.setText("%.8g" % self._liveTime)
         else:
             self.fundamentalWidget.autoTimeCheckBox.setChecked(False)
 
