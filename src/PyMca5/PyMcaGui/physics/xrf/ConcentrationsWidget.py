@@ -37,14 +37,6 @@ _logger.debug("ConcentrationsWidget is in debug mode")
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 
-if sys.platform.startswith("darwin"):
-    import threading
-    QThread = threading.Thread
-    QTHREAD = False
-else:
-    QThread = qt.QThread
-    QTHREAD = True
-
 if hasattr(qt, 'QString'):
     QString = qt.QString
 else:
@@ -65,6 +57,7 @@ except Exception:
     QTable = qt.QTableWidget
     USE_QTABLE_WIDGET = True
 
+from PyMca5.PyMcaGui.misc import CalculationThread
 from PyMca5.PyMcaPhysics.xrf import ConcentrationsTool
 from PyMca5.PyMcaPhysics.xrf import Elements
 import time
@@ -181,76 +174,22 @@ class Concentrations(qt.QWidget):
 
     def _submitThread(self, *var, **kw):
         message = "Calculating concentrations"
-        sthread = SimpleThread(self.concentrationsTool.processFitResult,
-                                *var, **kw)
-
+        sthread = CalculationThread.CalculationThread( \
+                                calculation_method=self.concentrationsTool.processFitResult,
+                                calculation_vars=var,
+                                calculation_kw=kw,
+                                expand_vars=True,
+                                expand_kw=True)
         sthread.start()
-
-        msg = qt.QDialog(self, qt.Qt.FramelessWindowHint)
-        msg.setModal(0)
-        msg.setWindowTitle("Please Wait")
-
-        layout = qt.QHBoxLayout(msg)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-        l1 = qt.QLabel(msg)
-        l1.setFixedWidth(l1.fontMetrics().maxWidth()*len('##'))
-        l2 = qt.QLabel(msg)
-        l2.setText("%s" % message)
-        l3 = qt.QLabel(msg)
-        l3.setFixedWidth(l3.fontMetrics().maxWidth()*len('##'))
-        layout.addWidget(l1)
-        layout.addWidget(l2)
-        layout.addWidget(l3)
-        msg.show()
-        qApp = qt.QApplication.instance()
-        qApp.processEvents()
-        i = 0
-        ticks = ['-', '\\', "|", "/", "-", "\\", '|', '/']
-        while (sthread.isRunning()):
-            i = (i + 1) % 8
-            l1.setText(ticks[i])
-            l3.setText(" " + ticks[i])
-            qApp = qt.QApplication.instance()
-            qApp.processEvents()
-            time.sleep(1)
-        msg.close()
-        result = sthread._result
-        del sthread
+        CalculationThread.waitingMessageDialog(sthread,
+                                           message=message,
+                                           parent=self,
+                                           modal=False,
+                                           update_callback=None,
+                                           frameless=True)
+        threadResult = sthread.getResult()
         self.raise_()
-        return result
-
-
-class SimpleThread(QThread):
-    def __init__(self, function, *var, **kw):
-        if kw is None:
-            kw = {}
-        if QTHREAD:
-            QThread.__init__(self, None)
-        else:
-            QThread.__init__(self)
-            self._threadRunning = False
-        self._function = function
-        self._var = var
-        self._kw = kw
-        self._result = None
-
-    if not QTHREAD:
-        def isRunning(self):
-            return self._threadRunning
-
-    def run(self):
-        if _logger.getEffectiveLevel() == logging.DEBUG:
-            self._result = self._function(*self._var, **self._kw)
-        else:
-            try:
-                self._threadRunning = True
-                self._result = self._function(*self._var, **self._kw)
-            except Exception:
-                self._result = ("Exception",) + sys.exc_info()
-            finally:
-                self._threadRunning = False
-
+        return threadResult
 
 class ConcentrationsWidget(qt.QWidget):
     sigConcentrationsWidgetSignal = qt.pyqtSignal(object)

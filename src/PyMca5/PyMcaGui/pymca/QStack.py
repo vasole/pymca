@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2025 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -36,32 +36,6 @@ import time
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaIO import EDFStack
 from PyMca5.PyMcaIO import SpecFileStack
-
-if sys.platform.startswith("darwin"):
-    import threading
-    QThread = threading.Thread
-else:
-    QThread = qt.QThread
-
-DEBUG = 0
-
-class SimpleThread(QThread):
-    def __init__(self, function, *var, **kw):
-        if kw is None:kw={}
-        QThread.__init__(self)
-        self._function = function
-        self._var      = var
-        self._kw       = kw
-        self._result   = None
-
-    def run(self):
-        if DEBUG:
-            self._result = self._function(*self._var, **self._kw )
-        else:
-            try:
-                self._result = self._function(*self._var, **self._kw )
-            except Exception:
-                self._result = ("Exception",) + sys.exc_info()
 
 class QSpecFileStack(SpecFileStack.SpecFileStack):
     def onBegin(self, nfiles):

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2023 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2025 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF.
@@ -220,7 +220,7 @@ def waitingMessageDialog(thread, message=None, parent=None,
     """
     thread  - The thread to be polled
     message - The initial message to be diplayed
-    parent  - The parent QWidget. It is used just to provide a convenient localtion
+    parent  - The parent QWidget. It is used just to provide a convenient location
     modal   - Default is True. The dialog will prevent user from using other widgets
     update_callback - The function to be called to provide progress feedback. It is expected
              to return a dictionary. The recognized key words are:
@@ -233,9 +233,9 @@ def waitingMessageDialog(thread, message=None, parent=None,
         message = "Please wait. Calculation going on."
     windowTitle = "Please Wait"
     if frameless:
-        msg = qt.QDialog(None, qt.Qt.FramelessWindowHint)
+        msg = qt.QDialog(parent, qt.Qt.FramelessWindowHint)
     else:
-        msg = qt.QDialog(None)
+        msg = qt.QDialog(parent)
 
     #if modal:
     #    msg.setWindowFlags(qt.Qt.Window | qt.Qt.CustomizeWindowHint | qt.Qt.WindowTitleHint)
@@ -255,11 +255,15 @@ def waitingMessageDialog(thread, message=None, parent=None,
     layout.addWidget(l3)
     msg.show()
     if parent is not None:
-        # place the dialog at appropriate point
-        parentGeometry = parent.geometry()
-        x = parentGeometry.x() + 0.5 * parentGeometry.width()
-        y = parentGeometry.y() + 0.5 * parentGeometry.height()
-        msg.move(int(x - 0.5 * msg.width()), int(y))
+        if parent.isHidden():
+            try:
+                # place the dialog at appropriate point
+                parentGeometry = parent.geometry()
+                x = parentGeometry.x() + 0.5 * parentGeometry.width()
+                y = parentGeometry.y() + 0.5 * parentGeometry.height()
+                msg.move(int(x - 0.5 * msg.width()), int(y))
+            except Exception:
+                _logger.info("Cannot relocate thread dialog")
     t0 = time.time()
     i = 0
     ticks = ['-','\\', "|", "/","-","\\",'|','/']
