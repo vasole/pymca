@@ -50,6 +50,7 @@ def subprocess_main(queue, method, *args, **kwargs):
 
 
 def extract_numbers_from_string(txt):
-    rexpr = '[/a-zA-Z:_-]'
-    nbs= [float(w) for w in re.split(rexpr, txt) if w not in ['',' ']]
-    return nbs
+    return [int(w) for w in _NON_NUMERIC_CHARS.split(txt) if w]
+
+
+_NON_NUMERIC_CHARS = re.compile('[^0-9]')
