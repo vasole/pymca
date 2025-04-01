@@ -51,6 +51,7 @@ if sys.version_info >= (3,):
 
 from . import DataObject
 from . import NexusTools
+from PyMca5.PyMcaIO.HDF5Utils import extract_numbers_from_string
 
 SOURCE_TYPE = "HDF5"
 
@@ -119,7 +120,7 @@ def h5py_sorting(object_list):
             return [x[1] for x in sorted_list]
 
         if sorting_key == 'name':
-            sorting_list = [(_get_number_list(o.name),o)
+            sorting_list = [(extract_numbers_from_string(o.name),o)
                            for o in object_list]
             sorting_list.sort()
             return [x[1] for x in sorting_list]
@@ -131,10 +132,6 @@ def h5py_sorting(object_list):
         _logger.warning("Probably all entries do not have the key %s", sorting_key)
         return object_list
 
-def _get_number_list(txt):
-    rexpr = '[/a-zA-Z:-]'
-    nbs= [float(w) for w in re.split(rexpr, txt) if w not in ['',' ']]
-    return nbs
 
 def get_family_pattern(filelist):
     name1 = filelist[0]

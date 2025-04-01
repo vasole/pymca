@@ -1,4 +1,5 @@
 import os
+import re
 import h5py
 from queue import Empty
 import multiprocessing
@@ -46,3 +47,9 @@ def run_in_subprocess(target, *args, context=None, default=None, **kwargs):
 
 def subprocess_main(queue, method, *args, **kwargs):
     queue.put(method(*args, **kwargs))
+
+
+def extract_numbers_from_string(txt):
+    rexpr = '[/a-zA-Z:_-]'
+    nbs= [float(w) for w in re.split(rexpr, txt) if w not in ['',' ']]
+    return nbs

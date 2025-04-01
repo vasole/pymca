@@ -67,6 +67,8 @@ except ImportError:
             return h5py.File(filename, "r", libver='latest', swmr=True)
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaIO.HDF5Utils import extract_numbers_from_string
+
 safe_str = qt.safe_str
 
 if hasattr(qt, 'QStringList'):
@@ -148,7 +150,7 @@ def h5py_sorting(object_list, sorting_list=None):
             return [x[1] for x in sorted_list]
 
         if sorting_key == 'name':
-            sorting_list = [(_get_number_list(o[1].name),o)
+            sorting_list = [(extract_numbers_from_string(o[1].name),o)
                            for o in object_list]
             sorting_list.sort()
             return [x[1] for x in sorting_list]
@@ -159,12 +161,6 @@ def h5py_sorting(object_list, sorting_list=None):
         _logger.warning("WARNING: Default ordering")
         _logger.warning("Probably all entries do not have the key %s" % sorting_key)
         return object_list
-
-
-def _get_number_list(txt):
-    rexpr = '[/a-zA-Z:_-]'
-    nbs= [float(w) for w in re.split(rexpr, txt) if w not in ['',' ']]
-    return nbs
 
 
 class BrokenLink(object):
