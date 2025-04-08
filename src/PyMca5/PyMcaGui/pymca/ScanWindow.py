@@ -562,6 +562,8 @@ class ScanWindow(PlotWindow.PlotWindow):
                     else:
                         closestIndex = (pow(x - ddict['x'], 2) + \
                                     pow(y - ddict['y'], 2))
+                    curs_xText = '%.7g' % ddict['x']
+                    curs_yText = '%.7g' % ddict['y']
                     xText = '----'
                     yText = '----'
                     if len(closestIndex):
@@ -572,12 +574,20 @@ class ScanWindow(PlotWindow.PlotWindow):
                             if abs(yCurve - ddict['y']) < (0.05 * maxYDistance):
                                 xText = '%.7g' % xCurve
                                 yText = '%.7g' % yCurve
+                    # showing ToolTip with coordinates of a cursor and nearest point
+                    if xMin <ddict['x']< xMax and yMin <ddict['y']< yMax:
+                        xy_tip = ('<span style="color: red;">X:%s <br>'
+                                  'Y:%s</span> <br>'
+                                  'X:%s <br>'
+                                  'Y:%s '
+                                  % (curs_xText, curs_yText, xText, yText))
+                        qt.QToolTip.showText(self.cursor().pos(), xy_tip)
                     if xText == '----':
                         if self.getGraphCursor():
                             self._xPos.setStyleSheet("color: rgb(255, 0, 0);")
                             self._yPos.setStyleSheet("color: rgb(255, 0, 0);")
-                            xText = '%.7g' % ddict['x']
-                            yText = '%.7g' % ddict['y']
+                            xText = curs_xText
+                            yText = curs_yText
                         else:
                             self._xPos.setStyleSheet("color: rgb(0, 0, 0);")
                             self._yPos.setStyleSheet("color: rgb(0, 0, 0);")
