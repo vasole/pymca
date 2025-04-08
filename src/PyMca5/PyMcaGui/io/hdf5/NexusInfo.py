@@ -29,6 +29,7 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 import h5py
+import os
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaCore.NexusTools import getStartingPositionerValues
@@ -66,6 +67,7 @@ class NexusMotorInfoWidget(qt.QWidget):
     def setInfoDict(self, ddict):
         if "motors" in ddict:
             self._setInfoDict(ddict["motors"])
+            print('motors are here!')
         else:
             self._setInfoDict(ddict)
 
@@ -128,10 +130,10 @@ def get_motor_positions(hdf5File, node):
     if not nxentry_name:
         return dict()
 
-    nxentry = hdf5File[nxentry_name]
+    nxentry = node.file[nxentry_name] # nxentry = hdf5File[nxentry_name]
     if not isinstance(nxentry, h5py.Group):
         return dict()
 
-    positions = getStartingPositionerValues(hdf5File, nxentry_name)
+    positions = getStartingPositionerValues(node.file, nxentry_name) # hdf5File
     column_names = "Name", "Value", "Units"
     return dict(zip(column_names, zip(*positions)))
