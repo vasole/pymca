@@ -541,7 +541,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                 return
 
     def graphCallback(self, ddict):
-        _logger.debug("graphCallback", ddict)
+        _logger.debug("graphCallback: %s", ddict)
         if ddict['event'] in ['markerMoved', 'markerSelected']:
             self._handleMarkerEvent(ddict)
         elif ddict['event'] in ["mouseMoved", "MouseAt"]:
