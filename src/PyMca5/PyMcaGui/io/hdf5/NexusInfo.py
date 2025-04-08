@@ -67,7 +67,6 @@ class NexusMotorInfoWidget(qt.QWidget):
     def setInfoDict(self, ddict):
         if "motors" in ddict:
             self._setInfoDict(ddict["motors"])
-            print('motors are here!')
         else:
             self._setInfoDict(ddict)
 
