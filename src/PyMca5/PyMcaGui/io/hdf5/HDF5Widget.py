@@ -31,10 +31,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
 import posixpath
-import time
 import gc
-import re
-from operator import itemgetter
 import logging
 _logger = logging.getLogger(__name__)
 
@@ -67,6 +64,8 @@ except ImportError:
             return h5py.File(filename, "r", libver='latest', swmr=True)
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaIO.HDF5Utils import sort_h5items
+
 safe_str = qt.safe_str
 
 if hasattr(qt, 'QStringList'):
@@ -76,95 +75,6 @@ else:
         return x
 
 QVERSION = qt.qVersion()
-
-
-#sorting method
-def h5py_sorting(object_list, sorting_list=None):
-    if sorting_list is None:
-        sorting_list = ['start_time', 'end_time', 'name']
-    n = len(object_list)
-    if n < 2:
-        return object_list
-
-    # we have received items, not values
-    # perform a first sort based on received names
-    # this solves a problem with Eiger data where all the
-    # external data have the same posixName. Without this sorting
-    # they arrive "unsorted"
-    object_list.sort()
-    try:
-        posixNames = [item[1].name for item in object_list]
-    except AttributeError:
-        # Typical of broken external links
-        _logger.debug("HDF5Widget: Cannot get posixNames")
-        return object_list
-
-    # This implementation only sorts entries
-    if posixpath.dirname(posixNames[0]) != "/":
-        return object_list
-
-    sorting_key = None
-    if hasattr(object_list[0][1], "items"):
-        for key in sorting_list:
-            if key in [x[0] for x in object_list[0][1].items()]:
-                sorting_key = key
-                break
-
-    if sorting_key is None:
-        if 'name' in sorting_list:
-            sorting_key = 'name'
-        else:
-            return object_list
-
-    try:
-        if sorting_key == 'title':
-            def getTitle(x):
-                try:
-                    title = x["title"][()]
-                except Exception:
-                    # allow the title to be missing
-                    title = ""
-                if hasattr(title, "dtype"):
-                    if hasattr(title, "__len__"):
-                        if len(title) == 1:
-                            title = title[0]
-                if hasattr(title, "decode"):
-                    title = title.decode("utf-8")
-                return title
-            # sort first by the traditional keys in order to be sorted
-            # by title and respecting actquisition order for equal title
-            try:
-                ordered_list = h5py_sorting(object_list)
-            except Exception:
-                ordered_list = object_list
-            sorting_list = [(getTitle(o[1]), o) for o in ordered_list]
-            sorted_list = sorted(sorting_list, key=itemgetter(0))
-            return [x[1] for x in sorted_list]
-
-        if sorting_key != 'name':
-            sorting_list = [(o[1][sorting_key][()], o)
-                           for o in object_list]
-            sorted_list = sorted(sorting_list, key=itemgetter(0))
-            return [x[1] for x in sorted_list]
-
-        if sorting_key == 'name':
-            sorting_list = [(_get_number_list(o[1].name),o)
-                           for o in object_list]
-            sorting_list.sort()
-            return [x[1] for x in sorting_list]
-    except Exception:
-        #The only way to reach this point is to have different
-        #structures among the different entries. In that case
-        #defaults to the unfiltered case
-        _logger.warning("WARNING: Default ordering")
-        _logger.warning("Probably all entries do not have the key %s" % sorting_key)
-        return object_list
-
-
-def _get_number_list(txt):
-    rexpr = '[/a-zA-Z:_-]'
-    nbs= [float(w) for w in re.split(rexpr, txt) if w not in ['',' ']]
-    return nbs
 
 
 class BrokenLink(object):
@@ -275,7 +185,7 @@ class H5NodeProxy(object):
                     items = list(self.getNode(self.name).items())
                 try:
                     # better handling of external links
-                    finalList = h5py_sorting(items, sorting_list=self.__sorting_list)
+                    finalList = sort_h5items(items, sorting_list=self.__sorting_list)
                     for i in range(len(finalList)):
                         # avoid an error at silx level with the linechecking "if finalList[i][1] and "
                         finalListIsTrue = True

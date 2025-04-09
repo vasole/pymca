@@ -32,8 +32,6 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
-from operator import itemgetter
-import re
 import posixpath
 try:
     # try to import hdf5plugin
@@ -52,6 +50,8 @@ except Exception:
 
     def is_group(something):
         return False
+
+from PyMca5.PyMcaIO.HDF5Utils import sort_h5items
 
 import logging
 _logger = logging.getLogger(__name__)
@@ -74,67 +74,6 @@ def isDataset(item):
     else:
         return False
 
-#sorting method
-def h5py_sorting(object_list):
-    sorting_list = ['start_time', 'end_time', 'name']
-    n = len(object_list)
-    if n < 2:
-        return object_list
-
-    # we have received items, not values
-    # perform a first sort based on received names
-    # this solves a problem with Eiger data where all the
-    # external data have the same posixName. Without this sorting
-    # they arrive "unsorted"
-    object_list.sort()
-    try:
-        posixNames = [item[1].name for item in object_list]
-    except AttributeError:
-        # Typical of broken external links
-        _logger.debug("HDF5Widget: Cannot get posixNames")
-        return object_list
-
-    # This implementation only sorts entries
-    if posixpath.dirname(posixNames[0]) != "/":
-        return object_list
-
-    sorting_key = None
-    if hasattr(object_list[0][1], "items"):
-        for key in sorting_list:
-            if key in [x[0] for x in object_list[0][1].items()]:
-                sorting_key = key
-                break
-
-    if sorting_key is None:
-        if 'name' in sorting_list:
-            sorting_key = 'name'
-        else:
-            return object_list
-
-    try:
-        if sorting_key != 'name':
-            sorting_list = [(o[1][sorting_key][()], o)
-                           for o in object_list]
-            sorted_list = sorted(sorting_list, key=itemgetter(0))
-            return [x[1] for x in sorted_list]
-
-        if sorting_key == 'name':
-            sorting_list = [(_get_number_list(o[1].name),o)
-                           for o in object_list]
-            sorting_list.sort()
-            return [x[1] for x in sorting_list]
-    except Exception:
-        #The only way to reach this point is to have different
-        #structures among the different entries. In that case
-        #defaults to the unfiltered case
-        _logger.warning("Default ordering. "
-                        "Probably all entries do not have the key %s", sorting_key)
-        return object_list
-
-def _get_number_list(txt):
-    rexpr = '[/a-zA-Z:-]'
-    nbs= [float(w) for w in re.split(rexpr, txt) if w not in ['',' ']]
-    return nbs
 
 def getEntryName(path, h5file=None):
     """
@@ -462,7 +401,7 @@ def getNXClassGroups(h5file, path, classes, single=False):
     groups = []
     items_list = list(h5file[path].items())
     if ("NXentry" in classes) or (b"NXentry" in classes):
-        items_list = h5py_sorting(items_list)
+        items_list = sort_h5items(items_list)
 
     for key, group in items_list:
         if not isGroup(group):

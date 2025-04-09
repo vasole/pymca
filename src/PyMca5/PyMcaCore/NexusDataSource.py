@@ -40,9 +40,7 @@ except Exception:
     # but do not crash just because of it
     pass
 import h5py
-from operator import itemgetter
 import re
-import posixpath
 import logging
 phynx = h5py
 
@@ -86,55 +84,6 @@ def h5open(filename):
             # give back the original error
             return h5py.File(filename, "r")
 
-#sorting method
-def h5py_sorting(object_list):
-    sorting_list = ['start_time', 'end_time', 'name']
-    n = len(object_list)
-    if n < 2:
-        return object_list
-
-    # This implementation only sorts entries
-    if posixpath.dirname(object_list[0].name) != "/":
-        return object_list
-
-    names = list(object_list[0].keys())
-
-    sorting_key = None
-    for key in sorting_list:
-        if key in names:
-            sorting_key = key
-            break
-
-    if sorting_key is None:
-        if 'name' in sorting_list:
-            sorting_key = 'name'
-        else:
-            return object_list
-
-    try:
-        if sorting_key != 'name':
-            sorting_list = [(o[sorting_key][()], o)
-                           for o in object_list]
-            sorted_list = sorted(sorting_list, key=itemgetter(0))
-            return [x[1] for x in sorted_list]
-
-        if sorting_key == 'name':
-            sorting_list = [(_get_number_list(o.name),o)
-                           for o in object_list]
-            sorting_list.sort()
-            return [x[1] for x in sorting_list]
-    except Exception:
-        #The only way to reach this point is to have different
-        #structures among the different entries. In that case
-        #defaults to the unfiltered case
-        _logger.warning("Default ordering")
-        _logger.warning("Probably all entries do not have the key %s", sorting_key)
-        return object_list
-
-def _get_number_list(txt):
-    rexpr = '[/a-zA-Z:-]'
-    nbs= [float(w) for w in re.split(rexpr, txt) if w not in ['',' ']]
-    return nbs
 
 def get_family_pattern(filelist):
     name1 = filelist[0]

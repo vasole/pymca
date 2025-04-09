@@ -1,7 +1,9 @@
 import os
+import time
 import shutil
 import tempfile
 import unittest
+import datetime
 import h5py
 
 from PyMca5.PyMcaIO import HDF5Utils
@@ -41,6 +43,96 @@ class testHDF5Utils(unittest.TestCase):
 
     def testSegFault(self):
         self.assertEqual(_safe_cause_segfault(default=123), 123)
+
+    def testHdf5GroupSortByName(self):
+        filename = os.path.join(self.path, "test.h5")
+
+        with h5py.File(filename, "w", track_order=True) as f:
+            _ = f.create_group("c")
+            _ = f.create_group("b")
+            _ = f.create_group("a")
+
+        with h5py.File(filename, "r") as f:
+            h5_items = list(f.items())
+            keys = [key for key, _ in HDF5Utils.sort_h5items(h5_items)]
+        assert keys == ["a", "b", "c"]
+
+    def testHdf5GroupSortByNameWithNumbers(self):
+        filename = os.path.join(self.path, "test.h5")
+
+        expected = []
+        with h5py.File(filename, "w", track_order=True) as f:
+            for i in list(range(1, 11))[::-1]:
+                key = f"1.{i}"
+                _ = f.create_group(key)
+                expected.insert(0, key)
+
+        with h5py.File(filename, "r") as f:
+            h5_items = list(f.items())
+            keys = [key for key, _ in HDF5Utils.sort_h5items(h5_items)]
+        assert keys == expected
+
+    def testHdf5GroupSortByStartTime(self):
+        filename = os.path.join(self.path, "test.h5")
+        expected = []
+        with h5py.File(filename, "w", track_order=True) as f:
+            for i in list(range(1, 11))[::-1]:
+                key = f"1.{i}"
+                grp = f.create_group(key)
+                grp["start_time"] = datetime.datetime.now().astimezone().isoformat()
+                expected.append(key)
+                time.sleep(0.1)  # make sure the start_time is unique
+
+        with h5py.File(filename, "r") as f:
+            h5_items = list(f.items())
+            keys = [key for key, _ in HDF5Utils.sort_h5items(h5_items)]
+        assert keys == expected
+
+    def testHdf5GroupSortByIdenticalStartTime(self):
+        filename = os.path.join(self.path, "test.h5")
+        expected = []
+        with h5py.File(filename, "w", track_order=True) as f:
+            start_time = datetime.datetime.now().astimezone().isoformat()
+            for i in list(range(1, 11))[::-1]:
+                key = f"1.{i}"
+                grp = f.create_group(key)
+                grp["start_time"] = start_time
+                expected.insert(0, key)
+
+        with h5py.File(filename, "r") as f:
+            h5_items = list(f.items())
+            keys = [key for key, _ in HDF5Utils.sort_h5items(h5_items)]
+        assert keys == expected
+
+    def testHdf5GroupSortByTitle(self):
+        filename = os.path.join(self.path, "test.h5")
+        expected = []
+        with h5py.File(filename, "w", track_order=True) as f:
+            for i in range(1, 11)[::-1]:
+                key = f"1.{11 - i}"
+                grp = f.create_group(key)
+                grp["title"] = chr(i + 65)
+                expected.insert(0, key)
+
+        with h5py.File(filename, "r") as f:
+            h5_items = list(f.items())
+            keys = [key for key, _ in HDF5Utils.sort_h5items(h5_items, ["title"])]
+        assert keys == expected
+
+    def testHdf5GroupSortByIdenticalTitle(self):
+        filename = os.path.join(self.path, "test.h5")
+        expected = []
+        with h5py.File(filename, "w", track_order=True) as f:
+            for i in range(1, 11)[::-1]:
+                key = f"1.{i}"
+                grp = f.create_group(key)
+                grp["title"] = "same title"
+                expected.insert(0, key)
+
+        with h5py.File(filename, "r") as f:
+            h5_items = list(f.items())
+            keys = [key for key, _ in HDF5Utils.sort_h5items(h5_items, ["title"])]
+        assert keys == expected
 
 
 def getSuite(auto=True):
