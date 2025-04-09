@@ -509,7 +509,7 @@ class QNexusWidget(qt.QWidget):
             phynxFile  = HDF5Widget.h5open(filename)
 
         info = self.getInfo(phynxFile, name)
-        nxclass = phynxFile[name].file[phynxFile[name].name.split("/")[1]].attrs.get("NX_class")
+        nxclass = phynxFile[name].attrs.get("NX_class")
         widget = NexusInfo.NexusInfoWidget(nxclass=nxclass)
         widget.notifyCloseEventToWidget(self)
         title = os.path.basename(filename)

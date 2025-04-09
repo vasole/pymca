@@ -29,7 +29,6 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 import h5py
-import os
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaCore.NexusTools import getStartingPositionerValues
@@ -129,10 +128,15 @@ def get_motor_positions(hdf5File, node):
     if not nxentry_name:
         return dict()
 
-    nxentry = node.file[nxentry_name]
+    if hasattr(node, "file"):
+        source_file = node.file
+    else:
+        source_file = hdf5File
+
+    nxentry = source_file[nxentry_name]
     if not isinstance(nxentry, h5py.Group):
         return dict()
 
-    positions = getStartingPositionerValues(node.file, nxentry_name)
+    positions = getStartingPositionerValues(source_file, nxentry_name)
     column_names = "Name", "Value", "Units"
     return dict(zip(column_names, zip(*positions)))
