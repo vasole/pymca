@@ -128,10 +128,15 @@ def get_motor_positions(hdf5File, node):
     if not nxentry_name:
         return dict()
 
-    nxentry = hdf5File[nxentry_name]
+    if hasattr(node, "file"):
+        source_file = node.file
+    else:
+        source_file = hdf5File
+
+    nxentry = source_file[nxentry_name]
     if not isinstance(nxentry, h5py.Group):
         return dict()
 
-    positions = getStartingPositionerValues(hdf5File, nxentry_name)
+    positions = getStartingPositionerValues(source_file, nxentry_name)
     column_names = "Name", "Value", "Units"
     return dict(zip(column_names, zip(*positions)))
