@@ -575,7 +575,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                                 xText = '%.7g' % xCurve
                                 yText = '%.7g' % yCurve
                     # showing ToolTip with coordinates of a cursor and nearest point
-                    if xMin <ddict['x']< xMax and yMin <ddict['y']< yMax:
+                    if xMin <ddict['x']< xMax and yMin <ddict['y']< yMax and self.getGraphCursor():
                         xy_tip = ('<span style="color: red;">X:%s <br>'
                                   'Y:%s</span> <br>'
                                   'X:%s <br>'
