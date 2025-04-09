@@ -95,7 +95,7 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
         self._widget.setSelectionMask(mask)
 
     def mySlot(self, ddict):
-        _logger.debug("mySlot ", ddict['event'], ddict.keys())
+        _logger.debug("mySlot %s %s", ddict['event'], ddict.keys())
         if ddict['event'] == "selectionMaskChanged":
             self.setStackSelectionMask(ddict['current'])
         elif ddict['event'] == "addImageClicked":
